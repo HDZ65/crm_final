@@ -89,6 +89,10 @@ export interface ExpeditionsFilters {
 
 /**
  * Hook pour récupérer la liste des expéditions avec détails
+ *
+ * Note: Les filtres etat, clientId, contratId, transporteurId, dateDebut, dateFin
+ * sont envoyés mais nécessitent une mise à jour du backend pour être pris en compte.
+ * Actuellement seul organisationId est supporté côté backend.
  */
 export function useExpeditions(organisationId: string | null, filters?: ExpeditionsFilters) {
   const [expeditions, setExpeditions] = useState<ExpeditionDto[]>([])

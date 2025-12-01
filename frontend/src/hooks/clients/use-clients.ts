@@ -23,7 +23,7 @@ export interface ContratDto {
   dateDebut: string
   dateFin: string
   statutId: string
-  groupeId: string | null
+  societeId: string
 }
 
 export interface ClientBaseDto {
@@ -79,12 +79,12 @@ function mapClientBaseToRow(
   client: ClientBaseDto,
   mapStatusFn?: (id: string) => "Actif" | "Impayé" | "Suspendu"
 ): ClientRow {
-  // Extraire les groupeIds uniques des contrats (correspond aux sociétés)
+  // Extraire les societeIds uniques des contrats
   const societeIds = [
     ...new Set(
       client.contrats
-        ?.map((c) => c.groupeId)
-        .filter((id): id is string => id !== null) || []
+        ?.map((c) => c.societeId)
+        .filter((id): id is string => !!id) || []
     ),
   ]
 
@@ -330,12 +330,13 @@ export function useClient(clientId: string | null) {
       if (clientData) {
         const mappedClient = mapClientDetailDtoToDetail(clientData, mapToStatus)
 
-        // Lancer les appels en parallèle pour les données associées
-        const [paymentsData, documentsData, eventsData] = await Promise.all([
-          api.get<PaiementDto[]>(`/clientbases/${clientId}/paiements`).catch(() => [] as PaiementDto[]),
-          api.get<DocumentDto[]>(`/clientbases/${clientId}/documents`).catch(() => [] as DocumentDto[]),
-          api.get<EvenementDto[]>(`/clientbases/${clientId}/evenements`).catch(() => [] as EvenementDto[]),
-        ])
+        // NOTE: Les endpoints /paiements, /documents, /evenements ne sont pas encore
+        // implémentés côté backend. Ces données seront disponibles quand le backend
+        // aura ajouté ces routes ou les inclura dans la réponse principale.
+        // Pour l'instant, on retourne des tableaux vides.
+        const paymentsData: PaiementDto[] = []
+        const documentsData: DocumentDto[] = []
+        const eventsData: EvenementDto[] = []
 
         // Mettre à jour le client avec les données associées
         setClient({

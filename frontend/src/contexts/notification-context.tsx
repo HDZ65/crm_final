@@ -14,7 +14,8 @@ import { useOrganisation } from '@/contexts/organisation-context';
 import { api } from '@/lib/api';
 import type { Notification, NotificationCount, NotificationEvents } from '@/types/notification';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8000';
+// Use same base URL as API for WebSocket connection
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -82,6 +83,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const socket = io(`${WS_URL}/notifications`, {
       transports: ['websocket'],
       autoConnect: true,
+      reconnectionAttempts: 3, // Limit reconnection attempts
+      reconnectionDelay: 5000, // Wait 5s between attempts
+      timeout: 10000, // Connection timeout
     });
 
     socketRef.current = socket;
@@ -103,7 +107,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     socket.on('connect_error', (err) => {
       setIsConnected(false);
-      setError(new Error(`Erreur de connexion WebSocket: ${err.message}`));
+      // Don't set error state in dev to avoid noisy UI when backend is not running
+      if (process.env.NODE_ENV !== 'development') {
+        setError(new Error(`Erreur de connexion WebSocket: ${err.message}`));
+      } else {
+        // Log at debug level to reduce noise in dev
+        console.debug('[WebSocket] Connection error (backend may not be running):', err.message);
+      }
     });
 
     // Événements de notification

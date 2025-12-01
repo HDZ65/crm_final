@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -18,7 +19,7 @@ export class CreateUtilisateurDto {
   @IsNotEmpty()
   prenom: string;
 
-  @IsString()
+  @IsEmail({}, { message: 'Email invalide' })
   @IsNotEmpty()
   email: string;
 

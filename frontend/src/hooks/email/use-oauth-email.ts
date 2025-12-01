@@ -56,7 +56,14 @@ export interface ConnectedAccount {
   accessToken: string
   refreshToken?: string
   expiresAt?: number
+  boiteMailId?: string
 }
+
+/**
+ * Buffer time in seconds before token actually expires to trigger refresh
+ * Refresh 5 minutes before expiration
+ */
+const TOKEN_EXPIRY_BUFFER_SECONDS = 5 * 60
 
 /**
  * Hook pour gérer l'authentification OAuth2 pour les emails
@@ -147,6 +154,72 @@ export function useOAuthEmail(config: OAuthConfig = DEFAULT_CONFIG) {
   }, [])
 
   /**
+   * Vérifie si un token est expiré ou va bientôt expirer
+   */
+  const isTokenExpired = useCallback((account: ConnectedAccount): boolean => {
+    if (!account.expiresAt) {
+      // If no expiry info, assume it might be expired
+      return true
+    }
+    const nowInSeconds = Math.floor(Date.now() / 1000)
+    return account.expiresAt <= nowInSeconds + TOKEN_EXPIRY_BUFFER_SECONDS
+  }, [])
+
+  /**
+   * Rafraîchit le token d'un compte
+   */
+  const refreshToken = useCallback(
+    async (account: ConnectedAccount): Promise<ConnectedAccount> => {
+      if (!account.boiteMailId) {
+        throw new Error("ID de boîte mail manquant pour le rafraîchissement du token")
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/oauth/refresh-token/${account.boiteMailId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Échec du rafraîchissement du token")
+      }
+
+      const data = await response.json()
+      return {
+        ...account,
+        accessToken: data.accessToken,
+        expiresAt: data.expiresAt ? Math.floor(new Date(data.expiresAt).getTime() / 1000) : undefined,
+      }
+    },
+    []
+  )
+
+  /**
+   * Obtient un token valide pour un compte, en le rafraîchissant si nécessaire
+   */
+  const getValidToken = useCallback(
+    async (account: ConnectedAccount): Promise<ConnectedAccount> => {
+      if (isTokenExpired(account)) {
+        console.log(`Token expiré pour ${account.email}, rafraîchissement en cours...`)
+        const refreshedAccount = await refreshToken(account)
+        // Update the account in state
+        setConnectedAccounts((prev) =>
+          prev.map((acc) =>
+            acc.provider === account.provider && acc.email === account.email
+              ? refreshedAccount
+              : acc
+          )
+        )
+        return refreshedAccount
+      }
+      return account
+    },
+    [isTokenExpired, refreshToken]
+  )
+
+  /**
    * Échange le code d'autorisation contre un access token
    */
   const exchangeCodeForToken = useCallback(
@@ -233,6 +306,7 @@ export function useOAuthEmail(config: OAuthConfig = DEFAULT_CONFIG) {
 
   /**
    * Envoie un email via un compte connecté
+   * Vérifie et rafraîchit le token si nécessaire avant l'envoi
    */
   const sendEmail = useCallback(
     async (
@@ -245,10 +319,18 @@ export function useOAuthEmail(config: OAuthConfig = DEFAULT_CONFIG) {
         cc?: string
       }
     ) => {
-      const account = connectedAccounts.find((acc) => acc.provider === provider && acc.email === email)
+      let account = connectedAccounts.find((acc) => acc.provider === provider && acc.email === email)
 
       if (!account) {
         throw new Error("Compte non connecté")
+      }
+
+      // Vérifier et rafraîchir le token si expiré
+      try {
+        account = await getValidToken(account)
+      } catch (refreshError) {
+        console.error("Impossible de rafraîchir le token:", refreshError)
+        throw new Error("Session expirée. Veuillez reconnecter votre compte email.")
       }
 
       // Appel à votre API backend pour envoyer l'email
@@ -271,7 +353,7 @@ export function useOAuthEmail(config: OAuthConfig = DEFAULT_CONFIG) {
 
       return await response.json()
     },
-    [connectedAccounts]
+    [connectedAccounts, getValidToken]
   )
 
   return {
@@ -280,5 +362,8 @@ export function useOAuthEmail(config: OAuthConfig = DEFAULT_CONFIG) {
     connectAccount,
     disconnectAccount,
     sendEmail,
+    isTokenExpired,
+    refreshToken,
+    getValidToken,
   }
 }

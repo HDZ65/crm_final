@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './infrastructure/framework/nest/app.module';
 import { AiStandaloneModule } from './infrastructure/framework/nest/ai-standalone.module';
+import { AllExceptionsFilter } from './infrastructure/framework/nest/filters/all-exceptions.filter';
 
 /**
  * Point d'entrée principal de l'application
@@ -56,6 +57,9 @@ async function bootstrap() {
       transform: true, // Transforme automatiquement les types
     }),
   );
+
+  // Activer le filtre d'exceptions global
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Setup Swagger only for full app
   if (useFullApp) {

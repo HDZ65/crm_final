@@ -1,4 +1,4 @@
-import { IsISO8601, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsISO8601, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateClientBaseDto {
   @IsString()
@@ -37,7 +37,7 @@ export class CreateClientBaseDto {
   telephone: string;
 
   @IsOptional()
-  @IsString()
+  @IsEmail({}, { message: 'Email invalide' })
   email?: string;
 
   @IsString()

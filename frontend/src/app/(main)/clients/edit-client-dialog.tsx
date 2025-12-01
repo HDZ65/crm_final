@@ -20,27 +20,39 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { useApiPut } from "@/hooks/core"
+import { useStatutClients } from "@/hooks/clients/use-statut-clients"
 
 const editClientSchema = z.object({
+  typeClient: z.string().min(1, "Le type de client est requis"),
   nom: z.string().min(1, "Le nom est requis"),
   prenom: z.string().min(1, "Le prénom est requis"),
   dateNaissance: z.string().optional(),
   telephone: z.string().min(1, "Le téléphone est requis"),
   email: z.string().email("Email invalide").optional().or(z.literal("")),
+  statutId: z.string().min(1, "Le statut est requis"),
 })
 
 type EditClientFormValues = z.infer<typeof editClientSchema>
 
 interface UpdateClientDto {
+  typeClient: string
   nom: string
   prenom: string
   dateNaissance?: Date | null
   telephone: string
   email?: string
+  statutId: string
 }
 
 interface EditClientDialogProps {
@@ -51,6 +63,9 @@ interface EditClientDialogProps {
     name: string
     email?: string
     phone?: string
+    typeClient?: string
+    statutId?: string
+    dateNaissance?: string
   }
   onSuccess?: () => void
 }
@@ -61,16 +76,19 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
   const defaultNom = nameParts[0] || ""
   const defaultPrenom = nameParts.slice(1).join(" ") || ""
 
+  const { statuts, loading: statutsLoading } = useStatutClients()
   const { execute: updateClient, loading } = useApiPut<unknown, UpdateClientDto>("/clientbases")
 
   const form = useForm<EditClientFormValues>({
     resolver: zodResolver(editClientSchema),
     defaultValues: {
+      typeClient: client.typeClient || "particulier",
       nom: defaultNom,
       prenom: defaultPrenom,
-      dateNaissance: "",
+      dateNaissance: client.dateNaissance || "",
       telephone: client.phone || "",
       email: client.email || "",
+      statutId: client.statutId || "",
     },
   })
 
@@ -78,23 +96,27 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
     if (open) {
       const nameParts = client.name.split(" ")
       form.reset({
+        typeClient: client.typeClient || "particulier",
         nom: nameParts[0] || "",
         prenom: nameParts.slice(1).join(" ") || "",
-        dateNaissance: "",
+        dateNaissance: client.dateNaissance || "",
         telephone: client.phone || "",
         email: client.email || "",
+        statutId: client.statutId || statuts.find(s => s.code === "actif")?.id || "",
       })
     }
-  }, [open, client, form])
+  }, [open, client, form, statuts])
 
   const onSubmit = async (data: EditClientFormValues) => {
     try {
       const payload: UpdateClientDto = {
+        typeClient: data.typeClient,
         nom: data.nom,
         prenom: data.prenom,
         dateNaissance: data.dateNaissance ? new Date(data.dateNaissance) : null,
         telephone: data.telephone,
         email: data.email || undefined,
+        statutId: data.statutId,
       }
       await updateClient(payload, client.id)
       toast.success("Client modifié avec succès")
@@ -116,6 +138,28 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="typeClient"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type de client</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selectionnez un type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="particulier">Particulier</SelectItem>
+                      <SelectItem value="entreprise">Entreprise</SelectItem>
+                      <SelectItem value="association">Association</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -183,11 +227,35 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="statutId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Statut</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selectionnez un statut" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {statuts.map((statut) => (
+                        <SelectItem key={statut.id} value={statut.id}>
+                          {statut.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading || statutsLoading}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || statutsLoading}>
                 {loading ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </DialogFooter>

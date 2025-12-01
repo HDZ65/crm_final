@@ -1,0 +1,770 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Schema: Prospect - Entité principale représentant un client potentiel et ses données personnelles.
+model Prospect {
+  idProspect                                 Int            @id @default(autoincrement())
+  nom                                        String
+  prenom                                     String
+  etapeCourante                              String?
+  civilite                                   Civilite?
+  dateNaissance                              DateTime?
+  lieuNaissance                              String?
+  codePostalNaissance                        String?
+  paysNaissance                              String?
+  csp                                        CspNeoliane?
+  numss                                      String?
+  numorganisme                               String?
+  regimeSocial                               RegimeSocial?
+  streetnumber                               String?
+  email                                      String         @unique
+  telephone                                  String         @unique
+  adressePostaleLigne1                       String
+  adressePostaleLigne2                       String?
+  ville                                      String
+  codePostal                                 String
+  statutProspect                             StatutProspect
+  enumbusiness                               Profession?
+  sector_id                                  Int?
+  createdAt                                  DateTime       @default(now())
+  is_politically_exposed                     Boolean?
+  recevoirDocumentsCOOG                      Boolean?
+  note                                       String?
+  consentementRGPDTraitementDonnees          Boolean
+  consentementRGPDCommunicationsCommerciales Boolean?
+  ocrStatus                                  Boolean        @default(false)
+  commercialId                               String?
+
+  // ✅ FIX : Ajout de @relation avec fields et references
+  identityCardId Int?          @unique
+  identityCard   IdentityCard? @relation(fields: [identityCardId], references: [id], onDelete: Cascade)
+
+  abonnements                  Abonnement[]
+  contrats                     Contrat[]
+  Conversation                 Conversation[]
+  informationsPaiement         InformationPaiementBancaire[]
+  commercial                   User?                          @relation(fields: [commercialId], references: [id])
+  Souscription                 Souscription[]
+  ChoixNeoline                 ChoixNeoline[]
+  neolianeCartResponses        NeolianeCartResponse[]
+  neolianeSubscriptionResponse NeolianeSubscriptionResponse[]
+
+  @@index([commercialId])
+  @@index([identityCardId])
+}
+
+// Schema: IdentityCard - Stocke les détails de la carte d'identité et le statut de vérification pour un prospect.
+model IdentityCard {
+  id Int @id @default(autoincrement())
+
+  nom            String?
+  prenom         String?
+  type           Categorie?
+  dateNaissance  DateTime?
+  lieuNaissance  String?
+  numeroIdentite String?    @unique
+  dateEmission   DateTime?
+  dateExpiration DateTime?
+  sexe           String?
+  nationalite    String?
+  adresse        String?
+
+  photoRectoPath String? @db.LongText
+  photoVersoPath String? @db.LongText
+  photoRectoUrl  String?
+  photoVersoUrl  String?
+
+  confidenceRecto Float? @default(0)
+  confidenceVerso Float? @default(0)
+  rawDataRecto    Json?
+  rawDataVerso    Json?
+
+  status          IdentityCardStatus @default(PENDING)
+  rejectionReason String?
+  verifiedAt      DateTime?
+  verifiedBy      Int?
+
+  prospectId Int?      @unique
+  prospect   Prospect?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([numeroIdentite])
+  @@index([prospectId])
+}
+
+// Schema: Categorie - Enum définissant les types de documents d'identité (ex: Passeport, Carte de séjour).
+enum Categorie { 
+  Passeport
+  Carte_de_séjour
+}
+
+// Schema: Offre - Représente les offres d'assurance disponibles pour les prospects.
+model Offre {
+  id            Int            @id @default(autoincrement())
+  nom           String
+  description   String
+  categorie     String
+  fournisseur   String
+  logo_url      String
+  prix_base     Float?
+  features      Json?
+  formules      Json?
+  popular       Boolean        @default(false)
+  rating        Float          @default(0)
+  isActive      Boolean        @default(true)
+  Conversation  Conversation[]
+  souscriptions Souscription[]
+}
+
+// Schema: IdentityCardStatus - Enum pour le statut de vérification d'une carte d'identité.
+enum IdentityCardStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// Schema: ChoixNeoline - Stocke la formule d'assurance spécifique et les options choisies par un prospect.
+model ChoixNeoline {
+  idChoix        Int           @id @default(autoincrement())
+  prospectId     Int
+  prospect       Prospect      @relation(fields: [prospectId], references: [idProspect], onDelete: Cascade)
+  souscriptionId Int?
+  souscription   Souscription? @relation(fields: [souscriptionId], references: [idSouscription], onDelete: Cascade)
+  formuleId      Int
+  formuleLabel   String
+  gammeId        Int
+  gammeLabel     String
+  typeAssurance  String
+  montant        Float
+  dateEffet      DateTime
+
+  createdAt DateTime @default(now())
+}
+
+// Schema: Abonnement - Représente un abonnement à un service ou produit.
+model Abonnement {
+  idAbonnement Int       @id @default(autoincrement())
+  type         String
+  fournisseur  String
+  nom          String
+  echeance     DateTime?
+  prix         Float?
+  contrat      String?
+  prospectId   Int
+  prospect     Prospect  @relation(fields: [prospectId], references: [idProspect], onDelete: Cascade)
+
+  @@index([prospectId], map: "Abonnement_prospectId_fkey")
+}
+
+// Schema: InformationPaiementBancaire - Stocke les coordonnées bancaires (IBAN, BIC) pour les paiements.
+model InformationPaiementBancaire {
+  idInfoPaiement Int       @id @default(autoincrement())
+  IBAN           String
+  BIC            String
+  mandatSEPA     String?
+  dateMandat     DateTime?
+  dateCreation   DateTime?
+  commentaire    String?
+  prospectId     Int
+  prospect       Prospect  @relation(fields: [prospectId], references: [idProspect], onDelete: Cascade)
+
+  @@index([prospectId], map: "InformationPaiementBancaire_prospectId_fkey")
+}
+
+// Schema: Souscription - Représente le processus et l'enregistrement de la souscription à une offre.
+model Souscription {
+  idSouscription   Int            @id @default(autoincrement())
+  prospectId       Int
+  conserverNumero  Boolean?
+  rio              String?
+  esim             Boolean?
+  dateSouscription DateTime       @default(now())
+  offreId          Int
+  totalAmount      Float?
+  formulaId        Int?
+  Conversation     Conversation[]
+  offre            Offre          @relation(fields: [offreId], references: [id])
+  prospect         Prospect       @relation(fields: [prospectId], references: [idProspect], onDelete: Cascade)
+  choixNeoline     ChoixNeoline[]
+  contrats         Contrat[]
+
+  @@index([offreId], map: "Souscription_offreId_fkey")
+  @@index([prospectId], map: "Souscription_prospectId_fkey")
+}
+
+// Schema: NeolianeSubscriptionResponse - Stocke la réponse et le statut de l'API de souscription Neoliane.
+model NeolianeSubscriptionResponse {
+  id             Int      @id @default(autoincrement())
+  prospectId     Int
+  leadId         String
+  subscriptionId String
+  totalAmount    Float?
+  token          String?
+  currentStep    String?
+  stepName       String?
+  stepInstanceId String?
+  formUrl        String?
+  saveUrl        String?
+  validateUrl    String?
+  status         String?  @default("in_progress")
+  rawResponse    Json?
+  dateCreation   DateTime @default(now())
+
+  prospect Prospect @relation(fields: [prospectId], references: [idProspect], onDelete: Cascade)
+
+  @@index([prospectId])
+  @@index([leadId])
+  @@index([subscriptionId])
+}
+
+// Schema: Contrat - Représente un contrat signé associé à un prospect et une souscription.
+model Contrat {
+  id               Int             @id @default(autoincrement())
+  titre            String
+  description      String?
+  statut           String
+  dateSignature    DateTime?
+  documentUrl      String?         @map("document_url")
+  auditTrailUrl    String?         @map("audit_trail_url")
+  montant          Float?
+  fournisseur      String?
+  type             String?
+  prospectId       Int
+  souscriptionId   Int?
+  prospect         Prospect        @relation(fields: [prospectId], references: [idProspect], onDelete: Cascade)
+  Conversation     Conversation[]
+  souscription     Souscription?   @relation(fields: [souscriptionId], references: [idSouscription])
+  yousignRequest   YousignRequest? @relation(fields: [yousignRequestId], references: [id], onDelete: Cascade)
+  yousignRequestId Int?
+
+  @@index([prospectId])
+  @@index([souscriptionId])
+  @@index([yousignRequestId])
+}
+
+// Schema: YousignRequest - Gère les demandes de signature électronique via l'intégration Yousign.
+model YousignRequest {
+  id                        Int                   @id @default(autoincrement())
+  yousignSignatureRequestId String                @unique
+  status                    YousignRequestStatus  @default(draft)
+  name                      String?
+  externalId                String?               @unique @map("external_id")
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+  expiresAt                 DateTime?
+  completedAt               DateTime?
+  documents                 YousignDocument[]
+  contrats                  Contrat[]
+  signers                   YousignSigner[]
+  webhookEvents             YousignWebhookEvent[]
+}
+
+// Schema: YousignDocument - Représente les documents associés à une demande de signature Yousign.
+model YousignDocument {
+  id                Int            @id @default(autoincrement())
+  yousignDocumentId String         @unique
+  nature            String
+  yousignRequestId  Int
+  yousignRequest    YousignRequest @relation(fields: [yousignRequestId], references: [id], onDelete: Cascade)
+
+  @@index([yousignRequestId], map: "YousignDocument_yousignRequestId_fkey")
+}
+
+// Schema: YousignSigner - Représente les individus qui doivent signer une demande Yousign.
+model YousignSigner {
+  id               Int                 @id @default(autoincrement())
+  yousignSignerId  String              @unique
+  status           YousignSignerStatus @default(notified)
+  firstName        String
+  lastName         String
+  email            String
+  phone            String?
+  signatureLink    String?
+  yousignRequestId Int
+  yousignRequest   YousignRequest      @relation(fields: [yousignRequestId], references: [id], onDelete: Cascade)
+
+  @@index([yousignRequestId])
+}
+
+// Schema: YousignWebhookEvent - Enregistre les événements webhook reçus de Yousign pour l'audit et le traitement.
+model YousignWebhookEvent {
+  id                        Int            @id @default(autoincrement())
+  eventId                   String         @unique
+  eventType                 String
+  receivedAt                DateTime       @default(now())
+  payload                   Json
+  yousignSignatureRequestId String
+  yousignRequest            YousignRequest @relation(fields: [yousignSignatureRequestId], references: [yousignSignatureRequestId], onDelete: Cascade)
+
+  @@index([yousignSignatureRequestId], map: "YousignWebhookEvent_yousignSignatureRequestId_fkey")
+}
+
+// Schema: Notification - Notifications système pour les utilisateurs concernant divers événements.
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  title        String
+  message      String?
+  type         NotificationType @default(info)
+  linkUrl      String?
+  meta         Json?
+  read         Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  commercialId String?
+  commercial   User?            @relation("NotificationCommercial", fields: [commercialId], references: [id])
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+  @@index([createdAt])
+  @@index([commercialId, createdAt])
+}
+
+// Schema: NotificationPreference - Stocke les préférences des utilisateurs pour la réception des notifications.
+model NotificationPreference {
+  id           Int      @id @default(autoincrement())
+  adminId      String
+  commercialId String
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  admin        User     @relation("AdminPrefs", fields: [adminId], references: [id], onDelete: Cascade)
+  commercial   User     @relation("CommercialPrefs", fields: [commercialId], references: [id], onDelete: Cascade)
+
+  @@unique([adminId, commercialId])
+  @@index([adminId])
+  @@index([commercialId])
+}
+
+// Schema: User - Représente les utilisateurs de l'application, y compris les Admins, Commerciaux et Managers.
+model User {
+  id                           String                       @id 
+  nom                          String
+  prenom                       String
+  username                     String
+  email                        String                    @unique
+  role                         UserRole                  @default(COMMERCIAL)
+  createdAt                    DateTime                  @default(now())
+  updatedAt                    DateTime                  @updatedAt
+  isActive                     Boolean                   @default(true)
+  managerId                    String?
+  manager                      User?                     @relation("ManagerTeam", fields: [managerId], references: [id])
+  team                         User[]                    @relation("ManagerTeam")
+  Conversation                 Conversation[]
+  ConversationParticipant      ConversationParticipant[]
+  Message                      Message[]
+  MessageApproval              MessageApproval[]
+  MessageRead                  MessageRead[]
+  notificationsAsCommercial    Notification[]            @relation("NotificationCommercial")
+  notifications                Notification[]
+  prefsAsAdmin                 NotificationPreference[]  @relation("AdminPrefs")
+  prefsAsCommercial            NotificationPreference[]  @relation("CommercialPrefs")
+  Prospect                     Prospect[]
+  performances                 Performance[]
+  userBadges                   UserBadge[]
+  managerObjectives            Objective[]               @relation("ManagerObjectives")
+  commercialObjectives         Objective[]               @relation("CommercialObjectives")
+  activitiesAsUser             Activity[]                @relation("UserActivities")
+  activitiesAsManager          Activity[]                @relation("ManagerActivities")
+  rankingHistoriesAsCommercial RankingHistory[]          @relation("CommercialRankingHistories")
+  rankingHistoriesAsManager    RankingHistory[]          @relation("ManagerRankingHistories")
+  commissionsAsCommercial      Commission[]              @relation("CommercialCommissions")
+  commissionsAsManager         Commission[]              @relation("ManagerCommissions")
+
+  @@index([managerId])
+}
+
+// Schema: ObjectiveType - Enum définissant les types d'objectifs de performance (ex: Revenu, Contrats).
+enum ObjectiveType {
+  CONTRACTS_SIGNED
+  REVENUE
+  NEW_PROSPECTS
+  CONVERSION_RATE
+  AVERAGE_BASKET
+}
+
+// Schema: ObjectivePeriod - Enum définissant les périodes pour les objectifs (ex: Mensuel, Annuel).
+enum ObjectivePeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+// Schema: Objective - Représente les objectifs de performance assignés aux commerciaux ou managers.
+model Objective {
+  id           Int             @id @default(autoincrement())
+  managerId    String
+  commercialId String?
+  teamId       Int?
+  type         ObjectiveType
+  period       ObjectivePeriod
+  target       Float
+  current      Float           @default(0)
+  progress     Float           @default(0)
+  startDate    DateTime
+  endDate      DateTime
+  description  String?
+  rewardAmount Float?
+  isActive     Boolean         @default(true)
+  isAchieved   Boolean         @default(false)
+  achievedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  manager    User  @relation("ManagerObjectives", fields: [managerId], references: [id])
+  commercial User? @relation("CommercialObjectives", fields: [commercialId], references: [id])
+}
+
+// Schema: Conversation - Représente une conversation par chat entre utilisateurs ou avec un prospect.
+model Conversation {
+  id             Int                       @id @default(autoincrement())
+  type           ConversationType
+  title          String?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  createdById    String?
+  prospectId     Int?
+  contratId      Int?
+  offreId        Int?
+  souscriptionId Int?
+  problemType    String?
+  subject        String?
+  contrat        Contrat?                  @relation(fields: [contratId], references: [id], onDelete: Cascade)
+  createdBy      User?                     @relation(fields: [createdById], references: [id])
+  offre          Offre?                    @relation(fields: [offreId], references: [id], onDelete: Cascade)
+  prospect       Prospect?                 @relation(fields: [prospectId], references: [idProspect], onDelete: Cascade)
+  souscription   Souscription?             @relation(fields: [souscriptionId], references: [idSouscription], onDelete: Cascade)
+  participants   ConversationParticipant[]
+  messages       Message[]
+
+  @@index([type, updatedAt])
+  @@index([prospectId])
+  @@index([contratId])
+  @@index([offreId])
+  @@index([souscriptionId])
+  @@index([problemType])
+  @@index([createdById], map: "Conversation_createdById_fkey")
+}
+
+// Schema: ConversationParticipant - Lie les utilisateurs aux conversations et suit leur rôle et statut de lecture.
+model ConversationParticipant {
+  id             Int             @id @default(autoincrement())
+  conversationId Int
+  userId         String
+  role           ParticipantRole @default(MEMBER)
+  lastReadAt     DateTime?
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId, lastReadAt])
+}
+
+// Schema: Message - Représente un message individuel au sein d'une conversation.
+model Message {
+  id             Int                 @id @default(autoincrement())
+  conversationId Int
+  authorId       String?
+  type           MessageType         @default(TEXT)
+  body           String?
+  meta           Json?
+  createdAt      DateTime            @default(now())
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  author         User?               @relation(fields: [authorId], references: [id])
+  conversation   Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  approval       MessageApproval?
+  attachments    MessageAttachment[]
+  reads          MessageRead[]
+
+  @@index([conversationId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+// Schema: MessageAttachment - Représente des fichiers ou médias joints à un message.
+model MessageAttachment {
+  id        Int      @id @default(autoincrement())
+  messageId Int
+  url       String
+  name      String?
+  mimeType  String?
+  size      Int?
+  createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+// Schema: MessageRead - Suit quels utilisateurs ont lu un message spécifique.
+model MessageRead {
+  id        Int      @id @default(autoincrement())
+  messageId Int
+  userId    String
+  readAt    DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId, messageId])
+}
+
+// Schema: MessageApproval - Gère le processus d'approbation pour les messages nécessitant une modération.
+model MessageApproval {
+  id          Int            @id @default(autoincrement())
+  messageId   Int            @unique
+  status      ApprovalStatus @default(PENDING)
+  decidedById String?
+  decidedAt   DateTime?
+  payload     Json?
+  decidedBy   User?          @relation(fields: [decidedById], references: [id])
+  message     Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([decidedById], map: "MessageApproval_decidedById_fkey")
+}
+
+// Schema: Performance - Suit les métriques de performance quantitatives pour les utilisateurs.
+model Performance {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  metric    String
+  value     Float
+  period    DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Schema: Badge - Représente les badges de gamification qui peuvent être gagnés par les utilisateurs.
+model Badge {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  iconUrl     String?
+  createdAt   DateTime    @default(now())
+  users       UserBadge[]
+}
+
+// Schema: UserBadge - Lie les utilisateurs aux badges qu'ils ont gagnés.
+model UserBadge {
+  id       Int      @id @default(autoincrement())
+  userId   String
+  badgeId  Int
+  earnedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+// Schema: NeolianeCartResponse - Stocke la réponse de l'API de création de panier Neoliane.
+model NeolianeCartResponse {
+  id          Int      @id @default(autoincrement())
+  prospectId  Int
+  leadId      String
+  userId      String
+  token       String
+  totalAmount Float
+  dateEffect  DateTime
+
+  prospect Prospect @relation(fields: [prospectId], references: [idProspect], onDelete: Cascade)
+
+  @@index([prospectId])
+  @@index([leadId])
+}
+
+// Schema: StatutProspect - Enum définissant les étapes d'un prospect dans le pipeline de vente.
+enum StatutProspect {
+  En_attente
+  Valide
+  Rejete
+  Retracte
+  Signe
+}
+
+// Schema: Civilite - Enum pour la civilité du prospect (ex: M, Mme).
+enum Civilite {
+  M
+  F
+}
+
+// Schema: Profession - Enum listant diverses professions pour la catégorisation des prospects.
+enum Profession {
+  AGRICULTEUR_EXPLOITANT
+  ARTISAN_COMMERCANT_CHEF_ENTREPRISE
+  CADRE_PROFESSION_INTELLECTUELLE
+  PROFESSION_LIBERALE
+  PROFESSION_INTERMEDIAIRE
+  EMPLOYE
+  OUVRIER
+  RETRAITE
+  SANS_ACTIVITE_DEMANDEUR_EMPLOI
+  ETUDIANT
+  INCONNU
+}
+
+// Schema: CspNeoliane - Enum pour les catégories socio-professionnelles spécifiques à Neoliane.
+enum CspNeoliane {
+  SALARIE_59_ANS_OU_MOINS
+  FRONTALIER
+  FONCTIONNAIRE
+  CONTRACTUEL_PUBLIC
+  ASSISTANTE_MATERNELLE
+  TNS_INDEPENDANT
+  PROFESSION_LIBERALE
+  CHEF_ENTREPRISE
+  RETRAITE
+  SALARIE_55_ANS_PLUS
+  ETUDIANT
+  RETRAITE_TNS
+  AUTRE
+}
+
+// Schema: RegimeSocial - Enum pour les régimes de sécurité sociale (ex: Salarié, TNS).
+enum RegimeSocial {
+  SALARIE
+  TNS
+  EXPLOITANT_AGRICOLE
+  RETRAITE_SALARIE
+  RETRAITE_TNS
+  ETUDIANT
+  SANS_EMPLOI
+  ALSACE_MOSELLE
+  FONCTIONNAIRE
+  ENSEIGNANT
+  EXPATRIE
+  SALARIE_AGRICOLE
+}
+
+// Schema: NotificationType - Enum définissant la gravité ou le type d'une notification.
+enum NotificationType {
+  info
+  success
+  warning
+  error
+}
+
+// Schema: YousignRequestStatus - Enum pour le statut d'une demande de signature Yousign.
+enum YousignRequestStatus {
+  draft
+  ongoing
+  done
+  expired
+  declined
+  canceled
+}
+
+// Schema: YousignSignerStatus - Enum pour le statut d'un signataire individuel dans une demande Yousign.
+enum YousignSignerStatus {
+  notified
+  opened
+  signed
+  declined
+}
+
+// Schema: UserRole - Enum définissant les rôles et permissions des utilisateurs (ex: Admin, Commercial).
+enum UserRole {
+  ADMIN
+  COMMERCIAL
+  MANAGER
+  GESTIONNAIRE
+}
+
+// Schema: ConversationType - Enum pour les types de conversations (ex: Direct, Groupe).
+enum ConversationType {
+  DIRECT
+  GROUP
+  CONTEXTUAL
+}
+
+// Schema: MessageType - Enum pour les types de messages (ex: Texte, Système).
+enum MessageType {
+  TEXT
+  SYSTEM
+  APPROVAL
+  TASK
+}
+
+// Schema: ParticipantRole - Enum pour le rôle d'un utilisateur dans une conversation.
+enum ParticipantRole {
+  MEMBER
+  OWNER
+}
+
+// Schema: ApprovalStatus - Enum pour le statut d'un flux d'approbation.
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+// Schema: RankingHistory - Stocke les données historiques de classement pour les commerciaux et managers.
+model RankingHistory {
+  id           Int             @id @default(autoincrement())
+  commercialId String
+  managerId    String
+  period       ObjectivePeriod
+  rank         Int
+  score        Float
+  createdAt    DateTime        @default(now())
+
+  commercial User @relation("CommercialRankingHistories", fields: [commercialId], references: [id])
+  manager    User @relation("ManagerRankingHistories", fields: [managerId], references: [id])
+
+  @@index([commercialId, period, createdAt])
+  @@index([managerId, period, createdAt])
+}
+
+// Schema: Commission - Enregistre les calculs de commission pour les commerciaux et managers.
+model Commission {
+  id             Int             @id @default(autoincrement())
+  commercialId   String
+  managerId      String
+  period         ObjectivePeriod
+  baseAmount     Float
+  bonusAmount    Float           @default(0)
+  totalAmount    Float
+  contractsCount Int
+  revenue        Float
+  createdAt      DateTime        @default(now())
+
+  commercial User @relation("CommercialCommissions", fields: [commercialId], references: [id])
+  manager    User @relation("ManagerCommissions", fields: [managerId], references: [id])
+
+  @@index([commercialId, period])
+  @@index([managerId, period])
+}
+
+// Schema: ActivityType - Enum définissant les types d'activités utilisateur suivies.
+enum ActivityType {
+  CONTRACT_CREATED
+  PROSPECT_ASSIGNED
+  OBJECTIVE_ACHIEVED
+  COMMISSION_CALCULATED
+}
+
+// Schema: Activity - Enregistre les activités des utilisateurs pour les pistes d'audit et l'historique.
+model Activity {
+  id          Int      @id @default(autoincrement())
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+  userId      String
+  managerId   String?
+
+  user    User  @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
+  manager User? @relation("ManagerActivities", fields: [managerId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([managerId, createdAt])
+}

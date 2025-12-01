@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install @nestjs/mapped-types)",
+      "Bash(npx prettier --write \"src/applications/dto/client-base/create-client-base.dto.ts\")",
+      "Bash(winget search postgresql)",
+      "Bash(npm run make:feature)",
+      "Bash(npm run build)",
+      "Bash(npm install googleapis @microsoft/microsoft-graph-client @azure/msal-node)",
+      "Bash(npm install axios)",
+      "Bash(npm run lint)",
+      "Bash(npm run start:dev)",
+      "Bash(timeout /t 5)",
+      "Bash(npx prettier --write \"src/applications/dto/boite-mail/create-boite-mail.dto.ts\")",
+      "Bash(npx prettier --write \"src/applications/dto/boite-mail/*.dto.ts\" \"src/applications/dto/oauth/*.dto.ts\")",
+      "Bash(npx prettier:*)",
+      "Bash(npm run start:ai:dev)",
+      "Bash(curl \"http://localhost:3000/ai/generate-once?q=Bonjour\")",
+      "Bash(curl \"http://localhost:3000/ai/generate-once?q=Test\")",
+      "Bash(timeout /t 10)",
+      "Bash(npm install @grpc/grpc-js@1.11.3)",
+      "Read(//c/Users/kille/Desktop/app/langChain/**)",
+      "Bash(curl \"http://localhost:3000/ai/generate?q=Bonjour\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(taskkill /F /PID 15520)",
+      "Bash(taskkill //F //PID 15520)",
+      "Read(//c/Users/kille/Desktop/app/**)",
+      "Bash(python server/server.py)",
+      "Bash(findstr :50051)",
+      "Bash(taskkill //F //PID 12376)",
+      "Bash(curl \"http://localhost:3000/ai/generate?q=Test\")",
+      "Bash(tree /F \"C:\\Users\\kille\\Desktop\\app\\langChain\")",
+      "Bash(python -c \"from app.services.chain_service import chain_service; print(''Import OK'')\")",
+      "Bash(taskkill //F //PID 11308)",
+      "Bash(taskkill //F //PID 9828)",
+      "Bash(taskkill //F //PID 34120)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

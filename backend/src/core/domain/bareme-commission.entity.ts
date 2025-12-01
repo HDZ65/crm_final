@@ -2,7 +2,7 @@ import { BaseEntity } from './base.entity';
 
 export type TypeCalcul = 'fixe' | 'pourcentage' | 'palier' | 'mixte';
 export type BaseCalcul = 'cotisation_ht' | 'ca_ht' | 'forfait';
-export type TypeProduit = 'telecom' | 'assurance_sante' | 'prevoyance' | 'energie' | 'conciergerie' | 'mondial_tv' | 'autre';
+export type TypeProduit = 'telecom' | 'assurance_sante' | 'prevoyance' | 'energie' | 'conciergerie' | 'mondial_tv' | 'depanssur' | 'autre';
 export type ProfilRemuneration = 'vrp' | 'manager' | 'directeur' | 'partenaire';
 
 export class BaremeCommissionEntity extends BaseEntity {

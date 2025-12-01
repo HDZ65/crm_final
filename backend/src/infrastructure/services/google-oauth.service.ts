@@ -27,11 +27,13 @@ export class GoogleOAuthService {
 
   /**
    * Génère l'URL d'autorisation Google OAuth2
+   * @param state - Paramètre optionnel pour protection CSRF
    */
   getAuthorizationUrl(
     clientId: string,
     clientSecret: string,
     redirectUri: string,
+    state?: string,
   ): string {
     const oauth2Client = this.createOAuth2Client(
       clientId,
@@ -43,6 +45,7 @@ export class GoogleOAuthService {
       access_type: 'offline',
       scope: this.SCOPES,
       prompt: 'consent', // Force le consentement pour obtenir un refresh_token
+      state, // Paramètre CSRF - le frontend doit valider ce state au retour
     });
   }
 

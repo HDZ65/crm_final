@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { UtilisateurEntity } from './utilisateur.entity';
+import { EncryptedColumnTransformer } from '../transformers/encrypted-column.transformer';
 
 @Entity('boites_mail')
 export class BoiteMailEntity {
@@ -45,24 +46,40 @@ export class BoiteMailEntity {
   @Column({ default: false })
   utiliseTls?: boolean;
 
-  // Credentials (À CHIFFRER EN PRODUCTION!)
+  // Credentials - Chiffrés via EncryptedColumnTransformer
   @Column({ type: 'varchar', nullable: true })
   username?: string | null;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    transformer: EncryptedColumnTransformer,
+  })
   motDePasse?: string | null;
 
-  // OAuth2 configuration
+  // OAuth2 configuration - Tokens chiffrés
   @Column({ type: 'varchar', nullable: true })
   clientId?: string | null;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    transformer: EncryptedColumnTransformer,
+  })
   clientSecret?: string | null;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({
+    type: 'text',
+    nullable: true,
+    transformer: EncryptedColumnTransformer,
+  })
   refreshToken?: string | null;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({
+    type: 'text',
+    nullable: true,
+    transformer: EncryptedColumnTransformer,
+  })
   accessToken?: string | null;
 
   @Column({ type: 'timestamp', nullable: true })

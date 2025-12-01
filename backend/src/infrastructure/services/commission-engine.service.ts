@@ -10,6 +10,7 @@ import { RepriseCommissionEntity } from '../../core/domain/reprise-commission.en
 import { BordereauCommissionEntity } from '../../core/domain/bordereau-commission.entity';
 import { LigneBordereauEntity } from '../../core/domain/ligne-bordereau.entity';
 import { BaremeCommissionEntity } from '../../core/domain/bareme-commission.entity';
+import { PalierCommissionEntity } from '../../core/domain/palier-commission.entity';
 
 export interface CalculCommissionInput {
   organisationId: string;
@@ -29,7 +30,7 @@ export interface CalculCommissionInput {
 export interface CalculCommissionResult {
   commission: CommissionEntity | null;
   bareme: BaremeCommissionEntity | null;
-  primes: { palierCode: string; montant: number }[];
+  primes: PalierCommissionEntity[];
   erreur?: string;
 }
 
@@ -121,7 +122,7 @@ export class CommissionEngineService {
     }
 
     // 3. Calculer les primes paliers cumulables
-    const primes: { palierCode: string; montant: number }[] = [];
+    const primes: PalierCommissionEntity[] = [];
     const paliersProduit = await this.palierRepository.findActifsByBaremeId(
       bareme.id,
     );
@@ -130,10 +131,7 @@ export class CommissionEngineService {
       if (p.typePalier === 'prime_produit' && p.cumulable) {
         // Vérifier si le seuil est atteint (logique simplifiée)
         // Dans une implémentation complète, on compterait les contrats par type
-        primes.push({
-          palierCode: p.code,
-          montant: p.montantPrime,
-        });
+        primes.push(p);
       }
     }
 

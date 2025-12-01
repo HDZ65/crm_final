@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import { ConfidentialClientApplication } from '@azure/msal-node';
+import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 export interface MicrosoftOAuthTokens {
@@ -19,6 +18,8 @@ export interface MicrosoftUserInfo {
 
 @Injectable()
 export class MicrosoftOAuthService {
+  private readonly logger = new Logger(MicrosoftOAuthService.name);
+
   private readonly SCOPES = [
     'https://graph.microsoft.com/Mail.Send',
     'https://graph.microsoft.com/Mail.Read',
@@ -27,12 +28,13 @@ export class MicrosoftOAuthService {
   ];
 
   private readonly AUTHORITY = 'https://login.microsoftonline.com/common';
+  private readonly TOKEN_ENDPOINT = `${this.AUTHORITY}/oauth2/v2.0/token`;
   private readonly GRAPH_ENDPOINT = 'https://graph.microsoft.com/v1.0';
 
   /**
    * Génère l'URL d'autorisation Microsoft OAuth2
    */
-  getAuthorizationUrl(clientId: string, redirectUri: string): string {
+  getAuthorizationUrl(clientId: string, redirectUri: string, state?: string): string {
     const params = new URLSearchParams({
       client_id: clientId,
       response_type: 'code',
@@ -42,11 +44,17 @@ export class MicrosoftOAuthService {
       prompt: 'consent',
     });
 
+    // Ajouter le paramètre state pour protection CSRF
+    if (state) {
+      params.append('state', state);
+    }
+
     return `${this.AUTHORITY}/oauth2/v2.0/authorize?${params.toString()}`;
   }
 
   /**
    * Échange le code d'autorisation contre des tokens
+   * Utilise l'API REST directement pour récupérer le refresh_token
    */
   async getTokensFromCode(
     code: string,
@@ -54,79 +62,115 @@ export class MicrosoftOAuthService {
     clientSecret: string,
     redirectUri: string,
   ): Promise<MicrosoftOAuthTokens> {
-    const msalConfig = {
-      auth: {
-        clientId,
-        clientSecret,
-        authority: this.AUTHORITY,
-      },
-    };
+    try {
+      const params = new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+        scope: this.SCOPES.join(' '),
+      });
 
-    const cca = new ConfidentialClientApplication(msalConfig);
+      const response = await axios.post<{
+        access_token: string;
+        refresh_token: string;
+        expires_in: number;
+        token_type: string;
+        scope: string;
+      }>(this.TOKEN_ENDPOINT, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
 
-    const tokenRequest = {
-      code,
-      scopes: this.SCOPES,
-      redirectUri,
-    };
+      if (!response.data.access_token) {
+        throw new Error('No access token received from Microsoft');
+      }
 
-    const response = await cca.acquireTokenByCode(tokenRequest);
+      if (!response.data.refresh_token) {
+        this.logger.warn(
+          'No refresh token received from Microsoft. User will need to re-authenticate after token expires.',
+        );
+      }
 
-    if (!response) {
-      throw new Error('Failed to acquire token from Microsoft');
+      return {
+        access_token: response.data.access_token,
+        refresh_token: response.data.refresh_token || '',
+        expires_in: response.data.expires_in || 3600,
+        token_type: response.data.token_type || 'Bearer',
+        scope: response.data.scope || this.SCOPES.join(' '),
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data as { error_description?: string; error?: string };
+        throw new Error(
+          `Microsoft OAuth error: ${errorData.error_description || errorData.error || 'Unknown error'}`,
+        );
+      }
+      throw error;
     }
-
-    // Note: MSAL gère le cache des refresh tokens en interne
-    // On ne peut pas récupérer directement le refresh token
-    return {
-      access_token: response.accessToken,
-      refresh_token: '', // MSAL cache le refresh token en interne
-      expires_in: response.expiresOn
-        ? Math.floor((response.expiresOn.getTime() - Date.now()) / 1000)
-        : 3600,
-      token_type: response.tokenType,
-      scope: response.scopes?.join(' ') || '',
-    };
   }
 
   /**
    * Rafraîchit l'access token avec le refresh token
+   * Utilise l'API REST directement pour garantir la récupération du nouveau refresh_token
    */
   async refreshAccessToken(
     refreshToken: string,
     clientId: string,
     clientSecret: string,
   ): Promise<MicrosoftOAuthTokens> {
-    const msalConfig = {
-      auth: {
-        clientId,
-        clientSecret,
-        authority: this.AUTHORITY,
-      },
-    };
-
-    const cca = new ConfidentialClientApplication(msalConfig);
-
-    const tokenRequest = {
-      refreshToken,
-      scopes: this.SCOPES,
-    };
-
-    const response = await cca.acquireTokenByRefreshToken(tokenRequest);
-
-    if (!response) {
-      throw new Error('Failed to refresh token from Microsoft');
+    if (!refreshToken) {
+      throw new Error('No refresh token available. User must re-authenticate.');
     }
 
-    return {
-      access_token: response.accessToken,
-      refresh_token: refreshToken, // On garde le même refresh token
-      expires_in: response.expiresOn
-        ? Math.floor((response.expiresOn.getTime() - Date.now()) / 1000)
-        : 3600,
-      token_type: response.tokenType,
-      scope: response.scopes?.join(' ') || '',
-    };
+    try {
+      const params = new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+        scope: this.SCOPES.join(' '),
+      });
+
+      const response = await axios.post<{
+        access_token: string;
+        refresh_token?: string;
+        expires_in: number;
+        token_type: string;
+        scope: string;
+      }>(this.TOKEN_ENDPOINT, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      if (!response.data.access_token) {
+        throw new Error('No access token received during refresh');
+      }
+
+      return {
+        access_token: response.data.access_token,
+        // Microsoft peut retourner un nouveau refresh_token ou pas
+        refresh_token: response.data.refresh_token || refreshToken,
+        expires_in: response.data.expires_in || 3600,
+        token_type: response.data.token_type || 'Bearer',
+        scope: response.data.scope || this.SCOPES.join(' '),
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data as { error_description?: string; error?: string };
+        // Si le refresh token est invalide/expiré, l'utilisateur doit se ré-authentifier
+        if (errorData.error === 'invalid_grant') {
+          throw new Error('Refresh token expired or invalid. User must re-authenticate.');
+        }
+        throw new Error(
+          `Microsoft OAuth refresh error: ${errorData.error_description || errorData.error || 'Unknown error'}`,
+        );
+      }
+      throw error;
+    }
   }
 
   /**

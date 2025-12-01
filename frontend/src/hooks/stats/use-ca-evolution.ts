@@ -55,7 +55,7 @@ export function useCAEvolution(
 
     try {
       const queryString = buildQueryString(filters)
-      const result = await api.get(`${ENDPOINT}${queryString}`)
+      const result = await api.get<CAEvolutionResponse>(`${ENDPOINT}${queryString}`)
       setData(result)
     } catch (err) {
       const apiError =

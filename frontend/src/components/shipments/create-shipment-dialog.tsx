@@ -59,7 +59,7 @@ const addressSchema = z.object({
   line2: z.string().optional(),
   postalCode: z.string().min(5, "Code postal invalide").max(5, "Code postal invalide"),
   city: z.string().min(1, "Ville requise"),
-  country: z.string().default("FR"),
+  country: z.string(),
 })
 
 const createShipmentSchema = z.object({
@@ -77,7 +77,7 @@ const createShipmentSchema = z.object({
 
   // Options d'envoi
   serviceLevel: z.enum(["URGENT", "FAST", "ECONOMIC"]),
-  format: z.string().default("A4"),
+  format: z.string(),
   weightGr: z.number().min(1, "Poids requis").max(30000, "Poids max 30kg"),
 })
 

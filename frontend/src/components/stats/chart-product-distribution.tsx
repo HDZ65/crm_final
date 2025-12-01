@@ -47,7 +47,7 @@ export function ChartProductDistribution({ data }: ChartProductDistributionProps
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle>Répartition CA par produit</CardTitle>
-        <CardDescription>Distribution du chiffre d'affaires</CardDescription>
+        <CardDescription>Distribution du chiffre d&apos;affaires</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer

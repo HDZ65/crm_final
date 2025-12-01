@@ -56,7 +56,7 @@ export function useProductDistribution(
 
     try {
       const queryString = buildQueryString(filters)
-      const result = await api.get(`${ENDPOINT}${queryString}`)
+      const result = await api.get<ProductDistributionResponse>(`${ENDPOINT}${queryString}`)
       setData(result)
     } catch (err) {
       const apiError =

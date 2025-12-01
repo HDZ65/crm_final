@@ -56,7 +56,7 @@ export function useApi<T = unknown>(options?: UseApiOptions<T>) {
       } catch (err) {
         const apiError = err instanceof ApiError
           ? err
-          : new ApiError('An unexpected error occurred', 0);
+          : new ApiError('Une erreur inattendue s\'est produite', 0);
 
         setState({ data: null, loading: false, error: apiError });
 

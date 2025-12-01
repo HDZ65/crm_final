@@ -67,8 +67,8 @@ function mapExpeditionToShipmentOrder(expedition: ExpeditionDto): ShipmentOrder 
 const inTransitStatuses: ShipmentStatus[] = ["shipped", "in_transit", "out_for_delivery"]
 
 export default function ShipmentsPage() {
-  const { currentOrganisation } = useOrganisation()
-  const organisationId = currentOrganisation?.id || null
+  const { activeOrganisation } = useOrganisation()
+  const organisationId = activeOrganisation?.id || null
 
   const { expeditions, loading, error, refetch } = useExpeditions(organisationId)
 

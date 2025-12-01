@@ -35,10 +35,10 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
 export function ContratsCard() {
-  const { currentOrganisation } = useOrganisation()
+  const { activeOrganisation } = useOrganisation()
   const { tableData, loading, error } = useCompanyStats({
-    filters: currentOrganisation ? { organisationId: currentOrganisation.id } : undefined,
-    skip: !currentOrganisation,
+    filters: activeOrganisation ? { organisationId: activeOrganisation.id } : undefined,
+    skip: !activeOrganisation,
   })
 
   const [sort, setSort] = React.useState<"contracts-desc" | "contracts-asc" | "alpha-asc" | "alpha-desc">("contracts-desc")

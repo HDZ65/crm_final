@@ -33,15 +33,15 @@ export function CompanyStatsTable({ data }: CompanyStatsTableProps) {
   }
 
   const getChurnStatus = (rate: number) => {
-    if (rate < 5) return { variant: "success" as const, label: "Bon" }
-    if (rate < 8) return { variant: "warning" as const, label: "Attention" }
-    return { variant: "destructive" as const, label: "Critique" }
+    if (rate < 5) return { variant: "secondary" as const, className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200", label: "Bon" }
+    if (rate < 8) return { variant: "secondary" as const, className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200", label: "Attention" }
+    return { variant: "destructive" as const, className: "", label: "Critique" }
   }
 
   const getImpayesStatus = (rate: number) => {
-    if (rate < 3) return { variant: "success" as const, label: "Bon" }
-    if (rate < 5) return { variant: "warning" as const, label: "Attention" }
-    return { variant: "destructive" as const, label: "Critique" }
+    if (rate < 3) return { variant: "secondary" as const, className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200", label: "Bon" }
+    if (rate < 5) return { variant: "secondary" as const, className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200", label: "Attention" }
+    return { variant: "destructive" as const, className: "", label: "Critique" }
   }
 
   return (
@@ -89,12 +89,12 @@ export function CompanyStatsTable({ data }: CompanyStatsTableProps) {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Badge variant={churnStatus.variant}>
+                      <Badge variant={churnStatus.variant} className={churnStatus.className}>
                         {company.tauxChurn.toFixed(1)}%
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Badge variant={impayesStatus.variant}>
+                      <Badge variant={impayesStatus.variant} className={impayesStatus.className}>
                         {company.tauxImpayes.toFixed(1)}%
                       </Badge>
                     </TableCell>

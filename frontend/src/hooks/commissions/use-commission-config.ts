@@ -146,8 +146,12 @@ export function useCommissionConfig() {
   const getColor = useCallback(
     (type: keyof CommissionConfigResponseDto, value: string): string | undefined => {
       const options = config[type]
-      const option = options.find((opt) => opt.value === value)
-      return option?.color
+      const option = options.find((opt) => String(opt.value) === value)
+      // Check if option has color property (only TypeOption has it)
+      if (option && 'color' in option) {
+        return (option as TypeOption).color
+      }
+      return undefined
     },
     [config]
   )

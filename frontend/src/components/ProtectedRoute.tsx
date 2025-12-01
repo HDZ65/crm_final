@@ -35,7 +35,7 @@ export function ProtectedRoute({
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold">Vérification de l'authentification...</h2>
+          <h2 className="text-xl font-semibold">Vérification de l&apos;authentification...</h2>
         </div>
       </div>
     );
@@ -57,7 +57,7 @@ export function ProtectedRoute({
         <div className="text-center">
           <h2 className="text-xl font-semibold text-red-600">Accès non autorisé</h2>
           <p className="mt-2 text-gray-600">
-            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+            Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
           </p>
         </div>
       </div>

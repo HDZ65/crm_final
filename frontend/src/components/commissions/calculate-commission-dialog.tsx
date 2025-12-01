@@ -39,9 +39,9 @@ export function CalculateCommissionDialog({
   typesProduit,
   loadingConfig,
 }: CalculateCommissionDialogProps) {
-  const { currentOrganisation } = useOrganisation()
+  const { activeOrganisation } = useOrganisation()
   const { apporteurs, loading: loadingApporteurs } = useApporteurs(
-    currentOrganisation ? { organisationId: currentOrganisation.id } : undefined
+    activeOrganisation ? { organisationId: activeOrganisation.id } : undefined
   )
   const { result, loading, error, calculer, reset } = useCalculerCommission()
 
@@ -75,10 +75,10 @@ export function CalculateCommissionDialog({
   }
 
   const handleCalculate = async () => {
-    if (!currentOrganisation) return
+    if (!activeOrganisation) return
 
     await calculer({
-      organisationId: currentOrganisation.id,
+      organisationId: activeOrganisation.id,
       contratId: formData.contratId,
       apporteurId: formData.apporteurId,
       periode: formData.periode,

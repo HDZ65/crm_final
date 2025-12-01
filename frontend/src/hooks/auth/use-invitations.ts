@@ -67,7 +67,7 @@ export function useCreateInvitation() {
   const [error, setError] = useState<Error | null>(null);
 
   const createInvitation = useCallback(
-    async (organisationId: string, email: string) => {
+    async (organisationId: string, email: string): Promise<Invitation | null> => {
       setLoading(true);
       setError(null);
 
@@ -75,7 +75,7 @@ export function useCreateInvitation() {
       const body = { emailInvite: email };
 
       try {
-        const result = await api.post(url, body);
+        const result = await api.post<Invitation>(url, body);
         setData(result);
         return result;
       } catch (err) {
@@ -161,14 +161,14 @@ export function useValidateInvitation() {
   const [error, setError] = useState<Error | null>(null);
 
   const validateInvitation = useCallback(
-    async (token: string) => {
+    async (token: string): Promise<InvitationValidation | null> => {
       setLoading(true);
       setError(null);
 
       const url = `/invitations/validate/${token}`;
 
       try {
-        const result = await api.get(url);
+        const result = await api.get<InvitationValidation>(url);
         setData(result);
         return result;
       } catch (err) {
@@ -198,14 +198,14 @@ export function useAcceptInvitation() {
   const [error, setError] = useState<Error | null>(null);
 
   const acceptInvitation = useCallback(
-    async (token: string) => {
+    async (token: string): Promise<InvitationAcceptResponse | null> => {
       setLoading(true);
       setError(null);
 
       const url = `/invitations/accept/${token}`;
 
       try {
-        const result = await api.post(url, {});
+        const result = await api.post<InvitationAcceptResponse>(url, {});
         setData(result);
         return result;
       } catch (err) {
@@ -290,7 +290,7 @@ export function useMyRole() {
       setError(null);
 
       try {
-        const result = await api.get(`/membrecomptes/my-role/${organisationId}`);
+        const result = await api.get<MyRoleResponse>(`/membrecomptes/my-role/${organisationId}`);
         setData(result);
         return result;
       } catch (err) {

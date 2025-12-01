@@ -103,8 +103,8 @@ export default function ClientDetailPage() {
   const params = useParams()
   const clientId = params.id as string
 
-  const { currentOrganisation } = useOrganisation()
-  const organisationId = currentOrganisation?.id || null
+  const { activeOrganisation } = useOrganisation()
+  const organisationId = activeOrganisation?.id || null
 
   const { client, loading, error } = useClient(clientId)
   const { expeditions, loading: expeditionsLoading } = useClientExpeditions(organisationId, clientId)

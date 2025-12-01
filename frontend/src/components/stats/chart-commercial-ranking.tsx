@@ -113,7 +113,6 @@ export function ChartCommercialRanking({ data, metric = "ventes" }: ChartCommerc
                 offset={8}
                 className="fill-(--color-label)"
                 fontSize={12}
-                fontWeight={(item: any) => item.rank < 3 ? "bold" : "normal"}
               />
               <LabelList
                 dataKey="value"
@@ -121,7 +120,6 @@ export function ChartCommercialRanking({ data, metric = "ventes" }: ChartCommerc
                 offset={8}
                 className="fill-foreground"
                 fontSize={12}
-                fontWeight={(item: any) => item.rank < 3 ? "bold" : "normal"}
                 formatter={(value: number) => formatValue(value)}
               />
             </Bar>

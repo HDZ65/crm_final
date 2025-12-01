@@ -46,7 +46,7 @@ export function TriggerRepriseDialog({
   loadingConfig,
   onSuccess,
 }: TriggerRepriseDialogProps) {
-  const { currentOrganisation } = useOrganisation()
+  const { activeOrganisation } = useOrganisation()
   const { reprise, loading, error, declencher, reset } = useDeclencherReprise()
 
   const [open, setOpen] = React.useState(false)
@@ -96,10 +96,10 @@ export function TriggerRepriseDialog({
   }
 
   const handleSubmit = async () => {
-    if (!validateForm() || !currentOrganisation) return
+    if (!validateForm() || !activeOrganisation) return
 
     const result = await declencher({
-      organisationId: currentOrganisation.id,
+      organisationId: activeOrganisation.id,
       commissionId: formData.commissionId,
       typeReprise: formData.typeReprise as TypeReprise,
       motif: formData.motif || undefined,

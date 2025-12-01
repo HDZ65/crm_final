@@ -65,7 +65,7 @@ export function WelcomeForm() {
                     </div>
                     <h2 className="text-2xl font-bold text-card-foreground mb-2">Tout est prêt !</h2>
                     <p className="text-slate-500 mb-6">
-                        Nous avons configuré l'espace pour <strong className="text-slate-800">{companyName}</strong>.
+                        Nous avons configuré l&apos;espace pour <strong className="text-slate-800">{companyName}</strong>.
                         Vous allez être redirigé...
                     </p>
                     <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
@@ -107,7 +107,7 @@ export function WelcomeForm() {
                                 Bienvenue, {profile?.firstName || profile?.fullName || profile?.username} 👋
                             </CardTitle>
                             <CardDescription className="text-slate-500 text-base">
-                                Vous n'êtes membre d'aucune organisation pour le moment.
+                                Vous n&apos;êtes membre d&apos;aucune organisation pour le moment.
                                 Créez votre propre espace de travail pour commencer.
                             </CardDescription>
 
@@ -162,7 +162,7 @@ export function WelcomeForm() {
                                     {isLoading ? (
                                         <>
                                             <Loader2 className="animate-spin mr-2 h-5 w-5" />
-                                            Configuration de l'espace...
+                                            Configuration de l&apos;espace...
                                         </>
                                     ) : (
                                         <>

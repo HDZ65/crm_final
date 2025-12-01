@@ -23,7 +23,7 @@ async function refreshToken(token: TokenData): Promise<TokenData> {
           client_id: process.env.KEYCLOAK_ID!,
           client_secret: process.env.KEYCLOAK_SECRET!,
           grant_type: "refresh_token",
-          refresh_token: token.refreshToken,
+          refresh_token: token.refreshToken || "",
         }),
       }
     );
@@ -147,7 +147,7 @@ const handler = NextAuth({
       // Send properties to client
       session.accessToken = token.accessToken as string;
       session.error = token.error as string | undefined;
-      if (token.sub) {
+      if (token.sub && session.user) {
         session.user.id = token.sub;
       }
 

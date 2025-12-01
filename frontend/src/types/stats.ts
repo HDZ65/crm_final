@@ -17,6 +17,10 @@ export interface StatsFilters {
   dateDebut?: string
   dateFin?: string
   periodeRapide?: PeriodeRapide
+  // UI-specific filters (component compatibility)
+  periode?: string
+  societe?: string
+  produit?: string
 }
 
 export type UserRole = "DIRECTION" | "MANAGER" | "COMMERCIAL" | "ADV"

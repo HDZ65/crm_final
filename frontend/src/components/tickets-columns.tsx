@@ -178,7 +178,7 @@ export const ticketsColumns: ColumnDef<Ticket>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => navigator.clipboard.writeText(ticket.id)}>
-              Copier l'ID du ticket
+              Copier l&apos;ID du ticket
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Voir le client</DropdownMenuItem>

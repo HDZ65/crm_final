@@ -30,7 +30,7 @@ export function useMailevaLabel() {
       setError(null);
 
       try {
-        const result = await api.post('/logistics/labels', request);
+        const result = await api.post<MailevaLabelResponse>('/logistics/labels', request);
         setData(result);
         return result;
       } catch (err) {
@@ -67,7 +67,7 @@ export function useMailevaTracking() {
       setError(null);
 
       try {
-        const result = await api.get(`/logistics/tracking/${encodeURIComponent(trackingNumber)}`);
+        const result = await api.get<MailevaTrackingResponse>(`/logistics/tracking/${encodeURIComponent(trackingNumber)}`);
         setData(result);
         return result;
       } catch (err) {
@@ -104,7 +104,7 @@ export function useMailevaPricing() {
       setError(null);
 
       try {
-        const result = await api.post('/logistics/pricing/simulate', request);
+        const result = await api.post<MailevaPricingResponse>('/logistics/pricing/simulate', request);
         setData(result);
         return result;
       } catch (err) {
@@ -145,7 +145,7 @@ export function useMailevaAddressValidation() {
       setError(null);
 
       try {
-        const result = await api.post('/logistics/addresses/validate', address);
+        const result = await api.post<MailevaAddressValidationResponse>('/logistics/addresses/validate', address);
         setData(result);
         return result;
       } catch (err) {

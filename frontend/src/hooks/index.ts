@@ -7,6 +7,9 @@ export * from './auth'
 // Client management hooks
 export * from './clients'
 
+// Contract management hooks
+export * from './contracts'
+
 // Email and mailing hooks
 export * from './email'
 

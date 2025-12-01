@@ -58,7 +58,7 @@ export function useCommercialKPIs(
 
     try {
       const queryString = buildQueryString(filters)
-      const result = await api.get(`${ENDPOINT}${queryString}`)
+      const result = await api.get<CommercialKPIsResponse>(`${ENDPOINT}${queryString}`)
       setData(result)
     } catch (err) {
       const apiError =

@@ -50,12 +50,12 @@ const chartConfig = {
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
-  const { currentOrganisation } = useOrganisation()
+  const { activeOrganisation } = useOrganisation()
   const [timeRange, setTimeRange] = React.useState("90d")
 
   const { chartData, loading, error } = useCAEvolution({
-    filters: currentOrganisation ? { organisationId: currentOrganisation.id } : undefined,
-    skip: !currentOrganisation,
+    filters: activeOrganisation ? { organisationId: activeOrganisation.id } : undefined,
+    skip: !activeOrganisation,
   })
 
   React.useEffect(() => {

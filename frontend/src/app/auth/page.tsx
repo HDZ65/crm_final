@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useAuth } from "@/hooks/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-export default function AuthPage() {
+function AuthContent() {
   const { ready, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -14,10 +14,8 @@ export default function AuthPage() {
   useEffect(() => {
     if (ready) {
       if (isAuthenticated) {
-        // Si déjà authentifié, rediriger vers la page principale
         router.push(callbackUrl);
       } else {
-        // Sinon, rediriger vers la page de connexion
         router.push(`/login${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`);
       }
     }
@@ -27,5 +25,17 @@ export default function AuthPage() {
     <div className="flex min-h-screen items-center justify-center">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   );
 }

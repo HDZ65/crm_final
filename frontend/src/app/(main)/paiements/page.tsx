@@ -123,7 +123,7 @@ export default function PaymentsPage() {
 
       <PaymentFiltersComponent filters={filters} onFiltersChange={setFilters} />
 
-      <PaymentTable payments={filteredPayments} onPaymentClick={handlePaymentClick} />
+      <PaymentTable payments={filteredPayments} onViewDetails={handlePaymentClick} />
 
       <PaymentDetailsDialog
         payment={selectedPayment}

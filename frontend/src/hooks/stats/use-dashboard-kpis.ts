@@ -55,7 +55,7 @@ export function useDashboardKPIs(
 
     try {
       const queryString = buildQueryString(filters)
-      const result = await api.get(`${ENDPOINT}${queryString}`)
+      const result = await api.get<DashboardKPIsResponse>(`${ENDPOINT}${queryString}`)
       setData(result)
     } catch (err) {
       const apiError =

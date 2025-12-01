@@ -3,20 +3,14 @@
 import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
+import { useStatutClients } from "./use-statut-clients"
 
-// IDs des statuts côté API
-export const STATUT_IDS = {
-  ACTIF: "e620365e-c045-4122-9e1c-17f651f82135",
-  SUSPENDU: "69f10297-1924-49f0-9da7-34dcec3363ed",
-  IMPAYE: "a83f7ff0-38a2-4217-97e8-fd6420a3aca6",
-} as const
-
-// Mapping statut ID -> label affiché
-export const STATUT_LABELS: Record<string, "Actif" | "Impayé" | "Suspendu"> = {
-  [STATUT_IDS.ACTIF]: "Actif",
-  [STATUT_IDS.IMPAYE]: "Impayé",
-  [STATUT_IDS.SUSPENDU]: "Suspendu",
-}
+// DEPRECATED: Ces constantes sont conservées pour compatibilité temporaire
+// Utilisez useStatutClients().getByCode('actif') à la place
+/** @deprecated Utilisez useStatutClients() à la place */
+export const STATUT_IDS = {} as Record<string, string>
+/** @deprecated Utilisez useStatutClients().mapToStatus() à la place */
+export const STATUT_LABELS: Record<string, "Actif" | "Impayé" | "Suspendu"> = {}
 
 export interface ClientFilters {
   statutId?: string
@@ -73,11 +67,18 @@ function formatCreatedAgo(dateString?: string): string {
   return `Créé il y a ${Math.floor(diffDays / 365)} an(s)`
 }
 
-function mapStatutIdToStatus(statutId: string): "Actif" | "Impayé" | "Suspendu" {
-  return STATUT_LABELS[statutId] || "Actif"
+// Note: Cette fonction est maintenant une version de compatibilité
+// Le vrai mapping se fait via useStatutClients().mapToStatus()
+function mapStatutIdToStatus(statutId: string, mapFn?: (id: string) => "Actif" | "Impayé" | "Suspendu"): "Actif" | "Impayé" | "Suspendu" {
+  if (mapFn) return mapFn(statutId)
+  // Fallback pour compatibilité - ne devrait plus être utilisé
+  return "Actif"
 }
 
-function mapClientBaseToRow(client: ClientBaseDto): ClientRow {
+function mapClientBaseToRow(
+  client: ClientBaseDto,
+  mapStatusFn?: (id: string) => "Actif" | "Impayé" | "Suspendu"
+): ClientRow {
   // Extraire les groupeIds uniques des contrats (correspond aux sociétés)
   const societeIds = [
     ...new Set(
@@ -90,7 +91,7 @@ function mapClientBaseToRow(client: ClientBaseDto): ClientRow {
   return {
     id: client.id,
     name: `${client.nom} ${client.prenom}`.trim(),
-    status: mapStatutIdToStatus(client.statutId),
+    status: mapStatutIdToStatus(client.statutId, mapStatusFn),
     contracts: client.contrats?.map((c) => c.referenceExterne) || [],
     createdAgo: formatCreatedAgo(client.createdAt),
     email: client.email,
@@ -99,13 +100,31 @@ function mapClientBaseToRow(client: ClientBaseDto): ClientRow {
   }
 }
 
+// DTO d'adresse (correspond au backend)
+export interface AdresseDto {
+  id: string
+  ligne1: string
+  ligne2?: string
+  codePostal: string
+  ville: string
+  pays: string
+  type?: string
+  clientId?: string
+}
+
 // DTO complet pour un client avec tous ses détails
+// Note: Les champs comme adresse, profession, iban etc. ne sont pas encore
+// implémentés côté backend. Ils seront ajoutés via des relations ou extensions futures.
 export interface ClientDetailDto extends ClientBaseDto {
-  adresse?: string
-  ville?: string
-  codePostal?: string
-  pays?: string
+  // Champs existants en backend
   dateNaissance?: string
+  compteCode?: string
+  partenaireId?: string
+  dateCreation?: string
+  // Relation adresses
+  adresses?: AdresseDto[]
+  // Champs à implémenter côté backend (optionnels pour compatibilité UI)
+  // Ces champs seront ajoutés progressivement quand le backend les supportera
   profession?: string
   iban?: string
   mandatSepa?: boolean
@@ -195,17 +214,27 @@ function getKycVariant(status?: string): "success" | "warning" | "error" {
   return "error"
 }
 
-function mapClientDetailDtoToDetail(client: ClientDetailDto): ClientDetail {
-  const address = [client.adresse, client.codePostal, client.ville, client.pays]
-    .filter(Boolean)
-    .join(", ")
+function mapClientDetailDtoToDetail(
+  client: ClientDetailDto,
+  mapStatusFn?: (id: string) => "Actif" | "Impayé" | "Suspendu"
+): ClientDetail {
+  // Récupérer l'adresse principale (première adresse ou adresse de type 'principal')
+  const primaryAddress = client.adresses?.find(a => a.type === 'principal') || client.adresses?.[0]
 
-  const location = [client.ville, client.pays].filter(Boolean).join(", ") || "Non renseigné"
+  const address = primaryAddress
+    ? [primaryAddress.ligne1, primaryAddress.ligne2, primaryAddress.codePostal, primaryAddress.ville, primaryAddress.pays]
+        .filter(Boolean)
+        .join(", ")
+    : "Non renseigné"
+
+  const location = primaryAddress
+    ? [primaryAddress.ville, primaryAddress.pays].filter(Boolean).join(", ")
+    : "Non renseigné"
 
   return {
     id: client.id,
     name: `${client.nom} ${client.prenom}`.trim(),
-    status: mapStatutIdToStatus(client.statutId),
+    status: mapStatutIdToStatus(client.statutId, mapStatusFn),
     location,
     memberSince: new Date(client.createdAt).getFullYear().toString(),
     info: {
@@ -244,6 +273,7 @@ function mapClientDetailDtoToDetail(client: ClientDetailDto): ClientDetail {
 export function useClients(filters?: ClientFilters) {
   const [clients, setClients] = useState<ClientRow[]>([])
   const { loading, error, execute } = useApi<ClientBaseDto[]>()
+  const { mapToStatus, loading: statutsLoading } = useStatutClients()
 
   const fetchClients = useCallback(async () => {
     try {
@@ -261,12 +291,12 @@ export function useClients(filters?: ClientFilters) {
 
       const data = await execute(() => api.get(endpoint))
       if (data) {
-        setClients(data.map(mapClientBaseToRow))
+        setClients(data.map(c => mapClientBaseToRow(c, mapToStatus)))
       }
     } catch {
       // Error handled by useApi
     }
-  }, [execute, filters?.statutId, filters?.societeId])
+  }, [execute, filters?.statutId, filters?.societeId, mapToStatus])
 
   useEffect(() => {
     fetchClients()
@@ -274,7 +304,7 @@ export function useClients(filters?: ClientFilters) {
 
   return {
     clients,
-    loading,
+    loading: loading || statutsLoading,
     error,
     refetch: fetchClients,
   }
@@ -285,6 +315,7 @@ export function useClient(clientId: string | null) {
   const [client, setClient] = useState<ClientDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const { mapToStatus, loading: statutsLoading } = useStatutClients()
 
   const fetchClient = useCallback(async () => {
     if (!clientId) return
@@ -297,13 +328,13 @@ export function useClient(clientId: string | null) {
       const clientData: ClientDetailDto = await api.get(`/clientbases/${clientId}`)
 
       if (clientData) {
-        const mappedClient = mapClientDetailDtoToDetail(clientData)
+        const mappedClient = mapClientDetailDtoToDetail(clientData, mapToStatus)
 
         // Lancer les appels en parallèle pour les données associées
         const [paymentsData, documentsData, eventsData] = await Promise.all([
-          api.get(`/clientbases/${clientId}/paiements`).catch(() => []),
-          api.get(`/clientbases/${clientId}/documents`).catch(() => []),
-          api.get(`/clientbases/${clientId}/evenements`).catch(() => []),
+          api.get<PaiementDto[]>(`/clientbases/${clientId}/paiements`).catch(() => [] as PaiementDto[]),
+          api.get<DocumentDto[]>(`/clientbases/${clientId}/documents`).catch(() => [] as DocumentDto[]),
+          api.get<EvenementDto[]>(`/clientbases/${clientId}/evenements`).catch(() => [] as EvenementDto[]),
         ])
 
         // Mettre à jour le client avec les données associées
@@ -319,7 +350,7 @@ export function useClient(clientId: string | null) {
     } finally {
       setLoading(false)
     }
-  }, [clientId])
+  }, [clientId, mapToStatus])
 
   useEffect(() => {
     if (clientId) {
@@ -329,7 +360,7 @@ export function useClient(clientId: string | null) {
 
   return {
     client,
-    loading,
+    loading: loading || statutsLoading,
     error,
     refetch: fetchClient,
   }

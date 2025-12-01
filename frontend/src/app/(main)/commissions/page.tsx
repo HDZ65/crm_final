@@ -61,7 +61,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 
 export default function CommissionsPage() {
-  const { currentOrganisation } = useOrganisation()
+  const { activeOrganisation } = useOrganisation()
   const [activeTab, setActiveTab] = React.useState("commissions")
   const [filters, setFilters] = React.useState<CommissionFiltersState>({})
   const [selectedRows, setSelectedRows] = React.useState<Record<string, boolean>>({})
@@ -82,10 +82,10 @@ export default function CommissionsPage() {
     loading: loadingCommissions,
     error: errorCommissions,
     refetch: refetchCommissions,
-  } = useCommissionsWithDetails(currentOrganisation?.id)
+  } = useCommissionsWithDetails(activeOrganisation?.id)
 
   const { apporteurs, loading: loadingApporteurs, refetch: refetchApporteurs } = useApporteurs(
-    currentOrganisation ? { organisationId: currentOrganisation.id } : undefined
+    activeOrganisation ? { organisationId: activeOrganisation.id } : undefined
   )
   const { statuts, loading: loadingStatuts } = useStatutsCommission()
   const { generer: genererBordereau, loading: loadingGeneration } = useGenererBordereau()
@@ -97,7 +97,7 @@ export default function CommissionsPage() {
     error: errorReprises,
     refetch: refetchReprises,
   } = useReprisesCommission(
-    currentOrganisation ? { organisationId: currentOrganisation.id } : undefined
+    activeOrganisation ? { organisationId: activeOrganisation.id } : undefined
   )
 
   // Hooks API - Bordereaux
@@ -106,7 +106,7 @@ export default function CommissionsPage() {
     loading: loadingBordereaux,
     error: errorBordereaux,
     refetch: refetchBordereaux,
-  } = useBordereauxWithDetails(currentOrganisation?.id)
+  } = useBordereauxWithDetails(activeOrganisation?.id)
 
   // Hooks API - Barèmes
   const {
@@ -115,7 +115,7 @@ export default function CommissionsPage() {
     error: errorBaremes,
     refetch: refetchBaremes,
   } = useBaremesCommission(
-    currentOrganisation ? { organisationId: currentOrganisation.id } : undefined
+    activeOrganisation ? { organisationId: activeOrganisation.id } : undefined
   )
 
   // Hooks de mutation
@@ -422,10 +422,10 @@ export default function CommissionsPage() {
 
   // Handlers pour les apporteurs
   const handleCreateApporteur = async (data: CreateApporteurData) => {
-    if (!currentOrganisation) return
+    if (!activeOrganisation) return
 
     const result = await createApporteur({
-      organisationId: currentOrganisation.id,
+      organisationId: activeOrganisation.id,
       nom: data.nom,
       prenom: data.prenom,
       typeApporteur: data.typeApporteur,

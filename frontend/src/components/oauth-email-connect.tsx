@@ -174,7 +174,7 @@ export function OAuthEmailConnect({
 
       <Alert>
         <AlertDescription className="text-sm">
-          <strong>Note :</strong> En connectant votre compte, vous autorisez l'application à envoyer
+          <strong>Note :</strong> En connectant votre compte, vous autorisez l&apos;application à envoyer
           des emails en votre nom. Vous pouvez révoquer cet accès à tout moment depuis les
           paramètres de votre compte Google ou Microsoft.
         </AlertDescription>

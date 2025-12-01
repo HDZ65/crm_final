@@ -277,7 +277,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 className="gap-2 rounded-2xl border border-dashed border-border/70 text-sm font-semibold"
-                onClick={login}
+                onClick={() => login()}
               >
                 <LogIn className="size-4" />
                 Se connecter

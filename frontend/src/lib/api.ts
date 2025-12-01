@@ -1,3 +1,5 @@
+import { translateBackendError, extractValidationErrors } from './error-messages';
+
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
 
 interface ApiOptions extends RequestInit {
@@ -5,6 +7,11 @@ interface ApiOptions extends RequestInit {
 }
 
 export class ApiError extends Error {
+  /** Message d'erreur traduit pour l'utilisateur */
+  public userMessage: string;
+  /** Erreurs de validation par champ (si applicable) */
+  public validationErrors: Record<string, string[]> | null;
+
   constructor(
     message: string,
     public status: number,
@@ -12,6 +19,29 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = 'ApiError';
+    this.userMessage = translateBackendError(message, status);
+    this.validationErrors = extractValidationErrors(response);
+  }
+
+  /**
+   * Retourne le message à afficher à l'utilisateur
+   */
+  getUserMessage(): string {
+    return this.userMessage;
+  }
+
+  /**
+   * Vérifie si l'erreur contient des erreurs de validation
+   */
+  hasValidationErrors(): boolean {
+    return this.validationErrors !== null && Object.keys(this.validationErrors).length > 0;
+  }
+
+  /**
+   * Retourne les erreurs de validation pour un champ spécifique
+   */
+  getFieldErrors(fieldName: string): string[] {
+    return this.validationErrors?.[fieldName] || [];
   }
 }
 
@@ -103,37 +133,37 @@ class ApiClient {
     }
   }
 
-  // Convenience methods
-  async get(endpoint: string, options?: ApiOptions) {
-    return this.request(endpoint, { ...options, method: 'GET' });
+  // Convenience methods with generic type support
+  async get<T = unknown>(endpoint: string, options?: ApiOptions): Promise<T> {
+    return this.request(endpoint, { ...options, method: 'GET' }) as Promise<T>;
   }
 
-  async post(endpoint: string, data?: unknown, options?: ApiOptions) {
+  async post<T = unknown>(endpoint: string, data?: unknown, options?: ApiOptions): Promise<T> {
     return this.request(endpoint, {
       ...options,
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
-    });
+    }) as Promise<T>;
   }
 
-  async put(endpoint: string, data?: unknown, options?: ApiOptions) {
+  async put<T = unknown>(endpoint: string, data?: unknown, options?: ApiOptions): Promise<T> {
     return this.request(endpoint, {
       ...options,
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
-    });
+    }) as Promise<T>;
   }
 
-  async patch(endpoint: string, data?: unknown, options?: ApiOptions) {
+  async patch<T = unknown>(endpoint: string, data?: unknown, options?: ApiOptions): Promise<T> {
     return this.request(endpoint, {
       ...options,
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
-    });
+    }) as Promise<T>;
   }
 
-  async delete(endpoint: string, options?: ApiOptions) {
-    return this.request(endpoint, { ...options, method: 'DELETE' });
+  async delete<T = unknown>(endpoint: string, options?: ApiOptions): Promise<T> {
+    return this.request(endpoint, { ...options, method: 'DELETE' }) as Promise<T>;
   }
 
   async getBlob(endpoint: string, options: ApiOptions = {}): Promise<Blob | null> {
@@ -186,13 +216,13 @@ const apiClient = new ApiClient();
 
 export default apiClient;
 
-// Export convenience functions
+// Export convenience functions with generic type support
 export const api = {
-  get: (endpoint: string, options?: ApiOptions) => apiClient.get(endpoint, options),
-  post: (endpoint: string, data?: unknown, options?: ApiOptions) => apiClient.post(endpoint, data, options),
-  put: (endpoint: string, data?: unknown, options?: ApiOptions) => apiClient.put(endpoint, data, options),
-  patch: (endpoint: string, data?: unknown, options?: ApiOptions) => apiClient.patch(endpoint, data, options),
-  delete: (endpoint: string, options?: ApiOptions) => apiClient.delete(endpoint, options),
+  get: <T = unknown>(endpoint: string, options?: ApiOptions): Promise<T> => apiClient.get<T>(endpoint, options),
+  post: <T = unknown>(endpoint: string, data?: unknown, options?: ApiOptions): Promise<T> => apiClient.post<T>(endpoint, data, options),
+  put: <T = unknown>(endpoint: string, data?: unknown, options?: ApiOptions): Promise<T> => apiClient.put<T>(endpoint, data, options),
+  patch: <T = unknown>(endpoint: string, data?: unknown, options?: ApiOptions): Promise<T> => apiClient.patch<T>(endpoint, data, options),
+  delete: <T = unknown>(endpoint: string, options?: ApiOptions): Promise<T> => apiClient.delete<T>(endpoint, options),
   getBlob: (endpoint: string, options?: ApiOptions) => apiClient.getBlob(endpoint, options),
   setToken: (token: string | null) => apiClient.setToken(token),
   setOnUnauthorized: (callback: () => void) => apiClient.setOnUnauthorized(callback),

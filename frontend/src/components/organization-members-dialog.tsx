@@ -133,17 +133,18 @@ export function OrganizationMembersDialog({
             }
             setInviteEmail("")
             setInviteRole("member")
-        } catch (error: any) {
-            const message = (error?.message || "").toLowerCase()
+        } catch (error: unknown) {
+            const err = error as { message?: string }
+            const message = (err?.message || "").toLowerCase()
 
             if (message.includes("déjà en attente") || message.includes("deja en attente")) {
                 setInviteError(`Une invitation est déjà en attente pour cet email`)
             } else if (message.includes("déjà membre") || message.includes("deja membre")) {
-                setInviteError(`Cet utilisateur est déjà membre de l'organisation`)
+                setInviteError(`Cet utilisateur est déjà membre de l&apos;organisation`)
             } else if (message.includes("email") && message.includes("invalid")) {
                 setInviteError("Adresse email invalide")
             } else {
-                setInviteError(error?.message || "Erreur lors de l'invitation")
+                setInviteError(err?.message || "Erreur lors de l'invitation")
             }
         } finally {
             setIsInviting(false)
@@ -278,7 +279,7 @@ export function OrganizationMembersDialog({
                                     <div className="flex items-center gap-2 mb-2">
                                         <Link className="size-4 text-green-600" />
                                         <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                                            Lien d'invitation créé
+                                            Lien d&apos;invitation créé
                                         </span>
                                     </div>
                                     <div className="flex gap-2">

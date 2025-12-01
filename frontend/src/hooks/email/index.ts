@@ -1,3 +1,3 @@
 export * from './use-oauth-email'
-export * from './use-maileva'
+// use-maileva-auth supersedes use-maileva with authenticated API calls
 export * from './use-maileva-auth'

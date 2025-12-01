@@ -32,16 +32,25 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { FormCombobox, type ComboboxOption } from "@/components/ui/combobox"
 import { toast } from "sonner"
 import { useApiPost } from "@/hooks/core"
 import { cn } from "@/lib/utils"
+import { useClients } from "@/hooks/clients"
+import { useGroupeEntites } from "@/hooks/clients/use-groupe-entites"
+import { useApporteurs } from "@/hooks/commissions/use-apporteurs"
+import {
+    useContractReferenceData,
+    useAdressesClient,
+} from "@/hooks/contracts"
+import { useOrganisation } from "@/contexts/organisation-context"
 
 const contratSchema = z.object({
     organisationId: z.string().uuid("ID organisation invalide"),
     referenceExterne: z.string().min(1, "Référence requise"),
-    dateSignature: z.date({ required_error: "Date de signature requise" }),
-    dateDebut: z.date({ required_error: "Date de début requise" }),
-    dateFin: z.date({ required_error: "Date de fin requise" }),
+    dateSignature: z.date({ error: "Date de signature requise" }),
+    dateDebut: z.date({ error: "Date de début requise" }),
+    dateFin: z.date({ error: "Date de fin requise" }),
     statutId: z.string().uuid("Statut requis"),
     autoRenouvellement: z.boolean(),
     joursPreavis: z.number().min(0, "Jours de préavis invalide"),
@@ -53,7 +62,7 @@ const contratSchema = z.object({
     commercialId: z.string().uuid("Commercial requis"),
     clientPartenaireId: z.string().uuid("Partenaire requis"),
     adresseFacturationId: z.string().uuid("Adresse de facturation requise"),
-    dateFinRetractation: z.date({ required_error: "Date fin rétractation requise" }),
+    dateFinRetractation: z.date({ error: "Date fin rétractation requise" }),
 })
 
 type ContratFormValues = z.infer<typeof contratSchema>
@@ -95,15 +104,100 @@ export function CreateContratDialog({
     onOpenChange,
     onSuccess,
 }: CreateContratDialogProps) {
-    // Récupérer l'organisationId depuis le localStorage
-    const [organisationId, setOrganisationId] = React.useState<string>("")
+    // Récupérer l'organisationId depuis le context
+    const { activeOrganisation } = useOrganisation()
+    const organisationId = activeOrganisation?.id || ""
 
-    React.useEffect(() => {
-        if (open) {
-            const orgId = localStorage.getItem("organisationId") || ""
-            setOrganisationId(orgId)
-        }
-    }, [open])
+    // Charger les données de référence
+    const { clients, loading: loadingClients } = useClients()
+    const { societes, loading: loadingSocietes } = useGroupeEntites()
+    const { apporteurs, loading: loadingApporteurs } = useApporteurs({ organisationId })
+    const {
+        conditionsPaiement,
+        modelesDistribution,
+        statutsContrat,
+        partenaires,
+        loading: loadingRefData,
+    } = useContractReferenceData()
+
+    // État pour l'ID client sélectionné (pour charger les adresses)
+    const [selectedClientId, setSelectedClientId] = React.useState<string | null>(null)
+    const { adresses, loading: loadingAdresses } = useAdressesClient(selectedClientId)
+
+    // Préparer les options pour les combobox
+    const clientOptions: ComboboxOption[] = React.useMemo(() =>
+        clients.map(c => ({
+            value: c.id,
+            label: c.name,
+            description: c.email || c.phone || undefined,
+        })),
+        [clients]
+    )
+
+    const societeOptions: ComboboxOption[] = React.useMemo(() =>
+        societes.map(s => ({
+            value: s.id,
+            label: s.raisonSociale,
+            description: s.siren || undefined,
+        })),
+        [societes]
+    )
+
+    const commercialOptions: ComboboxOption[] = React.useMemo(() =>
+        apporteurs.map(a => ({
+            value: a.id,
+            label: `${a.nom || ''} ${a.prenom || ''}`.trim() || a.email || 'Commercial',
+            description: a.email || undefined,
+        })),
+        [apporteurs]
+    )
+
+    const partenaireOptions: ComboboxOption[] = React.useMemo(() =>
+        partenaires.map(p => ({
+            value: p.id,
+            label: p.nom,
+            description: p.code || undefined,
+        })),
+        [partenaires]
+    )
+
+    const statutOptions: ComboboxOption[] = React.useMemo(() =>
+        statutsContrat.map(s => ({
+            value: s.id,
+            label: s.nom,
+            description: s.description || undefined,
+        })),
+        [statutsContrat]
+    )
+
+    const conditionPaiementOptions: ComboboxOption[] = React.useMemo(() =>
+        conditionsPaiement.map(c => ({
+            value: c.id,
+            label: c.nom,
+            description: c.delaiJours ? `${c.delaiJours} jours` : undefined,
+        })),
+        [conditionsPaiement]
+    )
+
+    const modeleDistributionOptions: ComboboxOption[] = React.useMemo(() =>
+        modelesDistribution.map(m => ({
+            value: m.id,
+            label: m.nom,
+            description: m.description || undefined,
+        })),
+        [modelesDistribution]
+    )
+
+    const adresseOptions: ComboboxOption[] = React.useMemo(() =>
+        adresses.map(a => ({
+            value: a.id,
+            label: `${a.ligne1}, ${a.codePostal} ${a.ville}`,
+            description: a.type || undefined,
+        })),
+        [adresses]
+    )
+
+    const isLoadingData = loadingClients || loadingSocietes || loadingApporteurs || loadingRefData
 
     const { loading, execute: createContrat } = useApiPost<Contrat, CreateContratDto>(
         "/contrats",
@@ -195,7 +289,7 @@ export function CreateContratDialog({
                                         <FormControl>
                                             <Input
                                                 placeholder="CTR-2024-001"
-                                                disabled={loading}
+                                                disabled={loading || isLoadingData}
                                                 {...field}
                                             />
                                         </FormControl>
@@ -210,12 +304,20 @@ export function CreateContratDialog({
                                 name="clientBaseId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Client (ID)</FormLabel>
+                                        <FormLabel>Client</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID du client"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={clientOptions}
+                                                value={field.value}
+                                                onChange={(value) => {
+                                                    field.onChange(value)
+                                                    setSelectedClientId(value || null)
+                                                }}
+                                                placeholder="Sélectionner un client"
+                                                searchPlaceholder="Rechercher un client..."
+                                                emptyMessage="Aucun client trouvé"
+                                                disabled={loading || isLoadingData}
+                                                loading={loadingClients}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -229,12 +331,17 @@ export function CreateContratDialog({
                                 name="societeId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Société (ID)</FormLabel>
+                                        <FormLabel>Société</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID de la société"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={societeOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Sélectionner une société"
+                                                searchPlaceholder="Rechercher une société..."
+                                                emptyMessage="Aucune société trouvée"
+                                                disabled={loading || isLoadingData}
+                                                loading={loadingSocietes}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -248,12 +355,17 @@ export function CreateContratDialog({
                                 name="commercialId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Commercial (ID)</FormLabel>
+                                        <FormLabel>Commercial</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID du commercial"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={commercialOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Sélectionner un commercial"
+                                                searchPlaceholder="Rechercher un commercial..."
+                                                emptyMessage="Aucun commercial trouvé"
+                                                disabled={loading || isLoadingData}
+                                                loading={loadingApporteurs}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -267,12 +379,17 @@ export function CreateContratDialog({
                                 name="clientPartenaireId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Partenaire (ID)</FormLabel>
+                                        <FormLabel>Partenaire</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID du partenaire"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={partenaireOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Sélectionner un partenaire"
+                                                searchPlaceholder="Rechercher un partenaire..."
+                                                emptyMessage="Aucun partenaire trouvé"
+                                                disabled={loading || isLoadingData}
+                                                loading={loadingRefData}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -286,12 +403,17 @@ export function CreateContratDialog({
                                 name="statutId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Statut (ID)</FormLabel>
+                                        <FormLabel>Statut</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID du statut"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={statutOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Sélectionner un statut"
+                                                searchPlaceholder="Rechercher un statut..."
+                                                emptyMessage="Aucun statut trouvé"
+                                                disabled={loading || isLoadingData}
+                                                loading={loadingRefData}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -479,12 +601,17 @@ export function CreateContratDialog({
                                 name="conditionPaiementId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Condition de paiement (ID)</FormLabel>
+                                        <FormLabel>Condition de paiement</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID condition paiement"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={conditionPaiementOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Sélectionner une condition"
+                                                searchPlaceholder="Rechercher..."
+                                                emptyMessage="Aucune condition trouvée"
+                                                disabled={loading || isLoadingData}
+                                                loading={loadingRefData}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -498,12 +625,17 @@ export function CreateContratDialog({
                                 name="modeleDistributionId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Modèle de distribution (ID)</FormLabel>
+                                        <FormLabel>Modèle de distribution</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID modèle distribution"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={modeleDistributionOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Sélectionner un modèle"
+                                                searchPlaceholder="Rechercher..."
+                                                emptyMessage="Aucun modèle trouvé"
+                                                disabled={loading || isLoadingData}
+                                                loading={loadingRefData}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -517,12 +649,17 @@ export function CreateContratDialog({
                                 name="facturationParId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Facturation par (ID)</FormLabel>
+                                        <FormLabel>Facturation par</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID facturation par"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={societeOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Sélectionner la société facturante"
+                                                searchPlaceholder="Rechercher..."
+                                                emptyMessage="Aucune société trouvée"
+                                                disabled={loading || isLoadingData}
+                                                loading={loadingSocietes}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -536,12 +673,17 @@ export function CreateContratDialog({
                                 name="adresseFacturationId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Adresse de facturation (ID)</FormLabel>
+                                        <FormLabel>Adresse de facturation</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="UUID adresse facturation"
-                                                disabled={loading}
-                                                {...field}
+                                            <FormCombobox
+                                                options={adresseOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder={selectedClientId ? "Sélectionner une adresse" : "Sélectionnez d'abord un client"}
+                                                searchPlaceholder="Rechercher..."
+                                                emptyMessage="Aucune adresse trouvée"
+                                                disabled={loading || isLoadingData || !selectedClientId}
+                                                loading={loadingAdresses}
                                             />
                                         </FormControl>
                                         <FormMessage />

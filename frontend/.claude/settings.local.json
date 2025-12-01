@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(git push -u origin main)",
+      "Bash(git remote set-url origin https://github.com/HDZ65/frontend-master.git)",
+      "Bash(git config --list)",
+      "Bash(git credential-manager delete https://github.com)",
+      "Bash(git credential-manager erase https://github.com)",
+      "Bash(echo \"protocol=https\nhost=github.com\")",
+      "Bash(git credential-manager erase)",
+      "Bash(npm run dev)",
+      "Bash(npm install zustand)",
+      "Bash(rm -rf .next)",
+      "Bash(test -f \"src/components/section-cards-assistant-ia.tsx\")",
+      "Bash(touch src/components/section-cards-assistant-ia.tsx)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "shadcn"
+  ]
+}

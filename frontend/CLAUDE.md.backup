@@ -1,0 +1,157 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a Next.js 15.5.4 application using React 19, TypeScript, and Tailwind CSS 4. The project is heavily integrated with Shadcn UI components (50+ components) using the "new-york" style variant.
+
+## Development Commands
+
+**Start development server:**
+```bash
+npm run dev
+```
+Development server runs on http://localhost:3000 with Turbopack enabled.
+
+**Build for production:**
+```bash
+npm run build
+```
+Uses Turbopack for faster builds.
+
+**Linting:**
+```bash
+npm run lint
+```
+Uses ESLint with Next.js core-web-vitals and TypeScript configurations.
+
+## Architecture
+
+### Tech Stack
+- **Framework:** Next.js 15.5.4 (App Router with React Server Components)
+- **React:** Version 19.1.0 with RSC support
+- **Styling:** Tailwind CSS 4 with custom CSS variables and OKLCH color space
+- **UI Components:** Shadcn UI (new-york style) with Radix UI primitives
+- **Forms:** React Hook Form 7 with Zod 4 validation and @hookform/resolvers
+- **Icons:** Lucide React
+- **Animations:** tw-animate-css plugin
+- **Notifications:** Sonner for toast notifications
+- **Theming:** next-themes with dark mode support
+
+### Directory Structure
+
+```
+src/
+├── app/                 # Next.js App Router pages
+│   ├── layout.tsx      # Root layout with Geist fonts
+│   ├── page.tsx        # Home page
+│   └── globals.css     # Global styles with Tailwind and theme variables
+├── components/
+│   └── ui/             # Shadcn UI components (50+ components)
+├── lib/
+│   └── utils.ts        # Utility functions (cn helper for class merging)
+└── hooks/
+    └── use-mobile.ts   # Mobile detection hook (breakpoint: 768px)
+```
+
+### Styling System
+
+**Design Tokens:**
+- Uses OKLCH color space for better perceptual uniformity
+- CSS variables defined in [globals.css](src/app/globals.css) for theming
+- Custom theme tokens include: background, foreground, primary, secondary, muted, accent, destructive, border, input, ring, card, popover, sidebar, and chart colors
+- Border radius system: sm (--radius - 4px), md (--radius - 2px), lg (--radius), xl (--radius + 4px)
+- Default radius: 0.625rem (10px)
+
+**Dark Mode:**
+- Implemented via custom `dark` variant: `@custom-variant dark (&:is(.dark *))`
+- All color tokens have dark mode equivalents defined in `.dark` class
+- Use `next-themes` for theme switching
+
+**Tailwind Configuration:**
+- Uses Tailwind CSS 4 with `@import "tailwindcss"`
+- Includes `tw-animate-css` for animations
+- PostCSS configured with `@tailwindcss/postcss` plugin
+- No prefix on utility classes
+
+### Component Patterns
+
+**Shadcn UI Components:**
+- Located in [src/components/ui/](src/components/ui/)
+- Use `cn()` utility from [lib/utils.ts](src/lib/utils.ts) for conditional class merging (combines clsx + tailwind-merge)
+- Components use `class-variance-authority` (CVA) for variant-based styling
+- All components use `data-slot` attributes for styling hooks
+- Form components integrate with React Hook Form via context providers
+- Icon components expect Lucide React icons
+
+**Path Aliases:**
+- `@/components` → `src/components`
+- `@/lib` → `src/lib`
+- `@/hooks` → `src/hooks`
+- `@/ui` → `src/components/ui`
+
+**Component Configuration ([components.json](components.json)):**
+- Style: "new-york"
+- RSC: enabled
+- TSX: enabled
+- Icon library: lucide
+- CSS variables: enabled
+- Base color: neutral
+
+### Available UI Components
+
+50+ Shadcn components are installed including:
+- **Forms:** button, input, textarea, select, checkbox, radio-group, switch, label, form, field, input-group, input-otp
+- **Layout:** card, separator, tabs, accordion, collapsible, resizable, sidebar, aspect-ratio, scroll-area
+- **Navigation:** navigation-menu, menubar, breadcrumb, pagination
+- **Overlay:** dialog, alert-dialog, popover, tooltip, hover-card, context-menu, sheet
+- **Feedback:** alert, badge, skeleton, spinner, progress, sonner (toasts)
+- **Data Display:** table, avatar, calendar, carousel, empty, kbd
+- **Controls:** button-group, toggle, toggle-group, slider, command
+
+### Forms
+
+Form handling follows react-hook-form patterns:
+- Use `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormDescription`, `FormMessage` from [ui/form.tsx](src/components/ui/form.tsx)
+- Validation via Zod schemas with `@hookform/resolvers/zod`
+- Form fields automatically handle error states via `aria-invalid` and show validation messages
+- Error styling handled automatically via data attributes (`data-error`)
+
+### Fonts
+
+Uses Geist font family:
+- `--font-geist-sans` for sans-serif
+- `--font-geist-mono` for monospace
+- Loaded via `next/font/google` in [layout.tsx](src/app/layout.tsx)
+
+## MCP Integration
+
+Shadcn MCP server is configured in [.mcp.json](.mcp.json) for AI-assisted component browsing and installation via `npx shadcn@latest mcp`.
+
+## TypeScript Configuration
+
+- Target: ES2017
+- Strict mode enabled
+- Module resolution: bundler
+- JSX: preserve (Next.js transforms it)
+- Path alias `@/*` maps to `./src/*`
+
+## ESLint Configuration
+
+Extends Next.js recommended configs:
+- `next/core-web-vitals`
+- `next/typescript`
+
+Ignores: node_modules, .next, out, build, next-env.d.ts
+
+## Key Dependencies
+
+- **UI Primitives:** All Radix UI components installed (@radix-ui/react-*)
+- **Forms:** react-hook-form + zod + @hookform/resolvers
+- **Styling:** class-variance-authority, clsx, tailwind-merge
+- **Icons:** lucide-react
+- **Dates:** date-fns, react-day-picker
+- **Carousel:** embla-carousel-react
+- **Command Palette:** cmdk
+- **Toasts:** sonner

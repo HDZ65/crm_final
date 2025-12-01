@@ -1,0 +1,76 @@
+import { AppSidebar } from "@/components/app-sidebar"
+import { SiteHeader } from "@/components/site-header"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+import { DataTable } from "@/components/data-table-basic"
+import { columns, type Partner } from "./columns"
+
+const partnersData: Partner[] = [
+  { id: "1", name: "ZVING MONIQUE", status: "Actif", email: "exemple@gmail.com", siren: "123 456 789" },
+  { id: "2", name: "ZWILLER MARC", status: "Impayé", email: "exemple@gmail.com", siren: "123 456 789" },
+  { id: "3", name: "ACHO Marie-thérèse", status: "Actif", email: "exemple@gmail.com", siren: "123 456 789" },
+  { id: "4", name: "ZWING ZWILLER MARC", status: "Actif", email: "exemple@gmail.com", siren: "123 456 789" },
+  { id: "5", name: "ZVING MONIQUE", status: "Prospect", email: "exemple@gmail.com", siren: "123 456 789" },
+  { id: "6", name: "ZYRA JOSIANE", status: "Actif", email: "exemple@gmail.com", siren: "123 456 789" },
+]
+
+export default function PartnersPage() {
+  return (
+    <SidebarProvider
+      style={{
+        "--sidebar-width": "14rem",
+        "--header-height": "calc(var(--spacing) * 12)",
+      } as React.CSSProperties}
+    >
+      <AppSidebar variant="inset" />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col bg-background">
+          <div
+            className="min-h-0 flex-1 gap-6 flex flex-col overflow-hidden px-4 py-4 md:px-6 md:py-6"
+            style={{ height: "calc(100dvh - var(--header-height))" }}
+          >
+            {/* Filtres (même style que /clients) */}
+            <Card className="bg-slate-300 border border-slate-200 shrink-0">
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+                  <Input placeholder="Nom" className="bg-white" />
+                  <Input placeholder="SIREN" className="bg-white" />
+                  <Input placeholder="Email" type="email" className="bg-white" />
+                  <Input placeholder="Téléphone" className="bg-white" />
+                  <Input placeholder="Société" className="bg-white" />
+                  <Select>
+                    <SelectTrigger className="bg-white w-full">
+                      <SelectValue placeholder="Produits" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mtv">MTV</SelectItem>
+                      <SelectItem value="sfpp">SFPP</SelectItem>
+                      <SelectItem value="ft">FT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tableau */}
+
+            <DataTable columns={columns} data={partnersData} />
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}

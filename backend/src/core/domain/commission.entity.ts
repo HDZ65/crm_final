@@ -54,12 +54,16 @@ export class CommissionEntity extends BaseEntity {
     this.dateCreation = props.dateCreation;
   }
 
-  isForfaitFixe(): boolean {
-    return this.typeBase === 'forfait_fixe';
+  isForfait(): boolean {
+    return this.typeBase === 'forfait';
   }
 
-  isPourcentageCA(): boolean {
-    return this.typeBase === 'pourcentage_ca';
+  isCotisationHT(): boolean {
+    return this.typeBase === 'cotisation_ht';
+  }
+
+  isCAHT(): boolean {
+    return this.typeBase === 'ca_ht';
   }
 
   isEnAttente(): boolean {

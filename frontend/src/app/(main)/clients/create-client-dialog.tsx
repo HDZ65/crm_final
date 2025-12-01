@@ -39,7 +39,9 @@ const createClientSchema = z.object({
   typeClient: z.string().min(1, "Le type de client est requis"),
   nom: z.string().min(1, "Le nom est requis"),
   prenom: z.string().min(1, "Le prenom est requis"),
-  dateNaissance: z.string().optional(),
+  dateNaissance: z.string()
+    .refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), "Date au format YYYY-MM-DD requise")
+    .optional(),
   telephone: z.string().min(1, "Le telephone est requis"),
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   statutId: z.string().min(1, "Le statut est requis"),

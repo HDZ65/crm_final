@@ -37,7 +37,9 @@ const editClientSchema = z.object({
   typeClient: z.string().min(1, "Le type de client est requis"),
   nom: z.string().min(1, "Le nom est requis"),
   prenom: z.string().min(1, "Le prénom est requis"),
-  dateNaissance: z.string().optional(),
+  dateNaissance: z.string()
+    .refine(val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), "Date au format YYYY-MM-DD requise")
+    .optional(),
   telephone: z.string().min(1, "Le téléphone est requis"),
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   statutId: z.string().min(1, "Le statut est requis"),
@@ -49,7 +51,7 @@ interface UpdateClientDto {
   typeClient: string
   nom: string
   prenom: string
-  dateNaissance?: Date | null
+  dateNaissance?: string | null
   telephone: string
   email?: string
   statutId: string
@@ -113,7 +115,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
         typeClient: data.typeClient,
         nom: data.nom,
         prenom: data.prenom,
-        dateNaissance: data.dateNaissance ? new Date(data.dateNaissance) : null,
+        dateNaissance: data.dateNaissance || null, // Keep as ISO8601 string
         telephone: data.telephone,
         email: data.email || undefined,
         statutId: data.statutId,

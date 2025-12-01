@@ -1,9 +1,16 @@
 "use client"
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { api, ApiError } from '@/lib/api'
+import { useAuth } from '@/hooks/auth/useAuth'
 
 export type OrchestrationAction = 'activate' | 'suspend' | 'terminate' | 'port-in'
+
+/**
+ * Rôles autorisés pour les opérations d'orchestration
+ * Doit être synchronisé avec @Roles backend: contract-orchestration.controller.ts
+ */
+export const ORCHESTRATION_ALLOWED_ROLES = ['realm:commercial', 'realm:manager', 'realm:admin'] as const
 
 export interface OrchestrationPayload {
   payload?: Record<string, unknown>
@@ -15,6 +22,7 @@ export interface UseContractOrchestrationResult {
   loading: boolean
   error: ApiError | null
   lastAction: OrchestrationAction | null
+  canOrchestrate: boolean // Whether user has required roles
   activate: (payload?: OrchestrationPayload) => Promise<boolean>
   suspend: (payload?: OrchestrationPayload) => Promise<boolean>
   terminate: (payload?: OrchestrationPayload) => Promise<boolean>
@@ -42,9 +50,16 @@ export interface UseContractOrchestrationResult {
  * ```
  */
 export function useContractOrchestration(contractId: string): UseContractOrchestrationResult {
+  const { hasAnyRole } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
   const [lastAction, setLastAction] = useState<OrchestrationAction | null>(null)
+
+  // Check if user has required roles for orchestration operations
+  const canOrchestrate = useMemo(
+    () => hasAnyRole([...ORCHESTRATION_ALLOWED_ROLES]),
+    [hasAnyRole]
+  )
 
   const executeAction = useCallback(async (
     action: OrchestrationAction,
@@ -52,6 +67,12 @@ export function useContractOrchestration(contractId: string): UseContractOrchest
   ): Promise<boolean> => {
     if (!contractId) {
       setError(new ApiError('ID de contrat manquant', 400))
+      return false
+    }
+
+    // Check role before making API call to avoid 403
+    if (!canOrchestrate) {
+      setError(new ApiError('Vous n\'avez pas les droits pour effectuer cette action', 403))
       return false
     }
 
@@ -71,7 +92,7 @@ export function useContractOrchestration(contractId: string): UseContractOrchest
     } finally {
       setLoading(false)
     }
-  }, [contractId])
+  }, [contractId, canOrchestrate])
 
   const activate = useCallback(
     (payload?: OrchestrationPayload) => executeAction('activate', payload),
@@ -102,6 +123,7 @@ export function useContractOrchestration(contractId: string): UseContractOrchest
     loading,
     error,
     lastAction,
+    canOrchestrate,
     activate,
     suspend,
     terminate,

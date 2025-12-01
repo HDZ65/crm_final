@@ -93,11 +93,20 @@ export function ContratsCard() {
     [filtered]
   )
 
-  // Loading state
-  if (loading) {
+  // Loading state - but not if skipped (no organisation selected)
+  if (loading && !(!activeOrganisation)) {
     return (
       <Card className="h-full flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </Card>
+    )
+  }
+
+  // No organisation selected
+  if (!activeOrganisation) {
+    return (
+      <Card className="h-full flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Sélectionnez une organisation</p>
       </Card>
     )
   }

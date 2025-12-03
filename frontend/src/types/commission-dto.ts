@@ -8,6 +8,7 @@ export type TypeBase = 'cotisation_ht' | 'ca_ht' | 'forfait'
 export type TypeCalcul = 'fixe' | 'pourcentage' | 'palier' | 'mixte'
 export type TypePalier = 'volume' | 'ca' | 'prime_produit'
 export type TypeProduit = 'telecom' | 'assurance_sante' | 'prevoyance' | 'energie' | 'depanssur' | 'mondial_tv' | 'conciergerie'
+export type CanalVente = 'terrain' | 'web' | 'televente'
 export type TypeReprise = 'resiliation' | 'impaye' | 'annulation' | 'regularisation'
 export type StatutReprise = 'en_attente' | 'appliquee' | 'annulee'
 export type StatutBordereau = 'brouillon' | 'valide' | 'exporte' | 'archive'
@@ -110,6 +111,7 @@ export interface BaremeCommissionResponseDto {
   baseCalcul: TypeBase
   montantFixe: number | null
   tauxPourcentage: number | null
+  precomptee: boolean
   recurrenceActive: boolean
   tauxRecurrence: number | null
   dureeRecurrenceMois: number | null
@@ -118,6 +120,12 @@ export interface BaremeCommissionResponseDto {
   typeProduit: TypeProduit | null
   profilRemuneration: TypeApporteur | null
   societeId: string | null
+  canalVente: CanalVente | null
+  // Répartition (doit totaliser 100%)
+  repartitionCommercial: number
+  repartitionManager: number
+  repartitionAgence: number
+  repartitionEntreprise: number
   version: number
   dateEffet: Date | string
   dateFin: Date | string | null
@@ -338,4 +346,125 @@ export interface CommissionSummaryDto {
   totalNet: number
   nombreLignes: number
   nombreSelectionnes: number
+}
+
+// ============================================
+// Mutation DTOs (Create/Update)
+// ============================================
+
+// Apporteurs
+export interface CreateApporteurDto {
+  organisationId: string
+  nom: string
+  prenom: string
+  typeApporteur: TypeApporteur
+  email?: string
+  telephone?: string
+}
+
+export interface UpdateApporteurDto {
+  nom?: string
+  prenom?: string
+  typeApporteur?: TypeApporteur
+  email?: string
+  telephone?: string
+  actif?: boolean
+}
+
+// Reprises
+export interface AnnulerRepriseDto {
+  motif: string
+}
+
+// Bordereaux
+export interface ValiderBordereauDto {
+  commentaire?: string
+}
+
+// Barèmes
+export interface CreateBaremeDto {
+  organisationId: string
+  code: string
+  nom: string
+  description?: string
+  typeCalcul: TypeCalcul
+  baseCalcul: TypeBase
+  montantFixe?: number
+  tauxPourcentage?: number
+  precomptee?: boolean
+  recurrenceActive?: boolean
+  tauxRecurrence?: number
+  dureeRecurrenceMois?: number
+  dureeReprisesMois?: number
+  tauxReprise?: number
+  typeProduit?: string
+  profilRemuneration?: string
+  societeId?: string
+  canalVente?: CanalVente
+  repartitionCommercial?: number
+  repartitionManager?: number
+  repartitionAgence?: number
+  repartitionEntreprise?: number
+  dateEffet: string
+  dateFin?: string
+}
+
+export interface UpdateBaremeDto {
+  nom?: string
+  description?: string
+  typeCalcul?: TypeCalcul
+  baseCalcul?: TypeBase
+  montantFixe?: number
+  tauxPourcentage?: number
+  precomptee?: boolean
+  recurrenceActive?: boolean
+  tauxRecurrence?: number
+  dureeRecurrenceMois?: number
+  dureeReprisesMois?: number
+  tauxReprise?: number
+  typeProduit?: string
+  profilRemuneration?: string
+  societeId?: string
+  canalVente?: CanalVente
+  repartitionCommercial?: number
+  repartitionManager?: number
+  repartitionAgence?: number
+  repartitionEntreprise?: number
+  dateFin?: string
+  actif?: boolean
+  motifModification?: string
+}
+
+// Paliers
+export interface CreatePalierDto {
+  organisationId: string
+  baremeId: string
+  code: string
+  nom: string
+  description?: string
+  typePalier: TypePalier
+  seuilMin: number
+  seuilMax?: number
+  montantPrime: number
+  tauxBonus?: number
+  cumulable?: boolean
+  parPeriode?: boolean
+  typeProduit?: string
+  ordre?: number
+}
+
+export interface UpdatePalierDto {
+  code?: string
+  nom?: string
+  description?: string
+  typePalier?: TypePalier
+  seuilMin?: number
+  seuilMax?: number
+  montantPrime?: number
+  tauxBonus?: number
+  cumulable?: boolean
+  parPeriode?: boolean
+  typeProduit?: string
+  ordre?: number
+  actif?: boolean
 }

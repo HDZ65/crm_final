@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreateContratDialog } from "@/components/create-contrat-dialog";
+import { CreateClientDialog } from "@/components/create-client-dialog";
 import { useNotifications } from "@/contexts/notification-context";
 import { NotificationType, type Notification } from "@/types/notification";
 import { formatDistanceToNow } from "date-fns";
@@ -115,6 +116,7 @@ function NotificationItem({
 export function SiteHeader() {
   const pathname = usePathname();
   const [createContratOpen, setCreateContratOpen] = useState(false);
+  const [createClientOpen, setCreateClientOpen] = useState(false);
   const {
     notifications,
     unreadCount,
@@ -127,11 +129,14 @@ export function SiteHeader() {
     if (!pathname) return "";
     if (pathname === "/") return "Tableau de Bord";
     if (pathname.startsWith("/clients/")) return "Fiche Client";
-    if (pathname === "/clients") return "Gestions Clients";
-    if (pathname === "/partenaires") return "Gestions Commerciaux";
+    if (pathname === "/clients") return "Gestion Clients";
+    if (pathname === "/commerciaux") return "Gestion Commerciaux";
     if (pathname === "/catalogue") return "Catalogue Produits";
+    if (pathname === "/expeditions") return "Expéditions";
+    if (pathname === "/commissions") return "Commissions";
+    if (pathname === "/statistiques") return "Statistiques";
     if (pathname === "/paiements") return "Gestion des Paiements";
-    if (pathname === "/contrats") return "Gestions Contrats";
+    if (pathname === "/contrats") return "Gestion Contrats";
     return "";
   })();
 
@@ -224,7 +229,7 @@ export function SiteHeader() {
               <DropdownMenuLabel>Actions rapides</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setCreateClientOpen(true)}>
                   <UserPlus className="mr-2 size-4" />
                   <span>Nouveau client</span>
                 </DropdownMenuItem>
@@ -257,6 +262,12 @@ export function SiteHeader() {
       <CreateContratDialog
         open={createContratOpen}
         onOpenChange={setCreateContratOpen}
+      />
+
+      {/* Dialog création de client */}
+      <CreateClientDialog
+        open={createClientOpen}
+        onOpenChange={setCreateClientOpen}
       />
     </header>
   );

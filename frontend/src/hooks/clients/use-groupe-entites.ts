@@ -3,39 +3,43 @@
 import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
+import type {
+  SocieteDto,
+  Groupe,
+  CreateSocieteDto,
+  UpdateSocieteDto,
+} from "@/types/societe"
 
-export interface SocieteDto {
-  id: string
-  organisationId: string
-  raisonSociale: string
-  siren: string
-  numeroTVA: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface Groupe {
-  id: string
-  nom: string
-}
+// Re-export des types pour compatibilité avec les imports existants
+export type {
+  SocieteDto,
+  Groupe,
+  CreateSocieteDto,
+  UpdateSocieteDto,
+} from "@/types/societe"
 
 /**
  * Hook pour récupérer les sociétés/groupes pour le filtrage
+ * @param organisationId - L'ID de l'organisation pour filtrer les sociétés
  */
-export function useGroupeEntites() {
+export function useGroupeEntites(organisationId?: string | null) {
   const [societes, setSocietes] = useState<SocieteDto[]>([])
   const { loading, error, execute } = useApi<SocieteDto[]>()
 
   const fetchSocietes = useCallback(async () => {
+    if (!organisationId) {
+      setSocietes([])
+      return
+    }
     try {
-      const data = await execute(() => api.get("/societes/groupes"))
+      const data = await execute(() => api.get(`/societes/groupes?organisationId=${organisationId}`))
       if (data) {
         setSocietes(data)
       }
     } catch {
       // Error handled by useApi
     }
-  }, [execute])
+  }, [execute, organisationId])
 
   useEffect(() => {
     fetchSocietes()
@@ -85,19 +89,6 @@ export function useSociete(id: string | null) {
     error,
     refetch: fetchSociete,
   }
-}
-
-export interface CreateSocieteDto {
-  organisationId: string
-  raisonSociale: string
-  siren: string
-  numeroTVA: string
-}
-
-export interface UpdateSocieteDto {
-  raisonSociale?: string
-  siren?: string
-  numeroTVA?: string
 }
 
 /**

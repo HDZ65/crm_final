@@ -39,6 +39,8 @@ export const BACKEND_ERROR_MESSAGES: Record<string, string> = {
   "Validation failed": "Veuillez vérifier les champs du formulaire.",
   "Invalid UUID": "Identifiant invalide.",
   "Invalid date format": "Format de date invalide.",
+  "societeId must be a UUID": "Veuillez sélectionner une société valide.",
+  "must be a UUID": "Identifiant invalide.",
 
   // === Conflits ===
   "Email already exists": "Cette adresse email est déjà utilisée.",
@@ -76,11 +78,33 @@ export const HTTP_STATUS_MESSAGES: Record<number, string> = {
 
 /**
  * Traduit un message d'erreur backend vers un message UX français
- * @param message - Le message d'erreur brut du backend
+ * @param message - Le message d'erreur brut du backend (string ou array)
  * @param statusCode - Le code HTTP optionnel pour fallback
  * @returns Le message traduit ou le message original si non trouvé
  */
-export function translateBackendError(message: string, statusCode?: number): string {
+export function translateBackendError(message: string | string[] | unknown, statusCode?: number): string {
+  // Gérer les tableaux de messages (class-validator)
+  if (Array.isArray(message)) {
+    // Prendre le premier message du tableau
+    const firstMessage = message[0]
+    if (typeof firstMessage === 'string') {
+      return translateBackendError(firstMessage, statusCode)
+    }
+    // Fallback sur le code HTTP si le tableau ne contient pas de strings
+    if (statusCode && HTTP_STATUS_MESSAGES[statusCode]) {
+      return HTTP_STATUS_MESSAGES[statusCode]
+    }
+    return "Une erreur de validation s'est produite."
+  }
+
+  // Si ce n'est pas une chaîne, fallback
+  if (typeof message !== 'string') {
+    if (statusCode && HTTP_STATUS_MESSAGES[statusCode]) {
+      return HTTP_STATUS_MESSAGES[statusCode]
+    }
+    return "Une erreur s'est produite."
+  }
+
   // Chercher une correspondance exacte
   if (BACKEND_ERROR_MESSAGES[message]) {
     return BACKEND_ERROR_MESSAGES[message]

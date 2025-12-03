@@ -24,3 +24,6 @@ export * from './stats'
 
 // Commission hooks
 export * from './commissions'
+
+// Catalogue/Product hooks
+export * from './catalogue'

@@ -36,14 +36,19 @@ import {
   Layers,
   CheckCircle2,
   XCircle,
+  Pencil,
+  Plus,
 } from "lucide-react"
 import type {
   BaremeCommissionResponseDto,
   TypeCalcul,
   PalierCommissionResponseDto,
 } from "@/types/commission-dto"
-import type { TypeOption } from "@/hooks/commissions/use-commission-config"
+import type { TypeOption, DureeOption } from "@/hooks/commissions/use-commission-config"
 import { usePaliersCommission } from "@/hooks"
+import { CreateBaremeDialog } from "./create-bareme-dialog"
+import { EditBaremeDialog } from "./edit-bareme-dialog"
+import { ManagePaliersDialog } from "./manage-paliers-dialog"
 
 interface BaremesListProps {
   baremes: BaremeCommissionResponseDto[]
@@ -51,9 +56,13 @@ interface BaremesListProps {
   typesBase: TypeOption[]
   typesProduit: TypeOption[]
   typesApporteur: TypeOption[]
+  typesPalier: TypeOption[]
+  dureesReprise: DureeOption[]
   loading?: boolean
   loadingConfig?: boolean
   onViewDetails?: (bareme: BaremeCommissionResponseDto) => void
+  onBaremeCreated?: (bareme: BaremeCommissionResponseDto) => void
+  onBaremeUpdated?: (bareme: BaremeCommissionResponseDto) => void
 }
 
 const formatCurrency = (amount: number | null) => {
@@ -88,12 +97,20 @@ export function BaremesList({
   typesBase,
   typesProduit,
   typesApporteur,
+  typesPalier,
+  dureesReprise,
   loading,
   loadingConfig,
   onViewDetails,
+  onBaremeCreated,
+  onBaremeUpdated,
 }: BaremesListProps) {
   const [detailDialogOpen, setDetailDialogOpen] = React.useState(false)
   const [selectedBareme, setSelectedBareme] = React.useState<BaremeCommissionResponseDto | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false)
+  const [editingBareme, setEditingBareme] = React.useState<BaremeCommissionResponseDto | null>(null)
+  const [paliersDialogOpen, setPaliersDialogOpen] = React.useState(false)
+  const [paliersBareme, setPaliersBareme] = React.useState<BaremeCommissionResponseDto | null>(null)
 
   // Charger les paliers du barème sélectionné
   const { paliers, loading: loadingPaliers } = usePaliersCommission(
@@ -129,6 +146,16 @@ export function BaremesList({
     onViewDetails?.(bareme)
   }
 
+  const handleEditBareme = (bareme: BaremeCommissionResponseDto) => {
+    setEditingBareme(bareme)
+    setEditDialogOpen(true)
+  }
+
+  const handleManagePaliers = (bareme: BaremeCommissionResponseDto) => {
+    setPaliersBareme(bareme)
+    setPaliersDialogOpen(true)
+  }
+
   const columns: ColumnDef<BaremeCommissionResponseDto>[] = [
     {
       accessorKey: "code",
@@ -157,13 +184,20 @@ export function BaremesList({
         const type = row.original.typeCalcul
         const icon = typeCalculIcons[type] || null
         return (
-          <Badge variant="outline" className="gap-1">
-            {icon}
-            {getTypeCalculLabel(type)}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <Badge variant="outline" className="gap-1">
+              {icon}
+              {getTypeCalculLabel(type)}
+            </Badge>
+            {row.original.precomptee && (
+              <Badge variant="secondary" className="text-xs">
+                Précomptée
+              </Badge>
+            )}
+          </div>
         )
       },
-      size: 140,
+      size: 180,
     },
     {
       accessorKey: "baseCalcul",
@@ -293,6 +327,14 @@ export function BaremesList({
                 <Eye className="size-4 mr-2" />
                 Voir les détails
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleEditBareme(bareme)}>
+                <Pencil className="size-4 mr-2" />
+                Modifier
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleManagePaliers(bareme)}>
+                <Layers className="size-4 mr-2" />
+                Gérer les paliers
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )
@@ -311,6 +353,24 @@ export function BaremesList({
 
   return (
     <>
+      {/* Header avec bouton de création */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold">Barèmes de commission</h3>
+          <p className="text-sm text-muted-foreground">
+            {baremes.length} barème{baremes.length > 1 ? "s" : ""} configuré{baremes.length > 1 ? "s" : ""}
+          </p>
+        </div>
+        <CreateBaremeDialog
+          typesCalcul={typesCalcul}
+          typesBase={typesBase}
+          typesProduit={typesProduit}
+          typesApporteur={typesApporteur}
+          dureesReprise={dureesReprise}
+          onSuccess={onBaremeCreated}
+        />
+      </div>
+
       <DataTable
         columns={columns}
         data={baremes}
@@ -364,6 +424,14 @@ export function BaremesList({
                       <p>
                         <Badge variant={selectedBareme.actif ? "default" : "secondary"}>
                           {selectedBareme.actif ? "Actif" : "Inactif"}
+                        </Badge>
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Commission précomptée :</span>
+                      <p>
+                        <Badge variant={selectedBareme.precomptee ? "default" : "outline"}>
+                          {selectedBareme.precomptee ? "Oui" : "Non"}
                         </Badge>
                       </p>
                     </div>
@@ -527,6 +595,38 @@ export function BaremesList({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de modification du barème */}
+      {editingBareme && (
+        <EditBaremeDialog
+          open={editDialogOpen}
+          onOpenChange={(open) => {
+            setEditDialogOpen(open)
+            if (!open) setEditingBareme(null)
+          }}
+          bareme={editingBareme}
+          typesCalcul={typesCalcul}
+          typesBase={typesBase}
+          typesProduit={typesProduit}
+          typesApporteur={typesApporteur}
+          dureesReprise={dureesReprise}
+          onSuccess={onBaremeUpdated}
+        />
+      )}
+
+      {/* Dialog de gestion des paliers */}
+      {paliersBareme && (
+        <ManagePaliersDialog
+          open={paliersDialogOpen}
+          onOpenChange={(open) => {
+            setPaliersDialogOpen(open)
+            if (!open) setPaliersBareme(null)
+          }}
+          bareme={paliersBareme}
+          typesPalier={typesPalier}
+          typesProduit={typesProduit}
+        />
+      )}
     </>
   )
 }

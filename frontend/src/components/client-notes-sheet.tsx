@@ -14,17 +14,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Plus, Send } from "lucide-react"
+import type { EventItem } from "@/types/client"
 
-export type ClientHistoryItem = {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  date: string
-  ref?: string
-}
+// Re-export pour compatibilité
+export type ClientHistoryItem = EventItem
 
 type NoteItem = { id: string; date: string; author: string; content: string }
 
-export function ClientNotesSheet(props: { history?: ClientHistoryItem[] }) {
+export function ClientNotesSheet(props: { history?: EventItem[] }) {
   const { history: _history } = props
 
   const [notes, setNotes] = React.useState<NoteItem[]>([

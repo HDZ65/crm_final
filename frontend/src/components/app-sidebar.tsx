@@ -10,6 +10,7 @@ import {
   BarChart3,
   LogIn,
   AudioWaveform,
+  Package,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -27,7 +28,7 @@ import { useAuth, useCreateInvitation, useOrganisationInvitations, useCancelInvi
 import { useOrganisation } from "@/contexts/organisation-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamSwitcher } from "./team-switcher";
-import { OrganizationMembersDialog } from "./organization-members-dialog";
+import { OrganizationsDialog } from "./organizations-dialog";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 
 const NAV_ITEMS = [
@@ -42,9 +43,14 @@ const NAV_ITEMS = [
     icon: Users,
   },
   {
-    title: "Partenaires",
-    url: "/partenaires",
+    title: "Commerciaux",
+    url: "/commerciaux",
     icon: Briefcase,
+  },
+  {
+    title: "Catalogue",
+    url: "/catalogue",
+    icon: Package,
   },
   {
     title: "Expéditions",
@@ -66,8 +72,10 @@ const NAV_ITEMS = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { profile, ready, isAuthenticated, login, logout } = useAuth();
   const { organisations, activeOrganisation, setActiveOrganisation, refetch } = useOrganisation();
-  const [membersDialogOpen, setMembersDialogOpen] = React.useState(false);
+  const [manageDialogOpen, setManageDialogOpen] = React.useState(false);
   const [createOrgDialogOpen, setCreateOrgDialogOpen] = React.useState(false);
+  // Organisation sélectionnée dans la modale (peut être différente de l'active)
+  const [selectedOrgIdInDialog, setSelectedOrgIdInDialog] = React.useState<string | null>(null);
 
   // Hooks pour les invitations, membres et rôle
   const { createInvitation } = useCreateInvitation();
@@ -76,25 +84,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { members: apiMembers, fetchMembers } = useOrganisationMembers();
   const { roleCode, fetchMyRole } = useMyRole();
 
-  // Charger le rôle de l'utilisateur quand l'organisation change
-  const organisationId = activeOrganisation?.id;
+  // ID de l'organisation à afficher dans la modale
+  const dialogOrgId = selectedOrgIdInDialog || activeOrganisation?.id;
+
+  // Charger le rôle de l'utilisateur quand l'organisation dans la modale change
   React.useEffect(() => {
-    if (organisationId) {
-      fetchMyRole(organisationId);
+    if (dialogOrgId && manageDialogOpen) {
+      fetchMyRole(dialogOrgId);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organisationId]);
+  }, [dialogOrgId, manageDialogOpen]);
 
-  // Charger les invitations et membres quand le dialog s'ouvre
+  // Initialiser l'organisation sélectionnée quand le dialog s'ouvre
   React.useEffect(() => {
-    if (membersDialogOpen && organisationId) {
+    if (manageDialogOpen && activeOrganisation?.id) {
+      setSelectedOrgIdInDialog(activeOrganisation.id);
+    }
+  }, [manageDialogOpen, activeOrganisation?.id]);
+
+  // Charger les invitations et membres quand le dialog s'ouvre ou l'org change
+  React.useEffect(() => {
+    if (manageDialogOpen && dialogOrgId) {
       // Réinitialiser les IDs supprimés localement avant de recharger
       setDeletedInvitationIds([]);
-      fetchInvitations(organisationId);
-      fetchMembers(organisationId);
+      fetchInvitations(dialogOrgId);
+      fetchMembers(dialogOrgId);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [membersDialogOpen, organisationId]);
+  }, [manageDialogOpen, dialogOrgId]);
 
   // Données des équipes basées sur les organisations de l'utilisateur
   const teamsData = React.useMemo(() => {
@@ -150,16 +167,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Récupérer le rôle de l'utilisateur actuel depuis l'API
   const currentUserRole = React.useMemo(() => {
     if (!roleCode) return "member" as const;
-    // Mapper le code du rôle vers le type attendu
-    const validRoles = ["owner", "admin", "manager", "member", "viewer"] as const;
-    if (validRoles.includes(roleCode as typeof validRoles[number])) {
-      return roleCode as "owner" | "admin" | "member" | "viewer";
+    // Mapper le code du rôle vers le type attendu (seulement owner et member existent)
+    if (roleCode === "owner") {
+      return "owner" as const;
     }
     return "member" as const;
   }, [roleCode]);
 
-  // Seul le owner peut inviter des membres
-  const canManageMembers = currentUserRole === "owner";
 
   // Transformer les membres API en format attendu par le dialog
   const members = React.useMemo(() => {
@@ -177,11 +191,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(" ");
 
-        // Mapper le rôle depuis l'objet role ou le roleId
+        // Mapper le rôle depuis l'objet role ou le roleId (seulement owner et member)
         const roleNom = member.role?.nom?.toLowerCase() || "member";
-        const role = (["owner", "admin", "member", "viewer"].includes(roleNom)
-          ? roleNom
-          : "member") as "owner" | "admin" | "member" | "viewer";
+        const role = (roleNom === "owner" ? "owner" : "member") as "owner" | "member";
 
         return {
           id: member.id,
@@ -206,21 +218,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .map((inv) => ({
         id: inv.id,
         email: inv.email,
-        role: (inv.roleNom?.toLowerCase() || "member") as "owner" | "admin" | "member" | "viewer",
+        role: (inv.roleNom?.toLowerCase() === "owner" ? "owner" : "member") as "owner" | "member",
         invitedBy: profile?.fullName || profile?.email || "Vous",
         invitedAt: new Date(inv.expireAt),
       }));
   }, [invitations, profile, deletedInvitationIds]);
 
-  const handleInviteMember = async (email: string, role: string) => {
-    if (!activeOrganisation?.id) return;
+  // Handler pour le changement d'organisation dans la modale
+  const handleOrganizationSelectInDialog = React.useCallback((orgId: string) => {
+    setSelectedOrgIdInDialog(orgId);
+  }, []);
+
+  const handleInviteMember = async (email: string) => {
+    if (!dialogOrgId) return;
 
     // Appel API pour créer l'invitation
-    const invitation = await createInvitation(activeOrganisation.id, email);
+    const invitation = await createInvitation(dialogOrgId, email);
 
     // Rafraîchir la liste des invitations
     if (invitation) {
-      await fetchInvitations(activeOrganisation.id);
+      await fetchInvitations(dialogOrgId);
       // Retourner l'invitation pour afficher le lien
       return {
         id: invitation.id,
@@ -256,7 +273,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             teams={teamsData}
             activeTeam={activeTeamData}
             onTeamChange={handleTeamChange}
-            onManageMembers={canManageMembers ? () => setMembersDialogOpen(true) : undefined}
+            onManageOrganizations={() => setManageDialogOpen(true)}
             onCreateOrganization={() => setCreateOrgDialogOpen(true)}
           />
         </SidebarHeader>
@@ -288,22 +305,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
     </Sidebar>
 
-    {/* Dialog de gestion des membres */}
-    {canManageMembers && (
-      <OrganizationMembersDialog
-        open={membersDialogOpen}
-        onOpenChange={setMembersDialogOpen}
-        organizationId={activeOrganisation?.id || ""}
-        organizationName={activeTeamData?.name || ""}
-        currentUserRole={currentUserRole}
-        members={members}
-        pendingInvitations={pendingInvitations}
-        onInviteMember={handleInviteMember}
-        onUpdateMemberRole={handleUpdateMemberRole}
-        onRemoveMember={handleRemoveMember}
-        onCancelInvitation={handleCancelInvitation}
-      />
-    )}
+    {/* Dialog de gestion des organisations */}
+    <OrganizationsDialog
+      open={manageDialogOpen}
+      onOpenChange={setManageDialogOpen}
+      organizations={teamsData.map((t) => ({ id: t.id, name: t.name, plan: t.plan }))}
+      activeOrganizationId={dialogOrgId || ""}
+      onOrganizationSelect={handleOrganizationSelectInDialog}
+      onCreateOrganization={() => {
+        setManageDialogOpen(false);
+        setCreateOrgDialogOpen(true);
+      }}
+      currentUserRole={currentUserRole}
+      members={members}
+      pendingInvitations={pendingInvitations}
+      onInviteMember={handleInviteMember}
+      onUpdateMemberRole={handleUpdateMemberRole}
+      onRemoveMember={handleRemoveMember}
+      onCancelInvitation={handleCancelInvitation}
+    />
 
     {/* Dialog de création d'organisation */}
     <CreateOrganizationDialog

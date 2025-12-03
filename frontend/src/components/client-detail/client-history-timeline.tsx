@@ -34,7 +34,7 @@ export function ClientHistoryTimeline({
             {history.map((item, i) => (
               <li key={i} className="flex items-start gap-3 relative">
                 <div className="mt-0.5 rounded-full bg-sky-500 text-white p-2 shadow-sm z-10">
-                  <item.icon className="size-4" />
+                  {item.icon ? <item.icon className="size-4" /> : <Clock className="size-4" />}
                 </div>
                 {i < history.length - 1 && (
                   <div className="absolute left-[18px] top-10 w-0.5 h-[calc(100%+8px)] bg-sky-200" />

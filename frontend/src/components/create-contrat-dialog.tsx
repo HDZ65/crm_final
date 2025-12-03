@@ -110,7 +110,7 @@ export function CreateContratDialog({
 
     // Charger les données de référence
     const { clients, loading: loadingClients } = useClients()
-    const { societes, loading: loadingSocietes } = useGroupeEntites()
+    const { societes, loading: loadingSocietes } = useGroupeEntites(organisationId)
     const { apporteurs, loading: loadingApporteurs } = useApporteurs({ organisationId })
     const {
         conditionsPaiement,

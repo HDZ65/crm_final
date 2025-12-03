@@ -30,13 +30,13 @@ export function TeamSwitcher({
     teams,
     activeTeam,
     onTeamChange,
-    onManageMembers,
+    onManageOrganizations,
     onCreateOrganization,
 }: {
     teams: Team[]
     activeTeam: Team | null
     onTeamChange?: (team: Team) => void
-    onManageMembers?: () => void
+    onManageOrganizations?: () => void
     onCreateOrganization?: () => void
 }) {
     const { isMobile } = useSidebar()
@@ -90,12 +90,12 @@ export function TeamSwitcher({
                             </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
-                        {onManageMembers && (
-                            <DropdownMenuItem className="gap-2 p-2" onClick={onManageMembers}>
+                        {onManageOrganizations && (
+                            <DropdownMenuItem className="gap-2 p-2" onClick={onManageOrganizations}>
                                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                                     <Settings className="size-4" />
                                 </div>
-                                <div className="font-medium">Gérer les membres</div>
+                                <div className="font-medium">Gérer mes organisations</div>
                             </DropdownMenuItem>
                         )}
                         <DropdownMenuItem className="gap-2 p-2" onClick={onCreateOrganization}>

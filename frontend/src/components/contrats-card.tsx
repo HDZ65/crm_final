@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Folder, Maximize2, Download, Filter, SortAsc, TrendingUp, FileText, Loader2 } from "lucide-react"
+import { Folder, Maximize2, Download, Filter, SortAsc, TrendingUp, FileText } from "lucide-react"
 import { useCompanyStats } from "@/hooks/stats"
 import { useOrganisation } from "@/contexts/organisation-context"
 import {
@@ -34,15 +34,49 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
+// Calculer les dates de début/fin en fonction de la période
+function getPeriodDates(period: string): { dateDebut: string; dateFin: string } {
+  const now = new Date()
+  const dateFin = now.toISOString().split("T")[0]
+  let dateDebut: Date
+
+  switch (period) {
+    case "24h":
+      dateDebut = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      break
+    case "7j":
+      dateDebut = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      break
+    case "30j":
+      dateDebut = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      break
+    default:
+      dateDebut = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+  }
+
+  return {
+    dateDebut: dateDebut.toISOString().split("T")[0],
+    dateFin,
+  }
+}
+
 export function ContratsCard() {
   const { activeOrganisation } = useOrganisation()
-  const { tableData, loading, error } = useCompanyStats({
-    filters: activeOrganisation ? { organisationId: activeOrganisation.id } : undefined,
+  const [sort, setSort] = React.useState<"contracts-desc" | "contracts-asc" | "alpha-asc" | "alpha-desc">("contracts-desc")
+  const [period, setPeriod] = React.useState("30j")
+
+  const periodDates = React.useMemo(() => getPeriodDates(period), [period])
+
+  const { tableData, error } = useCompanyStats({
+    filters: activeOrganisation
+      ? {
+          organisationId: activeOrganisation.id,
+          dateDebut: periodDates.dateDebut,
+          dateFin: periodDates.dateFin,
+        }
+      : undefined,
     skip: !activeOrganisation,
   })
-
-  const [sort, setSort] = React.useState<"contracts-desc" | "contracts-asc" | "alpha-asc" | "alpha-desc">("contracts-desc")
-  const [period, setPeriod] = React.useState("24h")
 
   // Transformer les données API vers le format attendu
   const contractsData = React.useMemo(() => {
@@ -93,20 +127,12 @@ export function ContratsCard() {
     [filtered]
   )
 
-  // Loading state - but not if skipped (no organisation selected)
-  if (loading && !(!activeOrganisation)) {
-    return (
-      <Card className="h-full flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </Card>
-    )
-  }
-
-  // No organisation selected
+  // No organisation selected - show empty state
   if (!activeOrganisation) {
     return (
-      <Card className="h-full flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">Sélectionnez une organisation</p>
+      <Card className="h-full flex items-center justify-center flex-col gap-2">
+        <Folder className="h-8 w-8 text-muted-foreground/50" />
+        <p className="text-sm text-muted-foreground">Aucune donnée disponible</p>
       </Card>
     )
   }
@@ -114,8 +140,19 @@ export function ContratsCard() {
   // Error state
   if (error) {
     return (
-      <Card className="h-full flex items-center justify-center">
+      <Card className="h-full flex items-center justify-center flex-col gap-2">
+        <Folder className="h-8 w-8 text-muted-foreground/50" />
         <p className="text-sm text-muted-foreground">Erreur de chargement</p>
+      </Card>
+    )
+  }
+
+  // No data state
+  if (!tableData || tableData.length === 0) {
+    return (
+      <Card className="h-full flex items-center justify-center flex-col gap-2">
+        <Folder className="h-8 w-8 text-muted-foreground/50" />
+        <p className="text-sm text-muted-foreground">Aucune donnée disponible</p>
       </Card>
     )
   }

@@ -1,6 +1,7 @@
 import type { Product } from "@/types/product"
 
-export const mockProducts: Product[] = [
+// Mock data - actif and societeId are required by Product type but not used in mock display
+export const mockProducts = [
   // France Téléphone - Assistance et Services
   {
     id: "1",

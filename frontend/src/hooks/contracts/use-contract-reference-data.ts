@@ -3,48 +3,21 @@
 import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
-import type { AdresseDto } from "../clients/use-clients"
+import type { AdresseDto } from "@/types/client"
+import type {
+  ConditionPaiementDto,
+  ModeleDistributionDto,
+  StatutContratDto,
+  PartenaireDto,
+} from "@/types/contract"
 
-// Types pour les données de référence
-
-export interface ConditionPaiementDto {
-  id: string
-  code: string
-  nom: string
-  description?: string
-  delaiJours?: number
-  createdAt?: string
-  updatedAt?: string
-}
-
-export interface ModeleDistributionDto {
-  id: string
-  code: string
-  nom: string
-  description?: string
-  createdAt?: string
-  updatedAt?: string
-}
-
-export interface StatutContratDto {
-  id: string
-  code: string
-  nom: string
-  description?: string
-  ordreAffichage?: number
-  createdAt?: string
-  updatedAt?: string
-}
-
-export interface PartenaireDto {
-  id: string
-  nom: string
-  code?: string
-  type?: string
-  actif?: boolean
-  createdAt?: string
-  updatedAt?: string
-}
+// Re-export des types pour compatibilité avec les imports existants
+export type {
+  ConditionPaiementDto,
+  ModeleDistributionDto,
+  StatutContratDto,
+  PartenaireDto,
+} from "@/types/contract"
 
 // Cache global pour les données de référence
 const cache: {

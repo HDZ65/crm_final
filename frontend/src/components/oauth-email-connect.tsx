@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
+import type { OAuthProvider, OAuthConnectionStatus } from "@/types/email"
 
-export type OAuthProvider = "google" | "microsoft" | "microsoft365" | "icloud"
-
-export type OAuthConnectionStatus = "idle" | "connecting" | "success" | "error"
+// Re-export des types pour compatibilité avec les imports existants
+export type { OAuthProvider, OAuthConnectionStatus } from "@/types/email"
 
 interface OAuthEmailConnectProps {
   onConnect: (provider: OAuthProvider) => Promise<void>

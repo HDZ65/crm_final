@@ -10,14 +10,16 @@ import { DataTable } from "@/components/data-table-basic"
 import { columns } from "./columns"
 import { useClientSearchStore } from "@/stores/client-search-store"
 import { useClients, useGroupeEntites, useStatutClients } from "@/hooks/clients"
-import { User, Mail, Phone, Building2, CreditCard, Globe, Plus, Shield, Loader2 } from "lucide-react"
+import { useOrganisation } from "@/contexts/organisation-context"
+import { User, Mail, Phone, Building2, CreditCard, Globe, Plus, Shield } from "lucide-react"
 import { AddGroupeDialog } from "./add-groupe-dialog"
 import { GroupeTab } from "./groupe-tab"
 
 const normalizePhone = (value: string) => value.replace(/\D/g, "")
 
 export default function ClientsPage() {
-  const { groupes, loading: groupesLoading, refetch: refetchGroupes } = useGroupeEntites()
+  const { activeOrganisation } = useOrganisation()
+  const { groupes, refetch: refetchGroupes } = useGroupeEntites(activeOrganisation?.id)
   const { statuts } = useStatutClients()
   const [addGroupeOpen, setAddGroupeOpen] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState("tous")
@@ -28,7 +30,12 @@ export default function ClientsPage() {
 
   // Construire les filtres API à partir des filtres UI
   const apiFilters = React.useMemo(() => {
-    const result: { statutId?: string; societeId?: string } = {}
+    const result: { organisationId?: string; statutId?: string; societeId?: string } = {}
+
+    // Filtre par organisation (obligatoire pour multi-tenant)
+    if (activeOrganisation?.id) {
+      result.organisationId = activeOrganisation.id
+    }
 
     // Filtre par statut (utilise directement l'UUID)
     if (filters.clientType) {
@@ -41,10 +48,10 @@ export default function ClientsPage() {
     }
 
     return result
-  }, [filters.clientType, activeTab])
+  }, [activeOrganisation?.id, filters.clientType, activeTab])
 
   // Appel API avec les filtres
-  const { clients, loading, error } = useClients(apiFilters)
+  const { clients, error } = useClients(apiFilters)
 
   const handleFilterChange = (field: keyof typeof filters) => (
     e: React.ChangeEvent<HTMLInputElement>
@@ -184,11 +191,7 @@ export default function ClientsPage() {
                 />
               </TabsList>
 
-              {loading || groupesLoading ? (
-                <div className="flex-1 flex items-center justify-center py-12">
-                  <Loader2 className="size-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : error ? (
+              {error ? (
                 <div className="flex-1 flex items-center justify-center py-12">
                   <p className="text-destructive">Erreur lors du chargement des clients</p>
                 </div>

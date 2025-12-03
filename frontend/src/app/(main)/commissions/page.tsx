@@ -782,8 +782,12 @@ export default function CommissionsPage() {
                     typesBase={config.typesBase}
                     typesProduit={config.typesProduit}
                     typesApporteur={config.typesApporteur}
+                    typesPalier={config.typesPalier || []}
+                    dureesReprise={config.dureesReprise || []}
                     loading={loadingBaremes}
                     loadingConfig={loadingConfig}
+                    onBaremeCreated={() => refetchBaremes()}
+                    onBaremeUpdated={() => refetchBaremes()}
                   />
                 )}
               </CardContent>

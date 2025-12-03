@@ -1,25 +1,19 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import type { OAuthProvider } from "@/components/oauth-email-connect"
+import type {
+  OAuthProvider,
+  OAuthConfig,
+  ConnectedAccount,
+} from "@/types/email"
 
-export interface OAuthConfig {
-  google: {
-    clientId: string
-    redirectUri: string
-    scopes: string[]
-  }
-  microsoft: {
-    clientId: string
-    redirectUri: string
-    scopes: string[]
-  }
-  microsoft365: {
-    clientId: string
-    redirectUri: string
-    scopes: string[]
-  }
-}
+// Re-export des types pour compatibilité avec les imports existants
+export type {
+  OAuthProvider,
+  OAuthConfig,
+  OAuthProviderConfig,
+  ConnectedAccount,
+} from "@/types/email"
 
 // Configuration par défaut - À REMPLACER par vos vraies valeurs
 const DEFAULT_CONFIG: OAuthConfig = {
@@ -48,15 +42,6 @@ const DEFAULT_CONFIG: OAuthConfig = {
       "https://graph.microsoft.com/User.Read",
     ],
   },
-}
-
-export interface ConnectedAccount {
-  provider: OAuthProvider
-  email: string
-  accessToken: string
-  refreshToken?: string
-  expiresAt?: number
-  boiteMailId?: string
 }
 
 /**

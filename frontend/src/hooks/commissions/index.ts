@@ -68,6 +68,15 @@ export {
   useExportBordereauExcel,
   useDeselectionnerCommission,
   useCommissionMutations,
+  // Barèmes
+  useCreateBareme,
+  useUpdateBareme,
+  useToggleBaremeActif,
+  useDeleteBareme,
+  // Paliers
+  useCreatePalier,
+  useUpdatePalier,
+  useDeletePalier,
 } from './use-commission-mutations'
 
 export type {
@@ -75,6 +84,10 @@ export type {
   UpdateApporteurDto,
   AnnulerRepriseDto,
   ValiderBordereauDto,
+  CreateBaremeDto,
+  UpdateBaremeDto,
+  CreatePalierDto,
+  UpdatePalierDto,
 } from './use-commission-mutations'
 
 // Commission Config

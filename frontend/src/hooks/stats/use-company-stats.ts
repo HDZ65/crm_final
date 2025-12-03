@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import { api, ApiError } from "@/lib/api"
 import type {
   CompanyStatsResponse,
@@ -25,6 +25,18 @@ interface UseCompanyStatsReturn {
 
 const ENDPOINT = "/dashboard/stats-societes"
 
+function buildQueryString(f?: StatsFilters): string {
+  if (!f) return ""
+  const params = new URLSearchParams()
+  Object.entries(f).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      params.append(key, String(value))
+    }
+  })
+  const result = params.toString()
+  return result ? `?${result}` : ""
+}
+
 /**
  * Hook for fetching company statistics
  * GET /dashboard/stats-societes
@@ -35,20 +47,13 @@ export function useCompanyStats(
   const { filters, skip = false } = options
 
   const [data, setData] = useState<CompanyStatsResponse | null>(null)
-  const [loading, setLoading] = useState(!skip)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
 
-  const buildQueryString = useCallback((f?: StatsFilters): string => {
-    if (!f) return ""
-    const params = new URLSearchParams()
-    Object.entries(f).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        params.append(key, String(value))
-      }
-    })
-    const result = params.toString()
-    return result ? `?${result}` : ""
-  }, [])
+  // Stabilize filters reference using JSON serialization
+  const filtersKey = JSON.stringify(filters ?? {})
+  const hasFetched = useRef(false)
+  const lastFiltersKey = useRef<string>("")
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -68,13 +73,22 @@ export function useCompanyStats(
     } finally {
       setLoading(false)
     }
-  }, [filters, buildQueryString])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersKey])
 
   useEffect(() => {
-    if (!skip) {
+    if (skip) {
+      hasFetched.current = false
+      return
+    }
+
+    // Only fetch if filters changed or first mount
+    if (!hasFetched.current || lastFiltersKey.current !== filtersKey) {
+      hasFetched.current = true
+      lastFiltersKey.current = filtersKey
       fetchData()
     }
-  }, [fetchData, skip])
+  }, [fetchData, skip, filtersKey])
 
   // Transform API response to legacy format for table components
   const tableData: CompanyStats[] = data

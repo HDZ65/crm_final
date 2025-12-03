@@ -7,37 +7,29 @@ import type {
   ApporteurResponseDto,
   RepriseCommissionResponseDto,
   BordereauCommissionResponseDto,
+  BaremeCommissionResponseDto,
+  PalierCommissionResponseDto,
+  CreateApporteurDto,
+  UpdateApporteurDto,
+  AnnulerRepriseDto,
+  ValiderBordereauDto,
+  CreateBaremeDto,
+  UpdateBaremeDto,
+  CreatePalierDto,
+  UpdatePalierDto,
 } from "@/types/commission-dto"
 
-// ============================================================================
-// Types pour les mutations
-// ============================================================================
-
-export interface CreateApporteurDto {
-  organisationId: string
-  nom: string
-  prenom: string
-  typeApporteur: "vrp" | "manager" | "directeur" | "partenaire"
-  email?: string
-  telephone?: string
-}
-
-export interface UpdateApporteurDto {
-  nom?: string
-  prenom?: string
-  typeApporteur?: "vrp" | "manager" | "directeur" | "partenaire"
-  email?: string
-  telephone?: string
-  actif?: boolean
-}
-
-export interface AnnulerRepriseDto {
-  motif: string
-}
-
-export interface ValiderBordereauDto {
-  commentaire?: string
-}
+// Re-export des types pour compatibilité avec les imports existants
+export type {
+  CreateApporteurDto,
+  UpdateApporteurDto,
+  AnnulerRepriseDto,
+  ValiderBordereauDto,
+  CreateBaremeDto,
+  UpdateBaremeDto,
+  CreatePalierDto,
+  UpdatePalierDto,
+} from "@/types/commission-dto"
 
 // ============================================================================
 // Hooks pour les Apporteurs
@@ -365,5 +357,237 @@ export function useCommissionMutations() {
     exportBordereauPDF,
     exportBordereauExcel,
     deselectionnerCommission,
+  }
+}
+
+// ============================================================================
+// Hooks pour les Barèmes Commission
+// ============================================================================
+
+/**
+ * Hook pour créer un nouveau barème
+ * POST /baremes-commission
+ */
+export function useCreateBareme() {
+  const [bareme, setBareme] = useState<BaremeCommissionResponseDto | null>(null)
+  const { loading, error, execute } = useApi<BaremeCommissionResponseDto>()
+
+  const create = useCallback(
+    async (data: CreateBaremeDto) => {
+      try {
+        const response = await execute(() => api.post("/baremes-commission", data))
+        if (response) {
+          setBareme(response)
+        }
+        return response
+      } catch {
+        return null
+      }
+    },
+    [execute]
+  )
+
+  const reset = useCallback(() => {
+    setBareme(null)
+  }, [])
+
+  return {
+    bareme,
+    loading,
+    error,
+    create,
+    reset,
+  }
+}
+
+/**
+ * Hook pour mettre à jour un barème
+ * PATCH /baremes-commission/:id
+ */
+export function useUpdateBareme() {
+  const [bareme, setBareme] = useState<BaremeCommissionResponseDto | null>(null)
+  const { loading, error, execute } = useApi<BaremeCommissionResponseDto>()
+
+  const update = useCallback(
+    async (baremeId: string, data: UpdateBaremeDto) => {
+      try {
+        const response = await execute(() => api.patch(`/baremes-commission/${baremeId}`, data))
+        if (response) {
+          setBareme(response)
+        }
+        return response
+      } catch {
+        return null
+      }
+    },
+    [execute]
+  )
+
+  const reset = useCallback(() => {
+    setBareme(null)
+  }, [])
+
+  return {
+    bareme,
+    loading,
+    error,
+    update,
+    reset,
+  }
+}
+
+/**
+ * Hook pour activer/désactiver un barème
+ * PATCH /baremes-commission/:id/toggle-actif
+ */
+export function useToggleBaremeActif() {
+  const { loading, error, execute } = useApi<BaremeCommissionResponseDto>()
+
+  const toggle = useCallback(
+    async (baremeId: string, actif: boolean) => {
+      try {
+        const response = await execute(() =>
+          api.patch(`/baremes-commission/${baremeId}`, { actif })
+        )
+        return response
+      } catch {
+        return null
+      }
+    },
+    [execute]
+  )
+
+  return {
+    loading,
+    error,
+    toggle,
+  }
+}
+
+/**
+ * Hook pour supprimer un barème
+ * DELETE /baremes-commission/:id
+ */
+export function useDeleteBareme() {
+  const { loading, error, execute } = useApi<void>()
+
+  const deleteBareme = useCallback(
+    async (baremeId: string) => {
+      try {
+        await execute(() => api.delete(`/baremes-commission/${baremeId}`))
+        return true
+      } catch {
+        return false
+      }
+    },
+    [execute]
+  )
+
+  return {
+    loading,
+    error,
+    deleteBareme,
+  }
+}
+
+// ============================================================================
+// Hooks pour les Paliers Commission
+// ============================================================================
+
+/**
+ * Hook pour créer un nouveau palier
+ * POST /paliers-commission
+ */
+export function useCreatePalier() {
+  const [palier, setPalier] = useState<PalierCommissionResponseDto | null>(null)
+  const { loading, error, execute } = useApi<PalierCommissionResponseDto>()
+
+  const create = useCallback(
+    async (data: CreatePalierDto) => {
+      try {
+        const response = await execute(() => api.post("/paliers-commission", data))
+        if (response) {
+          setPalier(response)
+        }
+        return response
+      } catch {
+        return null
+      }
+    },
+    [execute]
+  )
+
+  const reset = useCallback(() => {
+    setPalier(null)
+  }, [])
+
+  return {
+    palier,
+    loading,
+    error,
+    create,
+    reset,
+  }
+}
+
+/**
+ * Hook pour mettre à jour un palier
+ * PATCH /paliers-commission/:id
+ */
+export function useUpdatePalier() {
+  const [palier, setPalier] = useState<PalierCommissionResponseDto | null>(null)
+  const { loading, error, execute } = useApi<PalierCommissionResponseDto>()
+
+  const update = useCallback(
+    async (palierId: string, data: UpdatePalierDto) => {
+      try {
+        const response = await execute(() => api.patch(`/paliers-commission/${palierId}`, data))
+        if (response) {
+          setPalier(response)
+        }
+        return response
+      } catch {
+        return null
+      }
+    },
+    [execute]
+  )
+
+  const reset = useCallback(() => {
+    setPalier(null)
+  }, [])
+
+  return {
+    palier,
+    loading,
+    error,
+    update,
+    reset,
+  }
+}
+
+/**
+ * Hook pour supprimer un palier
+ * DELETE /paliers-commission/:id
+ */
+export function useDeletePalier() {
+  const { loading, error, execute } = useApi<void>()
+
+  const deletePalier = useCallback(
+    async (palierId: string) => {
+      try {
+        await execute(() => api.delete(`/paliers-commission/${palierId}`))
+        return true
+      } catch {
+        return false
+      }
+    },
+    [execute]
+  )
+
+  return {
+    loading,
+    error,
+    deletePalier,
   }
 }

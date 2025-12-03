@@ -1,6 +1,6 @@
 "use client"
 
-import { CreditCard, MoreVertical, LogOut, Bell, CircleUser, Mail } from "lucide-react"
+import { MoreVertical, LogOut, Settings } from "lucide-react"
 import * as React from "react"
 
 import {
@@ -23,7 +23,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { EmailAccountSettingsDialog } from "@/components/email-account-settings-dialog"
+import { SettingsDialog } from "@/components/settings-dialog"
 
 type NavUserProps = {
   user: {
@@ -47,7 +47,7 @@ const getInitials = (name?: string | null) => {
 
 export function NavUser({ user, onLogout }: NavUserProps) {
   const { isMobile } = useSidebar()
-  const [emailSettingsOpen, setEmailSettingsOpen] = React.useState(false)
+  const [settingsOpen, setSettingsOpen] = React.useState(false)
 
   const name = user.name || "Utilisateur"
   const email = user.email || "Email non renseigné"
@@ -101,37 +101,21 @@ export function NavUser({ user, onLogout }: NavUserProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <CircleUser />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setEmailSettingsOpen(true)}>
-                <Mail />
-                Email Accounts
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                <Settings />
+                Paramètres
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onLogout?.()}>
               <LogOut />
-              Log out
+              Se déconnecter
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
 
-      {/* Dialog de gestion des comptes email OAuth */}
-      <EmailAccountSettingsDialog
-        open={emailSettingsOpen}
-        onOpenChange={setEmailSettingsOpen}
-      />
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </SidebarMenu>
   )
 }

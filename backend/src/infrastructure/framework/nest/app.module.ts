@@ -379,6 +379,32 @@ import { CreateGammeUseCase } from '../../../applications/usecase/gamme/create-g
 import { GetGammeUseCase } from '../../../applications/usecase/gamme/get-gamme.usecase';
 import { UpdateGammeUseCase } from '../../../applications/usecase/gamme/update-gamme.usecase';
 import { DeleteGammeUseCase } from '../../../applications/usecase/gamme/delete-gamme.usecase';
+// Tache
+import { TacheController } from './http/tache.controller';
+import { TacheEntity } from '../../db/entities/tache.entity';
+import { TypeOrmTacheRepository } from '../../repositories/typeorm-tache.repository';
+import { CreateTacheUseCase } from '../../../applications/usecase/tache/create-tache.usecase';
+import { GetTacheUseCase } from '../../../applications/usecase/tache/get-tache.usecase';
+import { UpdateTacheUseCase } from '../../../applications/usecase/tache/update-tache.usecase';
+import { DeleteTacheUseCase } from '../../../applications/usecase/tache/delete-tache.usecase';
+// RegleRelance
+import { RegleRelanceController } from './http/regle-relance.controller';
+import { RegleRelanceEntity } from '../../db/entities/regle-relance.entity';
+import { TypeOrmRegleRelanceRepository } from '../../repositories/typeorm-regle-relance.repository';
+import { CreateRegleRelanceUseCase } from '../../../applications/usecase/regle-relance/create-regle-relance.usecase';
+import { GetRegleRelanceUseCase } from '../../../applications/usecase/regle-relance/get-regle-relance.usecase';
+import { UpdateRegleRelanceUseCase } from '../../../applications/usecase/regle-relance/update-regle-relance.usecase';
+import { DeleteRegleRelanceUseCase } from '../../../applications/usecase/regle-relance/delete-regle-relance.usecase';
+// HistoriqueRelance
+import { HistoriqueRelanceController } from './http/historique-relance.controller';
+import { HistoriqueRelanceEntity } from '../../db/entities/historique-relance.entity';
+import { TypeOrmHistoriqueRelanceRepository } from '../../repositories/typeorm-historique-relance.repository';
+import { CreateHistoriqueRelanceUseCase } from '../../../applications/usecase/historique-relance/create-historique-relance.usecase';
+import { GetHistoriqueRelanceUseCase } from '../../../applications/usecase/historique-relance/get-historique-relance.usecase';
+import { DeleteHistoriqueRelanceUseCase } from '../../../applications/usecase/historique-relance/delete-historique-relance.usecase';
+// RelanceEngine
+import { RelanceEngineService } from '../../services/relance-engine.service';
+import { ScheduleModule } from '@nestjs/schedule';
 // </plop:imports>
 
 const TYPEORM_ENTITIES = [
@@ -438,10 +464,14 @@ const TYPEORM_ENTITIES = [
   BordereauCommissionEntity,
   LigneBordereauEntity,
   GammeEntity,
+  TacheEntity,
+  RegleRelanceEntity,
+  HistoriqueRelanceEntity,
 ];
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     KeycloakModule,
     SecurityModule,
     // <plop:modules>
@@ -520,6 +550,9 @@ const TYPEORM_ENTITIES = [
     LigneBordereauController,
     CommissionEngineController,
     GammeController,
+    TacheController,
+    RegleRelanceController,
+    HistoriqueRelanceController,
     // </plop:controllers>
   ],
   providers: [
@@ -918,6 +951,34 @@ const TYPEORM_ENTITIES = [
     GetGammeUseCase,
     UpdateGammeUseCase,
     DeleteGammeUseCase,
+    // Tache providers
+    {
+      provide: 'TacheRepositoryPort',
+      useClass: TypeOrmTacheRepository,
+    },
+    CreateTacheUseCase,
+    GetTacheUseCase,
+    UpdateTacheUseCase,
+    DeleteTacheUseCase,
+    // RegleRelance providers
+    {
+      provide: 'RegleRelanceRepositoryPort',
+      useClass: TypeOrmRegleRelanceRepository,
+    },
+    CreateRegleRelanceUseCase,
+    GetRegleRelanceUseCase,
+    UpdateRegleRelanceUseCase,
+    DeleteRegleRelanceUseCase,
+    // HistoriqueRelance providers
+    {
+      provide: 'HistoriqueRelanceRepositoryPort',
+      useClass: TypeOrmHistoriqueRelanceRepository,
+    },
+    CreateHistoriqueRelanceUseCase,
+    GetHistoriqueRelanceUseCase,
+    DeleteHistoriqueRelanceUseCase,
+    // RelanceEngine Service
+    RelanceEngineService,
   ],
 })
 export class AppModule {}

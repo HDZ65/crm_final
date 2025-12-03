@@ -61,6 +61,10 @@ export class BaremeCommissionEntity {
   })
   tauxPourcentage: number | null;
 
+  // Commission précomptée
+  @Column({ name: 'precomptee', type: 'boolean', default: false })
+  precomptee: boolean;
+
   // Récurrence
   @Column({ name: 'recurrence_active', type: 'boolean', default: false })
   recurrenceActive: boolean;
@@ -104,6 +108,51 @@ export class BaremeCommissionEntity {
 
   @Column({ name: 'societe_id', type: 'uuid', nullable: true })
   societeId: string | null;
+
+  @Column({
+    name: 'canal_vente',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  canalVente: string | null; // 'terrain' | 'web' | 'televente' | null
+
+  // Répartition (doit totaliser 100%)
+  @Column({
+    name: 'repartition_commercial',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 100,
+  })
+  repartitionCommercial: number;
+
+  @Column({
+    name: 'repartition_manager',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0,
+  })
+  repartitionManager: number;
+
+  @Column({
+    name: 'repartition_agence',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0,
+  })
+  repartitionAgence: number;
+
+  @Column({
+    name: 'repartition_entreprise',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0,
+  })
+  repartitionEntreprise: number;
 
   // Versioning
   @Column({ type: 'int', default: 1 })

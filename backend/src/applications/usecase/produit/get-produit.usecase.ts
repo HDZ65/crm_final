@@ -22,4 +22,12 @@ export class GetProduitUseCase {
   async executeAll(): Promise<ProduitEntity[]> {
     return await this.repository.findAll();
   }
+
+  async executeBySocieteId(societeId: string): Promise<ProduitEntity[]> {
+    return await this.repository.findBySocieteId(societeId);
+  }
+
+  async executeByGammeId(gammeId: string): Promise<ProduitEntity[]> {
+    return await this.repository.findByGammeId(gammeId);
+  }
 }

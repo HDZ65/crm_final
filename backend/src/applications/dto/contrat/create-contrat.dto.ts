@@ -1,4 +1,6 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsString, Matches } from 'class-validator';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class CreateContratDto {
   @IsString()
@@ -47,7 +49,7 @@ export class CreateContratDto {
   @IsNotEmpty()
   clientBaseId: string;
 
-  @IsUUID()
+  @Matches(UUID_REGEX, { message: 'societeId doit être un UUID valide' })
   @IsNotEmpty()
   societeId: string;
 

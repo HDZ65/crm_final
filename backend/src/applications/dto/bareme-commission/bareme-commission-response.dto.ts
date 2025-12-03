@@ -8,6 +8,7 @@ export class BaremeCommissionResponseDto {
   baseCalcul: string;
   montantFixe: number | null;
   tauxPourcentage: number | null;
+  precomptee: boolean;
   recurrenceActive: boolean;
   tauxRecurrence: number | null;
   dureeRecurrenceMois: number | null;
@@ -16,6 +17,11 @@ export class BaremeCommissionResponseDto {
   typeProduit: string | null;
   profilRemuneration: string | null;
   societeId: string | null;
+  canalVente: string | null;
+  repartitionCommercial: number;
+  repartitionManager: number;
+  repartitionAgence: number;
+  repartitionEntreprise: number;
   version: number;
   dateEffet: Date | string;
   dateFin: Date | string | null;

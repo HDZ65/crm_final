@@ -72,12 +72,18 @@ export class ClientBaseController {
 
   @Get()
   async findAll(
+    @Query('organisationId') organisationId?: string,
     @Query('statutId') statutId?: string,
     @Query('societeId') societeId?: string,
   ): Promise<ClientBaseWithContratsDto[]> {
     const queryBuilder = this.clientBaseRepository
       .createQueryBuilder('client')
       .leftJoinAndSelect('client.contrats', 'contrat');
+
+    // Filtre par organisation (obligatoire pour le multi-tenant)
+    if (organisationId) {
+      queryBuilder.andWhere('client.organisationId = :organisationId', { organisationId });
+    }
 
     // Filtre par statut client
     if (statutId) {

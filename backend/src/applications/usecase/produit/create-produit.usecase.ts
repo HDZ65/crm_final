@@ -12,15 +12,21 @@ export class CreateProduitUseCase {
 
   async execute(dto: CreateProduitDto): Promise<ProduitEntity> {
     const entity = new ProduitEntity({
+      societeId: dto.societeId,
+      gammeId: dto.gammeId,
       sku: dto.sku,
       nom: dto.nom,
       description: dto.description,
+      categorie: dto.categorie,
+      type: dto.type,
+      prix: dto.prix,
+      tauxTVA: dto.tauxTVA ?? 20,
+      devise: dto.devise || 'EUR',
+      fournisseur: dto.fournisseur,
       actif: dto.actif,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-
-    // Add business logic here (if needed)
 
     return await this.repository.create(entity);
   }

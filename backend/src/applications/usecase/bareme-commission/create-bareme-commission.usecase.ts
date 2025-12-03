@@ -20,6 +20,7 @@ export class CreateBaremeCommissionUseCase {
       baseCalcul: dto.baseCalcul as any,
       montantFixe: dto.montantFixe ?? null,
       tauxPourcentage: dto.tauxPourcentage ?? null,
+      precomptee: dto.precomptee ?? false,
       recurrenceActive: dto.recurrenceActive ?? false,
       tauxRecurrence: dto.tauxRecurrence ?? null,
       dureeRecurrenceMois: dto.dureeRecurrenceMois ?? null,

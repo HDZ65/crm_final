@@ -181,7 +181,7 @@ export class GetAlertesUseCase {
         dateDebut: dateDebut.toISOString(),
         dateFin: dateFin.toISOString(),
       })
-      .andWhere('facture.statutId IN (SELECT id FROM statut_factures WHERE LOWER(nom) LIKE :statutImpaye)', {
+      .andWhere('facture.statutId IN (SELECT id FROM statutfactures WHERE LOWER(nom) LIKE :statutImpaye)', {
         statutImpaye: '%impay%',
       })
       .getRawOne();
@@ -223,7 +223,7 @@ export class GetAlertesUseCase {
     const queryBuilder = this.contratRepository.createQueryBuilder('contrat');
     queryBuilder.where('contrat.createdAt <= :fivesDaysAgo', { fivesDaysAgo: fivesDaysAgo.toISOString() });
     // Note: Adapter selon votre logique de statut "en attente de validation"
-    queryBuilder.andWhere('contrat.statutId IN (SELECT id FROM statut_contrats WHERE LOWER(nom) LIKE :statutAttente)', {
+    queryBuilder.andWhere('contrat.statutId IN (SELECT id FROM statutcontrats WHERE LOWER(nom) LIKE :statutAttente)', {
       statutAttente: '%attente%',
     });
 

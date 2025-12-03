@@ -26,12 +26,41 @@ export class UpdateProduitUseCase {
     if (dto.description !== undefined) {
       existing.description = dto.description;
     }
+    if (dto.categorie !== undefined) {
+      existing.categorie = dto.categorie;
+    }
+    if (dto.type !== undefined) {
+      existing.type = dto.type;
+    }
+    if (dto.prix !== undefined) {
+      existing.prix = dto.prix;
+    }
+    if (dto.tauxTVA !== undefined) {
+      existing.tauxTVA = dto.tauxTVA;
+    }
+    if (dto.devise !== undefined) {
+      existing.devise = dto.devise;
+    }
+    if (dto.fournisseur !== undefined) {
+      existing.fournisseur = dto.fournisseur;
+    }
     if (dto.actif !== undefined) {
       existing.actif = dto.actif;
     }
+    // Champs promotion
+    if (dto.promotionActive !== undefined) {
+      existing.promotionActive = dto.promotionActive;
+    }
+    if (dto.promotionPourcentage !== undefined) {
+      existing.promotionPourcentage = dto.promotionPourcentage;
+    }
+    if (dto.promotionDateDebut !== undefined) {
+      existing.promotionDateDebut = dto.promotionDateDebut;
+    }
+    if (dto.promotionDateFin !== undefined) {
+      existing.promotionDateFin = dto.promotionDateFin;
+    }
     existing.updatedAt = new Date();
-
-    // Add business logic here (if needed)
 
     return await this.repository.update(id, existing);
   }

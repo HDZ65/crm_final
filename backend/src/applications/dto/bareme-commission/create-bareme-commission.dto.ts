@@ -37,6 +37,10 @@ export class CreateBaremeCommissionDto {
 
   @IsOptional()
   @IsBoolean()
+  precomptee?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   recurrenceActive?: boolean;
 
   @IsOptional()
@@ -66,6 +70,27 @@ export class CreateBaremeCommissionDto {
   @IsOptional()
   @IsString()
   societeId?: string | null;
+
+  @IsOptional()
+  @IsIn(['terrain', 'web', 'televente'])
+  canalVente?: string | null;
+
+  // Répartition (doit totaliser 100%)
+  @IsOptional()
+  @IsNumber()
+  repartitionCommercial?: number;
+
+  @IsOptional()
+  @IsNumber()
+  repartitionManager?: number;
+
+  @IsOptional()
+  @IsNumber()
+  repartitionAgence?: number;
+
+  @IsOptional()
+  @IsNumber()
+  repartitionEntreprise?: number;
 
   @IsDateString()
   dateEffet: string;

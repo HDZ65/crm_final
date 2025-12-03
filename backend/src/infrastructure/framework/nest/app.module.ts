@@ -371,6 +371,14 @@ import { DeleteLigneBordereauUseCase } from '../../../applications/usecase/ligne
 // Commission Engine
 import { CommissionEngineController } from './http/commission-engine.controller';
 import { CommissionEngineService } from '../../services/commission-engine.service';
+// Gamme
+import { GammeController } from './http/gamme.controller';
+import { GammeEntity } from '../../db/entities/gamme.entity';
+import { TypeOrmGammeRepository } from '../../repositories/typeorm-gamme.repository';
+import { CreateGammeUseCase } from '../../../applications/usecase/gamme/create-gamme.usecase';
+import { GetGammeUseCase } from '../../../applications/usecase/gamme/get-gamme.usecase';
+import { UpdateGammeUseCase } from '../../../applications/usecase/gamme/update-gamme.usecase';
+import { DeleteGammeUseCase } from '../../../applications/usecase/gamme/delete-gamme.usecase';
 // </plop:imports>
 
 const TYPEORM_ENTITIES = [
@@ -429,6 +437,7 @@ const TYPEORM_ENTITIES = [
   RepriseCommissionEntity,
   BordereauCommissionEntity,
   LigneBordereauEntity,
+  GammeEntity,
 ];
 @Module({
   imports: [
@@ -510,6 +519,7 @@ const TYPEORM_ENTITIES = [
     BordereauCommissionController,
     LigneBordereauController,
     CommissionEngineController,
+    GammeController,
     // </plop:controllers>
   ],
   providers: [
@@ -899,6 +909,15 @@ const TYPEORM_ENTITIES = [
     DeleteLigneBordereauUseCase,
     // Commission Engine Service
     CommissionEngineService,
+    // Gamme providers
+    {
+      provide: 'GammeRepositoryPort',
+      useClass: TypeOrmGammeRepository,
+    },
+    CreateGammeUseCase,
+    GetGammeUseCase,
+    UpdateGammeUseCase,
+    DeleteGammeUseCase,
   ],
 })
 export class AppModule {}

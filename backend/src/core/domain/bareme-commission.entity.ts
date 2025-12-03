@@ -4,6 +4,7 @@ export type TypeCalcul = 'fixe' | 'pourcentage' | 'palier' | 'mixte';
 export type BaseCalcul = 'cotisation_ht' | 'ca_ht' | 'forfait';
 export type TypeProduit = 'telecom' | 'assurance_sante' | 'prevoyance' | 'energie' | 'conciergerie' | 'mondial_tv' | 'depanssur' | 'autre';
 export type ProfilRemuneration = 'vrp' | 'manager' | 'directeur' | 'partenaire';
+export type CanalVente = 'terrain' | 'web' | 'televente';
 
 export class BaremeCommissionEntity extends BaseEntity {
   organisationId: string;
@@ -19,6 +20,9 @@ export class BaremeCommissionEntity extends BaseEntity {
   montantFixe: number | null; // Pour type fixe
   tauxPourcentage: number | null; // Pour type pourcentage (ex: 5.5 = 5.5%)
 
+  // Commission précomptée
+  precomptee: boolean; // true = commission versée en une fois à la signature
+
   // Récurrence
   recurrenceActive: boolean;
   tauxRecurrence: number | null; // % sur récurrence
@@ -32,6 +36,13 @@ export class BaremeCommissionEntity extends BaseEntity {
   typeProduit: TypeProduit | null; // null = tous produits
   profilRemuneration: ProfilRemuneration | null; // null = tous profils
   societeId: string | null; // null = toutes sociétés
+  canalVente: CanalVente | null; // null = tous canaux
+
+  // Répartition (doit totaliser 100%)
+  repartitionCommercial: number; // % pour le commercial
+  repartitionManager: number; // % pour le manager
+  repartitionAgence: number; // % pour l'agence
+  repartitionEntreprise: number; // % pour l'entreprise
 
   // Versioning
   version: number;

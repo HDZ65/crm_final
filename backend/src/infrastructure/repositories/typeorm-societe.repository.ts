@@ -23,6 +23,11 @@ export class TypeOrmSocieteRepository implements SocieteRepositoryPort {
     return entities.map((entity) => SocieteMapper.toDomain(entity));
   }
 
+  async findByOrganisationId(organisationId: string): Promise<SocieteDomainEntity[]> {
+    const entities = await this.repository.find({ where: { organisationId } });
+    return entities.map((entity) => SocieteMapper.toDomain(entity));
+  }
+
   async create(entity: SocieteDomainEntity): Promise<SocieteDomainEntity> {
     const ormEntity = this.repository.create(
       SocieteMapper.toPersistence(entity),

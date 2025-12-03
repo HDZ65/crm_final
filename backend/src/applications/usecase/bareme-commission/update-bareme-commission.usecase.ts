@@ -29,6 +29,7 @@ export class UpdateBaremeCommissionUseCase {
     if (dto.montantFixe !== undefined) existing.montantFixe = dto.montantFixe;
     if (dto.tauxPourcentage !== undefined)
       existing.tauxPourcentage = dto.tauxPourcentage;
+    if (dto.precomptee !== undefined) existing.precomptee = dto.precomptee;
     if (dto.recurrenceActive !== undefined)
       existing.recurrenceActive = dto.recurrenceActive;
     if (dto.tauxRecurrence !== undefined)

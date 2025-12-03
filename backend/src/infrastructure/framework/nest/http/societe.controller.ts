@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -37,8 +38,10 @@ export class SocieteController {
 
   @Roles({ roles: ['realm:user'] })
   @Get()
-  async findAll(): Promise<SocieteDto[]> {
-    const entities = await this.getUseCase.executeAll();
+  async findAll(@Query('organisationId') organisationId?: string): Promise<SocieteDto[]> {
+    const entities = organisationId
+      ? await this.getUseCase.executeByOrganisation(organisationId)
+      : await this.getUseCase.executeAll();
     return entities.map((entity) => new SocieteDto(entity));
   }
 
@@ -48,8 +51,10 @@ export class SocieteController {
    */
   @Roles({ roles: ['realm:user'] })
   @Get('groupes')
-  async findAllAsGroupes(): Promise<SocieteDto[]> {
-    const entities = await this.getUseCase.executeAll();
+  async findAllAsGroupes(@Query('organisationId') organisationId?: string): Promise<SocieteDto[]> {
+    const entities = organisationId
+      ? await this.getUseCase.executeByOrganisation(organisationId)
+      : await this.getUseCase.executeAll();
     return entities.map((entity) => new SocieteDto(entity));
   }
 

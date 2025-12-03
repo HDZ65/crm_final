@@ -22,4 +22,8 @@ export class GetSocieteUseCase {
   async executeAll(): Promise<SocieteEntity[]> {
     return await this.repository.findAll();
   }
+
+  async executeByOrganisation(organisationId: string): Promise<SocieteEntity[]> {
+    return await this.repository.findByOrganisationId(organisationId);
+  }
 }

@@ -5,6 +5,7 @@ import { ContratEntity } from '../../../infrastructure/db/entities/contrat.entit
 import { FactureEntity } from '../../../infrastructure/db/entities/facture.entity';
 import { SocieteEntity } from '../../../infrastructure/db/entities/societe.entity';
 import { ClientBaseEntity } from '../../../infrastructure/db/entities/client-base.entity';
+import { StatutContratEntity } from '../../../infrastructure/db/entities/statut-contrat.entity';
 import { StatsSocietesResponseDto, StatsSocieteDto } from '../../dto/dashboard/stats-societe.dto';
 import { DashboardFiltersDto } from '../../dto/dashboard/dashboard-filters.dto';
 
@@ -19,6 +20,8 @@ export class GetStatsSocietesUseCase {
     private readonly societeRepository: Repository<SocieteEntity>,
     @InjectRepository(ClientBaseEntity)
     private readonly clientRepository: Repository<ClientBaseEntity>,
+    @InjectRepository(StatutContratEntity)
+    private readonly statutContratRepository: Repository<StatutContratEntity>,
   ) {}
 
   async execute(filters: DashboardFiltersDto): Promise<StatsSocietesResponseDto> {
@@ -98,10 +101,11 @@ export class GetStatsSocietesUseCase {
   }
 
   private async countContratsActifs(societeId: string, dateDebut: Date, dateFin: Date): Promise<number> {
+    // Compter les contrats signés dans la période spécifiée
     return this.contratRepository.createQueryBuilder('contrat')
       .where('contrat.societeId = :societeId', { societeId })
-      .andWhere('contrat.dateDebut <= :dateFin', { dateFin: dateFin.toISOString() })
-      .andWhere('(contrat.dateFin >= :dateDebut OR contrat.dateFin IS NULL)', { dateDebut: dateDebut.toISOString() })
+      .andWhere('contrat.dateSignature >= :dateDebut', { dateDebut: dateDebut.toISOString().split('T')[0] })
+      .andWhere('contrat.dateSignature <= :dateFin', { dateFin: dateFin.toISOString().split('T')[0] })
       .getCount();
   }
 

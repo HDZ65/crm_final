@@ -19,7 +19,23 @@ export class TypeOrmProduitRepository implements ProduitRepositoryPort {
   }
 
   async findAll(): Promise<ProduitDomainEntity[]> {
-    const entities = await this.repository.find();
+    const entities = await this.repository.find({ order: { nom: 'ASC' } });
+    return entities.map((entity) => ProduitMapper.toDomain(entity));
+  }
+
+  async findBySocieteId(societeId: string): Promise<ProduitDomainEntity[]> {
+    const entities = await this.repository.find({
+      where: { societeId },
+      order: { nom: 'ASC' },
+    });
+    return entities.map((entity) => ProduitMapper.toDomain(entity));
+  }
+
+  async findByGammeId(gammeId: string): Promise<ProduitDomainEntity[]> {
+    const entities = await this.repository.find({
+      where: { gammeId },
+      order: { nom: 'ASC' },
+    });
     return entities.map((entity) => ProduitMapper.toDomain(entity));
   }
 

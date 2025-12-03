@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -37,8 +38,18 @@ export class ProduitController {
 
   @Roles({ roles: ['realm:user'] })
   @Get()
-  async findAll(): Promise<ProduitDto[]> {
-    const entities = await this.getUseCase.executeAll();
+  async findAll(
+    @Query('societeId') societeId?: string,
+    @Query('gammeId') gammeId?: string,
+  ): Promise<ProduitDto[]> {
+    let entities;
+    if (gammeId) {
+      entities = await this.getUseCase.executeByGammeId(gammeId);
+    } else if (societeId) {
+      entities = await this.getUseCase.executeBySocieteId(societeId);
+    } else {
+      entities = await this.getUseCase.executeAll();
+    }
     return entities.map((e) => new ProduitDto(e));
   }
 

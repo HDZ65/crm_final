@@ -11,6 +11,7 @@ import {
   LogIn,
   AudioWaveform,
   Package,
+  ListTodo,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -61,6 +62,11 @@ const NAV_ITEMS = [
     title: "Commissions",
     url: "/commissions",
     icon: DollarSign,
+  },
+  {
+    title: "Tâches",
+    url: "/taches",
+    icon: ListTodo,
   },
   {
     title: "Statistiques",

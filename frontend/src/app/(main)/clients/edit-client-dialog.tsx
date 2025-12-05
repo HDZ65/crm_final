@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { useApiPut } from "@/hooks/core"
-import { useStatutClients } from "@/hooks/clients/use-statut-clients"
+import { useStatutClients, type StatutClientDto } from "@/hooks/clients/use-statut-clients"
 
 const editClientSchema = z.object({
   typeClient: z.string().min(1, "Le type de client est requis"),
@@ -54,7 +54,7 @@ interface UpdateClientDto {
   dateNaissance?: string | null
   telephone: string
   email?: string
-  statutId: string
+  statut?: string
 }
 
 interface EditClientDialogProps {
@@ -78,7 +78,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
   const defaultNom = nameParts[0] || ""
   const defaultPrenom = nameParts.slice(1).join(" ") || ""
 
-  const { statuts, loading: statutsLoading } = useStatutClients()
+  const { statuts, loading: statutsLoading, getCode } = useStatutClients()
   const { execute: updateClient, loading } = useApiPut<unknown, UpdateClientDto>("/clientbases")
 
   const form = useForm<EditClientFormValues>({
@@ -115,10 +115,10 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
         typeClient: data.typeClient,
         nom: data.nom,
         prenom: data.prenom,
-        dateNaissance: data.dateNaissance || null, // Keep as ISO8601 string
+        dateNaissance: data.dateNaissance || undefined, // undefined si vide pour éviter erreur ISO8601
         telephone: data.telephone,
         email: data.email || undefined,
-        statutId: data.statutId,
+        statut: data.statutId ? getCode(data.statutId) : undefined, // Convertir UUID en code
       }
       await updateClient(payload, client.id)
       toast.success("Client modifié avec succès")

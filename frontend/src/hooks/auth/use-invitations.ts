@@ -257,3 +257,40 @@ export function useMyRole() {
     fetchMyRole,
   }
 }
+
+export interface AvailableRole {
+  id: string
+  code: string
+  nom: string
+}
+
+/**
+ * Hook pour récupérer les rôles disponibles pour une organisation
+ */
+export function useAvailableRoles() {
+  const [roles, setRoles] = useState<AvailableRole[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
+  const fetchRoles = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await api.get<AvailableRole[]>('/roles/organisation-roles')
+      setRoles(result)
+      return result
+    } catch (err) {
+      setError(err as Error)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  return {
+    roles,
+    isLoading: loading,
+    error,
+    fetchRoles,
+  }
+}

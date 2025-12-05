@@ -7,13 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/data-table-basic"
-import { columns } from "./columns"
+import { createColumns } from "./columns"
 import { useClientSearchStore } from "@/stores/client-search-store"
 import { useClients, useGroupeEntites, useStatutClients } from "@/hooks/clients"
 import { useOrganisation } from "@/contexts/organisation-context"
-import { User, Mail, Phone, Building2, CreditCard, Globe, Plus, Shield } from "lucide-react"
+import { User, Mail, Phone, Building2, CreditCard, Globe, Plus, Shield, UserPlus, RefreshCw, Upload, Download } from "lucide-react"
 import { AddGroupeDialog } from "./add-groupe-dialog"
 import { GroupeTab } from "./groupe-tab"
+import { CreateClientDialog } from "@/components/create-client-dialog"
+import { ImportClientDialog } from "@/components/clients/import-client-dialog"
+import { toast } from "sonner"
 
 const normalizePhone = (value: string) => value.replace(/\D/g, "")
 
@@ -22,7 +25,10 @@ export default function ClientsPage() {
   const { groupes, refetch: refetchGroupes } = useGroupeEntites(activeOrganisation?.id)
   const { statuts } = useStatutClients()
   const [addGroupeOpen, setAddGroupeOpen] = React.useState(false)
+  const [createClientOpen, setCreateClientOpen] = React.useState(false)
+  const [importDialogOpen, setImportDialogOpen] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState("tous")
+  const [isRefreshing, setIsRefreshing] = React.useState(false)
 
   // Utiliser les sélecteurs Zustand pour optimiser les re-renders
   const filters = useClientSearchStore((state) => state.filters)
@@ -51,7 +57,10 @@ export default function ClientsPage() {
   }, [activeOrganisation?.id, filters.clientType, activeTab])
 
   // Appel API avec les filtres
-  const { clients, error } = useClients(apiFilters)
+  const { clients, error, refetch } = useClients(apiFilters)
+
+  // Créer les colonnes avec le callback de suppression
+  const columns = React.useMemo(() => createColumns(refetch), [refetch])
 
   const handleFilterChange = (field: keyof typeof filters) => (
     e: React.ChangeEvent<HTMLInputElement>
@@ -76,6 +85,41 @@ export default function ClientsPage() {
     })
   }, [filters.name, filters.email, filters.phone, clients])
 
+  const handleRefresh = React.useCallback(async () => {
+    setIsRefreshing(true)
+    await refetch()
+    setIsRefreshing(false)
+    toast.success("Liste actualisée")
+  }, [refetch])
+
+  const handleExport = React.useCallback(() => {
+    if (filteredClients.length === 0) {
+      toast.error("Aucune donnée à exporter")
+      return
+    }
+
+    const headers = ["Nom", "Email", "Téléphone", "Statut"]
+    const rows = filteredClients.map((c) => [
+      c.name,
+      c.email || "",
+      c.phone || "",
+      c.status,
+    ])
+
+    const csvContent = [
+      headers.join(";"),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(";")),
+    ].join("\n")
+
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `clients_${new Date().toISOString().split("T")[0]}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+    toast.success("Export CSV téléchargé")
+  }, [filteredClients])
 
   return (
     <main className="flex flex-1 flex-col gap-4 min-h-0">
@@ -169,34 +213,56 @@ export default function ClientsPage() {
 
         <Card className="flex-1 min-h-0 bg-blue-100 border-blue-200 flex flex-col">
           <CardContent className="flex-1 min-h-0 flex flex-col">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0">
-              <TabsList className="bg-white">
-                <TabsTrigger value="tous">Tous les clients</TabsTrigger>
-                {groupes.map((groupe) => (
-                  <GroupeTab
-                    key={groupe.id}
-                    id={groupe.id}
-                    nom={groupe.nom}
-                    onDeleted={refetchGroupes}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-4">
+                <TabsList className="bg-white">
+                  <TabsTrigger value="tous">Tous les clients</TabsTrigger>
+                  {groupes.map((groupe) => (
+                    <GroupeTab
+                      key={groupe.id}
+                      id={groupe.id}
+                      nom={groupe.nom}
+                      onDeleted={refetchGroupes}
+                    />
+                  ))}
+                  <Button variant="ghost" className="gap-2" onClick={() => setAddGroupeOpen(true)}>
+                    <Plus className="size-4" />
+                    Ajouter un groupe
+                  </Button>
+                  <AddGroupeDialog
+                    open={addGroupeOpen}
+                    onOpenChange={setAddGroupeOpen}
+                    onSuccess={refetchGroupes}
                   />
-                ))}
-                <Button variant="ghost" className="gap-2" onClick={() => setAddGroupeOpen(true)}>
-                  <Plus className="size-4" />
-                  Ajouter un groupe
-                </Button>
-                <AddGroupeDialog
-                  open={addGroupeOpen}
-                  onOpenChange={setAddGroupeOpen}
-                  onSuccess={refetchGroupes}
-                />
-              </TabsList>
+                </TabsList>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-muted-foreground">
+                    {filteredClients.length} client{filteredClients.length > 1 ? "s" : ""}
+                  </span>
+                  <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
+                    <RefreshCw className={`size-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                  </Button>
+                  <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+                    <Upload className="mr-2 size-4" />
+                    Importer
+                  </Button>
+                  <Button variant="outline" onClick={handleExport}>
+                    <Download className="mr-2 size-4" />
+                    Exporter
+                  </Button>
+                  <Button onClick={() => setCreateClientOpen(true)} className="gap-2">
+                    <UserPlus className="size-4" />
+                    Nouveau client
+                  </Button>
+                </div>
+              </div>
 
               {error ? (
                 <div className="flex-1 flex items-center justify-center py-12">
                   <p className="text-destructive">Erreur lors du chargement des clients</p>
                 </div>
               ) : (
-                <div className="flex-1 min-h-0 mt-6">
+                <div className="flex-1 min-h-0">
                   <DataTable
                     columns={columns}
                     data={filteredClients}
@@ -208,6 +274,18 @@ export default function ClientsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <CreateClientDialog
+        open={createClientOpen}
+        onOpenChange={setCreateClientOpen}
+        onSuccess={refetch}
+      />
+
+      <ImportClientDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={refetch}
+      />
     </main>
   )
 }

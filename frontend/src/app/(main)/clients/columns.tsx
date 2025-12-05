@@ -40,7 +40,7 @@ export type ClientRow = {
   phone?: string
 }
 
-export const columns: ColumnDef<ClientRow>[] = [
+export const createColumns = (onDeleted?: () => void): ColumnDef<ClientRow>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -163,11 +163,11 @@ export const columns: ColumnDef<ClientRow>[] = [
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => <ActionsCell client={row.original} />,
+    cell: ({ row }) => <ActionsCell client={row.original} onDeleted={onDeleted} />,
   },
 ]
 
-function ActionsCell({ client }: { client: ClientRow }) {
+function ActionsCell({ client, onDeleted }: { client: ClientRow; onDeleted?: () => void }) {
   const [editDialogOpen, setEditDialogOpen] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
 
@@ -177,7 +177,7 @@ function ActionsCell({ client }: { client: ClientRow }) {
         description: `${client.name} a été supprimé avec succès.`,
       })
       setDeleteDialogOpen(false)
-      window.location.reload()
+      onDeleted?.()
     },
     onError: (error) => {
       toast.error("Erreur lors de la suppression", {
@@ -201,9 +201,18 @@ function ActionsCell({ client }: { client: ClientRow }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(client.id)}>
+          <DropdownMenuItem onClick={() => {
+            const info = `${client.name}
+Statut: ${client.status}
+Email: ${client.email || "-"}
+Téléphone: ${client.phone || "-"}
+Contrats: ${client.contracts.length > 0 ? client.contracts.join(", ") : "-"}
+Créé: ${client.createdAgo}`
+            navigator.clipboard.writeText(info)
+            toast.success("Informations copiées")
+          }}>
             <Copy className="size-4 mr-2" />
-            Copier l&apos;ID
+            Copier les infos
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
@@ -226,6 +235,7 @@ function ActionsCell({ client }: { client: ClientRow }) {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         client={client}
+        onSuccess={onDeleted}
       />
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

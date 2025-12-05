@@ -3,6 +3,9 @@ import { ClientBaseEntity } from '../../../core/domain/client-base.entity';
 import type { ClientBaseRepositoryPort } from '../../../core/port/client-base-repository.port';
 import { CreateClientBaseDto } from '../../dto/client-base/create-client-base.dto';
 
+const capitalize = (str: string) =>
+  str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
 @Injectable()
 export class CreateClientBaseUseCase {
   constructor(
@@ -13,7 +16,7 @@ export class CreateClientBaseUseCase {
   async execute(dto: CreateClientBaseDto): Promise<ClientBaseEntity> {
     const existingClient = await this.repository.findByPhoneAndName(
       dto.telephone,
-      dto.nom,
+      capitalize(dto.nom),
     );
     if (existingClient) {
       throw new ConflictException(
@@ -28,14 +31,15 @@ export class CreateClientBaseUseCase {
     const entity = new ClientBaseEntity({
       organisationId: dto.organisationId,
       typeClient: dto.typeClient,
-      nom: dto.nom,
-      prenom: dto.prenom,
+      nom: capitalize(dto.nom),
+      prenom: capitalize(dto.prenom),
       dateNaissance: dto.dateNaissance ? new Date(dto.dateNaissance) : null,
       compteCode: dto.compteCode,
       partenaireId: dto.partenaireId,
       dateCreation: new Date(dto.dateCreation),
       telephone: dto.telephone,
-      statutId: dto.statutId,
+      email: dto.email,
+      statut: dto.statut,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

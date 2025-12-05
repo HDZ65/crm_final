@@ -4,113 +4,83 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
-import { LigneContratEntity } from './ligne-contrat.entity';
-import { HistoriqueStatutContratEntity } from './historique-statut-contrat.entity';
 import { OrganisationEntity } from './organisation.entity';
 import { ClientBaseEntity } from './client-base.entity';
-import { ConditionPaiementEntity } from './condition-paiement.entity';
-import { ModeleDistributionEntity } from './modele-distribution.entity';
-import { FacturationParEntity } from './facturation-par.entity';
-import { ClientPartenaireEntity } from './client-partenaire.entity';
-import { UtilisateurEntity } from './utilisateur.entity';
-import { AdresseEntity } from './adresse.entity';
-import { SocieteEntity } from './societe.entity';
+import { ApporteurEntity } from './apporteur.entity';
+import { LigneContratEntity } from './ligne-contrat.entity';
+import { HistoriqueStatutContratEntity } from './historique-statut-contrat.entity';
 
 @Entity('contrats')
 export class ContratEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   organisationId: string;
 
   @ManyToOne(() => OrganisationEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organisationId' })
   organisation: OrganisationEntity;
 
-  @Column()
-  referenceExterne: string;
+  @Column({ type: 'varchar' })
+  reference: string;
 
-  @Column()
-  dateSignature: string;
+  @Column({ type: 'varchar', nullable: true })
+  titre: string;
 
-  @Column()
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  type: string;
+
+  @Column({ type: 'varchar' })
+  statut: string;
+
+  @Column({ type: 'varchar' })
   dateDebut: string;
 
-  @Column()
+  @Column({ type: 'varchar', nullable: true })
   dateFin: string;
 
-  @Column()
-  statutId: string;
+  @Column({ type: 'varchar', nullable: true })
+  dateSignature: string;
 
-  @Column()
-  autoRenouvellement: boolean;
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  montant: number;
 
-  @Column()
-  joursPreavis: number;
+  @Column({ type: 'varchar', nullable: true, default: 'EUR' })
+  devise: string;
 
-  @Column()
-  conditionPaiementId: string;
+  @Column({ type: 'varchar', nullable: true })
+  frequenceFacturation: string;
 
-  @ManyToOne(() => ConditionPaiementEntity)
-  @JoinColumn({ name: 'conditionPaiementId' })
-  conditionPaiement: ConditionPaiementEntity;
+  @Column({ type: 'varchar', nullable: true })
+  documentUrl: string;
 
-  @Column()
-  modeleDistributionId: string;
+  @Column({ type: 'varchar', nullable: true })
+  fournisseur: string;
 
-  @ManyToOne(() => ModeleDistributionEntity)
-  @JoinColumn({ name: 'modeleDistributionId' })
-  modeleDistribution: ModeleDistributionEntity;
-
-  @Column()
-  facturationParId: string;
-
-  @ManyToOne(() => FacturationParEntity)
-  @JoinColumn({ name: 'facturationParId' })
-  facturationPar: FacturationParEntity;
-
-  @Column()
-  clientBaseId: string;
+  @Column({ type: 'varchar' })
+  clientId: string;
 
   @ManyToOne(() => ClientBaseEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'clientBaseId' })
+  @JoinColumn({ name: 'clientId' })
   client: ClientBaseEntity;
 
-  @Column()
-  societeId: string;
-
-  @ManyToOne(() => SocieteEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'societeId' })
-  societe: SocieteEntity;
-
-  @Column()
+  @Column({ type: 'varchar' })
   commercialId: string;
 
-  @ManyToOne(() => UtilisateurEntity)
+  @ManyToOne(() => ApporteurEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'commercialId' })
-  commercial: UtilisateurEntity;
+  commercial: ApporteurEntity;
 
-  @Column()
-  clientPartenaireId: string;
-
-  @ManyToOne(() => ClientPartenaireEntity)
-  @JoinColumn({ name: 'clientPartenaireId' })
-  clientPartenaire: ClientPartenaireEntity;
-
-  @Column()
-  adresseFacturationId: string;
-
-  @ManyToOne(() => AdresseEntity)
-  @JoinColumn({ name: 'adresseFacturationId' })
-  adresseFacturation: AdresseEntity;
-
-  @Column()
-  dateFinRetractation: string;
+  @Column({ type: 'text', nullable: true })
+  notes: string;
 
   @OneToMany(() => LigneContratEntity, (ligneContrat) => ligneContrat.contrat)
   lignesContrat: LigneContratEntity[];

@@ -15,6 +15,7 @@ export interface OrganisationMemberUtilisateur {
 
 export interface OrganisationMemberRole {
   id: string
+  code: string
   nom: string
 }
 

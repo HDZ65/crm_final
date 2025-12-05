@@ -26,18 +26,21 @@ import {
   CreditCard,
   FileText,
 } from "lucide-react"
+import { EditableField } from "./editable-field"
 import type { ClientInfo, ComplianceInfo, BankInfo } from "@/types/client"
 
 interface ClientInfoAccordionProps {
   clientInfo: ClientInfo
   compliance: ComplianceInfo
   bank: BankInfo
+  onUpdateField?: (field: string, value: string) => Promise<void>
 }
 
 export function ClientInfoAccordion({
   clientInfo,
   compliance,
   bank,
+  onUpdateField,
 }: ClientInfoAccordionProps) {
   const getVariantClass = (variant: "success" | "warning" | "error") => {
     switch (variant) {
@@ -106,53 +109,57 @@ export function ClientInfoAccordion({
                 </span>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="text-slate-800 grid grid-cols-1 gap-4 text-sm">
-                  <div className="flex items-start gap-2">
-                    <User className="size-4 text-slate-500 mt-0.5" />
-                    <div className="flex-1">
-                      <div className="text-slate-600 text-xs">Nom</div>
-                      <div className="font-medium">{clientInfo.name}</div>
-                    </div>
+                <div className="text-slate-800 grid grid-cols-1 gap-2 text-sm">
+                  <div className="grid grid-cols-2 gap-2">
+                    <EditableField
+                      value={clientInfo.nom}
+                      label="Nom"
+                      icon={<User className="size-4" />}
+                      onSave={(value) => onUpdateField?.("nom", value) ?? Promise.resolve()}
+                    />
+                    <EditableField
+                      value={clientInfo.prenom}
+                      label="Prénom"
+                      icon={<User className="size-4" />}
+                      onSave={(value) => onUpdateField?.("prenom", value) ?? Promise.resolve()}
+                    />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-start gap-2">
-                      <Briefcase className="size-4 text-slate-500 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-slate-600 text-xs">Profession</div>
-                        <div className="font-medium truncate">{clientInfo.profession}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Phone className="size-4 text-slate-500 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-slate-600 text-xs">Téléphone</div>
-                        <div className="font-medium truncate">{clientInfo.phone}</div>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <EditableField
+                      value={clientInfo.profession}
+                      label="Profession"
+                      icon={<Briefcase className="size-4" />}
+                      onSave={(value) => onUpdateField?.("profession", value) ?? Promise.resolve()}
+                    />
+                    <EditableField
+                      value={clientInfo.phone}
+                      label="Téléphone"
+                      icon={<Phone className="size-4" />}
+                      inputType="tel"
+                      onSave={(value) => onUpdateField?.("telephone", value) ?? Promise.resolve()}
+                    />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-start gap-2">
-                      <Calendar className="size-4 text-slate-500 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-slate-600 text-xs">Date de naissance</div>
-                        <div className="font-medium truncate">{clientInfo.birthDate}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Mail className="size-4 text-slate-500 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-slate-600 text-xs">Email</div>
-                        <div className="font-medium truncate">{clientInfo.email}</div>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <EditableField
+                      value={clientInfo.birthDate}
+                      label="Date de naissance"
+                      icon={<Calendar className="size-4" />}
+                      onSave={(value) => onUpdateField?.("dateNaissance", value) ?? Promise.resolve()}
+                    />
+                    <EditableField
+                      value={clientInfo.email}
+                      label="Email"
+                      icon={<Mail className="size-4" />}
+                      inputType="email"
+                      onSave={(value) => onUpdateField?.("email", value) ?? Promise.resolve()}
+                    />
                   </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="size-4 text-slate-500 mt-0.5" />
-                    <div className="flex-1">
-                      <div className="text-slate-600 text-xs">Adresse de facturation</div>
-                      <div className="font-medium">{clientInfo.address}</div>
-                    </div>
-                  </div>
+                  <EditableField
+                    value={clientInfo.address}
+                    label="Adresse de facturation"
+                    icon={<MapPin className="size-4" />}
+                    onSave={(value) => onUpdateField?.("adresse", value) ?? Promise.resolve()}
+                  />
                 </div>
               </AccordionContent>
             </AccordionItem>

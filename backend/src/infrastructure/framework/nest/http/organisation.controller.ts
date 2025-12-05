@@ -25,6 +25,9 @@ import { UpdateOrganisationDto } from '../../../../applications/dto/organisation
 import { OrganisationResponseDto } from '../../../../applications/dto/organisation/organisation-response.dto';
 import { AuthSyncService } from '../../../services/auth-sync.service';
 import { RoleEntity } from '../../../db/entities/role.entity';
+import { MembreOrganisationEntity } from '../../../db/entities/membre-compte.entity';
+import { NotificationEntity } from '../../../db/entities/notification.entity';
+import { NotificationGateway } from '../../../websocket/notification.gateway';
 
 @ApiTags('Organisations')
 @ApiBearerAuth()
@@ -41,6 +44,11 @@ export class OrganisationController {
     private readonly authSyncService: AuthSyncService,
     @InjectRepository(RoleEntity)
     private readonly roleRepository: Repository<RoleEntity>,
+    @InjectRepository(MembreOrganisationEntity)
+    private readonly membreRepository: Repository<MembreOrganisationEntity>,
+    @InjectRepository(NotificationEntity)
+    private readonly notificationRepository: Repository<NotificationEntity>,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   /**
@@ -227,7 +235,44 @@ export class OrganisationController {
     @Param('id') id: string,
     @Body() dto: UpdateOrganisationDto,
   ): Promise<OrganisationResponseDto> {
+    // Récupérer l'ancien nom avant mise à jour
+    const oldOrg = await this.getUseCase.findById(id);
+    const oldName = oldOrg?.nom;
+
+    // Effectuer la mise à jour
     const entity = await this.updateUseCase.execute(id, dto);
+
+    // Si le nom a changé, notifier tous les membres
+    if (dto.nom && oldName && dto.nom !== oldName) {
+      try {
+        // Récupérer tous les membres actifs de l'organisation
+        const members = await this.membreRepository.find({
+          where: { organisationId: id, etat: 'actif' },
+        });
+
+        // Notifier chaque membre
+        for (const member of members) {
+
+          const notification = this.notificationRepository.create({
+            utilisateurId: member.utilisateurId,
+            titre: 'Organisation renommée',
+            message: `L'organisation "${oldName}" a été renommée en "${dto.nom}"`,
+            type: 'info',
+            lu: false,
+            lienUrl: '/',
+          });
+
+          const savedNotification = await this.notificationRepository.save(notification);
+          this.notificationGateway.notifyNewNotification(member.utilisateurId, savedNotification);
+        }
+
+        this.logger.log(`Notifications envoyées pour le renommage de l'organisation: ${oldName} -> ${dto.nom}`);
+      } catch (error) {
+        this.logger.error(`Erreur lors de l'envoi des notifications de renommage: ${error.message}`, error.stack);
+        // Ne pas faire échouer la mise à jour si les notifications échouent
+      }
+    }
+
     return new OrganisationResponseDto(entity);
   }
 

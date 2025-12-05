@@ -82,7 +82,7 @@ export function useUpdateApporteur() {
   const update = useCallback(
     async (apporteurId: string, data: UpdateApporteurDto) => {
       try {
-        const response = await execute(() => api.patch(`/apporteurs/${apporteurId}`, data))
+        const response = await execute(() => api.put(`/apporteurs/${apporteurId}`, data))
         if (response) {
           setApporteur(response)
         }
@@ -104,6 +104,32 @@ export function useUpdateApporteur() {
     error,
     update,
     reset,
+  }
+}
+
+/**
+ * Hook pour supprimer un apporteur
+ * DELETE /apporteurs/:id
+ */
+export function useDeleteApporteur() {
+  const { loading, error, execute } = useApi<void>()
+
+  const deleteApporteur = useCallback(
+    async (apporteurId: string) => {
+      try {
+        await execute(() => api.delete(`/apporteurs/${apporteurId}`))
+        return true
+      } catch {
+        return false
+      }
+    },
+    [execute]
+  )
+
+  return {
+    loading,
+    error,
+    deleteApporteur,
   }
 }
 

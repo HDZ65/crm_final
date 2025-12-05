@@ -89,7 +89,7 @@ export class TypeOrmCommissionRepository implements CommissionRepositoryPort {
       contrat: entity.contrat
         ? {
             id: entity.contrat.id,
-            referenceExterne: entity.contrat.referenceExterne,
+            referenceExterne: entity.contrat.reference,
             clientNom: entity.contrat.client
               ? `${entity.contrat.client.prenom} ${entity.contrat.client.nom}`
               : null,
@@ -140,7 +140,7 @@ export class TypeOrmCommissionRepository implements CommissionRepositoryPort {
       contrat: entity.contrat
         ? {
             id: entity.contrat.id,
-            referenceExterne: entity.contrat.referenceExterne,
+            referenceExterne: entity.contrat.reference,
             clientNom: entity.contrat.client
               ? `${entity.contrat.client.prenom} ${entity.contrat.client.nom}`
               : null,

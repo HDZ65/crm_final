@@ -98,8 +98,8 @@ export class ContractOrchestrationService implements ContractOrchestrationPort {
       throw new Error(`Contrat avec ID "${contractId}" non trouvé.`);
     }
 
-    // Mettre à jour le statutId du contrat
-    contrat.statutId = targetStatut.id;
+    // Mettre à jour le statut du contrat
+    contrat.statut = statutCode;
     contrat.updatedAt = new Date();
 
     await this.contratRepository.update(contractId, contrat);

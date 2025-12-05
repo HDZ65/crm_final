@@ -5,8 +5,15 @@ import Link from "next/link"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ClientNotesSheet } from "@/components/client-notes-sheet"
-import { ArrowLeft, Plus, Mail, MapPin, Calendar } from "lucide-react"
+import { ArrowLeft, Plus, Mail, MapPin, Calendar, MoreHorizontal, Pencil, Trash2, Copy, Building2 } from "lucide-react"
 import type { EventItem } from "@/types/client"
 
 interface ClientHeaderProps {
@@ -17,6 +24,10 @@ interface ClientHeaderProps {
   allHistory: EventItem[]
   onEmailClick: () => void
   onNewContractClick: () => void
+  onEditClick?: () => void
+  onDeleteClick?: () => void
+  onCopyClick?: () => void
+  onAddSocieteClick?: () => void
 }
 
 export function ClientHeader({
@@ -27,6 +38,10 @@ export function ClientHeader({
   allHistory,
   onEmailClick,
   onNewContractClick,
+  onEditClick,
+  onDeleteClick,
+  onCopyClick,
+  onAddSocieteClick,
 }: ClientHeaderProps) {
   return (
     <Card className="bg-sidebar text-sidebar-foreground">
@@ -67,6 +82,32 @@ export function ClientHeader({
               <Plus className="size-4" />
               Nouveau contrat
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="size-8">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onEditClick}>
+                  <Pencil className="size-4 mr-2" />
+                  Modifier
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onCopyClick}>
+                  <Copy className="size-4 mr-2" />
+                  Copier les infos
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onAddSocieteClick}>
+                  <Building2 className="size-4 mr-2" />
+                  Ajouter une société
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onDeleteClick} className="text-destructive focus:text-destructive">
+                  <Trash2 className="size-4 mr-2" />
+                  Supprimer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardHeader>

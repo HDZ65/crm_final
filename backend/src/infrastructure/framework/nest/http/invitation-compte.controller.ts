@@ -25,7 +25,10 @@ import { InvitationCompteEntity } from '../../../db/entities/invitation-compte.e
 import { MembreOrganisationEntity } from '../../../db/entities/membre-compte.entity';
 import { OrganisationEntity } from '../../../db/entities/organisation.entity';
 import { RoleEntity } from '../../../db/entities/role.entity';
+import { NotificationEntity } from '../../../db/entities/notification.entity';
+import { UtilisateurEntity } from '../../../db/entities/utilisateur.entity';
 import { AuthSyncService } from '../../../services/auth-sync.service';
+import { NotificationGateway } from '../../../websocket/notification.gateway';
 
 // DTO pour créer une invitation
 class CreateInvitationDto {
@@ -99,7 +102,12 @@ export class InvitationCompteController {
     private readonly organisationRepository: Repository<OrganisationEntity>,
     @InjectRepository(RoleEntity)
     private readonly roleRepository: Repository<RoleEntity>,
+    @InjectRepository(NotificationEntity)
+    private readonly notificationRepository: Repository<NotificationEntity>,
+    @InjectRepository(UtilisateurEntity)
+    private readonly utilisateurRepository: Repository<UtilisateurEntity>,
     private readonly authSyncService: AuthSyncService,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   /**
@@ -216,6 +224,31 @@ export class InvitationCompteController {
     // 10. Construire l'URL d'invitation
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const inviteUrl = `${baseUrl}/invite/${token}`;
+
+    // 11. Envoyer une notification à l'utilisateur invité s'il a déjà un compte
+    const invitedUser = await this.utilisateurRepository.findOne({
+      where: { email: dto.emailInvite },
+    });
+
+    if (invitedUser) {
+      const notification = this.notificationRepository.create({
+        organisationId: organisationId,
+        utilisateurId: invitedUser.id,
+        type: 'invitation_received',
+        titre: 'Invitation reçue',
+        message: `Vous avez été invité à rejoindre l'organisation ${organisation.nom}`,
+        lienUrl: inviteUrl,
+        metadata: {
+          invitationId: saved.id,
+          organisationNom: organisation.nom,
+          token: token,
+        },
+      });
+      const savedNotification = await this.notificationRepository.save(notification);
+      // Émettre la notification en temps réel via WebSocket
+      this.notificationGateway.notifyNewNotification(invitedUser.id, savedNotification);
+      this.logger.log(`Notification envoyée à ${dto.emailInvite}`);
+    }
 
     return {
       id: saved.id,
@@ -364,6 +397,39 @@ export class InvitationCompteController {
     // 8. Marquer l'invitation comme acceptée
     invitation.etat = 'accepted';
     await this.invitationRepository.save(invitation);
+
+    // 9. Envoyer une notification à tous les membres de l'organisation (sauf le nouveau)
+    const existingMembers = await this.membreRepository.find({
+      where: {
+        organisationId: invitation.organisationId,
+        etat: 'actif',
+      },
+    });
+
+    const userName = [dbUser.prenom, dbUser.nom].filter(Boolean).join(' ') || dbUser.email;
+
+    for (const member of existingMembers) {
+      // Ne pas notifier le nouveau membre lui-même
+      if (member.utilisateurId === dbUser.id) continue;
+
+      const notification = this.notificationRepository.create({
+        organisationId: invitation.organisationId,
+        utilisateurId: member.utilisateurId,
+        type: 'member_joined',
+        titre: 'Nouveau membre',
+        message: `${userName} a rejoint l'organisation ${invitation.organisation.nom}`,
+        metadata: {
+          membreId: savedMembre.id,
+          utilisateurId: dbUser.id,
+          email: dbUser.email,
+        },
+      });
+      const savedNotification = await this.notificationRepository.save(notification);
+      // Émettre la notification en temps réel via WebSocket
+      this.notificationGateway.notifyNewNotification(member.utilisateurId, savedNotification);
+    }
+
+    this.logger.log(`Notifications envoyées aux ${existingMembers.length - 1} membre(s) de l'organisation`);
 
     return {
       success: true,

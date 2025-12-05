@@ -17,14 +17,23 @@ export class UpdateContratUseCase {
       throw new NotFoundException('Contrat with id ' + id + ' not found');
     }
 
-    if (dto.referenceExterne !== undefined) {
-      existing.referenceExterne = dto.referenceExterne;
-    }
     if (dto.organisationId !== undefined) {
       existing.organisationId = dto.organisationId;
     }
-    if (dto.dateSignature !== undefined) {
-      existing.dateSignature = dto.dateSignature;
+    if (dto.reference !== undefined) {
+      existing.reference = dto.reference;
+    }
+    if (dto.titre !== undefined) {
+      existing.titre = dto.titre;
+    }
+    if (dto.description !== undefined) {
+      existing.description = dto.description;
+    }
+    if (dto.type !== undefined) {
+      existing.type = dto.type;
+    }
+    if (dto.statut !== undefined) {
+      existing.statut = dto.statut;
     }
     if (dto.dateDebut !== undefined) {
       existing.dateDebut = dto.dateDebut;
@@ -32,42 +41,34 @@ export class UpdateContratUseCase {
     if (dto.dateFin !== undefined) {
       existing.dateFin = dto.dateFin;
     }
-    if (dto.statutId !== undefined) {
-      existing.statutId = dto.statutId;
+    if (dto.dateSignature !== undefined) {
+      existing.dateSignature = dto.dateSignature;
     }
-    if (dto.autoRenouvellement !== undefined) {
-      existing.autoRenouvellement = dto.autoRenouvellement;
+    if (dto.montant !== undefined) {
+      existing.montant = dto.montant;
     }
-    if (dto.joursPreavis !== undefined) {
-      existing.joursPreavis = dto.joursPreavis;
+    if (dto.devise !== undefined) {
+      existing.devise = dto.devise;
     }
-    if (dto.conditionPaiementId !== undefined) {
-      existing.conditionPaiementId = dto.conditionPaiementId;
+    if (dto.frequenceFacturation !== undefined) {
+      existing.frequenceFacturation = dto.frequenceFacturation;
     }
-    if (dto.modeleDistributionId !== undefined) {
-      existing.modeleDistributionId = dto.modeleDistributionId;
+    if (dto.documentUrl !== undefined) {
+      existing.documentUrl = dto.documentUrl;
     }
-    if (dto.facturationParId !== undefined) {
-      existing.facturationParId = dto.facturationParId;
+    if (dto.fournisseur !== undefined) {
+      existing.fournisseur = dto.fournisseur;
     }
-    if (dto.clientBaseId !== undefined) {
-      existing.clientBaseId = dto.clientBaseId;
+    if (dto.clientId !== undefined) {
+      existing.clientId = dto.clientId;
     }
     if (dto.commercialId !== undefined) {
       existing.commercialId = dto.commercialId;
     }
-    if (dto.clientPartenaireId !== undefined) {
-      existing.clientPartenaireId = dto.clientPartenaireId;
-    }
-    if (dto.adresseFacturationId !== undefined) {
-      existing.adresseFacturationId = dto.adresseFacturationId;
-    }
-    if (dto.dateFinRetractation !== undefined) {
-      existing.dateFinRetractation = dto.dateFinRetractation;
+    if (dto.notes !== undefined) {
+      existing.notes = dto.notes;
     }
     existing.updatedAt = new Date();
-
-    // Add business logic here (if needed)
 
     return await this.repository.update(id, existing);
   }

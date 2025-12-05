@@ -33,9 +33,9 @@ async function initDefaultRole() {
     // Créer le rôle "owner"
     console.log('📝 Création du rôle "owner"...');
     const insertQuery = `
-      INSERT INTO roles (nom, "createdAt", "updatedAt")
-      VALUES ('owner', NOW(), NOW())
-      RETURNING id, nom
+      INSERT INTO roles (code, nom, description, "createdAt", "updatedAt")
+      VALUES ('owner', 'owner', 'Propriétaire de l''organisation', NOW(), NOW())
+      RETURNING id, code, nom
     `;
     const insertResult = await client.query(insertQuery);
 

@@ -1,71 +1,77 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsString, Matches } from 'class-validator';
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateContratDto {
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
   organisationId: string;
 
   @IsString()
   @IsNotEmpty()
-  referenceExterne: string;
+  reference: string;
+
+  @IsString()
+  @IsOptional()
+  titre?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
 
   @IsString()
   @IsNotEmpty()
-  dateSignature: string;
+  statut: string;
 
   @IsString()
   @IsNotEmpty()
   dateDebut: string;
 
   @IsString()
-  @IsNotEmpty()
-  dateFin: string;
+  @IsOptional()
+  dateFin?: string;
 
   @IsString()
-  @IsNotEmpty()
-  statutId: string;
+  @IsOptional()
+  dateSignature?: string;
 
-  @IsBoolean()
-  autoRenouvellement: boolean;
-
-  @IsInt()
-  joursPreavis: number;
+  @IsNumber()
+  @IsOptional()
+  montant?: number;
 
   @IsString()
-  @IsNotEmpty()
-  conditionPaiementId: string;
+  @IsOptional()
+  devise?: string;
 
   @IsString()
-  @IsNotEmpty()
-  modeleDistributionId: string;
+  @IsOptional()
+  frequenceFacturation?: string;
 
   @IsString()
-  @IsNotEmpty()
-  facturationParId: string;
+  @IsOptional()
+  documentUrl?: string;
 
   @IsString()
-  @IsNotEmpty()
-  clientBaseId: string;
+  @IsOptional()
+  fournisseur?: string;
 
-  @Matches(UUID_REGEX, { message: 'societeId doit être un UUID valide' })
+  @IsUUID()
   @IsNotEmpty()
-  societeId: string;
+  clientId: string;
 
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
   commercialId: string;
 
   @IsString()
-  @IsNotEmpty()
-  clientPartenaireId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  adresseFacturationId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  dateFinRetractation: string;
+  @IsOptional()
+  notes?: string;
 }

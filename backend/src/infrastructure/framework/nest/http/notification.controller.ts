@@ -12,6 +12,8 @@ import {
   Headers,
 } from '@nestjs/common';
 import { Roles, Public } from 'nest-keycloak-connect';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateNotificationDto } from '../../../../applications/dto/notification/create-notification.dto';
 import { UpdateNotificationDto } from '../../../../applications/dto/notification/update-notification.dto';
 import { NotificationDto, NotificationCountDto } from '../../../../applications/dto/notification/notification-response.dto';
@@ -19,6 +21,7 @@ import { CreateNotificationUseCase } from '../../../../applications/usecase/noti
 import { GetNotificationUseCase } from '../../../../applications/usecase/notification/get-notification.usecase';
 import { UpdateNotificationUseCase } from '../../../../applications/usecase/notification/update-notification.usecase';
 import { DeleteNotificationUseCase } from '../../../../applications/usecase/notification/delete-notification.usecase';
+import { UtilisateurEntity } from '../../../db/entities/utilisateur.entity';
 
 @Controller('notifications')
 export class NotificationController {
@@ -27,9 +30,11 @@ export class NotificationController {
     private readonly getUseCase: GetNotificationUseCase,
     private readonly updateUseCase: UpdateNotificationUseCase,
     private readonly deleteUseCase: DeleteNotificationUseCase,
+    @InjectRepository(UtilisateurEntity)
+    private readonly utilisateurRepository: Repository<UtilisateurEntity>,
   ) {}
 
-  private extractUserIdFromToken(authHeader: string): string | null {
+  private extractKeycloakIdFromToken(authHeader: string): string | null {
     try {
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return null;
@@ -40,6 +45,17 @@ export class NotificationController {
     } catch {
       return null;
     }
+  }
+
+  private async getUserIdFromToken(authHeader: string): Promise<string | null> {
+    const keycloakId = this.extractKeycloakIdFromToken(authHeader);
+    if (!keycloakId) return null;
+
+    const user = await this.utilisateurRepository.findOne({
+      where: { keycloakId },
+    });
+
+    return user?.id || null;
   }
 
   @Roles({ roles: ['realm:admin'] })
@@ -66,7 +82,7 @@ export class NotificationController {
   async findMyNotifications(
     @Headers('authorization') authHeader: string,
   ): Promise<NotificationDto[]> {
-    const userId = this.extractUserIdFromToken(authHeader);
+    const userId = await this.getUserIdFromToken(authHeader);
     if (!userId) {
       return [];
     }
@@ -79,7 +95,7 @@ export class NotificationController {
   async findMyUnreadNotifications(
     @Headers('authorization') authHeader: string,
   ): Promise<NotificationDto[]> {
-    const userId = this.extractUserIdFromToken(authHeader);
+    const userId = await this.getUserIdFromToken(authHeader);
     if (!userId) {
       return [];
     }
@@ -92,7 +108,7 @@ export class NotificationController {
   async countMyNotifications(
     @Headers('authorization') authHeader: string,
   ): Promise<NotificationCountDto> {
-    const userId = this.extractUserIdFromToken(authHeader);
+    const userId = await this.getUserIdFromToken(authHeader);
     if (!userId) {
       return new NotificationCountDto(0, 0);
     }
@@ -130,12 +146,25 @@ export class NotificationController {
   async markAllAsRead(
     @Headers('authorization') authHeader: string,
   ): Promise<{ success: boolean }> {
-    const userId = this.extractUserIdFromToken(authHeader);
+    const userId = await this.getUserIdFromToken(authHeader);
     if (!userId) {
       return { success: false };
     }
     await this.updateUseCase.markAllAsRead(userId);
     return { success: true };
+  }
+
+  @Public()
+  @Delete('me/all')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAllMyNotifications(
+    @Headers('authorization') authHeader: string,
+  ): Promise<void> {
+    const userId = await this.getUserIdFromToken(authHeader);
+    if (!userId) {
+      return;
+    }
+    await this.deleteUseCase.executeAllByUtilisateurId(userId);
   }
 
   @Roles({ roles: ['realm:user'] })

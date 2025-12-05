@@ -77,6 +77,7 @@ interface Member {
   name?: string
   avatarUrl?: string
   role: OrganizationRole
+  roleId?: string
   joinedAt: Date
 }
 
@@ -95,6 +96,12 @@ interface InvitationResult {
   email: string
 }
 
+interface AvailableRole {
+  id: string
+  code: string
+  nom: string
+}
+
 interface OrganizationsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -102,11 +109,15 @@ interface OrganizationsDialogProps {
   activeOrganizationId: string
   onOrganizationSelect: (orgId: string) => void
   onCreateOrganization?: () => void
+  onDeleteOrganization?: (orgId: string) => Promise<void>
+  onUpdateOrganization?: (orgId: string, data: { nom: string }) => Promise<void>
+  onLeaveOrganization?: (orgId: string) => Promise<void>
   currentUserRole: OrganizationRole
   members: Member[]
   pendingInvitations: PendingInvitation[]
+  availableRoles?: AvailableRole[]
   onInviteMember: (email: string, role: OrganizationRole) => Promise<InvitationResult | void>
-  onUpdateMemberRole: (memberId: string, role: OrganizationRole) => Promise<void>
+  onUpdateMemberRole: (memberId: string, roleId: string) => Promise<void>
   onRemoveMember: (memberId: string) => Promise<void>
   onCancelInvitation: (invitationId: string) => Promise<void>
   loadingMembers?: boolean
@@ -195,10 +206,14 @@ function OrganisationsSection({
 function MembresSection({
   members,
   currentUserRole,
+  availableRoles,
+  onUpdateMemberRole,
   onRemoveMember,
 }: {
   members: Member[]
   currentUserRole: OrganizationRole
+  availableRoles?: AvailableRole[]
+  onUpdateMemberRole: (memberId: string, roleId: string) => Promise<void>
   onRemoveMember: (memberId: string) => Promise<void>
 }) {
   const canManageMembers = currentUserRole === "owner"
@@ -224,6 +239,15 @@ function MembresSection({
       toast.success("Membre retiré")
     } catch {
       toast.error("Erreur lors de la suppression")
+    }
+  }
+
+  const handleRoleChange = async (memberId: string, roleId: string) => {
+    try {
+      await onUpdateMemberRole(memberId, roleId)
+      toast.success("Rôle mis à jour")
+    } catch {
+      toast.error("Erreur lors du changement de rôle")
     }
   }
 
@@ -262,10 +286,28 @@ function MembresSection({
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="gap-1">
-                  <RoleIcon className="size-3" />
-                  {roleLabels[member.role]}
-                </Badge>
+                {canModifyThisMember && availableRoles && availableRoles.length > 0 ? (
+                  <Select
+                    value={member.roleId}
+                    onValueChange={(value) => handleRoleChange(member.id, value)}
+                  >
+                    <SelectTrigger className="w-[130px] h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge variant="secondary" className="gap-1">
+                    <RoleIcon className="size-3" />
+                    {roleLabels[member.role]}
+                  </Badge>
+                )}
 
                 {canModifyThisMember && (
                   <DropdownMenu>
@@ -506,9 +548,91 @@ function InvitationsSection({
 
 function ParametresSection({
   organization,
+  onDeleteOrganization,
+  onUpdateOrganization,
+  onLeaveOrganization,
+  currentUserRole,
 }: {
   organization?: Organization
+  onDeleteOrganization?: (orgId: string) => Promise<void>
+  onUpdateOrganization?: (orgId: string, data: { nom: string }) => Promise<void>
+  onLeaveOrganization?: (orgId: string) => Promise<void>
+  currentUserRole: OrganizationRole
 }) {
+  const [isDeleting, setIsDeleting] = React.useState(false)
+  const [isLeaving, setIsLeaving] = React.useState(false)
+  const [isSaving, setIsSaving] = React.useState(false)
+  const [name, setName] = React.useState(organization?.name || "")
+  const canEdit = currentUserRole === "owner"
+  const canDelete = currentUserRole === "owner"
+  const canLeave = currentUserRole !== "owner"
+  const hasChanges = name !== organization?.name
+
+  // Réinitialiser le nom quand l'organisation change
+  React.useEffect(() => {
+    setName(organization?.name || "")
+  }, [organization?.name])
+
+  const handleSave = async () => {
+    if (!organization || !onUpdateOrganization || !hasChanges) return
+
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      toast.error("Le nom ne peut pas être vide")
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      await onUpdateOrganization(organization.id, { nom: trimmedName })
+      toast.success("Organisation mise à jour")
+    } catch {
+      toast.error("Erreur lors de la mise à jour")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!organization || !onDeleteOrganization) return
+
+    const confirmed = confirm(
+      `Êtes-vous sûr de vouloir supprimer "${organization.name}" ?\n\nCette action est irréversible et supprimera toutes les données associées.`
+    )
+
+    if (!confirmed) return
+
+    setIsDeleting(true)
+    try {
+      await onDeleteOrganization(organization.id)
+      toast.success("Organisation supprimée")
+    } catch {
+      toast.error("Erreur lors de la suppression")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleLeave = async () => {
+    if (!organization || !onLeaveOrganization) return
+
+    const confirmed = confirm(
+      `Êtes-vous sûr de vouloir quitter "${organization.name}" ?\n\nVous perdrez l'accès à cette organisation.`
+    )
+
+    if (!confirmed) return
+
+    setIsLeaving(true)
+    try {
+      await onLeaveOrganization(organization.id)
+      toast.success("Vous avez quitté l'organisation")
+    } catch {
+      toast.error("Erreur lors du départ")
+    } finally {
+      setIsLeaving(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -521,17 +645,28 @@ function ParametresSection({
       <div className="space-y-4">
         <div className="grid gap-2">
           <Label htmlFor="org-name">Nom de l&apos;organisation</Label>
-          <Input id="org-name" defaultValue={organization?.name} />
-        </div>
-
-        <div className="grid gap-2">
-          <Label>Plan actuel</Label>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary">{organization?.plan || "Free"}</Badge>
-            <Button variant="link" className="h-auto p-0 text-sm">
-              Mettre à niveau
-            </Button>
+          <div className="flex gap-2">
+            <Input
+              id="org-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!canEdit}
+              placeholder="Nom de l'organisation"
+            />
+            {canEdit && (
+              <Button
+                onClick={handleSave}
+                disabled={!hasChanges || isSaving}
+              >
+                {isSaving ? "Enregistrement..." : "Enregistrer"}
+              </Button>
+            )}
           </div>
+          {!canEdit && (
+            <p className="text-xs text-muted-foreground">
+              Seul le propriétaire peut modifier le nom.
+            </p>
+          )}
         </div>
 
         <Separator />
@@ -541,9 +676,28 @@ function ParametresSection({
           <p className="text-sm text-muted-foreground">
             Les actions ci-dessous sont irréversibles.
           </p>
-          <Button variant="destructive" className="w-fit">
-            Supprimer l&apos;organisation
-          </Button>
+          <div className="flex flex-col gap-2">
+            {canLeave && (
+              <Button
+                variant="destructive"
+                className="w-fit"
+                onClick={handleLeave}
+                disabled={isLeaving}
+              >
+                {isLeaving ? "Départ en cours..." : "Quitter l'organisation"}
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="destructive"
+                className="w-fit"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Suppression..." : "Supprimer l'organisation"}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -557,10 +711,15 @@ export function OrganizationsDialog({
   activeOrganizationId,
   onOrganizationSelect,
   onCreateOrganization,
+  onDeleteOrganization,
+  onUpdateOrganization,
+  onLeaveOrganization,
   currentUserRole,
   members,
   pendingInvitations,
+  availableRoles,
   onInviteMember,
+  onUpdateMemberRole,
   onRemoveMember,
   onCancelInvitation,
   loadingMembers = false,
@@ -594,6 +753,8 @@ export function OrganizationsDialog({
           <MembresSection
             members={members}
             currentUserRole={currentUserRole}
+            availableRoles={availableRoles}
+            onUpdateMemberRole={onUpdateMemberRole}
             onRemoveMember={onRemoveMember}
           />
         )
@@ -607,7 +768,15 @@ export function OrganizationsDialog({
           />
         )
       case "parametres":
-        return <ParametresSection organization={activeOrganization} />
+        return (
+          <ParametresSection
+            organization={activeOrganization}
+            onDeleteOrganization={onDeleteOrganization}
+            onUpdateOrganization={onUpdateOrganization}
+            onLeaveOrganization={onLeaveOrganization}
+            currentUserRole={currentUserRole}
+          />
+        )
       default:
         return null
     }

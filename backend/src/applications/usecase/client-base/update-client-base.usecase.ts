@@ -3,6 +3,9 @@ import { ClientBaseEntity } from '../../../core/domain/client-base.entity';
 import type { ClientBaseRepositoryPort } from '../../../core/port/client-base-repository.port';
 import { UpdateClientBaseDto } from '../../dto/client-base/update-client-base.dto';
 
+const capitalize = (str: string) =>
+  str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
 @Injectable()
 export class UpdateClientBaseUseCase {
   constructor(
@@ -28,10 +31,10 @@ export class UpdateClientBaseUseCase {
       existing.organisationId = dto.organisationId;
     }
     if (dto.nom !== undefined) {
-      existing.nom = dto.nom;
+      existing.nom = capitalize(dto.nom);
     }
     if (dto.prenom !== undefined) {
-      existing.prenom = dto.prenom;
+      existing.prenom = capitalize(dto.prenom);
     }
     if (dto.dateNaissance !== undefined) {
       existing.dateNaissance =
@@ -49,8 +52,8 @@ export class UpdateClientBaseUseCase {
     if (dto.telephone !== undefined) {
       existing.telephone = dto.telephone;
     }
-    if (dto.statutId !== undefined) {
-      existing.statutId = dto.statutId;
+    if (dto.statut !== undefined) {
+      existing.statut = dto.statut;
     }
     existing.updatedAt = new Date();
 

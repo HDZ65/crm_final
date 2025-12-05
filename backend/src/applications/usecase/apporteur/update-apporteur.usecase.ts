@@ -3,6 +3,9 @@ import { ApporteurEntity } from '../../../core/domain/apporteur.entity';
 import type { ApporteurRepositoryPort } from '../../../core/port/apporteur-repository.port';
 import { UpdateApporteurDto } from '../../dto/apporteur/update-apporteur.dto';
 
+const capitalize = (str: string) =>
+  str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
 @Injectable()
 export class UpdateApporteurUseCase {
   constructor(
@@ -24,10 +27,10 @@ export class UpdateApporteurUseCase {
       existing.utilisateurId = dto.utilisateurId;
     }
     if (dto.nom !== undefined) {
-      existing.nom = dto.nom;
+      existing.nom = capitalize(dto.nom);
     }
     if (dto.prenom !== undefined) {
-      existing.prenom = dto.prenom;
+      existing.prenom = capitalize(dto.prenom);
     }
     if (dto.typeApporteur !== undefined) {
       existing.typeApporteur = dto.typeApporteur;

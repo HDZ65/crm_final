@@ -24,11 +24,16 @@ export class MembreCompteWithUserDto {
   dateActivation?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  utilisateur: {
+  utilisateur?: {
     id: string;
     email: string;
     nom: string;
     prenom: string;
+  };
+  role?: {
+    id: string;
+    code: string;
+    nom: string;
   };
 
   constructor(partial: Partial<MembreCompteWithUserDto>) {

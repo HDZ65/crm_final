@@ -50,4 +50,9 @@ export class TypeOrmStatutClientRepository
   async delete(id: string): Promise<void> {
     await this.repository.delete(id);
   }
+
+  async findByCode(code: string): Promise<StatutClientDomainEntity | null> {
+    const entity = await this.repository.findOne({ where: { code } });
+    return entity ? StatutClientMapper.toDomain(entity) : null;
+  }
 }

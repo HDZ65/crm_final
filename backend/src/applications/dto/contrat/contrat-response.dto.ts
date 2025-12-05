@@ -1,22 +1,22 @@
 export class ContratDto {
   id: string;
   organisationId: string;
-  referenceExterne: string;
-  dateSignature: string;
+  reference: string;
+  titre: string | null;
+  description: string | null;
+  type: string | null;
+  statut: string;
   dateDebut: string;
-  dateFin: string;
-  statutId: string;
-  autoRenouvellement: boolean;
-  joursPreavis: number;
-  conditionPaiementId: string;
-  modeleDistributionId: string;
-  facturationParId: string;
-  clientBaseId: string;
-  societeId: string;
+  dateFin: string | null;
+  dateSignature: string | null;
+  montant: number | null;
+  devise: string | null;
+  frequenceFacturation: string | null;
+  documentUrl: string | null;
+  fournisseur: string | null;
+  clientId: string;
   commercialId: string;
-  clientPartenaireId: string;
-  adresseFacturationId: string;
-  dateFinRetractation: string;
+  notes: string | null;
   createdAt: Date;
   updatedAt: Date;
 

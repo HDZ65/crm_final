@@ -11,7 +11,7 @@ export interface ClientBaseProps {
   partenaireId: string;
   telephone: string;
   email?: string;
-  statutId: string;
+  statut?: string;
   dateCreation: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -27,7 +27,7 @@ export class ClientBaseEntity extends BaseEntity {
   partenaireId: string;
   telephone: string;
   email?: string;
-  statutId: string;
+  statut: string;
   dateCreation: Date;
 
   constructor(props: ClientBaseProps) {
@@ -41,7 +41,7 @@ export class ClientBaseEntity extends BaseEntity {
     this.partenaireId = props.partenaireId;
     this.telephone = props.telephone;
     this.email = props.email;
-    this.statutId = props.statutId;
+    this.statut = props.statut ?? 'ACTIF';
     this.dateCreation = props.dateCreation;
   }
 

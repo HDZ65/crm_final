@@ -10,6 +10,10 @@ export enum NotificationType {
   ALERTE = 'ALERTE',
   INFO = 'INFO',
   SYSTEME = 'SYSTEME',
+  // Types pour les organisations
+  INVITATION_RECEIVED = 'invitation_received',
+  MEMBER_JOINED = 'member_joined',
+  MEMBER_LEFT = 'member_left',
 }
 
 export interface Notification {
@@ -17,10 +21,11 @@ export interface Notification {
   type: NotificationType;
   titre: string;
   message: string;
-  lue: boolean;
+  lu: boolean;
   utilisateurId: string;
   organisationId: string;
   metadata?: Record<string, unknown>;
+  lienUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

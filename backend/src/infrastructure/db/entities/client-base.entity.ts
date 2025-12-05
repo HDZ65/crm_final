@@ -59,8 +59,8 @@ export class ClientBaseEntity {
   @Column({ nullable: true })
   email?: string;
 
-  @Column()
-  statutId: string;
+  @Column({ default: 'ACTIF' })
+  statut: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -64,6 +64,10 @@ export class TypeOrmNotificationRepository implements NotificationRepositoryPort
     return result.affected || 0;
   }
 
+  async deleteAllByUtilisateurId(utilisateurId: string): Promise<void> {
+    await this.repository.delete({ utilisateurId });
+  }
+
   async create(entity: NotificationDomainEntity): Promise<NotificationDomainEntity> {
     const ormEntity = this.repository.create(
       NotificationMapper.toPersistence(entity),

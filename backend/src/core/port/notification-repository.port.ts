@@ -9,4 +9,5 @@ export interface NotificationRepositoryPort
   markAsRead(id: string): Promise<NotificationEntity>;
   markAllAsReadByUtilisateurId(utilisateurId: string): Promise<void>;
   deleteOlderThan(date: Date): Promise<number>;
+  deleteAllByUtilisateurId(utilisateurId: string): Promise<void>;
 }

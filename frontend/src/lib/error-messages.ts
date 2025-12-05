@@ -46,6 +46,7 @@ export const BACKEND_ERROR_MESSAGES: Record<string, string> = {
   "Email already exists": "Cette adresse email est déjà utilisée.",
   "Duplicate entry": "Cette entrée existe déjà.",
   "Resource already exists": "Cette ressource existe déjà.",
+  "existe deja": "Ce client existe déjà.",
 
   // === Contrats ===
   "Contrat déjà activé": "Ce contrat est déjà actif.",
@@ -118,12 +119,13 @@ export function translateBackendError(message: string | string[] | unknown, stat
     }
   }
 
-  // Fallback sur le code HTTP
-  if (statusCode && HTTP_STATUS_MESSAGES[statusCode]) {
+  // Si le message est un message technique générique, utiliser le fallback HTTP
+  const isGenericHttpError = /^HTTP error!?\s*status:?\s*\d+$/i.test(message.trim())
+  if (isGenericHttpError && statusCode && HTTP_STATUS_MESSAGES[statusCode]) {
     return HTTP_STATUS_MESSAGES[statusCode]
   }
 
-  // Retourner le message original si aucune traduction
+  // Retourner le message original du backend (il est déjà explicite)
   return message
 }
 

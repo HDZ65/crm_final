@@ -97,7 +97,8 @@ function mapClientDetailDtoToDetail(
     location,
     memberSince: new Date(client.createdAt).getFullYear().toString(),
     info: {
-      name: formatFullName(client.nom, client.prenom),
+      nom: client.nom || "Non renseigné",
+      prenom: client.prenom || "Non renseigné",
       profession: client.profession || "Non renseigné",
       phone: client.telephone || "Non renseigné",
       birthDate: formatDateFr(client.dateNaissance) || "Non renseigné",
@@ -224,5 +225,33 @@ export function useClient(clientId: string | null) {
     loading: loading || statutsLoading,
     error,
     refetch: fetchClient,
+  }
+}
+
+// Hook pour mettre à jour un client
+export function useUpdateClient(clientId: string | null) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
+  const updateField = useCallback(async (field: string, value: string) => {
+    if (!clientId) return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      await api.put(`/clientbases/${clientId}`, { [field]: value })
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Erreur lors de la mise à jour"))
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [clientId])
+
+  return {
+    updateField,
+    loading,
+    error,
   }
 }

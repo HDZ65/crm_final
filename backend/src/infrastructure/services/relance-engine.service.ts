@@ -10,6 +10,7 @@ import { TacheEntity, TacheType, TachePriorite } from '../../core/domain/tache.e
 import { HistoriqueRelanceEntity } from '../../core/domain/historique-relance.entity';
 import { RegleRelanceEntity, RelanceDeclencheur } from '../../core/domain/regle-relance.entity';
 import { NotificationService } from './notification.service';
+import type { NotificationType } from '../../core/domain/notification.entity';
 
 interface RelanceContext {
   organisationId: string;
@@ -264,7 +265,7 @@ export class RelanceEngineService {
     const message = this.formatTemplate(regle.templateDescriptionTache || this.getDefaultDescription(regle), context);
 
     if (regle.assigneParDefaut) {
-      await this.notificationService.createAndBroadcast({
+      await this.notificationService.createAndNotify({
         organisationId: context.organisationId,
         utilisateurId: regle.assigneParDefaut,
         type: this.getNotificationTypeFromDeclencheur(regle.declencheur),
@@ -324,7 +325,7 @@ export class RelanceEngineService {
     }
   }
 
-  private getNotificationTypeFromDeclencheur(declencheur: RelanceDeclencheur): string {
+  private getNotificationTypeFromDeclencheur(declencheur: RelanceDeclencheur): NotificationType {
     switch (declencheur) {
       case 'IMPAYE':
         return 'IMPAYE';

@@ -10,7 +10,7 @@ export class ClientBaseDto {
   dateCreation: Date;
   telephone: string;
   email?: string;
-  statutId: string;
+  statut: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -21,11 +21,12 @@ export class ClientBaseDto {
 
 export interface ContratSummaryDto {
   id: string;
-  referenceExterne: string;
+  reference: string;
+  titre: string | null;
   dateDebut: string;
-  dateFin: string;
-  statutId: string;
-  societeId: string;
+  dateFin: string | null;
+  statut: string;
+  montant: number | null;
 }
 
 export class ClientBaseWithContratsDto extends ClientBaseDto {

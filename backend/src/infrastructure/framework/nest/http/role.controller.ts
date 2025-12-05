@@ -9,7 +9,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Roles } from 'nest-keycloak-connect';
+import { Roles, Public } from 'nest-keycloak-connect';
 import { CreateRoleDto } from '../../../../applications/dto/role/create-role.dto';
 import { UpdateRoleDto } from '../../../../applications/dto/role/update-role.dto';
 import { RoleDto } from '../../../../applications/dto/role/role-response.dto';
@@ -40,6 +40,16 @@ export class RoleController {
   async findAll(): Promise<RoleDto[]> {
     const entities = await this.getUseCase.executeAll();
     return entities.map((e) => new RoleDto(e));
+  }
+
+  @Public()
+  @Get('organisation-roles')
+  async findOrganisationRoles(): Promise<RoleDto[]> {
+    const entities = await this.getUseCase.executeAll();
+    // Retourne uniquement les rôles assignables (pas owner)
+    return entities
+      .filter((e) => e.code !== 'owner')
+      .map((e) => new RoleDto(e));
   }
 
   @Roles({ roles: ['realm:admin'] })

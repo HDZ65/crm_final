@@ -40,7 +40,7 @@ export class CreateClientBaseDto {
   @IsEmail({}, { message: 'Email invalide' })
   email?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  statutId: string;
+  statut?: string;
 }

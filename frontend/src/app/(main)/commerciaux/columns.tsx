@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,11 +11,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { MoreHorizontal, CheckCircle2, XCircle, Mail, Phone, Copy, Eye, Edit, Trash2, User } from "lucide-react"
+import { MoreHorizontal, CheckCircle2, XCircle, Mail, Phone, Copy, Edit, Trash2, User } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
+import { toast } from "sonner"
 import type { Commercial, TypeCommercial } from "@/types/commercial"
 import { getCommercialFullName, getTypeCommercialLabel } from "@/types/commercial"
+import { EditCommercialDialog } from "@/components/commerciaux/edit-commercial-dialog"
+import { useDeleteApporteur } from "@/hooks/commissions/use-commission-mutations"
 
 // Couleurs pour les types de commercial
 const TYPE_COLORS: Record<TypeCommercial, { bg: string; text: string }> = {
@@ -24,7 +38,92 @@ const TYPE_COLORS: Record<TypeCommercial, { bg: string; text: string }> = {
   partenaire: { bg: "bg-teal-100", text: "text-teal-700" },
 }
 
-export const columns: ColumnDef<Commercial>[] = [
+// Composant pour les actions avec gestion de l'état des dialogs
+function ActionsCell({ commercial, onRefresh }: { commercial: Commercial; onRefresh: () => void }) {
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const { deleteApporteur, loading: deleteLoading } = useDeleteApporteur()
+
+  const handleDelete = async () => {
+    const success = await deleteApporteur(commercial.id)
+    if (success) {
+      toast.success("Commercial supprimé avec succès")
+      setDeleteDialogOpen(false)
+      onRefresh()
+    } else {
+      toast.error("Erreur lors de la suppression du commercial")
+    }
+  }
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => {
+            const info = `${getCommercialFullName(commercial)}
+Type: ${getTypeCommercialLabel(commercial.typeApporteur)}
+Email: ${commercial.email || "-"}
+Téléphone: ${commercial.telephone || "-"}
+Statut: ${commercial.actif ? "Actif" : "Inactif"}`
+            navigator.clipboard.writeText(info)
+            toast.success("Informations copiées")
+          }}>
+            <Copy className="size-4 mr-2" />
+            Copier les infos
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
+            <Edit className="size-4 mr-2" />
+            Modifier
+          </DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+            <Trash2 className="size-4 mr-2" />
+            Supprimer
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <EditCommercialDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        commercial={commercial}
+        onSuccess={onRefresh}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce commercial ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer <strong>{getCommercialFullName(commercial)}</strong> ?
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteLoading}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {deleteLoading ? "Suppression..." : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}
+
+export function createColumns(onRefresh: () => void): ColumnDef<Commercial>[] {
+  return [
   {
     id: "select",
     header: ({ table }) => (
@@ -133,36 +232,8 @@ export const columns: ColumnDef<Commercial>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const commercial = row.original
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(commercial.id)}>
-              <Copy className="size-4 mr-2" />
-              Copier l&apos;ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Eye className="size-4 mr-2" />
-              Voir
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Edit className="size-4 mr-2" />
-              Modifier
-            </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
-              <Trash2 className="size-4 mr-2" />
-              Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+      return <ActionsCell commercial={commercial} onRefresh={onRefresh} />
     },
   },
-]
+  ]
+}

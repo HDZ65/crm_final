@@ -27,6 +27,7 @@ interface NotificationContextType {
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
+  deleteAllNotifications: () => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -125,20 +126,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     socket.on('notification:read', ({ id }: NotificationEvents['notification:read']) => {
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, lue: true } : n))
+        prev.map((n) => (n.id === id ? { ...n, lu: true } : n))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     });
 
     socket.on('notification:all-read', () => {
-      setNotifications((prev) => prev.map((n) => ({ ...n, lue: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, lu: true })));
       setUnreadCount(0);
     });
 
     socket.on('notification:deleted', ({ id }: NotificationEvents['notification:deleted']) => {
       setNotifications((prev) => {
         const notif = prev.find((n) => n.id === id);
-        if (notif && !notif.lue) {
+        if (notif && !notif.lu) {
           setUnreadCount((c) => Math.max(0, c - 1));
         }
         return prev.filter((n) => n.id !== id);
@@ -190,7 +191,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     try {
       await api.put(`/notifications/${id}/read`);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, lue: true } : n))
+        prev.map((n) => (n.id === id ? { ...n, lu: true } : n))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
@@ -202,7 +203,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const markAllAsRead = useCallback(async () => {
     try {
       await api.put('/notifications/me/read-all');
-      setNotifications((prev) => prev.map((n) => ({ ...n, lue: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, lu: true })));
       setUnreadCount(0);
     } catch (err) {
       console.error('Erreur lors du marquage de toutes comme lues:', err);
@@ -215,7 +216,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       await api.delete(`/notifications/${id}`);
       setNotifications((prev) => {
         const notif = prev.find((n) => n.id === id);
-        if (notif && !notif.lue) {
+        if (notif && !notif.lu) {
           setUnreadCount((c) => Math.max(0, c - 1));
         }
         return prev.filter((n) => n.id !== id);
@@ -223,6 +224,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setTotalCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Erreur lors de la suppression:', err);
+      throw err;
+    }
+  }, []);
+
+  const deleteAllNotifications = useCallback(async () => {
+    try {
+      await api.delete('/notifications/me/all');
+      setNotifications([]);
+      setUnreadCount(0);
+      setTotalCount(0);
+    } catch (err) {
+      console.error('Erreur lors de la suppression de toutes les notifications:', err);
       throw err;
     }
   }, []);
@@ -243,6 +256,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         markAsRead,
         markAllAsRead,
         deleteNotification,
+        deleteAllNotifications,
         refetch,
       }}
     >

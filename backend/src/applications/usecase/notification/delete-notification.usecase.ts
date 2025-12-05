@@ -21,4 +21,8 @@ export class DeleteNotificationUseCase {
     date.setDate(date.getDate() - days);
     return await this.repository.deleteOlderThan(date);
   }
+
+  async executeAllByUtilisateurId(utilisateurId: string): Promise<void> {
+    await this.repository.deleteAllByUtilisateurId(utilisateurId);
+  }
 }

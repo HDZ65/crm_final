@@ -29,11 +29,10 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
-import { api } from "@/lib/api"
+import { api, ApiError } from "@/lib/api"
 import { useOrganisation } from "@/contexts/organisation-context"
-import { useStatutClients } from "@/hooks/clients/use-statut-clients"
-import { useSimpleSubmitGuard } from "@/hooks/core/use-submit-guard"
 
 const createClientSchema = z.object({
   typeClient: z.string().min(1, "Le type de client est requis"),
@@ -44,7 +43,6 @@ const createClientSchema = z.object({
     .optional(),
   telephone: z.string().min(1, "Le telephone est requis"),
   email: z.string().email("Email invalide").optional().or(z.literal("")),
-  statutId: z.string().min(1, "Le statut est requis"),
 })
 
 type CreateClientFormValues = z.infer<typeof createClientSchema>
@@ -60,7 +58,6 @@ interface CreateClientDto {
   dateCreation: string
   telephone: string
   email?: string
-  statutId: string
 }
 
 interface CreateClientDialogProps {
@@ -71,8 +68,8 @@ interface CreateClientDialogProps {
 
 export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClientDialogProps) {
   const { activeOrganisation } = useOrganisation()
-  const { statuts, loading: statutsLoading } = useStatutClients()
-  const [isSubmitting, withSubmitGuard] = useSimpleSubmitGuard()
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   const form = useForm<CreateClientFormValues>({
     resolver: zodResolver(createClientSchema),
@@ -83,19 +80,8 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClie
       dateNaissance: "",
       telephone: "",
       email: "",
-      statutId: "",
     },
   })
-
-  // Pre-select "actif" status when statuts are loaded
-  React.useEffect(() => {
-    if (statuts.length > 0 && !form.getValues("statutId")) {
-      const actifStatut = statuts.find(s => s.code === "actif")
-      if (actifStatut) {
-        form.setValue("statutId", actifStatut.id)
-      }
-    }
-  }, [statuts, form])
 
   React.useEffect(() => {
     if (open) {
@@ -106,12 +92,16 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClie
         dateNaissance: "",
         telephone: "",
         email: "",
-        statutId: statuts.find(s => s.code === "actif")?.id || "",
       })
+      setError(null)
     }
-  }, [open, form, statuts])
+  }, [open, form])
 
-  const handleSubmit = withSubmitGuard(async () => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (isSubmitting) return
+
     const data = form.getValues()
     const isValid = await form.trigger()
     if (!isValid) return
@@ -128,25 +118,24 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClie
       prenom: data.prenom,
       dateNaissance: data.dateNaissance || null,
       compteCode: `CLI-${Date.now().toString(36).toUpperCase()}`,
-      partenaireId: activeOrganisation.id, // Default to organisation
+      partenaireId: activeOrganisation.id,
       dateCreation: new Date().toISOString(),
       telephone: data.telephone,
       email: data.email || undefined,
-      statutId: data.statutId,
     }
 
-    await api.post("/clientbases", payload)
-    toast.success("Client cree avec succes")
-    onOpenChange(false)
-    onSuccess?.()
-  })
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    setIsSubmitting(true)
+    setError(null)
     try {
-      await handleSubmit()
-    } catch {
-      toast.error("Erreur lors de la creation du client")
+      await api.post("/clientbases", payload)
+      toast.success("Client cree avec succes")
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (error: unknown) {
+      const err = error as ApiError
+      setError(err?.userMessage || err?.message || "Erreur lors de la creation du client")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -250,35 +239,16 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClie
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="statutId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Statut</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selectionnez un statut" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {statuts.map((statut) => (
-                        <SelectItem key={statut.id} value={statut.id}>
-                          {statut.nom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting || statutsLoading}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={isSubmitting || statutsLoading}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Creation..." : "Creer le client"}
               </Button>
             </DialogFooter>

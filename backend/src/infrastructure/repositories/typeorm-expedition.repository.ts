@@ -58,7 +58,7 @@ export class TypeOrmExpeditionRepository implements ExpeditionRepositoryPort {
       contrat: entity.contrat
         ? {
             id: entity.contrat.id,
-            referenceExterne: entity.contrat.referenceExterne,
+            referenceExterne: entity.contrat.reference,
           }
         : null,
       transporteur: entity.transporteurCompte
@@ -97,7 +97,7 @@ export class TypeOrmExpeditionRepository implements ExpeditionRepositoryPort {
       contrat: entity.contrat
         ? {
             id: entity.contrat.id,
-            referenceExterne: entity.contrat.referenceExterne,
+            referenceExterne: entity.contrat.reference,
           }
         : null,
       transporteur: entity.transporteurCompte

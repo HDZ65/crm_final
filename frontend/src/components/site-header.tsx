@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
@@ -23,6 +26,7 @@ import {
   CalendarPlus,
   Bell,
   Check,
+  CheckCircle,
   AlertCircle,
   FileWarning,
   UserCheck,
@@ -30,16 +34,32 @@ import {
   Info,
   AlertTriangle,
   Settings,
+  ListTodo,
+  Phone,
+  Calendar,
+  MoreHorizontal,
+  Trash2,
+  X,
+  CheckCheck,
+  Users,
+  LogOut,
+  Building2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreateContratDialog } from "@/components/create-contrat-dialog";
 import { CreateClientDialog } from "@/components/create-client-dialog";
+import { AddGroupeDialog } from "@/app/(main)/clients/add-groupe-dialog";
+import { CreateCommercialDialog } from "@/components/commerciaux/create-commercial-dialog";
 import { useNotifications } from "@/contexts/notification-context";
 import { NotificationType, type Notification } from "@/types/notification";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isPast, isToday, isTomorrow, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMyTaches, useTacheMutations } from "@/hooks/taches";
+import type { TacheDto, TacheType } from "@/types/tache";
+import { TACHE_TYPE_LABELS, TACHE_PRIORITE_LABELS } from "@/types/tache";
+import { toast } from "sonner";
 
 function getNotificationIcon(type: NotificationType) {
   switch (type) {
@@ -63,49 +83,158 @@ function getNotificationIcon(type: NotificationType) {
       return <Info className="size-4 text-blue-500" />;
     case NotificationType.SYSTEME:
       return <Settings className="size-4 text-muted-foreground" />;
+    case NotificationType.INVITATION_RECEIVED:
+      return <Mail className="size-4 text-blue-500" />;
+    case NotificationType.MEMBER_JOINED:
+      return <Users className="size-4 text-emerald-500" />;
+    case NotificationType.MEMBER_LEFT:
+      return <LogOut className="size-4 text-amber-500" />;
     default:
       return <Bell className="size-4" />;
   }
 }
 
+const TYPE_ICONS: Record<TacheType, React.ReactNode> = {
+  APPEL: <Phone className="size-4" />,
+  EMAIL: <Mail className="size-4" />,
+  RDV: <Calendar className="size-4" />,
+  RELANCE_IMPAYE: <FileText className="size-4" />,
+  RELANCE_CONTRAT: <FileText className="size-4" />,
+  RENOUVELLEMENT: <FileText className="size-4" />,
+  SUIVI: <Clock className="size-4" />,
+  AUTRE: <MoreHorizontal className="size-4" />,
+}
+
+function getTaskDateLabel(date: Date): string {
+  if (isToday(date)) return "Aujourd'hui"
+  if (isTomorrow(date)) return "Demain"
+  if (isPast(date)) return "En retard"
+  return format(date, "dd MMM", { locale: fr })
+}
+
+function TacheDropdownItem({
+  tache,
+  onComplete,
+}: {
+  tache: TacheDto;
+  onComplete: (id: string) => void;
+}) {
+  const date = new Date(tache.dateEcheance);
+  const isLate = tache.statut !== "TERMINEE" && tache.statut !== "ANNULEE" && isPast(date);
+  const isDueToday = isToday(date);
+
+  return (
+    <DropdownMenuItem
+      className={cn(
+        "flex items-start gap-2 py-2.5 cursor-pointer",
+        isLate && "bg-destructive/5"
+      )}
+      onSelect={(e) => e.preventDefault()}
+    >
+      <div className={cn("p-1.5 rounded-full mt-0.5", isLate ? "bg-destructive/10 text-destructive" : "bg-muted")}>
+        {TYPE_ICONS[tache.type]}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={cn("font-medium text-sm truncate", isLate && "text-destructive")}>
+          {tache.titre}
+        </p>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span>{TACHE_TYPE_LABELS[tache.type]}</span>
+          <span>•</span>
+          <span className={cn(isLate ? "text-destructive font-medium" : isDueToday ? "text-orange-600 font-medium" : "")}>
+            {getTaskDateLabel(date)}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <Badge
+          variant={tache.priorite === "HAUTE" ? "destructive" : tache.priorite === "MOYENNE" ? "default" : "secondary"}
+          className="text-[10px] px-1.5 h-5"
+        >
+          {TACHE_PRIORITE_LABELS[tache.priorite]}
+        </Badge>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={(e) => {
+            e.stopPropagation();
+            onComplete(tache.id);
+          }}
+        >
+          <CheckCircle className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </DropdownMenuItem>
+  );
+}
+
 function NotificationItem({
   notification,
   onMarkAsRead,
+  onDelete,
 }: {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
+  const router = useRouter();
   const timeAgo = formatDistanceToNow(new Date(notification.createdAt), {
     addSuffix: true,
     locale: fr,
   });
 
+  const handleClick = () => {
+    // Marquer comme lu si non lu
+    if (!notification.lu) {
+      onMarkAsRead(notification.id);
+    }
+
+    // Naviguer vers le lien si disponible
+    if (notification.lienUrl) {
+      router.push(notification.lienUrl);
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onDelete(notification.id);
+  };
+
   return (
     <DropdownMenuItem
       className={cn(
-        "flex-col items-start gap-1 py-3 cursor-pointer",
-        !notification.lue && "bg-muted/50"
+        "flex-col items-start gap-1 py-3 cursor-pointer group",
+        !notification.lu && "bg-muted/50"
       )}
-      onClick={() => {
-        if (!notification.lue) {
-          onMarkAsRead(notification.id);
-        }
-      }}
+      onClick={handleClick}
+      onSelect={(e) => e.preventDefault()}
     >
       <div className="flex w-full items-start gap-2">
-        <div className="mt-0.5">{getNotificationIcon(notification.type)}</div>
+        <div className="mt-0.5 shrink-0">{getNotificationIcon(notification.type)}</div>
         <div className="flex-1 min-w-0">
           <div className="flex w-full items-start justify-between gap-2">
-            <span className={cn("font-medium truncate", !notification.lue && "text-foreground")}>
+            <span className={cn("font-medium truncate", !notification.lu && "text-foreground")}>
               {notification.titre}
             </span>
-            <span className="text-xs text-muted-foreground shrink-0">{timeAgo}</span>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-xs text-muted-foreground">{timeAgo}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                onClick={handleDelete}
+              >
+                <X className="size-3" />
+              </Button>
+            </div>
           </div>
           <span className="text-sm text-muted-foreground line-clamp-2">
             {notification.message}
           </span>
         </div>
-        {!notification.lue && (
+        {!notification.lu && (
           <div className="size-2 rounded-full bg-primary shrink-0 mt-1.5" />
         )}
       </div>
@@ -117,13 +246,53 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [createContratOpen, setCreateContratOpen] = useState(false);
   const [createClientOpen, setCreateClientOpen] = useState(false);
+  const [addSocieteOpen, setAddSocieteOpen] = useState(false);
+  const [createCommercialOpen, setCreateCommercialOpen] = useState(false);
   const {
     notifications,
     unreadCount,
     isLoading,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    deleteAllNotifications,
   } = useNotifications();
+
+  // Tâches
+  const { taches, loading: tachesLoading, refetch: refetchTaches } = useMyTaches("semaine");
+  const { marquerTerminee } = useTacheMutations();
+
+  const handleCompleteTache = async (id: string) => {
+    const result = await marquerTerminee(id);
+    if (result) {
+      toast.success("Tâche terminée");
+      refetchTaches();
+    }
+  };
+
+  const sortedTaches = useMemo(() => {
+    const priorityOrder = { HAUTE: 0, MOYENNE: 1, BASSE: 2 };
+    return [...taches]
+      .filter((t) => t.statut === "A_FAIRE" || t.statut === "EN_COURS")
+      .sort((a, b) => {
+        const aLate = isPast(new Date(a.dateEcheance)) ? 0 : 1;
+        const bLate = isPast(new Date(b.dateEcheance)) ? 0 : 1;
+        if (aLate !== bLate) return aLate - bLate;
+        const aPriority = priorityOrder[a.priorite];
+        const bPriority = priorityOrder[b.priorite];
+        if (aPriority !== bPriority) return aPriority - bPriority;
+        return new Date(a.dateEcheance).getTime() - new Date(b.dateEcheance).getTime();
+      })
+      .slice(0, 5);
+  }, [taches]);
+
+  const lateCount = taches.filter(
+    (t) => (t.statut === "A_FAIRE" || t.statut === "EN_COURS") && isPast(new Date(t.dateEcheance))
+  ).length;
+
+  const pendingCount = taches.filter(
+    (t) => t.statut === "A_FAIRE" || t.statut === "EN_COURS"
+  ).length;
 
   const title = (() => {
     if (!pathname) return "";
@@ -134,6 +303,7 @@ export function SiteHeader() {
     if (pathname === "/catalogue") return "Catalogue Produits";
     if (pathname === "/expeditions") return "Expéditions";
     if (pathname === "/commissions") return "Commissions";
+    if (pathname === "/facturation") return "Facturation";
     if (pathname === "/statistiques") return "Statistiques";
     if (pathname === "/paiements") return "Gestion des Paiements";
     if (pathname === "/contrats") return "Gestion Contrats";
@@ -147,7 +317,80 @@ export function SiteHeader() {
         <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
         <h1 className="text-base font-medium">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
+          {/* Dropdown Tâches */}
           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="relative">
+                <ListTodo className="size-4" />
+                {pendingCount > 0 && (
+                  <Badge
+                    variant={lateCount > 0 ? "destructive" : "default"}
+                    className="absolute -right-1.5 -top-1.5 h-4 min-w-4 flex items-center justify-center px-1 text-[9px] rounded-full"
+                  >
+                    {pendingCount > 99 ? "99+" : pendingCount}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-96">
+              <div className="flex items-center justify-between px-2">
+                <DropdownMenuLabel className="flex items-center gap-2">
+                  Mes tâches
+                  {lateCount > 0 && (
+                    <Badge variant="destructive" className="flex items-center gap-1 text-[10px] h-5">
+                      <AlertTriangle className="h-3 w-3" />
+                      {lateCount} en retard
+                    </Badge>
+                  )}
+                </DropdownMenuLabel>
+              </div>
+              <DropdownMenuSeparator />
+              <div className="max-h-[400px] overflow-y-auto">
+                {tachesLoading ? (
+                  <div className="p-4 space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex gap-2">
+                        <Skeleton className="size-8 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : sortedTaches.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <CheckCircle className="mx-auto size-8 mb-2 opacity-50" />
+                    <p className="text-sm">Aucune tâche en attente</p>
+                    <p className="text-xs">Vous êtes à jour !</p>
+                  </div>
+                ) : (
+                  sortedTaches.map((tache) => (
+                    <TacheDropdownItem
+                      key={tache.id}
+                      tache={tache}
+                      onComplete={handleCompleteTache}
+                    />
+                  ))
+                )}
+              </div>
+              {sortedTaches.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="justify-center text-sm text-primary cursor-pointer">
+                    <Link href="/taches">Voir toutes les tâches</Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Dropdown Notifications */}
+          <DropdownMenu onOpenChange={(open) => {
+            if (open && unreadCount > 0) {
+              markAllAsRead();
+            }
+          }}>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="relative">
                 <Bell className="size-4" />
@@ -164,20 +407,36 @@ export function SiteHeader() {
             <DropdownMenuContent align="end" className="w-96">
               <div className="flex items-center justify-between px-2">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto py-1 px-2 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      markAllAsRead();
-                    }}
-                  >
-                    <Check className="mr-1 size-3" />
-                    Tout marquer comme lu
-                  </Button>
-                )}
+                <div className="flex items-center gap-1">
+                  {unreadCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto py-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        markAllAsRead();
+                      }}
+                    >
+                      <Check className="mr-1 size-3" />
+                      Tout lire
+                    </Button>
+                  )}
+                  {notifications.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto py-1 px-2 text-xs text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        deleteAllNotifications();
+                      }}
+                    >
+                      <Trash2 className="mr-1 size-3" />
+                      Tout supprimer
+                    </Button>
+                  )}
+                </div>
               </div>
               <DropdownMenuSeparator />
               <div className="max-h-[400px] overflow-y-auto">
@@ -204,6 +463,7 @@ export function SiteHeader() {
                       key={notification.id}
                       notification={notification}
                       onMarkAsRead={markAsRead}
+                      onDelete={deleteNotification}
                     />
                   ))
                 )}
@@ -233,13 +493,17 @@ export function SiteHeader() {
                   <UserPlus className="mr-2 size-4" />
                   <span>Nouveau client</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setCreateCommercialOpen(true)}>
                   <Briefcase className="mr-2 size-4" />
                   <span>Nouveau commercial</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setCreateContratOpen(true)}>
                   <FileText className="mr-2 size-4" />
                   <span>Nouveau contrat</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setAddSocieteOpen(true)}>
+                  <Building2 className="mr-2 size-4" />
+                  <span>Nouvelle société</span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
@@ -268,6 +532,18 @@ export function SiteHeader() {
       <CreateClientDialog
         open={createClientOpen}
         onOpenChange={setCreateClientOpen}
+      />
+
+      {/* Dialog création de société */}
+      <AddGroupeDialog
+        open={addSocieteOpen}
+        onOpenChange={setAddSocieteOpen}
+      />
+
+      {/* Dialog création de commercial */}
+      <CreateCommercialDialog
+        open={createCommercialOpen}
+        onOpenChange={setCreateCommercialOpen}
       />
     </header>
   );

@@ -15,7 +15,7 @@ export class ClientBaseMapper {
       dateCreation: ormEntity.dateCreation,
       telephone: ormEntity.telephone,
       email: ormEntity.email,
-      statutId: ormEntity.statutId,
+      statut: ormEntity.statut,
       createdAt: ormEntity.createdAt,
       updatedAt: ormEntity.updatedAt,
     });
@@ -34,7 +34,7 @@ export class ClientBaseMapper {
       dateCreation: entity.dateCreation,
       telephone: entity.telephone,
       email: entity.email,
-      statutId: entity.statutId,
+      statut: entity.statut,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };

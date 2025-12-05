@@ -248,7 +248,7 @@ export class McpService {
       partenaireId: input.partenaireId,
       dateCreation: input.dateCreation,
       telephone: input.telephone,
-      statutId: input.statutId,
+      statut: input.statut,
     };
 
     const entity = await this.createClientBase.execute(dto);
@@ -258,7 +258,7 @@ export class McpService {
       nom: (entity as any).nom,
       prenom: (entity as any).prenom,
       telephone: (entity as any).telephone,
-      statutId: (entity as any).statutId,
+      statut: (entity as any).statut,
       createdAt: (entity as any).createdAt,
     };
   }
@@ -323,45 +323,45 @@ export class McpService {
     return {
       id: entity.id,
       organisationId: (entity as any).organisationId,
-      referenceExterne: (entity as any).referenceExterne,
+      reference: (entity as any).reference,
       dateSignature: (entity as any).dateSignature,
       dateDebut: (entity as any).dateDebut,
       dateFin: (entity as any).dateFin,
-      statutId: (entity as any).statutId,
-      autoRenouvellement: (entity as any).autoRenouvellement,
-      joursPreavis: (entity as any).joursPreavis,
-      clientBaseId: (entity as any).clientBaseId,
+      statut: (entity as any).statut,
+      montant: (entity as any).montant,
+      titre: (entity as any).titre,
+      clientId: (entity as any).clientId,
       commercialId: (entity as any).commercialId,
     };
   }
 
   private async createContract(input: CreateContractInput) {
+    const inputAny = input as any;
     const dto: CreateContratDto = {
       organisationId: input.organisationId,
-      referenceExterne: input.referenceExterne,
-      dateSignature: input.dateSignature,
+      reference: inputAny.referenceExterne || inputAny.reference || '',
+      titre: inputAny.titre,
+      description: inputAny.description,
+      type: inputAny.type,
+      statut: inputAny.statutId || inputAny.statut || 'brouillon',
       dateDebut: input.dateDebut,
-      dateFin: input.dateFin,
-      statutId: input.statutId,
-      autoRenouvellement: input.autoRenouvellement,
-      joursPreavis: input.joursPreavis,
-      conditionPaiementId: input.conditionPaiementId,
-      modeleDistributionId: input.modeleDistributionId,
-      facturationParId: input.facturationParId,
-      clientBaseId: input.clientBaseId,
-      societeId: input.societeId,
+      dateFin: inputAny.dateFin,
+      dateSignature: inputAny.dateSignature,
+      montant: inputAny.montant,
+      devise: inputAny.devise,
+      frequenceFacturation: inputAny.frequenceFacturation,
+      fournisseur: inputAny.fournisseur,
+      clientId: inputAny.clientBaseId || inputAny.clientId || '',
       commercialId: input.commercialId,
-      clientPartenaireId: input.clientPartenaireId,
-      adresseFacturationId: input.adresseFacturationId,
-      dateFinRetractation: input.dateFinRetractation,
+      notes: inputAny.notes,
     };
 
     const entity = await this.createContrat.execute(dto);
     return {
       id: (entity as any).id,
       organisationId: (entity as any).organisationId,
-      referenceExterne: (entity as any).referenceExterne,
-      statutId: (entity as any).statutId,
+      reference: (entity as any).reference,
+      statut: (entity as any).statut,
       createdAt: (entity as any).createdAt,
     };
   }

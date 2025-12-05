@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EmailAccountSelectorDialog, type EmailAccount } from "@/components/email-account-selector-dialog"
 import { EmailComposerDialog } from "@/components/email-composer-dialog"
@@ -12,10 +12,24 @@ import { ClientInfoAccordion } from "@/components/client-detail/client-info-acco
 import { ClientPayments } from "@/components/client-detail/client-payments"
 import { ClientDocuments } from "@/components/client-detail/client-documents"
 import { ClientShipments } from "@/components/client-detail/client-shipments"
-import { useClient, type ContratDto, type PaiementDto, type DocumentDto } from "@/hooks/clients"
+import { useClient, useUpdateClient, type ContratDto, type PaiementDto, type DocumentDto } from "@/hooks/clients"
 import { useClientExpeditions, type ExpeditionDto, type ExpeditionEtat } from "@/hooks/logistics"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+import { api } from "@/lib/api"
+import { CreateContratDialog } from "@/components/create-contrat-dialog"
+import { AddGroupeDialog } from "../add-groupe-dialog"
 import { Calendar } from "lucide-react"
 import type { EventItem, Contract, Payment, Document, ClientInfo, ComplianceInfo, BankInfo, Shipment, ShipmentStatus } from "@/types/client"
 
@@ -101,12 +115,18 @@ function mapExpeditionToShipment(expedition: ExpeditionDto): Shipment {
 
 export default function ClientDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const clientId = params.id as string
 
   const { activeOrganisation } = useOrganisation()
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [isDeleting, setIsDeleting] = React.useState(false)
+  const [createContratOpen, setCreateContratOpen] = React.useState(false)
+  const [addSocieteOpen, setAddSocieteOpen] = React.useState(false)
   const organisationId = activeOrganisation?.id || null
 
-  const { client, loading, error } = useClient(clientId)
+  const { client, loading, error, refetch } = useClient(clientId)
+  const { updateField } = useUpdateClient(clientId)
   const { expeditions, loading: expeditionsLoading } = useClientExpeditions(organisationId, clientId)
 
   const [selectedRef, setSelectedRef] = React.useState<string>("")
@@ -170,6 +190,45 @@ export default function ClientDetailPage() {
   const clientInfo: ClientInfo | null = client ? client.info : null
   const complianceInfo: ComplianceInfo | null = client ? client.compliance : null
   const bankInfo: BankInfo | null = client ? client.bank : null
+
+  // Fonction pour mettre à jour un champ du client
+  const handleUpdateField = React.useCallback(async (field: string, value: string) => {
+    await updateField(field, value)
+    refetch()
+  }, [updateField, refetch])
+
+  // Fonction pour copier les infos du client
+  const handleCopyClientInfo = React.useCallback(() => {
+    if (!client) return
+    const info = `${client.name}
+Email: ${client.info.email}
+Téléphone: ${client.info.phone}
+Adresse: ${client.info.address}`
+    navigator.clipboard.writeText(info)
+    toast.success("Informations copiées dans le presse-papier")
+  }, [client])
+
+  // Fonction pour supprimer le client
+  const handleDeleteClient = React.useCallback(async () => {
+    setIsDeleting(true)
+    try {
+      await api.delete(`/clientbases/${clientId}`)
+      toast.success("Client supprimé avec succès")
+      router.push("/clients")
+    } catch {
+      toast.error("Erreur lors de la suppression du client")
+    } finally {
+      setIsDeleting(false)
+      setDeleteDialogOpen(false)
+    }
+  }, [clientId, router])
+
+  // Fonction pour ouvrir la modale d'édition (scroll vers le dossier client)
+  const handleEditClick = React.useCallback(() => {
+    const accordion = document.querySelector('[data-slot="accordion"]')
+    accordion?.scrollIntoView({ behavior: "smooth" })
+    toast.info("Cliquez sur un champ pour le modifier")
+  }, [])
 
   const handleEmailAccountSelect = (account: EmailAccount) => {
     setSelectedEmailAccount(account)
@@ -240,7 +299,11 @@ export default function ClientDetailPage() {
           memberSince={client.memberSince}
           allHistory={allHistory}
           onEmailClick={() => setAccountSelectorOpen(true)}
-          onNewContractClick={() => console.log("Nouveau contrat")}
+          onNewContractClick={() => setCreateContratOpen(true)}
+          onEditClick={handleEditClick}
+          onDeleteClick={() => setDeleteDialogOpen(true)}
+          onCopyClick={handleCopyClientInfo}
+          onAddSocieteClick={() => setAddSocieteOpen(true)}
         />
 
         <Tabs defaultValue="overview" className="w-full gap-4 flex-1 flex flex-col h-full">
@@ -269,6 +332,7 @@ export default function ClientDetailPage() {
                 clientInfo={clientInfo}
                 compliance={complianceInfo}
                 bank={bankInfo}
+                onUpdateField={handleUpdateField}
               />
             )}
           </TabsContent>
@@ -322,6 +386,39 @@ export default function ClientDetailPage() {
         defaultTo={client.info.email}
         defaultSubject={`Re: ${client.name}`}
         onSendEmail={handleSendEmail}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce client ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer <strong>{client.name}</strong> ?
+              Cette action est irréversible et supprimera toutes les données associées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClient}
+              disabled={isDeleting}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {isDeleting ? "Suppression..." : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <CreateContratDialog
+        open={createContratOpen}
+        onOpenChange={setCreateContratOpen}
+        onSuccess={() => refetch()}
+      />
+
+      <AddGroupeDialog
+        open={addSocieteOpen}
+        onOpenChange={setAddSocieteOpen}
       />
     </>
   )

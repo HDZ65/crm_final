@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { UtilisateurEntity } from './utilisateur.entity';
 import { OrganisationEntity } from './organisation.entity';
+import { RoleEntity } from './role.entity';
 
 @Entity('membreorganisations')
 export class MembreOrganisationEntity {
@@ -18,7 +19,7 @@ export class MembreOrganisationEntity {
   @Column()
   organisationId: string;
 
-  @ManyToOne(() => OrganisationEntity)
+  @ManyToOne(() => OrganisationEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organisationId' })
   organisation: OrganisationEntity;
 
@@ -31,6 +32,10 @@ export class MembreOrganisationEntity {
 
   @Column()
   roleId: string;
+
+  @ManyToOne(() => RoleEntity)
+  @JoinColumn({ name: 'roleId' })
+  role: RoleEntity;
 
   @Column({ default: 'actif' })
   etat: string;

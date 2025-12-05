@@ -12,6 +12,7 @@ import {
   AudioWaveform,
   Package,
   ListTodo,
+  Receipt,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -25,7 +26,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAuth, useCreateInvitation, useOrganisationInvitations, useCancelInvitation, useOrganisationMembers, useMyRole } from "@/hooks/auth";
+import { useAuth, useCreateInvitation, useOrganisationInvitations, useCancelInvitation, useOrganisationMembers, useMyRole, useDeleteOrganisation, useUpdateOrganisation, useLeaveOrganisation, useRemoveMember, useUpdateMemberRole, useAvailableRoles } from "@/hooks/auth";
 import { useOrganisation } from "@/contexts/organisation-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamSwitcher } from "./team-switcher";
@@ -64,6 +65,11 @@ const NAV_ITEMS = [
     icon: DollarSign,
   },
   {
+    title: "Facturation",
+    url: "/facturation",
+    icon: Receipt,
+  },
+  {
     title: "Tâches",
     url: "/taches",
     icon: ListTodo,
@@ -89,14 +95,47 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { cancelInvitation } = useCancelInvitation();
   const { members: apiMembers, fetchMembers } = useOrganisationMembers();
   const { roleCode, fetchMyRole } = useMyRole();
+  const { deleteOrganisation } = useDeleteOrganisation({
+    onSuccess: async () => {
+      await refetch();
+      setManageDialogOpen(false);
+    },
+  });
+  const { updateOrganisation } = useUpdateOrganisation({
+    onSuccess: async () => {
+      await refetch();
+    },
+  });
+  const { leaveOrganisation } = useLeaveOrganisation({
+    onSuccess: async () => {
+      await refetch();
+      setManageDialogOpen(false);
+    },
+  });
+  const { removeMember } = useRemoveMember({
+    onSuccess: async () => {
+      if (dialogOrgId) {
+        await fetchMembers(dialogOrgId);
+      }
+    },
+  });
+  const { updateMemberRole } = useUpdateMemberRole({
+    onSuccess: async () => {
+      if (dialogOrgId) {
+        await fetchMembers(dialogOrgId);
+      }
+    },
+  });
+  const { roles: availableRoles, fetchRoles } = useAvailableRoles();
 
   // ID de l'organisation à afficher dans la modale
   const dialogOrgId = selectedOrgIdInDialog || activeOrganisation?.id;
 
-  // Charger le rôle de l'utilisateur quand l'organisation dans la modale change
+  // Charger le rôle de l'utilisateur et les rôles disponibles quand le dialog s'ouvre
   React.useEffect(() => {
     if (dialogOrgId && manageDialogOpen) {
       fetchMyRole(dialogOrgId);
+      fetchRoles();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOrgId, manageDialogOpen]);
@@ -197,9 +236,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(" ");
 
-        // Mapper le rôle depuis l'objet role ou le roleId (seulement owner et member)
-        const roleNom = member.role?.nom?.toLowerCase() || "member";
-        const role = (roleNom === "owner" ? "owner" : "member") as "owner" | "member";
+        // Mapper le rôle depuis l'objet role.code (seulement owner et member)
+        const roleCode = member.role?.code?.toLowerCase() || "member";
+        const role = (roleCode === "owner" ? "owner" : "member") as "owner" | "member";
 
         return {
           id: member.id,
@@ -207,6 +246,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           email: member.utilisateur?.email || "",
           name: capitalizedName,
           role,
+          roleId: member.role?.id,
           joinedAt: new Date(member.dateActivation || member.createdAt),
         };
       });
@@ -253,16 +293,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   };
 
-  const handleUpdateMemberRole = async (_memberId: string, _role: string) => {
-    // TODO: Implémenter quand l'API sera disponible
-    // await api.patch(`/organisations/${activeOrganisation?.id}/membres/${memberId}`, { roleId });
-    // Puis rafraîchir: fetchMembers(activeOrganisation.id);
+  const handleUpdateMemberRole = async (memberId: string, roleId: string) => {
+    await updateMemberRole(memberId, roleId);
   };
 
-  const handleRemoveMember = async (_memberId: string) => {
-    // TODO: Implémenter quand l'API sera disponible
-    // await api.delete(`/organisations/${activeOrganisation?.id}/membres/${memberId}`);
-    // Puis rafraîchir: fetchMembers(activeOrganisation.id);
+  const handleRemoveMember = async (memberId: string) => {
+    if (!dialogOrgId) return;
+    await removeMember(memberId, dialogOrgId);
   };
 
   const handleCancelInvitation = async (invitationId: string) => {
@@ -322,9 +359,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setManageDialogOpen(false);
         setCreateOrgDialogOpen(true);
       }}
+      onDeleteOrganization={deleteOrganisation}
+      onUpdateOrganization={async (id, data) => { await updateOrganisation(id, data); }}
+      onLeaveOrganization={leaveOrganisation}
       currentUserRole={currentUserRole}
       members={members}
       pendingInvitations={pendingInvitations}
+      availableRoles={availableRoles}
       onInviteMember={handleInviteMember}
       onUpdateMemberRole={handleUpdateMemberRole}
       onRemoveMember={handleRemoveMember}

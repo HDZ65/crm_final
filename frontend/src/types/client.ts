@@ -85,7 +85,8 @@ export interface ClientRow {
 
 // Informations personnelles du client
 export interface ClientInfo {
-  name: string
+  nom: string
+  prenom: string
   profession: string
   phone: string
   birthDate: string

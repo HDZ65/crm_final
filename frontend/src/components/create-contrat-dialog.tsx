@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { FileText, Loader2, CalendarIcon } from "lucide-react"
+import { FileText, Loader2, CalendarIcon, ChevronDown } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -23,9 +23,21 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import { Calendar } from "@/components/ui/calendar"
 import {
     Popover,
@@ -37,54 +49,48 @@ import { toast } from "sonner"
 import { useApiPost } from "@/hooks/core"
 import { cn } from "@/lib/utils"
 import { useClients } from "@/hooks/clients"
-import { useGroupeEntites } from "@/hooks/clients/use-groupe-entites"
 import { useApporteurs } from "@/hooks/commissions/use-apporteurs"
-import {
-    useContractReferenceData,
-    useAdressesClient,
-} from "@/hooks/contracts"
 import { useOrganisation } from "@/contexts/organisation-context"
 
 const contratSchema = z.object({
     organisationId: z.string().uuid("ID organisation invalide"),
-    referenceExterne: z.string().min(1, "Référence requise"),
-    dateSignature: z.date({ error: "Date de signature requise" }),
-    dateDebut: z.date({ error: "Date de début requise" }),
-    dateFin: z.date({ error: "Date de fin requise" }),
-    statutId: z.string().uuid("Statut requis"),
-    autoRenouvellement: z.boolean(),
-    joursPreavis: z.number().min(0, "Jours de préavis invalide"),
-    conditionPaiementId: z.string().uuid("Condition de paiement requise"),
-    modeleDistributionId: z.string().uuid("Modèle de distribution requis"),
-    facturationParId: z.string().uuid("Facturation par requis"),
-    clientBaseId: z.string().uuid("Client requis"),
-    societeId: z.string().uuid("Société requise"),
+    reference: z.string().min(1, "Référence requise"),
+    statut: z.string().min(1, "Statut requis"),
+    dateDebut: z.date({ required_error: "Date de début requise" }),
+    clientId: z.string().uuid("Client requis"),
     commercialId: z.string().uuid("Commercial requis"),
-    clientPartenaireId: z.string().uuid("Partenaire requis"),
-    adresseFacturationId: z.string().uuid("Adresse de facturation requise"),
-    dateFinRetractation: z.date({ error: "Date fin rétractation requise" }),
+    // Optionnels
+    titre: z.string().optional(),
+    description: z.string().optional(),
+    type: z.string().optional(),
+    dateFin: z.date().optional().nullable(),
+    dateSignature: z.date().optional().nullable(),
+    montant: z.number().optional().nullable(),
+    devise: z.string().optional(),
+    frequenceFacturation: z.string().optional(),
+    fournisseur: z.string().optional(),
+    notes: z.string().optional(),
 })
 
 type ContratFormValues = z.infer<typeof contratSchema>
 
 interface CreateContratDto {
     organisationId: string
-    referenceExterne: string
-    dateSignature: string
+    reference: string
+    statut: string
     dateDebut: string
-    dateFin: string
-    statutId: string
-    autoRenouvellement: boolean
-    joursPreavis: number
-    conditionPaiementId: string
-    modeleDistributionId: string
-    facturationParId: string
-    clientBaseId: string
-    societeId: string
+    clientId: string
     commercialId: string
-    clientPartenaireId: string
-    adresseFacturationId: string
-    dateFinRetractation: string
+    titre?: string
+    description?: string
+    type?: string
+    dateFin?: string
+    dateSignature?: string
+    montant?: number
+    devise?: string
+    frequenceFacturation?: string
+    fournisseur?: string
+    notes?: string
 }
 
 interface Contrat extends CreateContratDto {
@@ -99,32 +105,34 @@ interface CreateContratDialogProps {
     onSuccess?: (contrat: Contrat) => void
 }
 
+const STATUTS = [
+    { value: "brouillon", label: "Brouillon" },
+    { value: "en_attente", label: "En attente" },
+    { value: "actif", label: "Actif" },
+    { value: "suspendu", label: "Suspendu" },
+    { value: "resilie", label: "Résilié" },
+    { value: "termine", label: "Terminé" },
+]
+
+const FREQUENCES = [
+    { value: "unique", label: "Paiement unique" },
+    { value: "mensuel", label: "Mensuel" },
+    { value: "trimestriel", label: "Trimestriel" },
+    { value: "annuel", label: "Annuel" },
+]
+
 export function CreateContratDialog({
     open,
     onOpenChange,
     onSuccess,
 }: CreateContratDialogProps) {
-    // Récupérer l'organisationId depuis le context
     const { activeOrganisation } = useOrganisation()
     const organisationId = activeOrganisation?.id || ""
+    const [showMore, setShowMore] = React.useState(false)
 
-    // Charger les données de référence
     const { clients, loading: loadingClients } = useClients()
-    const { societes, loading: loadingSocietes } = useGroupeEntites(organisationId)
     const { apporteurs, loading: loadingApporteurs } = useApporteurs({ organisationId })
-    const {
-        conditionsPaiement,
-        modelesDistribution,
-        statutsContrat,
-        partenaires,
-        loading: loadingRefData,
-    } = useContractReferenceData()
 
-    // État pour l'ID client sélectionné (pour charger les adresses)
-    const [selectedClientId, setSelectedClientId] = React.useState<string | null>(null)
-    const { adresses, loading: loadingAdresses } = useAdressesClient(selectedClientId)
-
-    // Préparer les options pour les combobox
     const clientOptions: ComboboxOption[] = React.useMemo(() =>
         clients.map(c => ({
             value: c.id,
@@ -132,15 +140,6 @@ export function CreateContratDialog({
             description: c.email || c.phone || undefined,
         })),
         [clients]
-    )
-
-    const societeOptions: ComboboxOption[] = React.useMemo(() =>
-        societes.map(s => ({
-            value: s.id,
-            label: s.raisonSociale,
-            description: s.siren || undefined,
-        })),
-        [societes]
     )
 
     const commercialOptions: ComboboxOption[] = React.useMemo(() =>
@@ -152,52 +151,7 @@ export function CreateContratDialog({
         [apporteurs]
     )
 
-    const partenaireOptions: ComboboxOption[] = React.useMemo(() =>
-        partenaires.map(p => ({
-            value: p.id,
-            label: p.nom,
-            description: p.code || undefined,
-        })),
-        [partenaires]
-    )
-
-    const statutOptions: ComboboxOption[] = React.useMemo(() =>
-        statutsContrat.map(s => ({
-            value: s.id,
-            label: s.nom,
-            description: s.description || undefined,
-        })),
-        [statutsContrat]
-    )
-
-    const conditionPaiementOptions: ComboboxOption[] = React.useMemo(() =>
-        conditionsPaiement.map(c => ({
-            value: c.id,
-            label: c.nom,
-            description: c.delaiJours ? `${c.delaiJours} jours` : undefined,
-        })),
-        [conditionsPaiement]
-    )
-
-    const modeleDistributionOptions: ComboboxOption[] = React.useMemo(() =>
-        modelesDistribution.map(m => ({
-            value: m.id,
-            label: m.nom,
-            description: m.description || undefined,
-        })),
-        [modelesDistribution]
-    )
-
-    const adresseOptions: ComboboxOption[] = React.useMemo(() =>
-        adresses.map(a => ({
-            value: a.id,
-            label: `${a.ligne1}, ${a.codePostal} ${a.ville}`,
-            description: a.type || undefined,
-        })),
-        [adresses]
-    )
-
-    const isLoadingData = loadingClients || loadingSocietes || loadingApporteurs || loadingRefData
+    const isLoadingData = loadingClients || loadingApporteurs
 
     const { loading, execute: createContrat } = useApiPost<Contrat, CreateContratDto>(
         "/contrats",
@@ -206,6 +160,7 @@ export function CreateContratDialog({
                 toast.success("Contrat créé avec succès !")
                 onOpenChange(false)
                 form.reset()
+                setShowMore(false)
                 onSuccess?.(data)
             },
             onError: (error) => {
@@ -218,18 +173,17 @@ export function CreateContratDialog({
         resolver: zodResolver(contratSchema),
         defaultValues: {
             organisationId: "",
-            referenceExterne: "",
-            autoRenouvellement: false,
-            joursPreavis: 30,
-            statutId: "",
-            conditionPaiementId: "",
-            modeleDistributionId: "",
-            facturationParId: "",
-            clientBaseId: "",
-            societeId: "",
+            reference: "",
+            statut: "brouillon",
+            clientId: "",
             commercialId: "",
-            clientPartenaireId: "",
-            adresseFacturationId: "",
+            titre: "",
+            description: "",
+            type: "",
+            devise: "EUR",
+            frequenceFacturation: "",
+            fournisseur: "",
+            notes: "",
         },
     })
 
@@ -239,21 +193,32 @@ export function CreateContratDialog({
         }
     }, [organisationId, form])
 
-    // Reset le formulaire quand le dialog se ferme
     const handleOpenChange = (isOpen: boolean) => {
         if (!isOpen) {
             form.reset()
+            setShowMore(false)
         }
         onOpenChange(isOpen)
     }
 
     const onSubmit = async (data: ContratFormValues) => {
         const payload: CreateContratDto = {
-            ...data,
-            dateSignature: format(data.dateSignature, "yyyy-MM-dd"),
+            organisationId: data.organisationId,
+            reference: data.reference,
+            statut: data.statut,
             dateDebut: format(data.dateDebut, "yyyy-MM-dd"),
-            dateFin: format(data.dateFin, "yyyy-MM-dd"),
-            dateFinRetractation: format(data.dateFinRetractation, "yyyy-MM-dd"),
+            clientId: data.clientId,
+            commercialId: data.commercialId,
+            titre: data.titre || undefined,
+            description: data.description || undefined,
+            type: data.type || undefined,
+            dateFin: data.dateFin ? format(data.dateFin, "yyyy-MM-dd") : undefined,
+            dateSignature: data.dateSignature ? format(data.dateSignature, "yyyy-MM-dd") : undefined,
+            montant: data.montant ?? undefined,
+            devise: data.devise || undefined,
+            frequenceFacturation: data.frequenceFacturation || undefined,
+            fournisseur: data.fournisseur || undefined,
+            notes: data.notes || undefined,
         }
 
         try {
@@ -265,27 +230,27 @@ export function CreateContratDialog({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <FileText className="size-5" />
                         Nouveau contrat
                     </DialogTitle>
                     <DialogDescription>
-                        Créez un nouveau contrat en renseignant les informations ci-dessous.
+                        Renseignez les informations du contrat.
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        {/* Champs requis */}
                         <div className="grid grid-cols-2 gap-4">
-                            {/* Référence externe */}
                             <FormField
                                 control={form.control}
-                                name="referenceExterne"
+                                name="reference"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Référence externe</FormLabel>
+                                        <FormLabel>Référence *</FormLabel>
                                         <FormControl>
                                             <Input
                                                 placeholder="CTR-2024-001"
@@ -297,25 +262,47 @@ export function CreateContratDialog({
                                     </FormItem>
                                 )}
                             />
-
-                            {/* Client */}
                             <FormField
                                 control={form.control}
-                                name="clientBaseId"
+                                name="statut"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Client</FormLabel>
+                                        <FormLabel>Statut *</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Sélectionner" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {STATUTS.map((s) => (
+                                                    <SelectItem key={s.value} value={s.value}>
+                                                        {s.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="clientId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Client *</FormLabel>
                                         <FormControl>
                                             <FormCombobox
                                                 options={clientOptions}
                                                 value={field.value}
-                                                onChange={(value) => {
-                                                    field.onChange(value)
-                                                    setSelectedClientId(value || null)
-                                                }}
-                                                placeholder="Sélectionner un client"
-                                                searchPlaceholder="Rechercher un client..."
-                                                emptyMessage="Aucun client trouvé"
+                                                onChange={field.onChange}
+                                                placeholder="Sélectionner"
+                                                searchPlaceholder="Rechercher..."
+                                                emptyMessage="Aucun client"
                                                 disabled={loading || isLoadingData}
                                                 loading={loadingClients}
                                             />
@@ -324,46 +311,20 @@ export function CreateContratDialog({
                                     </FormItem>
                                 )}
                             />
-
-                            {/* Société */}
-                            <FormField
-                                control={form.control}
-                                name="societeId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Société</FormLabel>
-                                        <FormControl>
-                                            <FormCombobox
-                                                options={societeOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Sélectionner une société"
-                                                searchPlaceholder="Rechercher une société..."
-                                                emptyMessage="Aucune société trouvée"
-                                                disabled={loading || isLoadingData}
-                                                loading={loadingSocietes}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Commercial */}
                             <FormField
                                 control={form.control}
                                 name="commercialId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Commercial</FormLabel>
+                                        <FormLabel>Commercial *</FormLabel>
                                         <FormControl>
                                             <FormCombobox
                                                 options={commercialOptions}
                                                 value={field.value}
                                                 onChange={field.onChange}
-                                                placeholder="Sélectionner un commercial"
-                                                searchPlaceholder="Rechercher un commercial..."
-                                                emptyMessage="Aucun commercial trouvé"
+                                                placeholder="Sélectionner"
+                                                searchPlaceholder="Rechercher..."
+                                                emptyMessage="Aucun commercial"
                                                 disabled={loading || isLoadingData}
                                                 loading={loadingApporteurs}
                                             />
@@ -372,107 +333,15 @@ export function CreateContratDialog({
                                     </FormItem>
                                 )}
                             />
-
-                            {/* Partenaire */}
-                            <FormField
-                                control={form.control}
-                                name="clientPartenaireId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Partenaire</FormLabel>
-                                        <FormControl>
-                                            <FormCombobox
-                                                options={partenaireOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Sélectionner un partenaire"
-                                                searchPlaceholder="Rechercher un partenaire..."
-                                                emptyMessage="Aucun partenaire trouvé"
-                                                disabled={loading || isLoadingData}
-                                                loading={loadingRefData}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Statut */}
-                            <FormField
-                                control={form.control}
-                                name="statutId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Statut</FormLabel>
-                                        <FormControl>
-                                            <FormCombobox
-                                                options={statutOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Sélectionner un statut"
-                                                searchPlaceholder="Rechercher un statut..."
-                                                emptyMessage="Aucun statut trouvé"
-                                                disabled={loading || isLoadingData}
-                                                loading={loadingRefData}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
                         </div>
 
-                        {/* Dates */}
                         <div className="grid grid-cols-2 gap-4">
-                            {/* Date de signature */}
-                            <FormField
-                                control={form.control}
-                                name="dateSignature"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>Date de signature</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant="outline"
-                                                        className={cn(
-                                                            "w-full pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                        disabled={loading}
-                                                    >
-                                                        {field.value ? (
-                                                            format(field.value, "dd/MM/yyyy", { locale: fr })
-                                                        ) : (
-                                                            <span>Sélectionner une date</span>
-                                                        )}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    disabled={loading}
-                                                    locale={fr}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Date de début */}
                             <FormField
                                 control={form.control}
                                 name="dateDebut"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Date de début</FormLabel>
+                                        <FormLabel>Date de début *</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -487,7 +356,7 @@ export function CreateContratDialog({
                                                         {field.value ? (
                                                             format(field.value, "dd/MM/yyyy", { locale: fr })
                                                         ) : (
-                                                            <span>Sélectionner une date</span>
+                                                            <span>Sélectionner</span>
                                                         )}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
@@ -507,242 +376,200 @@ export function CreateContratDialog({
                                     </FormItem>
                                 )}
                             />
-
-                            {/* Date de fin */}
                             <FormField
                                 control={form.control}
-                                name="dateFin"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>Date de fin</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant="outline"
-                                                        className={cn(
-                                                            "w-full pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                        disabled={loading}
-                                                    >
-                                                        {field.value ? (
-                                                            format(field.value, "dd/MM/yyyy", { locale: fr })
-                                                        ) : (
-                                                            <span>Sélectionner une date</span>
-                                                        )}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    disabled={loading}
-                                                    locale={fr}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Date fin rétractation */}
-                            <FormField
-                                control={form.control}
-                                name="dateFinRetractation"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>Date fin rétractation</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant="outline"
-                                                        className={cn(
-                                                            "w-full pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                        disabled={loading}
-                                                    >
-                                                        {field.value ? (
-                                                            format(field.value, "dd/MM/yyyy", { locale: fr })
-                                                        ) : (
-                                                            <span>Sélectionner une date</span>
-                                                        )}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    disabled={loading}
-                                                    locale={fr}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {/* Conditions et options */}
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* Condition de paiement */}
-                            <FormField
-                                control={form.control}
-                                name="conditionPaiementId"
+                                name="montant"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Condition de paiement</FormLabel>
-                                        <FormControl>
-                                            <FormCombobox
-                                                options={conditionPaiementOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Sélectionner une condition"
-                                                searchPlaceholder="Rechercher..."
-                                                emptyMessage="Aucune condition trouvée"
-                                                disabled={loading || isLoadingData}
-                                                loading={loadingRefData}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Modèle de distribution */}
-                            <FormField
-                                control={form.control}
-                                name="modeleDistributionId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Modèle de distribution</FormLabel>
-                                        <FormControl>
-                                            <FormCombobox
-                                                options={modeleDistributionOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Sélectionner un modèle"
-                                                searchPlaceholder="Rechercher..."
-                                                emptyMessage="Aucun modèle trouvé"
-                                                disabled={loading || isLoadingData}
-                                                loading={loadingRefData}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Facturation par */}
-                            <FormField
-                                control={form.control}
-                                name="facturationParId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Facturation par</FormLabel>
-                                        <FormControl>
-                                            <FormCombobox
-                                                options={societeOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Sélectionner la société facturante"
-                                                searchPlaceholder="Rechercher..."
-                                                emptyMessage="Aucune société trouvée"
-                                                disabled={loading || isLoadingData}
-                                                loading={loadingSocietes}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Adresse de facturation */}
-                            <FormField
-                                control={form.control}
-                                name="adresseFacturationId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Adresse de facturation</FormLabel>
-                                        <FormControl>
-                                            <FormCombobox
-                                                options={adresseOptions}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder={selectedClientId ? "Sélectionner une adresse" : "Sélectionnez d'abord un client"}
-                                                searchPlaceholder="Rechercher..."
-                                                emptyMessage="Aucune adresse trouvée"
-                                                disabled={loading || isLoadingData || !selectedClientId}
-                                                loading={loadingAdresses}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {/* Préavis et renouvellement */}
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* Jours de préavis */}
-                            <FormField
-                                control={form.control}
-                                name="joursPreavis"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Jours de préavis</FormLabel>
+                                        <FormLabel>Montant (€)</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
-                                                placeholder="30"
+                                                step="0.01"
+                                                placeholder="0.00"
                                                 disabled={loading}
                                                 {...field}
-                                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                                value={field.value ?? ""}
+                                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
                                             />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
-
-                            {/* Auto-renouvellement */}
-                            <FormField
-                                control={form.control}
-                                name="autoRenouvellement"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                        <div className="space-y-0.5">
-                                            <FormLabel>Auto-renouvellement</FormLabel>
-                                        </div>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                                disabled={loading}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
                         </div>
 
+                        {/* Champs optionnels (dépliables) */}
+                        <Collapsible open={showMore} onOpenChange={setShowMore}>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="ghost" type="button" className="w-full justify-between text-muted-foreground">
+                                    Plus d&apos;options
+                                    <ChevronDown className={cn("h-4 w-4 transition-transform", showMore && "rotate-180")} />
+                                </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="space-y-4 pt-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="titre"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Titre</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Titre du contrat" disabled={loading} {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="type"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Type</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Type de contrat" disabled={loading} {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="dateFin"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Date de fin</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                className={cn(
+                                                                    "w-full pl-3 text-left font-normal",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                                disabled={loading}
+                                                            >
+                                                                {field.value ? format(field.value, "dd/MM/yyyy", { locale: fr }) : <span>Sélectionner</span>}
+                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar mode="single" selected={field.value ?? undefined} onSelect={field.onChange} locale={fr} />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="dateSignature"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Date signature</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                className={cn(
+                                                                    "w-full pl-3 text-left font-normal",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                                disabled={loading}
+                                                            >
+                                                                {field.value ? format(field.value, "dd/MM/yyyy", { locale: fr }) : <span>Sélectionner</span>}
+                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar mode="single" selected={field.value ?? undefined} onSelect={field.onChange} locale={fr} />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="frequenceFacturation"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Fréquence</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Sélectionner" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {FREQUENCES.map((f) => (
+                                                            <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="fournisseur"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Fournisseur</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Nom du fournisseur" disabled={loading} {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="description"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Description</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="Description..." className="resize-none" rows={2} disabled={loading} {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="notes"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Notes internes</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="Notes..." className="resize-none" rows={2} disabled={loading} {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CollapsibleContent>
+                        </Collapsible>
+
                         <div className="flex justify-end gap-3 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => handleOpenChange(false)}
-                                disabled={loading}
-                            >
+                            <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)} disabled={loading}>
                                 Annuler
                             </Button>
                             <Button type="submit" disabled={loading}>
@@ -752,7 +579,7 @@ export function CreateContratDialog({
                                         Création...
                                     </>
                                 ) : (
-                                    "Créer le contrat"
+                                    "Créer"
                                 )}
                             </Button>
                         </div>

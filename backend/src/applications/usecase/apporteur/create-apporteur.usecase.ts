@@ -3,6 +3,9 @@ import { ApporteurEntity } from '../../../core/domain/apporteur.entity';
 import type { ApporteurRepositoryPort } from '../../../core/port/apporteur-repository.port';
 import { CreateApporteurDto } from '../../dto/apporteur/create-apporteur.dto';
 
+const capitalize = (str: string) =>
+  str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
 @Injectable()
 export class CreateApporteurUseCase {
   constructor(
@@ -14,8 +17,8 @@ export class CreateApporteurUseCase {
     const entity = new ApporteurEntity({
       organisationId: dto.organisationId,
       utilisateurId: dto.utilisateurId ?? null,
-      nom: dto.nom,
-      prenom: dto.prenom,
+      nom: dto.nom ? capitalize(dto.nom) : dto.nom,
+      prenom: dto.prenom ? capitalize(dto.prenom) : dto.prenom,
       typeApporteur: dto.typeApporteur,
       email: dto.email ?? null,
       telephone: dto.telephone ?? null,

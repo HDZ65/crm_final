@@ -36,11 +36,12 @@ export class ClientBaseController {
   private toWithContratsDto(entity: ClientBaseEntity): ClientBaseWithContratsDto {
     const contrats: ContratSummaryDto[] = (entity.contrats || []).map((c) => ({
       id: c.id,
-      referenceExterne: c.referenceExterne,
+      reference: c.reference,
+      titre: c.titre,
       dateDebut: c.dateDebut,
       dateFin: c.dateFin,
-      statutId: c.statutId,
-      societeId: c.societeId,
+      statut: c.statut,
+      montant: c.montant ? Number(c.montant) : null,
     }));
 
     return new ClientBaseWithContratsDto({
@@ -55,7 +56,7 @@ export class ClientBaseController {
       dateCreation: entity.dateCreation,
       telephone: entity.telephone,
       email: entity.email,
-      statutId: entity.statutId,
+      statut: entity.statut,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       contrats,

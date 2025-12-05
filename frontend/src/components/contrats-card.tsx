@@ -78,12 +78,14 @@ export function ContratsCard() {
     skip: !activeOrganisation,
   })
 
-  // Transformer les données API vers le format attendu
+  // Transformer les données API vers le format attendu (exclure les sociétés avec 0 contrats)
   const contractsData = React.useMemo(() => {
-    return tableData.map((item) => ({
-      company: item.companyName,
-      contracts: item.contratsActifs,
-    }))
+    return tableData
+      .filter((item) => item.contratsActifs > 0)
+      .map((item) => ({
+        company: item.companyName,
+        contracts: item.contratsActifs,
+      }))
   }, [tableData])
 
   const allCompanies = React.useMemo(() => contractsData.map((c) => c.company), [contractsData])

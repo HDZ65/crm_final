@@ -29,7 +29,9 @@ import { NotificationEntity } from './modules/notification/entities/notification
         logging: configService.get<string>('NODE_ENV') === 'development',
         ssl:
           configService.get<string>('DB_SSL') === 'true'
-            ? { rejectUnauthorized: false }
+            ? {
+                rejectUnauthorized: configService.get<string>('NODE_ENV') === 'production',
+              }
             : false,
         extra: {
           max: 10,

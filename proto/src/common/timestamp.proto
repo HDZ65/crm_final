@@ -1,0 +1,23 @@
+// ====================================================================
+// Common Timestamp Messages
+// ====================================================================
+// 
+// Timestamps are represented as ISO 8601 strings for consistency
+// across frontend/backend and database
+// ====================================================================
+
+syntax = "proto3";
+
+package common;
+
+// Audit fields for entities
+message AuditFields {
+  // ISO 8601 timestamp
+  string created_at = 1;
+
+  // ISO 8601 timestamp
+  string updated_at = 2;
+
+  // Optional soft delete timestamp
+  optional string deleted_at = 3;
+}

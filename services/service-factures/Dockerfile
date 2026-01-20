@@ -52,15 +52,15 @@ RUN mkdir -p /app/storage/pdfs /app/storage/temp && \
 USER nestjs
 
 # Exposer le port gRPC
-EXPOSE 60051
+EXPOSE 50059
 
 # Variable d'environnement par défaut
 ENV NODE_ENV=production
-ENV GRPC_URL=0.0.0.0:50051
+ENV GRPC_URL=0.0.0.0:50059
 
 # Health check (utilise grpc-health-probe si disponible)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('net').connect({port:60051,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
+  CMD node -e "require('net').connect({port:50059,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
 
 # Démarrer l'application
 CMD ["node", "dist/main.js"]

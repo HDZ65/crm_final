@@ -34,12 +34,12 @@ COPY --from=builder --chown=nestjs:nodejs /app/proto ./proto
 
 USER nestjs
 
-EXPOSE 60056
+EXPOSE 50056
 
 ENV NODE_ENV=production
-ENV GRPC_PORT=60056
+ENV GRPC_PORT=50056
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('net').connect({port:60056,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
+  CMD node -e "require('net').connect({port:50056,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
 
 CMD ["node", "dist/main.js"]

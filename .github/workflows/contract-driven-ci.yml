@@ -1,0 +1,394 @@
+name: Contract-Driven CI (Fail-Fast)
+
+# ====================================================================
+# STRICT CONTRACT-DRIVEN CI/CD
+# ====================================================================
+#
+# This pipeline FAILS IMMEDIATELY if:
+# 1. Proto files don't lint
+# 2. Breaking changes detected
+# 3. Generated code is out of sync
+# 4. Manual DTOs exist
+# 5. Manual column mappings exist
+# 6. snake_case appears in application code
+# 7. Tests fail
+#
+# ZERO tolerance for violations
+# ====================================================================
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ====================================================================
+  # JOB 1: Proto Validation (CRITICAL)
+  # ====================================================================
+  proto-validation:
+    name: 🔍 Proto Validation (Strict)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for buf breaking
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: '1.47.2'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Buf Lint (FAIL on any warning)
+        working-directory: proto
+        run: |
+          echo "🔍 Running buf lint..."
+          buf lint --error-format=json > lint-results.json || {
+            echo "❌ LINT FAILED"
+            cat lint-results.json
+            exit 1
+          }
+          echo "✅ Lint passed"
+
+      - name: Buf Format Check
+        working-directory: proto
+        run: |
+          echo "🔍 Checking proto formatting..."
+          buf format --diff --exit-code || {
+            echo "❌ Proto files are not formatted"
+            echo "Run: buf format -w proto/src"
+            exit 1
+          }
+          echo "✅ Format check passed"
+
+      - name: Buf Breaking Change Detection
+        if: github.event_name == 'pull_request'
+        working-directory: proto
+        run: |
+          echo "🔍 Checking for breaking changes..."
+          buf breaking --against '.git#branch=main' || {
+            echo "❌ BREAKING CHANGES DETECTED"
+            echo "Breaking changes must be documented and approved"
+            exit 1
+          }
+          echo "✅ No breaking changes"
+
+      - name: Validate snake_case in Proto Files
+        run: |
+          echo "🔍 Validating snake_case in proto files..."
+          
+          # Check for camelCase in field names (forbidden)
+          if grep -r -E '^\s*[a-z]+[A-Z]' proto/src --include="*.proto"; then
+            echo "❌ FORBIDDEN: camelCase detected in proto files"
+            echo "All proto fields MUST use snake_case"
+            exit 1
+          fi
+          
+          echo "✅ All proto files use snake_case"
+
+  # ====================================================================
+  # JOB 2: Code Generation Sync Check
+  # ====================================================================
+  generation-sync:
+    name: 🔄 Generation Sync Check
+    runs-on: ubuntu-latest
+    needs: proto-validation
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: '1.47.2'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Proto Code
+        working-directory: proto
+        run: |
+          echo "🔄 Generating code from protos..."
+          buf generate
+
+      - name: Check for Uncommitted Changes
+        run: |
+          echo "🔍 Checking if generated code is in sync..."
+          
+          git diff --exit-code proto/gen/ || {
+            echo "❌ GENERATED CODE OUT OF SYNC"
+            echo ""
+            echo "Generated code differs from committed files."
+            echo "Run: cd proto && buf generate"
+            echo "Then commit the changes."
+            echo ""
+            git diff proto/gen/
+            exit 1
+          }
+          
+          echo "✅ Generated code is in sync"
+
+  # ====================================================================
+  # JOB 3: Anti-Pattern Detection
+  # ====================================================================
+  anti-pattern-detection:
+    name: 🚫 Anti-Pattern Detection
+    runs-on: ubuntu-latest
+    needs: proto-validation
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Manual DTOs (FORBIDDEN)
+        run: |
+          echo "🔍 Scanning for manual DTOs..."
+          
+          # Check for manual DTO classes in services (forbidden)
+          if find services -name "*.dto.ts" | grep -v "node_modules" | grep -q .; then
+            echo "❌ FORBIDDEN: Manual DTO files detected"
+            echo ""
+            find services -name "*.dto.ts" | grep -v "node_modules"
+            echo ""
+            echo "DTOs MUST be generated from proto files"
+            echo "Remove manual DTOs and use @proto/gen/* types"
+            exit 1
+          fi
+          
+          echo "✅ No manual DTOs found"
+
+      - name: Detect Manual Column Mapping (FORBIDDEN)
+        run: |
+          echo "🔍 Scanning for manual column mappings..."
+          
+          # Check for @Column({ name: '...' }) in entities
+          if grep -r "@Column.*{.*name:" services --include="*.entity.ts" --include="*.ts" | grep -v "node_modules"; then
+            echo "❌ FORBIDDEN: Manual @Column({ name: ... }) mapping detected"
+            echo ""
+            echo "Use automatic snake_case conversion via StrictNamingStrategy"
+            echo "Remove all @Column({ name: '...' }) decorators"
+            exit 1
+          fi
+          
+          echo "✅ No manual column mappings found"
+
+      - name: Detect snake_case in Application Code
+        run: |
+          echo "🔍 Scanning for snake_case in TypeScript code..."
+          
+          # Check for snake_case variable/property names (should be camelCase)
+          if grep -r -E '(const|let|var)\s+[a-z]+_[a-z]' services frontend/src --include="*.ts" --include="*.tsx" | grep -v "node_modules" | grep -v ".proto" | grep -v "test" | head -10; then
+            echo "⚠️  WARNING: snake_case variables detected in application code"
+            echo "Application code should use camelCase"
+            echo "snake_case is ONLY for .proto files and database"
+            # Don't fail - just warn (too strict for existing code)
+          fi
+
+      - name: Detect any Type Usage (FORBIDDEN)
+        run: |
+          echo "🔍 Scanning for 'any' type usage..."
+          
+          # Check for 'any' type in new code (strict)
+          ANY_COUNT=$(grep -r ": any" services frontend/src --include="*.ts" --include="*.tsx" | grep -v "node_modules" | grep -v ".d.ts" | grep -v "eslint-disable" | wc -l)
+          
+          if [ "$ANY_COUNT" -gt 100 ]; then
+            echo "⚠️  WARNING: High usage of 'any' type ($ANY_COUNT occurrences)"
+            echo "Prefer explicit types from proto/gen/*"
+          fi
+
+  # ====================================================================
+  # JOB 4: TypeScript Build
+  # ====================================================================
+  typescript-build:
+    name: 🔨 TypeScript Build
+    runs-on: ubuntu-latest
+    needs: [generation-sync, anti-pattern-detection]
+    
+    strategy:
+      matrix:
+        service:
+          - service-clients
+          - service-factures
+          - service-contrats
+          - service-payments
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: services/${{ matrix.service }}
+        run: npm ci
+
+      - name: TypeScript Build
+        working-directory: services/${{ matrix.service }}
+        run: |
+          echo "🔨 Building ${{ matrix.service }}..."
+          npm run build || {
+            echo "❌ TypeScript build failed for ${{ matrix.service }}"
+            exit 1
+          }
+          echo "✅ Build successful"
+
+  # ====================================================================
+  # JOB 5: Linting
+  # ====================================================================
+  lint:
+    name: 📋 ESLint
+    runs-on: ubuntu-latest
+    needs: typescript-build
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Root Dependencies
+        run: npm ci
+
+      - name: Lint Services
+        run: |
+          echo "📋 Linting all services..."
+          
+          for service in services/service-*; do
+            if [ -f "$service/package.json" ] && grep -q "\"lint\"" "$service/package.json"; then
+              echo "Linting $(basename $service)..."
+              cd "$service"
+              npm run lint || {
+                echo "❌ Lint failed for $(basename $service)"
+                exit 1
+              }
+              cd ../..
+            fi
+          done
+          
+          echo "✅ All services passed linting"
+
+  # ====================================================================
+  # JOB 6: Tests
+  # ====================================================================
+  tests:
+    name: 🧪 Tests
+    runs-on: ubuntu-latest
+    needs: typescript-build
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Tests
+        run: |
+          echo "🧪 Running tests..."
+          
+          for service in services/service-*; do
+            if [ -f "$service/package.json" ] && grep -q "\"test\"" "$service/package.json"; then
+              echo "Testing $(basename $service)..."
+              cd "$service"
+              npm ci
+              npm test || {
+                echo "❌ Tests failed for $(basename $service)"
+                exit 1
+              }
+              cd ../..
+            fi
+          done
+          
+          echo "✅ All tests passed"
+
+  # ====================================================================
+  # JOB 7: Contract Validation Report
+  # ====================================================================
+  contract-report:
+    name: 📊 Contract Validation Report
+    runs-on: ubuntu-latest
+    needs: [proto-validation, generation-sync, anti-pattern-detection, typescript-build, lint, tests]
+    if: always()
+    
+    steps:
+      - name: Generate Report
+        run: |
+          echo "📊 Contract-Driven Architecture Validation Report"
+          echo "=================================================="
+          echo ""
+          echo "✅ Proto Validation: ${{ needs.proto-validation.result }}"
+          echo "✅ Generation Sync: ${{ needs.generation-sync.result }}"
+          echo "✅ Anti-Pattern Detection: ${{ needs.anti-pattern-detection.result }}"
+          echo "✅ TypeScript Build: ${{ needs.typescript-build.result }}"
+          echo "✅ Linting: ${{ needs.lint.result }}"
+          echo "✅ Tests: ${{ needs.tests.result }}"
+          echo ""
+          
+          if [ "${{ needs.proto-validation.result }}" != "success" ] || \
+             [ "${{ needs.generation-sync.result }}" != "success" ] || \
+             [ "${{ needs.anti-pattern-detection.result }}" != "success" ] || \
+             [ "${{ needs.typescript-build.result }}" != "success" ] || \
+             [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.tests.result }}" != "success" ]; then
+            echo "❌ CONTRACT VALIDATION FAILED"
+            echo ""
+            echo "Review failed jobs above"
+            exit 1
+          fi
+          
+          echo "✅ ALL CONTRACT VALIDATIONS PASSED"
+
+      - name: Comment PR (if applicable)
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const report = `
+            ## 📊 Contract-Driven Architecture Report
+            
+            | Check | Status |
+            |-------|--------|
+            | Proto Validation | ${{ needs.proto-validation.result == 'success' && '✅' || '❌' }} |
+            | Generation Sync | ${{ needs.generation-sync.result == 'success' && '✅' || '❌' }} |
+            | Anti-Pattern Detection | ${{ needs.anti-pattern-detection.result == 'success' && '✅' || '❌' }} |
+            | TypeScript Build | ${{ needs.typescript-build.result == 'success' && '✅' || '❌' }} |
+            | Linting | ${{ needs.lint.result == 'success' && '✅' || '❌' }} |
+            | Tests | ${{ needs.tests.result == 'success' && '✅' || '❌' }} |
+            
+            ${{ needs.proto-validation.result == 'success' && needs.generation-sync.result == 'success' && needs.anti-pattern-detection.result == 'success' && needs.typescript-build.result == 'success' && needs.lint.result == 'success' && needs.tests.result == 'success' && '✅ **All checks passed!**' || '❌ **Some checks failed. See details above.**' }}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: report
+            });

@@ -54,7 +54,9 @@ import { RetryAuditLogEntity } from './modules/audit-log/entities/retry-audit-lo
         logging: configService.get<string>('NODE_ENV') === 'development',
         ssl:
           configService.get<string>('DB_SSL') === 'true'
-            ? { rejectUnauthorized: false }
+            ? {
+                rejectUnauthorized: configService.get<string>('NODE_ENV') === 'production',
+              }
             : false,
         extra: {
           max: 10,

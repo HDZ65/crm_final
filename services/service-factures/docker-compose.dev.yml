@@ -42,7 +42,7 @@ services:
       NODE_ENV: development
 
       # gRPC
-      GRPC_URL: 0.0.0.0:50051
+      GRPC_URL: 0.0.0.0:50059
 
       # Invoice Configuration
       INVOICE_PREFIX: INV
@@ -68,7 +68,7 @@ services:
       LATE_PAYMENT_INTEREST_RATE: 10
       RECOVERY_INDEMNITY_AMOUNT: 40
     ports:
-      - "50051:50051"
+      - "50059:50059"
     volumes:
       # Mount le code source pour le hot-reload
       - .:/app

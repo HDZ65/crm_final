@@ -9,12 +9,12 @@ services:
     build: ./service-activites
     container_name: crm-service-activites
     ports:
-      - "60051:60051"
+      - "50051:50051"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60051
+      GRPC_PORT: 50051
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: activites_db
@@ -26,12 +26,12 @@ services:
     build: ./service-clients
     container_name: crm-service-clients
     ports:
-      - "60052:60052"
+      - "50052:50052"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60052
+      GRPC_PORT: 50052
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: clients_db
@@ -43,12 +43,12 @@ services:
     build: ./service-commerciaux
     container_name: crm-service-commerciaux
     ports:
-      - "60053:60053"
+      - "50053:50053"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60053
+      GRPC_PORT: 50053
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: commerciaux_db
@@ -60,12 +60,12 @@ services:
     build: ./service-commission
     container_name: crm-service-commission
     ports:
-      - "60054:60054"
+      - "50054:50054"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60054
+      GRPC_PORT: 50054
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: commission_db
@@ -77,12 +77,12 @@ services:
     build: ./service-contrats
     container_name: crm-service-contrats
     ports:
-      - "60055:60055"
+      - "50055:50055"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60055
+      GRPC_PORT: 50055
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: contrats_db
@@ -94,12 +94,12 @@ services:
     build: ./service-dashboard
     container_name: crm-service-dashboard
     ports:
-      - "60056:60056"
+      - "50056:50056"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60056
+      GRPC_PORT: 50056
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: dashboard_db
@@ -111,12 +111,12 @@ services:
     build: ./service-documents
     container_name: crm-service-documents
     ports:
-      - "60057:60057"
+      - "50057:50057"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60057
+      GRPC_PORT: 50057
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: documents_db
@@ -128,12 +128,12 @@ services:
     build: ./service-email
     container_name: crm-service-email
     ports:
-      - "60058:60058"
+      - "50058:50058"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60058
+      GRPC_PORT: 50058
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: email_db
@@ -145,12 +145,12 @@ services:
     build: ./service-factures
     container_name: crm-service-factures
     ports:
-      - "60059:60059"
+      - "50059:50059"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60059
+      GRPC_PORT: 50059
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: factures_db
@@ -162,12 +162,12 @@ services:
     build: ./service-logistics
     container_name: crm-service-logistics
     ports:
-      - "60060:60060"
+      - "50060:50060"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60060
+      GRPC_PORT: 50060
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: logistics_db
@@ -179,14 +179,14 @@ services:
     build: ./service-notifications
     container_name: crm-service-notifications
     ports:
-      - "60061:60061"
-      - "3055:3055"
+      - "50061:50061"
+      - "3001:3001"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60061
-      WS_PORT: 3055
+      GRPC_PORT: 50061
+      WS_PORT: 3001
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: notifications_db
@@ -198,12 +198,12 @@ services:
     build: ./service-organisations
     container_name: crm-service-organisations
     ports:
-      - "60062:60062"
+      - "50062:50062"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60062
+      GRPC_PORT: 50062
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: organisations_db
@@ -215,12 +215,12 @@ services:
     build: ./service-payments
     container_name: crm-service-payments
     ports:
-      - "60063:60063"
+      - "50063:50063"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60063
+      GRPC_PORT: 50063
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: payments_db
@@ -232,12 +232,12 @@ services:
     build: ./service-products
     container_name: crm-service-products
     ports:
-      - "60064:60064"
+      - "50064:50064"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60064
+      GRPC_PORT: 50064
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: products_db
@@ -249,12 +249,12 @@ services:
     build: ./service-referentiel
     container_name: crm-service-referentiel
     ports:
-      - "60065:60065"
+      - "50065:50065"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60065
+      GRPC_PORT: 50065
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: referentiel_db
@@ -266,13 +266,13 @@ services:
     build: ./service-relance
     container_name: crm-service-relance
     ports:
-      - "60066:60066"
+      - "50066:50066"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60066
+      GRPC_PORT: 50066
       CRON_ENABLED: "true"
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: relance_db
@@ -284,12 +284,12 @@ services:
     build: ./service-users
     container_name: crm-service-users
     ports:
-      - "60067:60067"
+      - "50067:50067"
     environment:
       NODE_ENV: development
-      GRPC_PORT: 60067
+      GRPC_PORT: 50067
       DB_HOST: host.docker.internal
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: users_db

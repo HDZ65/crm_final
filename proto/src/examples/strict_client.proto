@@ -1,0 +1,313 @@
+// ====================================================================
+// EXAMPLE: Strict Contract-Driven Client Service
+// ====================================================================
+//
+// This proto demonstrates PERFECT contract-driven architecture:
+// - All fields: snake_case
+// - Full validation rules (buf.validate)
+// - No manual DTOs needed
+// - Auto-converts to camelCase in TypeScript
+// - Database auto snake_case via naming strategy
+//
+// USE THIS AS REFERENCE for all new services
+// ====================================================================
+
+syntax = "proto3";
+
+package examples.strict_client;
+
+import "buf/validate/validate.proto";
+import "common/pagination.proto";
+import "common/timestamp.proto";
+
+// ====================================================================
+// ENUMS
+// ====================================================================
+
+enum ClientStatus {
+  // Zero value MUST be UNSPECIFIED (buf lint requirement)
+  CLIENT_STATUS_UNSPECIFIED = 0;
+  CLIENT_STATUS_ACTIVE = 1;
+  CLIENT_STATUS_INACTIVE = 2;
+  CLIENT_STATUS_SUSPENDED = 3;
+  CLIENT_STATUS_PROSPECT = 4;
+}
+
+enum ClientType {
+  CLIENT_TYPE_UNSPECIFIED = 0;
+  CLIENT_TYPE_INDIVIDUAL = 1;    // Particulier
+  CLIENT_TYPE_COMPANY = 2;        // Entreprise
+  CLIENT_TYPE_PARTNER = 3;        // Partenaire
+}
+
+// ====================================================================
+// MESSAGES
+// ====================================================================
+
+// Client entity (full data model)
+message Client {
+  // UUID primary key
+  string id = 1 [(buf.validate.field).string.uuid = true];
+
+  // Organisation ID (multi-tenancy)
+  string organisation_id = 2 [(buf.validate.field).string.uuid = true];
+
+  // Client type
+  ClientType client_type = 3 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]  // Can't be UNSPECIFIED
+  }];
+
+  // Status
+  ClientStatus status = 4 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+
+  // Personal information
+  string first_name = 5 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100,
+    pattern: "^[a-zA-ZÀ-ÿ\\s'-]+$"  // Letters, accents, spaces, hyphens, apostrophes
+  }];
+
+  optional string last_name = 6 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100,
+    pattern: "^[a-zA-ZÀ-ÿ\\s'-]+$"
+  }];
+
+  // Contact information
+  string email = 7 [(buf.validate.field).string.email = true];
+
+  optional string phone = 8 [(buf.validate.field).string = {
+    pattern: "^\\+?[1-9]\\d{1,14}$"  // E.164 format
+  }];
+
+  // Address (embedded)
+  optional Address address = 9;
+
+  // Birth date (ISO 8601 string)
+  optional string date_of_birth = 10 [(buf.validate.field).string = {
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"  // YYYY-MM-DD
+  }];
+
+  // Company information (only if client_type = COMPANY)
+  optional CompanyInfo company_info = 11 [(buf.validate.field).ignore = IGNORE_IF_UNPOPULATED];
+
+  // Audit fields
+  common.AuditFields audit = 12;
+}
+
+// Address (embedded in Client)
+message Address {
+  optional string street = 1 [(buf.validate.field).string.max_len = 200];
+  
+  optional string city = 2 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100
+  }];
+
+  optional string postal_code = 3 [(buf.validate.field).string = {
+    pattern: "^\\d{5}$"  // French postal code
+  }];
+
+  optional string country = 4 [(buf.validate.field).string = {
+    min_len: 2,
+    max_len: 2,
+    pattern: "^[A-Z]{2}$"  // ISO 3166-1 alpha-2
+  }];
+}
+
+// Company information
+message CompanyInfo {
+  string company_name = 1 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 200
+  }];
+
+  optional string siret = 2 [(buf.validate.field).string = {
+    pattern: "^\\d{14}$"  // French SIRET
+  }];
+
+  optional string vat_number = 3 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 50
+  }];
+}
+
+// ====================================================================
+// REQUESTS & RESPONSES
+// ====================================================================
+
+// Create client request
+message CreateClientRequest {
+  // Required fields
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  ClientType client_type = 2 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+
+  string first_name = 3 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100,
+    pattern: "^[a-zA-ZÀ-ÿ\\s'-]+$"
+  }];
+
+  string email = 4 [(buf.validate.field).string.email = true];
+
+  // Optional fields
+  optional string last_name = 5;
+  optional string phone = 6;
+  optional Address address = 7;
+  optional string date_of_birth = 8;
+  optional CompanyInfo company_info = 9;
+}
+
+// Update client request
+message UpdateClientRequest {
+  // ID is required
+  string id = 1 [(buf.validate.field).string.uuid = true];
+
+  // All other fields optional (partial update)
+  optional string first_name = 2 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100
+  }];
+
+  optional string last_name = 3;
+  optional string email = 4 [(buf.validate.field).string.email = true];
+  optional string phone = 5;
+  optional Address address = 6;
+  optional ClientStatus status = 7 [(buf.validate.field).enum.defined_only = true];
+  optional CompanyInfo company_info = 8;
+}
+
+// Get client by ID
+message GetClientRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+// Delete client
+message DeleteClientRequest {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message DeleteClientResponse {
+  bool success = 1;
+}
+
+// List clients with filters
+message ListClientsRequest {
+  // Required: organisation ID for multi-tenancy
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+
+  // Filters (all optional)
+  optional ClientStatus status = 2;
+  optional ClientType client_type = 3;
+  optional string search = 4 [(buf.validate.field).string.max_len = 100];  // Search in names/email
+
+  // Pagination
+  common.PaginationRequest pagination = 5;
+}
+
+message ListClientsResponse {
+  repeated Client clients = 1;
+  common.PaginationResponse pagination = 2;
+}
+
+// Search clients (full-text)
+message SearchClientsRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string query = 2 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100
+  }];
+
+  common.PaginationRequest pagination = 3;
+}
+
+// ====================================================================
+// SERVICE DEFINITION
+// ====================================================================
+
+service StrictClientService {
+  // CRUD operations
+  rpc CreateClient(CreateClientRequest) returns (Client);
+  rpc GetClient(GetClientRequest) returns (Client);
+  rpc UpdateClient(UpdateClientRequest) returns (Client);
+  rpc DeleteClient(DeleteClientRequest) returns (DeleteClientResponse);
+
+  // List & Search
+  rpc ListClients(ListClientsRequest) returns (ListClientsResponse);
+  rpc SearchClients(SearchClientsRequest) returns (ListClientsResponse);
+}
+
+// ====================================================================
+// USAGE NOTES
+// ====================================================================
+//
+// BACKEND (NestJS):
+// ```typescript
+// import {
+//   StrictClientServiceController,
+//   CreateClientRequest,
+//   Client,
+// } from '@proto/gen/services/examples/strict_client';
+//
+// @Controller()
+// export class ClientController implements StrictClientServiceController {
+//   @GrpcMethod('StrictClientService', 'CreateClient')
+//   async createClient(request: CreateClientRequest): Promise<Client> {
+//     // request.organisationId ← auto camelCase
+//     // request.firstName ← auto camelCase
+//     
+//     const entity = this.repository.create({
+//       organisationId: request.organisationId,
+//       firstName: request.firstName,
+//       // ... NO manual mapping needed
+//     });
+//     
+//     // ORM auto converts to snake_case:
+//     // INSERT INTO client (organisation_id, first_name, ...)
+//     
+//     return this.repository.save(entity);
+//   }
+// }
+// ```
+//
+// ENTITY:
+// ```typescript
+// @Entity('client')
+// export class ClientEntity {
+//   @PrimaryGeneratedColumn('uuid')
+//   id: string;  // ← auto: id
+//
+//   @Column()
+//   organisationId: string;  // ← auto: organisation_id
+//
+//   @Column()
+//   firstName: string;  // ← auto: first_name
+//
+//   @Column()
+//   email: string;  // ← auto: email
+//
+//   // NO @Column({ name: '...' }) ← FORBIDDEN
+// }
+// ```
+//
+// FRONTEND (Next.js):
+// ```typescript
+// import { strictClientServiceClient } from '@/lib/grpc/strict-client';
+// import type { CreateClientRequest } from '@proto/gen/frontend/examples/strict_client';
+//
+// const client = await strictClientServiceClient.createClient({
+//   organisationId: '...',  // ← camelCase
+//   firstName: 'John',
+//   email: 'john@example.com',
+// });
+// ```
+// ====================================================================

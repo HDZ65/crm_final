@@ -1,0 +1,64 @@
+// ====================================================================
+// Common Pagination Messages - Shared across all services
+// ====================================================================
+// 
+// RULES:
+// - All fields: snake_case
+// - Validation rules included
+// - Used by all list/search operations
+// 
+// Generated as camelCase in TypeScript automatically
+// ====================================================================
+
+syntax = "proto3";
+
+package common;
+
+import "buf/validate/validate.proto";
+
+// Pagination request parameters
+message PaginationRequest {
+  // Page number (1-indexed)
+  int32 page = 1 [(buf.validate.field).int32 = {
+    gte: 1,
+    lte: 10000
+  }];
+
+  // Items per page
+  int32 limit = 2 [(buf.validate.field).int32 = {
+    gte: 1,
+    lte: 100  // Max 100 items per page
+  }];
+
+  // Sort field (snake_case)
+  optional string sort_by = 3 [(buf.validate.field).string = {
+    max_len: 50,
+    pattern: "^[a-z_]+$"  // Only snake_case
+  }];
+
+  // Sort order
+  optional string sort_order = 4 [(buf.validate.field).string = {
+    in: ["asc", "desc"]
+  }];
+}
+
+// Pagination response metadata
+message PaginationResponse {
+  // Total number of items
+  int32 total = 1;
+
+  // Current page number
+  int32 page = 2;
+
+  // Items per page
+  int32 limit = 3;
+
+  // Total number of pages
+  int32 total_pages = 4;
+
+  // Has next page
+  bool has_next_page = 5;
+
+  // Has previous page
+  bool has_previous_page = 6;
+}

@@ -6,11 +6,11 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '60058:60058'
+      - '50066:50066'
     environment:
       - NODE_ENV=development
       - GRPC_HOST=0.0.0.0
-      - GRPC_PORT=60058
+      - GRPC_PORT=50066
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USERNAME=postgres

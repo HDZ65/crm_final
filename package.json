@@ -35,7 +35,7 @@
   "author": "Your Team",
   "license": "PROPRIETARY",
 "devDependencies": {
-    "@bufbuild/buf": "^1.28.1",
-    "ts-proto": "^1.176.0"
+    "@bufbuild/buf": "^1.64.0",
+    "ts-proto": "^2.11.0"
   }
 }

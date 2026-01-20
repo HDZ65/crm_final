@@ -1,24 +1,72 @@
-version: v1
-name: buf.build/crm-final/protos
+# ====================================================================
+# Buf Configuration - Contract-Driven Architecture (STRICT MODE)
+# ====================================================================
+# 
+# This configuration enforces zero-tolerance for:
+# - Manual schema duplication
+# - Non-standard naming conventions  
+# - Breaking changes without deprecation
+# - Ambiguous field definitions
+#
+# Source of truth: proto/src/**/*.proto
+# Generated code: proto/gen/{frontend,services}
+# ====================================================================
 
+version: v2
+
+# Module definition
+modules:
+  - path: src
+    name: buf.build/crm-final/protos
+
+# Dependencies
 deps:
-  - buf.build/bufbuild/protovalidate
+  - buf.build/bufbuild/protovalidate  # Validation rules
 
+# ====================================================================
+# LINT CONFIGURATION (STRICT - NO EXCEPTIONS)
+# ====================================================================
 lint:
   use:
-    - STANDARD
-  except:
-    - PACKAGE_VERSION_SUFFIX
-    - SERVICE_SUFFIX
-    - ENUM_VALUE_PREFIX
-    - RPC_RESPONSE_STANDARD_NAME
-    - RPC_REQUEST_RESPONSE_UNIQUE
-    - RPC_REQUEST_STANDARD_NAME
+    - STANDARD          # Official Google style guide
+    - COMMENTS          # Enforce documentation
+    - UNARY_RPC         # Enforce unary RPC patterns
+  
+  # ZERO exceptions - fail fast on any violation
+  except: []
+  
+  # Enum zero value must be UNSPECIFIED
+  enum_zero_value_suffix: _UNSPECIFIED
+  
+  # RPC allows both Google and custom patterns
+  rpc_allow_same_request_response: false
+  rpc_allow_google_protobuf_empty_requests: true
+  rpc_allow_google_protobuf_empty_responses: true
+  
+  # Service names must end with "Service"
+  service_suffix: Service
 
+  # Reject any deprecated fields usage
+  allow_comment_ignores: false
+
+# ====================================================================
+# BREAKING CHANGE DETECTION (STRICT)
+# ====================================================================
 breaking:
   use:
-    - FILE
-  except:
-    - EXTENSION_MESSAGE_NO_DELETE
-    - FIELD_SAME_DEFAULT
+    - FILE            # Detect file-level changes
+    - WIRE_JSON       # Detect JSON serialization changes
+    - WIRE            # Detect wire format changes
   
+  # ZERO exceptions - backward compatibility mandatory
+  except: []
+  
+  # Breaking changes fail CI
+  ignore_unstable_packages: false
+
+# ====================================================================
+# FORMATTING (snake_case enforcement)
+# ====================================================================
+# All .proto files MUST use snake_case
+# Conversion to camelCase happens at generation time
+# ====================================================================

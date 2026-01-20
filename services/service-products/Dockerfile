@@ -19,6 +19,6 @@ RUN npm install --only=production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/proto ./proto
 
-EXPOSE 60057
+EXPOSE 50064
 
 CMD ["node", "dist/main.js"]

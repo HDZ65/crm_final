@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  service-products:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '60057:60057'
+    environment:
+      - NODE_ENV=development
+      - GRPC_HOST=0.0.0.0
+      - GRPC_PORT=60057
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_DATABASE=products_db
+    depends_on:
+      - postgres
+    networks:
+      - crm-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=products_db
+    volumes:
+      - products_db_data:/var/lib/postgresql/data
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    external: true
+
+volumes:
+  products_db_data:

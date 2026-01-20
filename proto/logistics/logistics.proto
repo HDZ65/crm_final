@@ -1,0 +1,308 @@
+syntax = "proto3";
+
+package logistics;
+
+// ==================== LOGISTICS SERVICE ====================
+// Service gRPC pour la gestion logistique (expéditions, colis, suivi, transporteurs)
+
+service LogisticsService {
+  // ==================== EXPEDITIONS ====================
+  rpc CreateExpedition(CreateExpeditionRequest) returns (ExpeditionResponse);
+  rpc GetExpedition(GetByIdRequest) returns (ExpeditionResponse);
+  rpc GetExpeditionsByClient(GetExpeditionsByClientRequest) returns (ExpeditionListResponse);
+  rpc GetExpeditionsByOrganisation(GetExpeditionsByOrganisationRequest) returns (ExpeditionListResponse);
+  rpc UpdateExpedition(UpdateExpeditionRequest) returns (ExpeditionResponse);
+  rpc DeleteExpedition(GetByIdRequest) returns (DeleteResponse);
+
+  // ==================== COLIS (PARCELS) ====================
+  rpc CreateColis(CreateColisRequest) returns (ColisResponse);
+  rpc GetColis(GetByIdRequest) returns (ColisResponse);
+  rpc GetColisByExpedition(GetByExpeditionIdRequest) returns (ColisListResponse);
+  rpc UpdateColis(UpdateColisRequest) returns (ColisResponse);
+  rpc DeleteColis(GetByIdRequest) returns (DeleteResponse);
+
+  // ==================== TRACKING EVENTS ====================
+  rpc CreateTrackingEvent(CreateTrackingEventRequest) returns (TrackingEventResponse);
+  rpc GetTrackingEvents(GetByExpeditionIdRequest) returns (TrackingEventListResponse);
+  rpc GetLatestTrackingEvent(GetByExpeditionIdRequest) returns (TrackingEventResponse);
+
+  // ==================== CARRIER ACCOUNTS ====================
+  rpc CreateCarrierAccount(CreateCarrierAccountRequest) returns (CarrierAccountResponse);
+  rpc GetCarrierAccount(GetByIdRequest) returns (CarrierAccountResponse);
+  rpc GetCarrierAccountsByOrganisation(GetByOrganisationIdRequest) returns (CarrierAccountListResponse);
+  rpc UpdateCarrierAccount(UpdateCarrierAccountRequest) returns (CarrierAccountResponse);
+  rpc DeleteCarrierAccount(GetByIdRequest) returns (DeleteResponse);
+
+  // ==================== MAILEVA OPERATIONS ====================
+  rpc GenerateLabel(GenerateLabelRequest) returns (LabelResponse);
+  rpc TrackShipment(TrackShipmentRequest) returns (TrackingResponse);
+  rpc ValidateAddress(ValidateAddressRequest) returns (AddressValidationResponse);
+  rpc SimulatePricing(SimulatePricingRequest) returns (PricingResponse);
+}
+
+// ==================== COMMON MESSAGES ====================
+
+message Empty {}
+
+message GetByIdRequest {
+  string id = 1;
+}
+
+message GetByExpeditionIdRequest {
+  string expedition_id = 1;
+}
+
+message GetByOrganisationIdRequest {
+  string organisation_id = 1;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ==================== ADDRESS ====================
+
+message Address {
+  string line1 = 1;
+  optional string line2 = 2;
+  string postal_code = 3;
+  string city = 4;
+  string country = 5;
+}
+
+// ==================== EXPEDITION MESSAGES ====================
+
+message CreateExpeditionRequest {
+  string organisation_id = 1;
+  string client_base_id = 2;
+  string transporteur_compte_id = 3;
+  optional string contrat_id = 4;
+  string reference_commande = 5;
+  optional string produit_id = 6;
+  optional string nom_produit = 7;
+  optional double poids = 8;
+  Address destination = 9;
+  optional string date_expedition = 10;
+  optional string date_livraison_estimee = 11;
+}
+
+message ExpeditionResponse {
+  string id = 1;
+  string organisation_id = 2;
+  string client_base_id = 3;
+  string transporteur_compte_id = 4;
+  optional string contrat_id = 5;
+  string tracking_number = 6;
+  string etat = 7;
+  string date_creation = 8;
+  string date_dernier_statut = 9;
+  string label_url = 10;
+  string reference_commande = 11;
+  optional string produit_id = 12;
+  optional string nom_produit = 13;
+  optional double poids = 14;
+  optional string adresse_destination = 15;
+  optional string ville_destination = 16;
+  optional string code_postal_destination = 17;
+  optional string date_expedition = 18;
+  optional string date_livraison_estimee = 19;
+  optional string date_livraison = 20;
+  optional string lieu_actuel = 21;
+  string created_at = 22;
+  string updated_at = 23;
+}
+
+message UpdateExpeditionRequest {
+  string id = 1;
+  optional string etat = 2;
+  optional string lieu_actuel = 3;
+  optional string date_livraison = 4;
+}
+
+message GetExpeditionsByClientRequest {
+  string client_base_id = 1;
+  optional int32 limit = 2;
+  optional int32 offset = 3;
+}
+
+message GetExpeditionsByOrganisationRequest {
+  string organisation_id = 1;
+  optional string etat = 2;
+  optional int32 limit = 3;
+  optional int32 offset = 4;
+}
+
+message ExpeditionListResponse {
+  repeated ExpeditionResponse expeditions = 1;
+  int32 total = 2;
+}
+
+// ==================== COLIS MESSAGES ====================
+
+message CreateColisRequest {
+  string expedition_id = 1;
+  int32 poids_gr = 2;
+  int32 long_cm = 3;
+  int32 larg_cm = 4;
+  int32 haut_cm = 5;
+  double valeur_declaree = 6;
+  string contenu = 7;
+}
+
+message ColisResponse {
+  string id = 1;
+  string expedition_id = 2;
+  int32 poids_gr = 3;
+  int32 long_cm = 4;
+  int32 larg_cm = 5;
+  int32 haut_cm = 6;
+  double valeur_declaree = 7;
+  string contenu = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+message UpdateColisRequest {
+  string id = 1;
+  optional int32 poids_gr = 2;
+  optional int32 long_cm = 3;
+  optional int32 larg_cm = 4;
+  optional int32 haut_cm = 5;
+  optional double valeur_declaree = 6;
+  optional string contenu = 7;
+}
+
+message ColisListResponse {
+  repeated ColisResponse colis = 1;
+  int32 total = 2;
+}
+
+// ==================== TRACKING EVENT MESSAGES ====================
+
+message CreateTrackingEventRequest {
+  string expedition_id = 1;
+  string code = 2;
+  string label = 3;
+  string date_evenement = 4;
+  optional string lieu = 5;
+  optional string raw = 6;
+}
+
+message TrackingEventResponse {
+  string id = 1;
+  string expedition_id = 2;
+  string code = 3;
+  string label = 4;
+  string date_evenement = 5;
+  optional string lieu = 6;
+  optional string raw = 7;
+  string created_at = 8;
+}
+
+message TrackingEventListResponse {
+  repeated TrackingEventResponse events = 1;
+  int32 total = 2;
+}
+
+// ==================== CARRIER ACCOUNT MESSAGES ====================
+
+message CreateCarrierAccountRequest {
+  string organisation_id = 1;
+  string type = 2;
+  string contract_number = 3;
+  string password = 4;
+  string label_format = 5;
+  bool actif = 6;
+}
+
+message CarrierAccountResponse {
+  string id = 1;
+  string organisation_id = 2;
+  string type = 3;
+  string contract_number = 4;
+  string label_format = 5;
+  bool actif = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message UpdateCarrierAccountRequest {
+  string id = 1;
+  optional string contract_number = 2;
+  optional string password = 3;
+  optional string label_format = 4;
+  optional bool actif = 5;
+}
+
+message CarrierAccountListResponse {
+  repeated CarrierAccountResponse accounts = 1;
+  int32 total = 2;
+}
+
+// ==================== MAILEVA OPERATIONS MESSAGES ====================
+
+message GenerateLabelRequest {
+  string organisation_id = 1;
+  string service_level = 2;
+  string format = 3;
+  int32 weight_gr = 4;
+  Address sender = 5;
+  Address recipient = 6;
+  optional string contract_id = 7;
+}
+
+message LabelResponse {
+  string tracking_number = 1;
+  string label_url = 2;
+  optional string estimated_delivery_date = 3;
+}
+
+message TrackShipmentRequest {
+  string tracking_number = 1;
+}
+
+message TrackingResponse {
+  string tracking_number = 1;
+  string status = 2;
+  repeated TrackingEvent events = 3;
+  string last_updated_at = 4;
+}
+
+message TrackingEvent {
+  string code = 1;
+  string label = 2;
+  string date = 3;
+  optional string location = 4;
+}
+
+message ValidateAddressRequest {
+  Address address = 1;
+}
+
+message AddressValidationResponse {
+  bool is_valid = 1;
+  optional Address normalized_address = 2;
+  repeated Address suggestions = 3;
+}
+
+message SimulatePricingRequest {
+  string service_level = 1;
+  string format = 2;
+  int32 weight_gr = 3;
+  string origin_country = 4;
+  string destination_country = 5;
+}
+
+message PricingResponse {
+  string service_level = 1;
+  double total_price = 2;
+  string currency = 3;
+  repeated PricingBreakdown breakdown = 4;
+  optional int32 estimated_delivery_days = 5;
+}
+
+message PricingBreakdown {
+  string label = 1;
+  double amount = 2;
+}

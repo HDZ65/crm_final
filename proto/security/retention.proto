@@ -1,0 +1,645 @@
+syntax = "proto3";
+
+package security;
+
+import "google/protobuf/timestamp.proto";
+import "security/options.proto";
+
+// ============================================================================
+// RETENTION & COMPLIANCE SERVICE - Data retention and GDPR purge
+// ============================================================================
+// The ComplianceService provides:
+// - Retention policy management per data category
+// - Scheduled automated purge jobs
+// - On-demand GDPR purge requests
+// - Proof of purge for compliance
+// ============================================================================
+
+// Purge mode for data removal
+enum PurgeMode {
+  PURGE_MODE_UNSPECIFIED = 0;
+  // Hard delete - completely remove data
+  PURGE_MODE_DELETE = 1;
+  // Anonymize - remove PII but keep structure for analytics
+  PURGE_MODE_ANONYMIZE = 2;
+  // Archive - move to cold storage
+  PURGE_MODE_ARCHIVE = 3;
+}
+
+// Status of a purge request
+enum PurgeRequestStatus {
+  PURGE_REQUEST_STATUS_UNSPECIFIED = 0;
+  // Request created, not yet processed
+  PURGE_REQUEST_STATUS_PENDING = 1;
+  // Purge is currently running
+  PURGE_REQUEST_STATUS_RUNNING = 2;
+  // Purge completed successfully
+  PURGE_REQUEST_STATUS_COMPLETED = 3;
+  // Partial purge (some data retained due to legal hold)
+  PURGE_REQUEST_STATUS_PARTIAL = 4;
+  // Request rejected (e.g., not authorized)
+  PURGE_REQUEST_STATUS_REJECTED = 5;
+  // Purge failed with error
+  PURGE_REQUEST_STATUS_FAILED = 6;
+}
+
+// Status of individual purge execution per service
+enum PurgeExecutionStatus {
+  PURGE_EXECUTION_STATUS_UNSPECIFIED = 0;
+  PURGE_EXECUTION_STATUS_SUCCESS = 1;
+  PURGE_EXECUTION_STATUS_PARTIAL = 2;
+  PURGE_EXECUTION_STATUS_FAILED = 3;
+  PURGE_EXECUTION_STATUS_SKIPPED = 4;
+}
+
+// Subject type for purge requests
+enum SubjectType {
+  SUBJECT_TYPE_UNSPECIFIED = 0;
+  // Internal user (employee, admin)
+  SUBJECT_TYPE_USER = 1;
+  // External customer
+  SUBJECT_TYPE_CUSTOMER = 2;
+  // Partner/vendor
+  SUBJECT_TYPE_PARTNER = 3;
+}
+
+// ============================================================================
+// RETENTION POLICY
+// ============================================================================
+
+// Retention policy for a data category
+message RetentionPolicy {
+  option (message_security) = {
+    sensitive: false
+    classification: DATA_CLASSIFICATION_INTERNAL
+    retention_category: "CONFIG"
+  };
+
+  string id = 1;
+  
+  // Category identifier (e.g., PAYMENT_10Y, AUDIT_7Y, TECH_90D)
+  string category = 2;
+  
+  // Service that owns this data
+  string service_name = 3;
+  
+  // Entity/table name
+  string entity_name = 4;
+  
+  // Retention period in days
+  int32 retention_days = 5;
+  
+  // How to handle data after retention period
+  PurgeMode purge_mode = 6;
+  
+  // Legal basis for retention (for compliance documentation)
+  string legal_basis = 7;
+  
+  // Description for documentation
+  string description = 8;
+  
+  // Timestamps
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  string updated_by_user_id = 11;
+  
+  // Whether this policy is active
+  bool is_active = 12;
+}
+
+// Create or update retention policy
+message UpsertRetentionPolicyRequest {
+  string category = 1;
+  string service_name = 2;
+  string entity_name = 3;
+  int32 retention_days = 4;
+  PurgeMode purge_mode = 5;
+  string legal_basis = 6;
+  string description = 7;
+}
+
+message UpsertRetentionPolicyResponse {
+  RetentionPolicy policy = 1;
+  bool created = 2;
+}
+
+// List retention policies
+message ListRetentionPoliciesRequest {
+  string service_name = 1;
+  string category = 2;
+  bool include_inactive = 3;
+}
+
+message ListRetentionPoliciesResponse {
+  repeated RetentionPolicy policies = 1;
+}
+
+// Get specific policy
+message GetRetentionPolicyRequest {
+  string id = 1;
+}
+
+message GetRetentionPolicyResponse {
+  RetentionPolicy policy = 1;
+}
+
+// ============================================================================
+// SCHEDULED PURGE JOBS
+// ============================================================================
+
+// Purge job for scheduled retention enforcement
+message PurgeJob {
+  string id = 1;
+  
+  // Which policy triggered this job
+  string retention_policy_id = 2;
+  
+  // Service being purged
+  string service_name = 3;
+  
+  // Entity being purged
+  string entity_name = 4;
+  
+  // Cutoff date (records before this date are purged)
+  google.protobuf.Timestamp cutoff_date = 5;
+  
+  // Job status
+  PurgeExecutionStatus status = 6;
+  
+  // Counts
+  int64 records_scanned = 7;
+  int64 records_deleted = 8;
+  int64 records_anonymized = 9;
+  int64 records_archived = 10;
+  int64 records_retained = 11;
+  
+  // Reason for retention (if any records retained)
+  string retention_reason = 12;
+  
+  // Timestamps
+  google.protobuf.Timestamp started_at = 13;
+  google.protobuf.Timestamp completed_at = 14;
+  
+  // Error info (if failed)
+  string error_message = 15;
+  
+  // Is this a dry run?
+  bool dry_run = 16;
+}
+
+// Run scheduled purge (daily job)
+message RunScheduledPurgeRequest {
+  // Optional: limit to specific service
+  string service_name = 1;
+  
+  // Optional: limit to specific category
+  string category = 2;
+  
+  // If true, only report what would be purged
+  bool dry_run = 3;
+}
+
+message RunScheduledPurgeResponse {
+  repeated PurgeJob jobs = 1;
+  int32 total_jobs = 2;
+  int32 successful_jobs = 3;
+  int32 failed_jobs = 4;
+  int64 total_records_purged = 5;
+}
+
+// List purge job history
+message ListPurgeJobsRequest {
+  string service_name = 1;
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+  repeated PurgeExecutionStatus statuses = 4;
+  int32 page = 5;
+  int32 limit = 6;
+}
+
+message ListPurgeJobsResponse {
+  repeated PurgeJob jobs = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+// ============================================================================
+// ON-DEMAND GDPR PURGE
+// ============================================================================
+
+// GDPR purge request for a specific subject
+message PurgeRequest {
+  option (message_security) = {
+    sensitive: true
+    classification: DATA_CLASSIFICATION_PII
+    retention_category: "AUDIT_7Y"
+  };
+
+  string id = 1;
+  
+  // Tenant context
+  string organisation_id = 2;
+  
+  // Who requested the purge
+  string requested_by_user_id = 3;
+  
+  // Subject of the purge
+  SubjectType subject_type = 4;
+  string subject_id = 5;
+  
+  // Optional: subject email (for cross-service lookup)
+  string subject_email = 6;
+  
+  // Reason for purge (GDPR article, etc.)
+  string reason = 7;
+  
+  // Legal basis for purge
+  string legal_basis = 8;
+  
+  // If true, some data may be retained for legal reasons
+  bool legal_hold = 9;
+  
+  // Legal hold details (if applicable)
+  string legal_hold_reason = 10;
+  google.protobuf.Timestamp legal_hold_until = 11;
+  
+  // Status
+  PurgeRequestStatus status = 12;
+  
+  // Timestamps
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp started_at = 14;
+  google.protobuf.Timestamp completed_at = 15;
+  
+  // External reference (e.g., support ticket)
+  string external_reference = 16;
+}
+
+// Per-service execution result for a purge request
+message PurgeExecution {
+  string id = 1;
+  string purge_request_id = 2;
+  
+  // Service that executed the purge
+  string service_name = 3;
+  
+  // Entity purged
+  string entity_name = 4;
+  
+  // Status
+  PurgeExecutionStatus status = 5;
+  
+  // Counts
+  int64 deleted_count = 6;
+  int64 anonymized_count = 7;
+  int64 retained_count = 8;
+  
+  // If any retained, why
+  string retained_reason = 9;
+  
+  // Verification
+  string verification_query = 10;
+  bool verification_passed = 11;
+  
+  // Timestamps
+  google.protobuf.Timestamp executed_at = 12;
+  
+  // Error info (if failed)
+  string error_message = 13;
+}
+
+// Create GDPR purge request
+message CreatePurgeRequestRequest {
+  string organisation_id = 1;
+  SubjectType subject_type = 2;
+  string subject_id = 3;
+  string subject_email = 4;
+  string reason = 5;
+  string legal_basis = 6;
+  string external_reference = 7;
+}
+
+message CreatePurgeRequestResponse {
+  PurgeRequest request = 1;
+}
+
+// Execute purge request
+message ExecutePurgeRequest {
+  string purge_request_id = 1;
+  
+  // If true, only report what would be purged
+  bool dry_run = 2;
+}
+
+message ExecutePurgeResponse {
+  PurgeRequest request = 1;
+  repeated PurgeExecution executions = 2;
+}
+
+// Get purge request with executions
+message GetPurgeRequestRequest {
+  string purge_request_id = 1;
+}
+
+message GetPurgeRequestResponse {
+  PurgeRequest request = 1;
+  repeated PurgeExecution executions = 2;
+}
+
+// List purge requests
+message ListPurgeRequestsRequest {
+  string organisation_id = 1;
+  repeated PurgeRequestStatus statuses = 2;
+  SubjectType subject_type = 3;
+  google.protobuf.Timestamp from = 4;
+  google.protobuf.Timestamp to = 5;
+  int32 page = 6;
+  int32 limit = 7;
+}
+
+message ListPurgeRequestsResponse {
+  repeated PurgeRequest requests = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+// Cancel pending purge request
+message CancelPurgeRequestRequest {
+  string purge_request_id = 1;
+  string reason = 2;
+}
+
+message CancelPurgeRequestResponse {
+  PurgeRequest request = 1;
+}
+
+// ============================================================================
+// LEGAL HOLD
+// ============================================================================
+
+// Legal hold on a subject's data
+message LegalHold {
+  string id = 1;
+  string organisation_id = 2;
+  SubjectType subject_type = 3;
+  string subject_id = 4;
+  
+  // Legal hold details
+  string reason = 5;
+  string case_reference = 6;
+  
+  // Who placed the hold
+  string placed_by_user_id = 7;
+  google.protobuf.Timestamp placed_at = 8;
+  
+  // Optional expiration
+  google.protobuf.Timestamp expires_at = 9;
+  
+  // Is hold active?
+  bool is_active = 10;
+  
+  // If lifted, details
+  string lifted_by_user_id = 11;
+  google.protobuf.Timestamp lifted_at = 12;
+  string lift_reason = 13;
+}
+
+// Place legal hold
+message PlaceLegalHoldRequest {
+  string organisation_id = 1;
+  SubjectType subject_type = 2;
+  string subject_id = 3;
+  string reason = 4;
+  string case_reference = 5;
+  google.protobuf.Timestamp expires_at = 6;
+}
+
+message PlaceLegalHoldResponse {
+  LegalHold hold = 1;
+}
+
+// Lift legal hold
+message LiftLegalHoldRequest {
+  string hold_id = 1;
+  string reason = 2;
+}
+
+message LiftLegalHoldResponse {
+  LegalHold hold = 1;
+}
+
+// Check for legal hold
+message CheckLegalHoldRequest {
+  string organisation_id = 1;
+  SubjectType subject_type = 2;
+  string subject_id = 3;
+}
+
+message CheckLegalHoldResponse {
+  bool has_hold = 1;
+  repeated LegalHold active_holds = 2;
+}
+
+// ============================================================================
+// PROOF OF PURGE
+// ============================================================================
+
+// Proof of purge for compliance documentation
+message PurgeProof {
+  string purge_request_id = 1;
+  
+  // Summary
+  google.protobuf.Timestamp purge_completed_at = 2;
+  PurgeRequestStatus final_status = 3;
+  
+  // Per-service summary
+  repeated PurgeExecution executions = 4;
+  
+  // Totals
+  int64 total_deleted = 5;
+  int64 total_anonymized = 6;
+  int64 total_retained = 7;
+  
+  // Verification results
+  bool all_verifications_passed = 8;
+  repeated string failed_verifications = 9;
+  
+  // Digital signature for proof integrity
+  string proof_signature = 10;
+  google.protobuf.Timestamp proof_generated_at = 11;
+}
+
+// Generate proof of purge
+message GeneratePurgeProofRequest {
+  string purge_request_id = 1;
+}
+
+message GeneratePurgeProofResponse {
+  PurgeProof proof = 1;
+}
+
+// ============================================================================
+// SERVICE DEFINITION
+// ============================================================================
+
+service ComplianceService {
+  // ========== RETENTION POLICIES ==========
+  
+  rpc UpsertRetentionPolicy(UpsertRetentionPolicyRequest) returns (UpsertRetentionPolicyResponse) {
+    option (required_permission) = {
+      permission: "compliance:policy:manage"
+      tenant_scoped: false
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "compliance.policy.upsert"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc ListRetentionPolicies(ListRetentionPoliciesRequest) returns (ListRetentionPoliciesResponse) {
+    option (required_permission) = {
+      permission: "compliance:policy:read"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "compliance.policy.list"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc GetRetentionPolicy(GetRetentionPolicyRequest) returns (GetRetentionPolicyResponse) {
+    option (required_permission) = {
+      permission: "compliance:policy:read"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "compliance.policy.get"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // ========== SCHEDULED PURGE ==========
+  
+  rpc RunScheduledPurge(RunScheduledPurgeRequest) returns (RunScheduledPurgeResponse) {
+    option (required_permission) = {
+      permission: "compliance:purge:schedule"
+      tenant_scoped: false
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "compliance.purge.scheduled"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc ListPurgeJobs(ListPurgeJobsRequest) returns (ListPurgeJobsResponse) {
+    option (required_permission) = {
+      permission: "compliance:purge:read"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "compliance.purge.list_jobs"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // ========== GDPR PURGE REQUESTS ==========
+  
+  rpc CreatePurgeRequest(CreatePurgeRequestRequest) returns (CreatePurgeRequestResponse) {
+    option (required_permission) = {
+      permission: "compliance:purge:create"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "compliance.purge.create"
+      data_classification: DATA_CLASSIFICATION_PII
+    };
+  }
+  
+  rpc ExecutePurge(ExecutePurgeRequest) returns (ExecutePurgeResponse) {
+    option (required_permission) = {
+      permission: "compliance:purge:execute"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "compliance.purge.execute"
+      data_classification: DATA_CLASSIFICATION_PII
+    };
+  }
+  
+  rpc GetPurgeRequest(GetPurgeRequestRequest) returns (GetPurgeRequestResponse) {
+    option (required_permission) = {
+      permission: "compliance:purge:read"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "compliance.purge.get"
+      data_classification: DATA_CLASSIFICATION_PII
+    };
+  }
+  
+  rpc ListPurgeRequests(ListPurgeRequestsRequest) returns (ListPurgeRequestsResponse) {
+    option (required_permission) = {
+      permission: "compliance:purge:read"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "compliance.purge.list"
+      data_classification: DATA_CLASSIFICATION_PII
+    };
+  }
+  
+  rpc CancelPurgeRequest(CancelPurgeRequestRequest) returns (CancelPurgeRequestResponse) {
+    option (required_permission) = {
+      permission: "compliance:purge:cancel"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "compliance.purge.cancel"
+      data_classification: DATA_CLASSIFICATION_PII
+    };
+  }
+  
+  // ========== LEGAL HOLD ==========
+  
+  rpc PlaceLegalHold(PlaceLegalHoldRequest) returns (PlaceLegalHoldResponse) {
+    option (required_permission) = {
+      permission: "compliance:hold:place"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "compliance.hold.place"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc LiftLegalHold(LiftLegalHoldRequest) returns (LiftLegalHoldResponse) {
+    option (required_permission) = {
+      permission: "compliance:hold:lift"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "compliance.hold.lift"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc CheckLegalHold(CheckLegalHoldRequest) returns (CheckLegalHoldResponse) {
+    option (required_permission) = {
+      permission: "compliance:hold:check"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "compliance.hold.check"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // ========== PROOF ==========
+  
+  rpc GeneratePurgeProof(GeneratePurgeProofRequest) returns (GeneratePurgeProofResponse) {
+    option (required_permission) = {
+      permission: "compliance:proof:generate"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "compliance.proof.generate"
+      data_classification: DATA_CLASSIFICATION_PII
+    };
+  }
+}

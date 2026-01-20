@@ -1,0 +1,226 @@
+syntax = "proto3";
+
+package security;
+
+// ============================================================================
+// SECURITY ERRORS - Typed error responses for security violations
+// ============================================================================
+// All security-related errors are returned with a structured SecurityError
+// that includes the error code, message, and actionable details.
+// ============================================================================
+
+// Security error codes grouped by category
+// 100-199: Authentication
+// 200-299: Authorization
+// 300-399: MFA / Step-up
+// 400-499: Audit
+// 500-599: Retention / Purge
+// 600-699: Encryption
+// 700-799: Break-glass
+enum SecurityErrorCode {
+  SECURITY_ERROR_CODE_UNSPECIFIED = 0;
+
+  // ========== AUTHENTICATION (100-199) ==========
+  
+  // No valid credentials provided
+  UNAUTHORIZED = 100;
+  
+  // Token has expired (access or refresh)
+  SESSION_EXPIRED = 101;
+  
+  // Session has been explicitly revoked (logout or admin action)
+  SESSION_REVOKED = 102;
+  
+  // OIDC/SAML assertion is invalid or malformed
+  SSO_ASSERTION_INVALID = 103;
+  
+  // Refresh token is invalid, expired, or has been reused
+  TOKEN_REFRESH_FAILED = 104;
+  
+  // Invalid credentials during authentication
+  INVALID_CREDENTIALS = 105;
+  
+  // Account is locked due to too many failed attempts
+  ACCOUNT_LOCKED = 106;
+  
+  // Account has been disabled by administrator
+  ACCOUNT_DISABLED = 107;
+
+  // ========== AUTHORIZATION (200-299) ==========
+  
+  // Generic forbidden - user authenticated but not allowed
+  FORBIDDEN = 200;
+  
+  // Specific permission not granted to user's role(s)
+  PERMISSION_MISSING = 201;
+  
+  // Request's organisation_id doesn't match user's membership
+  TENANT_SCOPE_VIOLATION = 202;
+  
+  // User's role is insufficient for this operation
+  ROLE_INSUFFICIENT = 203;
+  
+  // User's membership in organisation is not active
+  MEMBERSHIP_INACTIVE = 204;
+  
+  // Resource belongs to different tenant
+  RESOURCE_NOT_ACCESSIBLE = 205;
+
+  // ========== MFA / STEP-UP (300-399) ==========
+  
+  // MFA is not configured for user but is required
+  MFA_REQUIRED = 300;
+  
+  // MFA verification is stale, need to re-verify
+  MFA_STEP_UP_REQUIRED = 301;
+  
+  // MFA challenge failed (wrong OTP, WebAuthn failed, etc.)
+  MFA_CHALLENGE_FAILED = 302;
+  
+  // MFA device not registered
+  MFA_DEVICE_NOT_FOUND = 303;
+  
+  // MFA challenge has expired
+  MFA_CHALLENGE_EXPIRED = 304;
+  
+  // Too many MFA attempts, temporarily locked
+  MFA_ATTEMPTS_EXCEEDED = 305;
+
+  // ========== AUDIT (400-499) ==========
+  
+  // Audit write failed - BLOCKING for sensitive operations
+  // If this error is returned, the sensitive action was NOT executed
+  AUDIT_WRITE_FAILED = 400;
+  
+  // Audit service is unavailable
+  AUDIT_SERVICE_UNAVAILABLE = 401;
+  
+  // Audit chain verification failed (tampering detected)
+  AUDIT_CHAIN_INVALID = 402;
+  
+  // Audit export is not allowed for this query
+  AUDIT_EXPORT_DENIED = 403;
+
+  // ========== RETENTION / PURGE (500-599) ==========
+  
+  // Retention policy configuration is invalid
+  RETENTION_POLICY_INVALID = 500;
+  
+  // Purge is not allowed (legal hold, etc.)
+  PURGE_NOT_ALLOWED = 501;
+  
+  // Purge request is already in progress
+  PURGE_IN_PROGRESS = 502;
+  
+  // Purge request not found
+  PURGE_REQUEST_NOT_FOUND = 503;
+  
+  // Purge failed for one or more services
+  PURGE_PARTIAL_FAILURE = 504;
+  
+  // Subject for purge not found
+  PURGE_SUBJECT_NOT_FOUND = 505;
+
+  // ========== ENCRYPTION (600-699) ==========
+  
+  // Decryption failed - key version mismatch or data corrupted
+  DECRYPTION_FAILED = 600;
+  
+  // KMS key not found or inaccessible
+  KEY_NOT_FOUND = 601;
+  
+  // Encryption operation failed
+  ENCRYPTION_FAILED = 602;
+  
+  // Key rotation is in progress, retry later
+  KEY_ROTATION_IN_PROGRESS = 603;
+
+  // ========== BREAK-GLASS (700-799) ==========
+  
+  // This action requires an active break-glass session
+  BREAKGLASS_REQUIRED = 700;
+  
+  // Break-glass session has expired
+  BREAKGLASS_EXPIRED = 701;
+  
+  // No active break-glass session found
+  BREAKGLASS_NOT_ACTIVE = 702;
+  
+  // Break-glass activation failed
+  BREAKGLASS_ACTIVATION_FAILED = 703;
+  
+  // Break-glass session already active
+  BREAKGLASS_ALREADY_ACTIVE = 704;
+  
+  // Break-glass duration exceeds maximum allowed
+  BREAKGLASS_DURATION_EXCEEDED = 705;
+}
+
+// Structured security error response
+message SecurityError {
+  // Error code for programmatic handling
+  SecurityErrorCode code = 1;
+  
+  // Human-readable message (safe for UI display)
+  string message = 2;
+  
+  // Request ID for log correlation and support
+  string request_id = 3;
+  
+  // Additional non-sensitive context
+  map<string, string> details = 4;
+  
+  // For step-up flows: URL to redirect for MFA
+  string step_up_url = 5;
+  
+  // For step-up flows: how long the step-up is valid (seconds)
+  int32 step_up_ttl_seconds = 6;
+  
+  // For permission errors: the permission that was required
+  string required_permission = 7;
+  
+  // For tenant errors: the expected organisation_id
+  string expected_organisation_id = 8;
+  
+  // Timestamp when error occurred (ISO 8601)
+  string occurred_at = 9;
+}
+
+// Validation error for input validation failures
+message ValidationError {
+  // Field that failed validation
+  string field = 1;
+  
+  // Validation rule that failed
+  string rule = 2;
+  
+  // Human-readable error message
+  string message = 3;
+  
+  // The invalid value (redacted if sensitive)
+  string value = 4;
+}
+
+// Collection of validation errors
+message ValidationErrors {
+  // List of individual field validation errors
+  repeated ValidationError errors = 1;
+  
+  // Request ID for log correlation
+  string request_id = 2;
+}
+
+// Rate limit error response
+message RateLimitError {
+  // When the client can retry (Unix timestamp)
+  int64 retry_after = 1;
+  
+  // Current limit that was exceeded
+  int32 limit = 2;
+  
+  // Time window for the limit (seconds)
+  int32 window_seconds = 3;
+  
+  // Request ID for log correlation
+  string request_id = 4;
+}

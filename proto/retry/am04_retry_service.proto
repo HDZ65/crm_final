@@ -1,0 +1,486 @@
+syntax = "proto3";
+
+package retry;
+
+import "retry/am04_retry.proto";
+import "google/protobuf/timestamp.proto";
+
+service RetryAdminService {
+  rpc GetRetryPolicy(GetRetryPolicyRequest) returns (RetryPolicyResponse);
+  rpc ListRetryPolicies(ListRetryPoliciesRequest) returns (ListRetryPoliciesResponse);
+  rpc CreateRetryPolicy(CreateRetryPolicyRequest) returns (RetryPolicyResponse);
+  rpc UpdateRetryPolicy(UpdateRetryPolicyRequest) returns (RetryPolicyResponse);
+  rpc DeleteRetryPolicy(DeleteRetryPolicyRequest) returns (DeleteResponse);
+  
+  rpc GetRetrySchedule(GetRetryScheduleRequest) returns (RetryScheduleResponse);
+  rpc ListRetrySchedules(ListRetrySchedulesRequest) returns (ListRetrySchedulesResponse);
+  rpc CancelRetrySchedule(CancelRetryScheduleRequest) returns (RetryScheduleResponse);
+  rpc ReplanRetrySchedule(ReplanRetryScheduleRequest) returns (RetryScheduleResponse);
+  
+  rpc GetRetryAttempt(GetRetryAttemptRequest) returns (RetryAttemptResponse);
+  rpc ListRetryAttempts(ListRetryAttemptsRequest) returns (ListRetryAttemptsResponse);
+  
+  rpc RunNow(RunNowRequest) returns (RunNowResponse);
+  rpc GetRetryJobStatus(GetRetryJobStatusRequest) returns (RetryJobResponse);
+  rpc ListRetryJobs(ListRetryJobsRequest) returns (ListRetryJobsResponse);
+  
+  rpc GetRetryMetrics(GetRetryMetricsRequest) returns (RetryMetricsResponse);
+  rpc GetAuditLogs(GetAuditLogsRequest) returns (AuditLogsResponse);
+}
+
+service RetrySchedulerService {
+  rpc ProcessDueRetries(ProcessDueRetriesRequest) returns (ProcessDueRetriesResponse);
+  rpc CheckEligibility(CheckEligibilityRequest) returns (CheckEligibilityResponse);
+  rpc HandlePaymentRejected(PaymentRejectedEvent) returns (HandleRejectionResponse);
+}
+
+service ReminderService {
+  rpc GetReminderPolicy(GetReminderPolicyRequest) returns (ReminderPolicyResponse);
+  rpc ListReminderPolicies(ListReminderPoliciesRequest) returns (ListReminderPoliciesResponse);
+  rpc CreateReminderPolicy(CreateReminderPolicyRequest) returns (ReminderPolicyResponse);
+  rpc UpdateReminderPolicy(UpdateReminderPolicyRequest) returns (ReminderPolicyResponse);
+  rpc DeleteReminderPolicy(DeleteReminderPolicyRequest) returns (DeleteResponse);
+  
+  rpc GetReminder(GetReminderRequest) returns (ReminderResponse);
+  rpc ListReminders(ListRemindersRequest) returns (ListRemindersResponse);
+  rpc CancelReminder(CancelReminderRequest) returns (ReminderResponse);
+  
+  rpc SendReminder(SendReminderRequest) returns (SendReminderResponse);
+  rpc ProcessDueReminders(ProcessDueRemindersRequest) returns (ProcessDueRemindersResponse);
+  
+  rpc UpdateDeliveryStatus(UpdateDeliveryStatusRequest) returns (ReminderResponse);
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message GetRetryPolicyRequest {
+  string id = 1;
+}
+
+message RetryPolicyResponse {
+  RetryPolicy policy = 1;
+}
+
+message ListRetryPoliciesRequest {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  optional bool active_only = 3;
+  PaginationRequest pagination = 4;
+}
+
+message ListRetryPoliciesResponse {
+  repeated RetryPolicy policies = 1;
+  PaginationResponse pagination = 2;
+}
+
+message CreateRetryPolicyRequest {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  optional string product_id = 3;
+  optional string channel_id = 4;
+  
+  string name = 5;
+  string description = 6;
+  
+  repeated int32 retry_delays_days = 7;
+  int32 max_attempts = 8;
+  int32 max_total_days = 9;
+  
+  bool retry_on_am04 = 10;
+  repeated RejectionReasonCode retryable_codes = 11;
+  repeated RejectionReasonCode non_retryable_codes = 12;
+  
+  bool stop_on_payment_settled = 13;
+  bool stop_on_contract_cancelled = 14;
+  bool stop_on_mandate_revoked = 15;
+  
+  string backoff_strategy = 16;
+  bool is_default = 17;
+  int32 priority = 18;
+}
+
+message UpdateRetryPolicyRequest {
+  string id = 1;
+  
+  optional string name = 2;
+  optional string description = 3;
+  repeated int32 retry_delays_days = 4;
+  optional int32 max_attempts = 5;
+  optional int32 max_total_days = 6;
+  optional bool retry_on_am04 = 7;
+  repeated RejectionReasonCode retryable_codes = 8;
+  repeated RejectionReasonCode non_retryable_codes = 9;
+  optional bool stop_on_payment_settled = 10;
+  optional bool stop_on_contract_cancelled = 11;
+  optional bool stop_on_mandate_revoked = 12;
+  optional string backoff_strategy = 13;
+  optional bool is_active = 14;
+  optional bool is_default = 15;
+  optional int32 priority = 16;
+}
+
+message DeleteRetryPolicyRequest {
+  string id = 1;
+}
+
+message GetRetryScheduleRequest {
+  string id = 1;
+}
+
+message RetryScheduleResponse {
+  RetrySchedule schedule = 1;
+  repeated RetryAttempt attempts = 2;
+  repeated Reminder reminders = 3;
+}
+
+message ListRetrySchedulesRequest {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  optional string client_id = 3;
+  optional string contrat_id = 4;
+  optional RetryEligibility eligibility = 5;
+  optional bool is_resolved = 6;
+  optional google.protobuf.Timestamp from_date = 7;
+  optional google.protobuf.Timestamp to_date = 8;
+  PaginationRequest pagination = 9;
+}
+
+message ListRetrySchedulesResponse {
+  repeated RetrySchedule schedules = 1;
+  PaginationResponse pagination = 2;
+}
+
+message CancelRetryScheduleRequest {
+  string id = 1;
+  string reason = 2;
+  string cancelled_by = 3;
+}
+
+message ReplanRetryScheduleRequest {
+  string id = 1;
+  google.protobuf.Timestamp new_retry_date = 2;
+  string reason = 3;
+  string replanned_by = 4;
+}
+
+message GetRetryAttemptRequest {
+  string id = 1;
+}
+
+message RetryAttemptResponse {
+  RetryAttempt attempt = 1;
+}
+
+message ListRetryAttemptsRequest {
+  string retry_schedule_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListRetryAttemptsResponse {
+  repeated RetryAttempt attempts = 1;
+  PaginationResponse pagination = 2;
+}
+
+message RunNowRequest {
+  string organisation_id = 1;
+  optional string retry_schedule_id = 2;
+  string triggered_by = 3;
+  bool dry_run = 4;
+}
+
+message RunNowResponse {
+  string job_id = 1;
+  RetryJobStatus status = 2;
+  string message = 3;
+  int32 scheduled_count = 4;
+}
+
+message GetRetryJobStatusRequest {
+  string job_id = 1;
+}
+
+message RetryJobResponse {
+  RetryJob job = 1;
+}
+
+message ListRetryJobsRequest {
+  string organisation_id = 1;
+  optional RetryJobStatus status = 2;
+  optional google.protobuf.Timestamp from_date = 3;
+  optional google.protobuf.Timestamp to_date = 4;
+  PaginationRequest pagination = 5;
+}
+
+message ListRetryJobsResponse {
+  repeated RetryJob jobs = 1;
+  PaginationResponse pagination = 2;
+}
+
+message GetRetryMetricsRequest {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  google.protobuf.Timestamp from_date = 3;
+  google.protobuf.Timestamp to_date = 4;
+}
+
+message RetryMetricsResponse {
+  int32 total_rejections = 1;
+  int32 am04_rejections = 2;
+  int32 other_rejections = 3;
+  
+  int32 total_retry_schedules = 4;
+  int32 eligible_for_retry = 5;
+  int32 not_eligible = 6;
+  
+  int32 total_retry_attempts = 7;
+  int32 successful_retries = 8;
+  int32 failed_retries = 9;
+  int32 pending_retries = 10;
+  
+  double success_rate = 11;
+  double am04_rate = 12;
+  
+  int64 total_amount_recovered_cents = 13;
+  int64 total_amount_pending_cents = 14;
+  
+  repeated RejectionCodeMetric rejection_code_breakdown = 15;
+  repeated DailyRetryMetric daily_metrics = 16;
+}
+
+message RejectionCodeMetric {
+  RejectionReasonCode code = 1;
+  string code_raw = 2;
+  int32 count = 3;
+  double percentage = 4;
+}
+
+message DailyRetryMetric {
+  string date = 1;
+  int32 rejections = 2;
+  int32 retries_scheduled = 3;
+  int32 retries_executed = 4;
+  int32 retries_succeeded = 5;
+  int32 retries_failed = 6;
+}
+
+message GetAuditLogsRequest {
+  string organisation_id = 1;
+  optional string entity_type = 2;
+  optional string entity_id = 3;
+  optional string action = 4;
+  optional google.protobuf.Timestamp from_date = 5;
+  optional google.protobuf.Timestamp to_date = 6;
+  PaginationRequest pagination = 7;
+}
+
+message AuditLogsResponse {
+  repeated RetryAuditLog logs = 1;
+  PaginationResponse pagination = 2;
+}
+
+message ProcessDueRetriesRequest {
+  string organisation_id = 1;
+  google.protobuf.Timestamp target_date = 2;
+  string timezone = 3;
+  string cutoff_time = 4;
+  bool dry_run = 5;
+}
+
+message ProcessDueRetriesResponse {
+  string job_id = 1;
+  RetryJobStatus status = 2;
+  int32 total_processed = 3;
+  int32 successful = 4;
+  int32 failed = 5;
+  int32 skipped = 6;
+  repeated ProcessedRetryResult results = 7;
+}
+
+message ProcessedRetryResult {
+  string retry_schedule_id = 1;
+  string retry_attempt_id = 2;
+  bool success = 3;
+  optional string error_code = 4;
+  optional string error_message = 5;
+}
+
+message CheckEligibilityRequest {
+  string payment_id = 1;
+  string rejection_code = 2;
+  string organisation_id = 3;
+  optional string societe_id = 4;
+  optional string contrat_id = 5;
+  optional string client_id = 6;
+}
+
+message CheckEligibilityResponse {
+  RetryEligibility eligibility = 1;
+  string reason = 2;
+  optional string applicable_policy_id = 3;
+  optional google.protobuf.Timestamp first_retry_date = 4;
+}
+
+message HandleRejectionResponse {
+  bool processed = 1;
+  optional string retry_schedule_id = 2;
+  RetryEligibility eligibility = 3;
+  string message = 4;
+  repeated string reminder_ids = 5;
+}
+
+message GetReminderPolicyRequest {
+  string id = 1;
+}
+
+message ReminderPolicyResponse {
+  ReminderPolicy policy = 1;
+}
+
+message ListReminderPoliciesRequest {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  optional bool active_only = 3;
+  PaginationRequest pagination = 4;
+}
+
+message ListReminderPoliciesResponse {
+  repeated ReminderPolicy policies = 1;
+  PaginationResponse pagination = 2;
+}
+
+message CreateReminderPolicyRequest {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  
+  string name = 3;
+  string description = 4;
+  
+  repeated ReminderTriggerRule trigger_rules = 5;
+  
+  int32 cooldown_hours = 6;
+  int32 max_reminders_per_day = 7;
+  int32 max_reminders_per_week = 8;
+  
+  int32 allowed_start_hour = 9;
+  int32 allowed_end_hour = 10;
+  repeated int32 allowed_days_of_week = 11;
+  
+  bool respect_opt_out = 12;
+  bool is_default = 13;
+  int32 priority = 14;
+}
+
+message UpdateReminderPolicyRequest {
+  string id = 1;
+  
+  optional string name = 2;
+  optional string description = 3;
+  repeated ReminderTriggerRule trigger_rules = 4;
+  optional int32 cooldown_hours = 5;
+  optional int32 max_reminders_per_day = 6;
+  optional int32 max_reminders_per_week = 7;
+  optional int32 allowed_start_hour = 8;
+  optional int32 allowed_end_hour = 9;
+  repeated int32 allowed_days_of_week = 10;
+  optional bool respect_opt_out = 11;
+  optional bool is_active = 12;
+  optional bool is_default = 13;
+  optional int32 priority = 14;
+}
+
+message DeleteReminderPolicyRequest {
+  string id = 1;
+}
+
+message GetReminderRequest {
+  string id = 1;
+}
+
+message ReminderResponse {
+  Reminder reminder = 1;
+}
+
+message ListRemindersRequest {
+  string organisation_id = 1;
+  optional string retry_schedule_id = 2;
+  optional string client_id = 3;
+  optional ReminderChannel channel = 4;
+  optional ReminderStatus status = 5;
+  optional google.protobuf.Timestamp from_date = 6;
+  optional google.protobuf.Timestamp to_date = 7;
+  PaginationRequest pagination = 8;
+}
+
+message ListRemindersResponse {
+  repeated Reminder reminders = 1;
+  PaginationResponse pagination = 2;
+}
+
+message CancelReminderRequest {
+  string id = 1;
+  string reason = 2;
+  string cancelled_by = 3;
+}
+
+message SendReminderRequest {
+  string id = 1;
+  bool force = 2;
+}
+
+message SendReminderResponse {
+  bool success = 1;
+  string message = 2;
+  optional string provider_message_id = 3;
+  optional string error_code = 4;
+}
+
+message ProcessDueRemindersRequest {
+  string organisation_id = 1;
+  google.protobuf.Timestamp target_time = 2;
+  string timezone = 3;
+  bool dry_run = 4;
+}
+
+message ProcessDueRemindersResponse {
+  int32 total_processed = 1;
+  int32 sent = 2;
+  int32 failed = 3;
+  int32 skipped = 4;
+  repeated ProcessedReminderResult results = 5;
+}
+
+message ProcessedReminderResult {
+  string reminder_id = 1;
+  bool success = 2;
+  ReminderChannel channel = 3;
+  optional string provider_message_id = 4;
+  optional string error_code = 5;
+  optional string error_message = 6;
+  optional string skip_reason = 7;
+}
+
+message UpdateDeliveryStatusRequest {
+  string reminder_id = 1;
+  ReminderStatus status = 2;
+  optional string provider_message_id = 3;
+  optional string delivery_status_raw = 4;
+  optional string error_code = 5;
+  optional string error_message = 6;
+}

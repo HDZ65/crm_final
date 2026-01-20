@@ -1,0 +1,108 @@
+graph TB
+    subgraph "PHASE 1: SOUSCRIPTION & MANDAT"
+        A["📋 CLIENT SOUSCRIT<br/>━━━━━━━━━━━━━━━<br/>Collecte des infos paiement:<br/>• IBAN pour SEPA<br/>• Carte bancaire pour CB<br/>• Coordonnées client"] --> B["🔀 PSP ROUTER<br/>━━━━━━━━━━━━━━━<br/>Sélection intelligente du PSP:<br/>• Selon table PSP_ROUTE<br/>• Critères: méthode paiement,<br/>  priorité, disponibilité<br/>• Ex: GoCardless pour SEPA"]
+        B --> C["👤 CRÉER CUSTOMER PSP<br/>━━━━━━━━━━━━━━━<br/>Appel API PSP sélectionné:<br/>• POST /customers<br/>• Retour: psp_customer_id<br/>• Stockage dans CUSTOMER"]
+        C --> D["📝 CRÉER MANDATE/TOKEN<br/>━━━━━━━━━━━━━━━<br/>Génération mandat SEPA:<br/>• POST /mandates<br/>• Retour: psp_mandate_id<br/>• PDF mandat généré par PSP"]
+        D --> E["✍️ SIGNATURE YOUSIGN<br/>━━━━━━━━━━━━━━━<br/>Signature électronique optionnelle:<br/>• Si requis légalement<br/>• Envoi lien signature client<br/>• Horodatage de la signature"]
+        E --> F["💾 ARCHIVER PDF GED<br/>━━━━━━━━━━━━━━━<br/>Stockage documentaire:<br/>• Upload PDF dans GED<br/>• Retour: ged_document_id<br/>• Traçabilité légale 7 ans"]
+        F --> G["📅 GÉNÉRER SCHEDULE<br/>━━━━━━━━━━━━━━━<br/>Création échéancier paiement:<br/>• Montants TTC par échéance<br/>• Dates de prélèvement<br/>• Statut initial: planned<br/>• Fréquence: mensuel/annuel"]
+        G --> H{"⏳ VALIDATION DOUBLE<br/>━━━━━━━━━━━━━━━<br/>1️⃣ J+14 rétractation dépassée?<br/>2️⃣ Contrôle Qualité validé?"}
+        H -->|"❌ Non<br/>En attente"| WAIT["⏸️ ATTENTE VALIDATION<br/>━━━━━━━━━━━━━━━<br/>Blocage du prélèvement:<br/>• Période rétractation en cours<br/>• OU CQ non validé<br/>• Vérification quotidienne"]
+        H -->|"✅ Oui<br/>Go prélèvement"| I
+    end
+
+    subgraph "PSP INTÉGRÉS - Orchestrateur Multi-Prestataires"
+        PSP1["🏦 GoCardless<br/>━━━━━━━━━━━━━━━<br/>PRIORITÉ pour SEPA<br/>• Mandats SEPA Direct Debit<br/>• Prélèvements automatiques<br/>• Faibles frais"]
+        PSP2["🔄 Slimpay<br/>━━━━━━━━━━━━━━━<br/>SEPA Récurrent<br/>• Abonnements récurrents<br/>• Gestion mandats avancée<br/>• Compliance DSP2"]
+        PSP3["💳 Multisafepay<br/>━━━━━━━━━━━━━━━<br/>SEPA/CB Hybride<br/>• Paiements ponctuels<br/>• Paiements récurrents<br/>• Multi-méthodes"]
+        PSP4["🌍 Emerchantpay<br/>━━━━━━━━━━━━━━━<br/>SEPA/CB International<br/>• Gateway global<br/>• Tokenisation CB<br/>• Anti-fraude avancé"]
+        PSP5["⚡ Stripe<br/>━━━━━━━━━━━━━━━<br/>OPTIONNEL<br/>• Backup PSP<br/>• Paiements modernes<br/>• API developer-friendly"]
+    end
+
+    subgraph "PHASE 2: PRÉLÈVEMENT & WEBHOOKS"
+        I["🔐 CRÉER PAYMENT_INTENT<br/>━━━━━━━━━━━━━━━<br/>Préparation prélèvement:<br/>• Génération idempotency_key unique<br/>  Format: contract_id_schedule_id_timestamp<br/>• Montant + devise + mandat<br/>• Protection double-création<br/>• Statut initial: created"]
+        I --> J["🚀 DÉCLENCHER PRÉLÈVEMENT<br/>━━━━━━━━━━━━━━━<br/>Appel API PSP:<br/>• POST /payments<br/>• Référence idempotency_key<br/>• Retour: psp_payment_id<br/>• Statut: pending"]
+        J --> K["⚙️ PSP TRAITE PAIEMENT<br/>━━━━━━━━━━━━━━━<br/>Traitement par le PSP:<br/>• Validation IBAN/CB<br/>• Vérification fonds<br/>• Communication bancaire<br/>• Statut: processing<br/>• Délai: 1-5 jours SEPA"]
+        K --> L{"📡 WEBHOOK PSP REÇU<br/>━━━━━━━━━━━━━━━<br/>Normalisation événement:<br/>• Vérification signature webhook<br/>• Mapping format PSP → interne<br/>• Extraction event_type<br/>• Payload JSON brut conservé"}
+
+        L -->|"✅ payment_confirmed<br/>Succès"| M["🎉 PAIEMENT CONFIRMÉ<br/>━━━━━━━━━━━━━━━<br/>Actions automatiques:<br/>1️⃣ INSERT PAYMENT_EVENT<br/>2️⃣ UPDATE SCHEDULE.status=paid<br/>3️⃣ UPDATE INVOICE.status=paid<br/>4️⃣ INSERT LEDGER_ENTRY<br/>   • Débit: 512000 Banque<br/>   • Crédit: 411000 Client<br/>5️⃣ Email confirmation client"]
+
+        L -->|"❌ payment_failed<br/>Échec"| N["⚠️ PAIEMENT ÉCHOUÉ<br/>━━━━━━━━━━━━━━━<br/>Actions automatiques:<br/>1️⃣ INSERT PAYMENT_EVENT<br/>2️⃣ UPDATE SCHEDULE.status=failed<br/>3️⃣ Incrémenter retry_count<br/>4️⃣ Log raison échec:<br/>   • Fonds insuffisants<br/>   • IBAN invalide<br/>   • Compte clôturé<br/>5️⃣ Déclenchement DUNNING"]
+
+        L -->|"🚫 mandate_cancelled<br/>Annulation"| O["🔴 MANDAT ANNULÉ<br/>━━━━━━━━━━━━━━━<br/>Actions automatiques:<br/>1️⃣ INSERT PAYMENT_EVENT<br/>2️⃣ UPDATE MANDATE.status=cancelled<br/>3️⃣ Annuler SCHEDULE futurs<br/>4️⃣ Notifier back-office<br/>5️⃣ Email client confirmation<br/>6️⃣ Bloquer nouveaux prélèvements"]
+    end
+
+    subgraph "PHASE 3: DUNNING & RECOUVREMENT"
+        N --> P{"📊 ANALYSE HISTORIQUE<br/>━━━━━━━━━━━━━━━<br/>Compteur rejets consécutifs?<br/>• Requête: retry_count sur SCHEDULE<br/>• Vérification historique client<br/>• Scoring risque impayé"}
+
+        P -->|"1️⃣ Premier rejet<br/>Tolérance"| Q["💰 FRAIS DE REJET J0<br/>━━━━━━━━━━━━━━━<br/>Frais paramétrables (table config):<br/>• FT Mobile: 10€ TTC<br/>• Bleubox: 15€ TTC<br/>• Autre: selon paramétrage<br/><br/>📧 RELANCE NIVEAU 1 - J0:<br/>• Email: 'Échec prélèvement'<br/>• SMS: 'Régularisez paiement'<br/>• Ton: informatif, courtois<br/><br/>🔄 RETRY AUTOMATIQUE:<br/>• Programmé à J+3<br/>• Nouveau PAYMENT_INTENT<br/>• Même mandat réutilisé"]
+
+        P -->|"2️⃣ Deuxième rejet<br/>Alerte"| R["⚠️ ESCALADE NIVEAU 2 - J0<br/>━━━━━━━━━━━━━━━<br/>💰 Frais cumulés:<br/>• Frais rejet 1 + Frais rejet 2<br/>• Pénalités de retard possibles<br/><br/>📧 RELANCE NIVEAU 2 - J0:<br/>• Email: 'Suspension imminente'<br/>• SMS: 'Urgence paiement'<br/>• Ton: ferme, ultimatum<br/><br/>🚨 SUSPENSION AUTOMATIQUE:<br/>• Déclenchement immédiat<br/>• Appel API prestataires télécom<br/>• Coupure services J0+1<br/><br/>🔄 DERNIER RETRY:<br/>• Programmé à J+7<br/>• Dernière chance avant contentieux"]
+
+        P -->|"3️⃣ Troisième+ rejet<br/>Impayé"| S["🔴 IMPAYÉ DÉFINITIF<br/>━━━━━━━━━━━━━━━<br/>📋 Statut final:<br/>• SCHEDULE.status = unpaid<br/>• INVOICE.status = dunning<br/>• Flag client: mauvais payeur<br/><br/>⚖️ ESCALADE CONTENTIEUX:<br/>• Export liste recouvrement<br/>• Notification service juridique<br/>• Mise en demeure postale<br/>• Possibilité huissier si >500€<br/><br/>🚫 Arrêt retry automatique:<br/>• Traitement manuel uniquement<br/>• Accord paiement échelonné"]
+
+        R --> T["📱 API MTV<br/>━━━━━━━━━━━━━━━<br/>Suspension SIM mobile:<br/>• POST /suspend<br/>• Service: voix+data<br/>• Immédiat"]
+        R --> U["📶 API ReducBox<br/>━━━━━━━━━━━━━━━<br/>Suspension box internet:<br/>• POST /suspend<br/>• Service: accès internet<br/>• Délai: 24h"]
+        R --> V["🌐 API Transatel/Networth<br/>━━━━━━━━━━━━━━━<br/>Suspension services opérateur:<br/>• POST /accounts/suspend<br/>• Multi-services<br/>• Log action"]
+        T & U & V --> W["🔒 SERVICES SUSPENDUS<br/>━━━━━━━━━━━━━━━<br/>Mise à jour base:<br/>• SERVICE_LINK.status = suspended<br/>• suspended_at = TIMESTAMP<br/>• suspension_reason = payment_failure<br/><br/>📧 Notification client:<br/>• Email suspension confirmée<br/>• Procédure réactivation<br/>• Montant dû pour déblocage"]
+
+        Q --> X["🔁 RETRY AUTOMATIQUE<br/>━━━━━━━━━━━━━━━<br/>Nouvelle tentative programmée:<br/>• Création nouveau PAYMENT_INTENT<br/>• Nouveau idempotency_key<br/>• Réutilisation même mandat<br/>• Notification équipe recouvrement"]
+        X --> J
+    end
+
+    subgraph "BASE DE DONNÉES - Tables Critiques"
+        DB0[("📋 PSP_ROUTE<br/>━━━━━━━━━━━━━━━<br/>Référentiel prestataires<br/>• id: UUID<br/>• psp_name: enum<br/>• priority: int<br/>• payment_method: SEPA/CB<br/>• is_active: boolean<br/>• config: JSON credentials")]
+        DB1[("👤 CUSTOMER<br/>━━━━━━━━━━━━━━━<br/>Clients PSP<br/>• id: UUID<br/>• psp_name: enum<br/>• psp_customer_id: string<br/>• email: string<br/>• metadata: JSON<br/>• created_at: timestamp")]
+        DB2[("📝 MANDATE<br/>━━━━━━━━━━━━━━━<br/>Mandats SEPA/Tokens CB<br/>• id: UUID<br/>• customer_id: FK<br/>• psp_mandate_id: string<br/>• ged_document_id: string<br/>• status: enum<br/>• signed_at: timestamp")]
+        DB3[("📅 SCHEDULE<br/>━━━━━━━━━━━━━━━<br/>Échéancier paiements<br/>• id: UUID<br/>• contract_id: FK<br/>• amount_ttc: decimal<br/>• due_date: date<br/>• status: enum<br/>• retry_count: int")]
+        DB4[("💳 PAYMENT_INTENT<br/>━━━━━━━━━━━━━━━<br/>Tentatives paiement<br/>• id: UUID<br/>• schedule_id: FK<br/>• mandate_id: FK<br/>• idempotency_key: string UNIQUE<br/>• psp_payment_id: string<br/>• status: enum<br/>• amount: decimal")]
+        DB5[("📡 PAYMENT_EVENT<br/>━━━━━━━━━━━━━━━<br/>Événements webhooks<br/>• id: UUID<br/>• payment_intent_id: FK<br/>• event_type: enum<br/>• raw_payload: JSON<br/>• received_at: timestamp<br/>• processed: boolean")]
+        DB6[("🧾 INVOICE<br/>━━━━━━━━━━━━━━━<br/>Factures<br/>• id: UUID<br/>• contract_id: FK<br/>• amount_ht: decimal<br/>• amount_ttc: decimal<br/>• rejection_fees: decimal<br/>• status: enum<br/>• invoice_date: date")]
+        DB7[("📊 LEDGER_ENTRY<br/>━━━━━━━━━━━━━━━<br/>Écritures comptables<br/>• id: UUID<br/>• payment_event_id: FK<br/>• account_type: string<br/>• account_code: string<br/>• debit: decimal<br/>• credit: decimal<br/>• entry_date: timestamp")]
+        DB8[("🔗 SERVICE_LINK<br/>━━━━━━━━━━━━━━━<br/>Liens services télécom<br/>• id: UUID<br/>• contract_id: FK<br/>• provider: enum MTV/ReducBox/Transatel<br/>• external_service_id: string<br/>• status: active/suspended/terminated<br/>• suspended_at: timestamp")]
+    end
+
+    subgraph "PHASE 4: EXPORTS COMPTABLES"
+        M --> EXP1["💚 EXPORT RÈGLEMENTS<br/>━━━━━━━━━━━━━━━<br/>Paiements confirmés:<br/>• Format: CSV/Excel/XML<br/>• Colonnes: Date, Client,<br/>  Montant, Facture, PSP<br/>• Fréquence: quotidien<br/>• Compte: 512000 (Banque)"]
+        N --> EXP2["💔 EXPORT IMPAYÉS/DUNNING<br/>━━━━━━━━━━━━━━━<br/>Paiements échoués:<br/>• Format: CSV/Excel<br/>• Colonnes: Client, Montant dû,<br/>  Nb rejets, Statut, Actions<br/>• Fréquence: quotidien<br/>• Pour recouvrement<br/>• Compte: 416000 (Créances douteuses)"]
+        EXP1 & EXP2 --> EXP3["📦 LIVRABLE COMPTABILITÉ<br/>━━━━━━━━━━━━━━━<br/>Formats standardisés:<br/>• FEC (Fichier Écritures Comptables)<br/>  Norme fiscale française<br/>• Export Sage Compta<br/>• Export Cegid<br/>• Export EBP<br/><br/>Contenu:<br/>• Journal des ventes<br/>• Journal banque<br/>• Balance auxiliaire clients<br/>• États de rapprochement bancaire"]
+    end
+
+    subgraph "STATUTS - Cycle de Vie Paiement"
+        ST1["📋 planned<br/>Échéance planifiée<br/>Pas encore déclenchée"] --> ST2["⏳ pending<br/>Prélèvement déclenché<br/>Envoyé au PSP"]
+        ST2 --> ST3["⚙️ processing<br/>En cours traitement<br/>Banque sollicitée"]
+        ST3 --> ST4["✅ confirmed<br/>Paiement confirmé<br/>Fonds reçus"]
+        ST3 --> ST5["❌ failed<br/>Paiement échoué<br/>Raison enregistrée"]
+        ST5 --> ST6["🔄 retry_1<br/>1ère tentative retry<br/>J+3"]
+        ST6 --> ST3
+        ST6 --> ST7["🔄 retry_2<br/>2ème tentative retry<br/>J+7"]
+        ST7 --> ST3
+        ST7 --> ST8["💔 unpaid<br/>Impayé définitif<br/>Créance douteuse"]
+        ST8 --> ST9["⚖️ dunning<br/>En recouvrement<br/>Contentieux"]
+    end
+
+    B -.Sélection.-> DB0
+    B -.Route vers.-> PSP1 & PSP2 & PSP3 & PSP4 & PSP5
+    C --> DB1
+    D --> DB2
+    G --> DB3
+    I --> DB4
+    L --> DB5
+    M --> DB6
+    M --> DB7
+    W --> DB8
+
+    PSP1 & PSP2 & PSP3 & PSP4 & PSP5 -.Webhooks.-> L
+
+    style A fill:#e3f2fd
+    style H fill:#fff9c4
+    style M fill:#c8e6c9
+    style N fill:#ffcdd2
+    style R fill:#ff9800,color:#fff
+    style S fill:#f44336,color:#fff
+    style W fill:#ff5722,color:#fff
+    style EXP3 fill:#9c27b0,color:#fff
+    style ST4 fill:#4caf50,color:#fff
+    style ST5 fill:#f44336,color:#fff
+    style ST9 fill:#9c27b0,color:#fff
+    style DB0 fill:#ffd54f

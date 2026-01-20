@@ -1,0 +1,329 @@
+syntax = "proto3";
+
+package contrats;
+
+// ========== STATUT CONTRAT SERVICE ==========
+service StatutContratService {
+  rpc Create(CreateStatutContratRequest) returns (StatutContrat);
+  rpc Update(UpdateStatutContratRequest) returns (StatutContrat);
+  rpc Get(GetStatutContratRequest) returns (StatutContrat);
+  rpc GetByCode(GetStatutContratByCodeRequest) returns (StatutContrat);
+  rpc List(ListStatutContratRequest) returns (ListStatutContratResponse);
+  rpc Delete(DeleteStatutContratRequest) returns (DeleteResponse);
+}
+
+message StatutContrat {
+  string id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+  int32 ordre_affichage = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CreateStatutContratRequest {
+  string code = 1;
+  string nom = 2;
+  string description = 3;
+  int32 ordre_affichage = 4;
+}
+
+message UpdateStatutContratRequest {
+  string id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+  int32 ordre_affichage = 5;
+}
+
+message GetStatutContratRequest {
+  string id = 1;
+}
+
+message GetStatutContratByCodeRequest {
+  string code = 1;
+}
+
+message ListStatutContratRequest {
+  Pagination pagination = 1;
+}
+
+message ListStatutContratResponse {
+  repeated StatutContrat statuts = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteStatutContratRequest {
+  string id = 1;
+}
+
+// ========== CONTRAT SERVICE ==========
+service ContratService {
+  rpc Create(CreateContratRequest) returns (Contrat);
+  rpc Update(UpdateContratRequest) returns (Contrat);
+  rpc Get(GetContratRequest) returns (Contrat);
+  rpc GetByReference(GetContratByReferenceRequest) returns (Contrat);
+  rpc List(ListContratRequest) returns (ListContratResponse);
+  rpc Delete(DeleteContratRequest) returns (DeleteResponse);
+  rpc GetWithDetails(GetContratRequest) returns (ContratWithDetails);
+}
+
+message Contrat {
+  string id = 1;
+  string organisation_id = 2;
+  string reference = 3;
+  string titre = 4;
+  string description = 5;
+  string type = 6;
+  string statut = 7;
+  string date_debut = 8;
+  string date_fin = 9;
+  string date_signature = 10;
+  double montant = 11;
+  string devise = 12;
+  string frequence_facturation = 13;
+  string document_url = 14;
+  string fournisseur = 15;
+  string client_id = 16;
+  string commercial_id = 17;
+  string societe_id = 18;
+  string notes = 19;
+  string created_at = 20;
+  string updated_at = 21;
+}
+
+message ContratWithDetails {
+  Contrat contrat = 1;
+  repeated LigneContrat lignes = 2;
+  repeated HistoriqueStatutContrat historique = 3;
+}
+
+message CreateContratRequest {
+  string organisation_id = 1;
+  string reference = 2;
+  string titre = 3;
+  string description = 4;
+  string type = 5;
+  string statut = 6;
+  string date_debut = 7;
+  string date_fin = 8;
+  string date_signature = 9;
+  double montant = 10;
+  string devise = 11;
+  string frequence_facturation = 12;
+  string document_url = 13;
+  string fournisseur = 14;
+  string client_id = 15;
+  string commercial_id = 16;
+  string societe_id = 17;
+  string notes = 18;
+}
+
+message UpdateContratRequest {
+  string id = 1;
+  string reference = 2;
+  string titre = 3;
+  string description = 4;
+  string type = 5;
+  string statut = 6;
+  string date_debut = 7;
+  string date_fin = 8;
+  string date_signature = 9;
+  double montant = 10;
+  string devise = 11;
+  string frequence_facturation = 12;
+  string document_url = 13;
+  string fournisseur = 14;
+  string client_id = 15;
+  string commercial_id = 16;
+  string societe_id = 17;
+  string notes = 18;
+}
+
+message GetContratRequest {
+  string id = 1;
+}
+
+message GetContratByReferenceRequest {
+  string organisation_id = 1;
+  string reference = 2;
+}
+
+message ListContratRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string commercial_id = 3;
+  string societe_id = 4;
+  string statut = 5;
+  string search = 6;
+  Pagination pagination = 7;
+}
+
+message ListContratResponse {
+  repeated Contrat contrats = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteContratRequest {
+  string id = 1;
+}
+
+// ========== LIGNE CONTRAT SERVICE ==========
+service LigneContratService {
+  rpc Create(CreateLigneContratRequest) returns (LigneContrat);
+  rpc Update(UpdateLigneContratRequest) returns (LigneContrat);
+  rpc Get(GetLigneContratRequest) returns (LigneContrat);
+  rpc ListByContrat(ListLigneContratByContratRequest) returns (ListLigneContratResponse);
+  rpc Delete(DeleteLigneContratRequest) returns (DeleteResponse);
+}
+
+message LigneContrat {
+  string id = 1;
+  string contrat_id = 2;
+  string produit_id = 3;
+  string periode_facturation_id = 4;
+  int32 quantite = 5;
+  double prix_unitaire = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message CreateLigneContratRequest {
+  string contrat_id = 1;
+  string produit_id = 2;
+  string periode_facturation_id = 3;
+  int32 quantite = 4;
+  double prix_unitaire = 5;
+}
+
+message UpdateLigneContratRequest {
+  string id = 1;
+  string produit_id = 2;
+  string periode_facturation_id = 3;
+  int32 quantite = 4;
+  double prix_unitaire = 5;
+}
+
+message GetLigneContratRequest {
+  string id = 1;
+}
+
+message ListLigneContratByContratRequest {
+  string contrat_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListLigneContratResponse {
+  repeated LigneContrat lignes = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteLigneContratRequest {
+  string id = 1;
+}
+
+// ========== HISTORIQUE STATUT CONTRAT SERVICE ==========
+service HistoriqueStatutContratService {
+  rpc Create(CreateHistoriqueStatutContratRequest) returns (HistoriqueStatutContrat);
+  rpc Get(GetHistoriqueStatutContratRequest) returns (HistoriqueStatutContrat);
+  rpc ListByContrat(ListHistoriqueByContratRequest) returns (ListHistoriqueStatutContratResponse);
+  rpc Delete(DeleteHistoriqueStatutContratRequest) returns (DeleteResponse);
+}
+
+message HistoriqueStatutContrat {
+  string id = 1;
+  string contrat_id = 2;
+  string ancien_statut_id = 3;
+  string nouveau_statut_id = 4;
+  string date_changement = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CreateHistoriqueStatutContratRequest {
+  string contrat_id = 1;
+  string ancien_statut_id = 2;
+  string nouveau_statut_id = 3;
+  string date_changement = 4;
+}
+
+message GetHistoriqueStatutContratRequest {
+  string id = 1;
+}
+
+message ListHistoriqueByContratRequest {
+  string contrat_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListHistoriqueStatutContratResponse {
+  repeated HistoriqueStatutContrat historique = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteHistoriqueStatutContratRequest {
+  string id = 1;
+}
+
+// ========== CONTRACT ORCHESTRATION SERVICE ==========
+service ContractOrchestrationService {
+  rpc Activate(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc Suspend(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc Terminate(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc PortIn(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc GetHistory(GetOrchestrationHistoryRequest) returns (ListOrchestrationHistoryResponse);
+}
+
+message OrchestrationRequest {
+  string contract_id = 1;
+  string payload = 2; // JSON payload
+}
+
+message OrchestrationResponse {
+  bool success = 1;
+  string message = 2;
+  string history_id = 3;
+}
+
+message OrchestrationHistory {
+  string id = 1;
+  string contract_id = 2;
+  string operation = 3;
+  string status = 4;
+  string payload = 5;
+  string response_payload = 6;
+  string error_message = 7;
+  string started_at = 8;
+  string finished_at = 9;
+  string created_at = 10;
+}
+
+message GetOrchestrationHistoryRequest {
+  string contract_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListOrchestrationHistoryResponse {
+  repeated OrchestrationHistory history = 1;
+  PaginationResult pagination = 2;
+}
+
+// ========== COMMON MESSAGES ==========
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}

@@ -1,0 +1,41 @@
+{
+  "name": "crm-final",
+  "version": "1.0.0",
+  "description": "CRM Final - Multi-tenant White Label Partner Management System",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "service-*"
+  ],
+"scripts": {
+    "proto:lint": "buf lint",
+    "proto:generate": "buf generate --template proto/buf.gen.yaml",
+    "proto:breaking": "buf breaking --against '.git#branch=main'",
+    "proto:format": "buf format -w proto",
+    "proto:all": "npm run proto:lint && npm run proto:generate",
+    "install:buf": "echo 'Please install Buf manually from https://buf.build/docs/installation'",
+    "backend:dev": "cd backend && npm run start:dev",
+    "backend:build": "cd backend && npm run build",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/crm-final.git"
+  },
+  "keywords": [
+    "crm",
+    "white-label",
+    "multi-tenant",
+    "grpc",
+    "nestjs",
+    "microservices"
+  ],
+  "author": "Your Team",
+  "license": "PROPRIETARY",
+"devDependencies": {
+    "@bufbuild/buf": "^1.28.1",
+    "ts-proto": "^1.176.0"
+  }
+}

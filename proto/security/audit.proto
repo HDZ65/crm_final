@@ -1,0 +1,474 @@
+syntax = "proto3";
+
+package security;
+
+import "google/protobuf/timestamp.proto";
+import "security/options.proto";
+
+// ============================================================================
+// AUDIT SERVICE - Tamper-evident, append-only audit logging
+// ============================================================================
+// The AuditService provides:
+// - Append-only audit log storage with hash chain integrity
+// - Query API for audit log retrieval with tenant scoping
+// - Controlled export with watermarking
+// - Chain verification for tamper detection
+// ============================================================================
+
+// Audit result for logged actions
+enum AuditResult {
+  AUDIT_RESULT_UNSPECIFIED = 0;
+  // Action was allowed and executed
+  AUDIT_RESULT_ALLOWED = 1;
+  // Action was denied (authorization failed)
+  AUDIT_RESULT_DENIED = 2;
+  // Action failed (execution error)
+  AUDIT_RESULT_FAILED = 3;
+}
+
+// Type of actor performing the action
+enum ActorType {
+  ACTOR_TYPE_UNSPECIFIED = 0;
+  // Human user
+  ACTOR_TYPE_USER = 1;
+  // Service account or microservice
+  ACTOR_TYPE_SERVICE = 2;
+  // System/automated process
+  ACTOR_TYPE_SYSTEM = 3;
+  // External webhook
+  ACTOR_TYPE_WEBHOOK = 4;
+}
+
+// Information about who performed the action
+message AuditActor {
+  // Type of actor
+  ActorType actor_type = 1;
+  
+  // User ID (if actor_type = USER)
+  string user_id = 2;
+  
+  // Keycloak subject ID (for correlation with IdP)
+  string keycloak_sub = 3;
+  
+  // Service name (if actor_type = SERVICE)
+  string service_name = 4;
+  
+  // Organisation/tenant context
+  string organisation_id = 5;
+  
+  // Break-glass session ID (if action performed under break-glass)
+  string breakglass_session_id = 6;
+  
+  // User email (for display, may be redacted)
+  string user_email = 7;
+  
+  // IP address hash (SHA256 for privacy)
+  string ip_hash = 8;
+  
+  // User agent hash (SHA256 for privacy)
+  string user_agent_hash = 9;
+}
+
+// Information about the target of the action
+message AuditTarget {
+  // Type of target resource (e.g., "payment_intent", "user", "mandate")
+  string target_type = 1;
+  
+  // ID of the target resource
+  string target_id = 2;
+  
+  // Additional non-sensitive metadata about the target
+  map<string, string> target_meta = 3;
+}
+
+// A single audit log entry
+message AuditLogEntry {
+  option (message_security) = {
+    sensitive: true
+    classification: DATA_CLASSIFICATION_INTERNAL
+    retention_category: "AUDIT_7Y"
+  };
+
+  // Unique identifier (UUID)
+  string id = 1;
+  
+  // When the action occurred
+  google.protobuf.Timestamp occurred_at = 2;
+  
+  // ========== CORRELATION ==========
+  
+  // Trace ID for distributed tracing
+  string request_id = 3;
+  
+  // Business correlation ID (e.g., payment flow ID)
+  string correlation_id = 4;
+  
+  // ========== ACTOR ==========
+  
+  // Who performed the action
+  AuditActor actor = 5;
+  
+  // ========== ACTION ==========
+  
+  // Action label (e.g., "payment.refund.create")
+  string action = 6;
+  
+  // Permission that was evaluated
+  string permission = 7;
+  
+  // Result of the action
+  AuditResult result = 8;
+  
+  // Error message (if result = FAILED or DENIED)
+  string error_message = 9;
+  
+  // ========== TARGET ==========
+  
+  // What was the action performed on
+  AuditTarget target = 10;
+  
+  // ========== CHANGE TRACKING ==========
+  
+  // State before the action (JSON, encrypted if sensitive)
+  string before_json = 11;
+  
+  // State after the action (JSON, encrypted if sensitive)
+  string after_json = 12;
+  
+  // ========== INTEGRITY ==========
+  
+  // Hash of the previous entry in the chain
+  string prev_hash = 13;
+  
+  // Hash of this entry (SHA256 of prev_hash + canonical entry)
+  string entry_hash = 14;
+  
+  // ========== METADATA ==========
+  
+  // Additional non-sensitive metadata
+  map<string, string> meta = 15;
+}
+
+// ============================================================================
+// WRITE OPERATIONS
+// ============================================================================
+
+message WriteAuditRequest {
+  // The audit entry to write (id, prev_hash, entry_hash computed server-side)
+  AuditLogEntry entry = 1;
+}
+
+message WriteAuditResponse {
+  // Whether the write succeeded
+  bool success = 1;
+  
+  // The computed entry hash (for verification)
+  string persisted_entry_hash = 2;
+  
+  // The assigned entry ID
+  string entry_id = 3;
+}
+
+// Batch write for high-throughput scenarios
+message BatchWriteAuditRequest {
+  // Entries to write (ordered, hashes computed server-side)
+  repeated AuditLogEntry entries = 1;
+}
+
+message BatchWriteAuditResponse {
+  // Number of entries successfully written
+  int32 success_count = 1;
+  
+  // Number of entries that failed
+  int32 failure_count = 2;
+  
+  // IDs of failed entries
+  repeated string failed_entry_ids = 3;
+  
+  // Hash of the last successfully written entry
+  string last_entry_hash = 4;
+}
+
+// ============================================================================
+// QUERY OPERATIONS
+// ============================================================================
+
+message ListAuditRequest {
+  // Required: tenant scope
+  string organisation_id = 1;
+  
+  // Time range
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+  
+  // Filters
+  repeated string actions = 4;
+  repeated string actor_user_ids = 5;
+  repeated AuditResult results = 6;
+  string target_type = 7;
+  string target_id = 8;
+  string correlation_id = 9;
+  string request_id = 10;
+  
+  // Pagination
+  int32 page = 11;
+  int32 limit = 12;
+  
+  // Sort order (default: occurred_at DESC)
+  string sort_by = 13;
+  string sort_order = 14;
+}
+
+message ListAuditResponse {
+  // Audit entries matching the query
+  repeated AuditLogEntry entries = 1;
+  
+  // Pagination info
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  int32 total_pages = 5;
+}
+
+message GetAuditEntryRequest {
+  string id = 1;
+  string organisation_id = 2;
+}
+
+message GetAuditEntryResponse {
+  AuditLogEntry entry = 1;
+}
+
+// ============================================================================
+// EXPORT OPERATIONS
+// ============================================================================
+
+enum ExportFormat {
+  EXPORT_FORMAT_UNSPECIFIED = 0;
+  EXPORT_FORMAT_JSON = 1;
+  EXPORT_FORMAT_CSV = 2;
+  EXPORT_FORMAT_PARQUET = 3;
+}
+
+message ExportAuditRequest {
+  // Required: tenant scope
+  string organisation_id = 1;
+  
+  // Time range (required for export)
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+  
+  // Output format
+  ExportFormat format = 4;
+  
+  // Include hash chain proof data
+  bool include_chain_proof = 5;
+  
+  // Filters (same as ListAuditRequest)
+  repeated string actions = 6;
+  repeated string actor_user_ids = 7;
+}
+
+message ExportAuditChunk {
+  // Chunk of export data
+  bytes data = 1;
+  
+  // Watermark ID (tracks who exported this data)
+  string watermark_id = 2;
+  
+  // Chunk index (for reassembly)
+  int32 chunk_index = 3;
+  
+  // Total chunks
+  int32 total_chunks = 4;
+  
+  // Is this the last chunk?
+  bool is_last = 5;
+}
+
+// ============================================================================
+// VERIFICATION OPERATIONS
+// ============================================================================
+
+message VerifyChainRequest {
+  // Required: tenant scope
+  string organisation_id = 1;
+  
+  // Time range to verify
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+  
+  // Optional: specific stream (default: "default")
+  string stream = 4;
+}
+
+message VerifyChainResponse {
+  // Whether the chain is valid
+  bool valid = 1;
+  
+  // First hash in the verified range
+  string first_hash = 2;
+  
+  // Last hash in the verified range
+  string last_hash = 3;
+  
+  // Number of entries verified
+  int64 entries_checked = 4;
+  
+  // If invalid: ID of first corrupted entry
+  string corrupted_entry_id = 5;
+  
+  // If invalid: description of the issue
+  string corruption_details = 6;
+}
+
+message GetChainHeadRequest {
+  string organisation_id = 1;
+  string stream = 2;
+}
+
+message GetChainHeadResponse {
+  string organisation_id = 1;
+  string stream = 2;
+  string last_entry_hash = 3;
+  int64 entry_count = 4;
+  google.protobuf.Timestamp last_updated_at = 5;
+}
+
+// ============================================================================
+// CHECKPOINT OPERATIONS
+// ============================================================================
+
+message CreateCheckpointRequest {
+  string organisation_id = 1;
+  string stream = 2;
+  // If true, checkpoint is signed with KMS key
+  bool sign_checkpoint = 3;
+}
+
+message CreateCheckpointResponse {
+  string checkpoint_id = 1;
+  string checkpoint_hash = 2;
+  string signature = 3;
+  google.protobuf.Timestamp created_at = 4;
+  int64 entry_count = 5;
+}
+
+message VerifyCheckpointRequest {
+  string checkpoint_id = 1;
+}
+
+message VerifyCheckpointResponse {
+  bool valid = 1;
+  string checkpoint_hash = 2;
+  bool signature_valid = 3;
+  google.protobuf.Timestamp checkpoint_created_at = 4;
+}
+
+// ============================================================================
+// SERVICE DEFINITION
+// ============================================================================
+
+service AuditService {
+  // Write a single audit entry
+  rpc Write(WriteAuditRequest) returns (WriteAuditResponse) {
+    option (required_permission) = {
+      permission: "audit:write"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "audit.write"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // Batch write audit entries
+  rpc BatchWrite(BatchWriteAuditRequest) returns (BatchWriteAuditResponse) {
+    option (required_permission) = {
+      permission: "audit:write"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "audit.batch_write"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // Query audit entries
+  rpc List(ListAuditRequest) returns (ListAuditResponse) {
+    option (required_permission) = {
+      permission: "audit:read"
+      tenant_scoped: true
+      mfa_step_up_required: false
+      audit_blocking: false
+      audit_action: "audit.list"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // Get a single audit entry
+  rpc Get(GetAuditEntryRequest) returns (GetAuditEntryResponse) {
+    option (required_permission) = {
+      permission: "audit:read"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "audit.get"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // Export audit entries (controlled, watermarked)
+  rpc Export(ExportAuditRequest) returns (stream ExportAuditChunk) {
+    option (required_permission) = {
+      permission: "audit:export"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "audit.export"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // Verify hash chain integrity
+  rpc VerifyChain(VerifyChainRequest) returns (VerifyChainResponse) {
+    option (required_permission) = {
+      permission: "audit:verify"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "audit.verify_chain"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // Get current chain head
+  rpc GetChainHead(GetChainHeadRequest) returns (GetChainHeadResponse) {
+    option (required_permission) = {
+      permission: "audit:read"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "audit.get_chain_head"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // Create a checkpoint (signed snapshot of chain state)
+  rpc CreateCheckpoint(CreateCheckpointRequest) returns (CreateCheckpointResponse) {
+    option (required_permission) = {
+      permission: "audit:checkpoint"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "audit.create_checkpoint"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // Verify a checkpoint
+  rpc VerifyCheckpoint(VerifyCheckpointRequest) returns (VerifyCheckpointResponse) {
+    option (required_permission) = {
+      permission: "audit:verify"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "audit.verify_checkpoint"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+}

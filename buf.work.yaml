@@ -1,0 +1,4 @@
+version: v1
+# Buf workspace - run `buf generate` from crm_final root
+directories:
+  - proto

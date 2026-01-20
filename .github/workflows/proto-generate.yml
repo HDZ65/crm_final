@@ -1,0 +1,57 @@
+name: Proto Generation & Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'proto/**'
+  workflow_dispatch:
+
+jobs:
+  proto-generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Buf lint
+        run: |
+          npm run proto:lint
+
+      - name: Buf format
+        run: |
+          npm run proto:format
+
+      - name: Generate proto code
+        run: |
+          npm run proto:generate
+
+      - name: Upload generated code as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-proto-code
+          path: proto/gen
+
+      - name: Commit generated code
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add proto/gen
+          git diff --cached --quiet || exit 0
+          git commit -m "chore: regenerate proto code [skip ci]"
+        shell: bash
+
+      - name: Push generated code
+        run: |
+          git push
+        shell: bash

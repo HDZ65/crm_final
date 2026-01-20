@@ -1,0 +1,48 @@
+{
+  "name": "service-dashboard",
+  "version": "1.0.0",
+  "description": "Microservice gRPC pour les KPIs et tableaux de bord",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main.js",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:cov": "jest --coverage"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
+    "@nestjs/common": "^11.1.10",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.10",
+    "@nestjs/microservices": "^11.1.10",
+    "@nestjs/platform-express": "^11.1.10",
+    "@nestjs/typeorm": "^11.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "typeorm": "^0.3.28",
+    "typeorm-naming-strategies": "^4.1.0",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.14",
+    "@nestjs/schematics": "^11.0.9",
+    "@nestjs/testing": "^11.1.10",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
+    "eslint": "^9.39.2",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Information importante concernant votre paiement</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #f8f9fa; padding: 20px; border-bottom: 3px solid #007bff; }
+    .content { padding: 20px 0; }
+    .amount { font-size: 24px; font-weight: bold; color: #007bff; }
+    .alert { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 4px; margin: 20px 0; }
+    .footer { border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #666; }
+    .btn { display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Information importante</h1>
+  </div>
+  
+  <div class="content">
+    <p>Bonjour {{clientName}},</p>
+    
+    <p>Nous vous informons que le prelevement de <span class="amount">{{amount}} {{currency}}</span> 
+    prevu le {{paymentDate}} n'a pas pu etre effectue.</p>
+    
+    <div class="alert">
+      <strong>Motif du rejet:</strong> {{rejectionReason}}
+    </div>
+    
+    <p>Une nouvelle tentative de prelevement sera automatiquement effectuee le <strong>{{nextRetryDate}}</strong>.</p>
+    
+    <p>Si vous avez change de compte bancaire ou si votre situation a evolue, nous vous invitons a mettre a jour 
+    vos coordonnees bancaires dans votre espace client.</p>
+    
+    <p><a href="{{updateBankDetailsUrl}}" class="btn">Mettre a jour mes coordonnees</a></p>
+    
+    <p>Pour toute question, notre service client reste a votre disposition.</p>
+    
+    <p>Cordialement,<br>
+    L'equipe {{companyName}}</p>
+  </div>
+  
+  <div class="footer">
+    <p>Ce message est envoye automatiquement. Merci de ne pas y repondre directement.</p>
+    <p>Reference: {{retryScheduleId}}</p>
+  </div>
+</body>
+</html>

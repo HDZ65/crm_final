@@ -1,0 +1,452 @@
+syntax = "proto3";
+
+package calendar;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// CALENDAR MODULE WITH BUF.VALIDATE RULES
+// ============================================================================
+// Version with strict validation constraints using buf.validate (protovalidate)
+// Import this file OR the base calendar.proto - not both
+// ============================================================================
+
+// ================================
+// ENUMS
+// ================================
+
+enum DebitBatch {
+  DEBIT_BATCH_UNSPECIFIED = 0;
+  DEBIT_BATCH_L1 = 1;
+  DEBIT_BATCH_L2 = 2;
+  DEBIT_BATCH_L3 = 3;
+  DEBIT_BATCH_L4 = 4;
+}
+
+enum DebitDateMode {
+  DEBIT_DATE_MODE_UNSPECIFIED = 0;
+  DEBIT_DATE_MODE_BATCH = 1;
+  DEBIT_DATE_MODE_FIXED_DAY = 2;
+}
+
+enum DateShiftStrategy {
+  DATE_SHIFT_STRATEGY_UNSPECIFIED = 0;
+  DATE_SHIFT_STRATEGY_NEXT_BUSINESS_DAY = 1;
+  DATE_SHIFT_STRATEGY_PREVIOUS_BUSINESS_DAY = 2;
+  DATE_SHIFT_STRATEGY_NEXT_WEEK_SAME_DAY = 3;
+}
+
+enum ConfigurationLevel {
+  CONFIGURATION_LEVEL_UNSPECIFIED = 0;
+  CONFIGURATION_LEVEL_SYSTEM_DEFAULT = 1;
+  CONFIGURATION_LEVEL_COMPANY = 2;
+  CONFIGURATION_LEVEL_CLIENT = 3;
+  CONFIGURATION_LEVEL_CONTRACT = 4;
+}
+
+enum PlannedDateStatus {
+  PLANNED_DATE_STATUS_UNSPECIFIED = 0;
+  PLANNED_DATE_STATUS_PLANNED = 1;
+  PLANNED_DATE_STATUS_CONFIRMED = 2;
+  PLANNED_DATE_STATUS_PROCESSING = 3;
+  PLANNED_DATE_STATUS_EXECUTED = 4;
+  PLANNED_DATE_STATUS_FAILED = 5;
+  PLANNED_DATE_STATUS_CANCELLED = 6;
+}
+
+enum HolidayType {
+  HOLIDAY_TYPE_UNSPECIFIED = 0;
+  HOLIDAY_TYPE_PUBLIC = 1;
+  HOLIDAY_TYPE_BANK = 2;
+  HOLIDAY_TYPE_REGIONAL = 3;
+  HOLIDAY_TYPE_COMPANY = 4;
+}
+
+enum AuditSource {
+  AUDIT_SOURCE_UNSPECIFIED = 0;
+  AUDIT_SOURCE_UI = 1;
+  AUDIT_SOURCE_CSV_IMPORT = 2;
+  AUDIT_SOURCE_API = 3;
+  AUDIT_SOURCE_SYSTEM = 4;
+}
+
+// ================================
+// VALIDATED MESSAGES
+// ================================
+
+message CreateContractConfigRequest {
+  option (buf.validate.message).cel = {
+    id: "mode_batch_requires_batch",
+    message: "batch is required when mode is BATCH",
+    expression: "this.mode != 1 || this.batch != 0"
+  };
+  option (buf.validate.message).cel = {
+    id: "mode_fixed_requires_day",
+    message: "fixed_day is required when mode is FIXED_DAY",
+    expression: "this.mode != 2 || this.fixed_day > 0"
+  };
+
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string contrat_id = 2 [(buf.validate.field).string.uuid = true];
+  
+  DebitDateMode mode = 3 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+  
+  DebitBatch batch = 4 [(buf.validate.field).enum.defined_only = true];
+  
+  int32 fixed_day = 5 [(buf.validate.field).int32 = {
+    gte: 0,
+    lte: 28
+  }];
+  
+  DateShiftStrategy shift_strategy = 6 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+  
+  string holiday_zone_id = 7 [(buf.validate.field).string = {
+    uuid: true,
+    ignore_empty: true
+  }];
+}
+
+message CreateClientConfigRequest {
+  option (buf.validate.message).cel = {
+    id: "mode_batch_requires_batch",
+    message: "batch is required when mode is BATCH",
+    expression: "this.mode != 1 || this.batch != 0"
+  };
+  option (buf.validate.message).cel = {
+    id: "mode_fixed_requires_day",
+    message: "fixed_day is required when mode is FIXED_DAY",
+    expression: "this.mode != 2 || this.fixed_day > 0"
+  };
+
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string client_id = 2 [(buf.validate.field).string.uuid = true];
+  
+  DebitDateMode mode = 3 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+  
+  DebitBatch batch = 4 [(buf.validate.field).enum.defined_only = true];
+  
+  int32 fixed_day = 5 [(buf.validate.field).int32 = {
+    gte: 0,
+    lte: 28
+  }];
+  
+  DateShiftStrategy shift_strategy = 6 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+  
+  string holiday_zone_id = 7 [(buf.validate.field).string = {
+    uuid: true,
+    ignore_empty: true
+  }];
+}
+
+message CreateCompanyConfigRequest {
+  option (buf.validate.message).cel = {
+    id: "mode_batch_requires_batch",
+    message: "batch is required when mode is BATCH",
+    expression: "this.mode != 1 || this.batch != 0"
+  };
+  option (buf.validate.message).cel = {
+    id: "mode_fixed_requires_day",
+    message: "fixed_day is required when mode is FIXED_DAY",
+    expression: "this.mode != 2 || this.fixed_day > 0"
+  };
+
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string societe_id = 2 [(buf.validate.field).string.uuid = true];
+  
+  DebitDateMode mode = 3 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+  
+  DebitBatch batch = 4 [(buf.validate.field).enum.defined_only = true];
+  
+  int32 fixed_day = 5 [(buf.validate.field).int32 = {
+    gte: 0,
+    lte: 28
+  }];
+  
+  DateShiftStrategy shift_strategy = 6 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+  
+  string holiday_zone_id = 7 [(buf.validate.field).string = {
+    uuid: true,
+    ignore_empty: true
+  }];
+  
+  string cutoff_config_id = 8 [(buf.validate.field).string = {
+    uuid: true,
+    ignore_empty: true
+  }];
+}
+
+message CreateHolidayZoneRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string code = 2 [(buf.validate.field).string = {
+    min_len: 2,
+    max_len: 20,
+    pattern: "^[A-Z]{2}(-[A-Z0-9]{1,10})?$"
+  }];
+  
+  string name = 3 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100
+  }];
+  
+  string country_code = 4 [(buf.validate.field).string = {
+    len: 2,
+    pattern: "^[A-Z]{2}$"
+  }];
+  
+  string region_code = 5 [(buf.validate.field).string = {
+    max_len: 10,
+    pattern: "^[A-Z0-9]*$",
+    ignore_empty: true
+  }];
+}
+
+message CreateHolidayRequest {
+  option (buf.validate.message).cel = {
+    id: "recurring_requires_month_day",
+    message: "recurring_month and recurring_day are required when is_recurring is true",
+    expression: "!this.is_recurring || (this.recurring_month > 0 && this.recurring_day > 0)"
+  };
+
+  string holiday_zone_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string date = 2 [(buf.validate.field).string = {
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+  }];
+  
+  string name = 3 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100
+  }];
+  
+  HolidayType holiday_type = 4 [(buf.validate.field).enum = {
+    defined_only: true,
+    not_in: [0]
+  }];
+  
+  bool is_recurring = 5;
+  
+  int32 recurring_month = 6 [(buf.validate.field).int32 = {
+    gte: 0,
+    lte: 12
+  }];
+  
+  int32 recurring_day = 7 [(buf.validate.field).int32 = {
+    gte: 0,
+    lte: 31
+  }];
+}
+
+message CalculatePlannedDateRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string contrat_id = 2 [(buf.validate.field).string = {
+    uuid: true,
+    ignore_empty: true
+  }];
+  
+  string client_id = 3 [(buf.validate.field).string = {
+    uuid: true,
+    ignore_empty: true
+  }];
+  
+  string societe_id = 4 [(buf.validate.field).string = {
+    uuid: true,
+    ignore_empty: true
+  }];
+  
+  string reference_date = 5 [(buf.validate.field).string = {
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+    ignore_empty: true
+  }];
+  
+  int32 target_month = 6 [(buf.validate.field).int32 = {
+    gte: 1,
+    lte: 12
+  }];
+  
+  int32 target_year = 7 [(buf.validate.field).int32 = {
+    gte: 2020,
+    lte: 2100
+  }];
+  
+  bool include_resolution_trace = 8;
+}
+
+message CheckDateEligibilityRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string date = 2 [(buf.validate.field).string = {
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+  }];
+  
+  string holiday_zone_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message ImportCsvRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  bytes csv_content = 2 [(buf.validate.field).bytes = {
+    min_len: 10,
+    max_len: 10485760
+  }];
+  
+  string import_type = 3 [(buf.validate.field).string = {
+    in: ["DEBIT_CONFIG", "HOLIDAYS", "VOLUME_FORECAST"]
+  }];
+  
+  bool dry_run = 4;
+  
+  string uploaded_by_user_id = 5 [(buf.validate.field).string.uuid = true];
+}
+
+message CreateVolumeThresholdRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string societe_id = 2 [(buf.validate.field).string = {
+    uuid: true,
+    ignore_empty: true
+  }];
+  
+  int32 max_transaction_count = 3 [(buf.validate.field).int32.gte = 1];
+  
+  int64 max_amount_cents = 4 [(buf.validate.field).int64.gte = 100];
+  
+  string currency = 5 [(buf.validate.field).string = {
+    len: 3,
+    pattern: "^[A-Z]{3}$"
+  }];
+  
+  bool alert_on_exceed = 6;
+  
+  string alert_email = 7 [(buf.validate.field).string = {
+    email: true,
+    ignore_empty: true
+  }];
+}
+
+message GetCalendarViewRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string start_date = 2 [(buf.validate.field).string = {
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+  }];
+  
+  string end_date = 3 [(buf.validate.field).string = {
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+  }];
+  
+  repeated string societe_ids = 4 [(buf.validate.field).repeated = {
+    max_items: 100,
+    items: { string: { uuid: true } }
+  }];
+  
+  repeated DebitBatch batches = 5 [(buf.validate.field).repeated = {
+    max_items: 4,
+    items: { enum: { defined_only: true } }
+  }];
+  
+  repeated PlannedDateStatus statuses = 6 [(buf.validate.field).repeated = {
+    max_items: 10,
+    items: { enum: { defined_only: true } }
+  }];
+  
+  bool include_volumes = 7;
+}
+
+message GetVolumeHeatmapRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  int32 year = 2 [(buf.validate.field).int32 = {
+    gte: 2020,
+    lte: 2100
+  }];
+  
+  int32 month = 3 [(buf.validate.field).int32 = {
+    gte: 0,
+    lte: 12
+  }];
+  
+  repeated string societe_ids = 4 [(buf.validate.field).repeated = {
+    max_items: 100,
+    items: { string: { uuid: true } }
+  }];
+  
+  repeated DebitBatch batches = 5 [(buf.validate.field).repeated = {
+    max_items: 4,
+    items: { enum: { defined_only: true } }
+  }];
+  
+  bool include_forecast = 6;
+}
+
+message CutoffConfigurationRequest {
+  string organisation_id = 1 [(buf.validate.field).string.uuid = true];
+  
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 100
+  }];
+  
+  string cutoff_time = 3 [(buf.validate.field).string = {
+    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+  }];
+  
+  string timezone = 4 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 50
+  }];
+  
+  int32 days_before_value_date = 5 [(buf.validate.field).int32 = {
+    gte: 0,
+    lte: 10
+  }];
+}
+
+// ================================
+// PAGINATION (WITH VALIDATION)
+// ================================
+
+message PaginationRequest {
+  int32 page = 1 [(buf.validate.field).int32 = {
+    gte: 1,
+    lte: 10000
+  }];
+  
+  int32 limit = 2 [(buf.validate.field).int32 = {
+    gte: 1,
+    lte: 1000
+  }];
+  
+  string sort_by = 3 [(buf.validate.field).string = {
+    max_len: 50,
+    pattern: "^[a-z_]*$",
+    ignore_empty: true
+  }];
+  
+  string sort_order = 4 [(buf.validate.field).string = {
+    in: ["", "asc", "desc", "ASC", "DESC"]
+  }];
+}

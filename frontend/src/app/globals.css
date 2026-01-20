@@ -1,0 +1,109 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --breakpoint-2xl: 2560px;
+  --breakpoint-xl: 1920px;
+
+  --color-background: theme('colors.slate.50');
+  --color-foreground: theme('colors.slate.950');
+
+  --color-card: theme('colors.slate.100');
+  --color-card-foreground: theme('colors.slate.950');
+
+  --color-popover: theme('colors.white');
+  --color-popover-foreground: theme('colors.slate.950');
+
+  --color-primary: theme('colors.blue.500');
+  --color-primary-foreground: theme('colors.slate.50');
+
+  --color-secondary: theme('colors.slate.100');
+  --color-secondary-foreground: theme('colors.slate.900');
+
+  --color-muted: theme('colors.slate.100');
+  --color-muted-foreground: theme('colors.slate.500');
+
+  --color-accent: theme('colors.slate.100');
+  --color-accent-foreground: theme('colors.slate.900');
+
+  --color-destructive: theme('colors.red.500');
+  --color-destructive-foreground: theme('colors.white');
+
+  --color-success: theme('colors.emerald.500');
+  --color-success-foreground: theme('colors.white');
+
+  --color-warning: theme('colors.amber.500');
+  --color-warning-foreground: theme('colors.slate.950');
+
+  --color-info: theme('colors.cyan.500');
+  --color-info-foreground: theme('colors.white');
+
+  --color-border: theme('colors.slate.200');
+  --color-input: theme('colors.slate.300');
+  --color-input-foreground: theme('colors.slate.950');
+  --color-ring: theme('colors.slate.400');
+
+  --color-chart-1: theme('colors.blue.300');
+  --color-chart-2: theme('colors.blue.500');
+  --color-chart-3: theme('colors.blue.100');
+  --color-chart-4: theme('colors.blue.700');
+  --color-chart-5: theme('colors.blue.800');
+
+  /* Aliases pour compat shadcn examples (var(--chart-*)): */
+  --chart-1: var(--color-chart-1);
+  --chart-2: var(--color-chart-2);
+  --chart-3: var(--color-chart-3);
+  --chart-4: var(--color-chart-4);
+  --chart-5: var(--color-chart-5);
+
+  --color-sidebar: theme('colors.slate.800');
+  --color-sidebar-foreground: theme('colors.slate.50');
+  --color-sidebar-primary: theme('colors.blue.500');
+  --color-sidebar-primary-foreground: theme('colors.slate.50');
+  --color-sidebar-accent: theme('colors.slate.200');
+  --color-sidebar-accent-foreground: theme('colors.slate.900');
+  --color-sidebar-border: theme('colors.slate.200');
+  --color-sidebar-ring: theme('colors.slate.400');
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes shimmer-reverse {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-200%);
+  }
+}

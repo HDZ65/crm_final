@@ -1,0 +1,29 @@
+# Dockerfile pour le développement avec hot-reload
+FROM node:18-alpine
+
+# Installer les dépendances système
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copier les fichiers de dépendances
+COPY package*.json ./
+
+# Installer toutes les dépendances (y compris dev)
+RUN npm install
+
+# Copier le reste du code (sera overridé par le volume en dev)
+COPY . .
+
+# Créer les dossiers de stockage
+RUN mkdir -p /app/storage/pdfs /app/storage/temp
+
+# Exposer le port gRPC
+EXPOSE 50051
+
+# Variable d'environnement
+ENV NODE_ENV=development
+ENV GRPC_URL=0.0.0.0:50051
+
+# Commande par défaut (peut être overridée dans docker-compose)
+CMD ["npm", "run", "start:dev"]

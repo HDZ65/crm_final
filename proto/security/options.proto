@@ -1,0 +1,143 @@
+syntax = "proto3";
+
+package security;
+
+import "google/protobuf/descriptor.proto";
+
+// ============================================================================
+// SECURITY OPTIONS - Method-level security annotations
+// ============================================================================
+// These options are read by the security interceptor to enforce:
+// - Permission requirements
+// - Tenant scoping
+// - MFA step-up
+// - Audit blocking
+// ============================================================================
+
+// Data classification levels for sensitive data handling
+enum DataClassification {
+  DATA_CLASSIFICATION_UNSPECIFIED = 0;
+  // Public data - no restrictions
+  DATA_CLASSIFICATION_PUBLIC = 1;
+  // Internal data - no encryption required, basic audit
+  DATA_CLASSIFICATION_INTERNAL = 2;
+  // Personal Identifiable Information - encryption required, GDPR applies
+  DATA_CLASSIFICATION_PII = 3;
+  // Payment-related data - encryption + enhanced audit
+  DATA_CLASSIFICATION_PAYMENT = 4;
+  // Secrets - never log, always encrypt, restricted access
+  DATA_CLASSIFICATION_SECRET = 5;
+}
+
+// Permission requirement for a method
+// Used by security interceptor to enforce access control
+message PermissionRequirement {
+  // Permission code required (e.g., "payment:refund:create")
+  // Format: resource:action[:sub_resource]
+  string permission = 1;
+
+  // If true, request must include organisation_id and actor must be member
+  // Enforces tenant isolation
+  bool tenant_scoped = 2;
+
+  // If true, MFA must have been verified within the step-up window
+  // Window is configurable per permission (default: 10 minutes)
+  bool mfa_step_up_required = 3;
+
+  // If true, audit write MUST succeed or the RPC fails
+  // Critical for sensitive operations
+  bool audit_blocking = 4;
+
+  // Logical audit action label (e.g., "payment.refund.create")
+  // Used in audit logs for consistent action naming
+  string audit_action = 5;
+
+  // Data classification for this method
+  // Affects logging, encryption, and retention policies
+  DataClassification data_classification = 6;
+
+  // Step-up window in seconds (default: 600 = 10 minutes)
+  // Only applies when mfa_step_up_required = true
+  int32 step_up_window_seconds = 7;
+
+  // Description for documentation and error messages
+  string description = 8;
+}
+
+// Extend MethodOptions to add security requirements
+extend google.protobuf.MethodOptions {
+  // Security requirement for this RPC method
+  PermissionRequirement required_permission = 50001;
+}
+
+// ============================================================================
+// SERVICE OPTIONS - Service-level security configuration
+// ============================================================================
+
+// Service-level security configuration
+message ServiceSecurityConfig {
+  // Default tenant scoping for all methods (can be overridden per method)
+  bool default_tenant_scoped = 1;
+
+  // Default data classification for all methods
+  DataClassification default_data_classification = 2;
+
+  // Service identity for mTLS (e.g., "payment-service")
+  string service_identity = 3;
+
+  // List of services allowed to call this service (for mTLS allowlist)
+  repeated string allowed_callers = 4;
+}
+
+// Extend ServiceOptions to add security configuration
+extend google.protobuf.ServiceOptions {
+  ServiceSecurityConfig service_security = 50002;
+}
+
+// ============================================================================
+// FIELD OPTIONS - Field-level security annotations
+// ============================================================================
+
+// Field-level security annotations
+message FieldSecurityConfig {
+  // If true, this field must be encrypted at rest
+  bool encrypted = 1;
+
+  // If true, generate a blind index for searchable encryption
+  bool searchable = 2;
+
+  // If true, field should be redacted in logs
+  bool redact_in_logs = 3;
+
+  // Data classification for this field
+  DataClassification classification = 4;
+
+  // PII category (for GDPR tracking)
+  string pii_category = 5;
+}
+
+// Extend FieldOptions to add security annotations
+extend google.protobuf.FieldOptions {
+  FieldSecurityConfig field_security = 50003;
+}
+
+// ============================================================================
+// MESSAGE OPTIONS - Message-level security annotations
+// ============================================================================
+
+// Message-level security annotations
+message MessageSecurityConfig {
+  // If true, entire message should be treated as sensitive
+  bool sensitive = 1;
+
+  // Data classification for this message type
+  DataClassification classification = 2;
+
+  // Retention category (for purge policies)
+  string retention_category = 3;
+}
+
+// Extend MessageOptions to add security annotations
+extend google.protobuf.MessageOptions {
+  MessageSecurityConfig message_security = 50004;
+}

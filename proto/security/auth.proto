@@ -1,0 +1,495 @@
+syntax = "proto3";
+
+package security;
+
+import "google/protobuf/timestamp.proto";
+import "security/options.proto";
+
+// ============================================================================
+// AUTH SERVICE - Session management, MFA, and Break-glass
+// ============================================================================
+// The AuthService provides:
+// - Session tracking and revocation
+// - MFA state management
+// - Break-glass session management
+// ============================================================================
+
+// Session status
+enum SessionStatus {
+  SESSION_STATUS_UNSPECIFIED = 0;
+  SESSION_STATUS_ACTIVE = 1;
+  SESSION_STATUS_REVOKED = 2;
+  SESSION_STATUS_EXPIRED = 3;
+  SESSION_STATUS_SUSPICIOUS = 4;
+}
+
+// MFA method types
+enum MfaMethod {
+  MFA_METHOD_UNSPECIFIED = 0;
+  MFA_METHOD_TOTP = 1;
+  MFA_METHOD_WEBAUTHN = 2;
+  MFA_METHOD_SMS = 3;
+  MFA_METHOD_EMAIL = 4;
+}
+
+// Break-glass session status
+enum BreakglassStatus {
+  BREAKGLASS_STATUS_UNSPECIFIED = 0;
+  BREAKGLASS_STATUS_ACTIVE = 1;
+  BREAKGLASS_STATUS_EXPIRED = 2;
+  BREAKGLASS_STATUS_ENDED = 3;
+  BREAKGLASS_STATUS_REVOKED = 4;
+}
+
+// ============================================================================
+// SESSION MANAGEMENT
+// ============================================================================
+
+// Auth session tracking
+message AuthSession {
+  option (message_security) = {
+    sensitive: true
+    classification: DATA_CLASSIFICATION_INTERNAL
+    retention_category: "SESSION_30D"
+  };
+
+  // Session ID (from Keycloak sid claim)
+  string session_id = 1;
+  
+  // User ID in our system
+  string user_id = 2;
+  
+  // Keycloak subject ID
+  string keycloak_sub = 3;
+  
+  // Organisation context (if single-org session)
+  string organisation_id = 4;
+  
+  // Security metadata (hashed for privacy)
+  string ip_hash = 5 [(field_security) = { redact_in_logs: true }];
+  string user_agent_hash = 6 [(field_security) = { redact_in_logs: true }];
+  
+  // Timestamps
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp last_activity_at = 8;
+  google.protobuf.Timestamp expires_at = 9;
+  
+  // MFA state
+  google.protobuf.Timestamp mfa_verified_at = 10;
+  MfaMethod mfa_method = 11;
+  
+  // Session status
+  SessionStatus status = 12;
+  
+  // Revocation info (if revoked)
+  string revoked_by = 13;
+  string revocation_reason = 14;
+  google.protobuf.Timestamp revoked_at = 15;
+}
+
+// Request to track a new session
+message TrackSessionRequest {
+  string session_id = 1;
+  string user_id = 2;
+  string keycloak_sub = 3;
+  string organisation_id = 4;
+  string ip_hash = 5;
+  string user_agent_hash = 6;
+  google.protobuf.Timestamp expires_at = 7;
+  google.protobuf.Timestamp mfa_verified_at = 8;
+  MfaMethod mfa_method = 9;
+}
+
+message TrackSessionResponse {
+  AuthSession session = 1;
+}
+
+// Request to update session activity
+message UpdateSessionActivityRequest {
+  string session_id = 1;
+  string ip_hash = 2;
+  string user_agent_hash = 3;
+}
+
+message UpdateSessionActivityResponse {
+  AuthSession session = 1;
+  // True if session context changed significantly (IP/UA)
+  bool context_changed = 2;
+}
+
+// Request to revoke a session
+message RevokeSessionRequest {
+  string session_id = 1;
+  string revoked_by = 2;
+  string reason = 3;
+}
+
+message RevokeSessionResponse {
+  bool success = 1;
+}
+
+// Request to check session validity
+message CheckSessionRequest {
+  string session_id = 1;
+}
+
+message CheckSessionResponse {
+  bool valid = 1;
+  AuthSession session = 2;
+  // If invalid, reason why
+  string invalid_reason = 3;
+}
+
+// List active sessions for a user
+message ListUserSessionsRequest {
+  string user_id = 1;
+  bool include_revoked = 2;
+}
+
+message ListUserSessionsResponse {
+  repeated AuthSession sessions = 1;
+}
+
+// ============================================================================
+// MFA STATE MANAGEMENT
+// ============================================================================
+
+// MFA device registration
+message MfaDevice {
+  string id = 1;
+  string user_id = 2;
+  MfaMethod method = 3;
+  string device_name = 4;
+  google.protobuf.Timestamp registered_at = 5;
+  google.protobuf.Timestamp last_used_at = 6;
+  bool is_primary = 7;
+}
+
+// Record MFA verification
+message RecordMfaVerificationRequest {
+  string session_id = 1;
+  string user_id = 2;
+  MfaMethod method = 3;
+  bool success = 4;
+}
+
+message RecordMfaVerificationResponse {
+  bool recorded = 1;
+  google.protobuf.Timestamp mfa_verified_at = 2;
+}
+
+// Check if MFA step-up is required
+message CheckStepUpRequest {
+  string session_id = 1;
+  string permission = 2;
+  int32 required_freshness_seconds = 3;
+}
+
+message CheckStepUpResponse {
+  bool step_up_required = 1;
+  google.protobuf.Timestamp mfa_verified_at = 2;
+  int32 seconds_since_mfa = 3;
+  string step_up_url = 4;
+}
+
+// ============================================================================
+// BREAK-GLASS SESSION MANAGEMENT
+// ============================================================================
+
+// Break-glass session
+message BreakglassSession {
+  option (message_security) = {
+    sensitive: true
+    classification: DATA_CLASSIFICATION_SECRET
+    retention_category: "AUDIT_7Y"
+  };
+
+  string id = 1;
+  string organisation_id = 2;
+  string utilisateur_id = 3;
+  
+  // Reason is encrypted at rest
+  string reason_ciphertext = 4 [(field_security) = { encrypted: true classification: DATA_CLASSIFICATION_SECRET }];
+  
+  // Ticket reference (e.g., JIRA ticket, incident ID)
+  string ticket_ref = 5;
+  
+  // Timestamps
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp expires_at = 7;
+  google.protobuf.Timestamp ended_at = 8;
+  
+  // Who ended the session (if manually ended)
+  string ended_by_user_id = 9;
+  string end_reason = 10;
+  
+  // Status
+  BreakglassStatus status = 11;
+  
+  // Permissions granted during break-glass
+  repeated string granted_permissions = 12;
+}
+
+// Activate break-glass session
+message ActivateBreakglassRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string reason = 3;
+  string ticket_ref = 4;
+  // Duration in seconds (max 3600 = 1 hour)
+  int32 ttl_seconds = 5;
+  // Optional: specific permissions (default: SuperAdmin set)
+  repeated string requested_permissions = 6;
+}
+
+message ActivateBreakglassResponse {
+  BreakglassSession session = 1;
+}
+
+// Deactivate break-glass session
+message DeactivateBreakglassRequest {
+  string session_id = 1;
+  string ended_by_user_id = 2;
+  string reason = 3;
+}
+
+message DeactivateBreakglassResponse {
+  BreakglassSession session = 1;
+}
+
+// Get active break-glass session for user
+message GetActiveBreakglassRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+}
+
+message GetActiveBreakglassResponse {
+  // Null if no active session
+  BreakglassSession session = 1;
+  bool has_active_session = 2;
+}
+
+// Check if break-glass is active for context
+message CheckBreakglassRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+}
+
+message CheckBreakglassResponse {
+  bool is_active = 1;
+  string session_id = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  repeated string granted_permissions = 4;
+}
+
+// List break-glass sessions (for audit)
+message ListBreakglassSessionsRequest {
+  string organisation_id = 1;
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+  repeated BreakglassStatus statuses = 4;
+  int32 page = 5;
+  int32 limit = 6;
+}
+
+message ListBreakglassSessionsResponse {
+  repeated BreakglassSession sessions = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+// ============================================================================
+// ACCESS CONTEXT (for authorization decisions)
+// ============================================================================
+
+// Full access context for authorization decisions
+message AccessContext {
+  // User identity
+  string user_id = 1;
+  string keycloak_sub = 2;
+  
+  // Tenant context
+  string organisation_id = 3;
+  
+  // Roles and permissions
+  repeated string roles = 4;
+  repeated string permissions = 5;
+  
+  // Break-glass context (if active)
+  string breakglass_session_id = 6;
+  repeated string breakglass_permissions = 7;
+  
+  // MFA state
+  google.protobuf.Timestamp mfa_verified_at = 8;
+  MfaMethod mfa_method = 9;
+  
+  // Session metadata
+  string session_id = 10;
+  string ip_hash = 11;
+  string user_agent_hash = 12;
+  
+  // Request context
+  string request_id = 13;
+  string correlation_id = 14;
+}
+
+// Build access context from session
+message BuildAccessContextRequest {
+  string session_id = 1;
+  string organisation_id = 2;
+}
+
+message BuildAccessContextResponse {
+  AccessContext context = 1;
+}
+
+// ============================================================================
+// SERVICE DEFINITION
+// ============================================================================
+
+service AuthService {
+  // ========== SESSION MANAGEMENT ==========
+  
+  rpc TrackSession(TrackSessionRequest) returns (TrackSessionResponse) {
+    option (required_permission) = {
+      permission: "auth:session:track"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "auth.session.track"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc UpdateSessionActivity(UpdateSessionActivityRequest) returns (UpdateSessionActivityResponse) {
+    option (required_permission) = {
+      permission: "auth:session:update"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "auth.session.update"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse) {
+    option (required_permission) = {
+      permission: "auth:session:revoke"
+      tenant_scoped: false
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "auth.session.revoke"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc CheckSession(CheckSessionRequest) returns (CheckSessionResponse) {
+    option (required_permission) = {
+      permission: "auth:session:check"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "auth.session.check"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc ListUserSessions(ListUserSessionsRequest) returns (ListUserSessionsResponse) {
+    option (required_permission) = {
+      permission: "auth:session:list"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "auth.session.list"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // ========== MFA ==========
+  
+  rpc RecordMfaVerification(RecordMfaVerificationRequest) returns (RecordMfaVerificationResponse) {
+    option (required_permission) = {
+      permission: "auth:mfa:record"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "auth.mfa.record"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc CheckStepUp(CheckStepUpRequest) returns (CheckStepUpResponse) {
+    option (required_permission) = {
+      permission: "auth:mfa:check"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "auth.mfa.check"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // ========== BREAK-GLASS ==========
+  
+  rpc ActivateBreakglass(ActivateBreakglassRequest) returns (ActivateBreakglassResponse) {
+    option (required_permission) = {
+      permission: "breakglass:activate"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "breakglass.activate"
+      data_classification: DATA_CLASSIFICATION_SECRET
+      step_up_window_seconds: 0
+      description: "Activate break-glass emergency access"
+    };
+  }
+  
+  rpc DeactivateBreakglass(DeactivateBreakglassRequest) returns (DeactivateBreakglassResponse) {
+    option (required_permission) = {
+      permission: "breakglass:deactivate"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "breakglass.deactivate"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc GetActiveBreakglass(GetActiveBreakglassRequest) returns (GetActiveBreakglassResponse) {
+    option (required_permission) = {
+      permission: "breakglass:read"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "breakglass.get_active"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc CheckBreakglass(CheckBreakglassRequest) returns (CheckBreakglassResponse) {
+    option (required_permission) = {
+      permission: "breakglass:check"
+      tenant_scoped: true
+      audit_blocking: false
+      audit_action: "breakglass.check"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  rpc ListBreakglassSessions(ListBreakglassSessionsRequest) returns (ListBreakglassSessionsResponse) {
+    option (required_permission) = {
+      permission: "breakglass:list"
+      tenant_scoped: true
+      mfa_step_up_required: true
+      audit_blocking: false
+      audit_action: "breakglass.list"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+  
+  // ========== ACCESS CONTEXT ==========
+  
+  rpc BuildAccessContext(BuildAccessContextRequest) returns (BuildAccessContextResponse) {
+    option (required_permission) = {
+      permission: "auth:context:build"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "auth.context.build"
+      data_classification: DATA_CLASSIFICATION_INTERNAL
+    };
+  }
+}

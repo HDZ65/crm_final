@@ -1,0 +1,38 @@
+version: v1
+# Code generation for microservices
+
+managed:
+  enabled: true
+
+# Plugins for code generation
+plugins:
+
+# TypeScript/Frontend generation (pour Next.js - sans NestJS)
+  - plugin: ts-proto
+    out: gen/ts-frontend
+    path: /home/finanssor-data-center-v1/Applications/crm-gestion/crm_final/node_modules/.bin/protoc-gen-ts_proto
+    opt:
+      - nestJs=false
+      - addGrpcMetadata=true
+      - snakeToCamel=true
+      - outputServices=grpc-js
+      - esModuleInterop=true
+      - useOptionals=messages
+
+  # TypeScript generation for backend services (types only, no NestJS decorators)
+  - plugin: ts-proto
+    out: gen/ts
+    path: /home/finanssor-data-center-v1/Applications/crm-gestion/crm_final/node_modules/.bin/protoc-gen-ts_proto
+    opt:
+      - nestJs=false
+      - snakeToCamel=true
+      - outputServices=false
+      - esModuleInterop=true
+      - useOptionals=messages
+
+# Zod validation schemas generation from proto (disabled - requires protoc-gen-zod installation)
+# - plugin: buf.build/community/zod
+#   out: gen/zod
+#   opt:
+#     - target=ts
+#     - paths=source_relative

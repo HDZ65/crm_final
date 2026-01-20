@@ -1,0 +1,145 @@
+graph TB
+    subgraph "LAYER 1: ORCHESTRATION & ROUTING"
+        START["🎯 DÉCLENCHEUR<br/>━━━━━━━━━━━━━━━<br/>Sources:<br/>• Souscription client<br/>• Job scheduler (cron J+14)<br/>• Retry automatique<br/>• Action manuelle back-office"] --> ROUTER["🧠 PAYMENT ORCHESTRATOR<br/>━━━━━━━━━━━━━━━<br/>Intelligence centrale:<br/>• Charge PSP_ROUTE config<br/>• Sélection PSP selon:<br/>  - Payment method (SEPA/CB)<br/>  - Priority ranking<br/>  - Health check status<br/>  - Geographic zone<br/>• Circuit breaker: 5 fails = switch PSP"]
+
+        ROUTER --> CHECK_CONTEXT{"🔍 CONTEXTE VALIDE?<br/>━━━━━━━━━━━━━━━<br/>Vérifications:<br/>✓ Contract.status = active<br/>✓ J+14 rétractation dépassée<br/>✓ CQ validé<br/>✓ Mandate actif<br/>✓ Pas de blocage fraude<br/>✓ Client solvable"}
+
+        CHECK_CONTEXT -->|"❌ KO"| BLOCK["🚫 BLOCAGE<br/>━━━━━━━━━━━━━━━<br/>Actions:<br/>• Log raison blocage<br/>• Notification back-office<br/>• Schedule status = blocked<br/>• Alerte si bloqué >7j"]
+
+        CHECK_CONTEXT -->|"✅ OK"| SELECT_PSP["🎲 SÉLECTION PSP<br/>━━━━━━━━━━━━━━━<br/>Algorithme:<br/>1. Filtrer PSP actifs pour method<br/>2. Trier par priority ASC<br/>3. Health check (ping API)<br/>4. Fallback si unavailable<br/>5. Log PSP sélectionné"]
+    end
+
+    subgraph "LAYER 2: PSP ABSTRACTION LAYER"
+        SELECT_PSP --> ADAPTER{"🔌 PSP ADAPTER<br/>━━━━━━━━━━━━━━━<br/>Normalisation interface:<br/>• Adapter pattern<br/>• Abstraction API calls<br/>• Retry logic (3 attempts)<br/>• Timeout: 30s<br/>• Error mapping"}
+
+        ADAPTER -->|"Route SEPA<br/>Priority 1"| PSP_GC["🏦 GoCardless Adapter<br/>━━━━━━━━━━━━━━━<br/>Spécialité: SEPA DD<br/>Methods:<br/>• createCustomer()<br/>• createMandate()<br/>• createPayment()<br/>• getPaymentStatus()<br/>Rate limit: 100 req/min"]
+
+        ADAPTER -->|"Route SEPA<br/>Priority 2"| PSP_SP["🔄 Slimpay Adapter<br/>━━━━━━━━━━━━━━━<br/>Spécialité: SEPA Récurrent<br/>Methods:<br/>• setupRecurring()<br/>• signMandate()<br/>• collectPayment()<br/>Rate limit: 50 req/min"]
+
+        ADAPTER -->|"Route CB<br/>Priority 1"| PSP_MS["💳 Multisafepay Adapter<br/>━━━━━━━━━━━━━━━<br/>Spécialité: CB/SEPA Hybrid<br/>Methods:<br/>• tokenizeCard()<br/>• chargeToken()<br/>• refund()<br/>3DS2 compliant"]
+
+        ADAPTER -->|"Route CB<br/>Priority 2"| PSP_EM["🌍 Emerchantpay Adapter<br/>━━━━━━━━━━━━━━━<br/>Spécialité: International<br/>Methods:<br/>• processPayment()<br/>• fraudCheck()<br/>Rate limit: 200 req/min"]
+
+        ADAPTER -->|"Fallback<br/>All methods"| PSP_ST["⚡ Stripe Adapter<br/>━━━━━━━━━━━━━━━<br/>Backup universel<br/>Methods:<br/>• createCustomer()<br/>• createSetupIntent()<br/>• createPaymentIntent()<br/>Reliability: 99.99%"]
+    end
+
+    subgraph "LAYER 3: WORKFLOW TRANSACTIONNEL"
+        PSP_GC & PSP_SP & PSP_MS & PSP_EM & PSP_ST --> TXN_START["⚡ TRANSACTION START<br/>━━━━━━━━━━━━━━━<br/>BEGIN TRANSACTION<br/>• Isolation: SERIALIZABLE<br/>• Lock: SCHEDULE row<br/>• Générer idempotency_key<br/>  SHA256(contract+schedule+nonce)<br/>• Set status = processing"]
+
+        TXN_START --> CREATE_INTENT["📝 CREATE PAYMENT_INTENT<br/>━━━━━━━━━━━━━━━<br/>INSERT avec UPSERT:<br/>• ON CONFLICT idempotency_key<br/>  DO NOTHING RETURNING id<br/>• Montant + devise<br/>• Mandat reference<br/>• Metadata enrichie"]
+
+        CREATE_INTENT --> API_CALL["🌐 APPEL API PSP<br/>━━━━━━━━━━━━━━━<br/>HTTP Request:<br/>• POST /payments<br/>• Headers: idempotency key,<br/>  API key, signature<br/>• Body: normalized payload<br/>• Timeout: 30s<br/>• Retry: exponential backoff"]
+
+        API_CALL --> API_RESPONSE{"📨 RÉPONSE API?<br/>━━━━━━━━━━━━━━━"}
+
+        API_RESPONSE -->|"✅ 200/201<br/>Success"| COMMIT_TXN["✅ COMMIT TRANSACTION<br/>━━━━━━━━━━━━━━━<br/>Actions atomiques:<br/>• UPDATE SCHEDULE<br/>  status = pending<br/>• UPDATE PAYMENT_INTENT<br/>  psp_payment_id = XXX<br/>• INSERT PAYMENT_EVENT<br/>  type = payment_initiated<br/>• COMMIT"]
+
+        API_RESPONSE -->|"❌ 4xx/5xx<br/>Error"| HANDLE_ERROR["⚠️ ERROR HANDLER<br/>━━━━━━━━━━━━━━━<br/>Classification:<br/>• 400: Invalid request → BLOCK<br/>• 401: Auth failed → Alert ops<br/>• 429: Rate limit → Retry +60s<br/>• 500: Server error → Fallback PSP<br/>• Timeout: Retry exponential<br/>Log dans ERROR_LOG table"]
+
+        HANDLE_ERROR --> FALLBACK_DECISION{"🔀 FALLBACK?<br/>━━━━━━━━━━━━━━━<br/>Critères:<br/>• Error retryable?<br/>• Fallback PSP exists?<br/>• Circuit not open?<br/>• Max fallback < 3?"}
+
+        FALLBACK_DECISION -->|"✅ Oui"| SELECT_PSP
+        FALLBACK_DECISION -->|"❌ Non"| ROLLBACK_TXN["❌ ROLLBACK<br/>━━━━━━━━━━━━━━━<br/>Annulation complète:<br/>• ROLLBACK TRANSACTION<br/>• SCHEDULE status = failed<br/>• Notification alerte<br/>• Programmer retry +1h"]
+
+        API_RESPONSE -->|"⏳ Timeout<br/>No response"| ASYNC_CHECK["⏱️ ASYNC VERIFICATION<br/>━━━━━━━━━━━━━━━<br/>Job asynchrone:<br/>• Attendre 5 min<br/>• GET /payments/id status<br/>• Si toujours timeout:<br/>  polling toutes les 30min<br/>• Max polling: 24h<br/>• Alerte ops après 2h"]
+    end
+
+    subgraph "LAYER 4: EVENT-DRIVEN WEBHOOKS"
+        WEBHOOK_IN["📡 WEBHOOK ENDPOINT<br/>━━━━━━━━━━━━━━━<br/>/webhooks/:psp_name<br/>• IP whitelist validation<br/>• Signature verification<br/>• Rate limiting: 1000/min<br/>• Return 200 immediately<br/>• Queue for async processing"]
+
+        WEBHOOK_IN --> WEBHOOK_QUEUE["📬 MESSAGE QUEUE<br/>━━━━━━━━━━━━━━━<br/>BullMQ / RabbitMQ:<br/>• Queue: payment-events<br/>• Priority: high<br/>• Max retry: 5<br/>• DLQ: dead-letter-queue<br/>• Concurrency: 10 workers"]
+
+        WEBHOOK_QUEUE --> IDEMPOTENCY_CHECK{"🔐 IDEMPOTENCE CHECK<br/>━━━━━━━━━━━━━━━<br/>Redis cache:<br/>• Key: psp_event_id<br/>• TTL: 7 days<br/>• Atomic SETNX<br/>Déjà traité?"}
+
+        IDEMPOTENCY_CHECK -->|"✅ Nouveau"| NORMALIZE["🔄 NORMALISATION<br/>━━━━━━━━━━━━━━━<br/>Mapping événement:<br/>• GoCardless: payment.confirmed<br/>  → payment_confirmed<br/>• Slimpay: payment.executed<br/>  → payment_confirmed<br/>• Extraction montant réel<br/>• Date effective paiement<br/>• Raison échec si failed"]
+
+        IDEMPOTENCY_CHECK -->|"❌ Déjà traité"| IGNORE["✋ IGNORE EVENT<br/>━━━━━━━━━━━━━━━<br/>Actions:<br/>• Log duplication<br/>• Increment metric<br/>• ACK message queue<br/>• Return success"]
+
+        NORMALIZE --> EVENT_TYPE{"🎭 TYPE ÉVÉNEMENT?<br/>━━━━━━━━━━━━━━━"}
+
+        EVENT_TYPE -->|"payment_confirmed"| CONFIRMED_FLOW["🎉 FLUX CONFIRMÉ<br/>━━━━━━━━━━━━━━━<br/>BEGIN TRANSACTION<br/>1. INSERT PAYMENT_EVENT<br/>2. UPDATE SCHEDULE<br/>   status=paid, paid_at=NOW<br/>3. UPDATE INVOICE<br/>   status=paid, paid_at=NOW<br/>4. INSERT LEDGER_ENTRY<br/>   Débit 512000: +amount<br/>   Crédit 411000: -amount<br/>5. Mark retry_count = 0<br/>6. Cancel scheduled retries<br/>7. Email confirmation<br/>COMMIT"]
+
+        EVENT_TYPE -->|"payment_failed"| FAILED_FLOW["⚠️ FLUX ÉCHEC<br/>━━━━━━━━━━━━━━━<br/>BEGIN TRANSACTION<br/>1. INSERT PAYMENT_EVENT<br/>   + failure_reason<br/>2. UPDATE SCHEDULE<br/>   status=failed<br/>   retry_count++<br/>   last_failure_at=NOW<br/>3. Classify error:<br/>   • insufficient_funds<br/>   • invalid_iban<br/>   • account_closed<br/>   • mandate_revoked<br/>4. COMMIT<br/>5. Trigger DUNNING"]
+
+        EVENT_TYPE -->|"mandate_cancelled"| CANCELLED_FLOW["🚫 FLUX ANNULATION<br/>━━━━━━━━━━━━━━━<br/>BEGIN TRANSACTION<br/>1. INSERT PAYMENT_EVENT<br/>2. UPDATE MANDATE<br/>   status=cancelled<br/>   cancelled_at=NOW<br/>3. UPDATE all future SCHEDULE<br/>   status=cancelled<br/>4. Cancel all pending retries<br/>5. COMMIT<br/>6. Notification back-office<br/>7. Email client confirmation"]
+
+        EVENT_TYPE -->|"payment_pending"| PENDING_FLOW["⏳ FLUX ATTENTE<br/>━━━━━━━━━━━━━━━<br/>Actions limitées:<br/>• INSERT PAYMENT_EVENT<br/>• UPDATE status = processing<br/>• Pas de changement INVOICE<br/>• Set timeout alert: +5 jours<br/>• Normal pour SEPA (1-5j)"]
+    end
+
+    subgraph "LAYER 5: DUNNING ENGINE"
+        FAILED_FLOW --> DUNNING_ENGINE["⚙️ DUNNING ENGINE<br/>━━━━━━━━━━━━━━━<br/>Analyse contextuelle:<br/>• Load historique client<br/>• Calcul scoring risque<br/>• Load config frais par produit<br/>• Vérification seuils suspension"]
+
+        DUNNING_ENGINE --> CALCULATE_FEES["💰 CALCUL FRAIS<br/>━━━━━━━━━━━━━━━<br/>Table REJECTION_FEES_CONFIG:<br/>SELECT fee WHERE<br/>  company_id = X<br/>  AND product_id = Y<br/><br/>Apply fees:<br/>• Create INVOICE_LINE<br/>  type=rejection_fee<br/>  amount=10€ or 15€<br/>• Link to next invoice"]
+
+        CALCULATE_FEES --> RETRY_STRATEGY{"🎯 STRATÉGIE RETRY?<br/>━━━━━━━━━━━━━━━<br/>Decision tree:<br/>retry_count value?"}
+
+        RETRY_STRATEGY -->|"0 → 1<br/>First fail"| RETRY_1["📧 LEVEL 1 DUNNING<br/>━━━━━━━━━━━━━━━<br/>J0 Actions:<br/>• Send email template 1<br/>  Subject: Échec prélèvement<br/>  Tone: informatif<br/>• Send SMS template 1<br/>  Urgent: régularisez<br/>• Create DUNNING_ACTION log<br/>• Schedule retry: NOW + 3 days<br/>  via Job Queue<br/>• Metric: dunning_level_1++"]
+
+        RETRY_STRATEGY -->|"1 → 2<br/>Second fail"| RETRY_2["🚨 LEVEL 2 DUNNING<br/>━━━━━━━━━━━━━━━<br/>J0 Actions:<br/>• Send email template 2<br/>  Subject: URGENT suspension<br/>  Tone: ferme<br/>• Send SMS template 2<br/>  Dernière chance<br/>• Create DUNNING_ACTION log<br/>• Schedule retry: NOW + 7 days<br/>• TRIGGER SUSPENSION workflow<br/>• Metric: dunning_level_2++"]
+
+        RETRY_STRATEGY -->|"2 → 3+<br/>Third+ fail"| RETRY_3["🔴 UNPAID STATUS<br/>━━━━━━━━━━━━━━━<br/>Statut définitif:<br/>• UPDATE SCHEDULE<br/>  status = unpaid<br/>• UPDATE INVOICE<br/>  status = dunning<br/>• Flag CLIENT<br/>  payment_risk = high<br/>• Stop all auto retries<br/>• Export to collection team<br/>• Possible legal action<br/>• Metric: unpaid_count++"]
+
+        RETRY_2 --> SUSPEND_SERVICES["🔌 SUSPENSION ENGINE<br/>━━━━━━━━━━━━━━━<br/>Workflow parallèle:<br/>• Load SERVICE_LINK<br/>  WHERE contract_id<br/>• For each provider:<br/>  - Call API suspend<br/>  - Log response<br/>  - Update status<br/>• Aggregate results<br/>• Email notification"]
+
+        SUSPEND_SERVICES --> API_MTV["📱 MTV API<br/>━━━━━━━━━━━━━━━<br/>POST /sims/:id/suspend<br/>Circuit breaker: ON<br/>Retry: 3x<br/>Fallback: manual task"]
+
+        SUSPEND_SERVICES --> API_REDUC["📶 ReducBox API<br/>━━━━━━━━━━━━━━━<br/>POST /boxes/:id/suspend<br/>Circuit breaker: ON<br/>Retry: 3x<br/>Fallback: manual task"]
+
+        SUSPEND_SERVICES --> API_TRANS["🌐 Transatel API<br/>━━━━━━━━━━━━━━━<br/>POST /accounts/:id/suspend<br/>Circuit breaker: ON<br/>Retry: 3x<br/>Fallback: manual task"]
+
+        API_MTV & API_REDUC & API_TRANS --> UPDATE_SERVICE_LINK["🔗 UPDATE SERVICE_LINK<br/>━━━━━━━━━━━━━━━<br/>BEGIN TRANSACTION<br/>UPDATE SERVICE_LINK SET<br/>  status = suspended,<br/>  suspended_at = NOW(),<br/>  suspension_reason = payment_failure,<br/>  suspension_metadata = JSON<br/>COMMIT"]
+
+        RETRY_1 --> SCHEDULE_RETRY["⏰ SCHEDULE RETRY JOB<br/>━━━━━━━━━━━━━━━<br/>BullMQ delayed job:<br/>• Name: retry-payment<br/>• Delay: 3 days (retry 1)<br/>        or 7 days (retry 2)<br/>• Payload: schedule_id<br/>• Priority: high<br/>• Job triggers START"]
+    end
+
+    subgraph "LAYER 6: JOB SCHEDULER"
+        CRON["⏰ CRON SCHEDULER<br/>━━━━━━━━━━━━━━━<br/>Jobs quotidiens:<br/>1. Check J+14 contracts<br/>   → Trigger payment<br/>2. Process scheduled retries<br/>3. Check pending > 5 days<br/>   → Alert ops<br/>4. Health check PSPs<br/>5. Generate daily reports"]
+
+        CRON --> QUERY_SCHEDULES["🔍 QUERY SCHEDULES<br/>━━━━━━━━━━━━━━━<br/>SQL:<br/>SELECT * FROM schedule<br/>WHERE status = planned<br/>  AND due_date <= TODAY<br/>  AND contract.status = active<br/>  AND contract.created_at <= TODAY - 14<br/>  AND contract.cq_validated = true"]
+
+        QUERY_SCHEDULES --> BATCH_PROCESS["📦 BATCH PROCESSING<br/>━━━━━━━━━━━━━━━<br/>Pour chaque schedule:<br/>• Queue job payment<br/>• Rate limit: 100/sec<br/>• Spread over 1 hour<br/>• Monitor errors<br/>• Log processed IDs"]
+
+        BATCH_PROCESS --> START
+        SCHEDULE_RETRY --> START
+    end
+
+    subgraph "LAYER 7: RECONCILIATION"
+        BANK_IMPORT["🏦 IMPORT BANCAIRE<br/>━━━━━━━━━━━━━━━<br/>Sources:<br/>• API bancaire (PSD2)<br/>• Import CFONB/SEPA XML<br/>• Upload CSV manuel<br/>Parse transactions:<br/>• Date valeur<br/>• Montant<br/>• Libellé<br/>• Reference PSP"]
+
+        BANK_IMPORT --> MATCHING["🔍 MATCHING ENGINE<br/>━━━━━━━━━━━━━━━<br/>Algorithme:<br/>1. Match exact sur reference<br/>2. Match montant + date ±3j<br/>3. Fuzzy match libellé<br/>4. Machine learning scoring<br/>Confidence: 0-100%"]
+
+        MATCHING --> RECONCILED{"✅ MATCHED?<br/>━━━━━━━━━━━━━━━<br/>Confidence > 95%?"}
+
+        RECONCILED -->|"✅ Oui"| AUTO_RECONCILE["✅ AUTO RECONCILIATION<br/>━━━━━━━━━━━━━━━<br/>UPDATE PAYMENT_INTENT<br/>  bank_reconciled = true<br/>  bank_transaction_id = X<br/>  reconciled_at = NOW<br/>Metric: reconciliation_rate++"]
+
+        RECONCILED -->|"❌ Non"| MANUAL_REVIEW["👤 REVIEW MANUELLE<br/>━━━━━━━━━━━━━━━<br/>Queue pour back-office:<br/>• Dashboard suspect trans<br/>• Propose matches<br/>• Allow manual linking<br/>• Detect fraude potentielle"]
+
+        CONFIRMED_FLOW --> BANK_IMPORT
+    end
+
+    subgraph "LAYER 8: OBSERVABILITY"
+        METRICS["📊 METRICS & MONITORING<br/>━━━━━━━━━━━━━━━<br/>Prometheus metrics:<br/>• payment_success_rate<br/>• payment_latency_p95<br/>• psp_availability<br/>• dunning_efficiency<br/>• reconciliation_rate<br/>Dashboards Grafana"]
+
+        ALERTS["🚨 ALERTING<br/>━━━━━━━━━━━━━━━<br/>PagerDuty / Slack:<br/>• PSP down > 5min<br/>• Success rate < 90%<br/>• Pending > 1000<br/>• Unreconciled > 100<br/>• Webhook lag > 1h"]
+
+        AUDIT_LOG["📜 AUDIT LOG<br/>━━━━━━━━━━━━━━━<br/>Immutable log:<br/>• Toutes mutations DB<br/>• API calls PSP<br/>• Webhook events<br/>• Manual actions<br/>Retention: 7 ans"]
+    end
+
+    COMMIT_TXN --> METRICS
+    CONFIRMED_FLOW --> METRICS
+    FAILED_FLOW --> METRICS
+    HANDLE_ERROR --> ALERTS
+    ASYNC_CHECK --> ALERTS
+    CONFIRMED_FLOW --> AUDIT_LOG
+    FAILED_FLOW --> AUDIT_LOG
+
+    style START fill:#e3f2fd
+    style ROUTER fill:#fff9c4
+    style COMMIT_TXN fill:#c8e6c9
+    style CONFIRMED_FLOW fill:#4caf50,color:#fff
+    style FAILED_FLOW fill:#f44336,color:#fff
+    style RETRY_2 fill:#ff9800,color:#fff
+    style RETRY_3 fill:#9c27b0,color:#fff
+    style SUSPEND_SERVICES fill:#ff5722,color:#fff
+    style METRICS fill:#2196f3,color:#fff
+    style ALERTS fill:#f44336,color:#fff

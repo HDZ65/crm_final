@@ -1,0 +1,340 @@
+syntax = "proto3";
+
+package email;
+
+// ============================================
+// EMAIL MICROSERVICE - gRPC Service Definition
+// ============================================
+
+// Main Email Service
+service EmailService {
+  // ===== Mailbox Management =====
+  rpc CreateMailbox(CreateMailboxRequest) returns (MailboxResponse);
+  rpc GetMailbox(GetMailboxRequest) returns (MailboxResponse);
+  rpc GetMailboxesByOrganisation(GetMailboxesByOrganisationRequest) returns (MailboxListResponse);
+  rpc GetMailboxesBySociete(GetMailboxesBySocieteRequest) returns (MailboxListResponse);
+  rpc UpdateMailbox(UpdateMailboxRequest) returns (MailboxResponse);
+  rpc DeleteMailbox(DeleteMailboxRequest) returns (DeleteResponse);
+
+  // ===== OAuth2 Authentication =====
+  rpc GetGoogleAuthUrl(GetAuthUrlRequest) returns (AuthUrlResponse);
+  rpc ExchangeGoogleCode(ExchangeCodeRequest) returns (TokenResponse);
+  rpc RefreshGoogleToken(RefreshTokenRequest) returns (TokenResponse);
+  rpc RevokeGoogleToken(RevokeTokenRequest) returns (OperationResponse);
+
+  rpc GetMicrosoftAuthUrl(GetAuthUrlRequest) returns (AuthUrlResponse);
+  rpc ExchangeMicrosoftCode(ExchangeCodeRequest) returns (TokenResponse);
+  rpc RefreshMicrosoftToken(RefreshTokenRequest) returns (TokenResponse);
+  rpc RevokeMicrosoftToken(RevokeTokenRequest) returns (OperationResponse);
+
+  // ===== Email Operations =====
+  rpc SendEmail(SendEmailRequest) returns (SendEmailResponse);
+  rpc SendEmailWithTemplate(SendEmailWithTemplateRequest) returns (SendEmailResponse);
+  rpc GetEmails(GetEmailsRequest) returns (EmailListResponse);
+  rpc GetEmail(GetEmailRequest) returns (EmailResponse);
+
+  // ===== User Info =====
+  rpc GetGoogleUserInfo(GetUserInfoRequest) returns (UserInfoResponse);
+  rpc GetMicrosoftUserInfo(GetUserInfoRequest) returns (UserInfoResponse);
+
+  // ===== Connection Test =====
+  rpc TestMailboxConnection(TestConnectionRequest) returns (TestConnectionResponse);
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum MailProvider {
+  MAIL_PROVIDER_UNSPECIFIED = 0;
+  MAIL_PROVIDER_GMAIL = 1;
+  MAIL_PROVIDER_OUTLOOK = 2;
+  MAIL_PROVIDER_EXCHANGE = 3;
+  MAIL_PROVIDER_SMTP = 4;
+  MAIL_PROVIDER_OTHER = 5;
+}
+
+enum ConnectionType {
+  CONNECTION_TYPE_UNSPECIFIED = 0;
+  CONNECTION_TYPE_OAUTH2 = 1;
+  CONNECTION_TYPE_SMTP_IMAP = 2;
+}
+
+// ============================================
+// COMMON MESSAGES
+// ============================================
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message OperationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ============================================
+// MAILBOX MESSAGES
+// ============================================
+
+message Mailbox {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  string user_id = 4;
+  string nom = 5;
+  string adresse_email = 6;
+  MailProvider fournisseur = 7;
+  ConnectionType type_connexion = 8;
+
+  // SMTP/IMAP settings (for non-OAuth connections)
+  optional string smtp_host = 9;
+  optional int32 smtp_port = 10;
+  optional string imap_host = 11;
+  optional int32 imap_port = 12;
+  optional string username = 13;
+
+  // OAuth2 tokens (encrypted)
+  optional string access_token = 14;
+  optional string refresh_token = 15;
+  optional string token_expiry = 16;
+
+  // Additional settings
+  optional string signature = 17;
+  bool is_default = 18;
+  bool is_active = 19;
+
+  string created_at = 20;
+  string updated_at = 21;
+}
+
+message CreateMailboxRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  string user_id = 3;
+  string nom = 4;
+  string adresse_email = 5;
+  MailProvider fournisseur = 6;
+  ConnectionType type_connexion = 7;
+
+  // SMTP/IMAP settings
+  optional string smtp_host = 8;
+  optional int32 smtp_port = 9;
+  optional string imap_host = 10;
+  optional int32 imap_port = 11;
+  optional string username = 12;
+  optional string password = 13;
+
+  // OAuth2 tokens
+  optional string access_token = 14;
+  optional string refresh_token = 15;
+  optional string token_expiry = 16;
+
+  optional string signature = 17;
+  bool is_default = 18;
+}
+
+message GetMailboxRequest {
+  string id = 1;
+}
+
+message GetMailboxesByOrganisationRequest {
+  string organisation_id = 1;
+  optional int32 limit = 2;
+  optional int32 offset = 3;
+}
+
+message GetMailboxesBySocieteRequest {
+  string societe_id = 1;
+  optional int32 limit = 2;
+  optional int32 offset = 3;
+}
+
+message UpdateMailboxRequest {
+  string id = 1;
+  optional string nom = 2;
+  optional string adresse_email = 3;
+  optional MailProvider fournisseur = 4;
+  optional ConnectionType type_connexion = 5;
+
+  optional string smtp_host = 6;
+  optional int32 smtp_port = 7;
+  optional string imap_host = 8;
+  optional int32 imap_port = 9;
+  optional string username = 10;
+  optional string password = 11;
+
+  optional string access_token = 12;
+  optional string refresh_token = 13;
+  optional string token_expiry = 14;
+
+  optional string signature = 15;
+  optional bool is_default = 16;
+  optional bool is_active = 17;
+}
+
+message DeleteMailboxRequest {
+  string id = 1;
+}
+
+message MailboxResponse {
+  Mailbox mailbox = 1;
+}
+
+message MailboxListResponse {
+  repeated Mailbox mailboxes = 1;
+  int32 total = 2;
+}
+
+// ============================================
+// OAUTH2 MESSAGES
+// ============================================
+
+message GetAuthUrlRequest {
+  string redirect_uri = 1;
+  optional string state = 2;
+  repeated string scopes = 3;
+}
+
+message AuthUrlResponse {
+  string authorization_url = 1;
+  string state = 2;
+}
+
+message ExchangeCodeRequest {
+  string code = 1;
+  string redirect_uri = 2;
+}
+
+message TokenResponse {
+  string access_token = 1;
+  optional string refresh_token = 2;
+  int64 expires_in = 3;
+  string token_type = 4;
+  optional string id_token = 5;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+  string mailbox_id = 2;
+}
+
+message RevokeTokenRequest {
+  string access_token = 1;
+  string mailbox_id = 2;
+}
+
+message GetUserInfoRequest {
+  string access_token = 1;
+}
+
+message UserInfoResponse {
+  string email = 1;
+  string name = 2;
+  optional string picture = 3;
+  optional string locale = 4;
+}
+
+// ============================================
+// EMAIL MESSAGES
+// ============================================
+
+message EmailAttachment {
+  string filename = 1;
+  string content_type = 2;
+  bytes content = 3;
+  optional string content_id = 4;
+}
+
+message EmailRecipient {
+  string email = 1;
+  optional string name = 2;
+}
+
+message SendEmailRequest {
+  string mailbox_id = 1;
+  repeated EmailRecipient to = 2;
+  repeated EmailRecipient cc = 3;
+  repeated EmailRecipient bcc = 4;
+  string subject = 5;
+  optional string text_body = 6;
+  optional string html_body = 7;
+  repeated EmailAttachment attachments = 8;
+  optional string reply_to = 9;
+  map<string, string> headers = 10;
+}
+
+message SendEmailWithTemplateRequest {
+  string mailbox_id = 1;
+  repeated EmailRecipient to = 2;
+  repeated EmailRecipient cc = 3;
+  repeated EmailRecipient bcc = 4;
+  string template_id = 5;
+  map<string, string> template_variables = 6;
+  repeated EmailAttachment attachments = 7;
+}
+
+message SendEmailResponse {
+  bool success = 1;
+  string message_id = 2;
+  optional string error = 3;
+}
+
+message GetEmailsRequest {
+  string mailbox_id = 1;
+  optional string folder = 2;
+  optional int32 limit = 3;
+  optional int32 offset = 4;
+  optional string search_query = 5;
+}
+
+message GetEmailRequest {
+  string mailbox_id = 1;
+  string email_id = 2;
+}
+
+message Email {
+  string id = 1;
+  string mailbox_id = 2;
+  string message_id = 3;
+  string subject = 4;
+  EmailRecipient from = 5;
+  repeated EmailRecipient to = 6;
+  repeated EmailRecipient cc = 7;
+  optional string text_body = 8;
+  optional string html_body = 9;
+  repeated EmailAttachment attachments = 10;
+  string folder = 11;
+  bool is_read = 12;
+  bool is_starred = 13;
+  string received_at = 14;
+}
+
+message EmailResponse {
+  Email email = 1;
+}
+
+message EmailListResponse {
+  repeated Email emails = 1;
+  int32 total = 2;
+}
+
+// ============================================
+// CONNECTION TEST
+// ============================================
+
+message TestConnectionRequest {
+  string mailbox_id = 1;
+}
+
+message TestConnectionResponse {
+  bool success = 1;
+  string message = 2;
+  optional string error_details = 3;
+}

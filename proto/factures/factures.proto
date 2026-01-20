@@ -1,0 +1,462 @@
+syntax = "proto3";
+
+package factures;
+
+// ===== COMMON =====
+
+message Empty {}
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+// ===== STATUT FACTURE =====
+
+message StatutFacture {
+  string id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+  int32 ordre_affichage = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CreateStatutFactureRequest {
+  string code = 1;
+  string nom = 2;
+  string description = 3;
+  int32 ordre_affichage = 4;
+}
+
+message UpdateStatutFactureRequest {
+  string id = 1;
+  optional string code = 2;
+  optional string nom = 3;
+  optional string description = 4;
+  optional int32 ordre_affichage = 5;
+}
+
+message GetStatutFactureRequest {
+  string id = 1;
+}
+
+message GetStatutFactureByCodeRequest {
+  string code = 1;
+}
+
+message ListStatutsFactureRequest {
+  PaginationRequest pagination = 1;
+}
+
+message ListStatutsFactureResponse {
+  repeated StatutFacture statuts = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteStatutFactureRequest {
+  string id = 1;
+}
+
+message DeleteStatutFactureResponse {
+  bool success = 1;
+}
+
+// ===== EMISSION FACTURE =====
+
+message EmissionFacture {
+  string id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message CreateEmissionFactureRequest {
+  string code = 1;
+  string nom = 2;
+  string description = 3;
+}
+
+message UpdateEmissionFactureRequest {
+  string id = 1;
+  optional string code = 2;
+  optional string nom = 3;
+  optional string description = 4;
+}
+
+message GetEmissionFactureRequest {
+  string id = 1;
+}
+
+message ListEmissionsFactureRequest {
+  PaginationRequest pagination = 1;
+}
+
+message ListEmissionsFactureResponse {
+  repeated EmissionFacture emissions = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteEmissionFactureRequest {
+  string id = 1;
+}
+
+message DeleteEmissionFactureResponse {
+  bool success = 1;
+}
+
+// ===== LIGNE FACTURE =====
+
+message LigneFacture {
+  string id = 1;
+  string facture_id = 2;
+  string produit_id = 3;
+  int32 quantite = 4;
+  double prix_unitaire = 5;
+  string description = 6;
+  double montant_ht = 7;
+  double taux_tva = 8;
+  double montant_tva = 9;
+  double montant_ttc = 10;
+  int32 ordre_affichage = 11;
+  string created_at = 12;
+  string updated_at = 13;
+}
+
+message CreateLigneFactureRequest {
+  string facture_id = 1;
+  string produit_id = 2;
+  int32 quantite = 3;
+  double prix_unitaire = 4;
+  string description = 5;
+  double taux_tva = 6;
+  int32 ordre_affichage = 7;
+}
+
+message UpdateLigneFactureRequest {
+  string id = 1;
+  optional string produit_id = 2;
+  optional int32 quantite = 3;
+  optional double prix_unitaire = 4;
+  optional string description = 5;
+  optional double taux_tva = 6;
+  optional int32 ordre_affichage = 7;
+}
+
+message GetLigneFactureRequest {
+  string id = 1;
+}
+
+message ListLignesFactureRequest {
+  string facture_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListLignesFactureResponse {
+  repeated LigneFacture lignes = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteLigneFactureRequest {
+  string id = 1;
+}
+
+message DeleteLigneFactureResponse {
+  bool success = 1;
+}
+
+// ===== FACTURE =====
+
+message ClientInfo {
+  string id = 1;
+  string nom = 2;
+  string prenom = 3;
+}
+
+message Facture {
+  string id = 1;
+  string organisation_id = 2;
+  string numero = 3;
+  string date_emission = 4;
+  double montant_ht = 5;
+  double montant_ttc = 6;
+  string statut_id = 7;
+  string emission_facture_id = 8;
+  string client_base_id = 9;
+  string contrat_id = 10;
+  string client_partenaire_id = 11;
+  string adresse_facturation_id = 12;
+  string created_at = 13;
+  string updated_at = 14;
+  // Relations
+  StatutFacture statut = 15;
+  ClientInfo client = 16;
+  repeated LigneFacture lignes = 17;
+}
+
+message CreateFactureRequest {
+  string organisation_id = 1;
+  string date_emission = 2;
+  string statut_id = 3;
+  string emission_facture_id = 4;
+  string client_base_id = 5;
+  string contrat_id = 6;
+  string client_partenaire_id = 7;
+  string adresse_facturation_id = 8;
+  repeated CreateLigneFactureItem lignes = 9;
+}
+
+message CreateLigneFactureItem {
+  string produit_id = 1;
+  int32 quantite = 2;
+  double prix_unitaire = 3;
+  string description = 4;
+  double taux_tva = 5;
+}
+
+message UpdateFactureRequest {
+  string id = 1;
+  optional string date_emission = 2;
+  optional string statut_id = 3;
+  optional string emission_facture_id = 4;
+  optional string adresse_facturation_id = 5;
+}
+
+message GetFactureRequest {
+  string id = 1;
+}
+
+message GetFactureByNumeroRequest {
+  string organisation_id = 1;
+  string numero = 2;
+}
+
+message ListFacturesRequest {
+  string organisation_id = 1;
+  optional string client_base_id = 2;
+  optional string contrat_id = 3;
+  optional string statut_id = 4;
+  optional string date_from = 5;
+  optional string date_to = 6;
+  PaginationRequest pagination = 7;
+}
+
+message ListFacturesResponse {
+  repeated Facture factures = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteFactureRequest {
+  string id = 1;
+}
+
+message DeleteFactureResponse {
+  bool success = 1;
+}
+
+// Validation/Finalization
+message ValidateFactureRequest {
+  string id = 1;
+}
+
+message ValidateFactureResponse {
+  bool valid = 1;
+  repeated string errors = 2;
+  Facture facture = 3;
+}
+
+message FinalizeFactureRequest {
+  string id = 1;
+}
+
+// ===== FACTURE SETTINGS =====
+
+message FactureSettings {
+  string id = 1;
+  string societe_id = 2;
+  string logo_base64 = 3;
+  string logo_mime_type = 4;
+  string primary_color = 5;
+  string secondary_color = 6;
+  string company_name = 7;
+  string company_address = 8;
+  string company_phone = 9;
+  string company_email = 10;
+  string company_siret = 11;
+  string company_tva_number = 12;
+  string company_rcs = 13;
+  string company_capital = 14;
+  string iban = 15;
+  string bic = 16;
+  string bank_name = 17;
+  string header_text = 18;
+  string footer_text = 19;
+  string legal_mentions = 20;
+  string payment_terms = 21;
+  string invoice_prefix = 22;
+  bool show_logo = 23;
+  string logo_position = 24;
+  string created_at = 25;
+  string updated_at = 26;
+}
+
+message CreateFactureSettingsRequest {
+  string societe_id = 1;
+  string primary_color = 2;
+  string secondary_color = 3;
+  string company_name = 4;
+  string company_address = 5;
+  string company_phone = 6;
+  string company_email = 7;
+  string company_siret = 8;
+  string company_tva_number = 9;
+  string company_rcs = 10;
+  string company_capital = 11;
+  string iban = 12;
+  string bic = 13;
+  string bank_name = 14;
+  string header_text = 15;
+  string footer_text = 16;
+  string legal_mentions = 17;
+  string payment_terms = 18;
+  string invoice_prefix = 19;
+  bool show_logo = 20;
+  string logo_position = 21;
+}
+
+message UpdateFactureSettingsRequest {
+  string id = 1;
+  optional string primary_color = 2;
+  optional string secondary_color = 3;
+  optional string company_name = 4;
+  optional string company_address = 5;
+  optional string company_phone = 6;
+  optional string company_email = 7;
+  optional string company_siret = 8;
+  optional string company_tva_number = 9;
+  optional string company_rcs = 10;
+  optional string company_capital = 11;
+  optional string iban = 12;
+  optional string bic = 13;
+  optional string bank_name = 14;
+  optional string header_text = 15;
+  optional string footer_text = 16;
+  optional string legal_mentions = 17;
+  optional string payment_terms = 18;
+  optional string invoice_prefix = 19;
+  optional bool show_logo = 20;
+  optional string logo_position = 21;
+}
+
+message UploadLogoRequest {
+  string settings_id = 1;
+  string logo_base64 = 2;
+  string logo_mime_type = 3;
+}
+
+message GetFactureSettingsRequest {
+  string id = 1;
+}
+
+message GetFactureSettingsBySocieteRequest {
+  string societe_id = 1;
+}
+
+message DeleteFactureSettingsRequest {
+  string id = 1;
+}
+
+message DeleteFactureSettingsResponse {
+  bool success = 1;
+}
+
+// ===== GENERATION =====
+
+message GenerateNextNumeroRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+}
+
+message GenerateNextNumeroResponse {
+  string numero = 1;
+}
+
+message CalculateTotalsRequest {
+  repeated CalculateTotalsLine lignes = 1;
+}
+
+message CalculateTotalsLine {
+  int32 quantite = 1;
+  double prix_unitaire = 2;
+  double taux_tva = 3;
+}
+
+message CalculateTotalsResponse {
+  double montant_ht = 1;
+  double montant_tva = 2;
+  double montant_ttc = 3;
+}
+
+// ===== SERVICES =====
+
+service StatutFactureService {
+  rpc Create(CreateStatutFactureRequest) returns (StatutFacture);
+  rpc Update(UpdateStatutFactureRequest) returns (StatutFacture);
+  rpc Get(GetStatutFactureRequest) returns (StatutFacture);
+  rpc GetByCode(GetStatutFactureByCodeRequest) returns (StatutFacture);
+  rpc List(ListStatutsFactureRequest) returns (ListStatutsFactureResponse);
+  rpc Delete(DeleteStatutFactureRequest) returns (DeleteStatutFactureResponse);
+}
+
+service EmissionFactureService {
+  rpc Create(CreateEmissionFactureRequest) returns (EmissionFacture);
+  rpc Update(UpdateEmissionFactureRequest) returns (EmissionFacture);
+  rpc Get(GetEmissionFactureRequest) returns (EmissionFacture);
+  rpc List(ListEmissionsFactureRequest) returns (ListEmissionsFactureResponse);
+  rpc Delete(DeleteEmissionFactureRequest) returns (DeleteEmissionFactureResponse);
+}
+
+service LigneFactureService {
+  rpc Create(CreateLigneFactureRequest) returns (LigneFacture);
+  rpc Update(UpdateLigneFactureRequest) returns (LigneFacture);
+  rpc Get(GetLigneFactureRequest) returns (LigneFacture);
+  rpc List(ListLignesFactureRequest) returns (ListLignesFactureResponse);
+  rpc Delete(DeleteLigneFactureRequest) returns (DeleteLigneFactureResponse);
+}
+
+service FactureService {
+  rpc Create(CreateFactureRequest) returns (Facture);
+  rpc Update(UpdateFactureRequest) returns (Facture);
+  rpc Get(GetFactureRequest) returns (Facture);
+  rpc GetByNumero(GetFactureByNumeroRequest) returns (Facture);
+  rpc List(ListFacturesRequest) returns (ListFacturesResponse);
+  rpc Delete(DeleteFactureRequest) returns (DeleteFactureResponse);
+  rpc Validate(ValidateFactureRequest) returns (ValidateFactureResponse);
+  rpc Finalize(FinalizeFactureRequest) returns (Facture);
+}
+
+service FactureSettingsService {
+  rpc Create(CreateFactureSettingsRequest) returns (FactureSettings);
+  rpc Update(UpdateFactureSettingsRequest) returns (FactureSettings);
+  rpc Get(GetFactureSettingsRequest) returns (FactureSettings);
+  rpc GetBySociete(GetFactureSettingsBySocieteRequest) returns (FactureSettings);
+  rpc Delete(DeleteFactureSettingsRequest) returns (DeleteFactureSettingsResponse);
+  rpc UploadLogo(UploadLogoRequest) returns (FactureSettings);
+}
+
+service FactureGenerationService {
+  rpc GenerateNextNumero(GenerateNextNumeroRequest) returns (GenerateNextNumeroResponse);
+  rpc CalculateTotals(CalculateTotalsRequest) returns (CalculateTotalsResponse);
+}

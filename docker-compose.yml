@@ -1,0 +1,512 @@
+# CRM Final - Full Stack Docker Compose
+# Launch everything with: docker-compose up -d
+# Or use: make up
+
+services:
+  # ============================================
+  # PROTO CODE GENERATION (Buf)
+  # ============================================
+
+  proto-generator:
+    build:
+      context: ./proto
+      dockerfile: Dockerfile
+    container_name: crm-proto-generator
+    volumes:
+      - ./proto:/proto:ro
+      - ./frontend/src/gen:/output/frontend
+      - ./generated/proto:/output/services
+    command: sh /proto/docker-entrypoint.sh
+    networks:
+      - crm-network
+
+  # ============================================
+  # DATABASES
+  # ============================================
+
+  postgres-main:
+    image: postgres:18-alpine
+    container_name: crm-postgres-main
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crm_main
+    ports:
+      - "6432:5432"
+    volumes:
+      - postgres_main_data:/var/lib/postgresql/data
+      - ./backend/init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+
+  # ============================================
+  # BACKEND (NestJS HTTP API)
+  # ============================================
+
+  # ============================================
+  # BACKEND (Optional - Currently Disabled)
+  # ============================================
+  # Uncomment if you need a REST API gateway
+  #
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: crm-backend
+  #   ports:
+  #     - "4000:4000"
+  #   environment:
+  #     NODE_ENV: development
+  #     PORT: 4000
+  #   depends_on:
+  #     proto-generator:
+  #       condition: service_started
+  #     postgres-main:
+  #       condition: service_healthy
+  #   networks:
+  #     - crm-network
+  #   volumes:
+  #     - ./backend:/app
+  #     - /app/node_modules
+  #     - ./proto:/app/proto:ro
+
+  # ============================================
+  # FRONTEND (Next.js)
+  # ============================================
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: crm-frontend
+    ports:
+      - "3002:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_BACKEND_API_URL: http://localhost:8000
+      # Keycloak
+      KEYCLOAK_ISSUER: https://finanssorssoapi.com/realms/master
+      KEYCLOAK_ID: module-rh
+      KEYCLOAK_SECRET: Dmrf6tVFp0Aa8eUBlAWByKzwQLaCmdW9
+      KEYCLOAK_REALM: master
+      # NextAuth
+      NEXTAUTH_SECRET: crm-finanssor-secret-key-2026-production
+      NEXTAUTH_URL: http://localhost:3000
+      # gRPC URLs for Server Components (using correct Docker service names)
+      GRPC_ACTIVITES_URL: crm-service-activites:60051
+      GRPC_CLIENTS_URL: crm-service-clients:60052
+      GRPC_COMMERCIAUX_URL: crm-service-commerciaux:60053
+      GRPC_COMMISSION_URL: crm-service-commission:60054
+      GRPC_CONTRATS_URL: crm-service-contrats:60055
+      GRPC_DASHBOARD_URL: crm-service-dashboard:60056
+      GRPC_DOCUMENTS_URL: crm-service-documents:60057
+      GRPC_EMAIL_URL: crm-service-email:60058
+      GRPC_FACTURES_URL: crm-service-factures:60059
+      GRPC_LOGISTICS_URL: crm-service-logistics:60060
+      GRPC_NOTIFICATIONS_URL: crm-service-notifications:60061
+      GRPC_ORGANISATIONS_URL: crm-service-organisations:60062
+      GRPC_PAYMENTS_URL: crm-service-payments:60063
+      GRPC_PRODUCTS_URL: crm-service-products:60064
+      GRPC_REFERENTIEL_URL: crm-service-referentiel:60065
+      GRPC_RELANCE_URL: crm-service-relance:60066
+      GRPC_USERS_URL: crm-service-users:60067
+    depends_on:
+      proto-generator:
+        condition: service_started
+    networks:
+      - crm-network
+    # Note: No volumes for production build (standalone mode)
+
+  # ============================================
+  # MICROSERVICES
+  # ============================================
+
+  service-activites:
+    build:
+      context: .
+      dockerfile: services/service-activites/Dockerfile
+    container_name: crm-service-activites
+    ports:
+      - "60051:60051"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60051
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: activites_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-clients:
+    build:
+      context: .
+      dockerfile: services/service-clients/Dockerfile
+    container_name: crm-service-clients
+    ports:
+      - "60052:60052"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60052
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: clients_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-commerciaux:
+    build:
+      context: .
+      dockerfile: services/service-commerciaux/Dockerfile
+    container_name: crm-service-commerciaux
+    ports:
+      - "60053:60053"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60053
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: commerciaux_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-commission:
+    build:
+      context: .
+      dockerfile: services/service-commission/Dockerfile
+    container_name: crm-service-commission
+    ports:
+      - "60054:60054"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60054
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: commission_db
+    depends_on:
+      proto-generator:
+        condition: service_started
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-contrats:
+    build:
+      context: .
+      dockerfile: services/service-contrats/Dockerfile
+    container_name: crm-service-contrats
+    ports:
+      - "60055:60055"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60055
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: contrats_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-dashboard:
+    build:
+      context: .
+      dockerfile: services/service-dashboard/Dockerfile
+    container_name: crm-service-dashboard
+    ports:
+      - "60056:60056"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60056
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: dashboard_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-documents:
+    build:
+      context: .
+      dockerfile: services/service-documents/Dockerfile
+    container_name: crm-service-documents
+    ports:
+      - "60057:60057"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60057
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: documents_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-email:
+    build:
+      context: .
+      dockerfile: services/service-email/Dockerfile
+    container_name: crm-service-email
+    ports:
+      - "60058:60058"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60058
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: email_db
+      ENCRYPTION_KEY: your-32-char-encryption-key-here
+    depends_on:
+      proto-generator:
+        condition: service_started
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-factures:
+    build:
+      context: .
+      dockerfile: services/service-factures/Dockerfile
+    container_name: crm-service-factures
+    ports:
+      - "60059:60059"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60059
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: factures_db
+    depends_on:
+      proto-generator:
+        condition: service_started
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-logistics:
+    build:
+      context: .
+      dockerfile: services/service-logistics/Dockerfile
+    container_name: crm-service-logistics
+    ports:
+      - "60060:60060"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60060
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: logistics_db
+    depends_on:
+      proto-generator:
+        condition: service_started
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-notifications:
+    build:
+      context: .
+      dockerfile: services/service-notifications/Dockerfile
+    container_name: crm-service-notifications
+    ports:
+      - "60061:60061"
+      - "3055:3055"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60061
+      WS_PORT: 3055
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: notifications_db
+    depends_on:
+      proto-generator:
+        condition: service_started
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-organisations:
+    build:
+      context: .
+      dockerfile: services/service-organisations/Dockerfile
+    container_name: crm-service-organisations
+    ports:
+      - "60062:60062"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60062
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: organisations_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-payments:
+    build:
+      context: .
+      dockerfile: services/service-payments/Dockerfile
+    container_name: crm-service-payments
+    ports:
+      - "60063:60063"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60063
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: payments_db
+    depends_on:
+      proto-generator:
+        condition: service_started
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-products:
+    build:
+      context: .
+      dockerfile: services/service-products/Dockerfile
+    container_name: crm-service-products
+    ports:
+      - "60064:60064"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60064
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: products_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-referentiel:
+    build:
+      context: .
+      dockerfile: services/service-referentiel/Dockerfile
+    container_name: crm-service-referentiel
+    ports:
+      - "60065:60065"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60065
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: referentiel_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-relance:
+    build:
+      context: .
+      dockerfile: services/service-relance/Dockerfile
+    container_name: crm-service-relance
+    ports:
+      - "60066:60066"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60066
+      CRON_ENABLED: "true"
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: relance_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-users:
+    build:
+      context: .
+      dockerfile: services/service-users/Dockerfile
+    container_name: crm-service-users
+    ports:
+      - "60067:60067"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60067
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: users_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+# ============================================
+# NETWORKS & VOLUMES
+# ============================================
+
+networks:
+  crm-network:
+    driver: bridge
+
+volumes:
+  postgres_main_data:

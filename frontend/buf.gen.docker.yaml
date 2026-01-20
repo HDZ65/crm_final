@@ -1,0 +1,14 @@
+version: v1
+# Code generation for Docker - uses remote buf plugins
+
+plugins:
+  # TypeScript generation for frontend using buf.build plugin
+  - plugin: buf.build/stephenh/ts-proto
+    out: /output/grpc
+    opt:
+      - nestJs=false
+      - addGrpcMetadata=true
+      - snakeToCamel=true
+      - outputServices=grpc-js
+      - esModuleInterop=true
+      - useOptionals=messages

@@ -1,0 +1,593 @@
+syntax = "proto3";
+
+package payment;
+
+// ==================== PAYMENT SERVICE ====================
+// Service gRPC unifié pour tous les paiements (Stripe, PayPal, GoCardless, etc.)
+
+service PaymentService {
+  // ==================== STRIPE ====================
+  // Checkout & Payment Intents
+  rpc CreateStripeCheckoutSession(CreateStripeCheckoutSessionRequest) returns (StripeCheckoutSessionResponse);
+  rpc CreateStripePaymentIntent(CreateStripePaymentIntentRequest) returns (StripePaymentIntentResponse);
+  rpc GetStripePaymentIntent(GetByIdRequest) returns (StripePaymentIntentResponse);
+  rpc CancelStripePaymentIntent(GetByIdRequest) returns (StripePaymentIntentResponse);
+
+  // Customers
+  rpc CreateStripeCustomer(CreateStripeCustomerRequest) returns (StripeCustomerResponse);
+  rpc GetStripeCustomer(GetByIdRequest) returns (StripeCustomerResponse);
+
+  // Subscriptions
+  rpc CreateStripeSubscription(CreateStripeSubscriptionRequest) returns (StripeSubscriptionResponse);
+  rpc GetStripeSubscription(GetByIdRequest) returns (StripeSubscriptionResponse);
+  rpc CancelStripeSubscription(GetByIdRequest) returns (StripeSubscriptionResponse);
+
+  // Refunds
+  rpc CreateStripeRefund(CreateStripeRefundRequest) returns (StripeRefundResponse);
+
+  // Setup Intents (for saving payment methods)
+  rpc CreateStripeSetupIntent(CreateStripeSetupIntentRequest) returns (StripeSetupIntentResponse);
+
+  // Billing Portal
+  rpc CreateStripeBillingPortalSession(CreateStripeBillingPortalRequest) returns (StripeBillingPortalResponse);
+
+  // ==================== PAYPAL ====================
+  rpc CreatePayPalOrder(CreatePayPalOrderRequest) returns (PayPalOrderResponse);
+  rpc GetPayPalOrder(GetPayPalOrderRequest) returns (PayPalOrderResponse);
+  rpc CapturePayPalOrder(CapturePayPalOrderRequest) returns (PayPalCaptureResponse);
+  rpc AuthorizePayPalOrder(GetPayPalOrderRequest) returns (PayPalOrderResponse);
+
+  // ==================== GOCARDLESS ====================
+  rpc SetupGoCardlessMandate(SetupGoCardlessMandateRequest) returns (GoCardlessMandateResponse);
+  rpc GetGoCardlessMandate(GetGoCardlessMandateRequest) returns (GoCardlessMandateResponse);
+  rpc CancelGoCardlessMandate(GetGoCardlessMandateRequest) returns (GoCardlessMandateResponse);
+  rpc CreateGoCardlessPayment(CreateGoCardlessPaymentRequest) returns (GoCardlessPaymentResponse);
+  rpc CreateGoCardlessSubscription(CreateGoCardlessSubscriptionRequest) returns (GoCardlessSubscriptionResponse);
+  rpc CancelGoCardlessSubscription(CancelGoCardlessSubscriptionRequest) returns (GoCardlessSubscriptionResponse);
+
+  // ==================== SCHEDULES ====================
+  rpc CreateSchedule(CreateScheduleRequest) returns (ScheduleResponse);
+  rpc GetSchedule(GetByIdRequest) returns (ScheduleResponse);
+  rpc UpdateSchedule(UpdateScheduleRequest) returns (ScheduleResponse);
+  rpc DeleteSchedule(GetByIdRequest) returns (DeleteResponse);
+  rpc GetDueSchedules(GetDueSchedulesRequest) returns (ScheduleListResponse);
+  rpc ProcessDuePayments(ProcessDuePaymentsRequest) returns (ProcessDuePaymentsResponse);
+  rpc RenewSchedule(RenewScheduleRequest) returns (ScheduleResponse);
+
+  // ==================== PAYMENT INTENTS (Internal) ====================
+  rpc CreatePaymentIntent(CreatePaymentIntentRequest) returns (PaymentIntentResponse);
+  rpc GetPaymentIntent(GetByIdRequest) returns (PaymentIntentResponse);
+  rpc UpdatePaymentIntent(UpdatePaymentIntentRequest) returns (PaymentIntentResponse);
+  rpc DeletePaymentIntent(GetByIdRequest) returns (DeleteResponse);
+
+  // ==================== PAYMENT EVENTS ====================
+  rpc CreatePaymentEvent(CreatePaymentEventRequest) returns (PaymentEventResponse);
+  rpc GetPaymentEvent(GetByIdRequest) returns (PaymentEventResponse);
+  rpc GetUnprocessedEvents(GetUnprocessedEventsRequest) returns (PaymentEventListResponse);
+  rpc MarkEventProcessed(MarkEventProcessedRequest) returns (PaymentEventResponse);
+
+  // ==================== PSP ACCOUNTS ====================
+  rpc GetPSPAccountsSummary(GetPSPAccountsRequest) returns (PSPAccountsSummaryResponse);
+}
+
+// ==================== ENUMS ====================
+
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_STATUS_PENDING = 1;
+  PAYMENT_STATUS_SUBMITTED = 2;
+  PAYMENT_STATUS_PAID = 3;
+  PAYMENT_STATUS_REJECTED = 4;
+  PAYMENT_STATUS_REFUNDED = 5;
+  PAYMENT_STATUS_CANCELLED = 6;
+  PAYMENT_STATUS_FAILED = 7;
+}
+
+enum MandateStatus {
+  MANDATE_STATUS_UNSPECIFIED = 0;
+  MANDATE_STATUS_PENDING_CUSTOMER_APPROVAL = 1;
+  MANDATE_STATUS_PENDING_SUBMISSION = 2;
+  MANDATE_STATUS_SUBMITTED = 3;
+  MANDATE_STATUS_ACTIVE = 4;
+  MANDATE_STATUS_SUSPENDED_BY_PAYER = 5;
+  MANDATE_STATUS_FAILED = 6;
+  MANDATE_STATUS_CANCELLED = 7;
+  MANDATE_STATUS_EXPIRED = 8;
+  MANDATE_STATUS_CONSUMED = 9;
+  MANDATE_STATUS_BLOCKED = 10;
+}
+
+enum ScheduleStatus {
+  SCHEDULE_STATUS_UNSPECIFIED = 0;
+  SCHEDULE_STATUS_ACTIVE = 1;
+  SCHEDULE_STATUS_PAUSED = 2;
+  SCHEDULE_STATUS_CANCELLED = 3;
+  SCHEDULE_STATUS_COMPLETED = 4;
+}
+
+enum AuditAction {
+  AUDIT_ACTION_UNSPECIFIED = 0;
+  AUDIT_ACTION_PAYMENT_CREATED = 1;
+  AUDIT_ACTION_PAYMENT_SUBMITTED = 2;
+  AUDIT_ACTION_PAYMENT_SUCCEEDED = 3;
+  AUDIT_ACTION_PAYMENT_FAILED = 4;
+  AUDIT_ACTION_PAYMENT_CANCELLED = 5;
+  AUDIT_ACTION_PAYMENT_REFUNDED = 6;
+  AUDIT_ACTION_MANDATE_CREATED = 7;
+  AUDIT_ACTION_MANDATE_ACTIVATED = 8;
+  AUDIT_ACTION_MANDATE_CANCELLED = 9;
+  AUDIT_ACTION_SCHEDULE_CREATED = 10;
+  AUDIT_ACTION_SCHEDULE_PAUSED = 11;
+  AUDIT_ACTION_SCHEDULE_RESUMED = 12;
+  AUDIT_ACTION_SCHEDULE_CANCELLED = 13;
+}
+
+// ==================== COMMON MESSAGES ====================
+
+message Empty {}
+
+message GetByIdRequest {
+  string id = 1;
+  string societe_id = 2;  // Pour le multi-tenant
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ==================== STRIPE MESSAGES ====================
+
+message CreateStripeCheckoutSessionRequest {
+  string societe_id = 1;
+  int64 amount = 2;  // En centimes
+  string currency = 3;
+  string mode = 4;  // 'payment', 'subscription', 'setup'
+  string success_url = 5;
+  string cancel_url = 6;
+  optional string customer_id = 7;
+  optional string customer_email = 8;
+  optional string price_id = 9;  // Pour les abonnements
+  map<string, string> metadata = 10;
+  repeated LineItem line_items = 11;
+}
+
+message LineItem {
+  string name = 1;
+  string description = 2;
+  int64 amount = 3;
+  int32 quantity = 4;
+  string currency = 5;
+}
+
+message StripeCheckoutSessionResponse {
+  string id = 1;
+  string url = 2;
+  string status = 3;
+  string payment_status = 4;
+  optional string customer_id = 5;
+  optional string subscription_id = 6;
+}
+
+message CreateStripePaymentIntentRequest {
+  string societe_id = 1;
+  int64 amount = 2;
+  string currency = 3;
+  optional string customer_id = 4;
+  optional string description = 5;
+  optional string payment_method = 6;
+  bool confirm = 7;
+  bool automatic_payment_methods = 8;
+  map<string, string> metadata = 9;
+}
+
+message StripePaymentIntentResponse {
+  string id = 1;
+  int64 amount = 2;
+  string currency = 3;
+  string status = 4;
+  optional string client_secret = 5;
+  optional string customer_id = 6;
+  optional string payment_method = 7;
+}
+
+message CreateStripeCustomerRequest {
+  string societe_id = 1;
+  string email = 2;
+  optional string name = 3;
+  optional string phone = 4;
+  optional string description = 5;
+  map<string, string> metadata = 6;
+}
+
+message StripeCustomerResponse {
+  string id = 1;
+  string email = 2;
+  optional string name = 3;
+  optional string phone = 4;
+  int64 created = 5;
+}
+
+message CreateStripeSubscriptionRequest {
+  string societe_id = 1;
+  string customer_id = 2;
+  string price_id = 3;
+  optional string payment_method = 4;
+  optional string default_payment_method = 5;
+  map<string, string> metadata = 6;
+}
+
+message StripeSubscriptionResponse {
+  string id = 1;
+  string customer_id = 2;
+  string status = 3;
+  int64 current_period_start = 4;
+  int64 current_period_end = 5;
+  bool cancel_at_period_end = 6;
+}
+
+message CreateStripeRefundRequest {
+  string societe_id = 1;
+  string payment_intent_id = 2;
+  optional int64 amount = 3;  // Partial refund, omit for full
+  optional string reason = 4;
+}
+
+message StripeRefundResponse {
+  string id = 1;
+  int64 amount = 2;
+  string currency = 3;
+  string status = 4;
+  string payment_intent_id = 5;
+}
+
+message CreateStripeSetupIntentRequest {
+  string societe_id = 1;
+  optional string customer_id = 2;
+  repeated string payment_method_types = 3;
+  map<string, string> metadata = 4;
+}
+
+message StripeSetupIntentResponse {
+  string id = 1;
+  string client_secret = 2;
+  string status = 3;
+  optional string customer_id = 4;
+  optional string payment_method = 5;
+}
+
+message CreateStripeBillingPortalRequest {
+  string societe_id = 1;
+  string customer_id = 2;
+  string return_url = 3;
+}
+
+message StripeBillingPortalResponse {
+  string id = 1;
+  string url = 2;
+}
+
+// ==================== PAYPAL MESSAGES ====================
+
+message CreatePayPalOrderRequest {
+  string societe_id = 1;
+  string intent = 2;  // 'CAPTURE' or 'AUTHORIZE'
+  repeated PayPalPurchaseUnit purchase_units = 3;
+  string return_url = 4;
+  string cancel_url = 5;
+  map<string, string> metadata = 6;
+}
+
+message PayPalPurchaseUnit {
+  optional string reference_id = 1;
+  int64 amount = 2;  // En centimes
+  string currency = 3;
+  optional string description = 4;
+  optional string custom_id = 5;
+  optional string invoice_id = 6;
+}
+
+message PayPalOrderResponse {
+  string id = 1;
+  string status = 2;
+  optional string approve_url = 3;
+  optional string capture_url = 4;
+  repeated PayPalLink links = 5;
+}
+
+message PayPalLink {
+  string href = 1;
+  string rel = 2;
+  string method = 3;
+}
+
+message GetPayPalOrderRequest {
+  string order_id = 1;
+  string societe_id = 2;
+}
+
+message CapturePayPalOrderRequest {
+  string order_id = 1;
+  string societe_id = 2;
+}
+
+message PayPalCaptureResponse {
+  string id = 1;
+  string status = 2;
+  optional PayPalPayer payer = 3;
+  repeated PayPalCapturedPurchaseUnit purchase_units = 4;
+}
+
+message PayPalPayer {
+  optional string email_address = 1;
+  optional string payer_id = 2;
+  optional string given_name = 3;
+  optional string surname = 4;
+}
+
+message PayPalCapturedPurchaseUnit {
+  optional string reference_id = 1;
+  repeated PayPalCapture captures = 2;
+}
+
+message PayPalCapture {
+  string id = 1;
+  string status = 2;
+  PayPalAmount amount = 3;
+}
+
+message PayPalAmount {
+  string currency_code = 1;
+  string value = 2;
+}
+
+// ==================== GOCARDLESS MESSAGES ====================
+
+message SetupGoCardlessMandateRequest {
+  string client_id = 1;
+  string societe_id = 2;
+  string scheme = 3;  // 'bacs', 'sepa_core', 'ach', etc.
+  optional string description = 4;
+  string success_redirect_url = 5;
+  optional string session_token = 6;
+}
+
+message GoCardlessMandateResponse {
+  string id = 1;
+  string client_id = 2;
+  string mandate_id = 3;
+  string status = 4;
+  string scheme = 5;
+  optional string bank_name = 6;
+  optional string account_holder_name = 7;
+  optional string account_number_ending = 8;
+  optional string redirect_url = 9;
+}
+
+message GetGoCardlessMandateRequest {
+  string client_id = 1;
+  string societe_id = 2;
+}
+
+message CreateGoCardlessPaymentRequest {
+  string client_id = 1;
+  string societe_id = 2;
+  int64 amount = 3;  // En centimes
+  string currency = 4;
+  optional string description = 5;
+  optional string charge_date = 6;  // YYYY-MM-DD
+  map<string, string> metadata = 7;
+}
+
+message GoCardlessPaymentResponse {
+  string id = 1;
+  string payment_id = 2;
+  int64 amount = 3;
+  string currency = 4;
+  string status = 5;
+  optional string charge_date = 6;
+}
+
+message CreateGoCardlessSubscriptionRequest {
+  string client_id = 1;
+  string societe_id = 2;
+  int64 amount = 3;
+  string currency = 4;
+  string interval_unit = 5;  // 'weekly', 'monthly', 'yearly'
+  int32 interval = 6;
+  optional string name = 7;
+  optional string start_date = 8;
+  optional int32 count = 9;  // Number of payments, omit for indefinite
+  map<string, string> metadata = 10;
+}
+
+message GoCardlessSubscriptionResponse {
+  string id = 1;
+  string subscription_id = 2;
+  int64 amount = 3;
+  string currency = 4;
+  string status = 5;
+  string interval_unit = 6;
+  int32 interval = 7;
+  optional string next_payment_date = 8;
+}
+
+message CancelGoCardlessSubscriptionRequest {
+  string subscription_id = 1;
+  string societe_id = 2;
+}
+
+// ==================== SCHEDULE MESSAGES ====================
+
+message CreateScheduleRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  optional string contrat_id = 3;
+  optional string facture_id = 4;
+  optional string client_id = 5;
+  int64 amount = 6;
+  string currency = 7;
+  string due_date = 8;  // ISO date string
+  optional string description = 9;
+  bool auto_process = 10;
+  map<string, string> metadata = 11;
+}
+
+message ScheduleResponse {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  optional string contrat_id = 4;
+  optional string facture_id = 5;
+  optional string client_id = 6;
+  int64 amount = 7;
+  string currency = 8;
+  string due_date = 9;
+  string status = 10;  // PLANNED, PROCESSING, PENDING, PAID, FAILED, UNPAID, CANCELLED, EXPIRED
+  optional string last_attempt_at = 11;
+  optional string paid_at = 12;
+  int32 retry_count = 13;
+  optional string error_message = 14;
+}
+
+message UpdateScheduleRequest {
+  string id = 1;
+  optional int64 amount = 2;
+  optional string due_date = 3;
+  optional string status = 4;
+  optional bool auto_process = 5;
+}
+
+message GetDueSchedulesRequest {
+  string organisation_id = 1;
+  optional string before_date = 2;  // Get schedules due before this date
+}
+
+message ScheduleListResponse {
+  repeated ScheduleResponse schedules = 1;
+  int32 total = 2;
+}
+
+message ProcessDuePaymentsRequest {
+  string organisation_id = 1;
+  optional bool dry_run = 2;  // If true, don't actually process
+}
+
+message ProcessDuePaymentsResponse {
+  int32 processed_count = 1;
+  int32 success_count = 2;
+  int32 failed_count = 3;
+  repeated ProcessedPayment results = 4;
+}
+
+message ProcessedPayment {
+  string schedule_id = 1;
+  bool success = 2;
+  optional string payment_id = 3;
+  optional string error = 4;
+}
+
+message RenewScheduleRequest {
+  string id = 1;
+  string new_due_date = 2;
+  optional int64 new_amount = 3;
+}
+
+// ==================== PAYMENT INTENT MESSAGES ====================
+
+message CreatePaymentIntentRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  optional string schedule_id = 3;
+  string psp_name = 4;  // STRIPE, PAYPAL, GOCARDLESS, etc.
+  int64 amount = 5;
+  string currency = 6;
+  optional string mandate_reference = 7;
+  optional string idempotency_key = 8;
+  map<string, string> metadata = 9;
+}
+
+message PaymentIntentResponse {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  optional string schedule_id = 4;
+  string psp_name = 5;
+  optional string psp_payment_id = 6;
+  int64 amount = 7;
+  string currency = 8;
+  string status = 9;  // PENDING, PROCESSING, SUCCEEDED, FAILED, CANCELLED
+  optional string mandate_reference = 10;
+  optional string idempotency_key = 11;
+  optional string error_code = 12;
+  optional string error_message = 13;
+  string created_at = 14;
+  optional string updated_at = 15;
+}
+
+message UpdatePaymentIntentRequest {
+  string id = 1;
+  optional string status = 2;
+  optional string psp_payment_id = 3;
+  optional string error_code = 4;
+  optional string error_message = 5;
+}
+
+// ==================== PAYMENT EVENT MESSAGES ====================
+
+message CreatePaymentEventRequest {
+  string organisation_id = 1;
+  string payment_intent_id = 2;
+  string event_type = 3;  // PAYMENT_INITIATED, PAYMENT_CONFIRMED, PAYMENT_FAILED, etc.
+  string raw_payload = 4;  // JSON string
+}
+
+message PaymentEventResponse {
+  string id = 1;
+  string organisation_id = 2;
+  string payment_intent_id = 3;
+  string event_type = 4;
+  string raw_payload = 5;
+  string received_at = 6;
+  bool processed = 7;
+  optional string processed_at = 8;
+  optional string error_message = 9;
+}
+
+message GetUnprocessedEventsRequest {
+  string organisation_id = 1;
+  optional int32 limit = 2;
+}
+
+message PaymentEventListResponse {
+  repeated PaymentEventResponse events = 1;
+  int32 total = 2;
+}
+
+message MarkEventProcessedRequest {
+  string id = 1;
+  optional string error_message = 2;  // If processing failed
+}
+
+// ==================== PSP ACCOUNTS MESSAGES ====================
+
+message GetPSPAccountsRequest {
+  string societe_id = 1;
+}
+
+message PSPAccountsSummaryResponse {
+  optional PSPAccountInfo stripe = 1;
+  optional PSPAccountInfo paypal = 2;
+  optional PSPAccountInfo gocardless = 3;
+  optional PSPAccountInfo emerchantpay = 4;
+  optional PSPAccountInfo slimpay = 5;
+  optional PSPAccountInfo multisafepay = 6;
+}
+
+message PSPAccountInfo {
+  string id = 1;
+  string name = 2;
+  bool is_active = 3;
+  bool is_live_mode = 4;
+  bool is_configured = 5;
+}

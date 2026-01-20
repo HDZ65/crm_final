@@ -1,0 +1,298 @@
+# CRM Final - Microservices Only
+# Uses existing PostgreSQL on host (port 5433)
+# Usage: docker-compose -f docker-compose.services.yml up -d
+
+version: "3.8"
+
+services:
+  service-activites:
+    build: ./service-activites
+    container_name: crm-service-activites
+    ports:
+      - "60051:60051"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60051
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: activites_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-clients:
+    build: ./service-clients
+    container_name: crm-service-clients
+    ports:
+      - "60052:60052"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60052
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: clients_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-commerciaux:
+    build: ./service-commerciaux
+    container_name: crm-service-commerciaux
+    ports:
+      - "60053:60053"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60053
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: commerciaux_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-commission:
+    build: ./service-commission
+    container_name: crm-service-commission
+    ports:
+      - "60054:60054"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60054
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: commission_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-contrats:
+    build: ./service-contrats
+    container_name: crm-service-contrats
+    ports:
+      - "60055:60055"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60055
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: contrats_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-dashboard:
+    build: ./service-dashboard
+    container_name: crm-service-dashboard
+    ports:
+      - "60056:60056"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60056
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: dashboard_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-documents:
+    build: ./service-documents
+    container_name: crm-service-documents
+    ports:
+      - "60057:60057"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60057
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: documents_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-email:
+    build: ./service-email
+    container_name: crm-service-email
+    ports:
+      - "60058:60058"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60058
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: email_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-factures:
+    build: ./service-factures
+    container_name: crm-service-factures
+    ports:
+      - "60059:60059"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60059
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: factures_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-logistics:
+    build: ./service-logistics
+    container_name: crm-service-logistics
+    ports:
+      - "60060:60060"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60060
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: logistics_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-notifications:
+    build: ./service-notifications
+    container_name: crm-service-notifications
+    ports:
+      - "60061:60061"
+      - "3055:3055"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60061
+      WS_PORT: 3055
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: notifications_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-organisations:
+    build: ./service-organisations
+    container_name: crm-service-organisations
+    ports:
+      - "60062:60062"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60062
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: organisations_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-payments:
+    build: ./service-payments
+    container_name: crm-service-payments
+    ports:
+      - "60063:60063"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60063
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: payments_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-products:
+    build: ./service-products
+    container_name: crm-service-products
+    ports:
+      - "60064:60064"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60064
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: products_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-referentiel:
+    build: ./service-referentiel
+    container_name: crm-service-referentiel
+    ports:
+      - "60065:60065"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60065
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: referentiel_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-relance:
+    build: ./service-relance
+    container_name: crm-service-relance
+    ports:
+      - "60066:60066"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60066
+      CRON_ENABLED: "true"
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: relance_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  service-users:
+    build: ./service-users
+    container_name: crm-service-users
+    ports:
+      - "60067:60067"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 60067
+      DB_HOST: host.docker.internal
+      DB_PORT: 5433
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: users_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

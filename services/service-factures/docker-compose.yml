@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: invoices-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: invoices_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Microservice de facturation gRPC
+  invoice-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: invoice-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: invoices_db
+
+      # Application
+      NODE_ENV: production
+
+      # gRPC
+      GRPC_URL: 0.0.0.0:60051
+
+      # Invoice Configuration
+      INVOICE_PREFIX: INV
+      INVOICE_YEAR_RESET: "true"
+
+      # PDF Configuration
+      PDF_STORAGE_PATH: /app/storage/pdfs
+      PDF_TEMP_PATH: /app/storage/temp
+
+      # Legal Configuration (France)
+      COMPANY_NAME: "Ma Super Entreprise SAS"
+      COMPANY_ADDRESS: "123 Rue Example, 75001 Paris, France"
+      COMPANY_SIRET: "12345678901234"
+      COMPANY_SIREN: "123456789"
+      COMPANY_TVA: "FR12345678901"
+      COMPANY_RCS: "Paris B 123 456 789"
+      COMPANY_CAPITAL: "10000"
+      COMPANY_EMAIL: "contact@example.com"
+      COMPANY_PHONE: "+33 1 23 45 67 89"
+
+      # Payment Configuration
+      DEFAULT_PAYMENT_TERMS_DAYS: 30
+      LATE_PAYMENT_INTEREST_RATE: 10
+      RECOVERY_INDEMNITY_AMOUNT: 40
+    ports:
+      - "60051:60051"
+    volumes:
+      # Persister les PDFs générés
+      - invoice_pdfs:/app/storage/pdfs
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect({port:60051,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  invoice_pdfs:
+    driver: local

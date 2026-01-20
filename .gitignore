@@ -1,0 +1,15 @@
+
+# Proto generated files (centralized)
+proto/gen/
+
+# Legacy paths (can be removed once migration complete)
+frontend/src/gen/*.ts
+frontend/src/gen/*.js
+backend/src/gen/proto/*.ts
+backend/src/gen/proto/*.js
+generated/proto/*.js
+generated/proto/*.d.ts
+generated/proto/*.ts
+node_modules/
+.next/
+dist/

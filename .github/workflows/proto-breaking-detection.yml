@@ -1,0 +1,73 @@
+name: Proto Breaking Change Detection
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  check-breaking-changes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1.50.0
+
+      - name: Buf lint
+        run: |
+          cd proto
+          buf lint
+
+      - name: Buf format check
+        run: |
+          cd proto
+          buf format --exit-code proto
+
+      - name: Breaking change detection
+        run: |
+          cd proto
+          echo "Checking for breaking changes..."
+          buf breaking --against '.git#branch=main'
+        shell: bash
+
+      - name: Comment on PR (optional)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const breakingMessage = `⚠️ Breaking changes detected!
+
+            Please review the breaking change output above and either:
+            1. Fix the breaking changes (recommended)
+            2. Document the migration path
+            3. Get approval from maintainers
+
+            See [ARCHITECTURE_CONTRACT_DRIVEN.md](../ARCHITECTURE_CONTRACT_DRIVEN.md) for guidelines.`;
+
+            const passingMessage = `✅ No breaking changes detected.
+
+            The proto changes are backward compatible.`;
+
+            // Check if breaking changes were detected
+            const breakingCheck = '${{ steps.breaking-check.outcome }}';
+            if (breakingCheck === 'failure') {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: breakingMessage
+              });
+            } else {
+              // Optional: Comment success
+              // github.rest.issues.createComment({
+              //   issue_number: context.issue.number,
+              //   owner: context.repo.owner,
+              //   repo: context.repo.repo,
+              //   body: passingMessage
+              // });
+            }
+          github-token: ${{ secrets.GITHUB_TOKEN }}

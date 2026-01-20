@@ -1,0 +1,947 @@
+syntax = "proto3";
+
+package calendar;
+
+// ============================================================================
+// MODULE CALENDRIER DE PRÉLÈVEMENTS / LOTS
+// ============================================================================
+// Source unique de vérité pour le calcul des dates de prélèvement (plannedDebitDate)
+// et la gestion des lots L1-L4 avec jour fixe configurable.
+//
+// Conventions:
+// - Tous les champs en snake_case (convention Protobuf officielle)
+// - TypeScript généré en camelCase via buf.gen.yaml (snakeToCamel=true)
+// - Validation via buf.validate (protovalidate)
+// ============================================================================
+
+// ================================
+// ENUMS - TYPES FONDAMENTAUX
+// ================================
+
+// Définition des lots de prélèvement (fenêtres d'émission)
+// L1 = Semaine 1 du mois (jours 1-7)
+// L2 = Semaine 2 du mois (jours 8-14)
+// L3 = Semaine 3 du mois (jours 15-21)
+// L4 = Semaine 4 du mois (jours 22-fin)
+enum DebitBatch {
+  DEBIT_BATCH_UNSPECIFIED = 0;
+  DEBIT_BATCH_L1 = 1;  // Semaine 1: jours 1-7
+  DEBIT_BATCH_L2 = 2;  // Semaine 2: jours 8-14
+  DEBIT_BATCH_L3 = 3;  // Semaine 3: jours 15-21
+  DEBIT_BATCH_L4 = 4;  // Semaine 4: jours 22-fin du mois
+}
+
+// Mode de calcul de la date de prélèvement
+enum DebitDateMode {
+  DEBIT_DATE_MODE_UNSPECIFIED = 0;
+  DEBIT_DATE_MODE_BATCH = 1;      // Utilise le lot L1-L4 (premier jour ouvré du lot)
+  DEBIT_DATE_MODE_FIXED_DAY = 2;  // Utilise un jour fixe du mois (ex: le 5)
+}
+
+// Stratégie de report si date non éligible (weekend/férié)
+enum DateShiftStrategy {
+  DATE_SHIFT_STRATEGY_UNSPECIFIED = 0;
+  DATE_SHIFT_STRATEGY_NEXT_BUSINESS_DAY = 1;  // Reporter au prochain jour ouvré
+  DATE_SHIFT_STRATEGY_PREVIOUS_BUSINESS_DAY = 2;  // Anticiper au jour ouvré précédent
+  DATE_SHIFT_STRATEGY_NEXT_WEEK_SAME_DAY = 3;  // Reporter à la semaine suivante, même jour
+}
+
+// Niveau de configuration (pour la priorité)
+enum ConfigurationLevel {
+  CONFIGURATION_LEVEL_UNSPECIFIED = 0;
+  CONFIGURATION_LEVEL_SYSTEM_DEFAULT = 1;  // Priorité la plus basse
+  CONFIGURATION_LEVEL_COMPANY = 2;         // Niveau société
+  CONFIGURATION_LEVEL_CLIENT = 3;          // Niveau client
+  CONFIGURATION_LEVEL_CONTRACT = 4;        // Priorité la plus haute
+}
+
+// Statut d'une date planifiée
+enum PlannedDateStatus {
+  PLANNED_DATE_STATUS_UNSPECIFIED = 0;
+  PLANNED_DATE_STATUS_PLANNED = 1;       // Date calculée, en attente
+  PLANNED_DATE_STATUS_CONFIRMED = 2;     // Date confirmée pour émission
+  PLANNED_DATE_STATUS_PROCESSING = 3;    // En cours de traitement
+  PLANNED_DATE_STATUS_EXECUTED = 4;      // Prélèvement exécuté
+  PLANNED_DATE_STATUS_FAILED = 5;        // Échec du prélèvement
+  PLANNED_DATE_STATUS_CANCELLED = 6;     // Annulé
+}
+
+// Type de jour férié
+enum HolidayType {
+  HOLIDAY_TYPE_UNSPECIFIED = 0;
+  HOLIDAY_TYPE_PUBLIC = 1;       // Jour férié légal
+  HOLIDAY_TYPE_BANK = 2;         // Jour de fermeture bancaire
+  HOLIDAY_TYPE_REGIONAL = 3;     // Jour férié régional
+  HOLIDAY_TYPE_COMPANY = 4;      // Jour de fermeture société
+}
+
+// Source de modification pour audit
+enum AuditSource {
+  AUDIT_SOURCE_UNSPECIFIED = 0;
+  AUDIT_SOURCE_UI = 1;           // Interface admin
+  AUDIT_SOURCE_CSV_IMPORT = 2;   // Import CSV
+  AUDIT_SOURCE_API = 3;          // Appel API
+  AUDIT_SOURCE_SYSTEM = 4;       // Calcul automatique système
+}
+
+// ================================
+// MESSAGES - CONFIGURATION CALENDRIER
+// ================================
+
+// Configuration des jours fériés par zone/pays
+message HolidayZone {
+  string id = 1;
+  string organisation_id = 2;
+  string code = 3;           // Ex: "FR", "FR-ALS" (Alsace), "DE", "BE"
+  string name = 4;           // Ex: "France", "Alsace-Moselle"
+  string country_code = 5;   // ISO 3166-1 alpha-2: "FR", "DE", "BE"
+  string region_code = 6;    // Code région optionnel (ex: "ALS", "IDF")
+  bool is_active = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+// Jour férié individuel
+message Holiday {
+  string id = 1;
+  string holiday_zone_id = 2;
+  string date = 3;           // Format ISO: "2026-01-01"
+  string name = 4;           // Ex: "Jour de l'An", "Lundi de Pâques"
+  HolidayType holiday_type = 5;
+  bool is_recurring = 6;     // True si récurrent chaque année (même jour/mois)
+  int32 recurring_month = 7; // 1-12 si récurrent
+  int32 recurring_day = 8;   // 1-31 si récurrent
+  bool is_active = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+// Configuration du cutoff horaire
+message CutoffConfiguration {
+  string id = 1;
+  string organisation_id = 2;
+  string name = 3;                    // Ex: "Cutoff SEPA Standard"
+  string cutoff_time = 4;             // Format HH:mm en timezone locale, ex: "14:00"
+  string timezone = 5;                // Ex: "Europe/Paris"
+  int32 days_before_value_date = 6;   // J-X avant la date de valeur (ex: 2 pour SEPA)
+  bool is_active = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+// ================================
+// MESSAGES - CONFIGURATION LOTS
+// ================================
+
+// Configuration de lot par défaut système
+message SystemDebitConfiguration {
+  string id = 1;
+  string organisation_id = 2;
+  DebitDateMode default_mode = 3;
+  DebitBatch default_batch = 4;          // Si mode = BATCH
+  int32 default_fixed_day = 5;           // Si mode = FIXED_DAY (1-28)
+  DateShiftStrategy shift_strategy = 6;
+  string holiday_zone_id = 7;            // Zone de jours fériés par défaut
+  string cutoff_config_id = 8;           // Configuration cutoff par défaut
+  bool is_active = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+// Configuration de lot au niveau société
+message CompanyDebitConfiguration {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  DebitDateMode mode = 4;
+  DebitBatch batch = 5;
+  int32 fixed_day = 6;
+  DateShiftStrategy shift_strategy = 7;
+  string holiday_zone_id = 8;
+  string cutoff_config_id = 9;
+  bool is_active = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+// Configuration de lot au niveau client
+message ClientDebitConfiguration {
+  string id = 1;
+  string organisation_id = 2;
+  string client_id = 3;
+  DebitDateMode mode = 4;
+  DebitBatch batch = 5;
+  int32 fixed_day = 6;
+  DateShiftStrategy shift_strategy = 7;
+  string holiday_zone_id = 8;
+  bool is_active = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+// Configuration de lot au niveau contrat (priorité maximale)
+message ContractDebitConfiguration {
+  string id = 1;
+  string organisation_id = 2;
+  string contrat_id = 3;
+  DebitDateMode mode = 4;
+  DebitBatch batch = 5;
+  int32 fixed_day = 6;
+  DateShiftStrategy shift_strategy = 7;
+  string holiday_zone_id = 8;
+  bool is_active = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+// Configuration résolue (après application de la priorité)
+message ResolvedDebitConfiguration {
+  ConfigurationLevel applied_level = 1;  // Niveau qui a été appliqué
+  string applied_config_id = 2;          // ID de la config appliquée
+  DebitDateMode mode = 3;
+  DebitBatch batch = 4;
+  int32 fixed_day = 5;
+  DateShiftStrategy shift_strategy = 6;
+  string holiday_zone_id = 7;
+  string cutoff_config_id = 8;
+}
+
+// ================================
+// MESSAGES - CALENDAR ENGINE
+// ================================
+
+// Entrée pour le calcul de date de prélèvement
+message CalculatePlannedDateRequest {
+  string organisation_id = 1;
+  string contrat_id = 2;           // Optionnel - si fourni, utilise config contrat
+  string client_id = 3;            // Optionnel - si fourni, utilise config client
+  string societe_id = 4;           // Optionnel - si fourni, utilise config société
+  string reference_date = 5;       // Date de référence pour le calcul (ISO format)
+  int32 target_month = 6;          // Mois cible (1-12)
+  int32 target_year = 7;           // Année cible
+  bool include_resolution_trace = 8;  // Inclure le détail de la résolution
+}
+
+// Résultat du calcul de date de prélèvement
+message CalculatePlannedDateResponse {
+  string planned_debit_date = 1;          // Date calculée (ISO format)
+  string original_target_date = 2;        // Date cible avant ajustement
+  bool was_shifted = 3;                   // True si la date a été décalée
+  string shift_reason = 4;                // Raison du décalage (weekend, férié, etc.)
+  ResolvedDebitConfiguration resolved_config = 5;
+  repeated DateResolutionStep resolution_trace = 6;  // Trace de résolution si demandée
+}
+
+// Étape de résolution de date (pour debug/audit)
+message DateResolutionStep {
+  int32 step_order = 1;
+  string description = 2;
+  string input_date = 3;
+  string output_date = 4;
+  string applied_rule = 5;
+}
+
+// Calcul en lot pour plusieurs entités
+message CalculatePlannedDatesBatchRequest {
+  string organisation_id = 1;
+  repeated PlannedDateCalculationInput inputs = 2;
+  int32 target_month = 3;
+  int32 target_year = 4;
+}
+
+message PlannedDateCalculationInput {
+  string contrat_id = 1;
+  string client_id = 2;
+  string societe_id = 3;
+  int64 amount_cents = 4;  // Montant en centimes
+  string currency = 5;
+}
+
+message CalculatePlannedDatesBatchResponse {
+  repeated PlannedDateCalculationResult results = 1;
+  int32 total_count = 2;
+  int32 success_count = 3;
+  int32 error_count = 4;
+}
+
+message PlannedDateCalculationResult {
+  string contrat_id = 1;
+  bool success = 2;
+  string planned_debit_date = 3;
+  string error_code = 4;
+  string error_message = 5;
+  ResolvedDebitConfiguration resolved_config = 6;
+}
+
+// Vérification d'éligibilité d'une date
+message CheckDateEligibilityRequest {
+  string organisation_id = 1;
+  string date = 2;                 // Date à vérifier (ISO format)
+  string holiday_zone_id = 3;      // Zone de jours fériés
+}
+
+message CheckDateEligibilityResponse {
+  bool is_eligible = 1;
+  bool is_weekend = 2;
+  bool is_holiday = 3;
+  string holiday_name = 4;         // Nom du jour férié si applicable
+  string next_eligible_date = 5;   // Prochaine date éligible
+  string previous_eligible_date = 6;  // Date éligible précédente
+}
+
+// ================================
+// MESSAGES - PRÉLÈVEMENTS PLANIFIÉS
+// ================================
+
+// Prélèvement planifié
+message PlannedDebit {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  string client_id = 4;
+  string contrat_id = 5;
+  string schedule_id = 6;          // Référence vers payment.Schedule
+  string facture_id = 7;           // Référence vers facture si applicable
+  string planned_debit_date = 8;   // Date de prélèvement planifiée
+  string original_target_date = 9; // Date cible avant ajustement
+  PlannedDateStatus status = 10;
+  DebitBatch batch = 11;           // Lot assigné
+  int64 amount_cents = 12;         // Montant en centimes
+  string currency = 13;
+  ResolvedDebitConfiguration resolved_config = 14;
+  string created_at = 15;
+  string updated_at = 16;
+}
+
+// ================================
+// MESSAGES - VOLUMES ET PRÉVISIONS
+// ================================
+
+// Volume agrégé par date/lot
+message DebitVolumeAggregate {
+  string date = 1;                 // Date (ISO format)
+  DebitBatch batch = 2;
+  string societe_id = 3;           // Optionnel, si agrégation par société
+  int32 transaction_count = 4;
+  int64 total_amount_cents = 5;
+  string currency = 6;
+}
+
+// Prévision de volume (pour la heatmap)
+message VolumeForecast {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  int32 year = 4;
+  int32 month = 5;
+  int32 day = 6;
+  DebitBatch batch = 7;
+  int32 expected_transaction_count = 8;
+  int64 expected_amount_cents = 9;
+  string currency = 10;
+  int32 actual_transaction_count = 11;  // Rempli après exécution
+  int64 actual_amount_cents = 12;
+  string created_at = 13;
+  string updated_at = 14;
+}
+
+// Seuil d'alerte pour les volumes
+message VolumeThreshold {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;           // Optionnel
+  int32 max_transaction_count = 4;
+  int64 max_amount_cents = 5;
+  string currency = 6;
+  bool alert_on_exceed = 7;
+  string alert_email = 8;
+  bool is_active = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+// ================================
+// MESSAGES - IMPORT CSV
+// ================================
+
+// Requête d'import CSV (dry-run obligatoire)
+message ImportCsvRequest {
+  string organisation_id = 1;
+  bytes csv_content = 2;           // Contenu du fichier CSV
+  string import_type = 3;          // "DEBIT_CONFIG", "HOLIDAYS", "VOLUME_FORECAST"
+  bool dry_run = 4;                // OBLIGATOIRE: true pour prévisualisation
+  string uploaded_by_user_id = 5;
+}
+
+message ImportCsvResponse {
+  string import_id = 1;
+  bool success = 2;
+  bool is_dry_run = 3;
+  int32 total_rows = 4;
+  int32 valid_rows = 5;
+  int32 error_rows = 6;
+  repeated CsvValidationError errors = 7;
+  repeated CsvImportPreview preview = 8;  // Aperçu des changements
+}
+
+message CsvValidationError {
+  int32 row_number = 1;
+  string column_name = 2;
+  string value = 3;
+  string error_code = 4;
+  string error_message = 5;
+}
+
+message CsvImportPreview {
+  int32 row_number = 1;
+  string action = 2;               // "CREATE", "UPDATE", "SKIP"
+  string entity_type = 3;
+  string entity_id = 4;            // Existant si UPDATE
+  map<string, string> data = 5;    // Données à importer
+  string change_summary = 6;       // Résumé des changements
+}
+
+// Confirmation d'import (après dry-run)
+message ConfirmCsvImportRequest {
+  string import_id = 1;
+  string organisation_id = 2;
+  string confirmed_by_user_id = 3;
+}
+
+message ConfirmCsvImportResponse {
+  bool success = 1;
+  int32 created_count = 2;
+  int32 updated_count = 3;
+  int32 skipped_count = 4;
+  string audit_log_id = 5;
+}
+
+// ================================
+// MESSAGES - AUDIT
+// ================================
+
+// Entrée de log d'audit
+message CalendarAuditLog {
+  string id = 1;
+  string organisation_id = 2;
+  string entity_type = 3;          // Type d'entité modifiée
+  string entity_id = 4;            // ID de l'entité modifiée
+  string action = 5;               // "CREATE", "UPDATE", "DELETE"
+  string actor_user_id = 6;        // Utilisateur ayant effectué l'action
+  AuditSource source = 7;          // Source de la modification
+  string before_state = 8;         // État avant (JSON)
+  string after_state = 9;          // État après (JSON)
+  string change_summary = 10;      // Résumé lisible des changements
+  string ip_address = 11;
+  string user_agent = 12;
+  string created_at = 13;
+}
+
+// ================================
+// MESSAGES - REQUÊTES ADMIN
+// ================================
+
+// Requête de calendrier avec filtres
+message GetCalendarViewRequest {
+  string organisation_id = 1;
+  string start_date = 2;           // Date début (ISO format)
+  string end_date = 3;             // Date fin (ISO format)
+  repeated string societe_ids = 4; // Filtrer par sociétés
+  repeated DebitBatch batches = 5; // Filtrer par lots
+  repeated PlannedDateStatus statuses = 6;  // Filtrer par statut
+  bool include_volumes = 7;        // Inclure les volumes agrégés
+}
+
+message GetCalendarViewResponse {
+  repeated CalendarDay days = 1;
+  repeated DebitVolumeAggregate volumes = 2;
+}
+
+message CalendarDay {
+  string date = 1;
+  bool is_weekend = 2;
+  bool is_holiday = 3;
+  string holiday_name = 4;
+  bool is_eligible = 5;
+  repeated PlannedDebitSummary debits = 6;
+}
+
+message PlannedDebitSummary {
+  string id = 1;
+  string contrat_id = 2;
+  string client_name = 3;
+  int64 amount_cents = 4;
+  string currency = 5;
+  PlannedDateStatus status = 6;
+  DebitBatch batch = 7;
+}
+
+// Requête drill-down (détail d'une date)
+message GetDateDetailsRequest {
+  string organisation_id = 1;
+  string date = 2;
+  string societe_id = 3;
+  DebitBatch batch = 4;
+  Pagination pagination = 5;
+}
+
+message GetDateDetailsResponse {
+  repeated PlannedDebit debits = 1;
+  PaginationResult pagination = 2;
+  DebitVolumeAggregate aggregate = 3;
+}
+
+// Requête heatmap
+message GetVolumeHeatmapRequest {
+  string organisation_id = 1;
+  int32 year = 2;
+  int32 month = 3;                 // Optionnel, si non fourni: année entière
+  repeated string societe_ids = 4;
+  repeated DebitBatch batches = 5;
+  bool include_forecast = 6;
+}
+
+message GetVolumeHeatmapResponse {
+  repeated HeatmapCell cells = 1;
+  repeated VolumeThreshold exceeded_thresholds = 2;
+}
+
+message HeatmapCell {
+  string date = 1;
+  int32 day_of_week = 2;           // 0=Lundi, 6=Dimanche
+  int32 week_of_month = 3;
+  int32 transaction_count = 4;
+  int64 total_amount_cents = 5;
+  string currency = 6;
+  string intensity_level = 7;      // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  bool exceeds_threshold = 8;
+  VolumeForecast forecast = 9;     // Prévision si demandée
+}
+
+// Export CSV
+message ExportCalendarCsvRequest {
+  string organisation_id = 1;
+  string start_date = 2;
+  string end_date = 3;
+  repeated string societe_ids = 4;
+  repeated DebitBatch batches = 5;
+  string export_type = 6;          // "PLANNED_DEBITS", "VOLUMES", "HEATMAP"
+}
+
+message ExportCalendarCsvResponse {
+  bytes csv_content = 1;
+  string filename = 2;
+  int32 row_count = 3;
+}
+
+// ================================
+// MESSAGES - PAGINATION
+// ================================
+
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ================================
+// SERVICES gRPC
+// ================================
+
+// Service de calcul du Calendar Engine
+service CalendarEngineService {
+  // Calcul de date unique
+  rpc CalculatePlannedDate(CalculatePlannedDateRequest) returns (CalculatePlannedDateResponse);
+  
+  // Calcul en lot
+  rpc CalculatePlannedDatesBatch(CalculatePlannedDatesBatchRequest) returns (CalculatePlannedDatesBatchResponse);
+  
+  // Vérification d'éligibilité
+  rpc CheckDateEligibility(CheckDateEligibilityRequest) returns (CheckDateEligibilityResponse);
+}
+
+// Service de gestion des configurations
+service DebitConfigurationService {
+  // Configuration système
+  rpc GetSystemConfig(GetSystemConfigRequest) returns (SystemDebitConfiguration);
+  rpc UpdateSystemConfig(UpdateSystemConfigRequest) returns (SystemDebitConfiguration);
+  
+  // Configuration société
+  rpc CreateCompanyConfig(CreateCompanyConfigRequest) returns (CompanyDebitConfiguration);
+  rpc UpdateCompanyConfig(UpdateCompanyConfigRequest) returns (CompanyDebitConfiguration);
+  rpc GetCompanyConfig(GetCompanyConfigRequest) returns (CompanyDebitConfiguration);
+  rpc ListCompanyConfigs(ListCompanyConfigsRequest) returns (ListCompanyConfigsResponse);
+  rpc DeleteCompanyConfig(DeleteCompanyConfigRequest) returns (DeleteResponse);
+  
+  // Configuration client
+  rpc CreateClientConfig(CreateClientConfigRequest) returns (ClientDebitConfiguration);
+  rpc UpdateClientConfig(UpdateClientConfigRequest) returns (ClientDebitConfiguration);
+  rpc GetClientConfig(GetClientConfigRequest) returns (ClientDebitConfiguration);
+  rpc ListClientConfigs(ListClientConfigsRequest) returns (ListClientConfigsResponse);
+  rpc DeleteClientConfig(DeleteClientConfigRequest) returns (DeleteResponse);
+  
+  // Configuration contrat
+  rpc CreateContractConfig(CreateContractConfigRequest) returns (ContractDebitConfiguration);
+  rpc UpdateContractConfig(UpdateContractConfigRequest) returns (ContractDebitConfiguration);
+  rpc GetContractConfig(GetContractConfigRequest) returns (ContractDebitConfiguration);
+  rpc ListContractConfigs(ListContractConfigsRequest) returns (ListContractConfigsResponse);
+  rpc DeleteContractConfig(DeleteContractConfigRequest) returns (DeleteResponse);
+  
+  // Résolution de configuration
+  rpc ResolveConfiguration(ResolveConfigurationRequest) returns (ResolvedDebitConfiguration);
+}
+
+// Service de gestion des jours fériés
+service HolidayService {
+  // Zones
+  rpc CreateHolidayZone(CreateHolidayZoneRequest) returns (HolidayZone);
+  rpc UpdateHolidayZone(UpdateHolidayZoneRequest) returns (HolidayZone);
+  rpc GetHolidayZone(GetHolidayZoneRequest) returns (HolidayZone);
+  rpc ListHolidayZones(ListHolidayZonesRequest) returns (ListHolidayZonesResponse);
+  rpc DeleteHolidayZone(DeleteHolidayZoneRequest) returns (DeleteResponse);
+  
+  // Jours fériés
+  rpc CreateHoliday(CreateHolidayRequest) returns (Holiday);
+  rpc UpdateHoliday(UpdateHolidayRequest) returns (Holiday);
+  rpc GetHoliday(GetHolidayRequest) returns (Holiday);
+  rpc ListHolidays(ListHolidaysRequest) returns (ListHolidaysResponse);
+  rpc DeleteHoliday(DeleteHolidayRequest) returns (DeleteResponse);
+  
+  // Import jours fériés par pays
+  rpc ImportHolidaysByCountry(ImportHolidaysByCountryRequest) returns (ImportHolidaysByCountryResponse);
+}
+
+// Service Admin UI
+service CalendarAdminService {
+  // Vue calendrier
+  rpc GetCalendarView(GetCalendarViewRequest) returns (GetCalendarViewResponse);
+  rpc GetDateDetails(GetDateDetailsRequest) returns (GetDateDetailsResponse);
+  
+  // Heatmap volumes
+  rpc GetVolumeHeatmap(GetVolumeHeatmapRequest) returns (GetVolumeHeatmapResponse);
+  
+  // Import/Export CSV
+  rpc ImportCsv(ImportCsvRequest) returns (ImportCsvResponse);
+  rpc ConfirmCsvImport(ConfirmCsvImportRequest) returns (ConfirmCsvImportResponse);
+  rpc ExportCalendarCsv(ExportCalendarCsvRequest) returns (ExportCalendarCsvResponse);
+  
+  // Seuils
+  rpc CreateVolumeThreshold(CreateVolumeThresholdRequest) returns (VolumeThreshold);
+  rpc UpdateVolumeThreshold(UpdateVolumeThresholdRequest) returns (VolumeThreshold);
+  rpc GetVolumeThreshold(GetVolumeThresholdRequest) returns (VolumeThreshold);
+  rpc ListVolumeThresholds(ListVolumeThresholdsRequest) returns (ListVolumeThresholdsResponse);
+  rpc DeleteVolumeThreshold(DeleteVolumeThresholdRequest) returns (DeleteResponse);
+  
+  // Audit
+  rpc GetAuditLogs(GetAuditLogsRequest) returns (GetAuditLogsResponse);
+}
+
+// ================================
+// MESSAGES REQUÊTES/RÉPONSES CRUD
+// ================================
+
+// System Config
+message GetSystemConfigRequest {
+  string organisation_id = 1;
+}
+
+message UpdateSystemConfigRequest {
+  string organisation_id = 1;
+  DebitDateMode default_mode = 2;
+  DebitBatch default_batch = 3;
+  int32 default_fixed_day = 4;
+  DateShiftStrategy shift_strategy = 5;
+  string holiday_zone_id = 6;
+  string cutoff_config_id = 7;
+}
+
+// Company Config
+message CreateCompanyConfigRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  DebitDateMode mode = 3;
+  DebitBatch batch = 4;
+  int32 fixed_day = 5;
+  DateShiftStrategy shift_strategy = 6;
+  string holiday_zone_id = 7;
+  string cutoff_config_id = 8;
+}
+
+message UpdateCompanyConfigRequest {
+  string id = 1;
+  DebitDateMode mode = 2;
+  DebitBatch batch = 3;
+  int32 fixed_day = 4;
+  DateShiftStrategy shift_strategy = 5;
+  string holiday_zone_id = 6;
+  string cutoff_config_id = 7;
+  bool is_active = 8;
+}
+
+message GetCompanyConfigRequest {
+  string id = 1;
+}
+
+message ListCompanyConfigsRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  Pagination pagination = 3;
+}
+
+message ListCompanyConfigsResponse {
+  repeated CompanyDebitConfiguration configs = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteCompanyConfigRequest {
+  string id = 1;
+}
+
+// Client Config
+message CreateClientConfigRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  DebitDateMode mode = 3;
+  DebitBatch batch = 4;
+  int32 fixed_day = 5;
+  DateShiftStrategy shift_strategy = 6;
+  string holiday_zone_id = 7;
+}
+
+message UpdateClientConfigRequest {
+  string id = 1;
+  DebitDateMode mode = 2;
+  DebitBatch batch = 3;
+  int32 fixed_day = 4;
+  DateShiftStrategy shift_strategy = 5;
+  string holiday_zone_id = 6;
+  bool is_active = 7;
+}
+
+message GetClientConfigRequest {
+  string id = 1;
+}
+
+message ListClientConfigsRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  Pagination pagination = 3;
+}
+
+message ListClientConfigsResponse {
+  repeated ClientDebitConfiguration configs = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteClientConfigRequest {
+  string id = 1;
+}
+
+// Contract Config
+message CreateContractConfigRequest {
+  string organisation_id = 1;
+  string contrat_id = 2;
+  DebitDateMode mode = 3;
+  DebitBatch batch = 4;
+  int32 fixed_day = 5;
+  DateShiftStrategy shift_strategy = 6;
+  string holiday_zone_id = 7;
+}
+
+message UpdateContractConfigRequest {
+  string id = 1;
+  DebitDateMode mode = 2;
+  DebitBatch batch = 3;
+  int32 fixed_day = 4;
+  DateShiftStrategy shift_strategy = 5;
+  string holiday_zone_id = 6;
+  bool is_active = 7;
+}
+
+message GetContractConfigRequest {
+  string id = 1;
+}
+
+message ListContractConfigsRequest {
+  string organisation_id = 1;
+  string contrat_id = 2;
+  Pagination pagination = 3;
+}
+
+message ListContractConfigsResponse {
+  repeated ContractDebitConfiguration configs = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteContractConfigRequest {
+  string id = 1;
+}
+
+// Resolve Configuration
+message ResolveConfigurationRequest {
+  string organisation_id = 1;
+  string contrat_id = 2;
+  string client_id = 3;
+  string societe_id = 4;
+}
+
+// Holiday Zone CRUD
+message CreateHolidayZoneRequest {
+  string organisation_id = 1;
+  string code = 2;
+  string name = 3;
+  string country_code = 4;
+  string region_code = 5;
+}
+
+message UpdateHolidayZoneRequest {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string country_code = 4;
+  string region_code = 5;
+  bool is_active = 6;
+}
+
+message GetHolidayZoneRequest {
+  string id = 1;
+}
+
+message ListHolidayZonesRequest {
+  string organisation_id = 1;
+  string country_code = 2;
+  Pagination pagination = 3;
+}
+
+message ListHolidayZonesResponse {
+  repeated HolidayZone zones = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteHolidayZoneRequest {
+  string id = 1;
+}
+
+// Holiday CRUD
+message CreateHolidayRequest {
+  string holiday_zone_id = 1;
+  string date = 2;
+  string name = 3;
+  HolidayType holiday_type = 4;
+  bool is_recurring = 5;
+  int32 recurring_month = 6;
+  int32 recurring_day = 7;
+}
+
+message UpdateHolidayRequest {
+  string id = 1;
+  string date = 2;
+  string name = 3;
+  HolidayType holiday_type = 4;
+  bool is_recurring = 5;
+  int32 recurring_month = 6;
+  int32 recurring_day = 7;
+  bool is_active = 8;
+}
+
+message GetHolidayRequest {
+  string id = 1;
+}
+
+message ListHolidaysRequest {
+  string holiday_zone_id = 1;
+  int32 year = 2;
+  Pagination pagination = 3;
+}
+
+message ListHolidaysResponse {
+  repeated Holiday holidays = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteHolidayRequest {
+  string id = 1;
+}
+
+message ImportHolidaysByCountryRequest {
+  string organisation_id = 1;
+  string country_code = 2;
+  int32 year = 3;
+  bool include_regional = 4;
+}
+
+message ImportHolidaysByCountryResponse {
+  bool success = 1;
+  int32 imported_count = 2;
+  string holiday_zone_id = 3;
+}
+
+// Volume Threshold CRUD
+message CreateVolumeThresholdRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  int32 max_transaction_count = 3;
+  int64 max_amount_cents = 4;
+  string currency = 5;
+  bool alert_on_exceed = 6;
+  string alert_email = 7;
+}
+
+message UpdateVolumeThresholdRequest {
+  string id = 1;
+  int32 max_transaction_count = 2;
+  int64 max_amount_cents = 3;
+  string currency = 4;
+  bool alert_on_exceed = 5;
+  string alert_email = 6;
+  bool is_active = 7;
+}
+
+message GetVolumeThresholdRequest {
+  string id = 1;
+}
+
+message ListVolumeThresholdsRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  Pagination pagination = 3;
+}
+
+message ListVolumeThresholdsResponse {
+  repeated VolumeThreshold thresholds = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteVolumeThresholdRequest {
+  string id = 1;
+}
+
+// Audit
+message GetAuditLogsRequest {
+  string organisation_id = 1;
+  string entity_type = 2;
+  string entity_id = 3;
+  string actor_user_id = 4;
+  AuditSource source = 5;
+  string start_date = 6;
+  string end_date = 7;
+  Pagination pagination = 8;
+}
+
+message GetAuditLogsResponse {
+  repeated CalendarAuditLog logs = 1;
+  PaginationResult pagination = 2;
+}

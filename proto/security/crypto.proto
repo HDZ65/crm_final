@@ -1,0 +1,510 @@
+syntax = "proto3";
+
+package security;
+
+import "google/protobuf/timestamp.proto";
+import "security/options.proto";
+
+// ============================================================================
+// CRYPTO SERVICE - Encryption key management and operations
+// ============================================================================
+// The CryptoService provides:
+// - Envelope encryption/decryption operations
+// - Key version management
+// - Blind index generation for searchable encryption
+// - Key rotation orchestration
+// ============================================================================
+
+// Key domain for segmentation
+enum KeyDomain {
+  KEY_DOMAIN_UNSPECIFIED = 0;
+  // Personal Identifiable Information
+  KEY_DOMAIN_PII = 1;
+  // Payment-related data
+  KEY_DOMAIN_PAYMENT = 2;
+  // Audit log signing
+  KEY_DOMAIN_AUDIT_SIGNING = 3;
+  // General secrets
+  KEY_DOMAIN_SECRETS = 4;
+}
+
+// Key status
+enum KeyStatus {
+  KEY_STATUS_UNSPECIFIED = 0;
+  // Key is active for encryption and decryption
+  KEY_STATUS_ACTIVE = 1;
+  // Key is only valid for decryption (deprecated)
+  KEY_STATUS_DECRYPT_ONLY = 2;
+  // Key is scheduled for deletion
+  KEY_STATUS_PENDING_DELETION = 3;
+  // Key has been deleted/destroyed
+  KEY_STATUS_DESTROYED = 4;
+}
+
+// ============================================================================
+// KEY METADATA
+// ============================================================================
+
+// Data Encryption Key (DEK) metadata
+message DataKey {
+  string id = 1;
+  
+  // Which domain this key belongs to
+  KeyDomain domain = 2;
+  
+  // Key version (incrementing)
+  int32 version = 3;
+  
+  // Environment (dev, staging, prod)
+  string environment = 4;
+  
+  // Status
+  KeyStatus status = 5;
+  
+  // Algorithm (e.g., AES-256-GCM)
+  string algorithm = 6;
+  
+  // Timestamps
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp activated_at = 8;
+  google.protobuf.Timestamp deprecated_at = 9;
+  google.protobuf.Timestamp scheduled_deletion_at = 10;
+  
+  // Created by
+  string created_by = 11;
+  
+  // Is this the current active key for encryption?
+  bool is_current = 12;
+}
+
+// Encrypted field metadata (stored alongside ciphertext)
+message EncryptedFieldMeta {
+  // Key version used for encryption
+  int32 key_version = 1;
+  
+  // Key domain
+  KeyDomain domain = 2;
+  
+  // Algorithm (e.g., AES-256-GCM)
+  string algorithm = 3;
+  
+  // Nonce/IV (base64 encoded)
+  bytes nonce = 4;
+  
+  // Additional authenticated data (optional)
+  bytes aad = 5;
+  
+  // Timestamp of encryption
+  google.protobuf.Timestamp encrypted_at = 6;
+}
+
+// ============================================================================
+// ENCRYPTION OPERATIONS
+// ============================================================================
+
+// Encrypt a value
+message EncryptRequest {
+  // Plaintext to encrypt (bytes)
+  bytes plaintext = 1;
+  
+  // Key domain to use
+  KeyDomain domain = 2;
+  
+  // Optional: additional authenticated data
+  bytes aad = 3;
+  
+  // Context (for audit/logging)
+  string context = 4;
+}
+
+message EncryptResponse {
+  // Ciphertext (bytes)
+  bytes ciphertext = 1;
+  
+  // Metadata about the encryption
+  EncryptedFieldMeta meta = 2;
+}
+
+// Decrypt a value
+message DecryptRequest {
+  // Ciphertext to decrypt
+  bytes ciphertext = 1;
+  
+  // Encryption metadata
+  EncryptedFieldMeta meta = 2;
+  
+  // Context (for audit/logging)
+  string context = 3;
+}
+
+message DecryptResponse {
+  // Decrypted plaintext
+  bytes plaintext = 1;
+}
+
+// Batch encrypt multiple values
+message BatchEncryptRequest {
+  message Item {
+    string id = 1;
+    bytes plaintext = 2;
+    bytes aad = 3;
+  }
+  
+  repeated Item items = 1;
+  KeyDomain domain = 2;
+  string context = 3;
+}
+
+message BatchEncryptResponse {
+  message EncryptedItem {
+    string id = 1;
+    bytes ciphertext = 2;
+    EncryptedFieldMeta meta = 3;
+    string error = 4;
+  }
+  
+  repeated EncryptedItem items = 1;
+  int32 success_count = 2;
+  int32 failure_count = 3;
+}
+
+// Batch decrypt multiple values
+message BatchDecryptRequest {
+  message Item {
+    string id = 1;
+    bytes ciphertext = 2;
+    EncryptedFieldMeta meta = 3;
+  }
+  
+  repeated Item items = 1;
+  string context = 2;
+}
+
+message BatchDecryptResponse {
+  message DecryptedItem {
+    string id = 1;
+    bytes plaintext = 2;
+    string error = 3;
+  }
+  
+  repeated DecryptedItem items = 1;
+  int32 success_count = 2;
+  int32 failure_count = 3;
+}
+
+// Re-encrypt with new key version (for key rotation)
+message ReencryptRequest {
+  bytes ciphertext = 1;
+  EncryptedFieldMeta current_meta = 2;
+  string context = 3;
+}
+
+message ReencryptResponse {
+  bytes ciphertext = 1;
+  EncryptedFieldMeta new_meta = 2;
+  bool key_version_changed = 3;
+}
+
+// ============================================================================
+// BLIND INDEX OPERATIONS
+// ============================================================================
+
+// Generate blind index for searchable encryption
+message GenerateBlindIndexRequest {
+  // Value to index (will be normalized)
+  string value = 1;
+  
+  // Index type (affects normalization)
+  BlindIndexType index_type = 2;
+  
+  // Key domain for HMAC key
+  KeyDomain domain = 3;
+}
+
+enum BlindIndexType {
+  BLIND_INDEX_TYPE_UNSPECIFIED = 0;
+  // Email: lowercase, trim
+  BLIND_INDEX_TYPE_EMAIL = 1;
+  // Phone: digits only, normalized
+  BLIND_INDEX_TYPE_PHONE = 2;
+  // IBAN: uppercase, no spaces
+  BLIND_INDEX_TYPE_IBAN = 3;
+  // Generic: as-is
+  BLIND_INDEX_TYPE_GENERIC = 4;
+}
+
+message GenerateBlindIndexResponse {
+  // Blind index (HMAC-SHA256, hex encoded)
+  bytes blind_index = 1;
+  
+  // Key version used
+  int32 key_version = 2;
+}
+
+// Batch generate blind indexes
+message BatchGenerateBlindIndexRequest {
+  message Item {
+    string id = 1;
+    string value = 2;
+  }
+  
+  repeated Item items = 1;
+  BlindIndexType index_type = 2;
+  KeyDomain domain = 3;
+}
+
+message BatchGenerateBlindIndexResponse {
+  message IndexedItem {
+    string id = 1;
+    bytes blind_index = 2;
+    string error = 3;
+  }
+  
+  repeated IndexedItem items = 1;
+  int32 key_version = 2;
+}
+
+// ============================================================================
+// KEY MANAGEMENT
+// ============================================================================
+
+// List available keys
+message ListKeysRequest {
+  KeyDomain domain = 1;
+  string environment = 2;
+  bool include_deprecated = 3;
+}
+
+message ListKeysResponse {
+  repeated DataKey keys = 1;
+}
+
+// Get current active key for a domain
+message GetCurrentKeyRequest {
+  KeyDomain domain = 1;
+  string environment = 2;
+}
+
+message GetCurrentKeyResponse {
+  DataKey key = 1;
+}
+
+// Rotate key (create new version)
+message RotateKeyRequest {
+  KeyDomain domain = 1;
+  string environment = 2;
+  string reason = 3;
+}
+
+message RotateKeyResponse {
+  DataKey new_key = 1;
+  DataKey old_key = 2;
+}
+
+// Schedule key deletion
+message ScheduleKeyDeletionRequest {
+  string key_id = 1;
+  int32 pending_days = 2;
+  string reason = 3;
+}
+
+message ScheduleKeyDeletionResponse {
+  DataKey key = 1;
+}
+
+// Cancel scheduled deletion
+message CancelKeyDeletionRequest {
+  string key_id = 1;
+  string reason = 2;
+}
+
+message CancelKeyDeletionResponse {
+  DataKey key = 1;
+}
+
+// ============================================================================
+// SIGNING OPERATIONS (for audit)
+// ============================================================================
+
+// Sign data
+message SignRequest {
+  bytes data = 1;
+  KeyDomain domain = 2;
+  string context = 3;
+}
+
+message SignResponse {
+  bytes signature = 1;
+  int32 key_version = 2;
+  string algorithm = 3;
+}
+
+// Verify signature
+message VerifyRequest {
+  bytes data = 1;
+  bytes signature = 2;
+  int32 key_version = 3;
+  KeyDomain domain = 4;
+}
+
+message VerifyResponse {
+  bool valid = 1;
+}
+
+// ============================================================================
+// SERVICE DEFINITION
+// ============================================================================
+
+service CryptoService {
+  // ========== ENCRYPTION ==========
+  
+  rpc Encrypt(EncryptRequest) returns (EncryptResponse) {
+    option (required_permission) = {
+      permission: "crypto:encrypt"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.encrypt"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc Decrypt(DecryptRequest) returns (DecryptResponse) {
+    option (required_permission) = {
+      permission: "crypto:decrypt"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.decrypt"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc BatchEncrypt(BatchEncryptRequest) returns (BatchEncryptResponse) {
+    option (required_permission) = {
+      permission: "crypto:encrypt"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.batch_encrypt"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc BatchDecrypt(BatchDecryptRequest) returns (BatchDecryptResponse) {
+    option (required_permission) = {
+      permission: "crypto:decrypt"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.batch_decrypt"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc Reencrypt(ReencryptRequest) returns (ReencryptResponse) {
+    option (required_permission) = {
+      permission: "crypto:reencrypt"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.reencrypt"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  // ========== BLIND INDEX ==========
+  
+  rpc GenerateBlindIndex(GenerateBlindIndexRequest) returns (GenerateBlindIndexResponse) {
+    option (required_permission) = {
+      permission: "crypto:index"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.generate_blind_index"
+      data_classification: DATA_CLASSIFICATION_PII
+    };
+  }
+  
+  rpc BatchGenerateBlindIndex(BatchGenerateBlindIndexRequest) returns (BatchGenerateBlindIndexResponse) {
+    option (required_permission) = {
+      permission: "crypto:index"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.batch_generate_blind_index"
+      data_classification: DATA_CLASSIFICATION_PII
+    };
+  }
+  
+  // ========== KEY MANAGEMENT ==========
+  
+  rpc ListKeys(ListKeysRequest) returns (ListKeysResponse) {
+    option (required_permission) = {
+      permission: "crypto:key:read"
+      tenant_scoped: false
+      mfa_step_up_required: true
+      audit_blocking: false
+      audit_action: "crypto.key.list"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc GetCurrentKey(GetCurrentKeyRequest) returns (GetCurrentKeyResponse) {
+    option (required_permission) = {
+      permission: "crypto:key:read"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.key.get_current"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc RotateKey(RotateKeyRequest) returns (RotateKeyResponse) {
+    option (required_permission) = {
+      permission: "crypto:key:rotate"
+      tenant_scoped: false
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "crypto.key.rotate"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc ScheduleKeyDeletion(ScheduleKeyDeletionRequest) returns (ScheduleKeyDeletionResponse) {
+    option (required_permission) = {
+      permission: "crypto:key:delete"
+      tenant_scoped: false
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "crypto.key.schedule_deletion"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc CancelKeyDeletion(CancelKeyDeletionRequest) returns (CancelKeyDeletionResponse) {
+    option (required_permission) = {
+      permission: "crypto:key:delete"
+      tenant_scoped: false
+      mfa_step_up_required: true
+      audit_blocking: true
+      audit_action: "crypto.key.cancel_deletion"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  // ========== SIGNING ==========
+  
+  rpc Sign(SignRequest) returns (SignResponse) {
+    option (required_permission) = {
+      permission: "crypto:sign"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.sign"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+  
+  rpc Verify(VerifyRequest) returns (VerifyResponse) {
+    option (required_permission) = {
+      permission: "crypto:verify"
+      tenant_scoped: false
+      audit_blocking: false
+      audit_action: "crypto.verify"
+      data_classification: DATA_CLASSIFICATION_SECRET
+    };
+  }
+}

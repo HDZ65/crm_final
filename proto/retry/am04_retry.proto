@@ -1,0 +1,642 @@
+syntax = "proto3";
+
+package retry;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// AM04 RETRY SYSTEM - Protocol Buffer Definitions
+// ============================================================================
+// Source of truth for payment rejection retry handling (AM04 "Account Closed/Invalid")
+// 
+// Conventions:
+// - All fields: snake_case (Protobuf official style)
+// - Generated TS: camelCase via buf.gen.yaml (snakeToCamel=true)
+// - Database: snake_case via TypeORM naming strategy
+// - JSON API: camelCase (automatic proto-to-JSON conversion)
+// ============================================================================
+
+// ==================== ENUMS ====================
+
+// Rejection reason codes (SEPA return reason codes)
+enum RejectionReasonCode {
+  REJECTION_REASON_CODE_UNSPECIFIED = 0;
+  
+  // AM04 - Account closed/invalid - RETRYABLE
+  AM04_ACCOUNT_CLOSED = 1;
+  
+  // Other retryable codes
+  AC04_ACCOUNT_CLOSED = 2;           // Account closed
+  AC06_ACCOUNT_BLOCKED = 3;          // Account blocked
+  AG01_TRANSACTION_FORBIDDEN = 4;    // Transaction forbidden
+  AG02_INVALID_FORMAT = 5;           // Invalid bank operation code
+  BE04_MISSING_CREDITOR_ADDRESS = 6; // Missing creditor address
+  FF01_INVALID_FILE_FORMAT = 7;      // Invalid file format
+  MD01_NO_MANDATE = 8;               // No mandate
+  MD02_MISSING_MANDATORY_INFO = 9;   // Missing mandatory infos
+  MD06_REFUND_REQUEST = 10;          // Refund request by end customer
+  MD07_END_CUSTOMER_DECEASED = 11;   // End customer deceased
+  MS02_NOT_SPECIFIED_REASON = 12;    // Reason not specified by customer
+  MS03_AGENT_REASON = 13;            // Reason not specified by agent
+  RC01_INVALID_BIC = 14;             // Bank identifier incorrect
+  RR01_MISSING_DEBTOR_ACCOUNT = 15;  // Missing debtor account/ID
+  RR02_MISSING_DEBTOR_NAME = 16;     // Missing debtor name/address
+  RR03_MISSING_CREDITOR_NAME = 17;   // Missing creditor name/address
+  RR04_REGULATORY_REASON = 18;       // Regulatory reason
+  SL01_SPECIFIC_SERVICE_PROVIDER = 19; // Due to specific service offered
+  TM01_CUT_OFF_TIME = 20;            // File received after cut-off time
+  
+  // Non-retryable codes
+  AC01_IBAN_INVALID = 50;            // Incorrect IBAN - NOT RETRYABLE
+  AC13_DEBTOR_ACCOUNT_TYPE = 51;     // Invalid debtor account type - NOT RETRYABLE
+  CNOR_CREDITOR_NOT_ON_WHITELIST = 52; // Creditor bank not registered - NOT RETRYABLE
+  DNOR_DEBTOR_NOT_ON_WHITELIST = 53;   // Debtor bank not registered - NOT RETRYABLE
+  FF05_DUPLICATE_ENTRY = 54;         // Duplicate - NOT RETRYABLE
+  FOCR_FOLLOWING_CANCELLATION = 55;  // Following cancellation request - NOT RETRYABLE
+}
+
+// Retry eligibility decision
+enum RetryEligibility {
+  RETRY_ELIGIBILITY_UNSPECIFIED = 0;
+  ELIGIBLE = 1;                      // Can retry
+  NOT_ELIGIBLE_REASON_CODE = 2;      // Reason code is non-retryable
+  NOT_ELIGIBLE_MAX_ATTEMPTS = 3;     // Max attempts reached
+  NOT_ELIGIBLE_PAYMENT_SETTLED = 4;  // Payment already settled elsewhere
+  NOT_ELIGIBLE_CONTRACT_CANCELLED = 5; // Contract cancelled
+  NOT_ELIGIBLE_MANDATE_REVOKED = 6;  // Mandate revoked
+  NOT_ELIGIBLE_CLIENT_BLOCKED = 7;   // Client blocked/blacklisted
+  NOT_ELIGIBLE_MANUAL_CANCEL = 8;    // Manually cancelled by admin
+}
+
+// Retry attempt status
+enum RetryAttemptStatus {
+  RETRY_ATTEMPT_STATUS_UNSPECIFIED = 0;
+  SCHEDULED = 1;       // Planned for future date
+  IN_PROGRESS = 2;     // Currently being processed
+  SUBMITTED = 3;       // Submitted to PSP, awaiting confirmation
+  SUCCEEDED = 4;       // Payment successful
+  FAILED = 5;          // Payment failed (may trigger next retry)
+  CANCELLED = 6;       // Manually cancelled
+  SKIPPED = 7;         // Skipped due to condition (e.g., payment settled)
+}
+
+// Retry job status (scheduler batch)
+enum RetryJobStatus {
+  RETRY_JOB_STATUS_UNSPECIFIED = 0;
+  JOB_PENDING = 1;     // Waiting to be picked up
+  JOB_RUNNING = 2;     // Currently executing
+  JOB_COMPLETED = 3;   // Finished successfully
+  JOB_FAILED = 4;      // Failed with errors
+  JOB_PARTIAL = 5;     // Completed with some failures
+}
+
+// Reminder channel
+enum ReminderChannel {
+  REMINDER_CHANNEL_UNSPECIFIED = 0;
+  EMAIL = 1;
+  SMS = 2;
+  PHONE_CALL = 3;      // Task for call center
+  PUSH_NOTIFICATION = 4;
+  POSTAL_MAIL = 5;
+}
+
+// Reminder status
+enum ReminderStatus {
+  REMINDER_STATUS_UNSPECIFIED = 0;
+  REMINDER_PENDING = 1;    // Queued for sending
+  REMINDER_SENT = 2;       // Sent to provider
+  REMINDER_DELIVERED = 3;  // Confirmed delivered
+  REMINDER_FAILED = 4;     // Delivery failed
+  REMINDER_CANCELLED = 5;  // Cancelled before sending
+  REMINDER_BOUNCED = 6;    // Bounced (email)
+  REMINDER_OPENED = 7;     // Opened (email tracking)
+  REMINDER_CLICKED = 8;    // Link clicked (email tracking)
+}
+
+// Reminder trigger type
+enum ReminderTrigger {
+  REMINDER_TRIGGER_UNSPECIFIED = 0;
+  ON_AM04_RECEIVED = 1;        // When AM04 rejection received
+  BEFORE_RETRY = 2;            // X days before scheduled retry
+  AFTER_RETRY_FAILED = 3;      // After a retry attempt failed
+  AFTER_ALL_RETRIES_EXHAUSTED = 4; // All retries failed
+  MANUAL = 5;                  // Manually triggered by admin
+}
+
+// ==================== RETRY POLICY ====================
+
+// Policy defining retry behavior for a given context
+message RetryPolicy {
+  string id = 1;
+  string organisation_id = 2;
+  
+  // Scope (optional, for policy inheritance)
+  optional string societe_id = 3;    // If set, applies to this company
+  optional string product_id = 4;    // If set, applies to this product
+  optional string channel_id = 5;    // If set, applies to this channel
+  
+  // Policy name and description
+  string name = 6;
+  string description = 7;
+  
+  // Retry schedule (days after rejection)
+  repeated int32 retry_delays_days = 8;  // e.g., [5, 10, 20] for J+5, J+10, J+20
+  
+  // Limits
+  int32 max_attempts = 9;                // Maximum retry attempts (default: 3)
+  int32 max_total_days = 10;             // Maximum days from first rejection (default: 30)
+  
+  // Conditions
+  bool retry_on_am04 = 11;               // Retry on AM04 (default: true)
+  repeated RejectionReasonCode retryable_codes = 12;  // Additional retryable codes
+  repeated RejectionReasonCode non_retryable_codes = 13; // Explicit non-retryable codes
+  
+  // Stop conditions
+  bool stop_on_payment_settled = 14;     // Stop if payment made elsewhere
+  bool stop_on_contract_cancelled = 15;  // Stop if contract cancelled
+  bool stop_on_mandate_revoked = 16;     // Stop if mandate revoked
+  
+  // Backoff strategy (for future extensibility)
+  string backoff_strategy = 17;          // "FIXED" (default), "EXPONENTIAL", "LINEAR"
+  
+  // Active status
+  bool is_active = 18;
+  bool is_default = 19;                  // Default policy for organisation
+  
+  // Priority (higher = more specific)
+  int32 priority = 20;
+  
+  // Audit
+  string created_at = 21;
+  string updated_at = 22;
+  string created_by = 23;
+  string updated_by = 24;
+}
+
+// ==================== RETRY SCHEDULE ====================
+
+// A retry schedule for a specific rejected payment
+message RetrySchedule {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  
+  // Source payment reference
+  string original_payment_id = 4;        // Original failed payment ID
+  string schedule_id = 5;                // Reference to payment schedule
+  optional string facture_id = 6;        // Invoice if applicable
+  optional string contrat_id = 7;        // Contract if applicable
+  string client_id = 8;                  // Client reference
+  
+  // Rejection info
+  RejectionReasonCode rejection_code = 9;
+  string rejection_raw_code = 10;        // Raw code from PSP
+  string rejection_message = 11;
+  google.protobuf.Timestamp rejection_date = 12;
+  
+  // Policy applied
+  string retry_policy_id = 13;
+  
+  // Amount
+  int64 amount_cents = 14;
+  string currency = 15;
+  
+  // Eligibility
+  RetryEligibility eligibility = 16;
+  string eligibility_reason = 17;
+  
+  // Current state
+  int32 current_attempt = 18;            // 0 = no retry yet, 1..n = attempt number
+  int32 max_attempts = 19;
+  optional google.protobuf.Timestamp next_retry_date = 20;
+  
+  // Final outcome
+  bool is_resolved = 21;                 // True if no more retries needed
+  optional string resolution_reason = 22; // Why it was resolved
+  optional google.protobuf.Timestamp resolved_at = 23;
+  
+  // Idempotency
+  string idempotency_key = 24;           // Unique key: "{payment_id}:{rejection_date}"
+  
+  // Audit
+  string created_at = 25;
+  string updated_at = 26;
+  map<string, string> metadata = 27;
+}
+
+// ==================== RETRY ATTEMPT ====================
+
+// Individual retry attempt
+message RetryAttempt {
+  string id = 1;
+  string retry_schedule_id = 2;
+  
+  // Attempt info
+  int32 attempt_number = 3;              // 1, 2, 3, ...
+  google.protobuf.Timestamp planned_date = 4;
+  optional google.protobuf.Timestamp executed_at = 5;
+  
+  // Status
+  RetryAttemptStatus status = 6;
+  
+  // Execution details
+  optional string payment_intent_id = 7; // Created payment intent
+  optional string psp_payment_id = 8;    // PSP payment reference
+  optional string psp_response = 9;      // Raw PSP response (JSON)
+  
+  // Result
+  optional string error_code = 10;
+  optional string error_message = 11;
+  optional RejectionReasonCode new_rejection_code = 12; // If failed with new code
+  
+  // Retry job reference
+  optional string retry_job_id = 13;
+  
+  // Idempotency
+  string idempotency_key = 14;           // Unique key: "{schedule_id}:{attempt_number}"
+  
+  // Audit
+  string created_at = 15;
+  string updated_at = 16;
+}
+
+// ==================== RETRY JOB ====================
+
+// Batch job for scheduler execution
+message RetryJob {
+  string id = 1;
+  string organisation_id = 2;
+  
+  // Job parameters
+  google.protobuf.Timestamp target_date = 3;  // Date for which retries are being processed
+  string timezone = 4;                        // Timezone for cutoff (e.g., "Europe/Paris")
+  string cutoff_time = 5;                     // Cutoff time (e.g., "10:00:00")
+  
+  // Execution
+  google.protobuf.Timestamp scheduled_at = 6;
+  optional google.protobuf.Timestamp started_at = 7;
+  optional google.protobuf.Timestamp completed_at = 8;
+  
+  // Status
+  RetryJobStatus status = 9;
+  
+  // Results
+  int32 total_attempts = 10;
+  int32 successful_attempts = 11;
+  int32 failed_attempts = 12;
+  int32 skipped_attempts = 13;
+  
+  // Error tracking
+  optional string error_message = 14;
+  repeated string failed_schedule_ids = 15;
+  
+  // Idempotency
+  string idempotency_key = 16;           // Unique key: "{org_id}:{target_date}:{cutoff}"
+  
+  // Trigger
+  string triggered_by = 17;              // "SCHEDULER" or user_id for manual
+  bool is_manual = 18;
+  
+  // Audit
+  string created_at = 19;
+  string updated_at = 20;
+}
+
+// ==================== REMINDER POLICY ====================
+
+// Policy defining reminder behavior
+message ReminderPolicy {
+  string id = 1;
+  string organisation_id = 2;
+  
+  // Scope
+  optional string societe_id = 3;
+  
+  // Policy name
+  string name = 4;
+  string description = 5;
+  
+  // Trigger rules
+  repeated ReminderTriggerRule trigger_rules = 6;
+  
+  // Anti-spam / rate limiting
+  int32 cooldown_hours = 7;              // Minimum hours between reminders to same client
+  int32 max_reminders_per_day = 8;       // Max reminders per day per client
+  int32 max_reminders_per_week = 9;      // Max reminders per week per client
+  
+  // Time windows (hours in 24h format)
+  int32 allowed_start_hour = 10;         // e.g., 9 (9:00 AM)
+  int32 allowed_end_hour = 11;           // e.g., 19 (7:00 PM)
+  repeated int32 allowed_days_of_week = 12; // 0=Sunday, 1=Monday, ..., 6=Saturday
+  
+  // Opt-out handling
+  bool respect_opt_out = 13;             // Check client communication preferences
+  
+  // Active status
+  bool is_active = 14;
+  bool is_default = 15;
+  int32 priority = 16;
+  
+  // Audit
+  string created_at = 17;
+  string updated_at = 18;
+}
+
+// Trigger rule within a reminder policy
+message ReminderTriggerRule {
+  string id = 1;
+  
+  ReminderTrigger trigger = 2;
+  ReminderChannel channel = 3;
+  string template_id = 4;                // Email/SMS template reference
+  
+  // Timing
+  int32 delay_hours = 5;                 // Hours after trigger event
+  optional int32 days_before_retry = 6;  // For BEFORE_RETRY trigger
+  
+  // Priority
+  int32 order = 7;
+  
+  // Conditions
+  bool only_if_no_response = 8;          // Only send if no response to previous
+  bool only_first_rejection = 9;         // Only on first AM04, not subsequent
+}
+
+// ==================== REMINDER ====================
+
+// Individual reminder instance
+message Reminder {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  
+  // References
+  string retry_schedule_id = 4;
+  optional string retry_attempt_id = 5;  // If triggered by specific attempt
+  string client_id = 6;
+  
+  // Policy
+  string reminder_policy_id = 7;
+  string trigger_rule_id = 8;
+  
+  // Channel and content
+  ReminderChannel channel = 9;
+  string template_id = 10;
+  map<string, string> template_variables = 11;
+  
+  // Trigger
+  ReminderTrigger trigger = 12;
+  
+  // Scheduling
+  google.protobuf.Timestamp planned_at = 13;
+  optional google.protobuf.Timestamp sent_at = 14;
+  optional google.protobuf.Timestamp delivered_at = 15;
+  
+  // Status
+  ReminderStatus status = 16;
+  
+  // Delivery details
+  optional string provider_name = 17;    // Email provider, SMS gateway, etc.
+  optional string provider_message_id = 18; // Provider's tracking ID
+  optional string delivery_status_raw = 19; // Raw status from provider
+  
+  // Error handling
+  optional string error_code = 20;
+  optional string error_message = 21;
+  int32 retry_count = 22;                // Delivery retry count
+  
+  // Idempotency
+  string idempotency_key = 23;           // Unique key: "{schedule_id}:{trigger}:{channel}:{attempt}"
+  
+  // Audit
+  string created_at = 24;
+  string updated_at = 25;
+}
+
+// ==================== AUDIT LOG ====================
+
+// Append-only audit log for all retry/reminder actions
+message RetryAuditLog {
+  string id = 1;
+  string organisation_id = 2;
+  
+  // What changed
+  string entity_type = 3;                // "RETRY_SCHEDULE", "RETRY_ATTEMPT", "REMINDER", etc.
+  string entity_id = 4;
+  string action = 5;                     // "CREATED", "UPDATED", "STATUS_CHANGED", etc.
+  
+  // Change details
+  optional string old_value = 6;         // JSON of old state
+  string new_value = 7;                  // JSON of new state
+  optional string changed_fields = 8;    // Comma-separated field names
+  
+  // Context
+  optional string retry_schedule_id = 9;
+  optional string retry_attempt_id = 10;
+  optional string reminder_id = 11;
+  optional string payment_id = 12;
+  
+  // Actor
+  string actor_type = 13;                // "SYSTEM", "USER", "SCHEDULER", "WEBHOOK"
+  optional string actor_id = 14;         // User ID if applicable
+  string actor_ip = 15;
+  
+  // Timestamp (immutable)
+  google.protobuf.Timestamp timestamp = 16;
+  
+  // Additional context
+  map<string, string> metadata = 17;
+}
+
+// ==================== EVENTS ====================
+
+// Event: Payment rejected (input event)
+message PaymentRejectedEvent {
+  string event_id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  
+  // Payment info
+  string payment_id = 4;
+  string schedule_id = 5;
+  optional string facture_id = 6;
+  optional string contrat_id = 7;
+  string client_id = 8;
+  
+  // Rejection details
+  string reason_code = 9;                // Raw code (e.g., "AM04")
+  string reason_message = 10;
+  
+  // Amount
+  int64 amount_cents = 11;
+  string currency = 12;
+  
+  // PSP info
+  string psp_name = 13;
+  optional string psp_payment_id = 14;
+  optional string psp_raw_response = 15; // JSON
+  
+  // Timestamps
+  google.protobuf.Timestamp rejected_at = 16;
+  google.protobuf.Timestamp event_timestamp = 17;
+  
+  // Idempotency
+  string idempotency_key = 18;
+}
+
+// Event: Retry scheduled
+message RetryScheduledEvent {
+  string event_id = 1;
+  string retry_schedule_id = 2;
+  string retry_attempt_id = 3;
+  
+  int32 attempt_number = 4;
+  google.protobuf.Timestamp planned_date = 5;
+  
+  string client_id = 6;
+  int64 amount_cents = 7;
+  string currency = 8;
+  
+  google.protobuf.Timestamp event_timestamp = 9;
+}
+
+// Event: Retry executed
+message RetryExecutedEvent {
+  string event_id = 1;
+  string retry_schedule_id = 2;
+  string retry_attempt_id = 3;
+  
+  int32 attempt_number = 4;
+  RetryAttemptStatus status = 5;
+  
+  optional string payment_intent_id = 6;
+  optional string error_code = 7;
+  optional string error_message = 8;
+  
+  google.protobuf.Timestamp executed_at = 9;
+  google.protobuf.Timestamp event_timestamp = 10;
+}
+
+// Event: Retry succeeded
+message RetrySucceededEvent {
+  string event_id = 1;
+  string retry_schedule_id = 2;
+  string retry_attempt_id = 3;
+  
+  int32 attempt_number = 4;
+  string payment_intent_id = 5;
+  int64 amount_cents = 6;
+  string currency = 7;
+  
+  google.protobuf.Timestamp succeeded_at = 8;
+  google.protobuf.Timestamp event_timestamp = 9;
+}
+
+// Event: Retry failed
+message RetryFailedEvent {
+  string event_id = 1;
+  string retry_schedule_id = 2;
+  string retry_attempt_id = 3;
+  
+  int32 attempt_number = 4;
+  string error_code = 5;
+  string error_message = 6;
+  optional RejectionReasonCode new_rejection_code = 7;
+  
+  bool has_more_attempts = 8;
+  optional google.protobuf.Timestamp next_retry_date = 9;
+  
+  google.protobuf.Timestamp failed_at = 10;
+  google.protobuf.Timestamp event_timestamp = 11;
+}
+
+// Event: Retry cancelled
+message RetryCancelledEvent {
+  string event_id = 1;
+  string retry_schedule_id = 2;
+  optional string retry_attempt_id = 3;
+  
+  string cancellation_reason = 4;
+  string cancelled_by = 5;               // User ID or "SYSTEM"
+  
+  google.protobuf.Timestamp cancelled_at = 6;
+  google.protobuf.Timestamp event_timestamp = 7;
+}
+
+// Event: Reminder planned
+message ReminderPlannedEvent {
+  string event_id = 1;
+  string reminder_id = 2;
+  string retry_schedule_id = 3;
+  
+  ReminderChannel channel = 4;
+  ReminderTrigger trigger = 5;
+  google.protobuf.Timestamp planned_at = 6;
+  
+  string client_id = 7;
+  
+  google.protobuf.Timestamp event_timestamp = 8;
+}
+
+// Event: Reminder sent
+message ReminderSentEvent {
+  string event_id = 1;
+  string reminder_id = 2;
+  
+  ReminderChannel channel = 3;
+  string provider_name = 4;
+  optional string provider_message_id = 5;
+  
+  google.protobuf.Timestamp sent_at = 6;
+  google.protobuf.Timestamp event_timestamp = 7;
+}
+
+// Event: Reminder failed
+message ReminderFailedEvent {
+  string event_id = 1;
+  string reminder_id = 2;
+  
+  ReminderChannel channel = 3;
+  string error_code = 4;
+  string error_message = 5;
+  
+  int32 retry_count = 6;
+  bool will_retry = 7;
+  
+  google.protobuf.Timestamp failed_at = 8;
+  google.protobuf.Timestamp event_timestamp = 9;
+}
+
+// Event: Reminder cancelled
+message ReminderCancelledEvent {
+  string event_id = 1;
+  string reminder_id = 2;
+  
+  string cancellation_reason = 3;
+  string cancelled_by = 4;
+  
+  google.protobuf.Timestamp cancelled_at = 5;
+  google.protobuf.Timestamp event_timestamp = 6;
+}
+
+// ==================== ERROR TYPES ====================
+
+// Typed error responses
+message RetryError {
+  string code = 1;
+  string message = 2;
+  map<string, string> details = 3;
+}
+
+// Specific error codes (to be used with RetryError)
+// NOT_RETRYABLE_REASON
+// MAX_ATTEMPTS_REACHED
+// PAYMENT_NOT_ELIGIBLE
+// SCHEDULER_LAG_DETECTED
+// REMINDER_RATE_LIMITED
+// PROVIDER_DELIVERY_FAILED
+// DUPLICATE_EXECUTION_PREVENTED
+// POLICY_NOT_FOUND
+// SCHEDULE_NOT_FOUND
+// INVALID_STATE_TRANSITION
+// IDEMPOTENCY_CONFLICT

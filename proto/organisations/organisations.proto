@@ -1,0 +1,529 @@
+syntax = "proto3";
+
+package organisations;
+
+// ========== ORGANISATION SERVICE ==========
+service OrganisationService {
+  rpc Create(CreateOrganisationRequest) returns (Organisation);
+  rpc CreateWithOwner(CreateOrganisationWithOwnerRequest) returns (OrganisationWithOwner);
+  rpc Update(UpdateOrganisationRequest) returns (Organisation);
+  rpc Get(GetOrganisationRequest) returns (Organisation);
+  rpc List(ListOrganisationRequest) returns (ListOrganisationResponse);
+  rpc Delete(DeleteOrganisationRequest) returns (DeleteResponse);
+}
+
+message Organisation {
+  string id = 1;
+  string nom = 2;
+  string description = 3;
+  string siret = 4;
+  string adresse = 5;
+  string telephone = 6;
+  string email = 7;
+  bool actif = 8;
+  string etat = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+message CreateOrganisationRequest {
+  string nom = 1;
+  string description = 2;
+  string siret = 3;
+  string adresse = 4;
+  string telephone = 5;
+  string email = 6;
+  bool actif = 7;
+}
+
+message KeycloakUser {
+  string sub = 1;
+  string email = 2;
+  string given_name = 3;
+  string family_name = 4;
+  string preferred_username = 5;
+  string name = 6;
+}
+
+message CreateOrganisationWithOwnerRequest {
+  string nom = 1;
+  string description = 2;
+  string siret = 3;
+  string adresse = 4;
+  string telephone = 5;
+  string email = 6;
+  bool actif = 7;
+  KeycloakUser keycloak_user = 8;
+}
+
+message Utilisateur {
+  string id = 1;
+  string keycloak_id = 2;
+  string nom = 3;
+  string prenom = 4;
+  string email = 5;
+}
+
+message MembreOrganisation {
+  string id = 1;
+  string role_id = 2;
+  string etat = 3;
+}
+
+message OrganisationWithOwner {
+  Organisation organisation = 1;
+  Utilisateur utilisateur = 2;
+  MembreOrganisation membre = 3;
+}
+
+message UpdateOrganisationRequest {
+  string id = 1;
+  string nom = 2;
+  string description = 3;
+  string siret = 4;
+  string adresse = 5;
+  string telephone = 6;
+  string email = 7;
+  bool actif = 8;
+  string etat = 9;
+}
+
+message GetOrganisationRequest {
+  string id = 1;
+}
+
+message ListOrganisationRequest {
+  string search = 1;
+  bool actif = 2;
+  Pagination pagination = 3;
+}
+
+message ListOrganisationResponse {
+  repeated Organisation organisations = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteOrganisationRequest {
+  string id = 1;
+}
+
+// ========== SOCIETE SERVICE ==========
+service SocieteService {
+  rpc Create(CreateSocieteRequest) returns (Societe);
+  rpc Update(UpdateSocieteRequest) returns (Societe);
+  rpc Get(GetSocieteRequest) returns (Societe);
+  rpc ListByOrganisation(ListSocieteByOrganisationRequest) returns (ListSocieteResponse);
+  rpc List(ListSocieteRequest) returns (ListSocieteResponse);
+  rpc Delete(DeleteSocieteRequest) returns (DeleteResponse);
+}
+
+message Societe {
+  string id = 1;
+  string organisation_id = 2;
+  string raison_sociale = 3;
+  string siren = 4;
+  string numero_tva = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CreateSocieteRequest {
+  string organisation_id = 1;
+  string raison_sociale = 2;
+  string siren = 3;
+  string numero_tva = 4;
+}
+
+message UpdateSocieteRequest {
+  string id = 1;
+  string raison_sociale = 2;
+  string siren = 3;
+  string numero_tva = 4;
+}
+
+message GetSocieteRequest {
+  string id = 1;
+}
+
+message ListSocieteByOrganisationRequest {
+  string organisation_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListSocieteRequest {
+  string search = 1;
+  Pagination pagination = 2;
+}
+
+message ListSocieteResponse {
+  repeated Societe societes = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteSocieteRequest {
+  string id = 1;
+}
+
+// ========== STATUT PARTENAIRE SERVICE ==========
+service StatutPartenaireService {
+  rpc Create(CreateStatutPartenaireRequest) returns (StatutPartenaire);
+  rpc Update(UpdateStatutPartenaireRequest) returns (StatutPartenaire);
+  rpc Get(GetStatutPartenaireRequest) returns (StatutPartenaire);
+  rpc GetByCode(GetStatutPartenaireByCodeRequest) returns (StatutPartenaire);
+  rpc List(ListStatutPartenaireRequest) returns (ListStatutPartenaireResponse);
+  rpc Delete(DeleteStatutPartenaireRequest) returns (DeleteResponse);
+}
+
+message StatutPartenaire {
+  string id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message CreateStatutPartenaireRequest {
+  string code = 1;
+  string nom = 2;
+  string description = 3;
+}
+
+message UpdateStatutPartenaireRequest {
+  string id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+}
+
+message GetStatutPartenaireRequest {
+  string id = 1;
+}
+
+message GetStatutPartenaireByCodeRequest {
+  string code = 1;
+}
+
+message ListStatutPartenaireRequest {
+  Pagination pagination = 1;
+}
+
+message ListStatutPartenaireResponse {
+  repeated StatutPartenaire statuts = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteStatutPartenaireRequest {
+  string id = 1;
+}
+
+// ========== PARTENAIRE MARQUE BLANCHE SERVICE ==========
+service PartenaireMarqueBlancheService {
+  rpc Create(CreatePartenaireRequest) returns (PartenaireMarqueBlanche);
+  rpc Update(UpdatePartenaireRequest) returns (PartenaireMarqueBlanche);
+  rpc Get(GetPartenaireRequest) returns (PartenaireMarqueBlanche);
+  rpc List(ListPartenaireRequest) returns (ListPartenaireResponse);
+  rpc Delete(DeletePartenaireRequest) returns (DeleteResponse);
+}
+
+message PartenaireMarqueBlanche {
+  string id = 1;
+  string denomination = 2;
+  string siren = 3;
+  string numero_tva = 4;
+  string contact_support_email = 5;
+  string telephone = 6;
+  string statut_id = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreatePartenaireRequest {
+  string denomination = 1;
+  string siren = 2;
+  string numero_tva = 3;
+  string contact_support_email = 4;
+  string telephone = 5;
+  string statut_id = 6;
+}
+
+message UpdatePartenaireRequest {
+  string id = 1;
+  string denomination = 2;
+  string siren = 3;
+  string numero_tva = 4;
+  string contact_support_email = 5;
+  string telephone = 6;
+  string statut_id = 7;
+}
+
+message GetPartenaireRequest {
+  string id = 1;
+}
+
+message ListPartenaireRequest {
+  string search = 1;
+  string statut_id = 2;
+  Pagination pagination = 3;
+}
+
+message ListPartenaireResponse {
+  repeated PartenaireMarqueBlanche partenaires = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeletePartenaireRequest {
+  string id = 1;
+}
+
+// ========== THEME MARQUE SERVICE ==========
+service ThemeMarqueService {
+  rpc Create(CreateThemeMarqueRequest) returns (ThemeMarque);
+  rpc Update(UpdateThemeMarqueRequest) returns (ThemeMarque);
+  rpc Get(GetThemeMarqueRequest) returns (ThemeMarque);
+  rpc List(ListThemeMarqueRequest) returns (ListThemeMarqueResponse);
+  rpc Delete(DeleteThemeMarqueRequest) returns (DeleteResponse);
+}
+
+message ThemeMarque {
+  string id = 1;
+  string logo_url = 2;
+  string couleur_primaire = 3;
+  string couleur_secondaire = 4;
+  string favicon_url = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message CreateThemeMarqueRequest {
+  string logo_url = 1;
+  string couleur_primaire = 2;
+  string couleur_secondaire = 3;
+  string favicon_url = 4;
+}
+
+message UpdateThemeMarqueRequest {
+  string id = 1;
+  string logo_url = 2;
+  string couleur_primaire = 3;
+  string couleur_secondaire = 4;
+  string favicon_url = 5;
+}
+
+message GetThemeMarqueRequest {
+  string id = 1;
+}
+
+message ListThemeMarqueRequest {
+  Pagination pagination = 1;
+}
+
+message ListThemeMarqueResponse {
+  repeated ThemeMarque themes = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteThemeMarqueRequest {
+  string id = 1;
+}
+
+// ========== ROLE PARTENAIRE SERVICE ==========
+service RolePartenaireService {
+  rpc Create(CreateRolePartenaireRequest) returns (RolePartenaire);
+  rpc Update(UpdateRolePartenaireRequest) returns (RolePartenaire);
+  rpc Get(GetRolePartenaireRequest) returns (RolePartenaire);
+  rpc GetByCode(GetRolePartenaireByCodeRequest) returns (RolePartenaire);
+  rpc List(ListRolePartenaireRequest) returns (ListRolePartenaireResponse);
+  rpc Delete(DeleteRolePartenaireRequest) returns (DeleteResponse);
+}
+
+message RolePartenaire {
+  string id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message CreateRolePartenaireRequest {
+  string code = 1;
+  string nom = 2;
+  string description = 3;
+}
+
+message UpdateRolePartenaireRequest {
+  string id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+}
+
+message GetRolePartenaireRequest {
+  string id = 1;
+}
+
+message GetRolePartenaireByCodeRequest {
+  string code = 1;
+}
+
+message ListRolePartenaireRequest {
+  Pagination pagination = 1;
+}
+
+message ListRolePartenaireResponse {
+  repeated RolePartenaire roles = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteRolePartenaireRequest {
+  string id = 1;
+}
+
+// ========== MEMBRE PARTENAIRE SERVICE ==========
+service MembrePartenaireService {
+  rpc Create(CreateMembrePartenaireRequest) returns (MembrePartenaire);
+  rpc Update(UpdateMembrePartenaireRequest) returns (MembrePartenaire);
+  rpc Get(GetMembrePartenaireRequest) returns (MembrePartenaire);
+  rpc ListByPartenaire(ListMembreByPartenaireRequest) returns (ListMembrePartenaireResponse);
+  rpc ListByUtilisateur(ListMembreByUtilisateurRequest) returns (ListMembrePartenaireResponse);
+  rpc Delete(DeleteMembrePartenaireRequest) returns (DeleteResponse);
+}
+
+message MembrePartenaire {
+  string id = 1;
+  string utilisateur_id = 2;
+  string partenaire_id = 3;
+  string role_id = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message CreateMembrePartenaireRequest {
+  string utilisateur_id = 1;
+  string partenaire_id = 2;
+  string role_id = 3;
+}
+
+message UpdateMembrePartenaireRequest {
+  string id = 1;
+  string role_id = 2;
+}
+
+message GetMembrePartenaireRequest {
+  string id = 1;
+}
+
+message ListMembreByPartenaireRequest {
+  string partenaire_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListMembreByUtilisateurRequest {
+  string utilisateur_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListMembrePartenaireResponse {
+  repeated MembrePartenaire membres = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteMembrePartenaireRequest {
+  string id = 1;
+}
+
+// ========== INVITATION COMPTE SERVICE ==========
+service InvitationCompteService {
+  rpc Create(CreateInvitationCompteRequest) returns (InvitationCompte);
+  rpc Update(UpdateInvitationCompteRequest) returns (InvitationCompte);
+  rpc Get(GetInvitationCompteRequest) returns (InvitationCompte);
+  rpc GetByToken(GetInvitationByTokenRequest) returns (InvitationCompte);
+  rpc ListByOrganisation(ListInvitationByOrganisationRequest) returns (ListInvitationCompteResponse);
+  rpc ListPendingByEmail(ListPendingByEmailRequest) returns (ListInvitationCompteResponse);
+  rpc Accept(AcceptInvitationRequest) returns (InvitationCompte);
+  rpc Reject(RejectInvitationRequest) returns (InvitationCompte);
+  rpc Expire(ExpireInvitationRequest) returns (InvitationCompte);
+  rpc Delete(DeleteInvitationCompteRequest) returns (DeleteResponse);
+}
+
+message InvitationCompte {
+  string id = 1;
+  string organisation_id = 2;
+  string email_invite = 3;
+  string role_id = 4;
+  string token = 5;
+  string expire_at = 6;
+  string etat = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateInvitationCompteRequest {
+  string organisation_id = 1;
+  string email_invite = 2;
+  string role_id = 3;
+  string expire_at = 4;
+}
+
+message UpdateInvitationCompteRequest {
+  string id = 1;
+  string etat = 2;
+}
+
+message GetInvitationCompteRequest {
+  string id = 1;
+}
+
+message GetInvitationByTokenRequest {
+  string token = 1;
+}
+
+message ListInvitationByOrganisationRequest {
+  string organisation_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListPendingByEmailRequest {
+  string email = 1;
+}
+
+message ListInvitationCompteResponse {
+  repeated InvitationCompte invitations = 1;
+  PaginationResult pagination = 2;
+}
+
+message AcceptInvitationRequest {
+  string id = 1;
+}
+
+message RejectInvitationRequest {
+  string id = 1;
+}
+
+message ExpireInvitationRequest {
+  string id = 1;
+}
+
+message DeleteInvitationCompteRequest {
+  string id = 1;
+}
+
+// ========== COMMON MESSAGES ==========
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}

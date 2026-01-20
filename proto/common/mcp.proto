@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package mcp;
+
+// Service MCP exposant les tools pour l'IA
+service MCPService {
+  // Liste tous les tools disponibles
+  rpc ListTools(Empty) returns (ToolsResponse);
+
+  // Exécute un tool spécifique
+  rpc ExecuteTool(ExecuteRequest) returns (ExecuteResponse);
+}
+
+// Message vide pour les requêtes sans paramètres
+message Empty {}
+
+// Définition d'un tool MCP
+message ToolDefinition {
+  string name = 1;
+  string description = 2;
+  string input_schema = 3;  // JSON string du schéma
+}
+
+// Réponse contenant la liste des tools
+message ToolsResponse {
+  repeated ToolDefinition tools = 1;
+}
+
+// Requête pour exécuter un tool
+message ExecuteRequest {
+  string tool_name = 1;      // Nom du tool (ex: "search_clients")
+  string input = 2;          // Paramètres JSON (ex: {"organisationId": "abc", "limit": 10})
+  string request_id = 3;     // ID unique de la requête pour traçabilité
+  string organisation_id = 4; // ID du tenant (pour sécurité)
+}
+
+// Réponse après exécution d'un tool
+message ExecuteResponse {
+  string result = 1;         // Résultat JSON en cas de succès
+  string error = 2;          // Message d'erreur si échec
+  bool success = 3;          // Indicateur de succès
+}

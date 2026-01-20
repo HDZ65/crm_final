@@ -14,7 +14,7 @@ async function bootstrap() {
       transport: Transport.GRPC,
       options: {
         package: 'factures',
-        protoPath: join(__dirname, '../proto/factures.proto'),
+        protoPath: join(__dirname, '../../proto/factures.proto'),
         url: grpcUrl,
         maxReceiveMessageLength: 20 * 1024 * 1024, // 20MB for base64 images
         maxSendMessageLength: 20 * 1024 * 1024,    // 20MB for PDF responses

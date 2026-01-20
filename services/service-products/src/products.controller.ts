@@ -99,9 +99,8 @@ function protoToCategorie(proto: ProtoCategorieProduit): CategorieProduit {
     [ProtoCategorieProduit.SERVICE]: CategorieProduit.SERVICE,
     [ProtoCategorieProduit.ACCESSOIRE]: CategorieProduit.ACCESSOIRE,
     [ProtoCategorieProduit.CATEGORIE_PRODUIT_UNSPECIFIED]: CategorieProduit.SERVICE,
-    [ProtoCategorieProduit.UNRECOGNIZED]: CategorieProduit.SERVICE,
   };
-  return map[proto] || CategorieProduit.SERVICE;
+  return map[proto] ?? CategorieProduit.SERVICE;
 }
 
 function typeToProto(type: TypeProduit): ProtoTypeProduit {

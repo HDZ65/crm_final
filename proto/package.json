@@ -1,0 +1,19 @@
+{
+  "name": "proto",
+  "version": "1.0.0",
+  "description": "This directory contains all Protocol Buffer (protobuf) definitions for the CRM system's gRPC services.",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ts-proto": "^1.181.2"
+  }
+}

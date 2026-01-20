@@ -39,6 +39,7 @@ export function PortalPageClient({ token }: PortalPageClientProps) {
   const [pageState, setPageState] = useState<PageState>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [selectedMethod, setSelectedMethod] = useState<'card' | 'sepa' | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchSession();
@@ -90,7 +91,7 @@ export function PortalPageClient({ token }: PortalPageClientProps) {
     if (!session) return;
 
     try {
-      setPageState('processing');
+      setIsSubmitting(true);
       setSelectedMethod(method);
 
       const paymentMethod = method === 'card' ? 'CARD' : 'SEPA_DEBIT';
@@ -119,6 +120,8 @@ export function PortalPageClient({ token }: PortalPageClientProps) {
       console.error('Payment failed:', error);
       setPageState('failed');
       setErrorMessage(error instanceof Error ? error.message : 'Le paiement a echoue');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -221,7 +224,7 @@ export function PortalPageClient({ token }: PortalPageClientProps) {
                   hasMandate={!!session.mandate}
                   onSelectCard={() => handlePayment('card')}
                   onSelectSepa={() => handlePayment('sepa')}
-                  disabled={pageState === 'processing'}
+                  disabled={isSubmitting}
                 />
               </CardContent>
             </Card>

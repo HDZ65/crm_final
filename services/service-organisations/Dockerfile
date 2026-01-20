@@ -12,7 +12,17 @@ COPY services/service-organisations/package*.json ./
 RUN npm install
 
 COPY services/service-organisations/ .
-COPY proto/organisations ./proto
+
+# Copy proto source files
+COPY proto/src/organisations ./proto
+
+# Copy generated TypeScript files for @proto/* alias
+COPY proto/gen/ts ./proto/gen/ts
+
+# Update tsconfig paths for Docker context
+RUN if [ -f tsconfig.json ]; then \
+    sed -i 's|"../../proto/gen/ts/\*"|"./proto/gen/ts/*"|g' tsconfig.json; \
+fi
 
 RUN npm run build
 
@@ -34,12 +44,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/proto ./proto
 
 USER nestjs
 
-EXPOSE 50062
-
 ENV NODE_ENV=production
-ENV GRPC_PORT=50062
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('net').connect({port:50062,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
+  CMD node -e "require('net').connect({port:${GRPC_PORT:-50051},host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]

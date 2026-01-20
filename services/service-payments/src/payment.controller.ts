@@ -674,8 +674,8 @@ export class PaymentController {
         currency: intent.currency,
         pspName: intent.provider?.toUpperCase() || 'STRIPE',
         pspPaymentId: intent.providerPaymentId ?? undefined,
-        rejectedAt: new Date(),
-        eventTimestamp: new Date(),
+        rejectedAt: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
+        eventTimestamp: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
         idempotencyKey: `${intent.id}:manual_failed`,
       });
     } catch (error: any) {

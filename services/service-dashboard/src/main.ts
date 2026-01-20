@@ -13,7 +13,7 @@ async function bootstrap() {
       transport: Transport.GRPC,
       options: {
         package: 'dashboard',
-        protoPath: join(__dirname, '../proto/dashboard.proto'),
+        protoPath: join(__dirname, '../../proto/dashboard.proto'),
         url: grpcUrl,
         loader: {
           keepCase: true,

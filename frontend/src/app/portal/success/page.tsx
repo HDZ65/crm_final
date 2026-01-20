@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, Loader2, Shield } from 'lucide-react';
 
-export default function PortalSuccessPage() {
+function PortalSuccessContent() {
   const searchParams = useSearchParams();
   const state = searchParams.get('state');
   const [status, setStatus] = useState<'verifying' | 'confirmed' | 'pending'>('verifying');
@@ -90,5 +90,35 @@ export default function PortalSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8 px-4">
+      <div className="max-w-lg mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <div className="flex items-center justify-center gap-2 text-gray-600">
+            <Shield className="h-5 w-5" />
+            <span className="text-sm font-medium">Paiement securise</span>
+          </div>
+        </div>
+        <Card className="shadow-lg border-0">
+          <CardContent className="pt-8 pb-6">
+            <div className="flex justify-center">
+              <Loader2 className="h-16 w-16 text-green-500 animate-spin" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+export default function PortalSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PortalSuccessContent />
+    </Suspense>
   );
 }

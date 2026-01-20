@@ -1,103 +1,31 @@
-# ====================================================================
-# Buf Code Generation - Contract-Driven Architecture
-# ====================================================================
-#
-# CRITICAL RULES:
-# 1. Proto files use snake_case (convention officielle)
-# 2. Generated TypeScript uses camelCase (via snakeToCamel=true)
-# 3. ZERO manual mapping - conversion is automatic
-# 4. Frontend and Services have separate outputs
-# 5. Validation schemas generated from proto constraints
-#
-# Output structure:
-#   proto/gen/frontend/   -> Next.js types + gRPC clients
-#   proto/gen/services/   -> NestJS types (no decorators)
-#
-# ====================================================================
-
 version: v2
 
-# Managed mode - Buf controls imports
-managed:
-  enabled: true
-  override:
-    - file_option: go_package_prefix
-      value: github.com/crm-final/proto/gen/go
-
-# ====================================================================
-# PLUGIN 1: TypeScript for FRONTEND (Next.js)
-# ====================================================================
 plugins:
-  - remote: buf.build/community/timostamm-protobuf-ts
-    out: gen/frontend
+  # Backend services - NestJS-compatible types with gRPC support
+  - local: ./node_modules/.bin/protoc-gen-ts_proto
+    out: gen/ts
     opt:
-      # Generate clients for grpc-web
-      - generate_dependencies
-      - long_type_string
-      - ts_nocheck=false
-      
-  # Alternative: ts-proto for frontend (more features)
-  - local: protoc-gen-ts_proto
-    out: gen/frontend-ts-proto
-    opt:
-      # Frontend-specific options
-      - nestJs=false                    # No NestJS decorators
-      - snakeToCamel=true              # CRITICAL: snake_case → camelCase
-      - addGrpcMetadata=true           # Add gRPC metadata support
-      - outputServices=grpc-js         # Generate gRPC-JS clients
-      - esModuleInterop=true           # ES Module compatibility
-      - useOptionals=messages          # Optional fields as T | undefined
-      - useDate=false                  # Use string for timestamps (ISO 8601)
-      - stringEnums=true               # Enums as string unions
-      - oneof=unions                   # Oneof as TypeScript unions
-      - forceLong=string               # int64 as string (safe for JS)
-      - env=browser                    # Browser environment
-      - outputClientImpl=false         # No client implementation
+      - nestJs=true
+      - snakeToCamel=true
+      - addGrpcMetadata=true
+      - outputServices=grpc-js
+      - esModuleInterop=true
+      - useOptionals=messages
+      - exportCommonSymbols=false
+      - unrecognizedEnum=false
+      - forceLong=number
 
-# ====================================================================
-# PLUGIN 2: TypeScript for SERVICES (NestJS)
-# ====================================================================
-  - local: protoc-gen-ts_proto
-    out: gen/services
+  # Frontend - lightweight types for Next.js
+  - local: ./node_modules/.bin/protoc-gen-ts_proto
+    out: gen/ts-frontend
     opt:
-      # Backend-specific options
-      - nestJs=false                    # No decorators (pure types)
-      - snakeToCamel=true              # CRITICAL: snake_case → camelCase
-      - outputServices=false           # Types only, no service stubs
-      - esModuleInterop=true           # ES Module compatibility
-      - useOptionals=messages          # Optional fields
-      - useDate=false                  # ISO string for consistency
-      - stringEnums=true               # Type-safe enums
-      - oneof=unions                   # Union types
-      - forceLong=string               # Safe for Node.js
-      - env=node                       # Node.js environment
+      - nestJs=false
+      - snakeToCamel=true
+      - outputServices=grpc-js
+      - esModuleInterop=true
+      - useOptionals=messages
+      - exportCommonSymbols=false
+      - forceLong=number
 
-# ====================================================================
-# PLUGIN 3: Validation (buf.validate → TypeScript)
-# ====================================================================
-  - remote: buf.build/community/bufbuild-protovalidate-es
-    out: gen/validation
-    opt:
-      - target=ts
-
-# ====================================================================
-# PLUGIN 4: gRPC Service Definitions (for NestJS controllers)
-# ====================================================================
-  - remote: buf.build/grpc/node
-    out: gen/services/grpc
-    opt:
-      - grpc_js
-
-# ====================================================================
-# PLUGIN 5: Documentation Generation
-# ====================================================================
-  - remote: buf.build/bufbuild/doc
-    out: gen/docs
-    opt:
-      - markdown,docs.md
-
-# ====================================================================
-# INPUTS
-# ====================================================================
 inputs:
   - directory: src

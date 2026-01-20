@@ -16,7 +16,7 @@
     "baseUrl": "./",
     "paths": {
       "@proto/*": ["../../proto/gen/ts/*"],
-      "@proto-grpc/*": ["../../proto/gen/ts-frontend/*"]
+      "@proto-grpc/*": ["../../proto/gen/ts/*"]
     },
 
     "incremental": true,

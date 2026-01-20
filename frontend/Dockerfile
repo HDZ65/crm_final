@@ -1,15 +1,5 @@
 # ==========================================
-# Stage 1: Proto Generation
-# ==========================================
-FROM alpine:3.19 AS proto-gen
-
-WORKDIR /output/grpc
-
-# Copy pre-generated proto files from proto/gen/ts-frontend
-COPY proto/gen/ts-frontend/ .
-
-# ==========================================
-# Stage 2: Dependencies
+# Stage 1: Dependencies
 # ==========================================
 FROM node:20-alpine AS deps
 
@@ -17,12 +7,12 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-COPY frontend/package*.json ./
+COPY frontend/package.json ./
 
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # ==========================================
-# Stage 3: Build
+# Stage 2: Build
 # ==========================================
 FROM node:20-alpine AS builder
 
@@ -31,8 +21,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ .
 
-# Copy generated proto files
-COPY --from=proto-gen /output/grpc ./src/generated/grpc
+# Copy generated proto files to match the @proto-frontend/* path alias
+# tsconfig.json has: "@proto-frontend/*": ["../proto/gen/ts-frontend/*"]
+# In Docker context, we place them at ./proto/gen/ts-frontend/
+COPY proto/gen/ts-frontend/ ./proto/gen/ts-frontend/
+
+# Update tsconfig.json paths for Docker build context
+RUN sed -i 's|"../proto/gen/ts-frontend/\*"|"./proto/gen/ts-frontend/*"|g' tsconfig.json
 
 ENV NEXT_TELEMETRY_DISABLED=1
 

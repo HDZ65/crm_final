@@ -20,7 +20,7 @@ import {
   typeRepriseFromJSON,
   statutBordereauFromJSON,
   statutRepriseFromJSON,
-} from "@proto-frontend/commission/commission";
+} from "@proto-grpc/commission/commission";
 
 export interface ActionResult<T> {
   data: T | null;
@@ -378,7 +378,7 @@ export async function createBareme(params: {
   dateFin?: string;
 }): Promise<ActionResult<unknown>> {
   try {
-    const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto-frontend/commission/commission");
+    const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto-grpc/commission/commission");
 
     const data = await baremes.create({
       organisationId: params.organisationId,
@@ -436,7 +436,7 @@ export async function updateBareme(params: {
   actif?: boolean;
 }): Promise<ActionResult<unknown>> {
   try {
-    const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto-frontend/commission/commission");
+    const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto-grpc/commission/commission");
 
     const data = await baremes.update({
       id: params.id,
@@ -544,7 +544,7 @@ export async function createPalier(params: {
   ordre: number;
 }): Promise<ActionResult<unknown>> {
   try {
-    const { typePalierFromJSON } = await import("@proto-frontend/commission/commission");
+    const { typePalierFromJSON } = await import("@proto-grpc/commission/commission");
 
     const data = await paliers.create({
       organisationId: params.organisationId,

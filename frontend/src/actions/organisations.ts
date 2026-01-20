@@ -450,7 +450,7 @@ export async function createInvitation(
     const expireAtIso = expireAt.toISOString();
 
     // Utiliser create() pour construire le message protobuf correctement
-    const { CreateInvitationCompteRequest } = await import("@proto-frontend/organisations/organisations");
+    const { CreateInvitationCompteRequest } = await import("@proto-grpc/organisations/organisations");
     const request = CreateInvitationCompteRequest.create({
       organisationId,
       emailInvite,

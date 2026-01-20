@@ -15,9 +15,9 @@ plugins:
       - unrecognizedEnum=false
       - forceLong=number
 
-  # Frontend - lightweight types for Next.js
+  # Frontend gRPC - gRPC clients WITHOUT NestJS decorators (for Next.js server components)
   - local: ./node_modules/.bin/protoc-gen-ts_proto
-    out: gen/ts-frontend
+    out: gen/ts-grpc
     opt:
       - nestJs=false
       - snakeToCamel=true
@@ -26,6 +26,19 @@ plugins:
       - useOptionals=messages
       - exportCommonSymbols=false
       - forceLong=number
+
+  # Frontend types - lightweight types only for Next.js (no gRPC client code)
+  - local: ./node_modules/.bin/protoc-gen-ts_proto
+    out: gen/ts-frontend
+    opt:
+      - nestJs=false
+      - snakeToCamel=true
+      - outputServices=false
+      - esModuleInterop=true
+      - useOptionals=messages
+      - exportCommonSymbols=false
+      - forceLong=number
+      - onlyTypes=true
 
 inputs:
   - directory: src

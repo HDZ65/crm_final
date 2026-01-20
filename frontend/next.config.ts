@@ -11,7 +11,19 @@ const nextConfig: NextConfig = {
     "@connectrpc/connect-node",
     "google-auth-library",
     "protobufjs",
+    "@nestjs/microservices",
   ],
+  // Webpack config for excluding proto files from client bundle
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't bundle proto files on client side
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        "@proto": false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

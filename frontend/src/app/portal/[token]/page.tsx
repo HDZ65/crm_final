@@ -3,13 +3,14 @@ import { PortalPageClient } from './portal-page-client';
 import { PortalLoadingSkeleton } from './components/portal-loading';
 
 interface PortalPageProps {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
-export default function PortalPage({ params }: PortalPageProps) {
+export default async function PortalPage({ params }: PortalPageProps) {
+  const { token } = await params;
   return (
     <Suspense fallback={<PortalLoadingSkeleton />}>
-      <PortalPageClient token={params.token} />
+      <PortalPageClient token={token} />
     </Suspense>
   );
 }

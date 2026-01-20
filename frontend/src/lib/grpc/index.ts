@@ -80,7 +80,7 @@ import {
   type DeleteResponse as ClientDeleteResponse,
   type SearchClientRequest,
   type SearchClientResponse,
-} from "@proto-frontend/clients/clients";
+} from "@proto-grpc/clients/clients";
 
 let clientBaseInstance: ClientBaseServiceClient | null = null;
 
@@ -149,7 +149,7 @@ import {
   type ValidateFactureRequest,
   type ValidateFactureResponse,
   type FinalizeFactureRequest,
-} from "@proto-frontend/factures/factures";
+} from "@proto-grpc/factures/factures";
 
 let factureInstance: FactureServiceClient | null = null;
 
@@ -213,7 +213,7 @@ import {
   type StatutFacture,
   type ListStatutsFactureRequest,
   type ListStatutsFactureResponse,
-} from "@proto-frontend/factures/factures";
+} from "@proto-grpc/factures/factures";
 
 let statutFactureInstance: StatutFactureServiceClient | null = null;
 
@@ -252,7 +252,7 @@ import {
   type CreateScheduleRequest,
   type ScheduleResponse,
   type GetByIdRequest,
-} from "@proto-frontend/payments/payment";
+} from "@proto-grpc/payments/payment";
 
 let paymentInstance: PaymentServiceClient | null = null;
 
@@ -329,7 +329,7 @@ import {
   type ListContratResponse,
   type DeleteContratRequest,
   type DeleteResponse as ContratDeleteResponse,
-} from "@proto-frontend/contrats/contrats";
+} from "@proto-grpc/contrats/contrats";
 
 let contratInstance: ContratServiceClient | null = null;
 
@@ -389,7 +389,7 @@ import {
   type RepartitionProduitsResponse,
   type GetStatsSocietesRequest,
   type StatsSocietesResponse,
-} from "@proto-frontend/dashboard/dashboard";
+} from "@proto-grpc/dashboard/dashboard";
 
 let dashboardKpisInstance: DashboardKpisServiceClient | null = null;
 let evolutionCaInstance: EvolutionCaServiceClient | null = null;
@@ -477,7 +477,7 @@ import {
   type KpisCommerciauxResponse,
   type GetAlertesRequest,
   type AlertesResponse,
-} from "@proto-frontend/dashboard/dashboard";
+} from "@proto-grpc/dashboard/dashboard";
 
 let kpisCommerciauxInstance: KpisCommerciauxServiceClient | null = null;
 
@@ -540,7 +540,7 @@ import {
   type ListUtilisateurResponse,
   type DeleteUtilisateurRequest,
   type DeleteResponse as UserDeleteResponse,
-} from "@proto-frontend/organisations/users";
+} from "@proto-grpc/organisations/users";
 
 let utilisateurInstance: UtilisateurServiceClient | null = null;
 
@@ -607,7 +607,7 @@ import {
   type ActivateApporteurRequest,
   type DeleteApporteurRequest,
   type DeleteResponse as ApporteurDeleteResponse,
-} from "@proto-frontend/commerciaux/commerciaux";
+} from "@proto-grpc/commerciaux/commerciaux";
 
 let apporteurInstance: ApporteurServiceClient | null = null;
 
@@ -676,7 +676,7 @@ import {
   type StatutClient,
   type ListStatutClientRequest,
   type ListStatutClientResponse,
-} from "@proto-frontend/referentiel/referentiel";
+} from "@proto-grpc/referentiel/referentiel";
 
 let statutClientInstance: StatutClientServiceClient | null = null;
 
@@ -712,7 +712,7 @@ import {
   type UpdateExpeditionRequest,
   type GetByIdRequest as LogisticsGetByIdRequest,
   type DeleteResponse as LogisticsDeleteResponse,
-} from "@proto-frontend/logistics/logistics";
+} from "@proto-grpc/logistics/logistics";
 
 let logisticsInstance: LogisticsServiceClient | null = null;
 
@@ -818,7 +818,7 @@ import {
   type UpdatePalierRequest,
   type PalierResponse,
   type PalierListResponse,
-} from "@proto-frontend/commission/commission";
+} from "@proto-grpc/commission/commission";
 
 let commissionInstance: CommissionServiceClient | null = null;
 
@@ -1068,7 +1068,7 @@ import {
   type DeleteProduitResponse,
   type SetPromotionRequest,
   type ClearPromotionRequest,
-} from "@proto-frontend/products/products";
+} from "@proto-grpc/products/products";
 
 let gammeInstance: GammeServiceClient | null = null;
 let produitInstance: ProduitServiceClient | null = null;
@@ -1171,7 +1171,7 @@ import {
   type ListSocieteResponse,
   type DeleteSocieteRequest,
   type DeleteResponse as SocieteDeleteResponse,
-} from "@proto-frontend/organisations/organisations";
+} from "@proto-grpc/organisations/organisations";
 
 let societeInstance: SocieteServiceClient | null = null;
 
@@ -1238,7 +1238,7 @@ import {
   type ListTacheResponse,
   type DeleteTacheRequest,
   type DeleteResponse as TacheDeleteResponse,
-} from "@proto-frontend/activites/activites";
+} from "@proto-grpc/activites/activites";
 
 let tacheInstance: TacheServiceClient | null = null;
 
@@ -1358,7 +1358,7 @@ import {
   type ListHistoriquesRelanceResponse,
   type ExecuteRelancesRequest,
   type ExecuteRelancesResponse,
-} from "@proto-frontend/relance/relance";
+} from "@proto-grpc/relance/relance";
 
 let regleRelanceInstance: RegleRelanceServiceClient | null = null;
 let historiqueRelanceInstance: HistoriqueRelanceServiceClient | null = null;
@@ -1478,7 +1478,7 @@ import {
   type GetCompteRequest,
   type DeleteCompteRequest,
   type SyncKeycloakUserRequest,
-} from "@proto-frontend/organisations/users";
+} from "@proto-grpc/organisations/users";
 
 let membreCompteInstance: MembreCompteServiceClient | null = null;
 
@@ -1598,7 +1598,7 @@ import {
   type OperationResponse,
   type UnreadCountResponse,
   type GetUnreadCountRequest,
-} from "@proto-frontend/notifications/notifications";
+} from "@proto-grpc/notifications/notifications";
 
 let notificationInstance: NotificationServiceClient | null = null;
 
@@ -1670,7 +1670,7 @@ import {
   type ListOrganisationRequest,
   type ListOrganisationResponse,
   type DeleteResponse as OrganisationDeleteResponse,
-} from "@proto-frontend/organisations/organisations";
+} from "@proto-grpc/organisations/organisations";
 
 let organisationInstance: OrganisationServiceClient | null = null;
 
@@ -1726,7 +1726,7 @@ import {
   type GetRoleRequest,
   type ListRoleRequest,
   type ListRoleResponse,
-} from "@proto-frontend/organisations/users";
+} from "@proto-grpc/organisations/users";
 
 let roleInstance: RoleServiceClient | null = null;
 
@@ -1768,7 +1768,7 @@ import {
   type ListRolePartenaireResponse,
   type DeleteRolePartenaireRequest,
   type DeleteResponse as RolePartenaireDeleteResponse,
-} from "@proto-frontend/organisations/organisations";
+} from "@proto-grpc/organisations/organisations";
 
 let rolePartenaireInstance: RolePartenaireServiceClient | null = null;
 
@@ -1829,7 +1829,7 @@ import {
   type ListMembrePartenaireResponse,
   type DeleteMembrePartenaireRequest,
   type DeleteResponse as MembrePartenaireDeleteResponse,
-} from "@proto-frontend/organisations/organisations";
+} from "@proto-grpc/organisations/organisations";
 
 let membrePartenaireInstance: MembrePartenaireServiceClient | null = null;
 
@@ -1903,7 +1903,7 @@ import {
   type ExpireInvitationRequest,
   type DeleteInvitationCompteRequest,
   type DeleteResponse as InvitationCompteDeleteResponse,
-} from "@proto-frontend/organisations/organisations";
+} from "@proto-grpc/organisations/organisations";
 
 let invitationCompteInstance: InvitationCompteServiceClient | null = null;
 

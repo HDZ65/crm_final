@@ -49,6 +49,7 @@ export interface HandleWebhookParams {
   rawBody: string;
   signature: string;
   headers: Record<string, string>;
+  societeId?: string;
 }
 
 export interface HandleWebhookResult {
@@ -62,6 +63,13 @@ const PSP_STATE_BYTES = 32;
 @Injectable()
 export class PortalPSPService {
   private readonly logger = new Logger(PortalPSPService.name);
+
+  private resolveSocieteId(params: HandleWebhookParams): string {
+    if (!params.societeId) {
+      throw new BadRequestException('societeId is required for webhook verification');
+    }
+    return params.societeId;
+  }
 
   constructor(
     @InjectRepository(PortalPaymentSessionEntity)

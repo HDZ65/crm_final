@@ -37,7 +37,7 @@ export class ScheduleEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   @Index()
   organisationId: string | null;
 

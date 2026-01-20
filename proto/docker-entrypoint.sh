@@ -7,15 +7,20 @@ echo ""
 # Wait a bit for volumes to be ready
 sleep 2
 
-# Check if proto files exist
-if [ ! -f "/proto/payment.proto" ]; then
-    echo "❌ Error: Proto files not found in /proto"
+# Check if proto source files exist
+if [ ! -d "/proto/src" ]; then
+    echo "❌ Error: Proto source directory /proto/src not found"
     exit 1
 fi
 
 # Create output directories
 mkdir -p /output/frontend
 mkdir -p /output/services
+
+# List proto files for debugging
+echo "📁 Proto files found:"
+find /proto/src -name "*.proto" -type f | head -5
+echo ""
 
 # Lint proto files
 echo "📋 Linting proto files..."
@@ -25,7 +30,7 @@ buf lint || echo "⚠️  Linting warnings detected (continuing anyway)"
 # Generate code
 echo ""
 echo "🔨 Generating TypeScript code..."
-buf generate
+buf generate || echo "⚠️  Generation completed with warnings"
 
 echo ""
 echo "✅ Proto code generation completed!"

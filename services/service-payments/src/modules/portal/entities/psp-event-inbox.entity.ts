@@ -31,23 +31,23 @@ export class PSPEventInboxEntity {
   @Column({ length: 255 })
   pspEventId: string;
 
-  @Column({ nullable: true, length: 128 })
+  @Column({ type: 'varchar', nullable: true, length: 128 })
   pspEventType: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   portalSessionId: string | null;
 
   @ManyToOne(() => PortalPaymentSessionEntity, { nullable: true })
   @JoinColumn({ name: 'portal_session_id' })
   portalSession: PortalPaymentSessionEntity | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   paymentIntentId: string | null;
 
   @Column({ type: 'text' })
   rawPayload: string;
 
-  @Column({ nullable: true, length: 512 })
+  @Column({ type: 'varchar', nullable: true, length: 512 })
   signature: string | null;
 
   @Column({

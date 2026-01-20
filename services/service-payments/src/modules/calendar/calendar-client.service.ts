@@ -21,7 +21,8 @@ export class CalendarClientService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     const url = this.configService.get<string>('CALENDAR_GRPC_URL', 'localhost:50070');
-    const protoPath = join(process.cwd(), 'proto/calendar/calendar.proto');
+    const protoPath = join(process.cwd(), 'proto/src/calendar/calendar.proto');
+    const includeDirs = [join(process.cwd(), 'proto/src')];
 
     const packageDef = loadSync(protoPath, {
       keepCase: false,
@@ -29,11 +30,12 @@ export class CalendarClientService implements OnModuleInit, OnModuleDestroy {
       enums: String,
       defaults: true,
       oneofs: true,
+      includeDirs,
     });
 
     const grpcObj = loadPackageDefinition(packageDef) as any;
-    const CalendarEngineService = grpcObj.calendar.CalendarEngineService as typeof Client;
-    this.client = new CalendarEngineService(url, credentials.createInsecure()) as CalendarEngineServiceClient;
+    const CalendarEngineService = grpcObj.calendar.CalendarEngineService;
+    this.client = new CalendarEngineService(url, credentials.createInsecure()) as unknown as CalendarEngineServiceClient;
 
     this.logger.log(`Calendar gRPC client connected to ${url}`);
   }

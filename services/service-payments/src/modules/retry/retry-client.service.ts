@@ -1,12 +1,20 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Client, credentials } from '@grpc/grpc-js';
+import { Client, ClientUnaryCall, ServiceError, credentials, loadPackageDefinition } from '@grpc/grpc-js';
+import { loadSync } from '@grpc/proto-loader';
+import { join } from 'path';
 import type { HandleRejectionResponse } from '@proto/retry/am04_retry_service';
 import type { PaymentRejectedEvent } from '@proto/retry/am04_retry';
-import { RetrySchedulerServiceClient } from '@proto-grpc/retry/am04_retry_service';
 
 export type HandlePaymentRejectedRequest = PaymentRejectedEvent;
 export type HandlePaymentRejectedResponse = HandleRejectionResponse;
+
+type RetrySchedulerServiceClient = {
+  handlePaymentRejected(
+    request: HandlePaymentRejectedRequest,
+    callback: (error: ServiceError | null, response: HandlePaymentRejectedResponse) => void,
+  ): ClientUnaryCall;
+};
 
 @Injectable()
 export class RetryClientService implements OnModuleInit, OnModuleDestroy {
@@ -17,9 +25,27 @@ export class RetryClientService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     const url = this.configService.get<string>('RETRY_GRPC_URL', 'localhost:50059');
-    this.client = new RetrySchedulerServiceClient(url, credentials.createInsecure());
+    const protoPath = join(process.cwd(), 'proto/src/retry/am04_retry_service.proto');
+    const includeDirs = [join(process.cwd(), 'proto/src')];
 
-    this.logger.log(`Retry gRPC client connected to ${url}`);
+    try {
+      const packageDef = loadSync(protoPath, {
+        keepCase: false,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+        includeDirs,
+      });
+
+      const grpcObj = loadPackageDefinition(packageDef) as any;
+      const RetrySchedulerService = grpcObj.retry.RetrySchedulerService;
+      this.client = new RetrySchedulerService(url, credentials.createInsecure()) as unknown as RetrySchedulerServiceClient;
+
+      this.logger.log(`Retry gRPC client connected to ${url}`);
+    } catch (error) {
+      this.logger.warn(`Failed to connect to Retry service: ${error}`);
+    }
   }
 
   onModuleDestroy(): void {

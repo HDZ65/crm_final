@@ -219,7 +219,7 @@ export class PaymentEmissionJob {
             currency: paymentIntent.currency,
             pspName: schedule.provider.toUpperCase(),
             pspPaymentId: paymentIntent.providerPaymentId ?? undefined,
-            rejectedAt: new Date(),
+            rejectedAt: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
             idempotencyKey: `${paymentIntent.id}:emission_failed`,
           });
         } catch (retryError: any) {

@@ -31,6 +31,7 @@ export enum PSPProvider {
   GOCARDLESS = 'GOCARDLESS',
   EMERCHANTPAY = 'EMERCHANTPAY',
   SLIMPAY = 'SLIMPAY',
+  MULTISAFEPAY = 'MULTISAFEPAY',
 }
 
 @Entity('portal_payment_session')
@@ -51,11 +52,11 @@ export class PortalPaymentSessionEntity {
   @Column()
   customerId: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   @Index('idx_portal_session_contract')
   contractId: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   paymentIntentId: string | null;
 
   @Column({ unique: true, length: 64 })
@@ -83,7 +84,7 @@ export class PortalPaymentSessionEntity {
   @Column({ default: 0 })
   useCount: number;
 
-  @Column({ nullable: true, length: 64 })
+  @Column({ type: 'varchar', nullable: true, length: 64 })
   @Index('idx_portal_session_idempotency')
   idempotencyKeyHash: string | null;
 
@@ -93,16 +94,16 @@ export class PortalPaymentSessionEntity {
   @Column({ length: 3, default: 'EUR' })
   currency: string;
 
-  @Column({ nullable: true, length: 500 })
+  @Column({ type: 'varchar', nullable: true, length: 500 })
   description: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   mandateId: string | null;
 
-  @Column({ nullable: true, length: 50 })
+  @Column({ type: 'varchar', nullable: true, length: 50 })
   rumMasked: string | null;
 
-  @Column({ nullable: true, length: 64 })
+  @Column({ type: 'varchar', nullable: true, length: 64 })
   @Index('idx_portal_session_psp_state')
   pspState: string | null;
 
@@ -112,7 +113,7 @@ export class PortalPaymentSessionEntity {
   @Column({ type: 'enum', enum: PSPProvider, nullable: true })
   pspProvider: PSPProvider | null;
 
-  @Column({ nullable: true, length: 255 })
+  @Column({ type: 'varchar', nullable: true, length: 255 })
   pspSessionId: string | null;
 
   @Column({ type: 'jsonb', default: {} })

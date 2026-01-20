@@ -59,26 +59,26 @@ export class PortalSessionAuditEntity {
   @Column({ type: 'enum', enum: AuditActorType })
   actorType: AuditActorType;
 
-  @Column({ nullable: true, length: 64 })
+  @Column({ type: 'varchar', nullable: true, length: 64 })
   @Index('idx_portal_audit_request_id')
   requestId: string | null;
 
-  @Column({ nullable: true, length: 64 })
+  @Column({ type: 'varchar', nullable: true, length: 64 })
   correlationId: string | null;
 
-  @Column({ nullable: true, length: 64 })
+  @Column({ type: 'varchar', nullable: true, length: 64 })
   ipAddressHash: string | null;
 
-  @Column({ nullable: true, length: 64 })
+  @Column({ type: 'varchar', nullable: true, length: 64 })
   userAgentHash: string | null;
 
-  @Column({ nullable: true, length: 2 })
+  @Column({ type: 'varchar', nullable: true, length: 2 })
   geoCountry: string | null;
 
-  @Column({ nullable: true, length: 32 })
+  @Column({ type: 'varchar', nullable: true, length: 32 })
   previousStatus: string | null;
 
-  @Column({ nullable: true, length: 32 })
+  @Column({ type: 'varchar', nullable: true, length: 32 })
   newStatus: string | null;
 
   @Column({ type: 'jsonb', default: {} })

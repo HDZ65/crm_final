@@ -297,7 +297,7 @@ export class PortalSessionService {
       throw new BadRequestException('Cannot cancel a session in terminal state');
     }
 
-    await this.transitionStatus(session, PortalSessionStatus.CANCELLED, actorType, undefined, { reason });
+    await this.transitionStatus(session, PortalSessionStatus.CANCELLED, actorType, undefined, reason ? { reason } : undefined);
 
     return session;
   }

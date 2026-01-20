@@ -8,7 +8,7 @@
     "frontend",
     "service-*"
   ],
-"scripts": {
+  "scripts": {
     "proto:lint": "buf lint",
     "proto:generate": "buf generate --template proto/buf.gen.yaml",
     "proto:breaking": "buf breaking --against '.git#branch=main'",
@@ -34,8 +34,8 @@
   ],
   "author": "Your Team",
   "license": "PROPRIETARY",
-"devDependencies": {
+  "devDependencies": {
     "@bufbuild/buf": "^1.64.0",
-    "ts-proto": "^2.11.0"
+    "ts-proto": "^1.181.2"
   }
 }

@@ -13,8 +13,8 @@ RUN npm install
 
 COPY services/service-payments/ .
 
-# Copy proto source files
-COPY proto/src/payments ./proto
+# Copy all proto source files (needed for gRPC client runtime loading)
+COPY proto/src ./proto/src
 
 # Copy generated TypeScript files for @proto/* and @proto-grpc/* aliases
 COPY proto/gen/ts ./proto/gen/ts

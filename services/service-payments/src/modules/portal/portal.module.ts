@@ -8,6 +8,9 @@ import { PortalPSPService } from './portal-psp.service.js';
 import { PortalQueryService } from './portal-query.service.js';
 import { StripeModule } from '../stripe/stripe.module.js';
 import { GoCardlessModule } from '../gocardless/gocardless.module.js';
+import { SlimpayModule } from '../slimpay/slimpay.module.js';
+import { MultiSafepayModule } from '../multisafepay/multisafepay.module.js';
+import { EmerchantpayModule } from '../emerchantpay/emerchantpay.module.js';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { GoCardlessModule } from '../gocardless/gocardless.module.js';
     ]),
     StripeModule,
     GoCardlessModule,
+    SlimpayModule,
+    MultiSafepayModule,
+    EmerchantpayModule,
   ],
   providers: [
     PortalSessionService,

@@ -49,14 +49,14 @@ export class PaymentAuditLogEntity {
   @Index()
   action: AuditAction;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   @Index()
   actorId: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   actorType: 'user' | 'system' | 'webhook' | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   actorIp: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
@@ -68,7 +68,7 @@ export class PaymentAuditLogEntity {
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any> | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   @Index()
   correlationId: string | null;
 

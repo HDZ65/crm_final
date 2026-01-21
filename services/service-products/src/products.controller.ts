@@ -2,51 +2,39 @@ import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 
 import type {
-  Gamme,
   CreateGammeRequest,
   UpdateGammeRequest,
   GetGammeRequest,
   ListGammesRequest,
-  ListGammesResponse,
   DeleteGammeRequest,
-  DeleteGammeResponse,
-  Produit,
   CreateProduitRequest,
   UpdateProduitRequest,
   GetProduitRequest,
   GetProduitBySkuRequest,
   ListProduitsRequest,
-  ListProduitsResponse,
   DeleteProduitRequest,
-  DeleteProduitResponse,
   SetPromotionRequest,
   ClearPromotionRequest,
-  GrilleTarifaire,
   CreateGrilleTarifaireRequest,
   UpdateGrilleTarifaireRequest,
   GetGrilleTarifaireRequest,
   GetGrilleTarifaireActiveRequest,
   ListGrillesTarifairesRequest,
-  ListGrillesTarifairesResponse,
   DeleteGrilleTarifaireRequest,
-  DeleteGrilleTarifaireResponse,
   SetGrilleParDefautRequest,
-  PrixProduit,
   CreatePrixProduitRequest,
   UpdatePrixProduitRequest,
   GetPrixProduitRequest,
   GetPrixForProduitRequest,
   ListPrixProduitsRequest,
-  ListPrixProduitsResponse,
   DeletePrixProduitRequest,
-  DeletePrixProduitResponse,
   BulkCreatePrixProduitsRequest,
-  BulkCreatePrixProduitsResponse,
   GetCatalogRequest,
-  CatalogItem,
-  GetCatalogResponse,
   CalculatePriceRequest,
-  CalculatePriceResponse,
+} from '@proto/products/products';
+import {
+  CategorieProduit as ProtoCategorieProduit,
+  TypeProduit as ProtoTypeProduit,
 } from '@proto/products/products';
 
 import { GammeService } from './modules/gamme/gamme.service';
@@ -55,121 +43,19 @@ import { GrilleTarifaireService } from './modules/grille-tarifaire/grille-tarifa
 import { PrixProduitService } from './modules/prix-produit/prix-produit.service';
 import { CatalogService } from './modules/catalog/catalog.service';
 
-import { GammeEntity } from './modules/gamme/entities/gamme.entity';
-import { ProduitEntity, TypeProduit, CategorieProduit } from './modules/produit/entities/produit.entity';
-import { GrilleTarifaireEntity } from './modules/grille-tarifaire/entities/grille-tarifaire.entity';
-import { PrixProduitEntity } from './modules/prix-produit/entities/prix-produit.entity';
+import { TypeProduit, CategorieProduit } from './modules/produit/entities/produit.entity';
 
-import {
-  CategorieProduit as ProtoCategorieProduit,
-  TypeProduit as ProtoTypeProduit,
-} from '@proto/products/products';
+const categorieFromProto: Record<ProtoCategorieProduit, CategorieProduit> = {
+  [ProtoCategorieProduit.ASSURANCE]: CategorieProduit.ASSURANCE,
+  [ProtoCategorieProduit.PREVOYANCE]: CategorieProduit.PREVOYANCE,
+  [ProtoCategorieProduit.EPARGNE]: CategorieProduit.EPARGNE,
+  [ProtoCategorieProduit.SERVICE]: CategorieProduit.SERVICE,
+  [ProtoCategorieProduit.ACCESSOIRE]: CategorieProduit.ACCESSOIRE,
+  [ProtoCategorieProduit.CATEGORIE_PRODUIT_UNSPECIFIED]: CategorieProduit.SERVICE,
+};
 
-function toProtoGamme(gamme: GammeEntity): Gamme {
-  return {
-    id: gamme.id,
-    organisationId: gamme.organisationId,
-    nom: gamme.nom,
-    description: gamme.description || '',
-    icone: gamme.icone || '',
-    code: gamme.code,
-    ordre: gamme.ordre,
-    actif: gamme.actif,
-    createdAt: gamme.createdAt?.toISOString() || '',
-    updatedAt: gamme.updatedAt?.toISOString() || '',
-  };
-}
-
-function categorieToProto(categorie: CategorieProduit): ProtoCategorieProduit {
-  const map: Record<CategorieProduit, ProtoCategorieProduit> = {
-    [CategorieProduit.ASSURANCE]: ProtoCategorieProduit.ASSURANCE,
-    [CategorieProduit.PREVOYANCE]: ProtoCategorieProduit.PREVOYANCE,
-    [CategorieProduit.EPARGNE]: ProtoCategorieProduit.EPARGNE,
-    [CategorieProduit.SERVICE]: ProtoCategorieProduit.SERVICE,
-    [CategorieProduit.ACCESSOIRE]: ProtoCategorieProduit.ACCESSOIRE,
-  };
-  return map[categorie] || ProtoCategorieProduit.CATEGORIE_PRODUIT_UNSPECIFIED;
-}
-
-function protoToCategorie(proto: ProtoCategorieProduit): CategorieProduit {
-  const map: Record<ProtoCategorieProduit, CategorieProduit> = {
-    [ProtoCategorieProduit.ASSURANCE]: CategorieProduit.ASSURANCE,
-    [ProtoCategorieProduit.PREVOYANCE]: CategorieProduit.PREVOYANCE,
-    [ProtoCategorieProduit.EPARGNE]: CategorieProduit.EPARGNE,
-    [ProtoCategorieProduit.SERVICE]: CategorieProduit.SERVICE,
-    [ProtoCategorieProduit.ACCESSOIRE]: CategorieProduit.ACCESSOIRE,
-    [ProtoCategorieProduit.CATEGORIE_PRODUIT_UNSPECIFIED]: CategorieProduit.SERVICE,
-  };
-  return map[proto] ?? CategorieProduit.SERVICE;
-}
-
-function typeToProto(type: TypeProduit): ProtoTypeProduit {
-  return type === TypeProduit.INTERNE ? ProtoTypeProduit.INTERNE : ProtoTypeProduit.PARTENAIRE;
-}
-
-function protoToType(proto: ProtoTypeProduit): TypeProduit {
-  return proto === ProtoTypeProduit.INTERNE ? TypeProduit.INTERNE : TypeProduit.PARTENAIRE;
-}
-
-function toProtoProduit(produit: ProduitEntity): Produit {
-  return {
-    id: produit.id,
-    organisationId: produit.organisationId,
-    gammeId: produit.gammeId || '',
-    sku: produit.sku,
-    nom: produit.nom,
-    description: produit.description || '',
-    categorie: categorieToProto(produit.categorie),
-    type: typeToProto(produit.type),
-    prix: Number(produit.prix),
-    tauxTva: Number(produit.tauxTva),
-    devise: produit.devise,
-    actif: produit.actif,
-    promotionActive: produit.promotionActive,
-    prixPromotion: produit.prixPromotion ? Number(produit.prixPromotion) : 0,
-    dateDebutPromotion: produit.dateDebutPromotion?.toISOString() || '',
-    dateFinPromotion: produit.dateFinPromotion?.toISOString() || '',
-    imageUrl: produit.imageUrl || '',
-    codeExterne: produit.codeExterne || '',
-    metadata: produit.metadata ? JSON.stringify(produit.metadata) : '',
-    createdAt: produit.createdAt?.toISOString() || '',
-    updatedAt: produit.updatedAt?.toISOString() || '',
-    gamme: produit.gamme ? toProtoGamme(produit.gamme) : undefined,
-  };
-}
-
-function toProtoGrilleTarifaire(grille: GrilleTarifaireEntity): GrilleTarifaire {
-  return {
-    id: grille.id,
-    organisationId: grille.organisationId,
-    nom: grille.nom,
-    description: grille.description || '',
-    dateDebut: grille.dateDebut?.toISOString().split('T')[0] || '',
-    dateFin: grille.dateFin?.toISOString().split('T')[0] || '',
-    estParDefaut: grille.estParDefaut,
-    actif: grille.actif,
-    createdAt: grille.createdAt?.toISOString() || '',
-    updatedAt: grille.updatedAt?.toISOString() || '',
-    prixProduits: grille.prixProduits?.map(toProtoPrixProduit) || [],
-  };
-}
-
-function toProtoPrixProduit(prix: PrixProduitEntity): PrixProduit {
-  return {
-    id: prix.id,
-    grilleTarifaireId: prix.grilleTarifaireId,
-    produitId: prix.produitId,
-    prixUnitaire: Number(prix.prixUnitaire),
-    remisePourcent: Number(prix.remisePourcent),
-    prixMinimum: prix.prixMinimum ? Number(prix.prixMinimum) : 0,
-    prixMaximum: prix.prixMaximum ? Number(prix.prixMaximum) : 0,
-    actif: prix.actif,
-    createdAt: prix.createdAt?.toISOString() || '',
-    updatedAt: prix.updatedAt?.toISOString() || '',
-    produit: prix.produit ? toProtoProduit(prix.produit) : undefined,
-    grilleTarifaire: prix.grilleTarifaire ? toProtoGrilleTarifaire(prix.grilleTarifaire) : undefined,
-  };
-}
+const typeFromProto = (proto: ProtoTypeProduit): TypeProduit =>
+  proto === ProtoTypeProduit.INTERNE ? TypeProduit.INTERNE : TypeProduit.PARTENAIRE;
 
 @Controller()
 export class ProductsController {
@@ -182,8 +68,8 @@ export class ProductsController {
   ) {}
 
   @GrpcMethod('GammeService', 'Create')
-  async createGamme(data: CreateGammeRequest): Promise<Gamme> {
-    const gamme = await this.gammeService.create({
+  async createGamme(data: CreateGammeRequest) {
+    return this.gammeService.create({
       organisationId: data.organisationId,
       nom: data.nom,
       description: data.description,
@@ -191,24 +77,21 @@ export class ProductsController {
       code: data.code,
       ordre: data.ordre,
     });
-    return toProtoGamme(gamme);
   }
 
   @GrpcMethod('GammeService', 'Update')
-  async updateGamme(data: UpdateGammeRequest): Promise<Gamme> {
-    const gamme = await this.gammeService.update(data);
-    return toProtoGamme(gamme);
+  async updateGamme(data: UpdateGammeRequest) {
+    return this.gammeService.update(data);
   }
 
   @GrpcMethod('GammeService', 'Get')
-  async getGamme(data: GetGammeRequest): Promise<Gamme> {
-    const gamme = await this.gammeService.findById(data.id);
-    return toProtoGamme(gamme);
+  async getGamme(data: GetGammeRequest) {
+    return this.gammeService.findById(data.id);
   }
 
   @GrpcMethod('GammeService', 'List')
-  async listGammes(data: ListGammesRequest): Promise<ListGammesResponse> {
-    const result = await this.gammeService.findAll({
+  async listGammes(data: ListGammesRequest) {
+    return this.gammeService.findAll({
       organisationId: data.organisationId,
       actif: data.actif,
       pagination: data.pagination
@@ -220,33 +103,24 @@ export class ProductsController {
           }
         : undefined,
     });
-    return {
-      gammes: result.gammes.map(toProtoGamme),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        totalPages: result.pagination.totalPages,
-      },
-    };
   }
 
   @GrpcMethod('GammeService', 'Delete')
-  async deleteGamme(data: DeleteGammeRequest): Promise<DeleteGammeResponse> {
+  async deleteGamme(data: DeleteGammeRequest) {
     const success = await this.gammeService.delete(data.id);
     return { success };
   }
 
   @GrpcMethod('ProduitService', 'Create')
-  async createProduit(data: CreateProduitRequest): Promise<Produit> {
-    const produit = await this.produitService.create({
+  async createProduit(data: CreateProduitRequest) {
+    return this.produitService.create({
       organisationId: data.organisationId,
       gammeId: data.gammeId,
       sku: data.sku,
       nom: data.nom,
       description: data.description,
-      categorie: data.categorie ? protoToCategorie(data.categorie) : undefined,
-      type: data.type ? protoToType(data.type) : undefined,
+      categorie: data.categorie ? categorieFromProto[data.categorie] : undefined,
+      type: data.type ? typeFromProto(data.type) : undefined,
       prix: data.prix,
       tauxTva: data.tauxTva,
       devise: data.devise,
@@ -254,19 +128,18 @@ export class ProductsController {
       codeExterne: data.codeExterne,
       metadata: data.metadata,
     });
-    return toProtoProduit(produit);
   }
 
   @GrpcMethod('ProduitService', 'Update')
-  async updateProduit(data: UpdateProduitRequest): Promise<Produit> {
-    const produit = await this.produitService.update({
+  async updateProduit(data: UpdateProduitRequest) {
+    return this.produitService.update({
       id: data.id,
       gammeId: data.gammeId,
       sku: data.sku,
       nom: data.nom,
       description: data.description,
-      categorie: data.categorie ? protoToCategorie(data.categorie) : undefined,
-      type: data.type ? protoToType(data.type) : undefined,
+      categorie: data.categorie ? categorieFromProto[data.categorie] : undefined,
+      type: data.type ? typeFromProto(data.type) : undefined,
       prix: data.prix,
       tauxTva: data.tauxTva,
       devise: data.devise,
@@ -275,28 +148,25 @@ export class ProductsController {
       codeExterne: data.codeExterne,
       metadata: data.metadata,
     });
-    return toProtoProduit(produit);
   }
 
   @GrpcMethod('ProduitService', 'Get')
-  async getProduit(data: GetProduitRequest): Promise<Produit> {
-    const produit = await this.produitService.findById(data.id);
-    return toProtoProduit(produit);
+  async getProduit(data: GetProduitRequest) {
+    return this.produitService.findById(data.id);
   }
 
   @GrpcMethod('ProduitService', 'GetBySku')
-  async getProduitBySku(data: GetProduitBySkuRequest): Promise<Produit> {
-    const produit = await this.produitService.findBySku(data.organisationId, data.sku);
-    return toProtoProduit(produit);
+  async getProduitBySku(data: GetProduitBySkuRequest) {
+    return this.produitService.findBySku(data.organisationId, data.sku);
   }
 
   @GrpcMethod('ProduitService', 'List')
-  async listProduits(data: ListProduitsRequest): Promise<ListProduitsResponse> {
-    const result = await this.produitService.findAll({
+  async listProduits(data: ListProduitsRequest) {
+    return this.produitService.findAll({
       organisationId: data.organisationId,
       gammeId: data.gammeId,
-      categorie: data.categorie ? protoToCategorie(data.categorie) : undefined,
-      type: data.type ? protoToType(data.type) : undefined,
+      categorie: data.categorie ? categorieFromProto[data.categorie] : undefined,
+      type: data.type ? typeFromProto(data.type) : undefined,
       actif: data.actif,
       promotionActive: data.promotionActive,
       search: data.search,
@@ -309,43 +179,32 @@ export class ProductsController {
           }
         : undefined,
     });
-    return {
-      produits: result.produits.map(toProtoProduit),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        totalPages: result.pagination.totalPages,
-      },
-    };
   }
 
   @GrpcMethod('ProduitService', 'Delete')
-  async deleteProduit(data: DeleteProduitRequest): Promise<DeleteProduitResponse> {
+  async deleteProduit(data: DeleteProduitRequest) {
     const success = await this.produitService.delete(data.id);
     return { success };
   }
 
   @GrpcMethod('ProduitService', 'SetPromotion')
-  async setPromotion(data: SetPromotionRequest): Promise<Produit> {
-    const produit = await this.produitService.setPromotion(
+  async setPromotion(data: SetPromotionRequest) {
+    return this.produitService.setPromotion(
       data.produitId,
       data.prixPromotion,
       new Date(data.dateDebut),
       new Date(data.dateFin),
     );
-    return toProtoProduit(produit);
   }
 
   @GrpcMethod('ProduitService', 'ClearPromotion')
-  async clearPromotion(data: ClearPromotionRequest): Promise<Produit> {
-    const produit = await this.produitService.clearPromotion(data.produitId);
-    return toProtoProduit(produit);
+  async clearPromotion(data: ClearPromotionRequest) {
+    return this.produitService.clearPromotion(data.produitId);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'Create')
-  async createGrilleTarifaire(data: CreateGrilleTarifaireRequest): Promise<GrilleTarifaire> {
-    const grille = await this.grilleService.create({
+  async createGrilleTarifaire(data: CreateGrilleTarifaireRequest) {
+    return this.grilleService.create({
       organisationId: data.organisationId,
       nom: data.nom,
       description: data.description,
@@ -353,12 +212,11 @@ export class ProductsController {
       dateFin: data.dateFin ? new Date(data.dateFin) : undefined,
       estParDefaut: data.estParDefaut,
     });
-    return toProtoGrilleTarifaire(grille);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'Update')
-  async updateGrilleTarifaire(data: UpdateGrilleTarifaireRequest): Promise<GrilleTarifaire> {
-    const grille = await this.grilleService.update({
+  async updateGrilleTarifaire(data: UpdateGrilleTarifaireRequest) {
+    return this.grilleService.update({
       id: data.id,
       nom: data.nom,
       description: data.description,
@@ -367,27 +225,24 @@ export class ProductsController {
       estParDefaut: data.estParDefaut,
       actif: data.actif,
     });
-    return toProtoGrilleTarifaire(grille);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'Get')
-  async getGrilleTarifaire(data: GetGrilleTarifaireRequest): Promise<GrilleTarifaire> {
-    const grille = await this.grilleService.findById(data.id);
-    return toProtoGrilleTarifaire(grille);
+  async getGrilleTarifaire(data: GetGrilleTarifaireRequest) {
+    return this.grilleService.findById(data.id);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'GetActive')
-  async getGrilleTarifaireActive(data: GetGrilleTarifaireActiveRequest): Promise<GrilleTarifaire> {
-    const grille = await this.grilleService.findActive(
+  async getGrilleTarifaireActive(data: GetGrilleTarifaireActiveRequest) {
+    return this.grilleService.findActive(
       data.organisationId,
       new Date(data.date || Date.now()),
     );
-    return toProtoGrilleTarifaire(grille);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'List')
-  async listGrillesTarifaires(data: ListGrillesTarifairesRequest): Promise<ListGrillesTarifairesResponse> {
-    const result = await this.grilleService.findAll({
+  async listGrillesTarifaires(data: ListGrillesTarifairesRequest) {
+    return this.grilleService.findAll({
       organisationId: data.organisationId,
       actif: data.actif,
       estParDefaut: data.estParDefaut,
@@ -400,32 +255,22 @@ export class ProductsController {
           }
         : undefined,
     });
-    return {
-      grilles: result.grilles.map(toProtoGrilleTarifaire),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        totalPages: result.pagination.totalPages,
-      },
-    };
   }
 
   @GrpcMethod('GrilleTarifaireService', 'Delete')
-  async deleteGrilleTarifaire(data: DeleteGrilleTarifaireRequest): Promise<DeleteGrilleTarifaireResponse> {
+  async deleteGrilleTarifaire(data: DeleteGrilleTarifaireRequest) {
     const success = await this.grilleService.delete(data.id);
     return { success };
   }
 
   @GrpcMethod('GrilleTarifaireService', 'SetParDefaut')
-  async setGrilleParDefaut(data: SetGrilleParDefautRequest): Promise<GrilleTarifaire> {
-    const grille = await this.grilleService.setParDefaut(data.id);
-    return toProtoGrilleTarifaire(grille);
+  async setGrilleParDefaut(data: SetGrilleParDefautRequest) {
+    return this.grilleService.setParDefaut(data.id);
   }
 
   @GrpcMethod('PrixProduitService', 'Create')
-  async createPrixProduit(data: CreatePrixProduitRequest): Promise<PrixProduit> {
-    const prix = await this.prixProduitService.create({
+  async createPrixProduit(data: CreatePrixProduitRequest) {
+    return this.prixProduitService.create({
       grilleTarifaireId: data.grilleTarifaireId,
       produitId: data.produitId,
       prixUnitaire: data.prixUnitaire,
@@ -433,12 +278,11 @@ export class ProductsController {
       prixMinimum: data.prixMinimum,
       prixMaximum: data.prixMaximum,
     });
-    return toProtoPrixProduit(prix);
   }
 
   @GrpcMethod('PrixProduitService', 'Update')
-  async updatePrixProduit(data: UpdatePrixProduitRequest): Promise<PrixProduit> {
-    const prix = await this.prixProduitService.update({
+  async updatePrixProduit(data: UpdatePrixProduitRequest) {
+    return this.prixProduitService.update({
       id: data.id,
       prixUnitaire: data.prixUnitaire,
       remisePourcent: data.remisePourcent,
@@ -446,27 +290,24 @@ export class ProductsController {
       prixMaximum: data.prixMaximum,
       actif: data.actif,
     });
-    return toProtoPrixProduit(prix);
   }
 
   @GrpcMethod('PrixProduitService', 'Get')
-  async getPrixProduit(data: GetPrixProduitRequest): Promise<PrixProduit> {
-    const prix = await this.prixProduitService.findById(data.id);
-    return toProtoPrixProduit(prix);
+  async getPrixProduit(data: GetPrixProduitRequest) {
+    return this.prixProduitService.findById(data.id);
   }
 
   @GrpcMethod('PrixProduitService', 'GetForProduit')
-  async getPrixForProduit(data: GetPrixForProduitRequest): Promise<PrixProduit> {
-    const prix = await this.prixProduitService.findForProduit(
+  async getPrixForProduit(data: GetPrixForProduitRequest) {
+    return this.prixProduitService.findForProduit(
       data.grilleTarifaireId,
       data.produitId,
     );
-    return toProtoPrixProduit(prix);
   }
 
   @GrpcMethod('PrixProduitService', 'List')
-  async listPrixProduits(data: ListPrixProduitsRequest): Promise<ListPrixProduitsResponse> {
-    const result = await this.prixProduitService.findAll({
+  async listPrixProduits(data: ListPrixProduitsRequest) {
+    return this.prixProduitService.findAll({
       grilleTarifaireId: data.grilleTarifaireId,
       produitId: data.produitId,
       actif: data.actif,
@@ -479,25 +320,16 @@ export class ProductsController {
           }
         : undefined,
     });
-    return {
-      prixProduits: result.prixProduits.map(toProtoPrixProduit),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        totalPages: result.pagination.totalPages,
-      },
-    };
   }
 
   @GrpcMethod('PrixProduitService', 'Delete')
-  async deletePrixProduit(data: DeletePrixProduitRequest): Promise<DeletePrixProduitResponse> {
+  async deletePrixProduit(data: DeletePrixProduitRequest) {
     const success = await this.prixProduitService.delete(data.id);
     return { success };
   }
 
   @GrpcMethod('PrixProduitService', 'BulkCreate')
-  async bulkCreatePrixProduits(data: BulkCreatePrixProduitsRequest): Promise<BulkCreatePrixProduitsResponse> {
+  async bulkCreatePrixProduits(data: BulkCreatePrixProduitsRequest) {
     const items = data.items.map((item) => ({
       produitId: item.produitId,
       prixUnitaire: item.prixUnitaire,
@@ -506,46 +338,26 @@ export class ProductsController {
       prixMaximum: item.prixMaximum,
     }));
     const created = await this.prixProduitService.bulkCreate(data.grilleTarifaireId, items);
-    return {
-      created: created.map(toProtoPrixProduit),
-      count: created.length,
-    };
+    return { created, count: created.length };
   }
 
   @GrpcMethod('CatalogService', 'GetCatalog')
-  async getCatalog(data: GetCatalogRequest): Promise<GetCatalogResponse> {
-    const result = await this.catalogService.getCatalog(
+  async getCatalog(data: GetCatalogRequest) {
+    return this.catalogService.getCatalog(
       data.organisationId,
       data.grilleTarifaireId,
       data.gammeId,
       data.includeInactive,
     );
-    return {
-      items: result.items.map((item): CatalogItem => ({
-        produit: toProtoProduit(item.produit),
-        prix: item.prix ? toProtoPrixProduit(item.prix) : undefined,
-        prixFinal: item.prixFinal,
-        enPromotion: item.enPromotion,
-      })),
-      grilleUtilisee: toProtoGrilleTarifaire(result.grilleUtilisee),
-    };
   }
 
   @GrpcMethod('CatalogService', 'CalculatePrice')
-  async calculatePrice(data: CalculatePriceRequest): Promise<CalculatePriceResponse> {
-    const result = await this.catalogService.calculatePrice(
+  async calculatePrice(data: CalculatePriceRequest) {
+    return this.catalogService.calculatePrice(
       data.produitId,
       data.grilleTarifaireId,
       data.quantite,
       data.remiseAdditionnelle,
     );
-    return {
-      prixUnitaire: result.prixUnitaire,
-      prixApresRemise: result.prixApresRemise,
-      prixTotalHt: result.prixTotalHt,
-      tva: result.tva,
-      prixTotalTtc: result.prixTotalTtc,
-      promotionAppliquee: result.promotionAppliquee,
-    };
   }
 }

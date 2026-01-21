@@ -10,13 +10,10 @@ import { ReminderService } from './modules/reminder/reminder.service';
 import { AuditLogService } from './modules/audit-log/audit-log.service';
 import { RetrySchedulerService } from './modules/scheduler/retry-scheduler.service';
 
-import { RetryPolicyEntity } from './modules/retry-policy/entities/retry-policy.entity';
-import { RetryScheduleEntity, RetryEligibility } from './modules/retry-schedule/entities/retry-schedule.entity';
-import { RetryAttemptEntity, RetryAttemptStatus } from './modules/retry-attempt/entities/retry-attempt.entity';
-import { RetryJobEntity, RetryJobStatus } from './modules/retry-job/entities/retry-job.entity';
-import { ReminderPolicyEntity } from './modules/reminder-policy/entities/reminder-policy.entity';
-import { ReminderEntity, ReminderChannel, ReminderStatus, ReminderTrigger } from './modules/reminder/entities/reminder.entity';
-import { RetryAuditLogEntity, AuditActorType } from './modules/audit-log/entities/retry-audit-log.entity';
+import { RetryEligibility } from './modules/retry-schedule/entities/retry-schedule.entity';
+import { RetryJobStatus } from './modules/retry-job/entities/retry-job.entity';
+import { ReminderChannel, ReminderStatus, ReminderTrigger } from './modules/reminder/entities/reminder.entity';
+import { AuditActorType } from './modules/audit-log/entities/retry-audit-log.entity';
 
 import {
   validate,
@@ -25,177 +22,6 @@ import {
   RunNowValidation,
   CancelRetryScheduleValidation,
 } from './common/validation.pipe';
-
-function toProtoRetryPolicy(entity: RetryPolicyEntity): Record<string, unknown> {
-  return {
-    id: entity.id,
-    organisation_id: entity.organisationId,
-    societe_id: entity.societeId,
-    product_id: entity.productId,
-    channel_id: entity.channelId,
-    name: entity.name,
-    description: entity.description || '',
-    retry_delays_days: entity.retryDelaysDays,
-    max_attempts: entity.maxAttempts,
-    max_total_days: entity.maxTotalDays,
-    retry_on_am04: entity.retryOnAm04,
-    retryable_codes: entity.retryableCodes,
-    non_retryable_codes: entity.nonRetryableCodes,
-    stop_on_payment_settled: entity.stopOnPaymentSettled,
-    stop_on_contract_cancelled: entity.stopOnContractCancelled,
-    stop_on_mandate_revoked: entity.stopOnMandateRevoked,
-    backoff_strategy: entity.backoffStrategy,
-    is_active: entity.isActive,
-    is_default: entity.isDefault,
-    priority: entity.priority,
-    created_at: entity.createdAt?.toISOString(),
-    updated_at: entity.updatedAt?.toISOString(),
-  };
-}
-
-function toProtoRetrySchedule(entity: RetryScheduleEntity): Record<string, unknown> {
-  return {
-    id: entity.id,
-    organisation_id: entity.organisationId,
-    societe_id: entity.societeId,
-    original_payment_id: entity.originalPaymentId,
-    schedule_id: entity.scheduleId,
-    facture_id: entity.factureId,
-    contrat_id: entity.contratId,
-    client_id: entity.clientId,
-    rejection_code: entity.rejectionCode,
-    rejection_raw_code: entity.rejectionRawCode,
-    rejection_message: entity.rejectionMessage,
-    rejection_date: entity.rejectionDate?.toISOString(),
-    retry_policy_id: entity.retryPolicyId,
-    amount_cents: entity.amountCents,
-    currency: entity.currency,
-    eligibility: entity.eligibility,
-    eligibility_reason: entity.eligibilityReason,
-    current_attempt: entity.currentAttempt,
-    max_attempts: entity.maxAttempts,
-    next_retry_date: entity.nextRetryDate?.toISOString(),
-    is_resolved: entity.isResolved,
-    resolution_reason: entity.resolutionReason,
-    resolved_at: entity.resolvedAt?.toISOString(),
-    created_at: entity.createdAt?.toISOString(),
-    updated_at: entity.updatedAt?.toISOString(),
-  };
-}
-
-function toProtoRetryAttempt(entity: RetryAttemptEntity): Record<string, unknown> {
-  return {
-    id: entity.id,
-    retry_schedule_id: entity.retryScheduleId,
-    attempt_number: entity.attemptNumber,
-    planned_date: entity.plannedDate?.toISOString(),
-    executed_at: entity.executedAt?.toISOString(),
-    status: entity.status,
-    psp_payment_id: entity.pspPaymentId,
-    psp_response_code: entity.pspResponseCode,
-    error_code: entity.errorCode,
-    error_message: entity.errorMessage,
-    new_rejection_code: entity.newRejectionCode,
-    retry_job_id: entity.retryJobId,
-    created_at: entity.createdAt?.toISOString(),
-    updated_at: entity.updatedAt?.toISOString(),
-  };
-}
-
-function toProtoRetryJob(entity: RetryJobEntity): Record<string, unknown> {
-  return {
-    id: entity.id,
-    organisation_id: entity.organisationId,
-    target_date: entity.targetDate?.toISOString(),
-    timezone: entity.timezone,
-    cutoff_time: entity.cutoffTime,
-    status: entity.status,
-    started_at: entity.startedAt?.toISOString(),
-    completed_at: entity.completedAt?.toISOString(),
-    total_attempts: entity.totalAttempts,
-    successful_attempts: entity.successfulAttempts,
-    failed_attempts: entity.failedAttempts,
-    skipped_attempts: entity.skippedAttempts,
-    triggered_by: entity.triggeredBy,
-    is_manual: entity.isManual,
-    created_at: entity.createdAt?.toISOString(),
-    updated_at: entity.updatedAt?.toISOString(),
-  };
-}
-
-function toProtoReminderPolicy(entity: ReminderPolicyEntity): Record<string, unknown> {
-  return {
-    id: entity.id,
-    organisation_id: entity.organisationId,
-    societe_id: entity.societeId,
-    name: entity.name,
-    description: entity.description || '',
-    trigger_rules: entity.triggerRules,
-    cooldown_hours: entity.cooldownHours,
-    max_reminders_per_day: entity.maxRemindersPerDay,
-    max_reminders_per_week: entity.maxRemindersPerWeek,
-    allowed_start_hour: entity.allowedStartHour,
-    allowed_end_hour: entity.allowedEndHour,
-    allowed_days_of_week: entity.allowedDaysOfWeek,
-    respect_opt_out: entity.respectOptOut,
-    is_active: entity.isActive,
-    is_default: entity.isDefault,
-    priority: entity.priority,
-    created_at: entity.createdAt?.toISOString(),
-    updated_at: entity.updatedAt?.toISOString(),
-  };
-}
-
-function toProtoReminder(entity: ReminderEntity): Record<string, unknown> {
-  return {
-    id: entity.id,
-    organisation_id: entity.organisationId,
-    societe_id: entity.societeId,
-    retry_schedule_id: entity.retryScheduleId,
-    retry_attempt_id: entity.retryAttemptId,
-    client_id: entity.clientId,
-    reminder_policy_id: entity.reminderPolicyId,
-    trigger_rule_id: entity.triggerRuleId,
-    channel: entity.channel,
-    template_id: entity.templateId,
-    template_variables: entity.templateVariables,
-    trigger: entity.trigger,
-    planned_at: entity.plannedAt?.toISOString(),
-    sent_at: entity.sentAt?.toISOString(),
-    delivered_at: entity.deliveredAt?.toISOString(),
-    status: entity.status,
-    provider_name: entity.providerName,
-    provider_message_id: entity.providerMessageId,
-    delivery_status_raw: entity.deliveryStatusRaw,
-    error_code: entity.errorCode,
-    error_message: entity.errorMessage,
-    retry_count: entity.retryCount,
-    created_at: entity.createdAt?.toISOString(),
-    updated_at: entity.updatedAt?.toISOString(),
-  };
-}
-
-function toProtoAuditLog(entity: RetryAuditLogEntity): Record<string, unknown> {
-  return {
-    id: entity.id,
-    organisation_id: entity.organisationId,
-    entity_type: entity.entityType,
-    entity_id: entity.entityId,
-    action: entity.action,
-    old_value: entity.oldValue ? JSON.stringify(entity.oldValue) : '',
-    new_value: entity.newValue ? JSON.stringify(entity.newValue) : '',
-    changed_fields: entity.changedFields,
-    retry_schedule_id: entity.retryScheduleId,
-    retry_attempt_id: entity.retryAttemptId,
-    reminder_id: entity.reminderId,
-    payment_id: entity.paymentId,
-    actor_type: entity.actorType,
-    actor_id: entity.actorId,
-    actor_ip: entity.actorIp,
-    timestamp: entity.timestamp?.toISOString(),
-    metadata: entity.metadata,
-  };
-}
 
 @Controller()
 export class RetryController {
@@ -213,9 +39,9 @@ export class RetryController {
   ) {}
 
   @GrpcMethod('RetryAdminService', 'GetRetryPolicy')
-  async getRetryPolicy(data: { id: string }): Promise<{ policy: Record<string, unknown> }> {
+  async getRetryPolicy(data: { id: string }) {
     const policy = await this.policyService.findById(data.id);
-    return { policy: toProtoRetryPolicy(policy) };
+    return { policy };
   }
 
   @GrpcMethod('RetryAdminService', 'ListRetryPolicies')
@@ -224,10 +50,7 @@ export class RetryController {
     societe_id?: string;
     active_only?: boolean;
     pagination?: { page?: number; limit?: number; sort_by?: string; sort_order?: string };
-  }): Promise<{
-    policies: Record<string, unknown>[];
-    pagination: { total: number; page: number; limit: number; total_pages: number };
-  }> {
+  }) {
     const result = await this.policyService.findAll({
       organisationId: data.organisation_id,
       societeId: data.societe_id,
@@ -241,13 +64,8 @@ export class RetryController {
     });
 
     return {
-      policies: result.policies.map(toProtoRetryPolicy),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        total_pages: result.pagination.totalPages,
-      },
+      policies: result.policies,
+      pagination: result.pagination,
     };
   }
 
@@ -271,7 +89,7 @@ export class RetryController {
     backoff_strategy?: string;
     is_default?: boolean;
     priority?: number;
-  }): Promise<{ policy: Record<string, unknown> }> {
+  }) {
     validate(data as unknown as Record<string, unknown>, RetryPolicyValidation);
     
     const policy = await this.policyService.create({
@@ -294,7 +112,7 @@ export class RetryController {
       isDefault: data.is_default,
       priority: data.priority,
     });
-    return { policy: toProtoRetryPolicy(policy) };
+    return { policy };
   }
 
   @GrpcMethod('RetryAdminService', 'UpdateRetryPolicy')
@@ -315,7 +133,7 @@ export class RetryController {
     is_active?: boolean;
     is_default?: boolean;
     priority?: number;
-  }): Promise<{ policy: Record<string, unknown> }> {
+  }) {
     const policy = await this.policyService.update({
       id: data.id,
       name: data.name,
@@ -334,21 +152,17 @@ export class RetryController {
       isDefault: data.is_default,
       priority: data.priority,
     });
-    return { policy: toProtoRetryPolicy(policy) };
+    return { policy };
   }
 
   @GrpcMethod('RetryAdminService', 'DeleteRetryPolicy')
-  async deleteRetryPolicy(data: { id: string }): Promise<{ success: boolean; message: string }> {
+  async deleteRetryPolicy(data: { id: string }) {
     const success = await this.policyService.delete(data.id);
     return { success, message: success ? 'Policy deleted' : 'Policy not found' };
   }
 
   @GrpcMethod('RetryAdminService', 'GetRetrySchedule')
-  async getRetrySchedule(data: { id: string }): Promise<{
-    schedule: Record<string, unknown>;
-    attempts: Record<string, unknown>[];
-    reminders: Record<string, unknown>[];
-  }> {
+  async getRetrySchedule(data: { id: string }) {
     const schedule = await this.scheduleService.findById(data.id);
     const attempts = await this.attemptService.findByScheduleId(data.id);
     const reminders = await this.reminderService.findAll({
@@ -357,9 +171,9 @@ export class RetryController {
     });
 
     return {
-      schedule: toProtoRetrySchedule(schedule),
-      attempts: attempts.map(toProtoRetryAttempt),
-      reminders: reminders.reminders.map(toProtoReminder),
+      schedule,
+      attempts,
+      reminders: reminders.reminders,
     };
   }
 
@@ -374,10 +188,7 @@ export class RetryController {
     from_date?: { seconds: number };
     to_date?: { seconds: number };
     pagination?: { page?: number; limit?: number; sort_by?: string; sort_order?: string };
-  }): Promise<{
-    schedules: Record<string, unknown>[];
-    pagination: { total: number; page: number; limit: number; total_pages: number };
-  }> {
+  }) {
     const result = await this.scheduleService.findAll({
       organisationId: data.organisation_id,
       societeId: data.societe_id,
@@ -396,13 +207,8 @@ export class RetryController {
     });
 
     return {
-      schedules: result.schedules.map(toProtoRetrySchedule),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        total_pages: result.pagination.totalPages,
-      },
+      schedules: result.schedules,
+      pagination: result.pagination,
     };
   }
 
@@ -411,7 +217,7 @@ export class RetryController {
     id: string;
     reason: string;
     cancelled_by: string;
-  }): Promise<{ schedule: Record<string, unknown> }> {
+  }) {
     validate(data as unknown as Record<string, unknown>, CancelRetryScheduleValidation);
     
     const schedule = await this.scheduleService.cancel({
@@ -419,7 +225,7 @@ export class RetryController {
       reason: data.reason,
       cancelledBy: data.cancelled_by,
     });
-    return { schedule: toProtoRetrySchedule(schedule) };
+    return { schedule };
   }
 
   @GrpcMethod('RetryAdminService', 'ReplanRetrySchedule')
@@ -428,7 +234,7 @@ export class RetryController {
     new_retry_date: { seconds: number };
     reason: string;
     replanned_by: string;
-  }): Promise<{ schedule: Record<string, unknown> }> {
+  }) {
     const newDate = new Date(data.new_retry_date.seconds * 1000);
     const schedule = await this.scheduleService.updateNextRetryDate(data.id, newDate);
     
@@ -443,23 +249,20 @@ export class RetryController {
       actorId: data.replanned_by,
     });
 
-    return { schedule: toProtoRetrySchedule(schedule) };
+    return { schedule };
   }
 
   @GrpcMethod('RetryAdminService', 'GetRetryAttempt')
-  async getRetryAttempt(data: { id: string }): Promise<{ attempt: Record<string, unknown> }> {
+  async getRetryAttempt(data: { id: string }) {
     const attempt = await this.attemptService.findById(data.id);
-    return { attempt: toProtoRetryAttempt(attempt) };
+    return { attempt };
   }
 
   @GrpcMethod('RetryAdminService', 'ListRetryAttempts')
   async listRetryAttempts(data: {
     retry_schedule_id: string;
     pagination?: { page?: number; limit?: number; sort_by?: string; sort_order?: string };
-  }): Promise<{
-    attempts: Record<string, unknown>[];
-    pagination: { total: number; page: number; limit: number; total_pages: number };
-  }> {
+  }) {
     const result = await this.attemptService.findAll({
       retryScheduleId: data.retry_schedule_id,
       pagination: data.pagination ? {
@@ -471,13 +274,8 @@ export class RetryController {
     });
 
     return {
-      attempts: result.attempts.map(toProtoRetryAttempt),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        total_pages: result.pagination.totalPages,
-      },
+      attempts: result.attempts,
+      pagination: result.pagination,
     };
   }
 
@@ -487,12 +285,7 @@ export class RetryController {
     retry_schedule_id?: string;
     triggered_by: string;
     dry_run: boolean;
-  }): Promise<{
-    job_id: string;
-    status: RetryJobStatus;
-    message: string;
-    scheduled_count: number;
-  }> {
+  }) {
     validate(data as unknown as Record<string, unknown>, RunNowValidation);
     
     const result = await this.schedulerService.runNow({
@@ -503,17 +296,17 @@ export class RetryController {
     });
 
     return {
-      job_id: result.jobId,
+      jobId: result.jobId,
       status: result.status,
       message: result.message,
-      scheduled_count: result.scheduledCount,
+      scheduledCount: result.scheduledCount,
     };
   }
 
   @GrpcMethod('RetryAdminService', 'GetRetryJobStatus')
-  async getRetryJobStatus(data: { job_id: string }): Promise<{ job: Record<string, unknown> }> {
+  async getRetryJobStatus(data: { job_id: string }) {
     const job = await this.jobService.findById(data.job_id);
-    return { job: toProtoRetryJob(job) };
+    return { job };
   }
 
   @GrpcMethod('RetryAdminService', 'ListRetryJobs')
@@ -523,10 +316,7 @@ export class RetryController {
     from_date?: { seconds: number };
     to_date?: { seconds: number };
     pagination?: { page?: number; limit?: number; sort_by?: string; sort_order?: string };
-  }): Promise<{
-    jobs: Record<string, unknown>[];
-    pagination: { total: number; page: number; limit: number; total_pages: number };
-  }> {
+  }) {
     const result = await this.jobService.findAll({
       organisationId: data.organisation_id,
       status: data.status,
@@ -541,13 +331,8 @@ export class RetryController {
     });
 
     return {
-      jobs: result.jobs.map(toProtoRetryJob),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        total_pages: result.pagination.totalPages,
-      },
+      jobs: result.jobs,
+      pagination: result.pagination,
     };
   }
 
@@ -557,7 +342,7 @@ export class RetryController {
     societe_id?: string;
     from_date?: { seconds: number };
     to_date?: { seconds: number };
-  }): Promise<Record<string, unknown>> {
+  }) {
     const dateFrom = data.from_date ? new Date(data.from_date.seconds * 1000) : undefined;
     const dateTo = data.to_date ? new Date(data.to_date.seconds * 1000) : undefined;
 
@@ -574,22 +359,22 @@ export class RetryController {
     );
 
     return {
-      total_rejections: scheduleStats.total,
-      am04_rejections: 0,
-      other_rejections: 0,
-      total_retry_schedules: scheduleStats.total,
-      eligible_for_retry: scheduleStats.eligible,
-      not_eligible: scheduleStats.total - scheduleStats.eligible,
-      total_retry_attempts: jobStats.totalAttempts,
-      successful_retries: jobStats.successfulAttempts,
-      failed_retries: jobStats.failedAttempts,
-      pending_retries: scheduleStats.pending,
-      success_rate: jobStats.avgSuccessRate,
-      am04_rate: 0,
-      total_amount_recovered_cents: 0,
-      total_amount_pending_cents: 0,
-      rejection_code_breakdown: [],
-      daily_metrics: [],
+      totalRejections: scheduleStats.total,
+      am04Rejections: 0,
+      otherRejections: 0,
+      totalRetrySchedules: scheduleStats.total,
+      eligibleForRetry: scheduleStats.eligible,
+      notEligible: scheduleStats.total - scheduleStats.eligible,
+      totalRetryAttempts: jobStats.totalAttempts,
+      successfulRetries: jobStats.successfulAttempts,
+      failedRetries: jobStats.failedAttempts,
+      pendingRetries: scheduleStats.pending,
+      successRate: jobStats.avgSuccessRate,
+      am04Rate: 0,
+      totalAmountRecoveredCents: 0,
+      totalAmountPendingCents: 0,
+      rejectionCodeBreakdown: [],
+      dailyMetrics: [],
     };
   }
 
@@ -602,10 +387,7 @@ export class RetryController {
     from_date?: { seconds: number };
     to_date?: { seconds: number };
     pagination?: { page?: number; limit?: number; sort_by?: string; sort_order?: string };
-  }): Promise<{
-    logs: Record<string, unknown>[];
-    pagination: { total: number; page: number; limit: number; total_pages: number };
-  }> {
+  }) {
     const result = await this.auditLogService.findAll({
       organisationId: data.organisation_id,
       entityType: data.entity_type,
@@ -620,13 +402,8 @@ export class RetryController {
     });
 
     return {
-      logs: result.logs.map(toProtoAuditLog),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        total_pages: result.pagination.totalPages,
-      },
+      logs: result.logs,
+      pagination: result.pagination,
     };
   }
 
@@ -637,14 +414,7 @@ export class RetryController {
     timezone: string;
     cutoff_time: string;
     dry_run: boolean;
-  }): Promise<{
-    job_id: string;
-    status: RetryJobStatus;
-    total_processed: number;
-    successful: number;
-    failed: number;
-    skipped: number;
-  }> {
+  }) {
     const result = await this.schedulerService.processDueRetries({
       organisationId: data.organisation_id,
       targetDate: new Date(data.target_date.seconds * 1000),
@@ -654,9 +424,9 @@ export class RetryController {
     });
 
     return {
-      job_id: result.jobId,
+      jobId: result.jobId,
       status: result.status,
-      total_processed: result.totalProcessed,
+      totalProcessed: result.totalProcessed,
       successful: result.successful,
       failed: result.failed,
       skipped: result.skipped,
@@ -671,12 +441,7 @@ export class RetryController {
     societe_id?: string;
     contrat_id?: string;
     client_id?: string;
-  }): Promise<{
-    eligibility: RetryEligibility;
-    reason: string;
-    applicable_policy_id?: string;
-    first_retry_date?: { seconds: number };
-  }> {
+  }) {
     const result = await this.schedulerService.checkEligibility({
       paymentId: data.payment_id,
       rejectionCode: data.rejection_code,
@@ -689,8 +454,8 @@ export class RetryController {
     return {
       eligibility: result.eligibility,
       reason: result.reason,
-      applicable_policy_id: result.applicablePolicyId,
-      first_retry_date: result.firstRetryDate
+      applicablePolicyId: result.applicablePolicyId,
+      firstRetryDate: result.firstRetryDate
         ? { seconds: Math.floor(result.firstRetryDate.getTime() / 1000) }
         : undefined,
     };
@@ -714,13 +479,7 @@ export class RetryController {
     psp_payment_id?: string;
     rejected_at: { seconds: number };
     idempotency_key: string;
-  }): Promise<{
-    processed: boolean;
-    retry_schedule_id?: string;
-    eligibility: RetryEligibility;
-    message: string;
-    reminder_ids: string[];
-  }> {
+  }) {
     validate(data as unknown as Record<string, unknown>, PaymentRejectedValidation);
     
     const result = await this.schedulerService.handlePaymentRejected({
@@ -766,17 +525,17 @@ export class RetryController {
 
     return {
       processed: result.processed,
-      retry_schedule_id: result.retryScheduleId,
+      retryScheduleId: result.retryScheduleId,
       eligibility: result.eligibility,
       message: result.message,
-      reminder_ids: reminderIds,
+      reminderIds,
     };
   }
 
   @GrpcMethod('ReminderService', 'GetReminderPolicy')
-  async getReminderPolicy(data: { id: string }): Promise<{ policy: Record<string, unknown> }> {
+  async getReminderPolicy(data: { id: string }) {
     const policy = await this.reminderPolicyService.findById(data.id);
-    return { policy: toProtoReminderPolicy(policy) };
+    return { policy };
   }
 
   @GrpcMethod('ReminderService', 'ListReminderPolicies')
@@ -785,10 +544,7 @@ export class RetryController {
     societe_id?: string;
     active_only?: boolean;
     pagination?: { page?: number; limit?: number; sort_by?: string; sort_order?: string };
-  }): Promise<{
-    policies: Record<string, unknown>[];
-    pagination: { total: number; page: number; limit: number; total_pages: number };
-  }> {
+  }) {
     const result = await this.reminderPolicyService.findAll({
       organisationId: data.organisation_id,
       societeId: data.societe_id,
@@ -802,20 +558,15 @@ export class RetryController {
     });
 
     return {
-      policies: result.policies.map(toProtoReminderPolicy),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        total_pages: result.pagination.totalPages,
-      },
+      policies: result.policies,
+      pagination: result.pagination,
     };
   }
 
   @GrpcMethod('ReminderService', 'GetReminder')
-  async getReminder(data: { id: string }): Promise<{ reminder: Record<string, unknown> }> {
+  async getReminder(data: { id: string }) {
     const reminder = await this.reminderService.findById(data.id);
-    return { reminder: toProtoReminder(reminder) };
+    return { reminder };
   }
 
   @GrpcMethod('ReminderService', 'ListReminders')
@@ -828,10 +579,7 @@ export class RetryController {
     from_date?: { seconds: number };
     to_date?: { seconds: number };
     pagination?: { page?: number; limit?: number; sort_by?: string; sort_order?: string };
-  }): Promise<{
-    reminders: Record<string, unknown>[];
-    pagination: { total: number; page: number; limit: number; total_pages: number };
-  }> {
+  }) {
     const result = await this.reminderService.findAll({
       organisationId: data.organisation_id,
       retryScheduleId: data.retry_schedule_id,
@@ -847,13 +595,8 @@ export class RetryController {
     });
 
     return {
-      reminders: result.reminders.map(toProtoReminder),
-      pagination: {
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        total_pages: result.pagination.totalPages,
-      },
+      reminders: result.reminders,
+      pagination: result.pagination,
     };
   }
 
@@ -861,19 +604,14 @@ export class RetryController {
   async sendReminder(data: {
     id: string;
     force: boolean;
-  }): Promise<{
-    success: boolean;
-    message: string;
-    provider_message_id?: string;
-    error_code?: string;
-  }> {
+  }) {
     const reminder = await this.reminderService.findById(data.id);
     
     if (!data.force && reminder.status !== ReminderStatus.REMINDER_PENDING) {
       return {
         success: false,
         message: `Reminder is not pending (status: ${reminder.status})`,
-        error_code: 'NOT_PENDING',
+        errorCode: 'NOT_PENDING',
       };
     }
 
@@ -882,8 +620,8 @@ export class RetryController {
     return {
       success: result.success,
       message: result.success ? 'Reminder sent' : (result.errorMessage || 'Failed to send'),
-      provider_message_id: result.providerMessageId,
-      error_code: result.errorCode,
+      providerMessageId: result.providerMessageId,
+      errorCode: result.errorCode,
     };
   }
 
@@ -895,7 +633,7 @@ export class RetryController {
     delivery_status_raw?: string;
     error_code?: string;
     error_message?: string;
-  }): Promise<{ reminder: Record<string, unknown> }> {
+  }) {
     const statusMap: Record<string, 'delivered' | 'bounced' | 'opened' | 'clicked' | 'failed'> = {
       REMINDER_DELIVERED: 'delivered',
       REMINDER_BOUNCED: 'bounced',
@@ -913,6 +651,6 @@ export class RetryController {
     });
 
     const reminder = await this.reminderService.findById(data.reminder_id);
-    return { reminder: toProtoReminder(reminder) };
+    return { reminder };
   }
 }

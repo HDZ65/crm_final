@@ -718,7 +718,7 @@ export function CreateShipmentDialog({
           </div>
         )
 
-      case "confirmation":
+      case "confirmation": {
         const values = form.getValues()
         return (
           <div className="space-y-4">
@@ -765,6 +765,7 @@ export function CreateShipmentDialog({
             <PricingCard pricing={pricingData} isLoading={pricingLoading} />
           </div>
         )
+      }
 
       case "success":
         return (

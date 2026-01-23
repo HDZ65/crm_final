@@ -4,6 +4,15 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import {
   CommissionFilters,
   type CommissionFiltersState,
@@ -12,6 +21,9 @@ import { CommissionDetailDialog } from "@/components/commissions/commission-deta
 import { DeselectionReasonDialog } from "@/components/commissions/deselection-reason-dialog"
 import { ReprisesList } from "@/components/commissions/reprises-list"
 import { BordereauxList } from "@/components/commissions/bordereaux-list"
+import { AuditLogViewer } from "@/components/commissions/audit-log-viewer"
+import { RecurrencesList } from "@/components/commissions/recurrences-list"
+import { ReportsNegatifsList } from "@/components/commissions/reports-negatifs-list"
 import { CalculateCommissionDialog } from "@/components/commissions/calculate-commission-dialog"
 import { TriggerRepriseDialog } from "@/components/commissions/trigger-reprise-dialog"
 import { CommissionConfigDialog } from "@/components/commissions/commission-config-dialog"
@@ -26,6 +38,9 @@ import {
   exportBordereau as exportBordereauAction,
   annulerReprise as annulerRepriseAction,
   deselectionnerCommission as deselectionnerCommissionAction,
+  getAuditLogs,
+  getRecurrencesByOrganisation,
+  getReportsNegatifsByOrganisation,
 } from "@/actions/commissions"
 import { getApporteursByOrganisation } from "@/actions/commerciaux"
 import { useOrganisation } from "@/contexts/organisation-context"
@@ -44,14 +59,19 @@ import {
   Settings,
   Users,
   AlertTriangle,
+  History,
+  Repeat,
+  AlertOctagon,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 
 // Import types for SSR data
-import type { Commission, Reprise, Bordereau } from "@proto-frontend/commission/commission"
-import type { Apporteur } from "@proto-frontend/commerciaux/commerciaux"
+import type { Commission, Reprise, Bordereau, AuditLog, RecurrenceCommission, ReportNegatif } from "@proto/commission/commission"
+import { AuditAction, AuditScope, StatutRecurrence, StatutReport } from "@proto/commission/commission"
+import type { DateRange } from "react-day-picker"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
 
 // Simple type for statuts from server action
 interface SimpleStatut {
@@ -95,6 +115,9 @@ export function CommissionsPageClient({
   const hasFetchedApporteurs = React.useRef(!!initialApporteurs)
   const hasFetchedReprises = React.useRef(!!initialReprises)
   const hasFetchedBordereaux = React.useRef(!!initialBordereaux)
+  const hasFetchedAuditLogs = React.useRef(false)
+  const hasFetchedRecurrences = React.useRef(false)
+  const hasFetchedReportsNegatifs = React.useRef(false)
 
   // Helper to map commissions from gRPC format
   const mapCommission = React.useCallback((c: Commission): CommissionWithDetailsResponseDto => ({
@@ -218,6 +241,62 @@ export function CommissionsPageClient({
   const [loadingBordereaux, setLoadingBordereaux] = React.useState(!initialBordereaux)
   const [errorBordereaux, setErrorBordereaux] = React.useState<Error | null>(null)
 
+  const [auditLogs, setAuditLogs] = React.useState<AuditLog[]>([])
+  const [loadingAuditLogs, setLoadingAuditLogs] = React.useState(false)
+  const [errorAuditLogs, setErrorAuditLogs] = React.useState<Error | null>(null)
+  const [auditPage, setAuditPage] = React.useState(1)
+  const [auditTotal, setAuditTotal] = React.useState(0)
+
+  const [recurrencesData, setRecurrencesData] = React.useState<RecurrenceCommission[]>([])
+  const [loadingRecurrences, setLoadingRecurrences] = React.useState(false)
+  const [errorRecurrences, setErrorRecurrences] = React.useState<Error | null>(null)
+  const [recurrencesPage, setRecurrencesPage] = React.useState(1)
+  const [recurrencesTotal, setRecurrencesTotal] = React.useState(0)
+
+  const [reportsNegatifsData, setReportsNegatifsData] = React.useState<ReportNegatif[]>([])
+  const [loadingReportsNegatifs, setLoadingReportsNegatifs] = React.useState(false)
+  const [errorReportsNegatifs, setErrorReportsNegatifs] = React.useState<Error | null>(null)
+  const [reportsPage, setReportsPage] = React.useState(1)
+  const [reportsTotal, setReportsTotal] = React.useState(0)
+
+  const pageSize = 20
+
+  type AuditFiltersState = {
+    scope: string
+    action: string
+    refId: string
+    apporteurId: string
+    dateRange?: DateRange
+  }
+
+  type RecurrenceFiltersState = {
+    apporteurId: string
+    periode: string
+    statut: string
+  }
+
+  type ReportFiltersState = {
+    apporteurId: string
+    statut: string
+  }
+
+  const [auditFilters, setAuditFilters] = React.useState<AuditFiltersState>({
+    scope: "all",
+    action: "all",
+    refId: "",
+    apporteurId: "all",
+    dateRange: undefined,
+  })
+  const [recurrenceFilters, setRecurrenceFilters] = React.useState<RecurrenceFiltersState>({
+    apporteurId: "all",
+    periode: "",
+    statut: "all",
+  })
+  const [reportFilters, setReportFilters] = React.useState<ReportFiltersState>({
+    apporteurId: "all",
+    statut: "all",
+  })
+
   // Config statique pour le moment
   const config = React.useMemo(() => ({
     typesProduit: [
@@ -234,6 +313,91 @@ export function CommissionsPageClient({
     ],
   }), [])
   const loadingConfig = false
+
+  const auditScopeOptions = React.useMemo(() => ([
+    { value: String(AuditScope.AUDIT_SCOPE_COMMISSION), label: "Commission" },
+    { value: String(AuditScope.AUDIT_SCOPE_RECURRENCE), label: "Récurrence" },
+    { value: String(AuditScope.AUDIT_SCOPE_REPRISE), label: "Reprise" },
+    { value: String(AuditScope.AUDIT_SCOPE_REPORT), label: "Report" },
+    { value: String(AuditScope.AUDIT_SCOPE_BORDEREAU), label: "Bordereau" },
+    { value: String(AuditScope.AUDIT_SCOPE_LIGNE), label: "Ligne" },
+    { value: String(AuditScope.AUDIT_SCOPE_BAREME), label: "Barème" },
+    { value: String(AuditScope.AUDIT_SCOPE_PALIER), label: "Palier" },
+    { value: String(AuditScope.AUDIT_SCOPE_ENGINE), label: "Moteur" },
+  ]), [])
+
+  const auditActionOptions = React.useMemo(() => ([
+    { value: String(AuditAction.AUDIT_ACTION_COMMISSION_CALCULATED), label: "Commission calculée" },
+    { value: String(AuditAction.AUDIT_ACTION_COMMISSION_CREATED), label: "Commission créée" },
+    { value: String(AuditAction.AUDIT_ACTION_COMMISSION_UPDATED), label: "Commission mise à jour" },
+    { value: String(AuditAction.AUDIT_ACTION_COMMISSION_DELETED), label: "Commission supprimée" },
+    { value: String(AuditAction.AUDIT_ACTION_COMMISSION_STATUS_CHANGED), label: "Statut commission modifié" },
+    { value: String(AuditAction.AUDIT_ACTION_RECURRENCE_GENERATED), label: "Récurrence générée" },
+    { value: String(AuditAction.AUDIT_ACTION_RECURRENCE_STOPPED), label: "Récurrence stoppée" },
+    { value: String(AuditAction.AUDIT_ACTION_REPRISE_CREATED), label: "Reprise créée" },
+    { value: String(AuditAction.AUDIT_ACTION_REPRISE_APPLIED), label: "Reprise appliquée" },
+    { value: String(AuditAction.AUDIT_ACTION_REPRISE_CANCELLED), label: "Reprise annulée" },
+    { value: String(AuditAction.AUDIT_ACTION_REPRISE_REGULARIZED), label: "Reprise régularisée" },
+    { value: String(AuditAction.AUDIT_ACTION_REPORT_NEGATIF_CREATED), label: "Report négatif créé" },
+    { value: String(AuditAction.AUDIT_ACTION_REPORT_NEGATIF_APPLIED), label: "Report négatif appliqué" },
+    { value: String(AuditAction.AUDIT_ACTION_REPORT_NEGATIF_CLEARED), label: "Report négatif apuré" },
+    { value: String(AuditAction.AUDIT_ACTION_BORDEREAU_CREATED), label: "Bordereau créé" },
+    { value: String(AuditAction.AUDIT_ACTION_BORDEREAU_VALIDATED), label: "Bordereau validé" },
+    { value: String(AuditAction.AUDIT_ACTION_BORDEREAU_EXPORTED), label: "Bordereau exporté" },
+    { value: String(AuditAction.AUDIT_ACTION_BORDEREAU_ARCHIVED), label: "Bordereau archivé" },
+    { value: String(AuditAction.AUDIT_ACTION_LIGNE_SELECTED), label: "Ligne sélectionnée" },
+    { value: String(AuditAction.AUDIT_ACTION_LIGNE_DESELECTED), label: "Ligne désélectionnée" },
+    { value: String(AuditAction.AUDIT_ACTION_LIGNE_VALIDATED), label: "Ligne validée" },
+    { value: String(AuditAction.AUDIT_ACTION_LIGNE_REJECTED), label: "Ligne rejetée" },
+    { value: String(AuditAction.AUDIT_ACTION_BAREME_CREATED), label: "Barème créé" },
+    { value: String(AuditAction.AUDIT_ACTION_BAREME_UPDATED), label: "Barème mis à jour" },
+    { value: String(AuditAction.AUDIT_ACTION_BAREME_ACTIVATED), label: "Barème activé" },
+    { value: String(AuditAction.AUDIT_ACTION_BAREME_DEACTIVATED), label: "Barème désactivé" },
+    { value: String(AuditAction.AUDIT_ACTION_BAREME_VERSION_CREATED), label: "Version barème créée" },
+    { value: String(AuditAction.AUDIT_ACTION_PALIER_CREATED), label: "Palier créé" },
+    { value: String(AuditAction.AUDIT_ACTION_PALIER_UPDATED), label: "Palier mis à jour" },
+    { value: String(AuditAction.AUDIT_ACTION_PALIER_DELETED), label: "Palier supprimé" },
+  ]), [])
+
+  const recurrenceStatusOptions = React.useMemo(() => ([
+    { value: String(StatutRecurrence.STATUT_RECURRENCE_ACTIVE), label: "Active" },
+    { value: String(StatutRecurrence.STATUT_RECURRENCE_SUSPENDUE), label: "Suspendue" },
+    { value: String(StatutRecurrence.STATUT_RECURRENCE_TERMINEE), label: "Terminée" },
+    { value: String(StatutRecurrence.STATUT_RECURRENCE_ANNULEE), label: "Annulée" },
+  ]), [])
+
+  const reportStatusOptions = React.useMemo(() => ([
+    { value: String(StatutReport.STATUT_REPORT_EN_COURS), label: "En cours" },
+    { value: String(StatutReport.STATUT_REPORT_APURE), label: "Apuré" },
+    { value: String(StatutReport.STATUT_REPORT_ANNULE), label: "Annulé" },
+  ]), [])
+
+  const formatLocalDate = React.useCallback((date: Date | undefined) => {
+    if (!date) return undefined
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }, [])
+
+  const hasAuditFilters = React.useMemo(() => (
+    auditFilters.scope !== "all" ||
+    auditFilters.action !== "all" ||
+    auditFilters.refId.trim() !== "" ||
+    auditFilters.apporteurId !== "all" ||
+    Boolean(auditFilters.dateRange?.from || auditFilters.dateRange?.to)
+  ), [auditFilters])
+
+  const hasRecurrenceFilters = React.useMemo(() => (
+    recurrenceFilters.apporteurId !== "all" ||
+    recurrenceFilters.periode.trim() !== "" ||
+    recurrenceFilters.statut !== "all"
+  ), [recurrenceFilters])
+
+  const hasReportFilters = React.useMemo(() => (
+    reportFilters.apporteurId !== "all" ||
+    reportFilters.statut !== "all"
+  ), [reportFilters])
 
   // Fetch des commissions
   const refetchCommissions = React.useCallback(async () => {
@@ -364,6 +528,110 @@ export function CommissionsPageClient({
     setLoadingBordereaux(false)
   }, [activeOrganisation])
 
+  const refetchAuditLogs = React.useCallback(async (filters?: AuditFiltersState, page = auditPage) => {
+    if (!activeOrganisation) return
+    const activeFilters = filters ?? auditFilters
+    setLoadingAuditLogs(true)
+    setErrorAuditLogs(null)
+    const result = await getAuditLogs({
+      organisationId: activeOrganisation.organisationId,
+      apporteurId: activeFilters.apporteurId !== "all" ? activeFilters.apporteurId : undefined,
+      scope: activeFilters.scope !== "all" ? Number(activeFilters.scope) : undefined,
+      action: activeFilters.action !== "all" ? Number(activeFilters.action) : undefined,
+      refId: activeFilters.refId.trim() || undefined,
+      dateFrom: formatLocalDate(activeFilters.dateRange?.from),
+      dateTo: formatLocalDate(activeFilters.dateRange?.to),
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    })
+    if (result.error) {
+      setErrorAuditLogs(new Error(result.error))
+    } else if (result.data) {
+      setAuditLogs(result.data.logs)
+      setAuditTotal(result.data.total)
+    }
+    setLoadingAuditLogs(false)
+  }, [activeOrganisation, auditFilters, formatLocalDate, auditPage])
+
+  const refetchRecurrences = React.useCallback(async (filters?: RecurrenceFiltersState, page = recurrencesPage) => {
+    if (!activeOrganisation) return
+    const activeFilters = filters ?? recurrenceFilters
+    setLoadingRecurrences(true)
+    setErrorRecurrences(null)
+    const result = await getRecurrencesByOrganisation({
+      organisationId: activeOrganisation.organisationId,
+      apporteurId: activeFilters.apporteurId !== "all" ? activeFilters.apporteurId : undefined,
+      periode: activeFilters.periode.trim() || undefined,
+      statut: activeFilters.statut !== "all" ? Number(activeFilters.statut) : undefined,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    })
+    if (result.error) {
+      setErrorRecurrences(new Error(result.error))
+    } else if (result.data) {
+      setRecurrencesData(result.data.recurrences)
+      setRecurrencesTotal(result.data.total)
+    }
+    setLoadingRecurrences(false)
+  }, [activeOrganisation, recurrenceFilters, recurrencesPage])
+
+  const refetchReportsNegatifs = React.useCallback(async (filters?: ReportFiltersState, page = reportsPage) => {
+    if (!activeOrganisation) return
+    const activeFilters = filters ?? reportFilters
+    setLoadingReportsNegatifs(true)
+    setErrorReportsNegatifs(null)
+    const result = await getReportsNegatifsByOrganisation({
+      organisationId: activeOrganisation.organisationId,
+      apporteurId: activeFilters.apporteurId !== "all" ? activeFilters.apporteurId : undefined,
+      statut: activeFilters.statut !== "all" ? Number(activeFilters.statut) : undefined,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    })
+    if (result.error) {
+      setErrorReportsNegatifs(new Error(result.error))
+    } else if (result.data) {
+      setReportsNegatifsData(result.data.reports)
+      setReportsTotal(result.data.total)
+    }
+    setLoadingReportsNegatifs(false)
+  }, [activeOrganisation, reportFilters, reportsPage])
+
+  const applyAuditFilters = React.useCallback(() => {
+    setAuditPage(1)
+    refetchAuditLogs(auditFilters, 1)
+  }, [refetchAuditLogs, auditFilters])
+
+  const resetAuditFilters = React.useCallback(() => {
+    const next = { scope: "all", action: "all", refId: "", apporteurId: "all", dateRange: undefined }
+    setAuditFilters(next)
+    setAuditPage(1)
+    refetchAuditLogs(next, 1)
+  }, [refetchAuditLogs])
+
+  const applyRecurrenceFilters = React.useCallback(() => {
+    setRecurrencesPage(1)
+    refetchRecurrences(recurrenceFilters, 1)
+  }, [refetchRecurrences, recurrenceFilters])
+
+  const resetRecurrenceFilters = React.useCallback(() => {
+    const next = { apporteurId: "all", periode: "", statut: "all" }
+    setRecurrenceFilters(next)
+    setRecurrencesPage(1)
+    refetchRecurrences(next, 1)
+  }, [refetchRecurrences])
+
+  const applyReportFilters = React.useCallback(() => {
+    setReportsPage(1)
+    refetchReportsNegatifs(reportFilters, 1)
+  }, [refetchReportsNegatifs, reportFilters])
+
+  const resetReportFilters = React.useCallback(() => {
+    const next = { apporteurId: "all", statut: "all" }
+    setReportFilters(next)
+    setReportsPage(1)
+    refetchReportsNegatifs(next, 1)
+  }, [refetchReportsNegatifs])
+
   // Initial fetch when organisation becomes available - skip if SSR data provided
   React.useEffect(() => {
     if (!activeOrganisation) return
@@ -384,7 +652,19 @@ export function CommissionsPageClient({
       hasFetchedBordereaux.current = true
       refetchBordereaux()
     }
-  }, [activeOrganisation, refetchCommissions, fetchApporteurs, refetchReprises, refetchBordereaux])
+    if (!hasFetchedAuditLogs.current) {
+      hasFetchedAuditLogs.current = true
+      refetchAuditLogs()
+    }
+    if (!hasFetchedRecurrences.current) {
+      hasFetchedRecurrences.current = true
+      refetchRecurrences()
+    }
+    if (!hasFetchedReportsNegatifs.current) {
+      hasFetchedReportsNegatifs.current = true
+      refetchReportsNegatifs()
+    }
+  }, [activeOrganisation, refetchCommissions, fetchApporteurs, refetchReprises, refetchBordereaux, refetchAuditLogs, refetchRecurrences, refetchReportsNegatifs])
 
   // Les données sont déjà formatées dans les callbacks de fetch
   const reprises = reprisesData
@@ -658,6 +938,13 @@ export function CommissionsPageClient({
 
   const reprisesEnAttente = reprises.filter((r) => r.statutReprise === "en_attente").length
   const bordereauxBrouillon = bordereaux.filter((b) => b.statutBordereau === "brouillon").length
+  const auditCount = auditLogs.length
+  const recurrencesCount = recurrencesData.length
+  const reportsNegatifsCount = reportsNegatifsData.length
+
+  const auditTotalPages = Math.max(1, Math.ceil(auditTotal / pageSize))
+  const recurrencesTotalPages = Math.max(1, Math.ceil(recurrencesTotal / pageSize))
+  const reportsTotalPages = Math.max(1, Math.ceil(reportsTotal / pageSize))
 
   if (errorCommissions) {
     return (
@@ -739,6 +1026,21 @@ export function CommissionsPageClient({
                 Reprises
                 {reprisesEnAttente > 0 && <Badge variant="destructive" className="ml-1">{reprisesEnAttente}</Badge>}
               </TabsTrigger>
+              <TabsTrigger value="audit" className="gap-2">
+                <History className="size-4" />
+                Audit
+                <Badge variant="secondary" className="ml-1">{auditCount}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="recurrences" className="gap-2">
+                <Repeat className="size-4" />
+                Récurrences
+                <Badge variant="secondary" className="ml-1">{recurrencesCount}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="reports-negatifs" className="gap-2">
+                <AlertOctagon className="size-4" />
+                Reports négatifs
+                <Badge variant="secondary" className="ml-1">{reportsNegatifsCount}</Badge>
+              </TabsTrigger>
             </TabsList>
             <CommissionConfigDialog
               trigger={
@@ -800,7 +1102,7 @@ export function CommissionsPageClient({
                       typesReprise={config.typesReprise}
                       loadingConfig={loadingConfig}
                       trigger={
-                        <Button variant="outline" className="gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800">
+                        <Button variant="destructive" className="gap-2">
                           <AlertTriangle className="size-4" />
                           Déclencher reprise
                         </Button>
@@ -883,6 +1185,345 @@ export function CommissionsPageClient({
                     onCancel={handleCancelReprise}
                     onViewDetails={handleViewRepriseDetails}
                   />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="audit" className="flex-1 min-h-0 mt-4">
+            <Card className="flex-1 min-h-0 flex flex-col h-full">
+              <CardHeader className="shrink-0 pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <History className="size-4" />
+                  Journal d'audit
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 min-h-0 flex flex-col">
+                <div className="flex flex-wrap items-end gap-2 mb-4">
+                  <Input
+                    placeholder="Référence (commission, bordereau...)"
+                    value={auditFilters.refId}
+                    onChange={(e) => setAuditFilters((prev) => ({ ...prev, refId: e.target.value }))}
+                    className="h-9 max-w-xs"
+                  />
+                  <Select
+                    value={auditFilters.apporteurId}
+                    onValueChange={(value) => setAuditFilters((prev) => ({ ...prev, apporteurId: value }))}
+                  >
+                    <SelectTrigger className="h-9 w-[180px]">
+                      <SelectValue placeholder="Apporteur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous apporteurs</SelectItem>
+                      {apporteurs.map((apporteur) => (
+                        <SelectItem key={apporteur.id} value={apporteur.id}>
+                          {apporteur.prenom} {apporteur.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={auditFilters.scope}
+                    onValueChange={(value) => setAuditFilters((prev) => ({ ...prev, scope: value }))}
+                  >
+                    <SelectTrigger className="h-9 w-[160px]">
+                      <SelectValue placeholder="Scope" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous scopes</SelectItem>
+                      {auditScopeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={auditFilters.action}
+                    onValueChange={(value) => setAuditFilters((prev) => ({ ...prev, action: value }))}
+                  >
+                    <SelectTrigger className="h-9 w-[220px]">
+                      <SelectValue placeholder="Action" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes actions</SelectItem>
+                      {auditActionOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <DateRangePicker
+                    dateRange={auditFilters.dateRange}
+                    onDateRangeChange={(range) => setAuditFilters((prev) => ({ ...prev, dateRange: range }))}
+                    className="h-9"
+                  />
+                  <Button variant="secondary" className="h-9" onClick={applyAuditFilters}>
+                    Appliquer
+                  </Button>
+                  {hasAuditFilters && (
+                    <Button variant="ghost" className="h-9" onClick={resetAuditFilters}>
+                      Réinitialiser
+                    </Button>
+                  )}
+                </div>
+                {errorAuditLogs ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Erreur</AlertTitle>
+                    <AlertDescription>
+                      {errorAuditLogs.message}
+                      <Button variant="outline" size="sm" className="ml-4" onClick={() => refetchAuditLogs()}>
+                        Réessayer
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <>
+                    <AuditLogViewer logs={auditLogs} loading={loadingAuditLogs} />
+                    {auditTotalPages > 1 && (
+                      <div className="mt-4 flex items-center justify-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const next = Math.max(1, auditPage - 1)
+                            setAuditPage(next)
+                            refetchAuditLogs(auditFilters, next)
+                          }}
+                          disabled={auditPage === 1}
+                        >
+                          Précédent
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Page {auditPage} sur {auditTotalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const next = Math.min(auditTotalPages, auditPage + 1)
+                            setAuditPage(next)
+                            refetchAuditLogs(auditFilters, next)
+                          }}
+                          disabled={auditPage === auditTotalPages}
+                        >
+                          Suivant
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="recurrences" className="flex-1 min-h-0 mt-4">
+            <Card className="flex-1 min-h-0 flex flex-col h-full">
+              <CardHeader className="shrink-0 pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Repeat className="size-4" />
+                  Récurrences de commission
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 min-h-0 flex flex-col">
+                <div className="flex flex-wrap items-end gap-2 mb-4">
+                  <Select
+                    value={recurrenceFilters.apporteurId}
+                    onValueChange={(value) => setRecurrenceFilters((prev) => ({ ...prev, apporteurId: value }))}
+                  >
+                    <SelectTrigger className="h-9 w-[180px]">
+                      <SelectValue placeholder="Apporteur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous apporteurs</SelectItem>
+                      {apporteurs.map((apporteur) => (
+                        <SelectItem key={apporteur.id} value={apporteur.id}>
+                          {apporteur.prenom} {apporteur.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Période (YYYY-MM)"
+                    value={recurrenceFilters.periode}
+                    onChange={(e) => setRecurrenceFilters((prev) => ({ ...prev, periode: e.target.value }))}
+                    className="h-9 w-[160px]"
+                  />
+                  <Select
+                    value={recurrenceFilters.statut}
+                    onValueChange={(value) => setRecurrenceFilters((prev) => ({ ...prev, statut: value }))}
+                  >
+                    <SelectTrigger className="h-9 w-[160px]">
+                      <SelectValue placeholder="Statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous statuts</SelectItem>
+                      {recurrenceStatusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="secondary" className="h-9" onClick={applyRecurrenceFilters}>
+                    Appliquer
+                  </Button>
+                  {hasRecurrenceFilters && (
+                    <Button variant="ghost" className="h-9" onClick={resetRecurrenceFilters}>
+                      Réinitialiser
+                    </Button>
+                  )}
+                </div>
+                {errorRecurrences ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Erreur</AlertTitle>
+                    <AlertDescription>
+                      {errorRecurrences.message}
+                      <Button variant="outline" size="sm" className="ml-4" onClick={() => refetchRecurrences()}>
+                        Réessayer
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <>
+                    <RecurrencesList recurrences={recurrencesData} loading={loadingRecurrences} />
+                    {recurrencesTotalPages > 1 && (
+                      <div className="mt-4 flex items-center justify-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const next = Math.max(1, recurrencesPage - 1)
+                            setRecurrencesPage(next)
+                            refetchRecurrences(recurrenceFilters, next)
+                          }}
+                          disabled={recurrencesPage === 1}
+                        >
+                          Précédent
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Page {recurrencesPage} sur {recurrencesTotalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const next = Math.min(recurrencesTotalPages, recurrencesPage + 1)
+                            setRecurrencesPage(next)
+                            refetchRecurrences(recurrenceFilters, next)
+                          }}
+                          disabled={recurrencesPage === recurrencesTotalPages}
+                        >
+                          Suivant
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports-negatifs" className="flex-1 min-h-0 mt-4">
+            <Card className="flex-1 min-h-0 flex flex-col h-full">
+              <CardHeader className="shrink-0 pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertOctagon className="size-4" />
+                  Reports négatifs
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 min-h-0 flex flex-col">
+                <div className="flex flex-wrap items-end gap-2 mb-4">
+                  <Select
+                    value={reportFilters.apporteurId}
+                    onValueChange={(value) => setReportFilters((prev) => ({ ...prev, apporteurId: value }))}
+                  >
+                    <SelectTrigger className="h-9 w-[180px]">
+                      <SelectValue placeholder="Apporteur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous apporteurs</SelectItem>
+                      {apporteurs.map((apporteur) => (
+                        <SelectItem key={apporteur.id} value={apporteur.id}>
+                          {apporteur.prenom} {apporteur.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={reportFilters.statut}
+                    onValueChange={(value) => setReportFilters((prev) => ({ ...prev, statut: value }))}
+                  >
+                    <SelectTrigger className="h-9 w-[160px]">
+                      <SelectValue placeholder="Statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous statuts</SelectItem>
+                      {reportStatusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="secondary" className="h-9" onClick={applyReportFilters}>
+                    Appliquer
+                  </Button>
+                  {hasReportFilters && (
+                    <Button variant="ghost" className="h-9" onClick={resetReportFilters}>
+                      Réinitialiser
+                    </Button>
+                  )}
+                </div>
+                {errorReportsNegatifs ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Erreur</AlertTitle>
+                    <AlertDescription>
+                      {errorReportsNegatifs.message}
+                      <Button variant="outline" size="sm" className="ml-4" onClick={() => refetchReportsNegatifs()}>
+                        Réessayer
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <>
+                    <ReportsNegatifsList reports={reportsNegatifsData} loading={loadingReportsNegatifs} />
+                    {reportsTotalPages > 1 && (
+                      <div className="mt-4 flex items-center justify-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const next = Math.max(1, reportsPage - 1)
+                            setReportsPage(next)
+                            refetchReportsNegatifs(reportFilters, next)
+                          }}
+                          disabled={reportsPage === 1}
+                        >
+                          Précédent
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Page {reportsPage} sur {reportsTotalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const next = Math.min(reportsTotalPages, reportsPage + 1)
+                            setReportsPage(next)
+                            refetchReportsNegatifs(reportFilters, next)
+                          }}
+                          disabled={reportsPage === reportsTotalPages}
+                        >
+                          Suivant
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

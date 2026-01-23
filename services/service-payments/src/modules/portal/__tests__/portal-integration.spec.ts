@@ -2,19 +2,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHash, randomBytes } from 'crypto';
-import { PortalSessionService } from '../portal-session.service.js';
-import { PortalPSPService } from '../portal-psp.service.js';
-import { PortalQueryService } from '../portal-query.service.js';
+import { PortalSessionService } from '../portal-session.service';
+import { PortalPSPService } from '../portal-psp.service';
+import { PortalQueryService } from '../portal-query.service';
 import {
   PortalPaymentSessionEntity,
   PortalSessionStatus,
   PortalSessionAction,
   PSPProvider,
-} from '../entities/portal-session.entity.js';
-import { PortalSessionAuditEntity, AuditEventType } from '../entities/portal-session-audit.entity.js';
-import { PSPEventInboxEntity, WebhookEventStatus } from '../entities/psp-event-inbox.entity.js';
-import { StripeService } from '../../stripe/stripe.service.js';
-import { GoCardlessService } from '../../gocardless/gocardless.service.js';
+} from '../entities/portal-session.entity';
+import { PortalSessionAuditEntity, AuditEventType } from '../entities/portal-session-audit.entity';
+import { PSPEventInboxEntity, WebhookEventStatus } from '../entities/psp-event-inbox.entity';
+import { StripeService } from '../../stripe/stripe.service';
+import { GoCardlessService } from '../../gocardless/gocardless.service';
 
 describe('Portal Integration Tests', () => {
   let portalSessionService: PortalSessionService;
@@ -141,6 +141,7 @@ describe('Portal Integration Tests', () => {
         allowedActions: [PortalSessionAction.PAY_BY_CARD],
         amountCents: 15000,
         currency: 'EUR',
+        metadata: {},
       });
 
       expect(createResult.session).toBeDefined();

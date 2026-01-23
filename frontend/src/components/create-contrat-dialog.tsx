@@ -51,8 +51,8 @@ import { useOrganisation } from "@/contexts/organisation-context"
 import { getClientsByOrganisation } from "@/actions/clients"
 import { getApporteursByOrganisation } from "@/actions/commerciaux"
 import { createContrat } from "@/actions/contrats"
-import type { ClientBase } from "@proto-frontend/clients/clients"
-import type { Apporteur } from "@proto-frontend/commerciaux/commerciaux"
+import type { ClientBase } from "@proto/clients/clients"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
 
 const contratSchema = z.object({
     organisationId: z.string().uuid("ID organisation invalide"),

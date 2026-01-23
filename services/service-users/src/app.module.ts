@@ -11,6 +11,7 @@ import { CompteModule } from './modules/compte/compte.module';
 import { MembreCompteModule } from './modules/membre-compte/membre-compte.module';
 import { InvitationCompteModule } from './modules/invitation-compte/invitation-compte.module';
 import { AuthSyncModule } from './modules/auth-sync/auth-sync.module';
+import { OrganisationsClientModule } from './modules/organisations-client/organisations-client.module';
 import { UsersController } from './users.controller';
 
 @Module({
@@ -46,6 +47,7 @@ import { UsersController } from './users.controller';
     MembreCompteModule,
     InvitationCompteModule,
     AuthSyncModule,
+    OrganisationsClientModule,
   ],
   controllers: [UsersController],
 })

@@ -1,4 +1,4 @@
-import type { Gamme as GrpcGamme } from "@proto-frontend/products/products"
+import type { Gamme as GrpcGamme } from "@proto/products/products"
 
 // Re-export du type gRPC
 export type GammeDto = GrpcGamme

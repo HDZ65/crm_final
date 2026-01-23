@@ -4,19 +4,15 @@ import { Repository, Between } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { RetryJobEntity, RetryJobStatus } from './entities/retry-job.entity';
+import type { PaginationRequest } from '@proto/retry/am04_retry_service';
 
-interface ListRetryJobsInput {
+export interface ListRetryJobsInput {
   organisationId: string;
   status?: RetryJobStatus;
   isManual?: boolean;
   targetDateFrom?: Date;
   targetDateTo?: Date;
-  pagination?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: string;
-  };
+  pagination?: Partial<PaginationRequest>;
 }
 
 @Injectable()

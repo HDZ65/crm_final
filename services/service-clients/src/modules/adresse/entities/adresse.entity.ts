@@ -37,7 +37,7 @@ export class AdresseEntity {
   pays: string;
 
   @Column({ length: 50 })
-  type: string; // FACTURATION, LIVRAISON, PRINCIPALE
+  type: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

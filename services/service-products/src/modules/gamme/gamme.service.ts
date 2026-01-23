@@ -3,37 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import type {
+  CreateGammeRequest,
+  UpdateGammeRequest,
+  ListGammesRequest,
+  GetGammeRequest,
+  DeleteGammeRequest,
+} from '@proto/products/products';
 import { GammeEntity } from './entities/gamme.entity';
-
-interface CreateGammeInput {
-  organisationId: string;
-  nom: string;
-  description?: string;
-  icone?: string;
-  code: string;
-  ordre?: number;
-}
-
-interface UpdateGammeInput {
-  id: string;
-  nom?: string;
-  description?: string;
-  icone?: string;
-  code?: string;
-  ordre?: number;
-  actif?: boolean;
-}
-
-interface ListGammesInput {
-  organisationId: string;
-  actif?: boolean;
-  pagination?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: string;
-  };
-}
 
 @Injectable()
 export class GammeService {
@@ -44,7 +21,7 @@ export class GammeService {
     private readonly gammeRepository: Repository<GammeEntity>,
   ) {}
 
-  async create(input: CreateGammeInput): Promise<GammeEntity> {
+  async create(input: CreateGammeRequest): Promise<GammeEntity> {
     this.logger.log(`Creating gamme: ${input.nom}`);
 
     const existing = await this.gammeRepository.findOne({
@@ -71,7 +48,7 @@ export class GammeService {
     return this.gammeRepository.save(gamme);
   }
 
-  async update(input: UpdateGammeInput): Promise<GammeEntity> {
+  async update(input: UpdateGammeRequest): Promise<GammeEntity> {
     const gamme = await this.gammeRepository.findOne({
       where: { id: input.id },
     });
@@ -93,23 +70,23 @@ export class GammeService {
     return this.gammeRepository.save(gamme);
   }
 
-  async findById(id: string): Promise<GammeEntity> {
+  async findById(input: GetGammeRequest): Promise<GammeEntity> {
     const gamme = await this.gammeRepository.findOne({
-      where: { id },
+      where: { id: input.id },
       relations: ['produits'],
     });
 
     if (!gamme) {
       throw new RpcException({
         code: status.NOT_FOUND,
-        message: `Gamme ${id} not found`,
+        message: `Gamme ${input.id} not found`,
       });
     }
 
     return gamme;
   }
 
-  async findAll(input: ListGammesInput): Promise<{
+  async findAll(input: ListGammesRequest): Promise<{
     gammes: GammeEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }> {
@@ -145,8 +122,8 @@ export class GammeService {
     };
   }
 
-  async delete(id: string): Promise<boolean> {
-    const result = await this.gammeRepository.delete(id);
+  async delete(input: DeleteGammeRequest): Promise<boolean> {
+    const result = await this.gammeRepository.delete(input.id);
     return (result.affected ?? 0) > 0;
   }
 }

@@ -6,6 +6,7 @@ import Holidays from 'date-holidays';
 
 import { HolidayZoneEntity } from './entities/holiday-zone.entity.js';
 import { HolidayEntity } from './entities/holiday.entity.js';
+import type { CheckDateEligibilityResponse } from '@proto/calendar/calendar.js';
 
 export interface DateEligibility {
   isEligible: boolean;

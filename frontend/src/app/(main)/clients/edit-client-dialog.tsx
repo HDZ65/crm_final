@@ -30,8 +30,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { updateClient, getStatutClients } from "@/actions/clients"
-import type { StatutClient } from "@proto-frontend/referentiel/referentiel"
+import { updateClient } from "@/actions/clients"
+import { STATUTS_CLIENT, type StatutClient } from "@/constants/statuts-client"
+import { useSocietes } from "@/hooks/clients"
+import { useOrganisation } from "@/contexts/organisation-context"
 
 const editClientSchema = z.object({
   typeClient: z.string().min(1, "Le type de client est requis"),
@@ -43,6 +45,7 @@ const editClientSchema = z.object({
   telephone: z.string().min(1, "Le téléphone est requis"),
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   statutId: z.string().min(1, "Le statut est requis"),
+  societeId: z.string().optional(),
 })
 
 type EditClientFormValues = z.infer<typeof editClientSchema>
@@ -68,38 +71,25 @@ interface EditClientDialogProps {
     typeClient?: string
     statutId?: string
     dateNaissance?: string
+    societeId?: string
   }
   onSuccess?: () => void
 }
 
 export function EditClientDialog({ open, onOpenChange, client, onSuccess }: EditClientDialogProps) {
-  // Extraire nom et prénom du name (format "NOM PRENOM")
   const nameParts = client.name.split(" ")
   const defaultNom = nameParts[0] || ""
   const defaultPrenom = nameParts.slice(1).join(" ") || ""
 
-  const [statuts, setStatuts] = React.useState<StatutClient[]>([])
-  const [statutsLoading, setStatutsLoading] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
+  const statuts = STATUTS_CLIENT
+  const { activeOrganisation } = useOrganisation()
+  const { societes } = useSocietes(activeOrganisation?.organisationId)
 
-  // Helper function to get status code from ID
   const getCode = (id: string) => {
     const statut = statuts.find((s) => s.id === id)
     return statut?.code || ""
   }
-
-  // Fetch statuts on mount
-  React.useEffect(() => {
-    const fetchStatuts = async () => {
-      setStatutsLoading(true)
-      const result = await getStatutClients()
-      if (result.data?.statuts) {
-        setStatuts(result.data.statuts)
-      }
-      setStatutsLoading(false)
-    }
-    fetchStatuts()
-  }, [])
 
   const form = useForm<EditClientFormValues>({
     resolver: zodResolver(editClientSchema),
@@ -111,6 +101,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
       telephone: client.phone || "",
       email: client.email || "",
       statutId: client.statutId || "",
+      societeId: client.societeId || "",
     },
   })
 
@@ -125,6 +116,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
         telephone: client.phone || "",
         email: client.email || "",
         statutId: client.statutId || statuts.find(s => s.code === "actif")?.id || "",
+        societeId: client.societeId || "",
       })
     }
   }, [open, client, form, statuts])
@@ -141,6 +133,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
       telephone: data.telephone,
       email: data.email || undefined,
       statut: data.statutId ? getCode(data.statutId) : undefined,
+      societeId: data.societeId || null,
     })
 
     setLoading(false)
@@ -280,11 +273,36 @@ export function EditClientDialog({ open, onOpenChange, client, onSuccess }: Edit
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="societeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Société (optionnel)</FormLabel>
+                  <Select onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)} value={field.value || "__none__"}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Aucune société" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__none__">Aucune société</SelectItem>
+                      {societes.filter(s => s.id).map((societe) => (
+                        <SelectItem key={societe.id} value={societe.id}>
+                          {societe.raisonSociale}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading || statutsLoading}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={loading || statutsLoading}>
+              <Button type="submit" disabled={loading}>
                 {loading ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </DialogFooter>

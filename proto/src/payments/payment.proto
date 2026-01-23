@@ -591,3 +591,306 @@ message PSPAccountInfo {
   bool is_live_mode = 4;
   bool is_configured = 5;
 }
+
+// ==================== PORTAL PAYMENT SESSION ====================
+// Secure link-based payment portal for customers
+
+// Portal session status
+enum PortalSessionStatus {
+  PORTAL_SESSION_STATUS_UNSPECIFIED = 0;
+  PORTAL_SESSION_CREATED = 1;      // Session created, token generated
+  PORTAL_SESSION_ACTIVE = 2;       // First accessed
+  PORTAL_SESSION_REDIRECTED = 3;   // Redirected to PSP
+  PORTAL_SESSION_COMPLETED = 4;    // Payment completed
+  PORTAL_SESSION_FAILED = 5;       // Payment failed
+  PORTAL_SESSION_EXPIRED = 6;      // TTL exceeded
+  PORTAL_SESSION_CANCELLED = 7;    // Manually cancelled
+}
+
+// Allowed actions on portal
+enum PortalSessionAction {
+  PORTAL_SESSION_ACTION_UNSPECIFIED = 0;
+  PORTAL_ACTION_PAY_NOW = 1;       // Immediate payment
+  PORTAL_ACTION_UPDATE_CARD = 2;   // Update payment method
+  PORTAL_ACTION_SETUP_MANDATE = 3; // Setup direct debit mandate
+}
+
+// Portal error codes
+enum PortalErrorCode {
+  PORTAL_ERROR_CODE_UNSPECIFIED = 0;
+  PORTAL_ERROR_SESSION_NOT_FOUND = 1;
+  PORTAL_ERROR_SESSION_EXPIRED = 2;
+  PORTAL_ERROR_SESSION_ALREADY_USED = 3;
+  PORTAL_ERROR_SESSION_REVOKED = 4;
+  PORTAL_ERROR_SESSION_TERMINAL = 5;
+  PORTAL_ERROR_INVALID_TOKEN = 6;
+  PORTAL_ERROR_TOKEN_MALFORMED = 7;
+  PORTAL_ERROR_INVALID_TRANSITION = 8;
+  PORTAL_ERROR_ACTION_NOT_ALLOWED = 9;
+}
+
+// PSP provider for portal
+enum PortalPspProvider {
+  PORTAL_PSP_PROVIDER_UNSPECIFIED = 0;
+  PORTAL_PSP_STRIPE = 1;
+  PORTAL_PSP_GOCARDLESS = 2;
+  PORTAL_PSP_SLIMPAY = 3;
+  PORTAL_PSP_EMERCHANTPAY = 4;
+}
+
+// Portal audit event types
+enum PortalAuditEventType {
+  PORTAL_AUDIT_EVENT_UNSPECIFIED = 0;
+  PORTAL_SESSION_CREATED_EVENT = 1;
+  PORTAL_SESSION_ACTIVATED_EVENT = 2;
+  PORTAL_TOKEN_VALIDATED_EVENT = 3;
+  PORTAL_TOKEN_REJECTED_EVENT = 4;
+  PORTAL_SESSION_ACCESSED_EVENT = 5;
+  PORTAL_REDIRECT_INITIATED_EVENT = 6;
+  PORTAL_PAYMENT_INITIATED_EVENT = 7;
+  PORTAL_PAYMENT_COMPLETED_EVENT = 8;
+  PORTAL_PAYMENT_FAILED_EVENT = 9;
+  PORTAL_SESSION_EXPIRED_EVENT = 10;
+  PORTAL_SESSION_CANCELLED_EVENT = 11;
+}
+
+// Actor type for portal audit
+enum PortalAuditActorType {
+  PORTAL_AUDIT_ACTOR_UNSPECIFIED = 0;
+  PORTAL_ACTOR_SYSTEM = 1;
+  PORTAL_ACTOR_ADMIN = 2;
+  PORTAL_ACTOR_PORTAL_TOKEN = 3;
+  PORTAL_ACTOR_WEBHOOK = 4;
+}
+
+// Request to create a portal session
+message CreatePortalSessionRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  string customer_id = 3;
+  optional string contract_id = 4;
+  optional string payment_intent_id = 5;
+  repeated PortalSessionAction allowed_actions = 6;
+  optional int32 ttl_seconds = 7;           // Time-to-live, default 900 (15 min)
+  optional int32 max_uses = 8;              // Default 1
+  int64 amount_cents = 9;
+  optional string currency = 10;            // Default EUR
+  optional string description = 11;
+  optional string mandate_id = 12;
+  optional string rum_masked = 13;          // Masked RUM for display
+  optional string idempotency_key = 14;
+  map<string, string> metadata = 15;
+}
+
+// Response after creating a portal session
+message CreatePortalSessionResponse {
+  PortalPaymentSession session = 1;
+  string token = 2;                         // One-time use token (returned only on creation)
+  string portal_url = 3;                    // Full URL to the payment portal
+  bool was_idempotent_hit = 4;              // True if returned from idempotency cache
+}
+
+// Portal payment session entity
+message PortalPaymentSession {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  string customer_id = 4;
+  optional string contract_id = 5;
+  optional string payment_intent_id = 6;
+  
+  // Token (hash stored, never exposed)
+  string token_version = 7;
+  
+  // State
+  PortalSessionStatus status = 8;
+  repeated PortalSessionAction allowed_actions = 9;
+  
+  // Timing
+  string expires_at = 10;
+  int32 max_uses = 11;
+  int32 use_count = 12;
+  optional string consumed_at = 13;
+  optional string revoked_at = 14;
+  optional string last_accessed_at = 15;
+  
+  // Payment details
+  int64 amount_cents = 16;
+  string currency = 17;
+  optional string description = 18;
+  optional string mandate_id = 19;
+  optional string rum_masked = 20;
+  
+  // PSP state (for redirect flow)
+  optional string psp_state = 21;
+  optional string psp_redirect_url = 22;
+  optional PortalPspProvider psp_provider = 23;
+  optional string psp_session_id = 24;
+  
+  // Metadata
+  map<string, string> metadata = 25;
+  
+  // Audit
+  string created_at = 26;
+  string updated_at = 27;
+}
+
+// Validate a portal token
+message ValidatePortalTokenRequest {
+  string token = 1;
+  optional string ip_address_hash = 2;
+  optional string user_agent_hash = 3;
+  optional string request_id = 4;
+}
+
+message ValidatePortalTokenResponse {
+  bool valid = 1;
+  optional PortalPaymentSession session = 2;
+  optional PortalErrorCode error_code = 3;
+  optional string error_message = 4;
+}
+
+// Access a portal session (marks as active)
+message AccessPortalSessionRequest {
+  string token = 1;
+  optional string ip_address_hash = 2;
+  optional string user_agent_hash = 3;
+  optional string request_id = 4;
+}
+
+message AccessPortalSessionResponse {
+  PortalPaymentSession session = 1;
+}
+
+// Consume a portal token (for payment action)
+message ConsumePortalTokenRequest {
+  string token = 1;
+  PortalSessionAction action = 2;
+  optional string ip_address_hash = 3;
+  optional string user_agent_hash = 4;
+  optional string request_id = 5;
+}
+
+message ConsumePortalTokenResponse {
+  PortalPaymentSession session = 1;
+}
+
+// Cancel a portal session
+message CancelPortalSessionRequest {
+  string session_id = 1;
+  optional string reason = 2;
+}
+
+message CancelPortalSessionResponse {
+  PortalPaymentSession session = 1;
+}
+
+// Update PSP info on portal session
+message UpdatePortalPspInfoRequest {
+  string session_id = 1;
+  string psp_state = 2;
+  string psp_redirect_url = 3;
+  PortalPspProvider psp_provider = 4;
+  string psp_session_id = 5;
+}
+
+message UpdatePortalPspInfoResponse {
+  bool success = 1;
+}
+
+// Transition portal session status
+message TransitionPortalSessionRequest {
+  string session_id = 1;
+  PortalSessionStatus new_status = 2;
+  optional string reason = 3;
+  optional string ip_address_hash = 4;
+  optional string user_agent_hash = 5;
+}
+
+message TransitionPortalSessionResponse {
+  PortalPaymentSession session = 1;
+}
+
+// Portal session audit log entry
+message PortalSessionAuditLog {
+  string id = 1;
+  string portal_session_id = 2;
+  PortalAuditEventType event_type = 3;
+  PortalAuditActorType actor_type = 4;
+  optional string previous_status = 5;
+  optional string new_status = 6;
+  optional string ip_address_hash = 7;
+  optional string user_agent_hash = 8;
+  optional string request_id = 9;
+  optional string correlation_id = 10;
+  map<string, string> data = 11;
+  string timestamp = 12;
+}
+
+// List portal sessions
+message ListPortalSessionsRequest {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  optional string customer_id = 3;
+  optional PortalSessionStatus status = 4;
+  optional string from_date = 5;
+  optional string to_date = 6;
+  optional int32 page = 7;
+  optional int32 limit = 8;
+}
+
+message ListPortalSessionsResponse {
+  repeated PortalPaymentSession sessions = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 total_pages = 4;
+}
+
+// Get portal session audit logs
+message GetPortalSessionAuditRequest {
+  string session_id = 1;
+}
+
+message GetPortalSessionAuditResponse {
+  repeated PortalSessionAuditLog logs = 1;
+}
+
+// Portal session stats
+message GetPortalSessionStatsRequest {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  string from_date = 3;
+  string to_date = 4;
+}
+
+message GetPortalSessionStatsResponse {
+  int32 total_created = 1;
+  int32 total_completed = 2;
+  int32 total_failed = 3;
+  int32 total_expired = 4;
+  int32 total_cancelled = 5;
+  double completion_rate = 6;
+}
+
+// Request context for portal operations
+message PortalRequestContext {
+  optional string ip_hash = 1;
+  optional string ua_hash = 2;
+  optional string request_id = 3;
+  optional string correlation_id = 4;
+}
+
+// ==================== INTERNAL CONFIG TYPES ====================
+// These are internal types for PSP configuration
+
+// GoCardless configuration
+message GoCardlessConfig {
+  string access_token = 1;
+  string base_url = 2;
+}
+
+// Slimpay OAuth token (cached)
+message SlimpayToken {
+  string access_token = 1;
+  int64 expires_at = 2;  // Unix timestamp
+}

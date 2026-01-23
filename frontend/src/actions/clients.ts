@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { clients, statutClients } from "@/lib/grpc";
+import { clients } from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
 import { createFormAction, formDataTransformers } from "@/lib/form-validation";
 import {
@@ -14,11 +14,8 @@ import type { FormState } from "@/lib/form-state";
 import type {
   ClientBase,
   ListClientsBaseResponse,
-} from "@proto-frontend/clients/clients";
-import type {
-  StatutClient,
-  ListStatutClientResponse,
-} from "@proto-frontend/referentiel/referentiel";
+} from "@proto/clients/clients";
+
 
 export interface ActionResult<T> {
   data: T | null;
@@ -108,6 +105,7 @@ export async function createClient(input: {
   telephone: string;
   email: string;
   statut: string;
+  societeId?: string;
 }): Promise<ActionResult<ClientBase>> {
   try {
     const data = await clients.create({
@@ -115,6 +113,7 @@ export async function createClient(input: {
       dateNaissance: input.dateNaissance || "",
       compteCode: input.compteCode || "",
       partenaireId: input.partenaireId || "",
+      societeId: input.societeId || undefined,
     });
     revalidatePath("/clients");
     return { data, error: null };
@@ -141,9 +140,13 @@ export async function updateClient(input: {
   telephone?: string;
   email?: string;
   statut?: string;
+  societeId?: string | null;
 }): Promise<ActionResult<ClientBase>> {
   try {
-    const data = await clients.update(input);
+    const data = await clients.update({
+      ...input,
+      societeId: input.societeId ?? undefined,
+    });
     revalidatePath("/clients");
     revalidatePath(`/clients/${input.id}`);
     return { data, error: null };
@@ -175,24 +178,7 @@ export async function deleteClient(
   }
 }
 
-/**
- * Fetch liste des statuts client via gRPC
- */
-export async function getStatutClients(): Promise<ActionResult<ListStatutClientResponse>> {
-  try {
-    const data = await statutClients.list({
-      search: "",
-      pagination: undefined,
-    });
-    return { data, error: null };
-  } catch (err) {
-    console.error("[getStatutClients] gRPC error:", err);
-    return {
-      data: null,
-      error: err instanceof Error ? err.message : "Erreur lors du chargement des statuts",
-    };
-  }
-}
+
 
 // ============================================================================
 // Form Actions (Next.js 15 native pattern)
@@ -216,6 +202,7 @@ export const createClientAction = createFormAction(
         statut: data.statutId,
         compteCode: `CLI-${Date.now().toString(36).toUpperCase()}`,
         partenaireId: data.organisationId,
+        societeId: data.societeId && data.societeId !== "__none__" ? data.societeId : undefined,
       });
       revalidatePath("/clients");
       return { data: client, error: null };
@@ -245,6 +232,7 @@ export const updateClientAction = createFormAction(
         telephone: data.telephone,
         email: data.email,
         statut: data.statutId,
+        societeId: data.societeId && data.societeId !== "__none__" ? data.societeId : undefined,
       });
       revalidatePath("/clients");
       revalidatePath(`/clients/${data.id}`);

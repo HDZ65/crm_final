@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import type {
   Apporteur,
   ListApporteurResponse,
-} from "@proto-frontend/commerciaux/commerciaux";
+} from "@proto/commerciaux/commerciaux";
 
 export interface ActionResult<T> {
   data: T | null;

@@ -14,8 +14,9 @@ import {
 import { ReminderPolicyService } from '../reminder-policy/reminder-policy.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AuditActorType } from '../audit-log/entities/retry-audit-log.entity';
+import type { PaginationRequest } from '@proto/retry/am04_retry_service';
 
-interface CreateReminderInput {
+export interface CreateReminderInput {
   organisationId: string;
   societeId: string;
   retryScheduleId: string;
@@ -30,7 +31,7 @@ interface CreateReminderInput {
   plannedAt: Date;
 }
 
-interface ScheduleRemindersInput {
+export interface ScheduleRemindersInput {
   organisationId: string;
   societeId: string;
   retryScheduleId: string;
@@ -40,26 +41,21 @@ interface ScheduleRemindersInput {
   variables: Record<string, string>;
 }
 
-interface SendReminderResult {
+export interface SendReminderResult {
   success: boolean;
   providerMessageId?: string;
   errorCode?: string;
   errorMessage?: string;
 }
 
-interface ListRemindersInput {
+export interface ListRemindersInput {
   organisationId: string;
   retryScheduleId?: string;
   clientId?: string;
   channel?: ReminderChannel;
   status?: ReminderStatus;
   trigger?: ReminderTrigger;
-  pagination?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: string;
-  };
+  pagination?: Partial<PaginationRequest>;
 }
 
 @Injectable()
@@ -251,7 +247,7 @@ export class ReminderService {
 
       reminder.status = ReminderStatus.REMINDER_FAILED;
       reminder.errorCode = 'EXCEPTION';
-      reminder.errorMessage = result.errorMessage;
+      reminder.errorMessage = result.errorMessage || null;
       reminder.retryCount++;
     }
 

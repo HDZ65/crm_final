@@ -143,6 +143,7 @@ message ClientBase {
   string created_at = 13;
   string updated_at = 14;
   repeated Adresse adresses = 15;
+  optional string societe_id = 16;
 }
 
 message CreateClientBaseRequest {
@@ -156,6 +157,7 @@ message CreateClientBaseRequest {
   string telephone = 8;
   string email = 9;
   string statut = 10;
+  optional string societe_id = 11;
 }
 
 message UpdateClientBaseRequest {
@@ -169,6 +171,7 @@ message UpdateClientBaseRequest {
   optional string telephone = 8;
   optional string email = 9;
   optional string statut = 10;
+  optional string societe_id = 11;
 }
 
 message GetClientBaseRequest {

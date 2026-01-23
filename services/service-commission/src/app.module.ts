@@ -11,6 +11,9 @@ import { LigneBordereauModule } from './modules/ligne-bordereau/ligne-bordereau.
 import { RepriseModule } from './modules/reprise/reprise.module';
 import { StatutModule } from './modules/statut/statut.module';
 import { EngineModule } from './modules/engine/engine.module';
+import { CommissionAuditModule } from './modules/audit/audit.module';
+import { RecurrenceModule } from './modules/recurrence/recurrence.module';
+import { ReportNegatifModule } from './modules/report/report.module';
 
 import { CommissionController } from './commission.controller';
 
@@ -21,6 +24,9 @@ import { BordereauCommissionEntity } from './modules/bordereau/entities/borderea
 import { LigneBordereauEntity } from './modules/ligne-bordereau/entities/ligne-bordereau.entity';
 import { RepriseCommissionEntity } from './modules/reprise/entities/reprise-commission.entity';
 import { StatutCommissionEntity } from './modules/statut/entities/statut-commission.entity';
+import { CommissionAuditLogEntity } from './modules/audit/entities/commission-audit-log.entity';
+import { CommissionRecurrenteEntity } from './modules/recurrence/entities/commission-recurrente.entity';
+import { ReportNegatifEntity } from './modules/report/entities/report-negatif.entity';
 
 @Module({
   imports: [
@@ -47,6 +53,9 @@ import { StatutCommissionEntity } from './modules/statut/entities/statut-commiss
           LigneBordereauEntity,
           RepriseCommissionEntity,
           StatutCommissionEntity,
+          CommissionAuditLogEntity,
+          CommissionRecurrenteEntity,
+          ReportNegatifEntity,
         ],
         synchronize: configService.get<string>('NODE_ENV') === 'development',
         logging: configService.get<string>('NODE_ENV') === 'development',
@@ -71,6 +80,9 @@ import { StatutCommissionEntity } from './modules/statut/entities/statut-commiss
     RepriseModule,
     StatutModule,
     EngineModule,
+    CommissionAuditModule,
+    RecurrenceModule,
+    ReportNegatifModule,
   ],
   controllers: [CommissionController],
 })

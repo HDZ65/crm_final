@@ -6,13 +6,12 @@ import {
   getCurrentUserByKeycloakId,
   setActiveOrganisationId,
   type AuthMeResponse,
-  type UserOrganisation,
-  type UserRole,
-  type Utilisateur,
 } from '@/actions/auth';
-
-// Re-export proto types for consumers
-export type { UserOrganisation, UserRole, Utilisateur, AuthMeResponse };
+import type {
+  UserOrganisation,
+  UserRole,
+  Utilisateur,
+} from '@proto/organisations/users';
 
 interface OrganisationContextType {
   /** Full user profile with utilisateur and organisations */

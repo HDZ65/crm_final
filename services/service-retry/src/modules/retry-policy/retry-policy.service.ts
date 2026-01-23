@@ -4,8 +4,13 @@ import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { RetryPolicyEntity } from './entities/retry-policy.entity';
+import type {
+  CreateRetryPolicyRequest,
+  UpdateRetryPolicyRequest,
+  PaginationRequest,
+} from '@proto/retry/am04_retry_service';
 
-interface CreateRetryPolicyInput {
+export interface CreateRetryPolicyInput {
   organisationId: string;
   societeId?: string;
   productId?: string;
@@ -26,7 +31,7 @@ interface CreateRetryPolicyInput {
   priority?: number;
 }
 
-interface UpdateRetryPolicyInput {
+export interface UpdateRetryPolicyInput {
   id: string;
   name?: string;
   description?: string;

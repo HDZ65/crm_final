@@ -10,6 +10,12 @@ import { LigneBordereauService } from './modules/ligne-bordereau/ligne-bordereau
 import { RepriseService } from './modules/reprise/reprise.service';
 import { StatutService } from './modules/statut/statut.service';
 import { CommissionEngineService } from './modules/engine/commission-engine.service';
+import { CommissionAuditService } from './modules/audit/audit.service';
+import { RecurrenceService } from './modules/recurrence/recurrence.service';
+import { ReportNegatifService } from './modules/report/report.service';
+import { AuditAction, AuditScope } from './modules/audit/entities/commission-audit-log.entity';
+import { StatutRecurrence } from './modules/recurrence/entities/commission-recurrente.entity';
+import { StatutReport } from './modules/report/entities/report-negatif.entity';
 
 import { TypeCalcul, BaseCalcul } from './modules/bareme/entities/bareme-commission.entity';
 import { TypePalier } from './modules/palier/entities/palier-commission.entity';
@@ -68,6 +74,18 @@ import type {
   GenererBordereauRequest,
   GenererBordereauResponse,
   DeclencherRepriseRequest,
+  AuditLog,
+  GetAuditLogsRequest,
+  GetAuditLogsByRefRequest,
+  AuditLogListResponse,
+  GetByCommissionRequest,
+  RecurrenceCommission,
+  GetRecurrencesRequest,
+  GetRecurrencesByContratRequest,
+  RecurrenceListResponse,
+  ReportNegatif,
+  GetReportsNegatifsRequest,
+  ReportNegatifListResponse,
 } from '@proto/commission/commission';
 
 // Helper functions for enum conversion
@@ -93,6 +111,50 @@ const grpcToTypeReprise = (n: number): TypeReprise => ([null, TypeReprise.RESILI
 const statutRepriseToGrpc = (s: StatutReprise): number => ({ en_attente: 1, appliquee: 2, annulee: 3 }[s] || 0);
 const grpcToStatutReprise = (n: number): StatutReprise => ([null, StatutReprise.EN_ATTENTE, StatutReprise.APPLIQUEE, StatutReprise.ANNULEE][n] || StatutReprise.EN_ATTENTE);
 
+const auditScopeToGrpc = (s: AuditScope): number => ({
+  [AuditScope.COMMISSION]: 1, [AuditScope.RECURRENCE]: 2, [AuditScope.REPRISE]: 3, [AuditScope.REPORT]: 4,
+  [AuditScope.BORDEREAU]: 5, [AuditScope.LIGNE]: 6, [AuditScope.BAREME]: 7, [AuditScope.PALIER]: 8, [AuditScope.ENGINE]: 9,
+}[s] || 0);
+const grpcToAuditScope = (n: number): AuditScope => ([null, AuditScope.COMMISSION, AuditScope.RECURRENCE, AuditScope.REPRISE, AuditScope.REPORT,
+  AuditScope.BORDEREAU, AuditScope.LIGNE, AuditScope.BAREME, AuditScope.PALIER, AuditScope.ENGINE][n] || AuditScope.COMMISSION);
+
+const auditActionToGrpc = (a: AuditAction): number => {
+  const map: Record<AuditAction, number> = {
+    [AuditAction.COMMISSION_CALCULATED]: 1, [AuditAction.COMMISSION_CREATED]: 2, [AuditAction.COMMISSION_UPDATED]: 3,
+    [AuditAction.COMMISSION_DELETED]: 4, [AuditAction.COMMISSION_STATUS_CHANGED]: 5,
+    [AuditAction.RECURRENCE_GENERATED]: 6, [AuditAction.RECURRENCE_STOPPED]: 7,
+    [AuditAction.REPRISE_CREATED]: 8, [AuditAction.REPRISE_APPLIED]: 9, [AuditAction.REPRISE_CANCELLED]: 10, [AuditAction.REPRISE_REGULARIZED]: 11,
+    [AuditAction.REPORT_NEGATIF_CREATED]: 12, [AuditAction.REPORT_NEGATIF_APPLIED]: 13, [AuditAction.REPORT_NEGATIF_CLEARED]: 14,
+    [AuditAction.BORDEREAU_CREATED]: 15, [AuditAction.BORDEREAU_VALIDATED]: 16, [AuditAction.BORDEREAU_EXPORTED]: 17, [AuditAction.BORDEREAU_ARCHIVED]: 18,
+    [AuditAction.LIGNE_SELECTED]: 19, [AuditAction.LIGNE_DESELECTED]: 20, [AuditAction.LIGNE_VALIDATED]: 21, [AuditAction.LIGNE_REJECTED]: 22,
+    [AuditAction.BAREME_CREATED]: 23, [AuditAction.BAREME_UPDATED]: 24, [AuditAction.BAREME_ACTIVATED]: 25, [AuditAction.BAREME_DEACTIVATED]: 26, [AuditAction.BAREME_VERSION_CREATED]: 27,
+    [AuditAction.PALIER_CREATED]: 28, [AuditAction.PALIER_UPDATED]: 29, [AuditAction.PALIER_DELETED]: 30,
+  };
+  return map[a] || 0;
+};
+const grpcToAuditAction = (n: number): AuditAction => {
+  const actions = [null, AuditAction.COMMISSION_CALCULATED, AuditAction.COMMISSION_CREATED, AuditAction.COMMISSION_UPDATED,
+    AuditAction.COMMISSION_DELETED, AuditAction.COMMISSION_STATUS_CHANGED,
+    AuditAction.RECURRENCE_GENERATED, AuditAction.RECURRENCE_STOPPED,
+    AuditAction.REPRISE_CREATED, AuditAction.REPRISE_APPLIED, AuditAction.REPRISE_CANCELLED, AuditAction.REPRISE_REGULARIZED,
+    AuditAction.REPORT_NEGATIF_CREATED, AuditAction.REPORT_NEGATIF_APPLIED, AuditAction.REPORT_NEGATIF_CLEARED,
+    AuditAction.BORDEREAU_CREATED, AuditAction.BORDEREAU_VALIDATED, AuditAction.BORDEREAU_EXPORTED, AuditAction.BORDEREAU_ARCHIVED,
+    AuditAction.LIGNE_SELECTED, AuditAction.LIGNE_DESELECTED, AuditAction.LIGNE_VALIDATED, AuditAction.LIGNE_REJECTED,
+    AuditAction.BAREME_CREATED, AuditAction.BAREME_UPDATED, AuditAction.BAREME_ACTIVATED, AuditAction.BAREME_DEACTIVATED, AuditAction.BAREME_VERSION_CREATED,
+    AuditAction.PALIER_CREATED, AuditAction.PALIER_UPDATED, AuditAction.PALIER_DELETED];
+  return actions[n] || AuditAction.COMMISSION_CALCULATED;
+};
+
+const statutRecurrenceToGrpc = (s: StatutRecurrence): number => ({
+  active: 1, suspendue: 2, terminee: 3, annulee: 4,
+}[s] || 0);
+const grpcToStatutRecurrence = (n: number): StatutRecurrence => ([null, StatutRecurrence.ACTIVE, StatutRecurrence.SUSPENDUE, StatutRecurrence.TERMINEE, StatutRecurrence.ANNULEE][n] || StatutRecurrence.ACTIVE);
+
+const statutReportToGrpc = (s: StatutReport): number => ({
+  en_cours: 1, apure: 2, annule: 3,
+}[s] || 0);
+const grpcToStatutReport = (n: number): StatutReport => ([null, StatutReport.EN_COURS, StatutReport.APURE, StatutReport.ANNULE][n] || StatutReport.EN_COURS);
+
 @Controller()
 export class CommissionController {
   private readonly logger = new Logger(CommissionController.name);
@@ -106,6 +168,9 @@ export class CommissionController {
     private readonly repriseService: RepriseService,
     private readonly statutService: StatutService,
     private readonly engineService: CommissionEngineService,
+    private readonly auditService: CommissionAuditService,
+    private readonly recurrenceService: RecurrenceService,
+    private readonly reportService: ReportNegatifService,
   ) {}
 
   // ===== COMMISSION =====
@@ -648,6 +713,92 @@ export class CommissionController {
     }
   }
 
+  @GrpcMethod('CommissionService', 'GetAuditLogs')
+  async getAuditLogs(req: GetAuditLogsRequest): Promise<AuditLogListResponse> {
+    try {
+      const result = await this.auditService.findAll({
+        organisationId: req.organisationId,
+        scope: req.scope ? grpcToAuditScope(req.scope) : undefined,
+        action: req.action ? grpcToAuditAction(req.action) : undefined,
+        refId: req.refId,
+        userId: req.userId,
+        apporteurId: req.apporteurId,
+        contratId: req.contratId,
+        baremeId: req.baremeId,
+        periode: req.periode,
+        dateFrom: req.dateFrom ? new Date(req.dateFrom) : undefined,
+        dateTo: req.dateTo ? new Date(req.dateTo) : undefined,
+        limit: req.limit,
+        offset: req.offset,
+      });
+      return { logs: result.logs.map(l => this.mapAuditLog(l)), total: result.total };
+    } catch (e) {
+      throw new RpcException({ code: status.INTERNAL, message: e.message });
+    }
+  }
+
+  @GrpcMethod('CommissionService', 'GetAuditLogsByRef')
+  async getAuditLogsByRef(req: GetAuditLogsByRefRequest): Promise<AuditLogListResponse> {
+    try {
+      const logs = await this.auditService.findByRef(req.organisationId, grpcToAuditScope(req.scope), req.refId);
+      return { logs: logs.map(l => this.mapAuditLog(l)), total: logs.length };
+    } catch (e) {
+      throw new RpcException({ code: status.INTERNAL, message: e.message });
+    }
+  }
+
+  @GrpcMethod('CommissionService', 'GetAuditLogsByCommission')
+  async getAuditLogsByCommission(req: GetByCommissionRequest): Promise<AuditLogListResponse> {
+    try {
+      const commission = await this.commissionService.findById(req.commissionId);
+      const logs = await this.auditService.findByCommission(commission.organisationId, req.commissionId);
+      return { logs: logs.map(l => this.mapAuditLog(l)), total: logs.length };
+    } catch (e) {
+      throw new RpcException({ code: status.INTERNAL, message: e.message });
+    }
+  }
+
+  @GrpcMethod('CommissionService', 'GetRecurrences')
+  async getRecurrences(req: GetRecurrencesRequest): Promise<RecurrenceListResponse> {
+    try {
+      const result = await this.recurrenceService.findByOrganisation(req.organisationId, {
+        apporteurId: req.apporteurId,
+        periode: req.periode,
+        statut: req.statut ? grpcToStatutRecurrence(req.statut) : undefined,
+        limit: req.limit,
+        offset: req.offset,
+      });
+      return { recurrences: result.recurrences.map(r => this.mapRecurrence(r)), total: result.total };
+    } catch (e) {
+      throw new RpcException({ code: status.INTERNAL, message: e.message });
+    }
+  }
+
+  @GrpcMethod('CommissionService', 'GetRecurrencesByContrat')
+  async getRecurrencesByContrat(req: GetRecurrencesByContratRequest): Promise<RecurrenceListResponse> {
+    try {
+      const recurrences = await this.recurrenceService.findByContrat(req.organisationId, req.contratId);
+      return { recurrences: recurrences.map(r => this.mapRecurrence(r)), total: recurrences.length };
+    } catch (e) {
+      throw new RpcException({ code: status.INTERNAL, message: e.message });
+    }
+  }
+
+  @GrpcMethod('CommissionService', 'GetReportsNegatifs')
+  async getReportsNegatifs(req: GetReportsNegatifsRequest): Promise<ReportNegatifListResponse> {
+    try {
+      const result = await this.reportService.findByOrganisation(req.organisationId, {
+        apporteurId: req.apporteurId,
+        statut: req.statut ? grpcToStatutReport(req.statut) : undefined,
+        limit: req.limit,
+        offset: req.offset,
+      });
+      return { reports: result.reports.map(r => this.mapReportNegatif(r)), total: result.total };
+    } catch (e) {
+      throw new RpcException({ code: status.INTERNAL, message: e.message });
+    }
+  }
+
   // ===== MAPPERS =====
   private mapCommission(c: any): Commission {
     return {
@@ -808,6 +959,46 @@ export class CommissionController {
     };
   }
 
+  private mapRecurrence(r: any): RecurrenceCommission {
+    return {
+      id: r.id,
+      organisationId: r.organisationId,
+      commissionInitialeId: r.commissionInitialeId,
+      contratId: r.contratId,
+      echeanceId: r.echeanceId,
+      apporteurId: r.apporteurId,
+      baremeId: r.baremeId,
+      baremeVersion: r.baremeVersion,
+      periode: r.periode,
+      numeroMois: r.numeroMois,
+      montantBase: String(r.montantBase),
+      tauxRecurrence: String(r.tauxRecurrence),
+      montantCalcule: String(r.montantCalcule),
+      statutRecurrence: statutRecurrenceToGrpc(r.statutRecurrence),
+      bordereauId: r.bordereauId,
+      dateEncaissement: r.dateEncaissement?.toISOString?.() || r.dateEncaissement,
+      createdAt: r.createdAt?.toISOString?.() || r.createdAt,
+      updatedAt: r.updatedAt?.toISOString?.() || r.updatedAt,
+    };
+  }
+
+  private mapReportNegatif(r: any): ReportNegatif {
+    return {
+      id: r.id,
+      organisationId: r.organisationId,
+      apporteurId: r.apporteurId,
+      periodeOrigine: r.periodeOrigine,
+      montantInitial: String(r.montantInitial),
+      montantRestant: String(r.montantRestant),
+      statutReport: statutReportToGrpc(r.statutReport),
+      bordereauOrigineId: r.bordereauOrigineId,
+      dernierePeriodeApplication: r.dernierePeriodeApplication,
+      motif: r.motif,
+      createdAt: r.createdAt?.toISOString?.() || r.createdAt,
+      updatedAt: r.updatedAt?.toISOString?.() || r.updatedAt,
+    };
+  }
+
   private mapStatut(s: any): StatutCommission {
     return {
       id: s.id,
@@ -815,6 +1006,30 @@ export class CommissionController {
       nom: s.nom,
       description: s.description,
       ordreAffichage: s.ordreAffichage,
+    };
+  }
+
+  private mapAuditLog(l: any): AuditLog {
+    return {
+      id: l.id,
+      organisationId: l.organisationId,
+      scope: auditScopeToGrpc(l.scope),
+      refId: l.refId,
+      action: auditActionToGrpc(l.action),
+      beforeData: l.beforeData ? JSON.stringify(l.beforeData) : undefined,
+      afterData: l.afterData ? JSON.stringify(l.afterData) : undefined,
+      metadata: l.metadata ? JSON.stringify(l.metadata) : undefined,
+      userId: l.userId,
+      userName: l.userName,
+      ipAddress: l.ipAddress,
+      motif: l.motif,
+      baremeId: l.baremeId,
+      baremeVersion: l.baremeVersion,
+      contratId: l.contratId,
+      apporteurId: l.apporteurId,
+      periode: l.periode,
+      montantCalcule: l.montantCalcule ? String(l.montantCalcule) : undefined,
+      createdAt: l.createdAt?.toISOString?.() || l.createdAt,
     };
   }
 }

@@ -22,8 +22,8 @@ import {
 } from '@/actions/notifications';
 import type { Notification, NotificationEvents } from '@/types/notification';
 
-// Use same base URL as API for WebSocket connection
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
+// WebSocket URL for notifications service (port 3001 by default)
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
 
 interface NotificationContextType {
   notifications: Notification[];

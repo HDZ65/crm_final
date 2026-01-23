@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import type {
   Contrat,
   ListContratResponse,
-} from "@proto-frontend/contrats/contrats";
+} from "@proto/contrats/contrats";
 
 export interface ActionResult<T> {
   data: T | null;

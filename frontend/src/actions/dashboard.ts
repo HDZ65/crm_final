@@ -9,7 +9,7 @@ import type {
   KpisCommerciauxResponse,
   AlertesResponse,
   DashboardFilters,
-} from "@proto-frontend/dashboard/dashboard";
+} from "@proto/dashboard/dashboard";
 
 export interface DashboardActionResult<T> {
   data: T | null;

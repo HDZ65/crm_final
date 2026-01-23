@@ -2,13 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHash, randomBytes } from 'crypto';
-import { PortalSessionService, PortalErrorCode } from '../portal-session.service.js';
+import { PortalSessionService, PortalErrorCode } from '../portal-session.service';
 import {
   PortalPaymentSessionEntity,
   PortalSessionStatus,
   PortalSessionAction,
-} from '../entities/portal-session.entity.js';
-import { PortalSessionAuditEntity } from '../entities/portal-session-audit.entity.js';
+} from '../entities/portal-session.entity';
+import { PortalSessionAuditEntity } from '../entities/portal-session-audit.entity';
 
 describe('PortalSessionService', () => {
   let service: PortalSessionService;
@@ -68,6 +68,7 @@ describe('PortalSessionService', () => {
         customerId: 'customer-id',
         allowedActions: [PortalSessionAction.PAY_BY_CARD],
         amountCents: 10000,
+        metadata: {},
       });
 
       expect(result.token).toMatch(/^v1\.[A-Za-z0-9_-]+$/);
@@ -95,6 +96,7 @@ describe('PortalSessionService', () => {
           customerId: 'customer-id',
           allowedActions: [PortalSessionAction.PAY_BY_CARD],
           amountCents: 10000,
+          metadata: {},
         });
         tokens.add(result.token);
       }
@@ -120,6 +122,7 @@ describe('PortalSessionService', () => {
         customerId: 'customer-id',
         allowedActions: [PortalSessionAction.PAY_BY_CARD],
         amountCents: 10000,
+        metadata: {},
       });
 
       expect(storedTokenHash).not.toBe(result.token);
@@ -278,6 +281,7 @@ describe('PortalSessionService', () => {
         allowedActions: [PortalSessionAction.PAY_BY_CARD],
         amountCents: 10000,
         idempotencyKey,
+        metadata: {},
       });
 
       expect(result.wasIdempotentHit).toBe(true);
@@ -310,6 +314,7 @@ describe('PortalSessionService', () => {
         allowedActions: [PortalSessionAction.PAY_BY_CARD],
         amountCents: 10000,
         idempotencyKey,
+        metadata: {},
       });
 
       expect(result.wasIdempotentHit).toBe(false);

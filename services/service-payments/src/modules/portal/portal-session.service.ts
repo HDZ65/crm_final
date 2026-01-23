@@ -12,24 +12,15 @@ import {
   AuditEventType,
   AuditActorType,
 } from './entities/portal-session-audit.entity.js';
+import type {
+  CreatePortalSessionRequest,
+  PortalRequestContext,
+} from '@proto/payments/payment';
+import { PortalErrorCode as ProtoPortalErrorCode } from '@proto/payments/payment';
 
-export interface CreateSessionParams {
-  organisationId: string;
-  societeId: string;
-  customerId: string;
-  contractId?: string;
-  paymentIntentId?: string;
+export type CreateSessionParams = Omit<CreatePortalSessionRequest, 'allowedActions'> & {
   allowedActions: PortalSessionAction[];
-  ttlSeconds?: number;
-  maxUses?: number;
-  amountCents: number;
-  currency?: string;
-  description?: string;
-  mandateId?: string;
-  rumMasked?: string;
-  idempotencyKey?: string;
-  metadata?: Record<string, string>;
-}
+};
 
 export interface CreateSessionResult {
   session: PortalPaymentSessionEntity;

@@ -13,7 +13,7 @@ import { columns } from "./columns"
 import { toast } from "sonner"
 import { getFacturesByOrganisation } from "@/actions/factures"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { Facture as FactureGrpc, StatutFacture as StatutFactureGrpc } from "@proto-frontend/factures/factures"
+import type { Facture as FactureGrpc, StatutFacture as StatutFactureGrpc } from "@proto/factures/factures"
 import type { Facture, StatutFacture } from "@/types/facture"
 import { cn } from "@/lib/utils"
 

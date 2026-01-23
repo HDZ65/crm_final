@@ -13,6 +13,11 @@ import type {
   GenererBordereauResponse,
   CalculerCommissionResponse,
 } from "@/lib/grpc";
+import type {
+  AuditLogListResponse,
+  RecurrenceListResponse,
+  ReportNegatifListResponse,
+} from "@proto/commission/commission";
 import {
   StatutBordereau,
   StatutReprise,
@@ -20,7 +25,7 @@ import {
   typeRepriseFromJSON,
   statutBordereauFromJSON,
   statutRepriseFromJSON,
-} from "@proto-grpc/commission/commission";
+} from "@proto/commission/commission";
 
 export interface ActionResult<T> {
   data: T | null;
@@ -280,6 +285,147 @@ export async function declencherReprise(params: {
 }
 
 // ============================================
+// AUDIT LOGS
+// ============================================
+
+export async function getAuditLogs(params: {
+  organisationId: string;
+  scope?: number;
+  action?: number;
+  refId?: string;
+  userId?: string;
+  apporteurId?: string;
+  contratId?: string;
+  baremeId?: string;
+  periode?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<ActionResult<AuditLogListResponse>> {
+  try {
+    const data = await commissions.getAuditLogs({
+      organisationId: params.organisationId,
+      scope: params.scope,
+      action: params.action,
+      refId: params.refId,
+      userId: params.userId,
+      apporteurId: params.apporteurId,
+      contratId: params.contratId,
+      baremeId: params.baremeId,
+      periode: params.periode,
+      dateFrom: params.dateFrom,
+      dateTo: params.dateTo,
+      limit: params.limit,
+      offset: params.offset,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getAuditLogs] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des audits",
+    };
+  }
+}
+
+export async function getAuditLogsByCommission(params: {
+  commissionId: string;
+}): Promise<ActionResult<AuditLogListResponse>> {
+  try {
+    const data = await commissions.getAuditLogsByCommission({
+      commissionId: params.commissionId,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getAuditLogsByCommission] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des audits",
+    };
+  }
+}
+
+// ============================================
+// RECURRENCES
+// ============================================
+
+export async function getRecurrencesByOrganisation(params: {
+  organisationId: string;
+  apporteurId?: string;
+  periode?: string;
+  statut?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<ActionResult<RecurrenceListResponse>> {
+  try {
+    const data = await commissions.getRecurrences({
+      organisationId: params.organisationId,
+      apporteurId: params.apporteurId,
+      periode: params.periode,
+      statut: params.statut,
+      limit: params.limit,
+      offset: params.offset,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getRecurrencesByOrganisation] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des récurrences",
+    };
+  }
+}
+
+export async function getRecurrencesByContrat(params: {
+  organisationId: string;
+  contratId: string;
+}): Promise<ActionResult<RecurrenceListResponse>> {
+  try {
+    const data = await commissions.getRecurrencesByContrat({
+      organisationId: params.organisationId,
+      contratId: params.contratId,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getRecurrencesByContrat] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des récurrences",
+    };
+  }
+}
+
+// ============================================
+// REPORTS NEGATIFS
+// ============================================
+
+export async function getReportsNegatifsByOrganisation(params: {
+  organisationId: string;
+  apporteurId?: string;
+  statut?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<ActionResult<ReportNegatifListResponse>> {
+  try {
+    const data = await commissions.getReportsNegatifs({
+      organisationId: params.organisationId,
+      apporteurId: params.apporteurId,
+      statut: params.statut,
+      limit: params.limit,
+      offset: params.offset,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getReportsNegatifsByOrganisation] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des reports négatifs",
+    };
+  }
+}
+
+// ============================================
 // CALCUL / SIMULATION
 // ============================================
 
@@ -378,7 +524,7 @@ export async function createBareme(params: {
   dateFin?: string;
 }): Promise<ActionResult<unknown>> {
   try {
-    const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto-grpc/commission/commission");
+    const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto/commission/commission");
 
     const data = await baremes.create({
       organisationId: params.organisationId,
@@ -436,7 +582,7 @@ export async function updateBareme(params: {
   actif?: boolean;
 }): Promise<ActionResult<unknown>> {
   try {
-    const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto-grpc/commission/commission");
+    const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto/commission/commission");
 
     const data = await baremes.update({
       id: params.id,
@@ -544,7 +690,7 @@ export async function createPalier(params: {
   ordre: number;
 }): Promise<ActionResult<unknown>> {
   try {
-    const { typePalierFromJSON } = await import("@proto-grpc/commission/commission");
+    const { typePalierFromJSON } = await import("@proto/commission/commission");
 
     const data = await paliers.create({
       organisationId: params.organisationId,

@@ -1,7 +1,8 @@
 "use server";
 
-import { gammes, produits, societes } from "@/lib/grpc";
+import { gammes, produits, societes, produitVersions, produitDocuments, produitPublications } from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
+import { StatutCycleProduit } from "@proto/products/products";
 import type {
   Gamme,
   ListGammesResponse,
@@ -9,11 +10,17 @@ import type {
   ListProduitsResponse,
   CategorieProduit,
   TypeProduit,
-} from "@proto-frontend/products/products";
+  ProduitVersion,
+  ListProduitVersionsResponse,
+  ProduitDocument,
+  ListProduitDocumentsResponse,
+  ProduitPublication,
+  ListProduitPublicationsResponse,
+} from "@proto/products/products";
 import type {
   Societe,
   ListSocieteResponse,
-} from "@proto-frontend/organisations/organisations";
+} from "@proto/organisations/organisations";
 
 export interface ActionResult<T> {
   data: T | null;
@@ -182,6 +189,7 @@ export async function createProduit(input: {
   imageUrl?: string;
   codeExterne?: string;
   metadata?: string;
+  statutCycle?: StatutCycleProduit;
 }): Promise<ActionResult<Produit>> {
   try {
     const data = await produits.create({
@@ -192,6 +200,7 @@ export async function createProduit(input: {
       description: input.description || "",
       type: input.type,
       categorie: input.categorie,
+      statutCycle: input.statutCycle ?? StatutCycleProduit.STATUT_CYCLE_PRODUIT_ACTIF,
       prix: input.prix,
       tauxTva: input.tauxTva,
       devise: input.devise || "EUR",
@@ -314,6 +323,258 @@ export async function clearPromotion(produitId: string): Promise<ActionResult<Pr
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors de la désactivation de la promotion",
+    };
+  }
+}
+
+// ============================================
+// PRODUIT VERSIONS
+// ============================================
+
+export async function getProduitVersions(params: {
+  produitId: string;
+  page?: number;
+  limit?: number;
+}): Promise<ActionResult<ListProduitVersionsResponse>> {
+  try {
+    const data = await produitVersions.listByProduit({
+      produitId: params.produitId,
+      pagination: {
+        page: params.page || 1,
+        limit: params.limit || 20,
+        sortBy: "version",
+        sortOrder: "DESC",
+      },
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getProduitVersions] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des versions",
+    };
+  }
+}
+
+export async function createProduitVersion(input: {
+  produitId: string;
+  version: number;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  notes?: string;
+  breakingChanges?: boolean;
+}): Promise<ActionResult<ProduitVersion>> {
+  try {
+    const data = await produitVersions.create({
+      produitId: input.produitId,
+      version: input.version,
+      effectiveFrom: input.effectiveFrom,
+      effectiveTo: input.effectiveTo,
+      notes: input.notes,
+      breakingChanges: input.breakingChanges,
+    });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[createProduitVersion] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la creation de la version",
+    };
+  }
+}
+
+export async function updateProduitVersion(input: {
+  id: string;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+  notes?: string;
+  breakingChanges?: boolean;
+}): Promise<ActionResult<ProduitVersion>> {
+  try {
+    const data = await produitVersions.update({
+      id: input.id,
+      effectiveFrom: input.effectiveFrom,
+      effectiveTo: input.effectiveTo,
+      notes: input.notes,
+      breakingChanges: input.breakingChanges,
+    });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[updateProduitVersion] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la mise a jour de la version",
+    };
+  }
+}
+
+// ============================================
+// PRODUIT DOCUMENTS
+// ============================================
+
+export async function getProduitDocuments(params: {
+  versionProduitId: string;
+}): Promise<ActionResult<ListProduitDocumentsResponse>> {
+  try {
+    const data = await produitDocuments.listByVersion({
+      versionProduitId: params.versionProduitId,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getProduitDocuments] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des documents",
+    };
+  }
+}
+
+export async function createProduitDocument(input: {
+  versionProduitId: string;
+  type: number;
+  title: string;
+  fileUrl: string;
+  fileHash: string;
+  mandatory?: boolean;
+}): Promise<ActionResult<ProduitDocument>> {
+  try {
+    const data = await produitDocuments.create({
+      versionProduitId: input.versionProduitId,
+      type: input.type,
+      title: input.title,
+      fileUrl: input.fileUrl,
+      fileHash: input.fileHash,
+      mandatory: input.mandatory,
+    });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[createProduitDocument] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la creation du document",
+    };
+  }
+}
+
+export async function updateProduitDocument(input: {
+  id: string;
+  title?: string;
+  fileUrl?: string;
+  fileHash?: string;
+  mandatory?: boolean;
+  publishedAt?: string;
+}): Promise<ActionResult<ProduitDocument>> {
+  try {
+    const data = await produitDocuments.update({
+      id: input.id,
+      title: input.title,
+      fileUrl: input.fileUrl,
+      fileHash: input.fileHash,
+      mandatory: input.mandatory,
+      publishedAt: input.publishedAt,
+    });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[updateProduitDocument] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la mise a jour du document",
+    };
+  }
+}
+
+// ============================================
+// PRODUIT PUBLICATIONS
+// ============================================
+
+export async function getProduitPublicationsByVersion(params: {
+  versionProduitId: string;
+}): Promise<ActionResult<ListProduitPublicationsResponse>> {
+  try {
+    const data = await produitPublications.listByVersion({
+      versionProduitId: params.versionProduitId,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getProduitPublicationsByVersion] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des publications",
+    };
+  }
+}
+
+export async function getProduitPublicationsBySociete(params: {
+  societeId: string;
+}): Promise<ActionResult<ListProduitPublicationsResponse>> {
+  try {
+    const data = await produitPublications.listBySociete({
+      societeId: params.societeId,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getProduitPublicationsBySociete] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des publications",
+    };
+  }
+}
+
+export async function createProduitPublication(input: {
+  versionProduitId: string;
+  societeId: string;
+  channels: string[];
+  visibilite: number;
+  startAt: string;
+  endAt?: string;
+}): Promise<ActionResult<ProduitPublication>> {
+  try {
+    const data = await produitPublications.create({
+      versionProduitId: input.versionProduitId,
+      societeId: input.societeId,
+      channels: input.channels,
+      visibilite: input.visibilite,
+      startAt: input.startAt,
+      endAt: input.endAt,
+    });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[createProduitPublication] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la creation de la publication",
+    };
+  }
+}
+
+export async function updateProduitPublication(input: {
+  id: string;
+  channels: string[];
+  visibilite?: number;
+  startAt?: string;
+  endAt?: string;
+}): Promise<ActionResult<ProduitPublication>> {
+  try {
+    const data = await produitPublications.update({
+      id: input.id,
+      channels: input.channels,
+      visibilite: input.visibilite,
+      startAt: input.startAt,
+      endAt: input.endAt,
+    });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[updateProduitPublication] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la mise a jour de la publication",
     };
   }
 }

@@ -3,37 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import type {
+  CreatePrixProduitRequest,
+  UpdatePrixProduitRequest,
+  ListPrixProduitsRequest,
+  GetPrixProduitRequest,
+  GetPrixForProduitRequest,
+  DeletePrixProduitRequest,
+  BulkCreatePrixProduitsRequest,
+} from '@proto/products/products';
 import { PrixProduitEntity } from './entities/prix-produit.entity';
-
-interface CreatePrixProduitInput {
-  grilleTarifaireId: string;
-  produitId: string;
-  prixUnitaire: number;
-  remisePourcent?: number;
-  prixMinimum?: number;
-  prixMaximum?: number;
-}
-
-interface UpdatePrixProduitInput {
-  id: string;
-  prixUnitaire?: number;
-  remisePourcent?: number;
-  prixMinimum?: number;
-  prixMaximum?: number;
-  actif?: boolean;
-}
-
-interface ListPrixProduitsInput {
-  grilleTarifaireId: string;
-  produitId?: string;
-  actif?: boolean;
-  pagination?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: string;
-  };
-}
 
 @Injectable()
 export class PrixProduitService {
@@ -44,7 +23,7 @@ export class PrixProduitService {
     private readonly prixProduitRepository: Repository<PrixProduitEntity>,
   ) {}
 
-  async create(input: CreatePrixProduitInput): Promise<PrixProduitEntity> {
+  async create(input: CreatePrixProduitRequest): Promise<PrixProduitEntity> {
     this.logger.log(
       `Creating prix produit for grid ${input.grilleTarifaireId}, product ${input.produitId}`,
     );
@@ -76,7 +55,7 @@ export class PrixProduitService {
     return this.prixProduitRepository.save(prixProduit);
   }
 
-  async update(input: UpdatePrixProduitInput): Promise<PrixProduitEntity> {
+  async update(input: UpdatePrixProduitRequest): Promise<PrixProduitEntity> {
     const prixProduit = await this.prixProduitRepository.findOne({
       where: { id: input.id },
     });
@@ -97,39 +76,39 @@ export class PrixProduitService {
     return this.prixProduitRepository.save(prixProduit);
   }
 
-  async findById(id: string): Promise<PrixProduitEntity> {
+  async findById(input: GetPrixProduitRequest): Promise<PrixProduitEntity> {
     const prixProduit = await this.prixProduitRepository.findOne({
-      where: { id },
+      where: { id: input.id },
       relations: ['produit', 'grilleTarifaire'],
     });
 
     if (!prixProduit) {
       throw new RpcException({
         code: status.NOT_FOUND,
-        message: `Prix produit ${id} not found`,
+        message: `Prix produit ${input.id} not found`,
       });
     }
 
     return prixProduit;
   }
 
-  async findForProduit(grilleTarifaireId: string, produitId: string): Promise<PrixProduitEntity> {
+  async findForProduit(input: GetPrixForProduitRequest): Promise<PrixProduitEntity> {
     const prixProduit = await this.prixProduitRepository.findOne({
-      where: { grilleTarifaireId, produitId },
+      where: { grilleTarifaireId: input.grilleTarifaireId, produitId: input.produitId },
       relations: ['produit', 'grilleTarifaire'],
     });
 
     if (!prixProduit) {
       throw new RpcException({
         code: status.NOT_FOUND,
-        message: `No price found for product ${produitId} in grid ${grilleTarifaireId}`,
+        message: `No price found for product ${input.produitId} in grid ${input.grilleTarifaireId}`,
       });
     }
 
     return prixProduit;
   }
 
-  async findAll(input: ListPrixProduitsInput): Promise<{
+  async findAll(input: ListPrixProduitsRequest): Promise<{
     prixProduits: PrixProduitEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }> {
@@ -170,26 +149,22 @@ export class PrixProduitService {
     };
   }
 
-  async delete(id: string): Promise<boolean> {
-    const result = await this.prixProduitRepository.delete(id);
+  async delete(input: DeletePrixProduitRequest): Promise<boolean> {
+    const result = await this.prixProduitRepository.delete(input.id);
     return (result.affected ?? 0) > 0;
   }
 
-  async bulkCreate(
-    grilleTarifaireId: string,
-    items: Array<{
-      produitId: string;
-      prixUnitaire: number;
-      remisePourcent?: number;
-      prixMinimum?: number;
-      prixMaximum?: number;
-    }>,
-  ): Promise<PrixProduitEntity[]> {
-    this.logger.log(`Bulk creating ${items.length} prix produits for grid ${grilleTarifaireId}`);
+  async bulkCreate(input: BulkCreatePrixProduitsRequest): Promise<{
+    created: PrixProduitEntity[];
+    count: number;
+  }> {
+    this.logger.log(
+      `Bulk creating ${input.items.length} prix produits for grid ${input.grilleTarifaireId}`,
+    );
 
-    const entities = items.map((item) =>
+    const entities = input.items.map((item) =>
       this.prixProduitRepository.create({
-        grilleTarifaireId,
+        grilleTarifaireId: input.grilleTarifaireId,
         produitId: item.produitId,
         prixUnitaire: item.prixUnitaire,
         remisePourcent: item.remisePourcent ?? 0,
@@ -199,12 +174,13 @@ export class PrixProduitService {
       }),
     );
 
-    return this.prixProduitRepository.save(entities);
+    const created = await this.prixProduitRepository.save(entities);
+    return { created, count: created.length };
   }
 
-  async findByGrille(grilleTarifaireId: string): Promise<PrixProduitEntity[]> {
+  async findByGrille(input: ListPrixProduitsRequest): Promise<PrixProduitEntity[]> {
     return this.prixProduitRepository.find({
-      where: { grilleTarifaireId, actif: true },
+      where: { grilleTarifaireId: input.grilleTarifaireId, actif: true },
       relations: ['produit'],
     });
   }

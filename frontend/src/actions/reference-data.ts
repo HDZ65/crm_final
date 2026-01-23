@@ -49,7 +49,7 @@ import {
   type ConditionPaiement,
   type ListConditionPaiementRequest,
   type ListConditionPaiementResponse,
-} from "@proto-grpc/referentiel/referentiel";
+} from "@proto/referentiel/referentiel";
 
 let conditionPaiementInstance: ConditionPaiementServiceClient | null = null;
 
@@ -88,7 +88,7 @@ import {
   type ModeleDistribution,
   type ListModeleDistributionRequest,
   type ListModeleDistributionResponse,
-} from "@proto-grpc/commerciaux/commerciaux";
+} from "@proto/commerciaux/commerciaux";
 
 let modeleDistributionInstance: ModeleDistributionServiceClient | null = null;
 
@@ -127,7 +127,7 @@ import {
   type StatutContrat,
   type ListStatutContratRequest,
   type ListStatutContratResponse,
-} from "@proto-grpc/contrats/contrats";
+} from "@proto/contrats/contrats";
 
 let statutContratInstance: StatutContratServiceClient | null = null;
 
@@ -166,7 +166,7 @@ import {
   type PartenaireMarqueBlanche,
   type ListPartenaireRequest,
   type ListPartenaireResponse,
-} from "@proto-grpc/organisations/organisations";
+} from "@proto/organisations/organisations";
 
 let partenaireInstance: PartenaireMarqueBlancheServiceClient | null = null;
 

@@ -38,7 +38,7 @@ const PERIOD_PRESETS = [
   { label: "12 derniers mois", value: "12-mois", getRange: () => ({ from: subDays(new Date(), 365), to: new Date() }) },
 ]
 
-export function StatsFilters({ filters, onFiltersChange }: StatsFiltersProps) {
+export function StatsFiltersComponent({ filters, onFiltersChange }: StatsFiltersProps) {
   const [open, setOpen] = React.useState(false)
 
   const handleSelectChange = (field: keyof StatsFilters) => (value: string) => {

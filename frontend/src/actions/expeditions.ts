@@ -4,7 +4,7 @@ import { logistics } from "@/lib/grpc";
 import type {
   ExpeditionResponse,
   ExpeditionListResponse,
-} from "@proto-frontend/logistics/logistics";
+} from "@proto/logistics/logistics";
 
 export interface ActionResult<T> {
   data: T | null;

@@ -17,7 +17,7 @@ export class ClientBaseEntity {
   organisationId: string;
 
   @Column({ name: 'type_client', length: 50 })
-  typeClient: string; // PARTICULIER, ENTREPRISE
+  typeClient: string;
 
   @Column({ length: 100 })
   nom: string;
@@ -46,6 +46,9 @@ export class ClientBaseEntity {
   @Column({ length: 50, default: 'ACTIF' })
   statut: string;
 
+  @Column({ name: 'societe_id', type: 'uuid', nullable: true })
+  societeId: string | null;
+
   @OneToMany(() => AdresseEntity, (adresse) => adresse.client)
   adresses: AdresseEntity[];
 
@@ -55,7 +58,6 @@ export class ClientBaseEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  // Business logic: capitalize name
   static capitalizeName(name: string): string {
     if (!name) return name;
     return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();

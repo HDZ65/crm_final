@@ -2,7 +2,7 @@ import {
   PortalPaymentSessionEntity,
   PortalSessionStatus,
   PortalSessionAction,
-} from '../entities/portal-session.entity.js';
+} from '../entities/portal-session.entity';
 
 describe('PortalPaymentSessionEntity State Machine', () => {
   let session: PortalPaymentSessionEntity;

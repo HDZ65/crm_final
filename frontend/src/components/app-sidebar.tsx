@@ -13,6 +13,7 @@ import {
   Package,
   ListTodo,
   Receipt,
+  Calendar,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -72,6 +73,11 @@ const NAV_ITEMS = [
     title: "Tâches",
     url: "/taches",
     icon: ListTodo,
+  },
+  {
+    title: "Calendrier",
+    url: "/calendrier",
+    icon: Calendar,
   },
   {
     title: "Statistiques",

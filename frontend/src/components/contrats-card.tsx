@@ -4,7 +4,7 @@ import * as React from "react"
 import { Folder, Maximize2, Download, Filter, SortAsc, TrendingUp, FileText, AlertTriangle, RefreshCw } from "lucide-react"
 import { getStatsSocietes } from "@/actions/dashboard"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { StatsSociete } from "@proto-frontend/dashboard/dashboard"
+import type { StatsSociete } from "@proto/dashboard/dashboard"
 import {
   Card,
   CardAction,

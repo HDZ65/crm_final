@@ -41,7 +41,7 @@ import { createBareme } from "@/actions/commissions"
 import { getGammesByOrganisation, getProduitsByOrganisation } from "@/actions/catalogue"
 import type { TypeOption, DureeOption } from "@/lib/commission-config"
 import type { BaremeCommissionResponseDto } from "@/types/commission"
-import type { Gamme, Produit } from "@proto-frontend/products/products"
+import type { Gamme, Produit } from "@proto/products/products"
 
 const createBaremeSchema = z.object({
   code: z.string().min(1, "Le code est requis").max(50, "50 caractères maximum"),

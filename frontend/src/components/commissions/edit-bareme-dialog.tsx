@@ -40,7 +40,7 @@ import { toast } from "sonner"
 import { updateBareme, toggleBaremeActif } from "@/actions/commissions"
 import { getGammesByOrganisation, getProduitsByOrganisation } from "@/actions/catalogue"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { Gamme, Produit } from "@proto-frontend/products/products"
+import type { Gamme, Produit } from "@proto/products/products"
 import type { TypeOption, DureeOption } from "@/hooks/commissions/use-commission-config"
 import type { BaremeCommissionResponseDto } from "@/types/commission"
 

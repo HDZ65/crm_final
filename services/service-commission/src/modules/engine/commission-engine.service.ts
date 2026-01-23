@@ -5,11 +5,15 @@ import { BordereauService } from '../bordereau/bordereau.service';
 import { LigneBordereauService } from '../ligne-bordereau/ligne-bordereau.service';
 import { RepriseService } from '../reprise/reprise.service';
 import { StatutService } from '../statut/statut.service';
+import { CommissionAuditService } from '../audit/audit.service';
+import { RecurrenceService } from '../recurrence/recurrence.service';
+import { ReportNegatifService } from '../report/report.service';
 import { CommissionEntity } from '../commission/entities/commission.entity';
 import { BaremeCommissionEntity, TypeCalcul } from '../bareme/entities/bareme-commission.entity';
 import { BordereauCommissionEntity } from '../bordereau/entities/bordereau-commission.entity';
 import { TypeLigne } from '../ligne-bordereau/entities/ligne-bordereau.entity';
-import { TypeReprise, StatutReprise } from '../reprise/entities/reprise-commission.entity';
+import { TypeReprise } from '../reprise/entities/reprise-commission.entity';
+import { AuditAction, AuditScope } from '../audit/entities/commission-audit-log.entity';
 
 export interface CalculerCommissionInput {
   organisationId: string;
@@ -22,6 +26,8 @@ export interface CalculerCommissionInput {
   canalVente?: string;
   montantBase: number;
   periode: string;
+  echeanceId?: string;
+  dateEncaissement?: Date;
 }
 
 export interface PrimeApplicable {
@@ -36,6 +42,7 @@ export interface CalculerCommissionResult {
   baremeApplique: BaremeCommissionEntity;
   primes: PrimeApplicable[];
   montantTotal: number;
+  recurrenceGeneree?: boolean;
 }
 
 export interface GenererBordereauResult {
@@ -43,10 +50,13 @@ export interface GenererBordereauResult {
   summary: {
     nombreCommissions: number;
     nombreReprises: number;
+    nombreRecurrences: number;
     nombrePrimes: number;
     totalBrut: number;
     totalReprises: number;
+    totalReportsAppliques: number;
     totalNet: number;
+    reportNegatifGenere: number;
   };
 }
 
@@ -61,10 +71,12 @@ export class CommissionEngineService {
     private readonly ligneService: LigneBordereauService,
     private readonly repriseService: RepriseService,
     private readonly statutService: StatutService,
+    private readonly auditService: CommissionAuditService,
+    private readonly recurrenceService: RecurrenceService,
+    private readonly reportService: ReportNegatifService,
   ) {}
 
   async calculerCommission(input: CalculerCommissionInput): Promise<CalculerCommissionResult> {
-    // 1. Find applicable bareme
     const bareme = await this.baremeService.findApplicable(input.organisationId, {
       typeProduit: input.typeProduit,
       profilRemuneration: input.profilRemuneration,
@@ -77,32 +89,39 @@ export class CommissionEngineService {
       throw new Error('No applicable bareme found');
     }
 
-    // 2. Calculate gross amount based on type
     let montantBrut = 0;
+    const calculDetails: Record<string, any> = {
+      typeCalcul: bareme.typeCalcul,
+      baseCalcul: bareme.baseCalcul,
+      montantBase: input.montantBase,
+    };
+
     switch (bareme.typeCalcul) {
       case TypeCalcul.FIXE:
         montantBrut = Number(bareme.montantFixe) || 0;
+        calculDetails.montantFixe = bareme.montantFixe;
         break;
       case TypeCalcul.POURCENTAGE:
-        montantBrut = input.montantBase * (Number(bareme.tauxPourcentage) / 100);
+        montantBrut = this.round(input.montantBase * (Number(bareme.tauxPourcentage) / 100));
+        calculDetails.tauxPourcentage = bareme.tauxPourcentage;
         break;
       case TypeCalcul.PALIER:
       case TypeCalcul.MIXTE:
-        // For palier/mixte, start with percentage if available
         if (bareme.tauxPourcentage) {
-          montantBrut = input.montantBase * (Number(bareme.tauxPourcentage) / 100);
-        } else if (bareme.montantFixe) {
-          montantBrut = Number(bareme.montantFixe);
+          montantBrut = this.round(input.montantBase * (Number(bareme.tauxPourcentage) / 100));
+          calculDetails.tauxPourcentage = bareme.tauxPourcentage;
+        }
+        if (bareme.montantFixe && bareme.typeCalcul === TypeCalcul.MIXTE) {
+          montantBrut += Number(bareme.montantFixe);
+          calculDetails.montantFixe = bareme.montantFixe;
         }
         break;
     }
 
-    // 3. Find applicable primes (paliers)
     const primes: PrimeApplicable[] = [];
     if (bareme.paliers && bareme.paliers.length > 0) {
       for (const palier of bareme.paliers) {
         if (!palier.actif) continue;
-        // Simplified check - in real implementation, would check accumulated values
         if (input.montantBase >= Number(palier.seuilMin)) {
           if (!palier.seuilMax || input.montantBase <= Number(palier.seuilMax)) {
             primes.push({
@@ -116,14 +135,15 @@ export class CommissionEngineService {
       }
     }
 
-    // 4. Calculate total with primes
     const totalPrimes = primes.reduce((sum, p) => sum + p.montant, 0);
-    const montantTotal = montantBrut + totalPrimes;
+    const montantTotal = this.round(montantBrut + totalPrimes);
 
-    // 5. Get default status
+    calculDetails.montantBrut = montantBrut;
+    calculDetails.primes = primes;
+    calculDetails.montantTotal = montantTotal;
+
     const statutEnAttente = await this.statutService.findByCode('en_attente').catch(() => null);
 
-    // 6. Create commission
     const reference = `COM-${input.periode}-${Date.now().toString(36).toUpperCase()}`;
     const commission = await this.commissionService.create({
       organisationId: input.organisationId,
@@ -142,14 +162,95 @@ export class CommissionEngineService {
       dateCreation: new Date(),
     });
 
-    this.logger.log(`Calculated commission ${commission.id}: ${montantTotal}€`);
+    await this.auditService.logCalculation(
+      input.organisationId,
+      commission.id,
+      bareme.id,
+      bareme.version,
+      input.contratId,
+      input.apporteurId,
+      input.periode,
+      montantTotal,
+      calculDetails,
+    );
+
+    let recurrenceGeneree = false;
+    if (bareme.recurrenceActive && bareme.tauxRecurrence) {
+      recurrenceGeneree = await this.genererRecurrenceSiEligible(
+        input,
+        commission.id,
+        bareme,
+      );
+    }
+
+    this.logger.log(`Calculated commission ${commission.id}: ${montantTotal}EUR`);
 
     return {
       commission,
       baremeApplique: bareme,
       primes,
       montantTotal,
+      recurrenceGeneree,
     };
+  }
+
+  private async genererRecurrenceSiEligible(
+    input: CalculerCommissionInput,
+    commissionId: string,
+    bareme: BaremeCommissionEntity,
+  ): Promise<boolean> {
+    if (!input.echeanceId || !input.dateEncaissement) {
+      return false;
+    }
+
+    const exists = await this.recurrenceService.existsForPeriode(
+      input.organisationId,
+      input.contratId,
+      input.echeanceId,
+      input.periode,
+    );
+    if (exists) {
+      return false;
+    }
+
+    const lastNumero = await this.recurrenceService.getLastNumeroMois(
+      input.organisationId,
+      input.contratId,
+    );
+    const numeroMois = lastNumero + 1;
+
+    if (bareme.dureeRecurrenceMois && numeroMois > bareme.dureeRecurrenceMois) {
+      this.logger.log(`Recurrence limit reached for contrat ${input.contratId}: ${numeroMois} > ${bareme.dureeRecurrenceMois}`);
+      return false;
+    }
+
+    await this.recurrenceService.generate({
+      organisationId: input.organisationId,
+      commissionInitialeId: commissionId,
+      contratId: input.contratId,
+      echeanceId: input.echeanceId,
+      apporteurId: input.apporteurId,
+      baremeId: bareme.id,
+      baremeVersion: bareme.version,
+      periode: input.periode,
+      numeroMois,
+      montantBase: input.montantBase,
+      tauxRecurrence: Number(bareme.tauxRecurrence),
+      dateEncaissement: input.dateEncaissement,
+    });
+
+    await this.auditService.logRecurrence(
+      input.organisationId,
+      commissionId,
+      input.contratId,
+      input.apporteurId,
+      input.periode,
+      this.round(input.montantBase * (Number(bareme.tauxRecurrence) / 100)),
+      input.echeanceId,
+      numeroMois,
+    );
+
+    return true;
   }
 
   async genererBordereau(
@@ -158,7 +259,6 @@ export class CommissionEngineService {
     periode: string,
     creePar?: string,
   ): Promise<GenererBordereauResult> {
-    // 1. Check if bordereau already exists
     let bordereau = await this.bordereauService.findByApporteurAndPeriode(
       organisationId,
       apporteurId,
@@ -174,24 +274,29 @@ export class CommissionEngineService {
         apporteurId,
         creePar,
       });
+
+      await this.auditService.logBordereau(
+        organisationId,
+        bordereau.id,
+        AuditAction.BORDEREAU_CREATED,
+        creePar,
+      );
     } else {
-      // Clear existing lines
       await this.ligneService.deleteByBordereau(bordereau.id);
     }
 
-    // 2. Get all commissions for this period
     const { commissions } = await this.commissionService.findByOrganisation(organisationId, {
       apporteurId,
       periode,
     });
 
-    // 3. Get pending reprises
     const reprises = await this.repriseService.findPending(organisationId, apporteurId, periode);
+    const recurrences = await this.recurrenceService.findNonIncluses(organisationId, apporteurId, periode);
 
-    // 4. Create ligne for each commission
     let ordre = 0;
     let totalBrut = 0;
     let totalReprises = 0;
+    let totalRecurrences = 0;
 
     for (const commission of commissions) {
       await this.ligneService.create({
@@ -211,7 +316,29 @@ export class CommissionEngineService {
       totalBrut += Number(commission.montantBrut);
     }
 
-    // 5. Create ligne for each reprise
+    for (const recurrence of recurrences) {
+      await this.ligneService.create({
+        organisationId,
+        bordereauId: bordereau.id,
+        typeLigne: TypeLigne.COMMISSION,
+        contratId: recurrence.contratId,
+        contratReference: `REC-${recurrence.periode}-${recurrence.numeroMois}`,
+        montantBrut: recurrence.montantCalcule,
+        montantReprise: 0,
+        montantNet: recurrence.montantCalcule,
+        ordre: ordre++,
+      });
+      totalRecurrences += Number(recurrence.montantCalcule);
+    }
+    totalBrut += totalRecurrences;
+
+    if (recurrences.length > 0) {
+      await this.recurrenceService.marquerIncluses(
+        recurrences.map(r => r.id),
+        bordereau.id,
+      );
+    }
+
     for (const reprise of reprises) {
       await this.ligneService.create({
         organisationId,
@@ -222,38 +349,98 @@ export class CommissionEngineService {
         contratReference: reprise.reference,
         montantBrut: 0,
         montantReprise: reprise.montantReprise,
-        montantNet: -reprise.montantReprise,
+        montantNet: -Number(reprise.montantReprise),
         ordre: ordre++,
       });
       totalReprises += Number(reprise.montantReprise);
 
-      // Mark reprise as applied
       await this.repriseService.apply(reprise.id, bordereau.id);
+      
+      await this.auditService.logReprise(
+        organisationId,
+        reprise.id,
+        AuditAction.REPRISE_APPLIED,
+        reprise.contratId,
+        apporteurId,
+        reprise.periodeOrigine,
+        periode,
+        Number(reprise.montantReprise),
+      );
     }
 
-    // 6. Update bordereau totals
-    const totalNet = totalBrut - totalReprises;
+    let netAvantReports = totalBrut - totalReprises;
+    let totalReportsAppliques = 0;
+    let reportNegatifGenere = 0;
+
+    const { montantApresReports, reportsAppliques } = await this.reportService.appliquerSurMontant(
+      organisationId,
+      apporteurId,
+      netAvantReports,
+      periode,
+    );
+
+    for (const report of reportsAppliques) {
+      const montantApplique = Number(report.montantInitial) - Number(report.montantRestant);
+      totalReportsAppliques += montantApplique;
+
+      await this.auditService.logReportNegatif(
+        organisationId,
+        apporteurId,
+        report.periodeOrigine,
+        periode,
+        montantApplique,
+        AuditAction.REPORT_NEGATIF_APPLIED,
+      );
+    }
+
+    const totalNet = montantApresReports;
+
+    if (totalNet < 0) {
+      const report = await this.reportService.create({
+        organisationId,
+        apporteurId,
+        periodeOrigine: periode,
+        montantInitial: Math.abs(totalNet),
+        bordereauOrigineId: bordereau.id,
+        motif: 'Solde negatif apres reprises',
+      });
+      reportNegatifGenere = Math.abs(totalNet);
+
+      await this.auditService.logReportNegatif(
+        organisationId,
+        apporteurId,
+        periode,
+        periode,
+        reportNegatifGenere,
+        AuditAction.REPORT_NEGATIF_CREATED,
+      );
+    }
+
+    const netFinal = Math.max(0, totalNet);
+
     await this.bordereauService.updateTotals(bordereau.id, {
       totalBrut,
       totalReprises,
-      totalAcomptes: 0,
-      totalNetAPayer: totalNet,
+      totalAcomptes: totalReportsAppliques,
+      totalNetAPayer: netFinal,
       nombreLignes: ordre,
     });
 
-    // 7. Reload bordereau with lines
     bordereau = await this.bordereauService.findById(bordereau.id);
 
     const summary = {
       nombreCommissions: commissions.length,
       nombreReprises: reprises.length,
+      nombreRecurrences: recurrences.length,
       nombrePrimes: 0,
       totalBrut,
       totalReprises,
-      totalNet,
+      totalReportsAppliques,
+      totalNet: netFinal,
+      reportNegatifGenere,
     };
 
-    this.logger.log(`Generated bordereau ${bordereau.id} with ${ordre} lines, net: ${totalNet}€`);
+    this.logger.log(`Generated bordereau ${bordereau.id} with ${ordre} lines, net: ${netFinal}EUR`);
 
     return { bordereau, summary };
   }
@@ -264,26 +451,27 @@ export class CommissionEngineService {
     dateEvenement: Date,
     motif?: string,
   ) {
-    // 1. Get original commission
     const commission = await this.commissionService.findById(commissionId);
 
-    // 2. Calculate reprise amount (100% by default)
-    const montantReprise = Number(commission.montantNetAPayer);
+    const bareme = await this.baremeService.findApplicable(commission.organisationId, {
+      date: commission.dateCreation.toISOString(),
+    });
+    
+    const dureeReprisesMois = bareme?.dureeReprisesMois || 3;
+    const tauxReprise = bareme?.tauxReprise || 100;
 
-    // 3. Calculate deadline based on bareme (default 3 months)
     const dateLimite = new Date(commission.dateCreation);
-    dateLimite.setMonth(dateLimite.getMonth() + 3);
+    dateLimite.setMonth(dateLimite.getMonth() + dureeReprisesMois);
 
-    // 4. Check if still within reprise window
     if (dateEvenement > dateLimite) {
-      throw new Error('Reprise window has expired');
+      throw new Error(`Reprise window has expired (${dureeReprisesMois} months)`);
     }
 
-    // 5. Calculate application period (next month)
+    const montantReprise = this.round(Number(commission.montantNetAPayer) * (tauxReprise / 100));
+
     const now = new Date();
     const periodeApplication = `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}`;
 
-    // 6. Create reprise
     const reference = `REP-${periodeApplication}-${Date.now().toString(36).toUpperCase()}`;
     const reprise = await this.repriseService.create({
       organisationId: commission.organisationId,
@@ -293,8 +481,8 @@ export class CommissionEngineService {
       reference,
       typeReprise,
       montantReprise,
-      tauxReprise: 100,
-      montantOriginal: montantReprise,
+      tauxReprise,
+      montantOriginal: Number(commission.montantNetAPayer),
       periodeOrigine: commission.periode,
       periodeApplication,
       dateEvenement,
@@ -302,8 +490,64 @@ export class CommissionEngineService {
       motif,
     });
 
-    this.logger.log(`Created reprise ${reprise.id} for commission ${commissionId}`);
+    await this.auditService.logReprise(
+      commission.organisationId,
+      reprise.id,
+      AuditAction.REPRISE_CREATED,
+      commission.contratId,
+      commission.apporteurId,
+      commission.periode,
+      periodeApplication,
+      montantReprise,
+      motif,
+    );
+
+    if (typeReprise === TypeReprise.IMPAYE || typeReprise === TypeReprise.RESILIATION) {
+      await this.recurrenceService.suspendre(commission.contratId);
+      
+      await this.auditService.log({
+        organisationId: commission.organisationId,
+        scope: AuditScope.RECURRENCE,
+        action: AuditAction.RECURRENCE_STOPPED,
+        contratId: commission.contratId,
+        apporteurId: commission.apporteurId,
+        motif: `Suspension suite a ${typeReprise}`,
+      });
+    }
+
+    this.logger.log(`Created reprise ${reprise.id} for commission ${commissionId}: ${montantReprise}EUR`);
 
     return reprise;
+  }
+
+  async regulariserReprise(
+    repriseId: string,
+    dateRegularisation: Date,
+  ) {
+    const reprise = await this.repriseService.findById(repriseId);
+    
+    await this.repriseService.cancel(repriseId);
+
+    await this.recurrenceService.reprendre(reprise.contratId);
+
+    await this.auditService.logReprise(
+      reprise.organisationId,
+      repriseId,
+      AuditAction.REPRISE_REGULARIZED,
+      reprise.contratId,
+      reprise.apporteurId,
+      reprise.periodeOrigine,
+      reprise.periodeApplication,
+      Number(reprise.montantReprise),
+      'Regularisation apres recouvrement',
+    );
+
+    this.logger.log(`Regularized reprise ${repriseId}`);
+
+    return reprise;
+  }
+
+  private round(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 }

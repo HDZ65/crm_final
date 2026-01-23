@@ -3,11 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHmac } from 'crypto';
 import { SlimpayAccountEntity } from './entities/slimpay-account.entity.js';
-
-interface SlimpayToken {
-  accessToken: string;
-  expiresAt: number;
-}
+import { SlimpayToken } from '@proto/payments/payment.js';
 
 @Injectable()
 export class SlimpayService {

@@ -6,17 +6,19 @@ import {
   PortalSessionStatus,
 } from './entities/portal-session.entity.js';
 import { PortalSessionAuditEntity } from './entities/portal-session-audit.entity.js';
+import {
+  ListPortalSessionsRequest,
+  GetPortalSessionAuditRequest,
+} from '@proto/payments/payment.js';
 
-export interface ListSessionsParams {
-  organisationId: string;
-  customerId?: string;
+export type ListSessionsParams = Pick<ListPortalSessionsRequest, 'organisationId' | 'customerId'> & {
   contractId?: string;
   status?: PortalSessionStatus;
   createdAfter?: Date;
   createdBefore?: Date;
   page?: number;
   limit?: number;
-}
+};
 
 export interface ListSessionsResult {
   sessions: PortalPaymentSessionEntity[];
@@ -25,11 +27,10 @@ export interface ListSessionsResult {
   totalPages: number;
 }
 
-export interface GetAuditParams {
-  sessionId: string;
+export type GetAuditParams = Pick<GetPortalSessionAuditRequest, 'sessionId'> & {
   page?: number;
   limit?: number;
-}
+};
 
 export interface GetAuditResult {
   events: PortalSessionAuditEntity[];

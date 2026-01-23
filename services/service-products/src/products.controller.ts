@@ -31,10 +31,19 @@ import type {
   BulkCreatePrixProduitsRequest,
   GetCatalogRequest,
   CalculatePriceRequest,
-} from '@proto/products/products';
-import {
-  CategorieProduit as ProtoCategorieProduit,
-  TypeProduit as ProtoTypeProduit,
+  CreateProduitVersionRequest,
+  UpdateProduitVersionRequest,
+  GetProduitVersionRequest,
+  ListProduitVersionsRequest,
+  CreateProduitDocumentRequest,
+  UpdateProduitDocumentRequest,
+  GetProduitDocumentRequest,
+  ListProduitDocumentsRequest,
+  CreateProduitPublicationRequest,
+  UpdateProduitPublicationRequest,
+  GetProduitPublicationRequest,
+  ListProduitPublicationsByVersionRequest,
+  ListProduitPublicationsBySocieteRequest,
 } from '@proto/products/products';
 
 import { GammeService } from './modules/gamme/gamme.service';
@@ -42,20 +51,9 @@ import { ProduitService } from './modules/produit/produit.service';
 import { GrilleTarifaireService } from './modules/grille-tarifaire/grille-tarifaire.service';
 import { PrixProduitService } from './modules/prix-produit/prix-produit.service';
 import { CatalogService } from './modules/catalog/catalog.service';
-
-import { TypeProduit, CategorieProduit } from './modules/produit/entities/produit.entity';
-
-const categorieFromProto: Record<ProtoCategorieProduit, CategorieProduit> = {
-  [ProtoCategorieProduit.ASSURANCE]: CategorieProduit.ASSURANCE,
-  [ProtoCategorieProduit.PREVOYANCE]: CategorieProduit.PREVOYANCE,
-  [ProtoCategorieProduit.EPARGNE]: CategorieProduit.EPARGNE,
-  [ProtoCategorieProduit.SERVICE]: CategorieProduit.SERVICE,
-  [ProtoCategorieProduit.ACCESSOIRE]: CategorieProduit.ACCESSOIRE,
-  [ProtoCategorieProduit.CATEGORIE_PRODUIT_UNSPECIFIED]: CategorieProduit.SERVICE,
-};
-
-const typeFromProto = (proto: ProtoTypeProduit): TypeProduit =>
-  proto === ProtoTypeProduit.INTERNE ? TypeProduit.INTERNE : TypeProduit.PARTENAIRE;
+import { VersionProduitService } from './modules/version-produit/version-produit.service';
+import { DocumentProduitService } from './modules/document-produit/document-produit.service';
+import { PublicationProduitService } from './modules/publication-produit/publication-produit.service';
 
 @Controller()
 export class ProductsController {
@@ -65,18 +63,14 @@ export class ProductsController {
     private readonly grilleService: GrilleTarifaireService,
     private readonly prixProduitService: PrixProduitService,
     private readonly catalogService: CatalogService,
+    private readonly versionProduitService: VersionProduitService,
+    private readonly documentProduitService: DocumentProduitService,
+    private readonly publicationProduitService: PublicationProduitService,
   ) {}
 
   @GrpcMethod('GammeService', 'Create')
   async createGamme(data: CreateGammeRequest) {
-    return this.gammeService.create({
-      organisationId: data.organisationId,
-      nom: data.nom,
-      description: data.description,
-      icone: data.icone,
-      code: data.code,
-      ordre: data.ordre,
-    });
+    return this.gammeService.create(data);
   }
 
   @GrpcMethod('GammeService', 'Update')
@@ -86,278 +80,206 @@ export class ProductsController {
 
   @GrpcMethod('GammeService', 'Get')
   async getGamme(data: GetGammeRequest) {
-    return this.gammeService.findById(data.id);
+    return this.gammeService.findById(data);
   }
 
   @GrpcMethod('GammeService', 'List')
   async listGammes(data: ListGammesRequest) {
-    return this.gammeService.findAll({
-      organisationId: data.organisationId,
-      actif: data.actif,
-      pagination: data.pagination
-        ? {
-            page: data.pagination.page,
-            limit: data.pagination.limit,
-            sortBy: data.pagination.sortBy,
-            sortOrder: data.pagination.sortOrder,
-          }
-        : undefined,
-    });
+    return this.gammeService.findAll(data);
   }
 
   @GrpcMethod('GammeService', 'Delete')
   async deleteGamme(data: DeleteGammeRequest) {
-    const success = await this.gammeService.delete(data.id);
+    const success = await this.gammeService.delete(data);
     return { success };
   }
 
   @GrpcMethod('ProduitService', 'Create')
   async createProduit(data: CreateProduitRequest) {
-    return this.produitService.create({
-      organisationId: data.organisationId,
-      gammeId: data.gammeId,
-      sku: data.sku,
-      nom: data.nom,
-      description: data.description,
-      categorie: data.categorie ? categorieFromProto[data.categorie] : undefined,
-      type: data.type ? typeFromProto(data.type) : undefined,
-      prix: data.prix,
-      tauxTva: data.tauxTva,
-      devise: data.devise,
-      imageUrl: data.imageUrl,
-      codeExterne: data.codeExterne,
-      metadata: data.metadata,
-    });
+    return this.produitService.create(data);
   }
 
   @GrpcMethod('ProduitService', 'Update')
   async updateProduit(data: UpdateProduitRequest) {
-    return this.produitService.update({
-      id: data.id,
-      gammeId: data.gammeId,
-      sku: data.sku,
-      nom: data.nom,
-      description: data.description,
-      categorie: data.categorie ? categorieFromProto[data.categorie] : undefined,
-      type: data.type ? typeFromProto(data.type) : undefined,
-      prix: data.prix,
-      tauxTva: data.tauxTva,
-      devise: data.devise,
-      actif: data.actif,
-      imageUrl: data.imageUrl,
-      codeExterne: data.codeExterne,
-      metadata: data.metadata,
-    });
+    return this.produitService.update(data);
   }
 
   @GrpcMethod('ProduitService', 'Get')
   async getProduit(data: GetProduitRequest) {
-    return this.produitService.findById(data.id);
+    return this.produitService.findById(data);
   }
 
   @GrpcMethod('ProduitService', 'GetBySku')
   async getProduitBySku(data: GetProduitBySkuRequest) {
-    return this.produitService.findBySku(data.organisationId, data.sku);
+    return this.produitService.findBySku(data);
   }
 
   @GrpcMethod('ProduitService', 'List')
   async listProduits(data: ListProduitsRequest) {
-    return this.produitService.findAll({
-      organisationId: data.organisationId,
-      gammeId: data.gammeId,
-      categorie: data.categorie ? categorieFromProto[data.categorie] : undefined,
-      type: data.type ? typeFromProto(data.type) : undefined,
-      actif: data.actif,
-      promotionActive: data.promotionActive,
-      search: data.search,
-      pagination: data.pagination
-        ? {
-            page: data.pagination.page,
-            limit: data.pagination.limit,
-            sortBy: data.pagination.sortBy,
-            sortOrder: data.pagination.sortOrder,
-          }
-        : undefined,
-    });
+    return this.produitService.findAll(data);
   }
 
   @GrpcMethod('ProduitService', 'Delete')
   async deleteProduit(data: DeleteProduitRequest) {
-    const success = await this.produitService.delete(data.id);
+    const success = await this.produitService.delete(data);
     return { success };
   }
 
   @GrpcMethod('ProduitService', 'SetPromotion')
   async setPromotion(data: SetPromotionRequest) {
-    return this.produitService.setPromotion(
-      data.produitId,
-      data.prixPromotion,
-      new Date(data.dateDebut),
-      new Date(data.dateFin),
-    );
+    return this.produitService.setPromotion(data);
   }
 
   @GrpcMethod('ProduitService', 'ClearPromotion')
   async clearPromotion(data: ClearPromotionRequest) {
-    return this.produitService.clearPromotion(data.produitId);
+    return this.produitService.clearPromotion(data);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'Create')
   async createGrilleTarifaire(data: CreateGrilleTarifaireRequest) {
-    return this.grilleService.create({
-      organisationId: data.organisationId,
-      nom: data.nom,
-      description: data.description,
-      dateDebut: data.dateDebut ? new Date(data.dateDebut) : undefined,
-      dateFin: data.dateFin ? new Date(data.dateFin) : undefined,
-      estParDefaut: data.estParDefaut,
-    });
+    return this.grilleService.create(data);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'Update')
   async updateGrilleTarifaire(data: UpdateGrilleTarifaireRequest) {
-    return this.grilleService.update({
-      id: data.id,
-      nom: data.nom,
-      description: data.description,
-      dateDebut: data.dateDebut ? new Date(data.dateDebut) : undefined,
-      dateFin: data.dateFin ? new Date(data.dateFin) : undefined,
-      estParDefaut: data.estParDefaut,
-      actif: data.actif,
-    });
+    return this.grilleService.update(data);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'Get')
   async getGrilleTarifaire(data: GetGrilleTarifaireRequest) {
-    return this.grilleService.findById(data.id);
+    return this.grilleService.findById(data);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'GetActive')
   async getGrilleTarifaireActive(data: GetGrilleTarifaireActiveRequest) {
-    return this.grilleService.findActive(
-      data.organisationId,
-      new Date(data.date || Date.now()),
-    );
+    return this.grilleService.findActive(data);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'List')
   async listGrillesTarifaires(data: ListGrillesTarifairesRequest) {
-    return this.grilleService.findAll({
-      organisationId: data.organisationId,
-      actif: data.actif,
-      estParDefaut: data.estParDefaut,
-      pagination: data.pagination
-        ? {
-            page: data.pagination.page,
-            limit: data.pagination.limit,
-            sortBy: data.pagination.sortBy,
-            sortOrder: data.pagination.sortOrder,
-          }
-        : undefined,
-    });
+    return this.grilleService.findAll(data);
   }
 
   @GrpcMethod('GrilleTarifaireService', 'Delete')
   async deleteGrilleTarifaire(data: DeleteGrilleTarifaireRequest) {
-    const success = await this.grilleService.delete(data.id);
+    const success = await this.grilleService.delete(data);
     return { success };
   }
 
   @GrpcMethod('GrilleTarifaireService', 'SetParDefaut')
   async setGrilleParDefaut(data: SetGrilleParDefautRequest) {
-    return this.grilleService.setParDefaut(data.id);
+    return this.grilleService.setParDefaut(data);
   }
 
   @GrpcMethod('PrixProduitService', 'Create')
   async createPrixProduit(data: CreatePrixProduitRequest) {
-    return this.prixProduitService.create({
-      grilleTarifaireId: data.grilleTarifaireId,
-      produitId: data.produitId,
-      prixUnitaire: data.prixUnitaire,
-      remisePourcent: data.remisePourcent,
-      prixMinimum: data.prixMinimum,
-      prixMaximum: data.prixMaximum,
-    });
+    return this.prixProduitService.create(data);
   }
 
   @GrpcMethod('PrixProduitService', 'Update')
   async updatePrixProduit(data: UpdatePrixProduitRequest) {
-    return this.prixProduitService.update({
-      id: data.id,
-      prixUnitaire: data.prixUnitaire,
-      remisePourcent: data.remisePourcent,
-      prixMinimum: data.prixMinimum,
-      prixMaximum: data.prixMaximum,
-      actif: data.actif,
-    });
+    return this.prixProduitService.update(data);
   }
 
   @GrpcMethod('PrixProduitService', 'Get')
   async getPrixProduit(data: GetPrixProduitRequest) {
-    return this.prixProduitService.findById(data.id);
+    return this.prixProduitService.findById(data);
   }
 
   @GrpcMethod('PrixProduitService', 'GetForProduit')
   async getPrixForProduit(data: GetPrixForProduitRequest) {
-    return this.prixProduitService.findForProduit(
-      data.grilleTarifaireId,
-      data.produitId,
-    );
+    return this.prixProduitService.findForProduit(data);
   }
 
   @GrpcMethod('PrixProduitService', 'List')
   async listPrixProduits(data: ListPrixProduitsRequest) {
-    return this.prixProduitService.findAll({
-      grilleTarifaireId: data.grilleTarifaireId,
-      produitId: data.produitId,
-      actif: data.actif,
-      pagination: data.pagination
-        ? {
-            page: data.pagination.page,
-            limit: data.pagination.limit,
-            sortBy: data.pagination.sortBy,
-            sortOrder: data.pagination.sortOrder,
-          }
-        : undefined,
-    });
+    return this.prixProduitService.findAll(data);
   }
 
   @GrpcMethod('PrixProduitService', 'Delete')
   async deletePrixProduit(data: DeletePrixProduitRequest) {
-    const success = await this.prixProduitService.delete(data.id);
+    const success = await this.prixProduitService.delete(data);
     return { success };
   }
 
   @GrpcMethod('PrixProduitService', 'BulkCreate')
   async bulkCreatePrixProduits(data: BulkCreatePrixProduitsRequest) {
-    const items = data.items.map((item) => ({
-      produitId: item.produitId,
-      prixUnitaire: item.prixUnitaire,
-      remisePourcent: item.remisePourcent,
-      prixMinimum: item.prixMinimum,
-      prixMaximum: item.prixMaximum,
-    }));
-    const created = await this.prixProduitService.bulkCreate(data.grilleTarifaireId, items);
-    return { created, count: created.length };
+    const result = await this.prixProduitService.bulkCreate(data);
+    return { created: result.created, count: result.count };
   }
 
   @GrpcMethod('CatalogService', 'GetCatalog')
   async getCatalog(data: GetCatalogRequest) {
-    return this.catalogService.getCatalog(
-      data.organisationId,
-      data.grilleTarifaireId,
-      data.gammeId,
-      data.includeInactive,
-    );
+    return this.catalogService.getCatalog(data);
   }
 
   @GrpcMethod('CatalogService', 'CalculatePrice')
   async calculatePrice(data: CalculatePriceRequest) {
-    return this.catalogService.calculatePrice(
-      data.produitId,
-      data.grilleTarifaireId,
-      data.quantite,
-      data.remiseAdditionnelle,
-    );
+    return this.catalogService.calculatePrice(data);
+  }
+
+  @GrpcMethod('ProduitVersionService', 'Create')
+  async createProduitVersion(data: CreateProduitVersionRequest) {
+    return this.versionProduitService.create(data);
+  }
+
+  @GrpcMethod('ProduitVersionService', 'Update')
+  async updateProduitVersion(data: UpdateProduitVersionRequest) {
+    return this.versionProduitService.update(data);
+  }
+
+  @GrpcMethod('ProduitVersionService', 'Get')
+  async getProduitVersion(data: GetProduitVersionRequest) {
+    return this.versionProduitService.findById(data);
+  }
+
+  @GrpcMethod('ProduitVersionService', 'ListByProduit')
+  async listProduitVersions(data: ListProduitVersionsRequest) {
+    return this.versionProduitService.findByProduit(data);
+  }
+
+  @GrpcMethod('ProduitDocumentService', 'Create')
+  async createProduitDocument(data: CreateProduitDocumentRequest) {
+    return this.documentProduitService.create(data);
+  }
+
+  @GrpcMethod('ProduitDocumentService', 'Update')
+  async updateProduitDocument(data: UpdateProduitDocumentRequest) {
+    return this.documentProduitService.update(data);
+  }
+
+  @GrpcMethod('ProduitDocumentService', 'Get')
+  async getProduitDocument(data: GetProduitDocumentRequest) {
+    return this.documentProduitService.findById(data);
+  }
+
+  @GrpcMethod('ProduitDocumentService', 'ListByVersion')
+  async listProduitDocuments(data: ListProduitDocumentsRequest) {
+    return { documents: await this.documentProduitService.findByVersion(data) };
+  }
+
+  @GrpcMethod('ProduitPublicationService', 'Create')
+  async createProduitPublication(data: CreateProduitPublicationRequest) {
+    return this.publicationProduitService.create(data);
+  }
+
+  @GrpcMethod('ProduitPublicationService', 'Update')
+  async updateProduitPublication(data: UpdateProduitPublicationRequest) {
+    return this.publicationProduitService.update(data);
+  }
+
+  @GrpcMethod('ProduitPublicationService', 'Get')
+  async getProduitPublication(data: GetProduitPublicationRequest) {
+    return this.publicationProduitService.findById(data);
+  }
+
+  @GrpcMethod('ProduitPublicationService', 'ListByVersion')
+  async listProduitPublicationsByVersion(data: ListProduitPublicationsByVersionRequest) {
+    return { publications: await this.publicationProduitService.findByVersion(data) };
+  }
+
+  @GrpcMethod('ProduitPublicationService', 'ListBySociete')
+  async listProduitPublicationsBySociete(data: ListProduitPublicationsBySocieteRequest) {
+    return { publications: await this.publicationProduitService.findBySociete(data) };
   }
 }

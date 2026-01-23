@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { GammeEntity } from '../../gamme/entities/gamme.entity';
 import { PrixProduitEntity } from '../../prix-produit/entities/prix-produit.entity';
+import { VersionProduitEntity } from '../../version-produit/entities/version-produit.entity';
 
 export enum TypeProduit {
   INTERNE = 'INTERNE',
@@ -23,6 +24,14 @@ export enum CategorieProduit {
   EPARGNE = 'EPARGNE',
   SERVICE = 'SERVICE',
   ACCESSOIRE = 'ACCESSOIRE',
+}
+
+export enum StatutCycleProduit {
+  BROUILLON = 'BROUILLON',
+  TEST = 'TEST',
+  ACTIF = 'ACTIF',
+  GELE = 'GELE',
+  RETIRE = 'RETIRE',
 }
 
 @Entity('produit')
@@ -73,6 +82,14 @@ export class ProduitEntity {
   @Column({ default: true })
   actif: boolean;
 
+  @Column({
+    name: 'statut_cycle',
+    type: 'enum',
+    enum: StatutCycleProduit,
+    default: StatutCycleProduit.ACTIF,
+  })
+  statutCycle: StatutCycleProduit;
+
   @Column({ name: 'promotion_active', default: false })
   promotionActive: boolean;
 
@@ -107,4 +124,7 @@ export class ProduitEntity {
 
   @OneToMany(() => PrixProduitEntity, (prix) => prix.produit)
   prixProduits: PrixProduitEntity[];
+
+  @OneToMany(() => VersionProduitEntity, (version) => version.produit)
+  versions: VersionProduitEntity[];
 }

@@ -5,7 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import type { HolidayZoneEntity } from './holiday-zone.entity.js';
 
 export enum HolidayType {
   PUBLIC = 'PUBLIC',
@@ -15,9 +18,13 @@ export enum HolidayType {
 }
 
 @Entity('holiday')
+@Index(['holidayZoneId', 'date'])
 export class HolidayEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ name: 'holiday_zone_id', type: 'uuid' })
+  holidayZoneId: string;
 
   @Column({ type: 'date' })
   @Index()
@@ -46,4 +53,8 @@ export class HolidayEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne('HolidayZoneEntity', 'holidays')
+  @JoinColumn({ name: 'holiday_zone_id' })
+  holidayZone: HolidayZoneEntity;
 }

@@ -5,7 +5,7 @@ import type {
   Tache,
   TacheStats,
   ListTacheResponse,
-} from "@proto-frontend/activites/activites";
+} from "@proto/activites/activites";
 import type {
   TacheDto,
   TacheStatsDto,
@@ -166,9 +166,105 @@ export async function listTachesEnRetard(
   }
 }
 
-/**
- * Get tache by ID
- */
+export async function listTachesByClient(
+  clientId: string,
+  filters?: Pick<TacheFilters, "page" | "limit">
+): Promise<TacheActionResult<PaginatedTachesDto>> {
+  try {
+    const data = await taches.listByClient({
+      clientId,
+      pagination: {
+        page: filters?.page || 1,
+        limit: filters?.limit || 20,
+        sortBy: "dateEcheance",
+        sortOrder: "asc",
+      },
+    });
+    return {
+      data: {
+        data: data.taches.map(mapTacheToDto),
+        total: data.pagination?.total || data.taches.length,
+        page: data.pagination?.page || 1,
+        limit: data.pagination?.limit || 20,
+        totalPages: data.pagination?.totalPages || 1,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[listTachesByClient] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des tâches du client",
+    };
+  }
+}
+
+export async function listTachesByContrat(
+  contratId: string,
+  filters?: Pick<TacheFilters, "page" | "limit">
+): Promise<TacheActionResult<PaginatedTachesDto>> {
+  try {
+    const data = await taches.listByContrat({
+      contratId,
+      pagination: {
+        page: filters?.page || 1,
+        limit: filters?.limit || 20,
+        sortBy: "dateEcheance",
+        sortOrder: "asc",
+      },
+    });
+    return {
+      data: {
+        data: data.taches.map(mapTacheToDto),
+        total: data.pagination?.total || data.taches.length,
+        page: data.pagination?.page || 1,
+        limit: data.pagination?.limit || 20,
+        totalPages: data.pagination?.totalPages || 1,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[listTachesByContrat] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des tâches du contrat",
+    };
+  }
+}
+
+export async function listTachesByFacture(
+  factureId: string,
+  filters?: Pick<TacheFilters, "page" | "limit">
+): Promise<TacheActionResult<PaginatedTachesDto>> {
+  try {
+    const data = await taches.listByFacture({
+      factureId,
+      pagination: {
+        page: filters?.page || 1,
+        limit: filters?.limit || 20,
+        sortBy: "dateEcheance",
+        sortOrder: "asc",
+      },
+    });
+    return {
+      data: {
+        data: data.taches.map(mapTacheToDto),
+        total: data.pagination?.total || data.taches.length,
+        page: data.pagination?.page || 1,
+        limit: data.pagination?.limit || 20,
+        totalPages: data.pagination?.totalPages || 1,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[listTachesByFacture] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des tâches de la facture",
+    };
+  }
+}
+
 export async function getTache(id: string): Promise<TacheActionResult<TacheDto>> {
   try {
     const data = await taches.get({ id });

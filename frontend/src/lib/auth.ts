@@ -2,7 +2,8 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { users, membresCompte, comptes, roles } from "@/lib/grpc";
-import type { UserOrganisation, UserRole, AuthMeResponse } from "@/actions/auth";
+import type { UserOrganisation, UserRole } from "@proto/organisations/users";
+import type { AuthMeResponse } from "@/actions/auth";
 
 /**
  * Refresh access token using refresh token
@@ -134,11 +135,20 @@ export const authOptions: NextAuthOptions = {
         };
       }
 
-      if (!token.expiresAt || Date.now() < (token.expiresAt as number) * 1000) {
+      const expiresAt = token.expiresAt as number;
+      const now = Date.now() / 1000;
+      const timeUntilExpiry = expiresAt - now;
+      
+      // Refresh si le token expire dans moins de 60 secondes
+      if (timeUntilExpiry > 60) {
         return token;
       }
 
-      return refreshToken(token);
+      const refreshed = await refreshToken(token);
+      if (refreshed.error) {
+        return { ...token, error: "RefreshAccessTokenError" };
+      }
+      return refreshed;
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken as string;

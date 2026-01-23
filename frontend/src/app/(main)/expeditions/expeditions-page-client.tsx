@@ -11,7 +11,7 @@ import { DataTable } from "@/components/data-table-basic"
 import { CreateShipmentDialog } from "@/components/shipments/create-shipment-dialog"
 import { ShipmentTrackingSheet } from "@/components/shipments/shipment-tracking-sheet"
 import { getExpeditionsByOrganisation } from "@/actions/expeditions"
-import type { ExpeditionResponse } from "@proto-frontend/logistics/logistics"
+import type { ExpeditionResponse } from "@proto/logistics/logistics"
 import { useOrganisation } from "@/contexts/organisation-context"
 
 // Type local pour la compatibilité avec l'ancien code

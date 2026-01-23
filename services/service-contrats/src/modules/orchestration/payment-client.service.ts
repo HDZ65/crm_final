@@ -3,27 +3,21 @@ import { ConfigService } from '@nestjs/config';
 import { Client, ClientGrpc, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { Observable, lastValueFrom, timeout, catchError, of } from 'rxjs';
+import type {
+  SetupGoCardlessMandateRequest as ProtoSetupGoCardlessMandateRequest,
+  GoCardlessMandateResponse,
+  GetGoCardlessMandateRequest,
+} from '@proto/payments/payment';
 
-interface SetupGoCardlessMandateRequest {
+type SetupGoCardlessMandateRequest = Partial<ProtoSetupGoCardlessMandateRequest> & {
   societeId: string;
   clientId: string;
-  description?: string;
   successRedirectUrl: string;
-  scheme?: string;
-}
-
-interface GoCardlessMandateResponse {
-  id: string;
-  clientId: string;
-  mandateId: string;
-  status: string;
-  scheme: string;
-  redirectUrl?: string;
-}
+};
 
 interface PaymentServiceClient {
   SetupGoCardlessMandate(request: SetupGoCardlessMandateRequest): Observable<GoCardlessMandateResponse>;
-  GetGoCardlessMandate(request: { societeId: string; clientId: string }): Observable<GoCardlessMandateResponse>;
+  GetGoCardlessMandate(request: GetGoCardlessMandateRequest): Observable<GoCardlessMandateResponse>;
 }
 
 @Injectable()

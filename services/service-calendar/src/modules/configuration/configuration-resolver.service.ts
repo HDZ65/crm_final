@@ -6,6 +6,7 @@ import { SystemDebitConfigurationEntity, DebitDateMode, DebitBatch, DateShiftStr
 import { CompanyDebitConfigurationEntity } from './entities/company-debit-configuration.entity.js';
 import { ClientDebitConfigurationEntity } from './entities/client-debit-configuration.entity.js';
 import { ContractDebitConfigurationEntity } from './entities/contract-debit-configuration.entity.js';
+import type { ResolveConfigurationRequest } from '@proto/calendar/calendar.js';
 
 export type ConfigurationLevel = 'contract' | 'client' | 'company' | 'system';
 

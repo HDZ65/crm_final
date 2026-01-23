@@ -17,7 +17,7 @@ import { getApporteursByOrganisation } from "@/actions/commerciaux"
 import { useOrganisation } from "@/contexts/organisation-context"
 import type { Commercial } from "@/types/commercial"
 import { getCommercialFullName, TYPE_COMMERCIAL_LABELS } from "@/types/commercial"
-import type { Apporteur } from "@proto-frontend/commerciaux/commerciaux"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
 import { cn } from "@/lib/utils"
 
 interface CommerciauxPageClientProps {

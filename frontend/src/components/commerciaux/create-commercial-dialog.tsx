@@ -34,7 +34,7 @@ import { useOrganisation } from "@/contexts/organisation-context"
 import { createApporteur } from "@/actions/commerciaux"
 import { getSocietesByOrganisation } from "@/actions/catalogue"
 import { TYPE_COMMERCIAL_LABELS } from "@/types/commercial"
-import type { Societe } from "@proto-frontend/organisations/organisations"
+import type { Societe } from "@proto/organisations/organisations"
 
 const createCommercialSchema = z.object({
   nom: z.string().min(1, "Le nom est requis"),
@@ -60,13 +60,13 @@ export function CreateCommercialDialog({ open, onOpenChange, onSuccess }: Create
 
   const form = useForm<CreateCommercialFormValues>({
     resolver: zodResolver(createCommercialSchema),
-    defaultValues: {
+defaultValues: {
       nom: "",
       prenom: "",
       typeApporteur: "vrp",
       email: "",
       telephone: "",
-      societeId: "", // empty = toutes les sociétés
+      societeId: "__all__",
     },
   })
 
@@ -84,13 +84,13 @@ export function CreateCommercialDialog({ open, onOpenChange, onSuccess }: Create
 
   React.useEffect(() => {
     if (open) {
-      form.reset({
+form.reset({
         nom: "",
         prenom: "",
         typeApporteur: "vrp",
         email: "",
         telephone: "",
-        societeId: "",
+        societeId: "__all__",
       })
     }
   }, [open, form])
@@ -109,7 +109,7 @@ export function CreateCommercialDialog({ open, onOpenChange, onSuccess }: Create
       typeApporteur: data.typeApporteur.toUpperCase(),
       email: data.email || undefined,
       telephone: data.telephone || undefined,
-      societeId: data.societeId || undefined, // undefined = toutes les sociétés
+      societeId: data.societeId && data.societeId !== "__all__" ? data.societeId : undefined,
     })
     setLoading(false)
 
@@ -224,7 +224,7 @@ export function CreateCommercialDialog({ open, onOpenChange, onSuccess }: Create
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Toutes les sociétés</SelectItem>
+                      <SelectItem value="__all__">Toutes les sociétés</SelectItem>
                       {societes.map((societe) => (
                         <SelectItem key={societe.id} value={societe.id}>
                           {societe.raisonSociale}

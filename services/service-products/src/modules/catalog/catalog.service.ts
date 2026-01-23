@@ -5,6 +5,7 @@ import { PrixProduitService } from '../prix-produit/prix-produit.service';
 import { ProduitEntity } from '../produit/entities/produit.entity';
 import { PrixProduitEntity } from '../prix-produit/entities/prix-produit.entity';
 import { GrilleTarifaireEntity } from '../grille-tarifaire/entities/grille-tarifaire.entity';
+import type { GetCatalogRequest, CalculatePriceRequest } from '@proto/products/products';
 
 export interface CatalogItem {
   produit: ProduitEntity;
@@ -37,30 +38,31 @@ export class CatalogService {
     private readonly prixProduitService: PrixProduitService,
   ) {}
 
-  async getCatalog(
-    organisationId: string,
-    grilleTarifaireId?: string,
-    gammeId?: string,
-    includeInactive?: boolean,
-  ): Promise<GetCatalogResult> {
+  async getCatalog(input: GetCatalogRequest): Promise<GetCatalogResult> {
+    const { organisationId, grilleTarifaireId, gammeId, includeInactive } = input;
     this.logger.log(`Getting catalog for organisation ${organisationId}`);
 
     // Get the pricing grid
     let grille: GrilleTarifaireEntity;
     if (grilleTarifaireId) {
-      grille = await this.grilleService.findById(grilleTarifaireId);
+      grille = await this.grilleService.findById({ id: grilleTarifaireId });
     } else {
-      grille = await this.grilleService.findActive(organisationId, new Date());
+      grille = await this.grilleService.findActive({
+        organisationId,
+        date: new Date().toISOString(),
+      });
     }
 
     // Get all products for the organisation
-    const produits = await this.produitService.findByOrganisation(
+    const produits = await this.produitService.findByOrganisation({
       organisationId,
-      includeInactive ? undefined : true,
-    );
+      actif: includeInactive ? undefined : true,
+    });
 
     // Get all prices for this grid
-    const prixProduits = await this.prixProduitService.findByGrille(grille.id);
+    const prixProduits = await this.prixProduitService.findByGrille({
+      grilleTarifaireId: grille.id,
+    });
     const prixMap = new Map<string, PrixProduitEntity>();
     for (const prix of prixProduits) {
       prixMap.set(prix.produitId, prix);
@@ -94,19 +96,18 @@ export class CatalogService {
     };
   }
 
-  async calculatePrice(
-    produitId: string,
-    grilleTarifaireId: string,
-    quantite: number,
-    remiseAdditionnelle: number = 0,
-  ): Promise<CalculatePriceResult> {
-    const produit = await this.produitService.findById(produitId);
+  async calculatePrice(input: CalculatePriceRequest): Promise<CalculatePriceResult> {
+    const { produitId, grilleTarifaireId, quantite, remiseAdditionnelle = 0 } = input;
+    const produit = await this.produitService.findById({ id: produitId });
     const now = new Date();
     const enPromotion = this.isPromotionActive(produit, now);
 
     let prixProduit: PrixProduitEntity | null = null;
     try {
-      prixProduit = await this.prixProduitService.findForProduit(grilleTarifaireId, produitId);
+      prixProduit = await this.prixProduitService.findForProduit({
+        grilleTarifaireId,
+        produitId,
+      });
     } catch {
       // No price in grid, use product base price
     }

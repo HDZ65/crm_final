@@ -4,17 +4,13 @@ import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { RetryAttemptEntity, RetryAttemptStatus } from './entities/retry-attempt.entity';
+import type { PaginationRequest } from '@proto/retry/am04_retry_service';
 
-interface ListRetryAttemptsInput {
+export interface ListRetryAttemptsInput {
   retryScheduleId?: string;
   retryJobId?: string;
   status?: RetryAttemptStatus;
-  pagination?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: string;
-  };
+  pagination?: Partial<PaginationRequest>;
 }
 
 @Injectable()

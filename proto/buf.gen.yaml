@@ -40,5 +40,17 @@ plugins:
       - forceLong=number
       - onlyTypes=true
 
+  # Frontend gRPC - direct output to frontend/src/proto with full gRPC support
+  - local: ./node_modules/.bin/protoc-gen-ts_proto
+    out: ../frontend/src/proto
+    opt:
+      - nestJs=false
+      - snakeToCamel=true
+      - outputServices=grpc-js
+      - esModuleInterop=true
+      - useOptionals=messages
+      - exportCommonSymbols=false
+      - forceLong=number
+
 inputs:
   - directory: src

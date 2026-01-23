@@ -1115,7 +1115,6 @@ function BrandingSettings() {
             <div className="flex-shrink-0">
               {logoPreview ? (
                 <div className="relative inline-block">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={logoPreview}
                     alt="Logo de la société"

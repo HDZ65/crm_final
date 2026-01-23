@@ -9,8 +9,8 @@ import type {
   KpisResponse,
   EvolutionCaResponse,
   StatsSocietesResponse,
-} from "@proto-frontend/dashboard/dashboard";
-import { NotificationType as GrpcNotificationType } from "@proto-frontend/notifications/notifications";
+} from "@proto/dashboard/dashboard";
+import { NotificationType as GrpcNotificationType } from "@proto/notifications/notifications";
 import {
   NotificationType as AppNotificationType,
   type Notification as AppNotification,
@@ -171,18 +171,9 @@ export async function getServerSocietes(organisationId: string) {
   }
 }
 
-/**
- * Fetch client statuses server-side
- */
-export async function getServerStatutClients() {
-  try {
-    const { statutClients } = await import("@/lib/grpc");
-    const result = await statutClients.list({ search: "" });
-    return result.statuts || [];
-  } catch (error) {
-    console.error("[getServerStatutClients] Error:", error);
-    return [];
-  }
+export function getServerStatutClients() {
+  const { STATUTS_CLIENT } = require("@/constants/statuts-client");
+  return [...STATUTS_CLIENT];
 }
 
 /**

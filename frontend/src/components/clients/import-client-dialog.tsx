@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Upload, FileText, AlertCircle, CheckCircle2, Download } from "lucide-react"
 import { useOrganisation } from "@/contexts/organisation-context"
-import { useStatutClients } from "@/hooks/clients/use-statut-clients"
+import { getStatutByCode, DEFAULT_STATUT_CODE } from "@/constants/statuts-client"
 import { createClient } from "@/actions/clients"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -90,7 +90,6 @@ function parseCSV(content: string): { data: ParsedClient[]; errors: { line: numb
 
 export function ImportClientDialog({ open, onOpenChange, onSuccess }: ImportClientDialogProps) {
   const { activeOrganisation } = useOrganisation()
-  const { statuts } = useStatutClients()
   const [file, setFile] = React.useState<File | null>(null)
   const [preview, setPreview] = React.useState<{ data: ParsedClient[]; errors: { line: number; error: string }[] } | null>(null)
   const [importing, setImporting] = React.useState(false)
@@ -111,7 +110,7 @@ export function ImportClientDialog({ open, onOpenChange, onSuccess }: ImportClie
   const handleImport = async () => {
     if (!preview || !activeOrganisation) return
 
-    const actifStatut = statuts.find(s => s.code === "actif")
+    const actifStatut = getStatutByCode(DEFAULT_STATUT_CODE)
     if (!actifStatut) {
       toast.error("Statut 'actif' non trouve")
       return

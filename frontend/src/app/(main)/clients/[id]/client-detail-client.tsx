@@ -12,11 +12,12 @@ import { ClientInfoAccordion } from "@/components/client-detail/client-info-acco
 import { ClientPayments } from "@/components/client-detail/client-payments"
 import { ClientDocuments } from "@/components/client-detail/client-documents"
 import { ClientShipments } from "@/components/client-detail/client-shipments"
+import { ClientActivites } from "@/components/activites/client-activites"
 import { getClient, updateClient, deleteClient } from "@/actions/clients"
 import { getClientExpeditions } from "@/actions/expeditions"
-import type { ClientBase } from "@proto-frontend/clients/clients"
-import type { ExpeditionResponse } from "@proto-frontend/logistics/logistics"
-import type { StatutClient } from "@proto-frontend/referentiel/referentiel"
+import type { ClientBase } from "@proto/clients/clients"
+import type { ExpeditionResponse } from "@proto/logistics/logistics"
+import type { StatutClient } from "@/constants/statuts-client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -170,7 +171,7 @@ interface ClientDetailClientProps {
   clientId: string
   initialClient: ClientBase | null
   initialExpeditions: ExpeditionResponse[]
-  statuts: StatutClient[]
+  statuts: readonly StatutClient[] | StatutClient[]
 }
 
 export function ClientDetailClient({
@@ -402,8 +403,9 @@ Adresse: ${client.info.address}`
         />
 
         <Tabs defaultValue="overview" className="w-full gap-4 flex-1 flex flex-col h-full">
-          <TabsList>
+<TabsList>
             <TabsTrigger value="overview">Infos générales & Contrats</TabsTrigger>
+            <TabsTrigger value="activites">Activités</TabsTrigger>
             <TabsTrigger value="paiements">Paiements & Échéanciers</TabsTrigger>
             <TabsTrigger value="expeditions">Expéditions & Colis</TabsTrigger>
             <TabsTrigger value="documents">Documents (GED)</TabsTrigger>
@@ -430,6 +432,10 @@ Adresse: ${client.info.address}`
                 onUpdateField={handleUpdateField}
               />
             )}
+          </TabsContent>
+
+<TabsContent value="activites" className="flex-1">
+            <ClientActivites clientId={clientId} />
           </TabsContent>
 
           <TabsContent value="paiements">

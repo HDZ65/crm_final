@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { getDashboardKpis } from "@/actions/dashboard"
-import type { KpisResponse } from "@proto-frontend/dashboard/dashboard"
+import type { KpisResponse } from "@proto/dashboard/dashboard"
 
 interface KPICard {
   label: string

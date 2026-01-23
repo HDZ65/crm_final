@@ -19,6 +19,10 @@ export const createClientSchema = z.object({
     z.string().email("Email invalide").optional()
   ),
   statutId: z.string().min(1, "Le statut est requis"),
+  societeId: z.preprocess(
+    formDataTransformers.optionalString,
+    z.string().uuid("ID société invalide").optional()
+  ),
 });
 
 export type CreateClientFormData = z.infer<typeof createClientSchema>;
@@ -41,6 +45,10 @@ export const updateClientSchema = z.object({
     z.string().email("Email invalide").optional()
   ),
   statutId: z.string().optional(),
+  societeId: z.preprocess(
+    formDataTransformers.optionalString,
+    z.string().uuid("ID société invalide").optional().nullable()
+  ),
 });
 
 export type UpdateClientFormData = z.infer<typeof updateClientSchema>;

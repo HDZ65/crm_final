@@ -59,7 +59,7 @@ export type {
   GenererBordereauResponse,
   BordereauSummary,
   PrimeApplicable,
-} from "@proto-grpc/commission/commission";
+} from "@proto/commission/commission";
 
 // Re-export gRPC enums (for use with fromJSON/toJSON converters)
 export {
@@ -88,7 +88,7 @@ export {
   typeRepriseToJSON,
   statutRepriseFromJSON,
   statutRepriseToJSON,
-} from "@proto-grpc/commission/commission";
+} from "@proto/commission/commission";
 
 // ============================================
 // Frontend-friendly string literal types

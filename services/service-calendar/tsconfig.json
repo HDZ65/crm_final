@@ -22,7 +22,10 @@
     "resolveJsonModule": true,
     "strict": false,
     "strictPropertyInitialization": false,
-    "lib": ["ES2022"]
+    "lib": ["ES2022"],
+    "paths": {
+      "@proto/*": ["../../proto/gen/ts/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]

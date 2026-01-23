@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentAuditLogEntity, AuditAction } from './entities/payment-audit-log.entity.js';
 import { randomUUID } from 'crypto';
+import { PortalRequestContext } from '@proto/payments/payment.js';
 
 export interface AuditContext {
   actorId?: string;

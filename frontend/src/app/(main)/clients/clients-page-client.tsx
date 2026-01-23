@@ -13,14 +13,14 @@ import { useSocieteStore } from "@/stores/societe-store"
 import { getClientsByOrganisation } from "@/actions/clients"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { Search, User, Mail, Phone, Building2, CreditCard, Globe, Shield, UserPlus, RefreshCw, Upload, Download, SlidersHorizontal, ChevronDown, X } from "lucide-react"
-import { CreateClientDialog } from "./create-client-dialog"
+import { CreateClientDialog } from "@/components/create-client-dialog"
 import { ImportClientDialog } from "@/components/clients/import-client-dialog"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { ClientRow } from "@/types/client"
-import type { ClientBase } from "@proto-frontend/clients/clients"
-import type { StatutClient } from "@proto-frontend/referentiel/referentiel"
+import type { ClientBase } from "@proto/clients/clients"
+import type { StatutClient } from "@/constants/statuts-client"
 import { formatCreatedAgo, formatFullName } from "@/lib/formatters"
 
 // Helper pour mapper le statut vers le type UI
@@ -51,7 +51,7 @@ const normalizePhone = (value: string) => value.replace(/\D/g, "")
 
 interface ClientsPageClientProps {
   initialClients: ClientBase[]
-  statuts: StatutClient[]
+  statuts: readonly StatutClient[] | StatutClient[]
 }
 
 export function ClientsPageClient({ initialClients, statuts }: ClientsPageClientProps) {
@@ -336,7 +336,7 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
                   </div>
                   <div className="relative">
                     <Shield className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <Select value={filters.clientType || ""} onValueChange={(value) => handleSelectChange(value === "all" ? "" : value)}>
+                    <Select value={filters.clientType || "all"} onValueChange={(value) => handleSelectChange(value === "all" ? "" : value)}>
                       <SelectTrigger className="bg-white w-full pl-10">
                         <SelectValue placeholder="Statut" />
                       </SelectTrigger>

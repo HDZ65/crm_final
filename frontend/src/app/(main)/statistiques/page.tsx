@@ -1,7 +1,7 @@
 import { StatistiquesPageClient } from "./statistiques-page-client"
 import { getActiveOrgId } from "@/lib/server-data"
 import { getDashboardData, getKpisCommerciaux, getAlertes } from "@/actions/dashboard"
-import type { DashboardFilters } from "@proto-frontend/dashboard/dashboard"
+import type { DashboardFilters } from "@proto/dashboard/dashboard"
 
 export default async function StatistiquesPage() {
   const activeOrgId = await getActiveOrgId()

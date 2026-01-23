@@ -3,56 +3,46 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import { ProduitEntity, TypeProduit, CategorieProduit } from './entities/produit.entity';
+import {
+  CategorieProduit as ProtoCategorieProduit,
+  TypeProduit as ProtoTypeProduit,
+  StatutCycleProduit as ProtoStatutCycleProduit,
+} from '@proto/products/products';
+import type {
+  CreateProduitRequest,
+  UpdateProduitRequest,
+  ListProduitsRequest,
+  GetProduitRequest,
+  GetProduitBySkuRequest,
+  DeleteProduitRequest,
+  SetPromotionRequest,
+  ClearPromotionRequest,
+} from '@proto/products/products';
+import { ProduitEntity, TypeProduit, CategorieProduit, StatutCycleProduit } from './entities/produit.entity';
 
-interface CreateProduitInput {
-  organisationId: string;
-  gammeId?: string;
-  sku: string;
-  nom: string;
-  description?: string;
-  categorie?: CategorieProduit;
-  type?: TypeProduit;
-  prix?: number;
-  tauxTva?: number;
-  devise?: string;
-  imageUrl?: string;
-  codeExterne?: string;
-  metadata?: string;
-}
+const categorieFromProto: Record<ProtoCategorieProduit, CategorieProduit> = {
+  [ProtoCategorieProduit.ASSURANCE]: CategorieProduit.ASSURANCE,
+  [ProtoCategorieProduit.PREVOYANCE]: CategorieProduit.PREVOYANCE,
+  [ProtoCategorieProduit.EPARGNE]: CategorieProduit.EPARGNE,
+  [ProtoCategorieProduit.SERVICE]: CategorieProduit.SERVICE,
+  [ProtoCategorieProduit.ACCESSOIRE]: CategorieProduit.ACCESSOIRE,
+  [ProtoCategorieProduit.CATEGORIE_PRODUIT_UNSPECIFIED]: CategorieProduit.SERVICE,
+};
 
-interface UpdateProduitInput {
-  id: string;
-  gammeId?: string;
-  sku?: string;
-  nom?: string;
-  description?: string;
-  categorie?: CategorieProduit;
-  type?: TypeProduit;
-  prix?: number;
-  tauxTva?: number;
-  devise?: string;
-  actif?: boolean;
-  imageUrl?: string;
-  codeExterne?: string;
-  metadata?: string;
-}
+const typeFromProto: Record<ProtoTypeProduit, TypeProduit> = {
+  [ProtoTypeProduit.INTERNE]: TypeProduit.INTERNE,
+  [ProtoTypeProduit.PARTENAIRE]: TypeProduit.PARTENAIRE,
+  [ProtoTypeProduit.TYPE_PRODUIT_UNSPECIFIED]: TypeProduit.INTERNE,
+};
 
-interface ListProduitsInput {
-  organisationId: string;
-  gammeId?: string;
-  categorie?: CategorieProduit;
-  type?: TypeProduit;
-  actif?: boolean;
-  promotionActive?: boolean;
-  search?: string;
-  pagination?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: string;
-  };
-}
+const statutCycleFromProto: Record<ProtoStatutCycleProduit, StatutCycleProduit> = {
+  [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_BROUILLON]: StatutCycleProduit.BROUILLON,
+  [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_TEST]: StatutCycleProduit.TEST,
+  [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_ACTIF]: StatutCycleProduit.ACTIF,
+  [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_GELE]: StatutCycleProduit.GELE,
+  [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_RETIRE]: StatutCycleProduit.RETIRE,
+  [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_UNSPECIFIED]: StatutCycleProduit.ACTIF,
+};
 
 @Injectable()
 export class ProduitService {
@@ -63,7 +53,7 @@ export class ProduitService {
     private readonly produitRepository: Repository<ProduitEntity>,
   ) {}
 
-  async create(input: CreateProduitInput): Promise<ProduitEntity> {
+  async create(input: CreateProduitRequest): Promise<ProduitEntity> {
     this.logger.log(`Creating produit: ${input.nom} (SKU: ${input.sku})`);
 
     const existing = await this.produitRepository.findOne({
@@ -92,8 +82,9 @@ export class ProduitService {
       sku: input.sku,
       nom: input.nom,
       description: input.description || null,
-      categorie: input.categorie || CategorieProduit.SERVICE,
-      type: input.type || TypeProduit.INTERNE,
+      categorie: categorieFromProto[input.categorie],
+      type: typeFromProto[input.type],
+      statutCycle: statutCycleFromProto[input.statutCycle],
       prix: input.prix ?? 0,
       tauxTva: input.tauxTva ?? 20,
       devise: input.devise || 'EUR',
@@ -106,7 +97,7 @@ export class ProduitService {
     return this.produitRepository.save(produit);
   }
 
-  async update(input: UpdateProduitInput): Promise<ProduitEntity> {
+  async update(input: UpdateProduitRequest): Promise<ProduitEntity> {
     const produit = await this.produitRepository.findOne({
       where: { id: input.id },
     });
@@ -122,8 +113,9 @@ export class ProduitService {
     if (input.sku !== undefined) produit.sku = input.sku;
     if (input.nom !== undefined) produit.nom = input.nom;
     if (input.description !== undefined) produit.description = input.description || null;
-    if (input.categorie !== undefined) produit.categorie = input.categorie;
-    if (input.type !== undefined) produit.type = input.type;
+    if (input.categorie !== undefined) produit.categorie = categorieFromProto[input.categorie];
+    if (input.type !== undefined) produit.type = typeFromProto[input.type];
+    if (input.statutCycle !== undefined) produit.statutCycle = statutCycleFromProto[input.statutCycle];
     if (input.prix !== undefined) produit.prix = input.prix;
     if (input.tauxTva !== undefined) produit.tauxTva = input.tauxTva;
     if (input.devise !== undefined) produit.devise = input.devise;
@@ -141,39 +133,39 @@ export class ProduitService {
     return this.produitRepository.save(produit);
   }
 
-  async findById(id: string): Promise<ProduitEntity> {
+  async findById(input: GetProduitRequest): Promise<ProduitEntity> {
     const produit = await this.produitRepository.findOne({
-      where: { id },
+      where: { id: input.id },
       relations: ['gamme', 'prixProduits'],
     });
 
     if (!produit) {
       throw new RpcException({
         code: status.NOT_FOUND,
-        message: `Produit ${id} not found`,
+        message: `Produit ${input.id} not found`,
       });
     }
 
     return produit;
   }
 
-  async findBySku(organisationId: string, sku: string): Promise<ProduitEntity> {
+  async findBySku(input: GetProduitBySkuRequest): Promise<ProduitEntity> {
     const produit = await this.produitRepository.findOne({
-      where: { organisationId, sku },
+      where: { organisationId: input.organisationId, sku: input.sku },
       relations: ['gamme'],
     });
 
     if (!produit) {
       throw new RpcException({
         code: status.NOT_FOUND,
-        message: `Produit with SKU ${sku} not found`,
+        message: `Produit with SKU ${input.sku} not found`,
       });
     }
 
     return produit;
   }
 
-  async findAll(input: ListProduitsInput): Promise<{
+  async findAll(input: ListProduitsRequest): Promise<{
     produits: ProduitEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }> {
@@ -193,12 +185,14 @@ export class ProduitService {
       queryBuilder.andWhere('produit.gammeId = :gammeId', { gammeId: input.gammeId });
     }
 
-    if (input.categorie) {
-      queryBuilder.andWhere('produit.categorie = :categorie', { categorie: input.categorie });
+    if (input.categorie !== undefined) {
+      queryBuilder.andWhere('produit.categorie = :categorie', {
+        categorie: categorieFromProto[input.categorie],
+      });
     }
 
-    if (input.type) {
-      queryBuilder.andWhere('produit.type = :type', { type: input.type });
+    if (input.type !== undefined) {
+      queryBuilder.andWhere('produit.type = :type', { type: typeFromProto[input.type] });
     }
 
     if (input.actif !== undefined) {
@@ -235,29 +229,24 @@ export class ProduitService {
     };
   }
 
-  async delete(id: string): Promise<boolean> {
-    const result = await this.produitRepository.delete(id);
+  async delete(input: DeleteProduitRequest): Promise<boolean> {
+    const result = await this.produitRepository.delete(input.id);
     return (result.affected ?? 0) > 0;
   }
 
-  async setPromotion(
-    produitId: string,
-    prixPromotion: number,
-    dateDebut: Date,
-    dateFin: Date,
-  ): Promise<ProduitEntity> {
-    const produit = await this.findById(produitId);
+  async setPromotion(input: SetPromotionRequest): Promise<ProduitEntity> {
+    const produit = await this.findById({ id: input.produitId });
 
     produit.promotionActive = true;
-    produit.prixPromotion = prixPromotion;
-    produit.dateDebutPromotion = dateDebut;
-    produit.dateFinPromotion = dateFin;
+    produit.prixPromotion = input.prixPromotion;
+    produit.dateDebutPromotion = new Date(input.dateDebut);
+    produit.dateFinPromotion = new Date(input.dateFin);
 
     return this.produitRepository.save(produit);
   }
 
-  async clearPromotion(produitId: string): Promise<ProduitEntity> {
-    const produit = await this.findById(produitId);
+  async clearPromotion(input: ClearPromotionRequest): Promise<ProduitEntity> {
+    const produit = await this.findById({ id: input.produitId });
 
     produit.promotionActive = false;
     produit.prixPromotion = null;
@@ -267,10 +256,12 @@ export class ProduitService {
     return this.produitRepository.save(produit);
   }
 
-  async findByOrganisation(organisationId: string, actif?: boolean): Promise<ProduitEntity[]> {
-    const where: { organisationId: string; actif?: boolean } = { organisationId };
-    if (actif !== undefined) {
-      where.actif = actif;
+  async findByOrganisation(input: ListProduitsRequest): Promise<ProduitEntity[]> {
+    const where: { organisationId: string; actif?: boolean } = {
+      organisationId: input.organisationId,
+    };
+    if (input.actif !== undefined) {
+      where.actif = input.actif;
     }
     return this.produitRepository.find({
       where,

@@ -7,13 +7,19 @@
     "example": "examples"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate": "buf generate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "ts-proto": "^1.181.2"
+    "ts-proto": "^1.181.2",
+    "@grpc/grpc-js": "^1.9.14",
+    "@nestjs/microservices": "^10.3.0",
+    "protobufjs": "^7.2.5",
+    "rxjs": "^7.8.1",
+    "long": "^5.2.3"
   }
 }

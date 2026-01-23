@@ -24,9 +24,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@proto/*": ["../proto/gen/ts/*"],
-      "@proto-grpc/*": ["../proto/gen/ts-grpc/*"],
-      "@proto-frontend/*": ["../proto/gen/ts-frontend/*"]
+      "@proto/*": ["./src/proto/*"]
     }
   },
   "include": [

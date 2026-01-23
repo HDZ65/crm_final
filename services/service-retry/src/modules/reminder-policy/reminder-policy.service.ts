@@ -3,43 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import { ReminderPolicyEntity } from './entities/reminder-policy.entity';
+import { ReminderPolicyEntity, ReminderTriggerRule } from './entities/reminder-policy.entity';
+import type {
+  CreateReminderPolicyRequest,
+  UpdateReminderPolicyRequest,
+} from '@proto/retry/am04_retry_service';
 
-import { ReminderTriggerRule } from './entities/reminder-policy.entity';
-
-interface CreateReminderPolicyInput {
-  organisationId: string;
-  societeId?: string;
-  name: string;
-  description?: string;
+export type CreateReminderPolicyInput = Omit<CreateReminderPolicyRequest, 'triggerRules'> & {
   triggerRules: ReminderTriggerRule[];
-  cooldownHours?: number;
-  maxRemindersPerDay?: number;
-  maxRemindersPerWeek?: number;
-  allowedStartHour?: number;
-  allowedEndHour?: number;
-  allowedDaysOfWeek?: number[];
-  respectOptOut?: boolean;
-  isDefault?: boolean;
-  priority?: number;
-}
+};
 
-interface UpdateReminderPolicyInput {
-  id: string;
-  name?: string;
-  description?: string;
+export type UpdateReminderPolicyInput = Omit<UpdateReminderPolicyRequest, 'triggerRules'> & {
   triggerRules?: ReminderTriggerRule[];
-  cooldownHours?: number;
-  maxRemindersPerDay?: number;
-  maxRemindersPerWeek?: number;
-  allowedStartHour?: number;
-  allowedEndHour?: number;
-  allowedDaysOfWeek?: number[];
-  respectOptOut?: boolean;
-  isActive?: boolean;
-  isDefault?: boolean;
-  priority?: number;
-}
+};
 
 @Injectable()
 export class ReminderPolicyService {

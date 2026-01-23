@@ -6,6 +6,9 @@ import { BordereauModule } from '../bordereau/bordereau.module';
 import { LigneBordereauModule } from '../ligne-bordereau/ligne-bordereau.module';
 import { RepriseModule } from '../reprise/reprise.module';
 import { StatutModule } from '../statut/statut.module';
+import { CommissionAuditModule } from '../audit/audit.module';
+import { RecurrenceModule } from '../recurrence/recurrence.module';
+import { ReportNegatifModule } from '../report/report.module';
 
 @Module({
   imports: [
@@ -15,6 +18,9 @@ import { StatutModule } from '../statut/statut.module';
     LigneBordereauModule,
     RepriseModule,
     StatutModule,
+    CommissionAuditModule,
+    RecurrenceModule,
+    ReportNegatifModule,
   ],
   providers: [CommissionEngineService],
   exports: [CommissionEngineService],

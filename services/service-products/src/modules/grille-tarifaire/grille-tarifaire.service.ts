@@ -3,38 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, MoreThanOrEqual, IsNull, Or } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import type {
+  CreateGrilleTarifaireRequest,
+  UpdateGrilleTarifaireRequest,
+  ListGrillesTarifairesRequest,
+  GetGrilleTarifaireRequest,
+  GetGrilleTarifaireActiveRequest,
+  DeleteGrilleTarifaireRequest,
+  SetGrilleParDefautRequest,
+} from '@proto/products/products';
 import { GrilleTarifaireEntity } from './entities/grille-tarifaire.entity';
-
-interface CreateGrilleTarifaireInput {
-  organisationId: string;
-  nom: string;
-  description?: string;
-  dateDebut?: Date;
-  dateFin?: Date;
-  estParDefaut?: boolean;
-}
-
-interface UpdateGrilleTarifaireInput {
-  id: string;
-  nom?: string;
-  description?: string;
-  dateDebut?: Date;
-  dateFin?: Date;
-  estParDefaut?: boolean;
-  actif?: boolean;
-}
-
-interface ListGrillesTarifairesInput {
-  organisationId: string;
-  actif?: boolean;
-  estParDefaut?: boolean;
-  pagination?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: string;
-  };
-}
 
 @Injectable()
 export class GrilleTarifaireService {
@@ -45,8 +23,11 @@ export class GrilleTarifaireService {
     private readonly grilleRepository: Repository<GrilleTarifaireEntity>,
   ) {}
 
-  async create(input: CreateGrilleTarifaireInput): Promise<GrilleTarifaireEntity> {
+  async create(input: CreateGrilleTarifaireRequest): Promise<GrilleTarifaireEntity> {
     this.logger.log(`Creating grille tarifaire: ${input.nom}`);
+
+    const dateDebut = input.dateDebut ? new Date(input.dateDebut) : null;
+    const dateFin = input.dateFin ? new Date(input.dateFin) : null;
 
     // If this is the default grid, unset other defaults
     if (input.estParDefaut) {
@@ -60,8 +41,8 @@ export class GrilleTarifaireService {
       organisationId: input.organisationId,
       nom: input.nom,
       description: input.description || null,
-      dateDebut: input.dateDebut || null,
-      dateFin: input.dateFin || null,
+      dateDebut,
+      dateFin,
       estParDefaut: input.estParDefaut ?? false,
       actif: true,
     });
@@ -69,7 +50,7 @@ export class GrilleTarifaireService {
     return this.grilleRepository.save(grille);
   }
 
-  async update(input: UpdateGrilleTarifaireInput): Promise<GrilleTarifaireEntity> {
+  async update(input: UpdateGrilleTarifaireRequest): Promise<GrilleTarifaireEntity> {
     const grille = await this.grilleRepository.findOne({
       where: { id: input.id },
     });
@@ -91,35 +72,36 @@ export class GrilleTarifaireService {
 
     if (input.nom !== undefined) grille.nom = input.nom;
     if (input.description !== undefined) grille.description = input.description || null;
-    if (input.dateDebut !== undefined) grille.dateDebut = input.dateDebut;
-    if (input.dateFin !== undefined) grille.dateFin = input.dateFin;
+    if (input.dateDebut !== undefined) grille.dateDebut = input.dateDebut ? new Date(input.dateDebut) : null;
+    if (input.dateFin !== undefined) grille.dateFin = input.dateFin ? new Date(input.dateFin) : null;
     if (input.estParDefaut !== undefined) grille.estParDefaut = input.estParDefaut;
     if (input.actif !== undefined) grille.actif = input.actif;
 
     return this.grilleRepository.save(grille);
   }
 
-  async findById(id: string): Promise<GrilleTarifaireEntity> {
+  async findById(input: GetGrilleTarifaireRequest): Promise<GrilleTarifaireEntity> {
     const grille = await this.grilleRepository.findOne({
-      where: { id },
+      where: { id: input.id },
       relations: ['prixProduits', 'prixProduits.produit'],
     });
 
     if (!grille) {
       throw new RpcException({
         code: status.NOT_FOUND,
-        message: `Grille tarifaire ${id} not found`,
+        message: `Grille tarifaire ${input.id} not found`,
       });
     }
 
     return grille;
   }
 
-  async findActive(organisationId: string, date: Date): Promise<GrilleTarifaireEntity> {
+  async findActive(input: GetGrilleTarifaireActiveRequest): Promise<GrilleTarifaireEntity> {
+    const date = input.date ? new Date(input.date) : new Date();
     // First try to find a grid valid for the given date
     let grille = await this.grilleRepository.findOne({
       where: {
-        organisationId,
+        organisationId: input.organisationId,
         actif: true,
         dateDebut: Or(LessThanOrEqual(date), IsNull()),
         dateFin: Or(MoreThanOrEqual(date), IsNull()),
@@ -132,7 +114,7 @@ export class GrilleTarifaireService {
     if (!grille) {
       grille = await this.grilleRepository.findOne({
         where: {
-          organisationId,
+          organisationId: input.organisationId,
           actif: true,
           estParDefaut: true,
         },
@@ -143,14 +125,14 @@ export class GrilleTarifaireService {
     if (!grille) {
       throw new RpcException({
         code: status.NOT_FOUND,
-        message: `No active grille tarifaire found for organisation ${organisationId}`,
+        message: `No active grille tarifaire found for organisation ${input.organisationId}`,
       });
     }
 
     return grille;
   }
 
-  async findAll(input: ListGrillesTarifairesInput): Promise<{
+  async findAll(input: ListGrillesTarifairesRequest): Promise<{
     grilles: GrilleTarifaireEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }> {
@@ -192,20 +174,20 @@ export class GrilleTarifaireService {
     };
   }
 
-  async delete(id: string): Promise<boolean> {
-    const grille = await this.grilleRepository.findOne({ where: { id } });
+  async delete(input: DeleteGrilleTarifaireRequest): Promise<boolean> {
+    const grille = await this.grilleRepository.findOne({ where: { id: input.id } });
     if (grille?.estParDefaut) {
       throw new RpcException({
         code: status.FAILED_PRECONDITION,
         message: 'Cannot delete the default pricing grid',
       });
     }
-    const result = await this.grilleRepository.delete(id);
+    const result = await this.grilleRepository.delete(input.id);
     return (result.affected ?? 0) > 0;
   }
 
-  async setParDefaut(id: string): Promise<GrilleTarifaireEntity> {
-    const grille = await this.findById(id);
+  async setParDefaut(input: SetGrilleParDefautRequest): Promise<GrilleTarifaireEntity> {
+    const grille = await this.findById({ id: input.id });
 
     // Unset other defaults
     await this.grilleRepository.update(

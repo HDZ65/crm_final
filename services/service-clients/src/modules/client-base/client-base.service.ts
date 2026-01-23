@@ -4,13 +4,11 @@ import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { ClientBaseEntity } from './entities/client-base.entity';
-
-interface ClientBaseFilters {
-  organisationId: string;
-  statutId?: string;
-  societeId?: string;
-  search?: string;
-}
+import type {
+  CreateClientBaseRequest,
+  UpdateClientBaseRequest,
+  ListClientsBaseRequest,
+} from '@proto/clients/clients';
 
 @Injectable()
 export class ClientBaseService {
@@ -21,19 +19,7 @@ export class ClientBaseService {
     private readonly repository: Repository<ClientBaseEntity>,
   ) {}
 
-  async create(input: {
-    organisationId: string;
-    typeClient: string;
-    nom: string;
-    prenom: string;
-    dateNaissance?: string;
-    compteCode: string;
-    partenaireId: string;
-    telephone: string;
-    email?: string;
-    statut?: string;
-  }): Promise<ClientBaseEntity> {
-    // Check for duplicates by phone + name
+  async create(input: CreateClientBaseRequest): Promise<ClientBaseEntity> {
     const existing = await this.findByPhoneAndName(input.telephone, input.nom);
     if (existing) {
       throw new RpcException({
@@ -54,23 +40,13 @@ export class ClientBaseService {
       telephone: input.telephone,
       email: input.email || null,
       statut: input.statut || 'ACTIF',
+      societeId: input.societeId || null,
     });
 
     return this.repository.save(entity);
   }
 
-  async update(input: {
-    id: string;
-    typeClient?: string;
-    nom?: string;
-    prenom?: string;
-    dateNaissance?: string;
-    compteCode?: string;
-    partenaireId?: string;
-    telephone?: string;
-    email?: string;
-    statut?: string;
-  }): Promise<ClientBaseEntity> {
+  async update(input: UpdateClientBaseRequest): Promise<ClientBaseEntity> {
     const entity = await this.findById(input.id);
 
     if (input.typeClient !== undefined) entity.typeClient = input.typeClient;
@@ -82,6 +58,7 @@ export class ClientBaseService {
     if (input.telephone !== undefined) entity.telephone = input.telephone;
     if (input.email !== undefined) entity.email = input.email || null;
     if (input.statut !== undefined) entity.statut = input.statut;
+    if (input.societeId !== undefined) entity.societeId = input.societeId || null;
 
     return this.repository.save(entity);
   }
@@ -104,30 +81,33 @@ export class ClientBaseService {
   }
 
   async findAll(
-    filters: ClientBaseFilters,
-    pagination?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string },
+    request: ListClientsBaseRequest,
   ): Promise<{
     clients: ClientBaseEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }> {
-    const page = pagination?.page ?? 1;
-    const limit = pagination?.limit ?? 20;
-    const sortBy = pagination?.sortBy || 'createdAt';
-    const sortOrder = (pagination?.sortOrder?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
+    const page = request.pagination?.page ?? 1;
+    const limit = request.pagination?.limit ?? 20;
+    const sortBy = request.pagination?.sortBy || 'createdAt';
+    const sortOrder = (request.pagination?.sortOrder?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
 
     const qb = this.repository
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.adresses', 'adresses')
-      .where('c.organisationId = :orgId', { orgId: filters.organisationId });
+      .where('c.organisationId = :orgId', { orgId: request.organisationId });
 
-    if (filters.statutId) {
-      qb.andWhere('c.statut = :statut', { statut: filters.statutId });
+    if (request.statutId) {
+      qb.andWhere('c.statut = :statut', { statut: request.statutId });
     }
 
-    if (filters.search) {
+    if (request.societeId) {
+      qb.andWhere('c.societeId = :societeId', { societeId: request.societeId });
+    }
+
+    if (request.search) {
       qb.andWhere(
         '(LOWER(c.nom) LIKE LOWER(:search) OR LOWER(c.prenom) LIKE LOWER(:search) OR c.telephone LIKE :search OR LOWER(c.email) LIKE LOWER(:search))',
-        { search: `%${filters.search}%` },
+        { search: `%${request.search}%` },
       );
     }
 

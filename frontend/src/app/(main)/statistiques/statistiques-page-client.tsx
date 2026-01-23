@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 
 // Components
-import { StatsFilters } from "@/components/stats/stats-filters"
+import { StatsFiltersComponent as StatsFilters } from "@/components/stats/stats-filters"
 import { KPICardComponent } from "@/components/stats/kpi-card"
 import { ChartCAEvolution } from "@/components/stats/chart-ca-evolution"
 import { ChartProductDistribution } from "@/components/stats/chart-product-distribution"
@@ -34,7 +34,7 @@ import {
 } from "lucide-react"
 
 import type { UserRole, StatsFilters as FiltersType, KPICard, CommercialRanking, CAEvolution, ProductStats, Alert, CompanyStats } from "@/types/stats"
-import type { DashboardFilters, KpisResponse, EvolutionCaResponse, RepartitionProduitsResponse, StatsSocietesResponse, KpisCommerciauxResponse, AlertesResponse } from "@proto-frontend/dashboard/dashboard"
+import type { DashboardFilters, KpisResponse, EvolutionCaResponse, RepartitionProduitsResponse, StatsSocietesResponse, KpisCommerciauxResponse, AlertesResponse } from "@proto/dashboard/dashboard"
 
 // Type for action results
 type DashboardActionResult<T> = { data: T | null; error: string | null }

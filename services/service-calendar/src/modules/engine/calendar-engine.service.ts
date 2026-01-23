@@ -7,6 +7,11 @@ import { PlannedDebitEntity } from './entities/planned-debit.entity.js';
 import { ConfigurationResolverService, ResolvedConfig } from '../configuration/configuration-resolver.service.js';
 import { HolidaysService } from '../holidays/holidays.service.js';
 import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity.js';
+import type {
+  CalculatePlannedDateRequest,
+  CalculatePlannedDateResponse,
+  DateResolutionStep,
+} from '@proto/calendar/calendar.js';
 
 export interface CalculatePlannedDateInput {
   organisationId: string;

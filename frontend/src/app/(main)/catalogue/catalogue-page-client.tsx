@@ -14,7 +14,7 @@ import {
   updateProduit as updateProduitAction,
   getSocietesByOrganisation,
 } from "@/actions/catalogue"
-import type { Gamme as GrpcGamme, Produit as GrpcProduit, TypeProduit, CategorieProduit } from "@proto-frontend/products/products"
+import type { Gamme as GrpcGamme, Produit as GrpcProduit, TypeProduit, CategorieProduit } from "@proto/products/products"
 
 // Local enum values matching proto - avoids importing grpc runtime in client bundle
 const TypeProduitValues = {
@@ -33,7 +33,7 @@ const CategorieProduitValues = {
   ACCESSOIRE: 5,
   UNRECOGNIZED: -1,
 } as const
-import type { Societe } from "@proto-frontend/organisations/organisations"
+import type { Societe } from "@proto/organisations/organisations"
 import type { Gamme } from "@/types/gamme"
 import type { SocieteDto } from "@/types/societe"
 

@@ -7,8 +7,8 @@ import type {
   ListReglesRelanceResponse,
   ListHistoriquesRelanceResponse,
   ExecuteRelancesResponse,
-} from "@proto-frontend/relance/relance";
-import { RelanceDeclencheur, RelanceActionType, Priorite } from "@proto-frontend/relance/relance";
+} from "@proto/relance/relance";
+import { RelanceDeclencheur, RelanceActionType, Priorite } from "@proto/relance/relance";
 import type {
   RegleRelanceDto,
   CreateRegleRelanceDto,

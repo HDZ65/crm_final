@@ -15,12 +15,17 @@
  * ```
  */
 
-import { credentials, type ServiceError } from "@grpc/grpc-js";
+// Use require to bypass ESM bundling issues
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const grpc = require("@grpc/grpc-js");
+const credentials = grpc.credentials;
+type ServiceError = import("@grpc/grpc-js").ServiceError;
 
 // Service endpoints configuration
 // Note: Les ports correspondent aux conteneurs Docker des microservices
 const SERVICES = {
   activites: process.env.GRPC_ACTIVITES_URL || "localhost:60051",
+  calendar: process.env.GRPC_CALENDAR_URL || "localhost:50070",
   clients: process.env.GRPC_CLIENTS_URL || "localhost:60052",
   commerciaux: process.env.GRPC_COMMERCIAUX_URL || "localhost:60053",
   commission: process.env.GRPC_COMMISSION_URL || "localhost:60054",
@@ -31,12 +36,12 @@ const SERVICES = {
   factures: process.env.GRPC_FACTURES_URL || "localhost:60059",
   logistics: process.env.GRPC_LOGISTICS_URL || "localhost:60060",
   notifications: process.env.GRPC_NOTIFICATIONS_URL || "localhost:60061",
-  organisations: process.env.GRPC_ORGANISATIONS_URL || "localhost:60062", // crm-service-organisations
-  payments: process.env.GRPC_PAYMENTS_URL || "localhost:60063", // crm-service-payments
+  organisations: process.env.GRPC_ORGANISATIONS_URL || "localhost:60062",
+  payments: process.env.GRPC_PAYMENTS_URL || "localhost:60063",
   products: process.env.GRPC_PRODUCTS_URL || "localhost:60064",
   referentiel: process.env.GRPC_REFERENTIEL_URL || "localhost:60065",
   relance: process.env.GRPC_RELANCE_URL || "localhost:60066",
-  users: process.env.GRPC_USERS_URL || "localhost:60067", // crm-service-users
+  users: process.env.GRPC_USERS_URL || "localhost:60067",
 } as const;
 
 /**
@@ -80,7 +85,7 @@ import {
   type DeleteResponse as ClientDeleteResponse,
   type SearchClientRequest,
   type SearchClientResponse,
-} from "@proto-grpc/clients/clients";
+} from "@proto/clients/clients";
 
 let clientBaseInstance: ClientBaseServiceClient | null = null;
 
@@ -149,7 +154,7 @@ import {
   type ValidateFactureRequest,
   type ValidateFactureResponse,
   type FinalizeFactureRequest,
-} from "@proto-grpc/factures/factures";
+} from "@proto/factures/factures";
 
 let factureInstance: FactureServiceClient | null = null;
 
@@ -213,7 +218,7 @@ import {
   type StatutFacture,
   type ListStatutsFactureRequest,
   type ListStatutsFactureResponse,
-} from "@proto-grpc/factures/factures";
+} from "@proto/factures/factures";
 
 let statutFactureInstance: StatutFactureServiceClient | null = null;
 
@@ -252,7 +257,7 @@ import {
   type CreateScheduleRequest,
   type ScheduleResponse,
   type GetByIdRequest,
-} from "@proto-grpc/payments/payment";
+} from "@proto/payments/payment";
 
 let paymentInstance: PaymentServiceClient | null = null;
 
@@ -329,7 +334,7 @@ import {
   type ListContratResponse,
   type DeleteContratRequest,
   type DeleteResponse as ContratDeleteResponse,
-} from "@proto-grpc/contrats/contrats";
+} from "@proto/contrats/contrats";
 
 let contratInstance: ContratServiceClient | null = null;
 
@@ -389,7 +394,7 @@ import {
   type RepartitionProduitsResponse,
   type GetStatsSocietesRequest,
   type StatsSocietesResponse,
-} from "@proto-grpc/dashboard/dashboard";
+} from "@proto/dashboard/dashboard";
 
 let dashboardKpisInstance: DashboardKpisServiceClient | null = null;
 let evolutionCaInstance: EvolutionCaServiceClient | null = null;
@@ -477,7 +482,7 @@ import {
   type KpisCommerciauxResponse,
   type GetAlertesRequest,
   type AlertesResponse,
-} from "@proto-grpc/dashboard/dashboard";
+} from "@proto/dashboard/dashboard";
 
 let kpisCommerciauxInstance: KpisCommerciauxServiceClient | null = null;
 
@@ -540,7 +545,7 @@ import {
   type ListUtilisateurResponse,
   type DeleteUtilisateurRequest,
   type DeleteResponse as UserDeleteResponse,
-} from "@proto-grpc/organisations/users";
+} from "@proto/organisations/users";
 
 let utilisateurInstance: UtilisateurServiceClient | null = null;
 
@@ -607,7 +612,7 @@ import {
   type ActivateApporteurRequest,
   type DeleteApporteurRequest,
   type DeleteResponse as ApporteurDeleteResponse,
-} from "@proto-grpc/commerciaux/commerciaux";
+} from "@proto/commerciaux/commerciaux";
 
 let apporteurInstance: ApporteurServiceClient | null = null;
 
@@ -668,37 +673,6 @@ export const apporteurs = {
 };
 
 // ============================================
-// REFERENTIEL - STATUT CLIENT SERVICE
-// ============================================
-
-import {
-  StatutClientServiceClient,
-  type StatutClient,
-  type ListStatutClientRequest,
-  type ListStatutClientResponse,
-} from "@proto-grpc/referentiel/referentiel";
-
-let statutClientInstance: StatutClientServiceClient | null = null;
-
-function getStatutClientClient(): StatutClientServiceClient {
-  if (!statutClientInstance) {
-    statutClientInstance = new StatutClientServiceClient(
-      SERVICES.referentiel,
-      credentials.createInsecure()
-    );
-  }
-  return statutClientInstance;
-}
-
-export const statutClients = {
-  list: (request: ListStatutClientRequest): Promise<ListStatutClientResponse> =>
-    promisify<ListStatutClientRequest, ListStatutClientResponse>(
-      getStatutClientClient(),
-      "list"
-    )(request),
-};
-
-// ============================================
 // LOGISTICS (EXPEDITIONS) SERVICE
 // ============================================
 
@@ -712,7 +686,7 @@ import {
   type UpdateExpeditionRequest,
   type GetByIdRequest as LogisticsGetByIdRequest,
   type DeleteResponse as LogisticsDeleteResponse,
-} from "@proto-grpc/logistics/logistics";
+} from "@proto/logistics/logistics";
 
 let logisticsInstance: LogisticsServiceClient | null = null;
 
@@ -818,7 +792,19 @@ import {
   type UpdatePalierRequest,
   type PalierResponse,
   type PalierListResponse,
-} from "@proto-grpc/commission/commission";
+  // Audit
+  type GetAuditLogsRequest as CommissionGetAuditLogsRequest,
+  type GetAuditLogsByRefRequest as CommissionGetAuditLogsByRefRequest,
+  type GetByCommissionRequest as CommissionGetByCommissionRequest,
+  type AuditLogListResponse as CommissionAuditLogListResponse,
+  // Recurrences
+  type GetRecurrencesRequest as CommissionGetRecurrencesRequest,
+  type GetRecurrencesByContratRequest as CommissionGetRecurrencesByContratRequest,
+  type RecurrenceListResponse as CommissionRecurrenceListResponse,
+  // Reports negatifs
+  type GetReportsNegatifsRequest as CommissionGetReportsNegatifsRequest,
+  type ReportNegatifListResponse as CommissionReportNegatifListResponse,
+} from "@proto/commission/commission";
 
 let commissionInstance: CommissionServiceClient | null = null;
 
@@ -888,6 +874,45 @@ export const commissions = {
     promisify<DeclencherRepriseRequest, RepriseResponse>(
       getCommissionClient(),
       "declencherReprise"
+    )(request),
+
+  // === Audit Logs ===
+  getAuditLogs: (request: CommissionGetAuditLogsRequest): Promise<CommissionAuditLogListResponse> =>
+    promisify<CommissionGetAuditLogsRequest, CommissionAuditLogListResponse>(
+      getCommissionClient(),
+      "getAuditLogs"
+    )(request),
+
+  getAuditLogsByRef: (request: CommissionGetAuditLogsByRefRequest): Promise<CommissionAuditLogListResponse> =>
+    promisify<CommissionGetAuditLogsByRefRequest, CommissionAuditLogListResponse>(
+      getCommissionClient(),
+      "getAuditLogsByRef"
+    )(request),
+
+  getAuditLogsByCommission: (request: CommissionGetByCommissionRequest): Promise<CommissionAuditLogListResponse> =>
+    promisify<CommissionGetByCommissionRequest, CommissionAuditLogListResponse>(
+      getCommissionClient(),
+      "getAuditLogsByCommission"
+    )(request),
+
+  // === Recurrences ===
+  getRecurrences: (request: CommissionGetRecurrencesRequest): Promise<CommissionRecurrenceListResponse> =>
+    promisify<CommissionGetRecurrencesRequest, CommissionRecurrenceListResponse>(
+      getCommissionClient(),
+      "getRecurrences"
+    )(request),
+
+  getRecurrencesByContrat: (request: CommissionGetRecurrencesByContratRequest): Promise<CommissionRecurrenceListResponse> =>
+    promisify<CommissionGetRecurrencesByContratRequest, CommissionRecurrenceListResponse>(
+      getCommissionClient(),
+      "getRecurrencesByContrat"
+    )(request),
+
+  // === Reports Negatifs ===
+  getReportsNegatifs: (request: CommissionGetReportsNegatifsRequest): Promise<CommissionReportNegatifListResponse> =>
+    promisify<CommissionGetReportsNegatifsRequest, CommissionReportNegatifListResponse>(
+      getCommissionClient(),
+      "getReportsNegatifs"
     )(request),
 };
 
@@ -1050,6 +1075,9 @@ export const paliers = {
 import {
   GammeServiceClient,
   ProduitServiceClient,
+  ProduitVersionServiceClient,
+  ProduitDocumentServiceClient,
+  ProduitPublicationServiceClient,
   type Gamme,
   type CreateGammeRequest,
   type UpdateGammeRequest,
@@ -1068,10 +1096,32 @@ import {
   type DeleteProduitResponse,
   type SetPromotionRequest,
   type ClearPromotionRequest,
-} from "@proto-grpc/products/products";
+  type ProduitVersion,
+  type CreateProduitVersionRequest,
+  type UpdateProduitVersionRequest,
+  type GetProduitVersionRequest,
+  type ListProduitVersionsRequest,
+  type ListProduitVersionsResponse,
+  type ProduitDocument,
+  type CreateProduitDocumentRequest,
+  type UpdateProduitDocumentRequest,
+  type GetProduitDocumentRequest,
+  type ListProduitDocumentsRequest,
+  type ListProduitDocumentsResponse,
+  type ProduitPublication,
+  type CreateProduitPublicationRequest,
+  type UpdateProduitPublicationRequest,
+  type GetProduitPublicationRequest,
+  type ListProduitPublicationsByVersionRequest,
+  type ListProduitPublicationsBySocieteRequest,
+  type ListProduitPublicationsResponse,
+} from "@proto/products/products";
 
 let gammeInstance: GammeServiceClient | null = null;
 let produitInstance: ProduitServiceClient | null = null;
+let produitVersionInstance: ProduitVersionServiceClient | null = null;
+let produitDocumentInstance: ProduitDocumentServiceClient | null = null;
+let produitPublicationInstance: ProduitPublicationServiceClient | null = null;
 
 function getGammeClient(): GammeServiceClient {
   if (!gammeInstance) {
@@ -1091,6 +1141,36 @@ function getProduitClient(): ProduitServiceClient {
     );
   }
   return produitInstance;
+}
+
+function getProduitVersionClient(): ProduitVersionServiceClient {
+  if (!produitVersionInstance) {
+    produitVersionInstance = new ProduitVersionServiceClient(
+      SERVICES.products,
+      credentials.createInsecure()
+    );
+  }
+  return produitVersionInstance;
+}
+
+function getProduitDocumentClient(): ProduitDocumentServiceClient {
+  if (!produitDocumentInstance) {
+    produitDocumentInstance = new ProduitDocumentServiceClient(
+      SERVICES.products,
+      credentials.createInsecure()
+    );
+  }
+  return produitDocumentInstance;
+}
+
+function getProduitPublicationClient(): ProduitPublicationServiceClient {
+  if (!produitPublicationInstance) {
+    produitPublicationInstance = new ProduitPublicationServiceClient(
+      SERVICES.products,
+      credentials.createInsecure()
+    );
+  }
+  return produitPublicationInstance;
 }
 
 export const gammes = {
@@ -1157,6 +1237,90 @@ export const produits = {
     )(request),
 };
 
+export const produitVersions = {
+  create: (request: CreateProduitVersionRequest): Promise<ProduitVersion> =>
+    promisify<CreateProduitVersionRequest, ProduitVersion>(
+      getProduitVersionClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdateProduitVersionRequest): Promise<ProduitVersion> =>
+    promisify<UpdateProduitVersionRequest, ProduitVersion>(
+      getProduitVersionClient(),
+      "update"
+    )(request),
+
+  get: (request: GetProduitVersionRequest): Promise<ProduitVersion> =>
+    promisify<GetProduitVersionRequest, ProduitVersion>(
+      getProduitVersionClient(),
+      "get"
+    )(request),
+
+  listByProduit: (request: ListProduitVersionsRequest): Promise<ListProduitVersionsResponse> =>
+    promisify<ListProduitVersionsRequest, ListProduitVersionsResponse>(
+      getProduitVersionClient(),
+      "listByProduit"
+    )(request),
+};
+
+export const produitDocuments = {
+  create: (request: CreateProduitDocumentRequest): Promise<ProduitDocument> =>
+    promisify<CreateProduitDocumentRequest, ProduitDocument>(
+      getProduitDocumentClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdateProduitDocumentRequest): Promise<ProduitDocument> =>
+    promisify<UpdateProduitDocumentRequest, ProduitDocument>(
+      getProduitDocumentClient(),
+      "update"
+    )(request),
+
+  get: (request: GetProduitDocumentRequest): Promise<ProduitDocument> =>
+    promisify<GetProduitDocumentRequest, ProduitDocument>(
+      getProduitDocumentClient(),
+      "get"
+    )(request),
+
+  listByVersion: (request: ListProduitDocumentsRequest): Promise<ListProduitDocumentsResponse> =>
+    promisify<ListProduitDocumentsRequest, ListProduitDocumentsResponse>(
+      getProduitDocumentClient(),
+      "listByVersion"
+    )(request),
+};
+
+export const produitPublications = {
+  create: (request: CreateProduitPublicationRequest): Promise<ProduitPublication> =>
+    promisify<CreateProduitPublicationRequest, ProduitPublication>(
+      getProduitPublicationClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdateProduitPublicationRequest): Promise<ProduitPublication> =>
+    promisify<UpdateProduitPublicationRequest, ProduitPublication>(
+      getProduitPublicationClient(),
+      "update"
+    )(request),
+
+  get: (request: GetProduitPublicationRequest): Promise<ProduitPublication> =>
+    promisify<GetProduitPublicationRequest, ProduitPublication>(
+      getProduitPublicationClient(),
+      "get"
+    )(request),
+
+  listByVersion: (request: ListProduitPublicationsByVersionRequest): Promise<ListProduitPublicationsResponse> =>
+    promisify<ListProduitPublicationsByVersionRequest, ListProduitPublicationsResponse>(
+      getProduitPublicationClient(),
+      "listByVersion"
+    )(request),
+
+  listBySociete: (request: ListProduitPublicationsBySocieteRequest): Promise<ListProduitPublicationsResponse> =>
+    promisify<ListProduitPublicationsBySocieteRequest, ListProduitPublicationsResponse>(
+      getProduitPublicationClient(),
+      "listBySociete"
+    )(request),
+};
+
 // ============================================
 // SOCIETES SERVICE
 // ============================================
@@ -1171,7 +1335,7 @@ import {
   type ListSocieteResponse,
   type DeleteSocieteRequest,
   type DeleteResponse as SocieteDeleteResponse,
-} from "@proto-grpc/organisations/organisations";
+} from "@proto/organisations/organisations";
 
 let societeInstance: SocieteServiceClient | null = null;
 
@@ -1238,7 +1402,7 @@ import {
   type ListTacheResponse,
   type DeleteTacheRequest,
   type DeleteResponse as TacheDeleteResponse,
-} from "@proto-grpc/activites/activites";
+} from "@proto/activites/activites";
 
 let tacheInstance: TacheServiceClient | null = null;
 
@@ -1358,7 +1522,7 @@ import {
   type ListHistoriquesRelanceResponse,
   type ExecuteRelancesRequest,
   type ExecuteRelancesResponse,
-} from "@proto-grpc/relance/relance";
+} from "@proto/relance/relance";
 
 let regleRelanceInstance: RegleRelanceServiceClient | null = null;
 let historiqueRelanceInstance: HistoriqueRelanceServiceClient | null = null;
@@ -1478,7 +1642,7 @@ import {
   type GetCompteRequest,
   type DeleteCompteRequest,
   type SyncKeycloakUserRequest,
-} from "@proto-grpc/organisations/users";
+} from "@proto/organisations/users";
 
 let membreCompteInstance: MembreCompteServiceClient | null = null;
 
@@ -1598,7 +1762,7 @@ import {
   type OperationResponse,
   type UnreadCountResponse,
   type GetUnreadCountRequest,
-} from "@proto-grpc/notifications/notifications";
+} from "@proto/notifications/notifications";
 
 let notificationInstance: NotificationServiceClient | null = null;
 
@@ -1670,7 +1834,7 @@ import {
   type ListOrganisationRequest,
   type ListOrganisationResponse,
   type DeleteResponse as OrganisationDeleteResponse,
-} from "@proto-grpc/organisations/organisations";
+} from "@proto/organisations/organisations";
 
 let organisationInstance: OrganisationServiceClient | null = null;
 
@@ -1726,7 +1890,7 @@ import {
   type GetRoleRequest,
   type ListRoleRequest,
   type ListRoleResponse,
-} from "@proto-grpc/organisations/users";
+} from "@proto/organisations/users";
 
 let roleInstance: RoleServiceClient | null = null;
 
@@ -1768,7 +1932,7 @@ import {
   type ListRolePartenaireResponse,
   type DeleteRolePartenaireRequest,
   type DeleteResponse as RolePartenaireDeleteResponse,
-} from "@proto-grpc/organisations/organisations";
+} from "@proto/organisations/organisations";
 
 let rolePartenaireInstance: RolePartenaireServiceClient | null = null;
 
@@ -1829,7 +1993,7 @@ import {
   type ListMembrePartenaireResponse,
   type DeleteMembrePartenaireRequest,
   type DeleteResponse as MembrePartenaireDeleteResponse,
-} from "@proto-grpc/organisations/organisations";
+} from "@proto/organisations/organisations";
 
 let membrePartenaireInstance: MembrePartenaireServiceClient | null = null;
 
@@ -1903,7 +2067,7 @@ import {
   type ExpireInvitationRequest,
   type DeleteInvitationCompteRequest,
   type DeleteResponse as InvitationCompteDeleteResponse,
-} from "@proto-grpc/organisations/organisations";
+} from "@proto/organisations/organisations";
 
 let invitationCompteInstance: InvitationCompteServiceClient | null = null;
 
@@ -1975,6 +2139,634 @@ export const invitationsCompte = {
     )(request),
 };
 
+// ============================================
+// TYPE ACTIVITE SERVICE
+// ============================================
+
+import {
+  TypeActiviteServiceClient,
+  type TypeActivite,
+  type CreateTypeActiviteRequest,
+  type UpdateTypeActiviteRequest,
+  type GetTypeActiviteRequest,
+  type GetTypeActiviteByCodeRequest,
+  type ListTypeActiviteRequest,
+  type ListTypeActiviteResponse,
+  type DeleteTypeActiviteRequest,
+  type DeleteResponse as TypeActiviteDeleteResponse,
+} from "@proto/activites/activites";
+
+let typeActiviteInstance: TypeActiviteServiceClient | null = null;
+
+function getTypeActiviteClient(): TypeActiviteServiceClient {
+  if (!typeActiviteInstance) {
+    typeActiviteInstance = new TypeActiviteServiceClient(
+      SERVICES.activites,
+      credentials.createInsecure()
+    );
+  }
+  return typeActiviteInstance;
+}
+
+export const typesActivite = {
+  create: (request: CreateTypeActiviteRequest): Promise<TypeActivite> =>
+    promisify<CreateTypeActiviteRequest, TypeActivite>(
+      getTypeActiviteClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdateTypeActiviteRequest): Promise<TypeActivite> =>
+    promisify<UpdateTypeActiviteRequest, TypeActivite>(
+      getTypeActiviteClient(),
+      "update"
+    )(request),
+
+  get: (request: GetTypeActiviteRequest): Promise<TypeActivite> =>
+    promisify<GetTypeActiviteRequest, TypeActivite>(
+      getTypeActiviteClient(),
+      "get"
+    )(request),
+
+  getByCode: (request: GetTypeActiviteByCodeRequest): Promise<TypeActivite> =>
+    promisify<GetTypeActiviteByCodeRequest, TypeActivite>(
+      getTypeActiviteClient(),
+      "getByCode"
+    )(request),
+
+  list: (request: ListTypeActiviteRequest): Promise<ListTypeActiviteResponse> =>
+    promisify<ListTypeActiviteRequest, ListTypeActiviteResponse>(
+      getTypeActiviteClient(),
+      "list"
+    )(request),
+
+  delete: (request: DeleteTypeActiviteRequest): Promise<TypeActiviteDeleteResponse> =>
+    promisify<DeleteTypeActiviteRequest, TypeActiviteDeleteResponse>(
+      getTypeActiviteClient(),
+      "delete"
+    )(request),
+};
+
+// ============================================
+// ACTIVITE SERVICE
+// ============================================
+
+import {
+  ActiviteServiceClient,
+  type Activite,
+  type CreateActiviteRequest,
+  type UpdateActiviteRequest,
+  type GetActiviteRequest,
+  type ListActiviteByClientRequest,
+  type ListActiviteByContratRequest,
+  type ListActiviteRequest,
+  type ListActiviteResponse,
+  type DeleteActiviteRequest,
+  type DeleteResponse as ActiviteDeleteResponse,
+} from "@proto/activites/activites";
+
+let activiteInstance: ActiviteServiceClient | null = null;
+
+function getActiviteClient(): ActiviteServiceClient {
+  if (!activiteInstance) {
+    activiteInstance = new ActiviteServiceClient(
+      SERVICES.activites,
+      credentials.createInsecure()
+    );
+  }
+  return activiteInstance;
+}
+
+export const activites = {
+  create: (request: CreateActiviteRequest): Promise<Activite> =>
+    promisify<CreateActiviteRequest, Activite>(
+      getActiviteClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdateActiviteRequest): Promise<Activite> =>
+    promisify<UpdateActiviteRequest, Activite>(
+      getActiviteClient(),
+      "update"
+    )(request),
+
+  get: (request: GetActiviteRequest): Promise<Activite> =>
+    promisify<GetActiviteRequest, Activite>(
+      getActiviteClient(),
+      "get"
+    )(request),
+
+  listByClient: (request: ListActiviteByClientRequest): Promise<ListActiviteResponse> =>
+    promisify<ListActiviteByClientRequest, ListActiviteResponse>(
+      getActiviteClient(),
+      "listByClient"
+    )(request),
+
+  listByContrat: (request: ListActiviteByContratRequest): Promise<ListActiviteResponse> =>
+    promisify<ListActiviteByContratRequest, ListActiviteResponse>(
+      getActiviteClient(),
+      "listByContrat"
+    )(request),
+
+  list: (request: ListActiviteRequest): Promise<ListActiviteResponse> =>
+    promisify<ListActiviteRequest, ListActiviteResponse>(
+      getActiviteClient(),
+      "list"
+    )(request),
+
+  delete: (request: DeleteActiviteRequest): Promise<ActiviteDeleteResponse> =>
+    promisify<DeleteActiviteRequest, ActiviteDeleteResponse>(
+      getActiviteClient(),
+      "delete"
+    )(request),
+};
+
+// ============================================
+// EVENEMENT SUIVI SERVICE
+// ============================================
+
+import {
+  EvenementSuiviServiceClient,
+  type EvenementSuivi,
+  type CreateEvenementSuiviRequest,
+  type UpdateEvenementSuiviRequest,
+  type GetEvenementSuiviRequest,
+  type ListEvenementByExpeditionRequest,
+  type ListEvenementSuiviRequest,
+  type ListEvenementSuiviResponse,
+  type DeleteEvenementSuiviRequest,
+  type DeleteResponse as EvenementSuiviDeleteResponse,
+} from "@proto/activites/activites";
+
+let evenementSuiviInstance: EvenementSuiviServiceClient | null = null;
+
+function getEvenementSuiviClient(): EvenementSuiviServiceClient {
+  if (!evenementSuiviInstance) {
+    evenementSuiviInstance = new EvenementSuiviServiceClient(
+      SERVICES.activites,
+      credentials.createInsecure()
+    );
+  }
+  return evenementSuiviInstance;
+}
+
+export const evenementsSuivi = {
+  create: (request: CreateEvenementSuiviRequest): Promise<EvenementSuivi> =>
+    promisify<CreateEvenementSuiviRequest, EvenementSuivi>(
+      getEvenementSuiviClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdateEvenementSuiviRequest): Promise<EvenementSuivi> =>
+    promisify<UpdateEvenementSuiviRequest, EvenementSuivi>(
+      getEvenementSuiviClient(),
+      "update"
+    )(request),
+
+  get: (request: GetEvenementSuiviRequest): Promise<EvenementSuivi> =>
+    promisify<GetEvenementSuiviRequest, EvenementSuivi>(
+      getEvenementSuiviClient(),
+      "get"
+    )(request),
+
+  listByExpedition: (request: ListEvenementByExpeditionRequest): Promise<ListEvenementSuiviResponse> =>
+    promisify<ListEvenementByExpeditionRequest, ListEvenementSuiviResponse>(
+      getEvenementSuiviClient(),
+      "listByExpedition"
+    )(request),
+
+  list: (request: ListEvenementSuiviRequest): Promise<ListEvenementSuiviResponse> =>
+    promisify<ListEvenementSuiviRequest, ListEvenementSuiviResponse>(
+      getEvenementSuiviClient(),
+      "list"
+    )(request),
+
+  delete: (request: DeleteEvenementSuiviRequest): Promise<EvenementSuiviDeleteResponse> =>
+    promisify<DeleteEvenementSuiviRequest, EvenementSuiviDeleteResponse>(
+      getEvenementSuiviClient(),
+      "delete"
+    )(request),
+};
+
+// ============================================
+// CALENDAR ENGINE SERVICE
+// ============================================
+
+import {
+  CalendarEngineServiceClient,
+  DebitConfigurationServiceClient,
+  HolidayServiceClient,
+  CalendarAdminServiceClient,
+  // Engine types
+  type CalculatePlannedDateRequest,
+  type CalculatePlannedDateResponse,
+  type CalculatePlannedDatesBatchRequest,
+  type CalculatePlannedDatesBatchResponse,
+  type CheckDateEligibilityRequest,
+  type CheckDateEligibilityResponse,
+  // Debit Configuration types
+  type GetSystemConfigRequest,
+  type UpdateSystemConfigRequest,
+  type SystemDebitConfiguration,
+  type CreateCompanyConfigRequest,
+  type UpdateCompanyConfigRequest,
+  type GetCompanyConfigRequest,
+  type ListCompanyConfigsRequest,
+  type ListCompanyConfigsResponse,
+  type DeleteCompanyConfigRequest,
+  type CompanyDebitConfiguration,
+  type CreateClientConfigRequest,
+  type UpdateClientConfigRequest,
+  type GetClientConfigRequest,
+  type ListClientConfigsRequest,
+  type ListClientConfigsResponse,
+  type DeleteClientConfigRequest,
+  type ClientDebitConfiguration,
+  type CreateContractConfigRequest,
+  type UpdateContractConfigRequest,
+  type GetContractConfigRequest,
+  type ListContractConfigsRequest,
+  type ListContractConfigsResponse,
+  type DeleteContractConfigRequest,
+  type ContractDebitConfiguration,
+  type ResolveConfigurationRequest,
+  type ResolvedDebitConfiguration,
+  // Holiday types
+  type CreateHolidayZoneRequest,
+  type UpdateHolidayZoneRequest,
+  type GetHolidayZoneRequest,
+  type ListHolidayZonesRequest,
+  type ListHolidayZonesResponse,
+  type DeleteHolidayZoneRequest,
+  type HolidayZone,
+  type CreateHolidayRequest,
+  type UpdateHolidayRequest,
+  type GetHolidayRequest,
+  type ListHolidaysRequest,
+  type ListHolidaysResponse,
+  type DeleteHolidayRequest,
+  type Holiday,
+  type ImportHolidaysByCountryRequest,
+  type ImportHolidaysByCountryResponse,
+  // Admin types
+  type GetCalendarViewRequest,
+  type GetCalendarViewResponse,
+  type GetDateDetailsRequest,
+  type GetDateDetailsResponse,
+  type GetVolumeHeatmapRequest,
+  type GetVolumeHeatmapResponse,
+  type ImportCsvRequest,
+  type ImportCsvResponse,
+  type ConfirmCsvImportRequest,
+  type ConfirmCsvImportResponse,
+  type ExportCalendarCsvRequest,
+  type ExportCalendarCsvResponse,
+  type CreateVolumeThresholdRequest,
+  type UpdateVolumeThresholdRequest,
+  type GetVolumeThresholdRequest,
+  type ListVolumeThresholdsRequest,
+  type ListVolumeThresholdsResponse,
+  type DeleteVolumeThresholdRequest,
+  type VolumeThreshold,
+  type GetAuditLogsRequest,
+  type GetAuditLogsResponse,
+  type CalendarAuditLog,
+  type DeleteResponse as CalendarDeleteResponse,
+} from "@proto/calendar/calendar";
+
+let calendarEngineInstance: CalendarEngineServiceClient | null = null;
+let debitConfigInstance: DebitConfigurationServiceClient | null = null;
+let holidayInstance: HolidayServiceClient | null = null;
+let calendarAdminInstance: CalendarAdminServiceClient | null = null;
+
+function getCalendarEngineClient(): CalendarEngineServiceClient {
+  if (!calendarEngineInstance) {
+    calendarEngineInstance = new CalendarEngineServiceClient(
+      SERVICES.calendar,
+      credentials.createInsecure()
+    );
+  }
+  return calendarEngineInstance;
+}
+
+function getDebitConfigClient(): DebitConfigurationServiceClient {
+  if (!debitConfigInstance) {
+    debitConfigInstance = new DebitConfigurationServiceClient(
+      SERVICES.calendar,
+      credentials.createInsecure()
+    );
+  }
+  return debitConfigInstance;
+}
+
+function getHolidayClient(): HolidayServiceClient {
+  if (!holidayInstance) {
+    holidayInstance = new HolidayServiceClient(
+      SERVICES.calendar,
+      credentials.createInsecure()
+    );
+  }
+  return holidayInstance;
+}
+
+function getCalendarAdminClient(): CalendarAdminServiceClient {
+  if (!calendarAdminInstance) {
+    calendarAdminInstance = new CalendarAdminServiceClient(
+      SERVICES.calendar,
+      credentials.createInsecure()
+    );
+  }
+  return calendarAdminInstance;
+}
+
+// Calendar Engine - Calcul de dates de prélèvement
+export const calendarEngine = {
+  calculatePlannedDate: (request: CalculatePlannedDateRequest): Promise<CalculatePlannedDateResponse> =>
+    promisify<CalculatePlannedDateRequest, CalculatePlannedDateResponse>(
+      getCalendarEngineClient(),
+      "calculatePlannedDate"
+    )(request),
+
+  calculatePlannedDatesBatch: (request: CalculatePlannedDatesBatchRequest): Promise<CalculatePlannedDatesBatchResponse> =>
+    promisify<CalculatePlannedDatesBatchRequest, CalculatePlannedDatesBatchResponse>(
+      getCalendarEngineClient(),
+      "calculatePlannedDatesBatch"
+    )(request),
+
+  checkDateEligibility: (request: CheckDateEligibilityRequest): Promise<CheckDateEligibilityResponse> =>
+    promisify<CheckDateEligibilityRequest, CheckDateEligibilityResponse>(
+      getCalendarEngineClient(),
+      "checkDateEligibility"
+    )(request),
+};
+
+// Debit Configuration - Configs système/société/client/contrat
+export const debitConfig = {
+  // System config
+  getSystemConfig: (request: GetSystemConfigRequest): Promise<SystemDebitConfiguration> =>
+    promisify<GetSystemConfigRequest, SystemDebitConfiguration>(
+      getDebitConfigClient(),
+      "getSystemConfig"
+    )(request),
+
+  updateSystemConfig: (request: UpdateSystemConfigRequest): Promise<SystemDebitConfiguration> =>
+    promisify<UpdateSystemConfigRequest, SystemDebitConfiguration>(
+      getDebitConfigClient(),
+      "updateSystemConfig"
+    )(request),
+
+  // Company config
+  createCompanyConfig: (request: CreateCompanyConfigRequest): Promise<CompanyDebitConfiguration> =>
+    promisify<CreateCompanyConfigRequest, CompanyDebitConfiguration>(
+      getDebitConfigClient(),
+      "createCompanyConfig"
+    )(request),
+
+  updateCompanyConfig: (request: UpdateCompanyConfigRequest): Promise<CompanyDebitConfiguration> =>
+    promisify<UpdateCompanyConfigRequest, CompanyDebitConfiguration>(
+      getDebitConfigClient(),
+      "updateCompanyConfig"
+    )(request),
+
+  getCompanyConfig: (request: GetCompanyConfigRequest): Promise<CompanyDebitConfiguration> =>
+    promisify<GetCompanyConfigRequest, CompanyDebitConfiguration>(
+      getDebitConfigClient(),
+      "getCompanyConfig"
+    )(request),
+
+  listCompanyConfigs: (request: ListCompanyConfigsRequest): Promise<ListCompanyConfigsResponse> =>
+    promisify<ListCompanyConfigsRequest, ListCompanyConfigsResponse>(
+      getDebitConfigClient(),
+      "listCompanyConfigs"
+    )(request),
+
+  deleteCompanyConfig: (request: DeleteCompanyConfigRequest): Promise<CalendarDeleteResponse> =>
+    promisify<DeleteCompanyConfigRequest, CalendarDeleteResponse>(
+      getDebitConfigClient(),
+      "deleteCompanyConfig"
+    )(request),
+
+  // Client config
+  createClientConfig: (request: CreateClientConfigRequest): Promise<ClientDebitConfiguration> =>
+    promisify<CreateClientConfigRequest, ClientDebitConfiguration>(
+      getDebitConfigClient(),
+      "createClientConfig"
+    )(request),
+
+  updateClientConfig: (request: UpdateClientConfigRequest): Promise<ClientDebitConfiguration> =>
+    promisify<UpdateClientConfigRequest, ClientDebitConfiguration>(
+      getDebitConfigClient(),
+      "updateClientConfig"
+    )(request),
+
+  getClientConfig: (request: GetClientConfigRequest): Promise<ClientDebitConfiguration> =>
+    promisify<GetClientConfigRequest, ClientDebitConfiguration>(
+      getDebitConfigClient(),
+      "getClientConfig"
+    )(request),
+
+  listClientConfigs: (request: ListClientConfigsRequest): Promise<ListClientConfigsResponse> =>
+    promisify<ListClientConfigsRequest, ListClientConfigsResponse>(
+      getDebitConfigClient(),
+      "listClientConfigs"
+    )(request),
+
+  deleteClientConfig: (request: DeleteClientConfigRequest): Promise<CalendarDeleteResponse> =>
+    promisify<DeleteClientConfigRequest, CalendarDeleteResponse>(
+      getDebitConfigClient(),
+      "deleteClientConfig"
+    )(request),
+
+  // Contract config
+  createContractConfig: (request: CreateContractConfigRequest): Promise<ContractDebitConfiguration> =>
+    promisify<CreateContractConfigRequest, ContractDebitConfiguration>(
+      getDebitConfigClient(),
+      "createContractConfig"
+    )(request),
+
+  updateContractConfig: (request: UpdateContractConfigRequest): Promise<ContractDebitConfiguration> =>
+    promisify<UpdateContractConfigRequest, ContractDebitConfiguration>(
+      getDebitConfigClient(),
+      "updateContractConfig"
+    )(request),
+
+  getContractConfig: (request: GetContractConfigRequest): Promise<ContractDebitConfiguration> =>
+    promisify<GetContractConfigRequest, ContractDebitConfiguration>(
+      getDebitConfigClient(),
+      "getContractConfig"
+    )(request),
+
+  listContractConfigs: (request: ListContractConfigsRequest): Promise<ListContractConfigsResponse> =>
+    promisify<ListContractConfigsRequest, ListContractConfigsResponse>(
+      getDebitConfigClient(),
+      "listContractConfigs"
+    )(request),
+
+  deleteContractConfig: (request: DeleteContractConfigRequest): Promise<CalendarDeleteResponse> =>
+    promisify<DeleteContractConfigRequest, CalendarDeleteResponse>(
+      getDebitConfigClient(),
+      "deleteContractConfig"
+    )(request),
+
+  // Resolve configuration (apply priority)
+  resolveConfiguration: (request: ResolveConfigurationRequest): Promise<ResolvedDebitConfiguration> =>
+    promisify<ResolveConfigurationRequest, ResolvedDebitConfiguration>(
+      getDebitConfigClient(),
+      "resolveConfiguration"
+    )(request),
+};
+
+// Holiday Service - Zones et jours fériés
+export const holidays = {
+  // Zones
+  createZone: (request: CreateHolidayZoneRequest): Promise<HolidayZone> =>
+    promisify<CreateHolidayZoneRequest, HolidayZone>(
+      getHolidayClient(),
+      "createHolidayZone"
+    )(request),
+
+  updateZone: (request: UpdateHolidayZoneRequest): Promise<HolidayZone> =>
+    promisify<UpdateHolidayZoneRequest, HolidayZone>(
+      getHolidayClient(),
+      "updateHolidayZone"
+    )(request),
+
+  getZone: (request: GetHolidayZoneRequest): Promise<HolidayZone> =>
+    promisify<GetHolidayZoneRequest, HolidayZone>(
+      getHolidayClient(),
+      "getHolidayZone"
+    )(request),
+
+  listZones: (request: ListHolidayZonesRequest): Promise<ListHolidayZonesResponse> =>
+    promisify<ListHolidayZonesRequest, ListHolidayZonesResponse>(
+      getHolidayClient(),
+      "listHolidayZones"
+    )(request),
+
+  deleteZone: (request: DeleteHolidayZoneRequest): Promise<CalendarDeleteResponse> =>
+    promisify<DeleteHolidayZoneRequest, CalendarDeleteResponse>(
+      getHolidayClient(),
+      "deleteHolidayZone"
+    )(request),
+
+  // Holidays
+  create: (request: CreateHolidayRequest): Promise<Holiday> =>
+    promisify<CreateHolidayRequest, Holiday>(
+      getHolidayClient(),
+      "createHoliday"
+    )(request),
+
+  update: (request: UpdateHolidayRequest): Promise<Holiday> =>
+    promisify<UpdateHolidayRequest, Holiday>(
+      getHolidayClient(),
+      "updateHoliday"
+    )(request),
+
+  get: (request: GetHolidayRequest): Promise<Holiday> =>
+    promisify<GetHolidayRequest, Holiday>(
+      getHolidayClient(),
+      "getHoliday"
+    )(request),
+
+  list: (request: ListHolidaysRequest): Promise<ListHolidaysResponse> =>
+    promisify<ListHolidaysRequest, ListHolidaysResponse>(
+      getHolidayClient(),
+      "listHolidays"
+    )(request),
+
+  delete: (request: DeleteHolidayRequest): Promise<CalendarDeleteResponse> =>
+    promisify<DeleteHolidayRequest, CalendarDeleteResponse>(
+      getHolidayClient(),
+      "deleteHoliday"
+    )(request),
+
+  // Import by country
+  importByCountry: (request: ImportHolidaysByCountryRequest): Promise<ImportHolidaysByCountryResponse> =>
+    promisify<ImportHolidaysByCountryRequest, ImportHolidaysByCountryResponse>(
+      getHolidayClient(),
+      "importHolidaysByCountry"
+    )(request),
+};
+
+// Calendar Admin - Vue calendrier, heatmap, import/export, audit
+export const calendarAdmin = {
+  // Calendar view
+  getCalendarView: (request: GetCalendarViewRequest): Promise<GetCalendarViewResponse> =>
+    promisify<GetCalendarViewRequest, GetCalendarViewResponse>(
+      getCalendarAdminClient(),
+      "getCalendarView"
+    )(request),
+
+  getDateDetails: (request: GetDateDetailsRequest): Promise<GetDateDetailsResponse> =>
+    promisify<GetDateDetailsRequest, GetDateDetailsResponse>(
+      getCalendarAdminClient(),
+      "getDateDetails"
+    )(request),
+
+  // Heatmap
+  getVolumeHeatmap: (request: GetVolumeHeatmapRequest): Promise<GetVolumeHeatmapResponse> =>
+    promisify<GetVolumeHeatmapRequest, GetVolumeHeatmapResponse>(
+      getCalendarAdminClient(),
+      "getVolumeHeatmap"
+    )(request),
+
+  // Import/Export CSV
+  importCsv: (request: ImportCsvRequest): Promise<ImportCsvResponse> =>
+    promisify<ImportCsvRequest, ImportCsvResponse>(
+      getCalendarAdminClient(),
+      "importCsv"
+    )(request),
+
+  confirmCsvImport: (request: ConfirmCsvImportRequest): Promise<ConfirmCsvImportResponse> =>
+    promisify<ConfirmCsvImportRequest, ConfirmCsvImportResponse>(
+      getCalendarAdminClient(),
+      "confirmCsvImport"
+    )(request),
+
+  exportCalendarCsv: (request: ExportCalendarCsvRequest): Promise<ExportCalendarCsvResponse> =>
+    promisify<ExportCalendarCsvRequest, ExportCalendarCsvResponse>(
+      getCalendarAdminClient(),
+      "exportCalendarCsv"
+    )(request),
+
+  // Volume Thresholds
+  createVolumeThreshold: (request: CreateVolumeThresholdRequest): Promise<VolumeThreshold> =>
+    promisify<CreateVolumeThresholdRequest, VolumeThreshold>(
+      getCalendarAdminClient(),
+      "createVolumeThreshold"
+    )(request),
+
+  updateVolumeThreshold: (request: UpdateVolumeThresholdRequest): Promise<VolumeThreshold> =>
+    promisify<UpdateVolumeThresholdRequest, VolumeThreshold>(
+      getCalendarAdminClient(),
+      "updateVolumeThreshold"
+    )(request),
+
+  getVolumeThreshold: (request: GetVolumeThresholdRequest): Promise<VolumeThreshold> =>
+    promisify<GetVolumeThresholdRequest, VolumeThreshold>(
+      getCalendarAdminClient(),
+      "getVolumeThreshold"
+    )(request),
+
+  listVolumeThresholds: (request: ListVolumeThresholdsRequest): Promise<ListVolumeThresholdsResponse> =>
+    promisify<ListVolumeThresholdsRequest, ListVolumeThresholdsResponse>(
+      getCalendarAdminClient(),
+      "listVolumeThresholds"
+    )(request),
+
+  deleteVolumeThreshold: (request: DeleteVolumeThresholdRequest): Promise<CalendarDeleteResponse> =>
+    promisify<DeleteVolumeThresholdRequest, CalendarDeleteResponse>(
+      getCalendarAdminClient(),
+      "deleteVolumeThreshold"
+    )(request),
+
+  // Audit
+  getAuditLogs: (request: GetAuditLogsRequest): Promise<GetAuditLogsResponse> =>
+    promisify<GetAuditLogsRequest, GetAuditLogsResponse>(
+      getCalendarAdminClient(),
+      "getAuditLogs"
+    )(request),
+};
+
 // Re-export types for convenience
 export type {
   // Clients
@@ -2007,9 +2799,6 @@ export type {
   UpdateApporteurRequest,
   ListApporteurByOrganisationRequest,
   ListApporteurResponse,
-  // StatutClient
-  StatutClient,
-  ListStatutClientResponse,
   // Logistics
   ExpeditionResponse,
   ExpeditionListResponse,
@@ -2080,4 +2869,87 @@ export type {
   UpdateInvitationCompteRequest,
   ListInvitationByOrganisationRequest,
   ListInvitationCompteResponse,
+  // Types Activite
+  TypeActivite,
+  CreateTypeActiviteRequest,
+  UpdateTypeActiviteRequest,
+  ListTypeActiviteRequest,
+  ListTypeActiviteResponse,
+  // Activites
+  Activite,
+  CreateActiviteRequest,
+  UpdateActiviteRequest,
+  ListActiviteByClientRequest,
+  ListActiviteByContratRequest,
+  ListActiviteRequest,
+  ListActiviteResponse,
+  // Evenements Suivi
+  EvenementSuivi,
+  CreateEvenementSuiviRequest,
+  UpdateEvenementSuiviRequest,
+  ListEvenementByExpeditionRequest,
+  ListEvenementSuiviRequest,
+  ListEvenementSuiviResponse,
+  // Calendar Engine
+  CalculatePlannedDateRequest,
+  CalculatePlannedDateResponse,
+  CalculatePlannedDatesBatchRequest,
+  CalculatePlannedDatesBatchResponse,
+  CheckDateEligibilityRequest,
+  CheckDateEligibilityResponse,
+  // Debit Configuration
+  SystemDebitConfiguration,
+  CompanyDebitConfiguration,
+  ClientDebitConfiguration,
+  ContractDebitConfiguration,
+  ResolvedDebitConfiguration,
+  GetSystemConfigRequest,
+  UpdateSystemConfigRequest,
+  CreateCompanyConfigRequest,
+  UpdateCompanyConfigRequest,
+  ListCompanyConfigsRequest,
+  ListCompanyConfigsResponse,
+  CreateClientConfigRequest,
+  UpdateClientConfigRequest,
+  ListClientConfigsRequest,
+  ListClientConfigsResponse,
+  CreateContractConfigRequest,
+  UpdateContractConfigRequest,
+  ListContractConfigsRequest,
+  ListContractConfigsResponse,
+  ResolveConfigurationRequest,
+  // Holidays
+  HolidayZone,
+  Holiday,
+  CreateHolidayZoneRequest,
+  UpdateHolidayZoneRequest,
+  ListHolidayZonesRequest,
+  ListHolidayZonesResponse,
+  CreateHolidayRequest,
+  UpdateHolidayRequest,
+  ListHolidaysRequest,
+  ListHolidaysResponse,
+  ImportHolidaysByCountryRequest,
+  ImportHolidaysByCountryResponse,
+  // Calendar Admin
+  GetCalendarViewRequest,
+  GetCalendarViewResponse,
+  GetDateDetailsRequest,
+  GetDateDetailsResponse,
+  GetVolumeHeatmapRequest,
+  GetVolumeHeatmapResponse,
+  ImportCsvRequest,
+  ImportCsvResponse,
+  ConfirmCsvImportRequest,
+  ConfirmCsvImportResponse,
+  ExportCalendarCsvRequest,
+  ExportCalendarCsvResponse,
+  VolumeThreshold,
+  CreateVolumeThresholdRequest,
+  UpdateVolumeThresholdRequest,
+  ListVolumeThresholdsRequest,
+  ListVolumeThresholdsResponse,
+  CalendarAuditLog,
+  GetAuditLogsRequest,
+  GetAuditLogsResponse,
 };

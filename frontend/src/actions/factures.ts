@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import type {
   Facture,
   ListFacturesResponse,
-} from "@proto-frontend/factures/factures";
+} from "@proto/factures/factures";
 import type {
   StatutFacture,
   ListStatutsFactureResponse,
-} from "@proto-frontend/factures/factures";
+} from "@proto/factures/factures";
 
 export interface ActionResult<T> {
   data: T | null;

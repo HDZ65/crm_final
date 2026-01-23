@@ -10,14 +10,12 @@ import type {
   UserOrganisation,
   UserRole,
   Utilisateur,
-} from "@proto-frontend/organisations/users";
+} from "@proto/organisations/users";
 
-// Re-export proto types for consumers
-export type { UserProfile, UserOrganisation, UserRole, Utilisateur };
-
-// AuthMeResponse extends UserProfile with guaranteed utilisateur
-export interface AuthMeResponse extends Omit<UserProfile, 'utilisateur'> {
+export interface AuthMeResponse {
   utilisateur: Utilisateur;
+  organisations: UserOrganisation[];
+  hasOrganisation: boolean;
 }
 
 export interface ActionResult<T> {

@@ -4,11 +4,7 @@ import { Repository } from 'typeorm';
 import { GoCardlessAccountEntity } from './entities/gocardless-account.entity.js';
 import { GoCardlessMandateEntity, MandateStatus } from './entities/gocardless-mandate.entity.js';
 import { RumGeneratorService } from './rum-generator.service.js';
-
-interface GoCardlessConfig {
-  accessToken: string;
-  baseUrl: string;
-}
+import type { GoCardlessConfig } from '@proto/payments/payment';
 
 @Injectable()
 export class GoCardlessService {

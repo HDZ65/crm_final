@@ -12,6 +12,7 @@ import { RetryPolicyEntity } from '../retry-policy/entities/retry-policy.entity'
 import { RetryAuditLogEntity, AuditActorType } from '../audit-log/entities/retry-audit-log.entity';
 import { RetryPolicyService } from '../retry-policy/retry-policy.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import type { PaymentRejectedEvent as ProtoPaymentRejectedEvent } from '@proto/retry/am04_retry';
 
 const NON_RETRYABLE_CODES = [
   'AC01_IBAN_INVALID',
@@ -31,7 +32,7 @@ const RETRYABLE_CODES = [
   'MS03_AGENT_REASON',
 ];
 
-interface PaymentRejectedEvent {
+export interface PaymentRejectedEvent {
   eventId: string;
   organisationId: string;
   societeId: string;
@@ -50,7 +51,7 @@ interface PaymentRejectedEvent {
   idempotencyKey: string;
 }
 
-interface ProcessDueRetriesInput {
+export interface ProcessDueRetriesInput {
   organisationId: string;
   targetDate: Date;
   timezone: string;
@@ -423,7 +424,7 @@ export class RetrySchedulerService {
 
       if (paymentResult.success) {
         savedAttempt.status = RetryAttemptStatus.SUCCEEDED;
-        savedAttempt.pspPaymentId = paymentResult.pspPaymentId;
+        savedAttempt.pspPaymentId = paymentResult.pspPaymentId ?? null;
         await this.attemptRepository.save(savedAttempt);
 
         schedule.isResolved = true;
@@ -446,9 +447,9 @@ export class RetrySchedulerService {
         return { status: 'SUCCEEDED', attemptId: savedAttempt.id };
       } else {
         savedAttempt.status = RetryAttemptStatus.FAILED;
-        savedAttempt.errorCode = paymentResult.errorCode;
-        savedAttempt.errorMessage = paymentResult.errorMessage;
-        savedAttempt.newRejectionCode = paymentResult.newRejectionCode;
+        savedAttempt.errorCode = paymentResult.errorCode ?? null;
+        savedAttempt.errorMessage = paymentResult.errorMessage ?? null;
+        savedAttempt.newRejectionCode = paymentResult.newRejectionCode ?? null;
         await this.attemptRepository.save(savedAttempt);
 
         schedule.currentAttempt = attemptNumber;

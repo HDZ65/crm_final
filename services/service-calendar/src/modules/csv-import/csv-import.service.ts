@@ -11,6 +11,7 @@ import { HolidayEntity, HolidayType } from '../holidays/entities/holiday.entity.
 import { AuditService } from '../audit/audit.service.js';
 import { AuditSource } from '../audit/entities/calendar-audit-log.entity.js';
 import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity.js';
+import type { ImportCsvResponse, CsvValidationError } from '@proto/calendar/calendar.js';
 
 export interface CsvImportResult {
   importId: string;

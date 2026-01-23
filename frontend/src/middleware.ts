@@ -23,10 +23,13 @@ export async function middleware(request: NextRequest) {
   // Vérifier l'authentification
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
-  if (!token) {
+  if (!token || token.error === "RefreshAccessTokenError") {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.delete('next-auth.session-token');
+    response.cookies.delete('next-auth.csrf-token');
+    return response;
   }
 
   return NextResponse.next();

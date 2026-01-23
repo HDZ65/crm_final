@@ -6,8 +6,14 @@ import { status } from '@grpc/grpc-js';
 import { FactureEntity } from './entities/facture.entity';
 import { LigneFactureEntity } from '../ligne-facture/entities/ligne-facture.entity';
 import { StatutFactureService } from '../statut-facture/statut-facture.service';
+import type {
+  CreateFactureRequest,
+  ListFacturesRequest,
+  CreateLigneFactureItem,
+  PaginationRequest,
+} from '@proto/factures/factures';
 
-interface CreateFactureInput {
+export interface CreateFactureInput {
   organisationId: string;
   dateEmission: Date;
   statutId: string;
@@ -25,14 +31,14 @@ interface CreateFactureInput {
   }>;
 }
 
-interface ListFacturesInput {
+export interface ListFacturesInput {
   organisationId: string;
   clientBaseId?: string;
   contratId?: string;
   statutId?: string;
   dateFrom?: Date;
   dateTo?: Date;
-  pagination?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string };
+  pagination?: Partial<PaginationRequest>;
 }
 
 @Injectable()

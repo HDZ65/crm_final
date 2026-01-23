@@ -4,16 +4,9 @@ import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { LigneFactureEntity } from './entities/ligne-facture.entity';
+import type { CreateLigneFactureRequest } from '@proto/factures/factures';
 
-interface CreateLigneInput {
-  factureId: string;
-  produitId: string;
-  quantite: number;
-  prixUnitaire: number;
-  description?: string;
-  tauxTVA?: number;
-  ordreAffichage?: number;
-}
+export type CreateLigneInput = CreateLigneFactureRequest;
 
 @Injectable()
 export class LigneFactureService {
@@ -25,7 +18,7 @@ export class LigneFactureService {
   ) {}
 
   async create(input: CreateLigneInput): Promise<LigneFactureEntity> {
-    const tauxTVA = input.tauxTVA ?? 20;
+    const tauxTVA = input.tauxTva ?? 20;
     const amounts = LigneFactureEntity.calculateAmounts(input.quantite, input.prixUnitaire, tauxTVA);
 
     const entity = this.repository.create({

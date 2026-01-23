@@ -9,7 +9,7 @@ import { Maximize2, TrendingUp, Download, Euro, AlertTriangle, RefreshCw, BarCha
 import { useIsMobile } from "@/hooks/core"
 import { getEvolutionCa } from "@/actions/dashboard"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { EvolutionCaMensuelle } from "@proto-frontend/dashboard/dashboard"
+import type { EvolutionCaMensuelle } from "@proto/dashboard/dashboard"
 import {
   Card,
   CardAction,

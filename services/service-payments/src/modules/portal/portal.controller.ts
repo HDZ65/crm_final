@@ -196,7 +196,7 @@ export class PortalController {
       mandateId: data.mandateId,
       rumMasked: data.rumMasked,
       idempotencyKey: data.idempotencyKey,
-      metadata: data.metadata,
+      metadata: data.metadata ?? {},
     });
 
     return {

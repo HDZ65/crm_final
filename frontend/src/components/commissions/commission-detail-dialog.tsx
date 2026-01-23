@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,8 @@ import {
   Info,
 } from "lucide-react"
 import type { CommissionWithDetailsResponseDto, TypeApporteur } from "@/types/commission"
+import { getAuditLogsByCommission } from "@/actions/commissions"
+import { AuditAction, AuditLog, AuditScope } from "@proto/commission/commission"
 
 interface CommissionDetailDialogProps {
   open: boolean
@@ -92,6 +95,81 @@ export function CommissionDetailDialog({
   }
 
   const isEnAttente = commission.statut?.code?.toLowerCase() === "en_attente"
+
+  const [auditLogs, setAuditLogs] = React.useState<AuditLog[]>([])
+  const [auditLoading, setAuditLoading] = React.useState(false)
+  const [auditError, setAuditError] = React.useState<string | null>(null)
+
+  const scopeLabels: Record<number, string> = {
+    [AuditScope.AUDIT_SCOPE_COMMISSION]: "Commission",
+    [AuditScope.AUDIT_SCOPE_RECURRENCE]: "Récurrence",
+    [AuditScope.AUDIT_SCOPE_REPRISE]: "Reprise",
+    [AuditScope.AUDIT_SCOPE_REPORT]: "Report",
+    [AuditScope.AUDIT_SCOPE_BORDEREAU]: "Bordereau",
+    [AuditScope.AUDIT_SCOPE_LIGNE]: "Ligne",
+    [AuditScope.AUDIT_SCOPE_BAREME]: "Barème",
+    [AuditScope.AUDIT_SCOPE_PALIER]: "Palier",
+    [AuditScope.AUDIT_SCOPE_ENGINE]: "Moteur",
+  }
+
+  const actionLabels: Record<number, string> = {
+    [AuditAction.AUDIT_ACTION_COMMISSION_CALCULATED]: "Commission calculée",
+    [AuditAction.AUDIT_ACTION_COMMISSION_CREATED]: "Commission créée",
+    [AuditAction.AUDIT_ACTION_COMMISSION_UPDATED]: "Commission mise à jour",
+    [AuditAction.AUDIT_ACTION_COMMISSION_DELETED]: "Commission supprimée",
+    [AuditAction.AUDIT_ACTION_COMMISSION_STATUS_CHANGED]: "Statut modifié",
+    [AuditAction.AUDIT_ACTION_RECURRENCE_GENERATED]: "Récurrence générée",
+    [AuditAction.AUDIT_ACTION_RECURRENCE_STOPPED]: "Récurrence stoppée",
+    [AuditAction.AUDIT_ACTION_REPRISE_CREATED]: "Reprise créée",
+    [AuditAction.AUDIT_ACTION_REPRISE_APPLIED]: "Reprise appliquée",
+    [AuditAction.AUDIT_ACTION_REPRISE_CANCELLED]: "Reprise annulée",
+    [AuditAction.AUDIT_ACTION_REPRISE_REGULARIZED]: "Reprise régularisée",
+    [AuditAction.AUDIT_ACTION_REPORT_NEGATIF_CREATED]: "Report négatif créé",
+    [AuditAction.AUDIT_ACTION_REPORT_NEGATIF_APPLIED]: "Report négatif appliqué",
+    [AuditAction.AUDIT_ACTION_REPORT_NEGATIF_CLEARED]: "Report négatif apuré",
+    [AuditAction.AUDIT_ACTION_BORDEREAU_CREATED]: "Bordereau créé",
+    [AuditAction.AUDIT_ACTION_BORDEREAU_VALIDATED]: "Bordereau validé",
+    [AuditAction.AUDIT_ACTION_BORDEREAU_EXPORTED]: "Bordereau exporté",
+    [AuditAction.AUDIT_ACTION_BORDEREAU_ARCHIVED]: "Bordereau archivé",
+    [AuditAction.AUDIT_ACTION_LIGNE_SELECTED]: "Ligne sélectionnée",
+    [AuditAction.AUDIT_ACTION_LIGNE_DESELECTED]: "Ligne désélectionnée",
+    [AuditAction.AUDIT_ACTION_LIGNE_VALIDATED]: "Ligne validée",
+    [AuditAction.AUDIT_ACTION_LIGNE_REJECTED]: "Ligne rejetée",
+    [AuditAction.AUDIT_ACTION_BAREME_CREATED]: "Barème créé",
+    [AuditAction.AUDIT_ACTION_BAREME_UPDATED]: "Barème mis à jour",
+    [AuditAction.AUDIT_ACTION_BAREME_ACTIVATED]: "Barème activé",
+    [AuditAction.AUDIT_ACTION_BAREME_DEACTIVATED]: "Barème désactivé",
+    [AuditAction.AUDIT_ACTION_BAREME_VERSION_CREATED]: "Version barème créée",
+    [AuditAction.AUDIT_ACTION_PALIER_CREATED]: "Palier créé",
+    [AuditAction.AUDIT_ACTION_PALIER_UPDATED]: "Palier mis à jour",
+    [AuditAction.AUDIT_ACTION_PALIER_DELETED]: "Palier supprimé",
+  }
+
+  React.useEffect(() => {
+    if (!open || !commission?.id) return
+    let cancelled = false
+    setAuditLoading(true)
+    setAuditError(null)
+    getAuditLogsByCommission({ commissionId: commission.id })
+      .then((result) => {
+        if (cancelled) return
+        if (result.error) {
+          setAuditError(result.error)
+        } else if (result.data) {
+          setAuditLogs(result.data.logs.slice(0, 10))
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setAuditError(err instanceof Error ? err.message : "Erreur lors du chargement des audits")
+      })
+      .finally(() => {
+        if (!cancelled) setAuditLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, commission?.id])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -275,6 +353,46 @@ export function CommissionDetailDialog({
                   <span className="font-medium">{formatDate(commission.updatedAt)}</span>
                 </div>
               </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Info className="size-4" />
+                Journal d&apos;audit
+              </h3>
+              {auditLoading ? (
+                <div className="text-sm text-muted-foreground">Chargement des audits...</div>
+              ) : auditError ? (
+                <Alert variant="destructive">
+                  <AlertTitle>Erreur</AlertTitle>
+                  <AlertDescription>{auditError}</AlertDescription>
+                </Alert>
+              ) : auditLogs.length === 0 ? (
+                <div className="text-sm text-muted-foreground">Aucun audit disponible pour cette commission.</div>
+              ) : (
+                <div className="space-y-3">
+                  {auditLogs.map((log) => (
+                    <div key={log.id} className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">
+                          {actionLabels[log.action] || "Action"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {scopeLabels[log.scope] || "—"} · {log.userName || log.userId || "Système"}
+                        </div>
+                        {log.motif && (
+                          <div className="text-xs text-muted-foreground">{log.motif}</div>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatDate(log.createdAt)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </ScrollArea>

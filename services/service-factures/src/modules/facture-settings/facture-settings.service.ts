@@ -4,30 +4,11 @@ import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { FactureSettingsEntity, LogoPosition } from './entities/facture-settings.entity';
+import type { CreateFactureSettingsRequest } from '@proto/factures/factures';
 
-interface CreateSettingsInput {
-  societeId: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  companyName?: string;
-  companyAddress?: string;
-  companyPhone?: string;
-  companyEmail?: string;
-  companySiret?: string;
-  companyTvaNumber?: string;
-  companyRcs?: string;
-  companyCapital?: string;
-  iban?: string;
-  bic?: string;
-  bankName?: string;
-  headerText?: string;
-  footerText?: string;
-  legalMentions?: string;
-  paymentTerms?: string;
-  invoicePrefix?: string;
-  showLogo?: boolean;
+export type CreateSettingsInput = Omit<CreateFactureSettingsRequest, 'logoPosition'> & {
   logoPosition?: LogoPosition;
-}
+};
 
 @Injectable()
 export class FactureSettingsService {

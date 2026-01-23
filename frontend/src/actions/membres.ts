@@ -1,7 +1,7 @@
 "use server";
 
 import { membresCompte, users } from "@/lib/grpc";
-import type { MembreCompte, Utilisateur } from "@proto-frontend/organisations/users";
+import type { MembreCompte, Utilisateur } from "@proto/organisations/users";
 
 export interface MembreWithUserDto {
   id: string;

@@ -85,6 +85,15 @@ enum TypeProduit {
   PARTENAIRE = 2;
 }
 
+enum StatutCycleProduit {
+  STATUT_CYCLE_PRODUIT_UNSPECIFIED = 0;
+  STATUT_CYCLE_PRODUIT_BROUILLON = 1;
+  STATUT_CYCLE_PRODUIT_TEST = 2;
+  STATUT_CYCLE_PRODUIT_ACTIF = 3;
+  STATUT_CYCLE_PRODUIT_GELE = 4;
+  STATUT_CYCLE_PRODUIT_RETIRE = 5;
+}
+
 enum CategorieProduit {
   CATEGORIE_PRODUIT_UNSPECIFIED = 0;
   ASSURANCE = 1;
@@ -118,6 +127,7 @@ message Produit {
   string updated_at = 21;
   // Relations
   Gamme gamme = 22;
+  StatutCycleProduit statut_cycle = 23;
 }
 
 message CreateProduitRequest {
@@ -134,6 +144,7 @@ message CreateProduitRequest {
   string image_url = 11;
   string code_externe = 12;
   string metadata = 13;
+  StatutCycleProduit statut_cycle = 14;
 }
 
 message UpdateProduitRequest {
@@ -151,6 +162,7 @@ message UpdateProduitRequest {
   optional string image_url = 12;
   optional string code_externe = 13;
   optional string metadata = 14;
+  optional StatutCycleProduit statut_cycle = 15;
 }
 
 message GetProduitRequest {
@@ -184,6 +196,160 @@ message DeleteProduitRequest {
 
 message DeleteProduitResponse {
   bool success = 1;
+}
+
+// ===== PRODUIT VERSION =====
+
+message ProduitVersion {
+  string id = 1;
+  string produit_id = 2;
+  int32 version = 3;
+  string effective_from = 4;
+  string effective_to = 5;
+  string notes = 6;
+  bool breaking_changes = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateProduitVersionRequest {
+  string produit_id = 1;
+  int32 version = 2;
+  string effective_from = 3;
+  optional string effective_to = 4;
+  optional string notes = 5;
+  optional bool breaking_changes = 6;
+}
+
+message UpdateProduitVersionRequest {
+  string id = 1;
+  optional string effective_from = 2;
+  optional string effective_to = 3;
+  optional string notes = 4;
+  optional bool breaking_changes = 5;
+}
+
+message GetProduitVersionRequest {
+  string id = 1;
+}
+
+message ListProduitVersionsRequest {
+  string produit_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListProduitVersionsResponse {
+  repeated ProduitVersion versions = 1;
+  PaginationResponse pagination = 2;
+}
+
+// ===== PRODUIT DOCUMENT =====
+
+enum TypeDocumentProduit {
+  TYPE_DOCUMENT_PRODUIT_UNSPECIFIED = 0;
+  TYPE_DOCUMENT_PRODUIT_DIPA = 1;
+  TYPE_DOCUMENT_PRODUIT_CG = 2;
+  TYPE_DOCUMENT_PRODUIT_CP = 3;
+  TYPE_DOCUMENT_PRODUIT_TARIF = 4;
+  TYPE_DOCUMENT_PRODUIT_SCRIPT = 5;
+  TYPE_DOCUMENT_PRODUIT_MEDIA = 6;
+}
+
+message ProduitDocument {
+  string id = 1;
+  string version_produit_id = 2;
+  TypeDocumentProduit type = 3;
+  string title = 4;
+  string file_url = 5;
+  string file_hash = 6;
+  bool mandatory = 7;
+  string published_at = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+message CreateProduitDocumentRequest {
+  string version_produit_id = 1;
+  TypeDocumentProduit type = 2;
+  string title = 3;
+  string file_url = 4;
+  string file_hash = 5;
+  optional bool mandatory = 6;
+}
+
+message UpdateProduitDocumentRequest {
+  string id = 1;
+  optional string title = 2;
+  optional string file_url = 3;
+  optional string file_hash = 4;
+  optional bool mandatory = 5;
+  optional string published_at = 6;
+}
+
+message GetProduitDocumentRequest {
+  string id = 1;
+}
+
+message ListProduitDocumentsRequest {
+  string version_produit_id = 1;
+}
+
+message ListProduitDocumentsResponse {
+  repeated ProduitDocument documents = 1;
+}
+
+// ===== PRODUIT PUBLICATION =====
+
+enum VisibilitePublication {
+  VISIBILITE_PUBLICATION_UNSPECIFIED = 0;
+  VISIBILITE_PUBLICATION_CACHE = 1;
+  VISIBILITE_PUBLICATION_INTERNE = 2;
+  VISIBILITE_PUBLICATION_PUBLIC = 3;
+}
+
+message ProduitPublication {
+  string id = 1;
+  string version_produit_id = 2;
+  string societe_id = 3;
+  repeated string channels = 4;
+  VisibilitePublication visibilite = 5;
+  string start_at = 6;
+  string end_at = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateProduitPublicationRequest {
+  string version_produit_id = 1;
+  string societe_id = 2;
+  repeated string channels = 3;
+  VisibilitePublication visibilite = 4;
+  string start_at = 5;
+  optional string end_at = 6;
+}
+
+message UpdateProduitPublicationRequest {
+  string id = 1;
+  repeated string channels = 2;
+  optional VisibilitePublication visibilite = 3;
+  optional string start_at = 4;
+  optional string end_at = 5;
+}
+
+message GetProduitPublicationRequest {
+  string id = 1;
+}
+
+message ListProduitPublicationsByVersionRequest {
+  string version_produit_id = 1;
+}
+
+message ListProduitPublicationsBySocieteRequest {
+  string societe_id = 1;
+}
+
+message ListProduitPublicationsResponse {
+  repeated ProduitPublication publications = 1;
 }
 
 // Promotion
@@ -407,6 +573,28 @@ service ProduitService {
   rpc Delete(DeleteProduitRequest) returns (DeleteProduitResponse);
   rpc SetPromotion(SetPromotionRequest) returns (Produit);
   rpc ClearPromotion(ClearPromotionRequest) returns (Produit);
+}
+
+service ProduitVersionService {
+  rpc Create(CreateProduitVersionRequest) returns (ProduitVersion);
+  rpc Update(UpdateProduitVersionRequest) returns (ProduitVersion);
+  rpc Get(GetProduitVersionRequest) returns (ProduitVersion);
+  rpc ListByProduit(ListProduitVersionsRequest) returns (ListProduitVersionsResponse);
+}
+
+service ProduitDocumentService {
+  rpc Create(CreateProduitDocumentRequest) returns (ProduitDocument);
+  rpc Update(UpdateProduitDocumentRequest) returns (ProduitDocument);
+  rpc Get(GetProduitDocumentRequest) returns (ProduitDocument);
+  rpc ListByVersion(ListProduitDocumentsRequest) returns (ListProduitDocumentsResponse);
+}
+
+service ProduitPublicationService {
+  rpc Create(CreateProduitPublicationRequest) returns (ProduitPublication);
+  rpc Update(UpdateProduitPublicationRequest) returns (ProduitPublication);
+  rpc Get(GetProduitPublicationRequest) returns (ProduitPublication);
+  rpc ListByVersion(ListProduitPublicationsByVersionRequest) returns (ListProduitPublicationsResponse);
+  rpc ListBySociete(ListProduitPublicationsBySocieteRequest) returns (ListProduitPublicationsResponse);
 }
 
 service GrilleTarifaireService {

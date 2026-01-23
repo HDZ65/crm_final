@@ -4,8 +4,12 @@ import { Repository, LessThanOrEqual, Between } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { RetryScheduleEntity, RetryEligibility } from './entities/retry-schedule.entity';
+import type {
+  CancelRetryScheduleRequest,
+  PaginationRequest,
+} from '@proto/retry/am04_retry_service';
 
-interface ListRetrySchedulesInput {
+export interface ListRetrySchedulesInput {
   organisationId: string;
   societeId?: string;
   clientId?: string;
@@ -14,19 +18,10 @@ interface ListRetrySchedulesInput {
   isResolved?: boolean;
   nextRetryDateFrom?: Date;
   nextRetryDateTo?: Date;
-  pagination?: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: string;
-  };
+  pagination?: Partial<PaginationRequest>;
 }
 
-interface CancelRetryScheduleInput {
-  id: string;
-  reason: string;
-  cancelledBy: string;
-}
+export type CancelRetryScheduleInput = CancelRetryScheduleRequest;
 
 @Injectable()
 export class RetryScheduleService {

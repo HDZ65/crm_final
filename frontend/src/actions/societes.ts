@@ -1,7 +1,7 @@
 "use server";
 
 import { societes } from "@/lib/grpc";
-import type { Societe } from "@proto-frontend/organisations/organisations";
+import type { Societe } from "@proto/organisations/organisations";
 
 export interface SocieteDto {
   id: string;

@@ -4,9 +4,9 @@ import { Repository, Between } from 'typeorm';
 import { getDay, format, getMonth, getDate, startOfYear, endOfYear } from 'date-fns';
 import Holidays from 'date-holidays';
 
-import { HolidayZoneEntity } from './entities/holiday-zone.entity.js';
-import { HolidayEntity } from './entities/holiday.entity.js';
-import type { CheckDateEligibilityResponse } from '@proto/calendar/calendar.js';
+import { HolidayZoneEntity } from './entities/holiday-zone.entity';
+import { HolidayEntity } from './entities/holiday.entity';
+import type { CheckDateEligibilityResponse } from '@proto/calendar/calendar';
 
 export interface DateEligibility {
   isEligible: boolean;

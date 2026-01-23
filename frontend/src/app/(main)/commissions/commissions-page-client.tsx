@@ -69,9 +69,10 @@ import { Badge } from "@/components/ui/badge"
 
 // Import types for SSR data
 import type { Commission, Reprise, Bordereau, AuditLog, RecurrenceCommission, ReportNegatif } from "@proto/commission/commission"
-import { AuditAction, AuditScope, StatutRecurrence, StatutReport } from "@proto/commission/commission"
 import type { DateRange } from "react-day-picker"
 import type { Apporteur } from "@proto/commerciaux/commerciaux"
+// Use local enums to avoid importing gRPC code in browser
+import { AuditAction, AuditScope, StatutRecurrence, StatutReport } from "@/lib/proto-enums"
 
 // Simple type for statuts from server action
 interface SimpleStatut {

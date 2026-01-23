@@ -20,8 +20,16 @@ export class OrganisationsClientService implements OnModuleInit {
 
   onModuleInit(): void {
     const url = this.configService.get<string>('ORGANISATIONS_GRPC_URL', 'service-organisations:50062');
-    const protoPath = join(process.cwd(), 'proto/src/organisations/organisations.proto');
-    const includeDirs = [join(process.cwd(), 'proto/src')];
+    
+    // Try Docker path first, then dev path
+    const dockerProtoPath = join(process.cwd(), 'proto/organisations.proto');
+    const devProtoPath = join(process.cwd(), 'proto/src/organisations/organisations.proto');
+    
+    const fs = require('fs');
+    const protoPath = fs.existsSync(dockerProtoPath) ? dockerProtoPath : devProtoPath;
+    const includeDirs = fs.existsSync(dockerProtoPath) 
+      ? [join(process.cwd(), 'proto')]
+      : [join(process.cwd(), 'proto/src')];
 
     try {
       const packageDef = loadSync(protoPath, {

@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { DebitBatch } from '../../configuration/entities/system-debit-configuration.entity.js';
+import { DebitBatch } from '../../configuration/entities/system-debit-configuration.entity';
 
 export enum PlannedDateStatus {
   PLANNED = 'PLANNED',

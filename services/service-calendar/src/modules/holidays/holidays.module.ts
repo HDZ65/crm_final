@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { HolidayZoneEntity } from './entities/holiday-zone.entity.js';
-import { HolidayEntity } from './entities/holiday.entity.js';
-import { HolidaysService } from './holidays.service.js';
+import { HolidayZoneEntity } from './entities/holiday-zone.entity';
+import { HolidayEntity } from './entities/holiday.entity';
+import { HolidaysService } from './holidays.service';
 
 @Module({
   imports: [

@@ -2,13 +2,13 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { SystemDebitConfigurationEntity, DebitDateMode, DebitBatch, DateShiftStrategy } from './entities/system-debit-configuration.entity.js';
-import { CompanyDebitConfigurationEntity } from './entities/company-debit-configuration.entity.js';
-import { ClientDebitConfigurationEntity } from './entities/client-debit-configuration.entity.js';
-import { ContractDebitConfigurationEntity } from './entities/contract-debit-configuration.entity.js';
-import { AuditService } from '../audit/audit.service.js';
-import { AuditSource } from '../audit/entities/calendar-audit-log.entity.js';
-import type { Pagination, PaginationResult } from '@proto/calendar/calendar.js';
+import { SystemDebitConfigurationEntity, DebitDateMode, DebitBatch, DateShiftStrategy } from './entities/system-debit-configuration.entity';
+import { CompanyDebitConfigurationEntity } from './entities/company-debit-configuration.entity';
+import { ClientDebitConfigurationEntity } from './entities/client-debit-configuration.entity';
+import { ContractDebitConfigurationEntity } from './entities/contract-debit-configuration.entity';
+import { AuditService } from '../audit/audit.service';
+import { AuditSource } from '../audit/entities/calendar-audit-log.entity';
+import type { Pagination, PaginationResult } from '@proto/calendar/calendar';
 
 export interface PaginationInput {
   page?: number;

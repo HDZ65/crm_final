@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "proto:copy": "rm -rf src/proto && mkdir -p src/proto && cp -r ../proto/gen/frontend/* src/proto/",
+    "proto:copy": "rm -rf src/proto && mkdir -p src/proto && cp -r ../proto/gen/ts-frontend/* src/proto/",
     "proto:clean": "rm -rf src/proto",
     "type-check": "tsc --noEmit",
     "docker:build": "cd .. && docker build -f frontend/Dockerfile -t frontend:latest .",

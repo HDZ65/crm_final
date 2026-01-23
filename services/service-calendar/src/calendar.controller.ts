@@ -2,14 +2,14 @@ import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { format, parseISO, addDays, subDays } from 'date-fns';
 
-import { CalendarEngineService } from './modules/engine/calendar-engine.service.js';
-import { ConfigurationResolverService } from './modules/configuration/configuration-resolver.service.js';
-import { ConfigurationService } from './modules/configuration/configuration.service.js';
-import { HolidaysService } from './modules/holidays/holidays.service.js';
-import { AuditService } from './modules/audit/audit.service.js';
-import { CsvImportService, ImportType } from './modules/csv-import/csv-import.service.js';
-import { AuditSource } from './modules/audit/entities/calendar-audit-log.entity.js';
-import { DebitDateMode, DebitBatch, DateShiftStrategy } from './modules/configuration/entities/system-debit-configuration.entity.js';
+import { CalendarEngineService } from './modules/engine/calendar-engine.service';
+import { ConfigurationResolverService } from './modules/configuration/configuration-resolver.service';
+import { ConfigurationService } from './modules/configuration/configuration.service';
+import { HolidaysService } from './modules/holidays/holidays.service';
+import { AuditService } from './modules/audit/audit.service';
+import { CsvImportService, ImportType } from './modules/csv-import/csv-import.service';
+import { AuditSource } from './modules/audit/entities/calendar-audit-log.entity';
+import { DebitDateMode, DebitBatch, DateShiftStrategy } from './modules/configuration/entities/system-debit-configuration.entity';
 
 @Controller()
 export class CalendarController {

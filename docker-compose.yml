@@ -144,6 +144,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: activites_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -165,6 +166,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: clients_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -186,6 +188,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: commerciaux_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -207,6 +210,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: commission_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       proto-generator:
         condition: service_started
@@ -230,6 +234,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: contrats_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -251,6 +256,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: dashboard_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -272,6 +278,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: documents_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -293,6 +300,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: email_db
+      DB_SYNCHRONIZE: "true"
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     depends_on:
       proto-generator:
@@ -317,6 +325,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: factures_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       proto-generator:
         condition: service_started
@@ -340,6 +349,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: logistics_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       proto-generator:
         condition: service_started
@@ -365,6 +375,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: notifications_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       proto-generator:
         condition: service_started
@@ -388,6 +399,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: organisations_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -409,6 +421,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: payments_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       proto-generator:
         condition: service_started
@@ -432,6 +445,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: products_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -453,6 +467,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: referentiel_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -475,6 +490,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: relance_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -496,6 +512,29 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: users_db
+      DB_SYNCHRONIZE: "true"
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - crm-network
+
+  service-calendar:
+    build:
+      context: .
+      dockerfile: services/service-calendar/Dockerfile
+    container_name: crm-service-calendar
+    ports:
+      - "50070:50070"
+    environment:
+      NODE_ENV: development
+      GRPC_PORT: 50070
+      DB_HOST: postgres-main
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: calendar_db
+      DB_SYNCHRONIZE: "true"
     depends_on:
       postgres-main:
         condition: service_healthy

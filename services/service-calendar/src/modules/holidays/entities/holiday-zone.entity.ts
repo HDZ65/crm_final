@@ -7,7 +7,7 @@ import {
   Index,
   OneToMany,
 } from 'typeorm';
-import { HolidayEntity } from './holiday.entity.js';
+import { HolidayEntity } from './holiday.entity';
 
 @Entity('holiday_zone')
 export class HolidayZoneEntity {

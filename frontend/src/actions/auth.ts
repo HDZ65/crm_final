@@ -50,13 +50,63 @@ export async function setActiveOrganisationId(organisationId: string): Promise<v
 /**
  * Get current user by Keycloak ID via gRPC
  * This replaces the REST API /auth/me endpoint
+ * If user doesn't exist, creates them automatically
  */
 export async function getCurrentUserByKeycloakId(
-  keycloakId: string
+  keycloakId: string,
+  userInfo?: { email?: string; name?: string; given_name?: string; family_name?: string }
 ): Promise<ActionResult<AuthMeResponse>> {
   try {
-    // Get user by keycloak ID
-    const user = await users.getByKeycloakId({ keycloakId });
+    let user;
+    
+    try {
+      // Try to get user by keycloak ID
+      user = await users.getByKeycloakId({ keycloakId });
+    } catch (err) {
+      // User doesn't exist - create them if we have userInfo
+      const error = err as { code?: number; details?: string };
+      const isNotFound = error.code === 5 || error.details?.includes("not found") || error.details?.includes("NOT_FOUND");
+      
+      if (isNotFound && userInfo?.email) {
+        console.log(`[getCurrentUserByKeycloakId] User not found, creating new user for keycloakId: ${keycloakId}`);
+        
+        // Parse name from userInfo
+        let nom = "";
+        let prenom = "";
+        
+        if (userInfo.family_name) {
+          nom = userInfo.family_name;
+        }
+        if (userInfo.given_name) {
+          prenom = userInfo.given_name;
+        }
+        // Fallback: split the full name
+        if (!nom && !prenom && userInfo.name) {
+          const nameParts = userInfo.name.trim().split(" ");
+          if (nameParts.length >= 2) {
+            prenom = nameParts[0];
+            nom = nameParts.slice(1).join(" ");
+          } else {
+            nom = userInfo.name;
+          }
+        }
+        
+        // Create the user
+        user = await users.create({
+          keycloakId,
+          email: userInfo.email,
+          nom: nom || "Utilisateur",
+          prenom: prenom || "",
+          telephone: "",
+          actif: true,
+        });
+        
+        console.log(`[getCurrentUserByKeycloakId] User created successfully: ${user.id}`);
+      } else {
+        // Re-throw if not a "not found" error or no userInfo
+        throw err;
+      }
+    }
 
     // Get user's organisations via membre_compte
     const membresResponse = await membresCompte.listByUtilisateur({

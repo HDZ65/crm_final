@@ -8,7 +8,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import type { HolidayZoneEntity } from './holiday-zone.entity.js';
+import type { HolidayZoneEntity } from './holiday-zone.entity';
 
 export enum HolidayType {
   PUBLIC = 'PUBLIC',

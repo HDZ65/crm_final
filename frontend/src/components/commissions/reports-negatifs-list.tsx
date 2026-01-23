@@ -4,7 +4,8 @@ import * as React from "react"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table-basic"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ReportNegatif, StatutReport } from "@proto/commission/commission"
+import type { ReportNegatif } from "@proto/commission/commission"
+import { StatutReport } from "@/lib/proto-enums"
 
 interface ReportsNegatifsListProps {
   reports: ReportNegatif[]

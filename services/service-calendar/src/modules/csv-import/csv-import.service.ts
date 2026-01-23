@@ -4,14 +4,14 @@ import { Repository, DataSource } from 'typeorm';
 import { parse } from 'csv-parse/sync';
 import { v4 as uuidv4 } from 'uuid';
 
-import { CompanyDebitConfigurationEntity } from '../configuration/entities/company-debit-configuration.entity.js';
-import { ClientDebitConfigurationEntity } from '../configuration/entities/client-debit-configuration.entity.js';
-import { ContractDebitConfigurationEntity } from '../configuration/entities/contract-debit-configuration.entity.js';
-import { HolidayEntity, HolidayType } from '../holidays/entities/holiday.entity.js';
-import { AuditService } from '../audit/audit.service.js';
-import { AuditSource } from '../audit/entities/calendar-audit-log.entity.js';
-import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity.js';
-import type { ImportCsvResponse, CsvValidationError } from '@proto/calendar/calendar.js';
+import { CompanyDebitConfigurationEntity } from '../configuration/entities/company-debit-configuration.entity';
+import { ClientDebitConfigurationEntity } from '../configuration/entities/client-debit-configuration.entity';
+import { ContractDebitConfigurationEntity } from '../configuration/entities/contract-debit-configuration.entity';
+import { HolidayEntity, HolidayType } from '../holidays/entities/holiday.entity';
+import { AuditService } from '../audit/audit.service';
+import { AuditSource } from '../audit/entities/calendar-audit-log.entity';
+import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity';
+import type { ImportCsvResponse, CsvValidationError } from '@proto/calendar/calendar';
 
 export interface CsvImportResult {
   importId: string;

@@ -95,11 +95,8 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClie
               </Select>
             </NativeFormField>
 
-            <NativeFormField
-              name="societeId"
-              label="Societe (optionnel)"
-              errors={state.errors?.societeId}
-            >
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Societe (optionnel)</label>
               <Select value={selectedSocieteId} onValueChange={setSelectedSocieteId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Aucune societe" />
@@ -113,7 +110,10 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClie
                   ))}
                 </SelectContent>
               </Select>
-            </NativeFormField>
+              {state.errors?.societeId && (
+                <p className="text-sm text-destructive">{state.errors.societeId[0]}</p>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

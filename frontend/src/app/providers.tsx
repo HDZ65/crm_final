@@ -1,18 +1,60 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalErrorDisplay } from "@/components/error/global-error-display";
+import { ConnectionStatus } from "@/components/error/connection-status";
+import { useAppStore } from "@/stores/app-store";
 
 type ProvidersProps = {
   children: ReactNode;
 };
 
+/**
+ * Initialise l'application et les stores
+ */
+function AppInitializer({ children }: { children: ReactNode }) {
+  const setAppReady = useAppStore((state) => state.setAppReady);
+  const setInitializing = useAppStore((state) => state.setInitializing);
+  const setOnline = useAppStore((state) => state.setOnline);
+
+  useEffect(() => {
+    // Marquer l'app comme initialisee
+    setInitializing(false);
+    setAppReady(true);
+
+    // Ecouter les changements de connexion
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [setAppReady, setInitializing, setOnline]);
+
+  return <>{children}</>;
+}
+
 export function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
-      {children}
-      <Toaster richColors position="bottom-right" />
+      <AppInitializer>
+        {children}
+        
+        {/* Affichage des erreurs globales */}
+        <GlobalErrorDisplay position="top" maxErrors={3} />
+        
+        {/* Status de connexion (affiche seulement si deconnecte) */}
+        <ConnectionStatus showWhenConnected={false} />
+        
+        {/* Toast notifications */}
+        <Toaster richColors position="bottom-right" />
+      </AppInitializer>
     </SessionProvider>
   );
 }

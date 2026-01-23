@@ -57,7 +57,13 @@ export function OrganisationProvider({
     setError(null);
     try {
       // Appel gRPC via Server Action
-      const result = await getCurrentUserByKeycloakId(profile.id);
+      // Pass user info for auto-creation if user doesn't exist
+      const result = await getCurrentUserByKeycloakId(profile.id, {
+        email: profile.email,
+        name: profile.fullName,
+        given_name: profile.firstName,
+        family_name: profile.lastName,
+      });
       if (result.error) {
         throw new Error(result.error);
       }
@@ -68,7 +74,7 @@ export function OrganisationProvider({
     } finally {
       setIsLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.id, profile?.email, profile?.fullName, profile?.firstName, profile?.lastName]);
 
   // Fetch au montage quand authentifié (skip si initialUser provided)
   useEffect(() => {

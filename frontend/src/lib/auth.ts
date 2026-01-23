@@ -172,23 +172,40 @@ export async function getServerAuth() {
   return getServerSession(authOptions);
 }
 
+interface TokenPayload {
+  sub?: string;
+  email?: string;
+  name?: string;
+  given_name?: string;
+  family_name?: string;
+  preferred_username?: string;
+}
+
 /**
- * Get keycloak ID from JWT token
+ * Parse JWT token to extract user info
  */
-function getKeycloakIdFromToken(accessToken: string): string | null {
+function parseToken(accessToken: string): TokenPayload | null {
   try {
     const base64Url = accessToken.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
-    return payload.sub || null;
+    return JSON.parse(Buffer.from(base64, 'base64').toString());
   } catch {
     return null;
   }
 }
 
 /**
+ * Get keycloak ID from JWT token
+ */
+function getKeycloakIdFromToken(accessToken: string): string | null {
+  const payload = parseToken(accessToken);
+  return payload?.sub || null;
+}
+
+/**
  * Get user profile server-side - fetches all data in one go
  * Use this in Server Components for optimal performance
+ * Creates user automatically if they don't exist
  */
 export async function getServerUserProfile(): Promise<AuthMeResponse | null> {
   try {
@@ -198,13 +215,56 @@ export async function getServerUserProfile(): Promise<AuthMeResponse | null> {
       return null;
     }
 
-    const keycloakId = getKeycloakIdFromToken(session.accessToken);
-    if (!keycloakId) {
+    const tokenPayload = parseToken(session.accessToken);
+    if (!tokenPayload?.sub) {
       return null;
     }
 
-    // Fetch user by keycloak ID
-    const user = await users.getByKeycloakId({ keycloakId });
+    const keycloakId = tokenPayload.sub;
+    let user;
+
+    try {
+      // Try to fetch user by keycloak ID
+      user = await users.getByKeycloakId({ keycloakId });
+    } catch (err) {
+      // User doesn't exist - create them automatically
+      const error = err as { code?: number; details?: string };
+      const isNotFound = error.code === 5 || error.details?.includes("not found") || error.details?.includes("NOT_FOUND");
+      
+      if (isNotFound && tokenPayload.email) {
+        console.log(`[getServerUserProfile] User not found, creating new user for keycloakId: ${keycloakId}`);
+        
+        // Parse name from token
+        let nom = tokenPayload.family_name || "";
+        let prenom = tokenPayload.given_name || "";
+        
+        // Fallback: split the full name
+        if (!nom && !prenom && tokenPayload.name) {
+          const nameParts = tokenPayload.name.trim().split(" ");
+          if (nameParts.length >= 2) {
+            prenom = nameParts[0];
+            nom = nameParts.slice(1).join(" ");
+          } else {
+            nom = tokenPayload.name;
+          }
+        }
+        
+        // Create the user
+        user = await users.create({
+          keycloakId,
+          email: tokenPayload.email,
+          nom: nom || "Utilisateur",
+          prenom: prenom || "",
+          telephone: "",
+          actif: true,
+        });
+        
+        console.log(`[getServerUserProfile] User created successfully: ${user.id}`);
+      } else {
+        // Re-throw if not a "not found" error or no email
+        throw err;
+      }
+    }
 
     // Fetch user's organisations
     const membresResponse = await membresCompte.listByUtilisateur({

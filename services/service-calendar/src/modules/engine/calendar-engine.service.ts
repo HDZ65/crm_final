@@ -3,15 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { addDays, subDays, format } from 'date-fns';
 
-import { PlannedDebitEntity } from './entities/planned-debit.entity.js';
-import { ConfigurationResolverService, ResolvedConfig } from '../configuration/configuration-resolver.service.js';
-import { HolidaysService } from '../holidays/holidays.service.js';
-import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity.js';
+import { PlannedDebitEntity } from './entities/planned-debit.entity';
+import { ConfigurationResolverService, ResolvedConfig } from '../configuration/configuration-resolver.service';
+import { HolidaysService } from '../holidays/holidays.service';
+import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity';
 import type {
   CalculatePlannedDateRequest,
   CalculatePlannedDateResponse,
   DateResolutionStep,
-} from '@proto/calendar/calendar.js';
+} from '@proto/calendar/calendar';
 
 export interface CalculatePlannedDateInput {
   organisationId: string;

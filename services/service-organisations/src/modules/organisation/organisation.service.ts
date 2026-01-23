@@ -15,6 +15,7 @@ export class OrganisationService {
   ) {}
 
   async create(input: {
+    id?: string; // Optional: use provided ID for synchronization with service-users
     nom: string;
     description?: string;
     siret?: string;
@@ -23,7 +24,7 @@ export class OrganisationService {
     email?: string;
     actif?: boolean;
   }): Promise<OrganisationEntity> {
-    const entity = this.repository.create({
+    const entityData: Partial<OrganisationEntity> = {
       nom: input.nom,
       description: input.description || null,
       siret: input.siret || null,
@@ -32,7 +33,14 @@ export class OrganisationService {
       email: input.email || null,
       actif: input.actif ?? true,
       etat: 'actif',
-    });
+    };
+    
+    // If ID is provided, use it (for sync with service-users comptes)
+    if (input.id) {
+      entityData.id = input.id;
+    }
+    
+    const entity = this.repository.create(entityData);
     return this.repository.save(entity);
   }
 

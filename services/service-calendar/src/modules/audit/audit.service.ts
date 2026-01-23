@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, FindOptionsWhere } from 'typeorm';
 
-import { CalendarAuditLogEntity, AuditSource } from './entities/calendar-audit-log.entity.js';
-import type { GetAuditLogsRequest } from '@proto/calendar/calendar.js';
+import { CalendarAuditLogEntity, AuditSource } from './entities/calendar-audit-log.entity';
+import type { GetAuditLogsRequest } from '@proto/calendar/calendar';
 
 export interface CreateAuditLogInput {
   organisationId: string;

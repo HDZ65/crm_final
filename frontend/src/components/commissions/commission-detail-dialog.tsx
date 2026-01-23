@@ -28,7 +28,8 @@ import {
 } from "lucide-react"
 import type { CommissionWithDetailsResponseDto, TypeApporteur } from "@/types/commission"
 import { getAuditLogsByCommission } from "@/actions/commissions"
-import { AuditAction, AuditLog, AuditScope } from "@proto/commission/commission"
+import type { AuditLog } from "@proto/commission/commission"
+import { AuditAction, AuditScope } from "@/lib/proto-enums"
 
 interface CommissionDetailDialogProps {
   open: boolean

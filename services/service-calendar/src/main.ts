@@ -2,17 +2,24 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
-import { AppModule } from './app.module.js';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const grpcPort = process.env.GRPC_PORT || '50070';
   const grpcUrl = process.env.GRPC_URL || `0.0.0.0:${grpcPort}`;
 
+  // In Docker: /app/proto/calendar.proto (proto/src/calendar is copied to ./proto)
+  // In dev: proto/src/calendar/calendar.proto (from project root)
+  const isDocker = process.env.NODE_ENV === 'production' || process.env.DB_HOST === 'postgres-main';
+  const protoPath = isDocker
+    ? join(process.cwd(), 'proto/calendar.proto')
+    : join(process.cwd(), '../../proto/src/calendar/calendar.proto');
+
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
     transport: Transport.GRPC,
     options: {
       package: 'calendar',
-      protoPath: join(process.cwd(), 'proto/calendar/calendar.proto'),
+      protoPath,
       url: grpcUrl,
       maxReceiveMessageLength: 20 * 1024 * 1024,
       maxSendMessageLength: 20 * 1024 * 1024,

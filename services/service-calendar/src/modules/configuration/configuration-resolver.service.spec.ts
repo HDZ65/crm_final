@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
-import { ConfigurationResolverService, ConfigurationError } from './configuration-resolver.service.js';
-import { ContractDebitConfigurationEntity } from './entities/contract-debit-configuration.entity.js';
-import { ClientDebitConfigurationEntity } from './entities/client-debit-configuration.entity.js';
-import { CompanyDebitConfigurationEntity } from './entities/company-debit-configuration.entity.js';
-import { SystemDebitConfigurationEntity, DebitDateMode, DebitBatch, DateShiftStrategy } from './entities/system-debit-configuration.entity.js';
+import { ConfigurationResolverService, ConfigurationError } from './configuration-resolver.service';
+import { ContractDebitConfigurationEntity } from './entities/contract-debit-configuration.entity';
+import { ClientDebitConfigurationEntity } from './entities/client-debit-configuration.entity';
+import { CompanyDebitConfigurationEntity } from './entities/company-debit-configuration.entity';
+import { SystemDebitConfigurationEntity, DebitDateMode, DebitBatch, DateShiftStrategy } from './entities/system-debit-configuration.entity';
 
 describe('ConfigurationResolverService', () => {
   let service: ConfigurationResolverService;

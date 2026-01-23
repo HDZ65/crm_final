@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { DebitDateMode, DebitBatch, DateShiftStrategy } from './system-debit-configuration.entity.js';
+import { DebitDateMode, DebitBatch, DateShiftStrategy } from './system-debit-configuration.entity';
 
 @Entity('company_debit_configuration')
 export class CompanyDebitConfigurationEntity {

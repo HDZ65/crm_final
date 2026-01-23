@@ -7,7 +7,7 @@ import {
   Index,
   Unique,
 } from 'typeorm';
-import { DebitBatch } from '../../configuration/entities/system-debit-configuration.entity.js';
+import { DebitBatch } from '../../configuration/entities/system-debit-configuration.entity';
 
 @Entity('volume_forecast')
 @Unique(['organisationId', 'societeId', 'year', 'month', 'day', 'batch'])

@@ -2,11 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { CalendarEngineService, CalendarError } from './calendar-engine.service.js';
-import { PlannedDebitEntity } from './entities/planned-debit.entity.js';
-import { ConfigurationResolverService, ResolvedConfig } from '../configuration/configuration-resolver.service.js';
-import { HolidaysService, DateEligibility } from '../holidays/holidays.service.js';
-import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity.js';
+import { CalendarEngineService, CalendarError } from './calendar-engine.service';
+import { PlannedDebitEntity } from './entities/planned-debit.entity';
+import { ConfigurationResolverService, ResolvedConfig } from '../configuration/configuration-resolver.service';
+import { HolidaysService, DateEligibility } from '../holidays/holidays.service';
+import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity';
 
 describe('CalendarEngineService', () => {
   let service: CalendarEngineService;

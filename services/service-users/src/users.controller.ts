@@ -1,5 +1,6 @@
 import { Controller, Logger } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, RpcException } from '@nestjs/microservices';
+import { status } from '@grpc/grpc-js';
 
 import type {
   CreateUtilisateurRequest,
@@ -274,11 +275,23 @@ export class UsersController {
       createdByUserId: owner.id,
     });
 
+    // Synchronize with organisations service - this is mandatory
     try {
       await this.organisationsClientService.syncOrganisationWithCompte(compte.id, data.nom);
       this.logger.log(`Organisation synchronisée avec compte ${compte.id}`);
     } catch (error) {
+      // Rollback: delete the compte if organisation sync fails
       this.logger.error(`Erreur lors de la synchronisation de l'organisation: ${error}`);
+      try {
+        await this.compteService.delete(compte.id);
+        this.logger.log(`Compte ${compte.id} supprimé suite à l'échec de synchronisation`);
+      } catch (deleteError) {
+        this.logger.error(`Impossible de supprimer le compte ${compte.id}: ${deleteError}`);
+      }
+      throw new RpcException({
+        code: status.INTERNAL,
+        message: `Impossible de créer l'organisation: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+      });
     }
 
     let ownerRole;

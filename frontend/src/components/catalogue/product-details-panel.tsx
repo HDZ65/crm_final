@@ -56,7 +56,7 @@ import type {
   ProduitDocument,
   ProduitPublication,
 } from "@proto/products/products"
-import { TypeDocumentProduit, VisibilitePublication } from "@proto/products/products"
+import { TypeDocumentProduit, VisibilitePublication } from "@/lib/proto-enums"
 import type { Societe } from "@proto/organisations/organisations"
 
 interface ProductDetailsPanelProps {

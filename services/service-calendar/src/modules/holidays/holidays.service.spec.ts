@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
-import { HolidaysService, HolidaysError } from './holidays.service.js';
-import { HolidayZoneEntity } from './entities/holiday-zone.entity.js';
-import { HolidayEntity, HolidayType } from './entities/holiday.entity.js';
+import { HolidaysService, HolidaysError } from './holidays.service';
+import { HolidayZoneEntity } from './entities/holiday-zone.entity';
+import { HolidayEntity, HolidayType } from './entities/holiday.entity';
 
 describe('HolidaysService', () => {
   let service: HolidaysService;

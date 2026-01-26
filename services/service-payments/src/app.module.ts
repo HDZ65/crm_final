@@ -4,37 +4,37 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 // Feature Modules
-import { StripeModule } from './modules/stripe/stripe.module.js';
-import { PaypalModule } from './modules/paypal/paypal.module.js';
-import { GoCardlessModule } from './modules/gocardless/gocardless.module.js';
-import { SlimpayModule } from './modules/slimpay/slimpay.module.js';
-import { MultiSafepayModule } from './modules/multisafepay/multisafepay.module.js';
-import { EmerchantpayModule } from './modules/emerchantpay/emerchantpay.module.js';
-import { SchedulesModule } from './modules/schedules/schedules.module.js';
-import { PortalModule } from './modules/portal/portal.module.js';
-import { AuditModule } from './modules/audit/audit.module.js';
-import { CalendarModule } from './modules/calendar/calendar.module.js';
-import { RetryModule } from './modules/retry/retry.module.js';
+import { StripeModule } from './modules/stripe/stripe.module';
+import { PaypalModule } from './modules/paypal/paypal.module';
+import { GoCardlessModule } from './modules/gocardless/gocardless.module';
+import { SlimpayModule } from './modules/slimpay/slimpay.module';
+import { MultiSafepayModule } from './modules/multisafepay/multisafepay.module';
+import { EmerchantpayModule } from './modules/emerchantpay/emerchantpay.module';
+import { SchedulesModule } from './modules/schedules/schedules.module';
+import { PortalModule } from './modules/portal/portal.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
+import { RetryModule } from './modules/retry/retry.module';
 
 // Entities
-import { StripeAccountEntity } from './modules/stripe/entities/stripe-account.entity.js';
-import { PaypalAccountEntity } from './modules/paypal/entities/paypal-account.entity.js';
-import { GoCardlessAccountEntity } from './modules/gocardless/entities/gocardless-account.entity.js';
-import { GoCardlessMandateEntity } from './modules/gocardless/entities/gocardless-mandate.entity.js';
-import { ScheduleEntity } from './modules/schedules/entities/schedule.entity.js';
-import { PaymentIntentEntity } from './modules/schedules/entities/payment-intent.entity.js';
-import { PaymentEventEntity } from './modules/schedules/entities/payment-event.entity.js';
-import { PortalPaymentSessionEntity } from './modules/portal/entities/portal-session.entity.js';
-import { PortalSessionAuditEntity } from './modules/portal/entities/portal-session-audit.entity.js';
-import { PSPEventInboxEntity } from './modules/portal/entities/psp-event-inbox.entity.js';
-import { PaymentAuditLogEntity } from './modules/audit/entities/payment-audit-log.entity.js';
-import { SlimpayAccountEntity } from './modules/slimpay/entities/slimpay-account.entity.js';
-import { MultiSafepayAccountEntity } from './modules/multisafepay/entities/multisafepay-account.entity.js';
-import { EmerchantpayAccountEntity } from './modules/emerchantpay/entities/emerchantpay-account.entity.js';
+import { StripeAccountEntity } from './modules/stripe/entities/stripe-account.entity';
+import { PaypalAccountEntity } from './modules/paypal/entities/paypal-account.entity';
+import { GoCardlessAccountEntity } from './modules/gocardless/entities/gocardless-account.entity';
+import { GoCardlessMandateEntity } from './modules/gocardless/entities/gocardless-mandate.entity';
+import { ScheduleEntity } from './modules/schedules/entities/schedule.entity';
+import { PaymentIntentEntity } from './modules/schedules/entities/payment-intent.entity';
+import { PaymentEventEntity } from './modules/schedules/entities/payment-event.entity';
+import { PortalPaymentSessionEntity } from './modules/portal/entities/portal-session.entity';
+import { PortalSessionAuditEntity } from './modules/portal/entities/portal-session-audit.entity';
+import { PSPEventInboxEntity } from './modules/portal/entities/psp-event-inbox.entity';
+import { PaymentAuditLogEntity } from './modules/audit/entities/payment-audit-log.entity';
+import { SlimpayAccountEntity } from './modules/slimpay/entities/slimpay-account.entity';
+import { MultiSafepayAccountEntity } from './modules/multisafepay/entities/multisafepay-account.entity';
+import { EmerchantpayAccountEntity } from './modules/emerchantpay/entities/emerchantpay-account.entity';
 
 // Payment gRPC Controller
-import { PaymentController } from './payment.controller.js';
-import { PortalController } from './modules/portal/portal.controller.js';
+import { PaymentController } from './payment.controller';
+import { PortalController } from './modules/portal/portal.controller';
 
 @Module({
   imports: [
@@ -72,7 +72,9 @@ import { PortalController } from './modules/portal/portal.controller.js';
           MultiSafepayAccountEntity,
           EmerchantpayAccountEntity,
         ],
-        synchronize: configService.get('NODE_ENV') === 'development',
+        synchronize: false, // Désactivé - utiliser les migrations
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get('NODE_ENV') === 'development',
         extra: {
           max: 10,

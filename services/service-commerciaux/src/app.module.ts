@@ -28,7 +28,9 @@ import { ModeleDistribution } from './modules/modele-distribution/entities/model
         database: configService.get('DB_DATABASE', 'commerciaux_db'),
         namingStrategy: new SnakeNamingStrategy(),
         entities: [Apporteur, BaremeCommission, PalierCommission, ModeleDistribution],
-        synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
+        synchronize: false, // Désactivé - utiliser les migrations
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         extra: {
           max: 10,
           idleTimeoutMillis: 30000,

@@ -27,7 +27,9 @@ import { EncryptionService } from './common/encryption.service';
         database: configService.get<string>('DB_DATABASE', 'email_db'),
         namingStrategy: new SnakeNamingStrategy(),
         entities: [MailboxEntity],
-        synchronize: configService.get<string>('NODE_ENV') === 'development',
+        synchronize: false, // Désactivé - utiliser les migrations
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get<string>('NODE_ENV') === 'development',
         ssl:
           configService.get<string>('DB_SSL') === 'true'

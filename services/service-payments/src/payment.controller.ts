@@ -1,16 +1,16 @@
 import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import { StripeService } from './modules/stripe/stripe.service.js';
-import { PaypalService } from './modules/paypal/paypal.service.js';
-import { GoCardlessService } from './modules/gocardless/gocardless.service.js';
-import { SlimpayService } from './modules/slimpay/slimpay.service.js';
-import { MultiSafepayService } from './modules/multisafepay/multisafepay.service.js';
-import { EmerchantpayService } from './modules/emerchantpay/emerchantpay.service.js';
-import { SchedulesService } from './modules/schedules/schedules.service.js';
-import { RetryClientService } from './modules/retry/retry-client.service.js';
-import { PaymentProvider, ScheduleFrequency } from './modules/schedules/entities/schedule.entity.js';
-import { PaymentIntentStatus } from './modules/schedules/entities/payment-intent.entity.js';
+import { StripeService } from './modules/stripe/stripe.service';
+import { PaypalService } from './modules/paypal/paypal.service';
+import { GoCardlessService } from './modules/gocardless/gocardless.service';
+import { SlimpayService } from './modules/slimpay/slimpay.service';
+import { MultiSafepayService } from './modules/multisafepay/multisafepay.service';
+import { EmerchantpayService } from './modules/emerchantpay/emerchantpay.service';
+import { SchedulesService } from './modules/schedules/schedules.service';
+import { RetryClientService } from './modules/retry/retry-client.service';
+import { PaymentProvider, ScheduleFrequency } from './modules/schedules/entities/schedule.entity';
+import { PaymentIntentStatus } from './modules/schedules/entities/payment-intent.entity';
 import type {
   CreateStripeCheckoutSessionRequest,
   StripeCheckoutSessionResponse,

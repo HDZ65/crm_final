@@ -1,15 +1,15 @@
 import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { createHash } from 'crypto';
-import { PortalSessionService, RequestContext } from './portal-session.service.js';
-import { PortalPSPService } from './portal-psp.service.js';
-import { PortalQueryService } from './portal-query.service.js';
+import { PortalSessionService, RequestContext } from './portal-session.service';
+import { PortalPSPService } from './portal-psp.service';
+import { PortalQueryService } from './portal-query.service';
 import {
   PortalPaymentSessionEntity,
   PortalSessionAction,
   PortalSessionStatus,
   PSPProvider,
-} from './entities/portal-session.entity.js';
+} from './entities/portal-session.entity';
 
 interface CreatePortalSessionRequest {
   organisationId: string;

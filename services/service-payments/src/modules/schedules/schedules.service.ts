@@ -6,16 +6,16 @@ import {
   ScheduleStatus,
   ScheduleFrequency,
   PaymentProvider,
-} from './entities/schedule.entity.js';
+} from './entities/schedule.entity';
 import {
   PaymentIntentEntity,
   PaymentIntentStatus,
-} from './entities/payment-intent.entity.js';
+} from './entities/payment-intent.entity';
 import {
   PaymentEventEntity,
   PaymentEventType,
-} from './entities/payment-event.entity.js';
-import { IdempotencyService, IdempotencyKeyConflictError } from './idempotency.service.js';
+} from './entities/payment-event.entity';
+import { IdempotencyService, IdempotencyKeyConflictError } from './idempotency.service';
 
 @Injectable()
 export class SchedulesService {

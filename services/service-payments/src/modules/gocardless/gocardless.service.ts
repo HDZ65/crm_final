@@ -1,9 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GoCardlessAccountEntity } from './entities/gocardless-account.entity.js';
-import { GoCardlessMandateEntity, MandateStatus } from './entities/gocardless-mandate.entity.js';
-import { RumGeneratorService } from './rum-generator.service.js';
+import { GoCardlessAccountEntity } from './entities/gocardless-account.entity';
+import { GoCardlessMandateEntity, MandateStatus } from './entities/gocardless-mandate.entity';
+import { RumGeneratorService } from './rum-generator.service';
 import type { GoCardlessConfig } from '@proto/payments/payment';
 
 @Injectable()

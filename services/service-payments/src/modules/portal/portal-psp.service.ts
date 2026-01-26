@@ -7,10 +7,10 @@ import {
   PortalSessionStatus,
   PortalSessionAction,
   PSPProvider,
-} from './entities/portal-session.entity.js';
-import { PSPEventInboxEntity, WebhookEventStatus } from './entities/psp-event-inbox.entity.js';
-import { PortalSessionAuditEntity, AuditEventType, AuditActorType } from './entities/portal-session-audit.entity.js';
-import { PortalSessionService, RequestContext } from './portal-session.service.js';
+} from './entities/portal-session.entity';
+import { PSPEventInboxEntity, WebhookEventStatus } from './entities/psp-event-inbox.entity';
+import { PortalSessionAuditEntity, AuditEventType, AuditActorType } from './entities/portal-session-audit.entity';
+import { PortalSessionService, RequestContext } from './portal-session.service';
 import { StripeService } from '../stripe/stripe.service.js';
 import { GoCardlessService } from '../gocardless/gocardless.service.js';
 import { SlimpayService } from '../slimpay/slimpay.service.js';

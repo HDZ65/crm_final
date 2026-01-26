@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { PortalPaymentSessionEntity } from './portal-session.entity.js';
+import { PortalPaymentSessionEntity } from './portal-session.entity';
 
 export enum AuditEventType {
   SESSION_CREATED = 'SESSION_CREATED',

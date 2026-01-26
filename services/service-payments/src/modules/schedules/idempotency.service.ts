@@ -1,7 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PaymentIntentEntity } from './entities/payment-intent.entity.js';
+import { PaymentIntentEntity } from './entities/payment-intent.entity';
 import { createHash } from 'crypto';
 
 export class IdempotencyKeyConflictError extends ConflictException {

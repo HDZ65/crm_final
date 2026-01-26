@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHmac } from 'crypto';
-import { SlimpayAccountEntity } from './entities/slimpay-account.entity.js';
+import { SlimpayAccountEntity } from './entities/slimpay-account.entity';
 import { SlimpayToken } from '@proto/payments/payment.js';
 
 @Injectable()

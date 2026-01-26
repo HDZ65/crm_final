@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GoCardlessMandateEntity } from './entities/gocardless-mandate.entity.js';
+import { GoCardlessMandateEntity } from './entities/gocardless-mandate.entity';
 import { randomBytes } from 'crypto';
 
 const RUM_MAX_LENGTH = 35;

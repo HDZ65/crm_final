@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SlimpayAccountEntity } from './entities/slimpay-account.entity.js';
-import { SlimpayService } from './slimpay.service.js';
+import { SlimpayAccountEntity } from './entities/slimpay-account.entity';
+import { SlimpayService } from './slimpay.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([SlimpayAccountEntity])],

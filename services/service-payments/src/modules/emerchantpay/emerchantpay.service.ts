@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createPublicKey, verify } from 'crypto';
-import { EmerchantpayAccountEntity } from './entities/emerchantpay-account.entity.js';
+import { EmerchantpayAccountEntity } from './entities/emerchantpay-account.entity';
 
 @Injectable()
 export class EmerchantpayService {

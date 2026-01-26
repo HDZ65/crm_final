@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import Stripe from 'stripe';
-import { StripeAccountEntity } from './entities/stripe-account.entity.js';
+import { StripeAccountEntity } from './entities/stripe-account.entity';
 
 @Injectable()
 export class StripeService {

@@ -54,7 +54,9 @@ import { CalendarController } from './calendar.controller';
           VolumeThresholdEntity,
           CalendarAuditLogEntity,
         ],
-        synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true' || configService.get('NODE_ENV') === 'development',
+        synchronize: false, // Désactivé - utiliser les migrations
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'] || configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
         extra: {
           max: 10,

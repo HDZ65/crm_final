@@ -31,7 +31,9 @@ import { OrganisationsController } from './organisations.controller';
         database: configService.get('DB_DATABASE', 'organisations_db'),
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
-        synchronize: configService.get('NODE_ENV', 'development') === 'development',
+        synchronize: false, // Désactivé - utiliser les migrations
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         extra: {
           max: 10,
           idleTimeoutMillis: 30000,

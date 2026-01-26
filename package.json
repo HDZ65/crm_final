@@ -4,21 +4,44 @@
   "description": "CRM Final - Multi-tenant White Label Partner Management System",
   "private": true,
   "workspaces": [
-    "backend",
     "frontend",
-    "service-*"
+    "shared",
+    "services/*"
   ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
+    "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn')!==-1)throw new Error('Use npm, not yarn')\"",
+    
     "proto:lint": "buf lint",
     "proto:generate": "buf generate --template proto/buf.gen.yaml",
-    "proto:breaking": "buf breaking --against '.git#branch=main'",
     "proto:format": "buf format -w proto",
     "proto:all": "npm run proto:lint && npm run proto:generate",
-    "install:buf": "echo 'Please install Buf manually from https://buf.build/docs/installation'",
-    "backend:dev": "cd backend && npm run start:dev",
-    "backend:build": "cd backend && npm run build",
-    "frontend:dev": "cd frontend && npm run dev",
-    "frontend:build": "cd frontend && npm run build"
+    
+    "frontend:dev": "npm run dev --workspace=frontend",
+    "frontend:build": "npm run build --workspace=frontend",
+    "frontend:start": "npm run start --workspace=frontend",
+    
+    "db:create": "docker exec -i crm-postgres-main bash < scripts/docker-create-databases.sh",
+    "db:migrate": "node scripts/db-setup.js migrate",
+    "db:generate": "node scripts/db-setup.js generate",
+    "db:status": "node scripts/db-setup.js status",
+    "db:setup": "npm run db:create && npm run db:migrate",
+    
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:db": "docker-compose up -d postgres-main",
+    "docker:services": "docker-compose up -d",
+    "docker:rebuild": "docker-compose up -d --build",
+    
+    "dev": "npm run docker:db && npm run frontend:dev",
+    "start:dev": "npm run docker:services && npm run frontend:dev",
+    
+    "clean": "rm -rf node_modules && rm -rf */node_modules && rm -rf services/*/node_modules",
+    "clean:docker": "docker-compose down -v --rmi local"
   },
   "repository": {
     "type": "git",
@@ -30,12 +53,16 @@
     "multi-tenant",
     "grpc",
     "nestjs",
-    "microservices"
+    "nextjs",
+    "microservices",
+    "typescript"
   ],
   "author": "Your Team",
   "license": "PROPRIETARY",
   "devDependencies": {
     "@bufbuild/buf": "^1.64.0",
+    "dotenv": "^16.4.5",
+    "pg": "^8.17.2",
     "ts-proto": "^1.181.2"
   }
 }

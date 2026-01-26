@@ -28,7 +28,9 @@ import { EvenementSuivi } from './modules/evenement-suivi/entities/evenement-sui
         database: configService.get('DB_DATABASE', 'activites_db'),
         namingStrategy: new SnakeNamingStrategy(),
         entities: [TypeActivite, Activite, Tache, EvenementSuivi],
-        synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
+        synchronize: false, // Désactivé - utiliser les migrations
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         extra: {
           max: 10,
           idleTimeoutMillis: 30000,

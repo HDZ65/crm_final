@@ -1,9 +1,0 @@
-export { CommissionController } from './commission.controller';
-export { BaremeCommissionController } from './bareme-commission.controller';
-export { PalierCommissionController } from './palier-commission.controller';
-export { RepriseCommissionController } from './reprise-commission.controller';
-export { BordereauCommissionController } from './bordereau-commission.controller';
-export { LigneBordereauController } from './ligne-bordereau.controller';
-export { StatutCommissionController } from './statut-commission.controller';
-export { ApporteurController } from './apporteur.controller';
-export { CommissionEngineController } from './commission-engine.controller';

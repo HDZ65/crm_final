@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GoCardlessAccountEntity } from './entities/gocardless-account.entity.js';
-import { GoCardlessMandateEntity } from './entities/gocardless-mandate.entity.js';
-import { GoCardlessService } from './gocardless.service.js';
-import { RumGeneratorService } from './rum-generator.service.js';
+import { GoCardlessAccountEntity } from './entities/gocardless-account.entity';
+import { GoCardlessMandateEntity } from './entities/gocardless-mandate.entity';
+import { GoCardlessService } from './gocardless.service';
+import { RumGeneratorService } from './rum-generator.service';
 
 @Module({
   imports: [

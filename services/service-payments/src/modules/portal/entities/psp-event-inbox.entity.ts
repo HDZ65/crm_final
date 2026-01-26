@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { PortalPaymentSessionEntity, PSPProvider } from './portal-session.entity.js';
+import { PortalPaymentSessionEntity, PSPProvider } from './portal-session.entity';
 
 export enum WebhookEventStatus {
   RECEIVED = 'RECEIVED',

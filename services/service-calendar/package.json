@@ -17,12 +17,18 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/datasource.ts",
+    "migration:generate": "npm run typeorm -- migration:generate src/migrations/$npm_config_name",
+    "migration:create": "npm run typeorm -- migration:create src/migrations/$npm_config_name",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "migration:show": "npm run typeorm -- migration:show",
+    "db:create": "ts-node src/scripts/create-database.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
-    "protobufjs": "^7.5.3",
     "@nestjs/common": "^11.1.12",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.12",
@@ -36,7 +42,9 @@
     "date-fns": "^2.30.0",
     "date-fns-tz": "^2.0.1",
     "date-holidays": "^3.26.6",
+    "dotenv": "^16.6.1",
     "pg": "^8.17.1",
+    "protobufjs": "^7.5.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.28",
@@ -50,6 +58,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.9",
+    "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
     "eslint": "^9.39.2",
@@ -62,8 +71,7 @@
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.3",
-    "@types/uuid": "^11.0.0"
+    "typescript": "^5.9.3"
   },
   "jest": {
     "moduleFileExtensions": [

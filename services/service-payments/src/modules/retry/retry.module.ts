@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { RetryClientService } from './retry-client.service.js';
+import { RetryClientService } from './retry-client.service';
 
 @Module({
   imports: [ConfigModule],

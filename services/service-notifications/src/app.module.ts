@@ -25,7 +25,9 @@ import { NotificationEntity } from './modules/notification/entities/notification
         database: configService.get<string>('DB_DATABASE', 'notifications_db'),
         namingStrategy: new SnakeNamingStrategy(),
         entities: [NotificationEntity],
-        synchronize: configService.get<string>('NODE_ENV') === 'development',
+        synchronize: false, // Désactivé - utiliser les migrations
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get<string>('NODE_ENV') === 'development',
         ssl:
           configService.get<string>('DB_SSL') === 'true'

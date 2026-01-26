@@ -27,7 +27,11 @@ import { ClientsController } from './clients.controller';
         database: configService.get('DB_DATABASE', 'clients_db'),
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
-        synchronize: configService.get('NODE_ENV') === 'development',
+        // MIGRATIONS: synchronize désactivé en production
+        // En dev, on peut l'activer temporairement si besoin
+        synchronize: false,
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         extra: {
           max: 10,
           idleTimeoutMillis: 30000,

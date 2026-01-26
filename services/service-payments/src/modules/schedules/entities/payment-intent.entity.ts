@@ -8,7 +8,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { ScheduleEntity, PaymentProvider } from './schedule.entity.js';
+import { ScheduleEntity, PaymentProvider } from './schedule.entity';
 
 export enum PaymentIntentStatus {
   PENDING = 'pending',

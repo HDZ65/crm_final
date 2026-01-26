@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHmac } from 'crypto';
-import { MultiSafepayAccountEntity } from './entities/multisafepay-account.entity.js';
+import { MultiSafepayAccountEntity } from './entities/multisafepay-account.entity';
 
 @Injectable()
 export class MultiSafepayService {

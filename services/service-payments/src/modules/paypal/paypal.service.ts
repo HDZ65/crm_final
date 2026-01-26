@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PaypalAccountEntity } from './entities/paypal-account.entity.js';
+import { PaypalAccountEntity } from './entities/paypal-account.entity';
 
 interface PayPalAccessToken {
   access_token: string;

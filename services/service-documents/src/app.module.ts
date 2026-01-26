@@ -24,7 +24,9 @@ import { BoiteMail } from './modules/boite-mail/entities/boite-mail.entity';
         database: configService.get('DB_DATABASE', 'documents_db'),
         namingStrategy: new SnakeNamingStrategy(),
         entities: [PieceJointe, BoiteMail],
-        synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
+        synchronize: false, // Désactivé - utiliser les migrations
+        migrationsRun: true, // Exécute les migrations au démarrage
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         extra: {
           max: 10,
           idleTimeoutMillis: 30000,

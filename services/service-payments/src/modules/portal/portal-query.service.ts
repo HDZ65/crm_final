@@ -4,8 +4,8 @@ import { Repository, FindOptionsWhere, LessThan, MoreThan, Between } from 'typeo
 import {
   PortalPaymentSessionEntity,
   PortalSessionStatus,
-} from './entities/portal-session.entity.js';
-import { PortalSessionAuditEntity } from './entities/portal-session-audit.entity.js';
+} from './entities/portal-session.entity';
+import { PortalSessionAuditEntity } from './entities/portal-session-audit.entity';
 import {
   ListPortalSessionsRequest,
   GetPortalSessionAuditRequest,

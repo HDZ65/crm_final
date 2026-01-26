@@ -1,23 +1,108 @@
-# Environment files (NEVER commit secrets!)
+# ============================================
+# CRM FINAL - GITIGNORE
+# ============================================
+
+# ============================================
+# ENVIRONMENT & SECRETS (NEVER COMMIT!)
+# ============================================
 .env
 .env.local
 .env.production
 .env.*.local
+*.pem
+*.key
+credentials.json
+secrets/
 
-# Proto generated files (centralized)
-proto/gen/
+# MCP Configuration (contains API keys)
+.mcp.json
 
-# Legacy paths (can be removed once migration complete)
-frontend/src/gen/*.ts
-frontend/src/gen/*.js
-backend/src/gen/proto/*.ts
-backend/src/gen/proto/*.js
-generated/proto/*.js
-generated/proto/*.d.ts
-generated/proto/*.ts
+# ============================================
+# DEPENDENCIES
+# ============================================
 node_modules/
-.next/
-dist/
+.pnp
+.pnp.js
 
-# Generated proto files at root (legacy)
-gen/
+# ============================================
+# BUILD OUTPUTS
+# ============================================
+dist/
+build/
+.next/
+out/
+
+# ============================================
+# PROTO GENERATED FILES
+# ============================================
+proto/gen/
+frontend/src/gen/
+generated/
+
+# ============================================
+# LOGS & DEBUG
+# ============================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs/
+
+# ============================================
+# TESTING & COVERAGE
+# ============================================
+coverage/
+.nyc_output/
+*.lcov
+
+# ============================================
+# IDE & EDITORS
+# ============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# OS FILES
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================
+# DOCKER
+# ============================================
+docker-compose.override.yml
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ============================================
+# TYPESCRIPT
+# ============================================
+*.tsbuildinfo
+.tsbuildinfo
+
+# ============================================
+# MISC
+# ============================================
+.turbo
+.vercel
+.cache

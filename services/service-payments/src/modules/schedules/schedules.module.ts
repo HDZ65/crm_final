@@ -1,12 +1,12 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
-import { ScheduleEntity } from './entities/schedule.entity.js';
-import { PaymentIntentEntity } from './entities/payment-intent.entity.js';
-import { PaymentEventEntity } from './entities/payment-event.entity.js';
-import { SchedulesService } from './schedules.service.js';
-import { PaymentEmissionJob } from './payment-emission.job.js';
-import { IdempotencyService } from './idempotency.service.js';
+import { ScheduleEntity } from './entities/schedule.entity';
+import { PaymentIntentEntity } from './entities/payment-intent.entity';
+import { PaymentEventEntity } from './entities/payment-event.entity';
+import { SchedulesService } from './schedules.service';
+import { PaymentEmissionJob } from './payment-emission.job';
+import { IdempotencyService } from './idempotency.service';
 import { GoCardlessModule } from '../gocardless/gocardless.module.js';
 import { StripeModule } from '../stripe/stripe.module.js';
 import { CalendarModule } from '../calendar/calendar.module.js';

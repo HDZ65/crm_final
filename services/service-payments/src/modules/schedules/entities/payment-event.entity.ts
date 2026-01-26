@@ -7,8 +7,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { PaymentIntentEntity } from './payment-intent.entity.js';
-import { PaymentProvider } from './schedule.entity.js';
+import { PaymentIntentEntity } from './payment-intent.entity';
+import { PaymentProvider } from './schedule.entity';
 
 export enum PaymentEventType {
   // Intent events

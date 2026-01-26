@@ -6,12 +6,12 @@ import {
   PortalPaymentSessionEntity,
   PortalSessionStatus,
   PortalSessionAction,
-} from './entities/portal-session.entity.js';
+} from './entities/portal-session.entity';
 import {
   PortalSessionAuditEntity,
   AuditEventType,
   AuditActorType,
-} from './entities/portal-session-audit.entity.js';
+} from './entities/portal-session-audit.entity';
 import type {
   CreatePortalSessionRequest,
   PortalRequestContext,

@@ -13,8 +13,6 @@ import { ReminderModule } from './modules/reminder/reminder.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 
-import { RetryController } from './retry.controller';
-
 import { RetryPolicyEntity } from './modules/retry-policy/entities/retry-policy.entity';
 import { RetryScheduleEntity } from './modules/retry-schedule/entities/retry-schedule.entity';
 import { RetryAttemptEntity } from './modules/retry-attempt/entities/retry-attempt.entity';
@@ -76,6 +74,6 @@ synchronize: false, // Désactivé - utiliser les migrations
     AuditLogModule,
     SchedulerModule,
   ],
-  controllers: [RetryController],
+  controllers: [],
 })
 export class AppModule {}

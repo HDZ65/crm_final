@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PieceJointeModule } from './modules/piece-jointe/piece-jointe.module';
 import { BoiteMailModule } from './modules/boite-mail/boite-mail.module';
-import { DocumentsController } from './documents.controller';
 import { PieceJointe } from './modules/piece-jointe/entities/piece-jointe.entity';
 import { BoiteMail } from './modules/boite-mail/entities/boite-mail.entity';
 
@@ -38,6 +37,6 @@ import { BoiteMail } from './modules/boite-mail/entities/boite-mail.entity';
     PieceJointeModule,
     BoiteMailModule,
   ],
-  controllers: [DocumentsController],
+  controllers: [],
 })
 export class AppModule {}

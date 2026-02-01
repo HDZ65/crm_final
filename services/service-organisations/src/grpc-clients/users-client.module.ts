@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { join } from 'path';
+import { getGrpcClientModuleOptions } from '@crm/grpc-utils';
 
 @Module({
   imports: [
@@ -10,14 +10,16 @@ import { join } from 'path';
         name: 'USERS_SERVICE',
         imports: [ConfigModule],
         inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.GRPC,
-          options: {
-            package: 'users',
-            protoPath: join(__dirname, '../../../proto/users.proto'),
-            url: configService.get('USERS_SERVICE_URL', 'localhost:50063'),
-          },
-        }),
+        useFactory: (configService: ConfigService) => {
+          const baseOptions = getGrpcClientModuleOptions('USERS_SERVICE', 'users');
+          return {
+            ...baseOptions,
+            options: {
+              ...baseOptions.options,
+              url: configService.get('USERS_SERVICE_URL', 'service-users:50067'),
+            },
+          };
+        },
       },
     ]),
   ],

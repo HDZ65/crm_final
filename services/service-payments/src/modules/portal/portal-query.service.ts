@@ -9,7 +9,7 @@ import { PortalSessionAuditEntity } from './entities/portal-session-audit.entity
 import {
   ListPortalSessionsRequest,
   GetPortalSessionAuditRequest,
-} from '@proto/payments/payment.js';
+} from '@crm/proto/payments';
 
 export type ListSessionsParams = Pick<ListPortalSessionsRequest, 'organisationId' | 'customerId'> & {
   contractId?: string;

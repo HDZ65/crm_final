@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
+// Modules - chaque module a son propre controleur
 import { CommissionModule } from './modules/commission/commission.module';
 import { BaremeModule } from './modules/bareme/bareme.module';
 import { PalierModule } from './modules/palier/palier.module';
@@ -15,8 +16,7 @@ import { CommissionAuditModule } from './modules/audit/audit.module';
 import { RecurrenceModule } from './modules/recurrence/recurrence.module';
 import { ReportNegatifModule } from './modules/report/report.module';
 
-import { CommissionController } from './commission.controller';
-
+// Entities
 import { CommissionEntity } from './modules/commission/entities/commission.entity';
 import { BaremeCommissionEntity } from './modules/bareme/entities/bareme-commission.entity';
 import { PalierCommissionEntity } from './modules/palier/entities/palier-commission.entity';
@@ -57,15 +57,13 @@ import { ReportNegatifEntity } from './modules/report/entities/report-negatif.en
           CommissionRecurrenteEntity,
           ReportNegatifEntity,
         ],
-        synchronize: false, // Désactivé - utiliser les migrations
-        migrationsRun: true, // Exécute les migrations au démarrage
+        synchronize: false,
+        migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get<string>('NODE_ENV') === 'development',
         ssl:
           configService.get<string>('DB_SSL') === 'true'
-            ? {
-                rejectUnauthorized: configService.get<string>('NODE_ENV') === 'production',
-              }
+            ? { rejectUnauthorized: configService.get<string>('NODE_ENV') === 'production' }
             : false,
         extra: {
           max: 10,
@@ -74,6 +72,7 @@ import { ReportNegatifEntity } from './modules/report/entities/report-negatif.en
         },
       }),
     }),
+    // Chaque module importe son propre controleur
     CommissionModule,
     BaremeModule,
     PalierModule,
@@ -86,6 +85,7 @@ import { ReportNegatifEntity } from './modules/report/entities/report-negatif.en
     RecurrenceModule,
     ReportNegatifModule,
   ],
-  controllers: [CommissionController],
+  // Plus de controleur monolithique ici - chaque module a le sien
+  controllers: [],
 })
 export class AppModule {}

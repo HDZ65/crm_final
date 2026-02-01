@@ -4,7 +4,12 @@ import { MembreCompteService } from '../membre-compte/membre-compte.service';
 import { CompteService } from '../compte/compte.service';
 import { RoleService } from '../role/role.service';
 import { UtilisateurEntity } from '../utilisateur/entities/utilisateur.entity';
+import type { SyncKeycloakUserRequest } from '@crm/proto/users';
 
+/**
+ * Interface for Keycloak user data with snake_case properties (OIDC standard)
+ * Used by controllers to build the user object before syncing
+ */
 export interface KeycloakUser {
   sub: string;
   email: string;
@@ -36,7 +41,7 @@ export class AuthSyncService {
     private readonly roleService: RoleService,
   ) {}
 
-  async syncKeycloakUser(keycloakUser: KeycloakUser): Promise<UtilisateurEntity> {
+  async syncKeycloakUser(keycloakUser: KeycloakUser | SyncKeycloakUserRequest): Promise<UtilisateurEntity> {
     this.logger.log(`Syncing Keycloak user: ${keycloakUser.sub} (${keycloakUser.email})`);
 
     // Check if user already exists
@@ -47,9 +52,13 @@ export class AuthSyncService {
       return user;
     }
 
+    // Handle both snake_case (KeycloakUser) and camelCase (SyncKeycloakUserRequest) formats
+    const familyName = 'family_name' in keycloakUser ? keycloakUser.family_name : (keycloakUser as SyncKeycloakUserRequest).familyName;
+    const givenName = 'given_name' in keycloakUser ? keycloakUser.given_name : (keycloakUser as SyncKeycloakUserRequest).givenName;
+
     // Parse name from Keycloak claims
-    const nom = keycloakUser.family_name || this.extractLastName(keycloakUser.name) || keycloakUser.email.split('@')[0];
-    const prenom = keycloakUser.given_name || this.extractFirstName(keycloakUser.name) || '';
+    const nom = familyName || this.extractLastName(keycloakUser.name) || keycloakUser.email.split('@')[0];
+    const prenom = givenName || this.extractFirstName(keycloakUser.name) || '';
 
     // Create new user
     user = await this.utilisateurService.create({

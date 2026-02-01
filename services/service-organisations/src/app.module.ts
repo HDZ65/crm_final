@@ -11,8 +11,6 @@ import { ThemeMarqueModule } from './modules/theme-marque/theme-marque.module';
 import { RolePartenaireModule } from './modules/role-partenaire/role-partenaire.module';
 import { MembrePartenaireModule } from './modules/membre-partenaire/membre-partenaire.module';
 import { InvitationCompteModule } from './modules/invitation-compte/invitation-compte.module';
-import { UsersClientModule } from './grpc-clients/users-client.module';
-import { OrganisationsController } from './organisations.controller';
 
 @Module({
   imports: [
@@ -49,8 +47,7 @@ import { OrganisationsController } from './organisations.controller';
     RolePartenaireModule,
     MembrePartenaireModule,
     InvitationCompteModule,
-    UsersClientModule,
   ],
-  controllers: [OrganisationsController],
+  controllers: [],
 })
 export class AppModule {}

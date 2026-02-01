@@ -138,8 +138,8 @@ export default function OnboardingPage() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    onClick={logout}
-                    title="Ce n'est pas vous ? Se déconnecter"
+                    onClick={() => logout()}
+                    title="Ce n'est pas vous ? Se deconnecter"
                     className="text-muted-foreground hover:text-destructive"
                 >
                     <LogOut className="size-5" />

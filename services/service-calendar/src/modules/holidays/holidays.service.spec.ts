@@ -22,18 +22,18 @@ describe('HolidaysService', () => {
     save: jest.fn(),
   };
 
-  const mockHolidayZone: HolidayZoneEntity = {
+  const mockHolidayZone = {
     id: 'zone-fr',
     organisationId: 'org-1',
     code: 'FR',
     name: 'France',
     countryCode: 'FR',
-    regionCode: null,
+    regionCode: undefined,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
     holidays: [],
-  } as HolidayZoneEntity;
+  } as unknown as HolidayZoneEntity;
 
   const mockHoliday: HolidayEntity = {
     id: 'holiday-1',
@@ -63,7 +63,7 @@ describe('HolidaysService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('checkEligibility', () => {
@@ -111,9 +111,10 @@ describe('HolidaysService', () => {
         recurringDay: 1,
         name: 'Fête du Travail',
       };
+      // Service calls findOne twice: first for exact date, then for recurring
       mockHolidayRepo.findOne
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(recurringHoliday);
+        .mockResolvedValueOnce(null) // exact date lookup
+        .mockResolvedValueOnce(recurringHoliday); // recurring lookup
 
       const result = await service.checkEligibility(recurringHolidayDate, 'zone-fr');
 

@@ -3,17 +3,26 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import {
-  VisibilitePublication as ProtoVisibilitePublication,
+import type {
   CreateProduitPublicationRequest,
   UpdateProduitPublicationRequest,
   ListProduitPublicationsByVersionRequest,
   ListProduitPublicationsBySocieteRequest,
   GetProduitPublicationRequest,
-} from '@proto/products/products';
+} from '@crm/proto/products';
 import { PublicationProduitEntity, VisibilitePublication } from './entities/publication-produit.entity';
 
-const visibiliteFromProto: Record<ProtoVisibilitePublication, VisibilitePublication> = {
+// Proto enum values (matching proto definitions to avoid ESM import issues)
+const ProtoVisibilitePublication = {
+  VISIBILITE_PUBLICATION_UNSPECIFIED: 0,
+  VISIBILITE_PUBLICATION_CACHE: 1,
+  VISIBILITE_PUBLICATION_INTERNE: 2,
+  VISIBILITE_PUBLICATION_PUBLIC: 3,
+} as const;
+
+type ProtoVisibilitePublicationType = (typeof ProtoVisibilitePublication)[keyof typeof ProtoVisibilitePublication];
+
+const visibiliteFromProto: Record<ProtoVisibilitePublicationType, VisibilitePublication> = {
   [ProtoVisibilitePublication.VISIBILITE_PUBLICATION_CACHE]: VisibilitePublication.CACHE,
   [ProtoVisibilitePublication.VISIBILITE_PUBLICATION_INTERNE]: VisibilitePublication.INTERNE,
   [ProtoVisibilitePublication.VISIBILITE_PUBLICATION_PUBLIC]: VisibilitePublication.PUBLIC,

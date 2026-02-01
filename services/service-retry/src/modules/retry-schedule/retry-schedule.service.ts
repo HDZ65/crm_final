@@ -7,7 +7,7 @@ import { RetryScheduleEntity, RetryEligibility } from './entities/retry-schedule
 import type {
   CancelRetryScheduleRequest,
   PaginationRequest,
-} from '@proto/retry/am04_retry_service';
+} from '@crm/proto/retry';
 
 export interface ListRetrySchedulesInput {
   organisationId: string;

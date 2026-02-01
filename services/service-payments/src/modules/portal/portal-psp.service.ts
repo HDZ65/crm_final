@@ -16,7 +16,7 @@ import { GoCardlessService } from '../gocardless/gocardless.service.js';
 import { SlimpayService } from '../slimpay/slimpay.service.js';
 import { MultiSafepayService } from '../multisafepay/multisafepay.service.js';
 import { EmerchantpayService } from '../emerchantpay/emerchantpay.service.js';
-import { PortalRequestContext, PortalPspProvider } from '@proto/payments/payment.js';
+import { PortalRequestContext, PortalPspProvider } from '@crm/proto/payments';
 
 export interface StartRedirectParams {
   token: string;

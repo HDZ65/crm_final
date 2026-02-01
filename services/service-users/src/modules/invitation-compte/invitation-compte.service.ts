@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { InvitationCompteEntity } from './entities/invitation-compte.entity';
 
 @Injectable()
@@ -39,7 +39,7 @@ export class InvitationCompteService {
       organisationId: input.organisationId,
       emailInvite: input.emailInvite,
       roleId: input.roleId,
-      token: uuidv4(),
+      token: randomUUID(),
       expireAt,
       etat: 'pending',
     });

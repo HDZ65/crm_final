@@ -8,7 +8,7 @@ import type {
   UpdateProduitVersionRequest,
   ListProduitVersionsRequest,
   GetProduitVersionRequest,
-} from '@proto/products/products';
+} from '@crm/proto/products';
 import { VersionProduitEntity } from './entities/version-produit.entity';
 
 @Injectable()

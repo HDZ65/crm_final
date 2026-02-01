@@ -1,32 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
-import { DashboardFilters } from '../kpis/kpis.service';
+import { randomUUID } from 'crypto';
 
-export type NiveauAlerte = 'critique' | 'avertissement' | 'info';
-export type TypeAlerte = 'taux_impayes' | 'taux_churn' | 'controles_qualite' | 'objectif_ca' | 'autre';
-
-export interface Alerte {
-  id: string;
-  titre: string;
-  description: string;
-  niveau: NiveauAlerte;
-  type: TypeAlerte;
-  valeurActuelle: number;
-  seuil: number;
-  dateDetection: string;
-  entiteConcernee?: string;
-  entiteId?: string;
-}
-
-export interface AlertesResult {
-  alertes: Alerte[];
-  total: number;
-  nombreCritiques: number;
-  nombreAvertissements: number;
-  nombreInfos: number;
-}
+// Import types from proto definitions
+import type {
+  DashboardFilters,
+  Alerte,
+  AlertesResponse,
+} from '@crm/proto/dashboard';
 
 // Threshold configuration
 const THRESHOLDS = {
@@ -34,6 +16,8 @@ const THRESHOLDS = {
   tauxChurn: { critique: 10, avertissement: 5, info: 3 },
   objectifCa: { critique: 70, avertissement: 85, info: 95 }, // Percentage of objective reached
 };
+
+type NiveauAlerte = 'critique' | 'avertissement' | 'info';
 
 @Injectable()
 export class AlertesService {
@@ -48,7 +32,7 @@ export class AlertesService {
     private readonly organisationsDb: DataSource,
   ) {}
 
-  async getAlertes(filters: DashboardFilters): Promise<AlertesResult> {
+  async getAlertes(filters: DashboardFilters): Promise<AlertesResponse> {
     // Validate organisationId - return empty result if empty
     if (!filters.organisationId || filters.organisationId.trim() === '') {
       this.logger.warn('organisationId is empty, returning empty alerts');
@@ -79,8 +63,8 @@ export class AlertesService {
 
     // Sort by level (critique first)
     alertes.sort((a, b) => {
-      const order = { critique: 0, avertissement: 1, info: 2 };
-      return order[a.niveau] - order[b.niveau];
+      const order: Record<string, number> = { critique: 0, avertissement: 1, info: 2 };
+      return (order[a.niveau] ?? 3) - (order[b.niveau] ?? 3);
     });
 
     return {
@@ -108,7 +92,6 @@ export class AlertesService {
     const societes = await this.organisationsDb.query(societesQuery, societeParams);
 
     // For each societe, calculate unpaid rate from factures_db
-    // Note: facture table doesn't have societe_id column, so we check org-wide
     for (const s of societes) {
       const [totalResult, unpaidResult] = await Promise.all([
         this.facturesDb.query(
@@ -132,7 +115,7 @@ export class AlertesService {
 
         if (niveau) {
           alertes.push({
-            id: uuidv4(),
+            id: randomUUID(),
             titre: `Taux d'impayés élevé`,
             description: `Le taux d'impayés de ${s.nom} est de ${taux.toFixed(1)}%`,
             niveau,
@@ -189,7 +172,7 @@ export class AlertesService {
 
         if (niveau) {
           alertes.push({
-            id: uuidv4(),
+            id: randomUUID(),
             titre: 'Taux de churn élevé',
             description: `Le taux de churn de ${s.nom} est de ${taux.toFixed(1)}%`,
             niveau,
@@ -256,7 +239,7 @@ export class AlertesService {
 
         if (niveau) {
           alertes.push({
-            id: uuidv4(),
+            id: randomUUID(),
             titre: 'Objectif CA non atteint',
             description: `${s.nom} n'atteint que ${pourcentage.toFixed(1)}% de l'objectif mensuel`,
             niveau,

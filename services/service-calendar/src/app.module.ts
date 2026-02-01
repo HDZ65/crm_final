@@ -21,8 +21,6 @@ import { VolumeForecastEntity } from './modules/engine/entities/volume-forecast.
 import { VolumeThresholdEntity } from './modules/engine/entities/volume-threshold.entity';
 import { CalendarAuditLogEntity } from './modules/audit/entities/calendar-audit-log.entity';
 
-import { CalendarController } from './calendar.controller';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -56,7 +54,7 @@ import { CalendarController } from './calendar.controller';
         ],
         synchronize: false, // Désactivé - utiliser les migrations
         migrationsRun: true, // Exécute les migrations au démarrage
-        migrations: [__dirname + '/migrations/*{.ts,.js}'] || configService.get('NODE_ENV') === 'development',
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get('NODE_ENV') === 'development',
         extra: {
           max: 10,
@@ -72,7 +70,7 @@ import { CalendarController } from './calendar.controller';
     CsvImportModule,
     AuditModule,
   ],
-  controllers: [CalendarController],
+  controllers: [],
   providers: [],
 })
 export class AppModule {}

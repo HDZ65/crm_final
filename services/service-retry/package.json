@@ -1,5 +1,5 @@
 {
-  "name": "service-retry",
+  "name": "@crm/service-retry",
   "version": "1.0.0",
   "description": "Microservice gRPC pour la gestion des retries AM04 et relances multi-canaux",
   "author": "",
@@ -11,7 +11,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "migrate": "psql -h $DB_HOST -U $DB_USERNAME -d retry_db -f src/migrations/001_create_am04_retry_tables.sql",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/datasource.ts",
@@ -20,7 +20,8 @@
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
-    "db:create": "ts-node src/scripts/create-database.ts"
+    "db:create": "ts-node src/scripts/create-database.ts",
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
@@ -33,20 +34,25 @@
     "@nestjs/typeorm": "^11.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
-    "dotenv": "^16.6.1",
-    "pg": "^8.17.1",
+    "dotenv": "^17.2.3",
+    "pg": "^8.17.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.28",
-    "typeorm-naming-strategies": "^4.1.0"
+    "typeorm-naming-strategies": "^4.1.0",
+    "@crm/grpc-utils": "*",
+    "@crm/proto": "*",
+    "@crm/shared": "*"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
     "@nestjs/schematics": "^11.0.9",
-    "@types/node": "^25.0.9",
-    "prettier": "^3.8.0",
+    "@types/node": "^25.0.10",
+    "prettier": "^3.8.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.3"
-  }
+    "typescript": "^5.9.3",
+    "rimraf": "^6.1.2"
+  },
+  "main": "dist/main.js"
 }

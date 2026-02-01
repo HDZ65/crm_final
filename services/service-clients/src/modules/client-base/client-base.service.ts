@@ -8,7 +8,7 @@ import type {
   CreateClientBaseRequest,
   UpdateClientBaseRequest,
   ListClientsBaseRequest,
-} from '@proto/clients/clients';
+} from '@crm/proto/clients';
 
 @Injectable()
 export class ClientBaseService {

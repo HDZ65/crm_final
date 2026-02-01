@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
+// Modules - chaque module a son propre controleur
 import { GammeModule } from './modules/gamme/gamme.module';
 import { ProduitModule } from './modules/produit/produit.module';
 import { GrilleTarifaireModule } from './modules/grille-tarifaire/grille-tarifaire.module';
@@ -12,8 +13,7 @@ import { VersionProduitModule } from './modules/version-produit/version-produit.
 import { DocumentProduitModule } from './modules/document-produit/document-produit.module';
 import { PublicationProduitModule } from './modules/publication-produit/publication-produit.module';
 
-import { ProductsController } from './products.controller';
-
+// Entities
 import { GammeEntity } from './modules/gamme/entities/gamme.entity';
 import { ProduitEntity } from './modules/produit/entities/produit.entity';
 import { GrilleTarifaireEntity } from './modules/grille-tarifaire/entities/grille-tarifaire.entity';
@@ -65,6 +65,7 @@ import { PublicationProduitEntity } from './modules/publication-produit/entities
         },
       }),
     }),
+    // Chaque module importe son propre controleur
     GammeModule,
     ProduitModule,
     GrilleTarifaireModule,
@@ -74,6 +75,7 @@ import { PublicationProduitEntity } from './modules/publication-produit/entities
     DocumentProduitModule,
     PublicationProduitModule,
   ],
-  controllers: [ProductsController],
+  // Plus de controleur monolithique ici - chaque module a le sien
+  controllers: [],
 })
 export class AppModule {}

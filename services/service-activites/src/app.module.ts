@@ -6,7 +6,6 @@ import { TypeActiviteModule } from './modules/type-activite/type-activite.module
 import { ActiviteModule } from './modules/activite/activite.module';
 import { TacheModule } from './modules/tache/tache.module';
 import { EvenementSuiviModule } from './modules/evenement-suivi/evenement-suivi.module';
-import { ActivitesController } from './activites.controller';
 import { TypeActivite } from './modules/type-activite/entities/type-activite.entity';
 import { Activite } from './modules/activite/entities/activite.entity';
 import { Tache } from './modules/tache/entities/tache.entity';
@@ -44,6 +43,6 @@ import { EvenementSuivi } from './modules/evenement-suivi/entities/evenement-sui
     TacheModule,
     EvenementSuiviModule,
   ],
-  controllers: [ActivitesController],
+  controllers: [],
 })
 export class AppModule {}

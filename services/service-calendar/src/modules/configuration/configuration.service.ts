@@ -8,7 +8,7 @@ import { ClientDebitConfigurationEntity } from './entities/client-debit-configur
 import { ContractDebitConfigurationEntity } from './entities/contract-debit-configuration.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditSource } from '../audit/entities/calendar-audit-log.entity';
-import type { Pagination, PaginationResult } from '@proto/calendar/calendar';
+import type { Pagination, PaginationResult } from '@crm/proto/calendar';
 
 export interface PaginationInput {
   page?: number;

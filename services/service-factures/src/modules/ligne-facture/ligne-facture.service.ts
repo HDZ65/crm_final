@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { LigneFactureEntity } from './entities/ligne-facture.entity';
-import type { CreateLigneFactureRequest } from '@proto/factures/factures';
+import type { CreateLigneFactureRequest } from '@crm/proto/factures';
 
 export type CreateLigneInput = CreateLigneFactureRequest;
 

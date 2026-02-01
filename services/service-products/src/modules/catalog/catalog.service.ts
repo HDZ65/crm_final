@@ -5,7 +5,7 @@ import { PrixProduitService } from '../prix-produit/prix-produit.service';
 import { ProduitEntity } from '../produit/entities/produit.entity';
 import { PrixProduitEntity } from '../prix-produit/entities/prix-produit.entity';
 import { GrilleTarifaireEntity } from '../grille-tarifaire/entities/grille-tarifaire.entity';
-import type { GetCatalogRequest, CalculatePriceRequest } from '@proto/products/products';
+import type { GetCatalogRequest, CalculatePriceRequest } from '@crm/proto/products';
 
 export interface CatalogItem {
   produit: ProduitEntity;

@@ -22,8 +22,8 @@ export class PartenaireMarqueBlancheEntity {
   @Column({ type: 'varchar', length: 20 })
   siren: string;
 
-  @Column({ name: 'numero_tva', type: 'varchar', length: 50 })
-  numeroTVA: string;
+@Column({ name: 'numero_tva', type: 'varchar', length: 50 })
+  numeroTva: string;
 
   @Column({ name: 'contact_support_email', type: 'varchar', length: 255 })
   contactSupportEmail: string;

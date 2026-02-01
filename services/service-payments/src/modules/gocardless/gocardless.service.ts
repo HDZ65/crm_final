@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { GoCardlessAccountEntity } from './entities/gocardless-account.entity';
 import { GoCardlessMandateEntity, MandateStatus } from './entities/gocardless-mandate.entity';
 import { RumGeneratorService } from './rum-generator.service';
-import type { GoCardlessConfig } from '@proto/payments/payment';
+import type { GoCardlessConfig } from '@crm/proto/payments';
 
 @Injectable()
 export class GoCardlessService {
@@ -52,7 +52,7 @@ export class GoCardlessService {
       throw new Error(`GoCardless API error: ${response.status}`);
     }
 
-    return response.json();
+    return response.json() as Promise<T>;
   }
 
   async createBillingRequest(

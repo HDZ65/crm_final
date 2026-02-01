@@ -1,49 +1,30 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Client, ClientUnaryCall, ServiceError, credentials, loadPackageDefinition } from '@grpc/grpc-js';
-import { loadSync } from '@grpc/proto-loader';
-import { join } from 'path';
-import type { CalculatePlannedDateRequest, CalculatePlannedDateResponse } from '@proto/calendar/calendar';
-
-type CalendarEngineServiceClient = {
-  calculatePlannedDate(
-    request: CalculatePlannedDateRequest,
-    callback: (error: ServiceError | null, response: CalculatePlannedDateResponse) => void,
-  ): ClientUnaryCall;
-};
+import { Client } from '@grpc/grpc-js';
+import { createGrpcClient } from '@crm/grpc-utils';
+import type { CalculatePlannedDateRequest, CalculatePlannedDateResponse } from '@crm/proto/calendar';
 
 @Injectable()
 export class CalendarClientService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(CalendarClientService.name);
-  private client: CalendarEngineServiceClient | null = null;
+  private client: any = null;
 
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit(): void {
-    const url = this.configService.get<string>('CALENDAR_GRPC_URL', 'localhost:50070');
-    const protoPath = join(process.cwd(), 'proto/src/calendar/calendar.proto');
-    const includeDirs = [join(process.cwd(), 'proto/src')];
+    const url = this.configService.get<string>('CALENDAR_GRPC_URL', 'service-calendar:50068');
 
-    const packageDef = loadSync(protoPath, {
-      keepCase: false,
-      longs: String,
-      enums: String,
-      defaults: true,
-      oneofs: true,
-      includeDirs,
-    });
-
-    const grpcObj = loadPackageDefinition(packageDef) as any;
-    const CalendarEngineService = grpcObj.calendar.CalendarEngineService;
-    this.client = new CalendarEngineService(url, credentials.createInsecure()) as unknown as CalendarEngineServiceClient;
-
-    this.logger.log(`Calendar gRPC client connected to ${url}`);
+    try {
+      this.client = createGrpcClient('calendar', 'CalendarEngineService', { url });
+      this.logger.log(`Calendar gRPC client connected to ${url}`);
+    } catch (error) {
+      this.logger.warn(`Failed to connect to Calendar service: ${error}`);
+    }
   }
 
   onModuleDestroy(): void {
-    const client = this.client as Client | null;
-    if (client) {
-      client.close();
+    if (this.client) {
+      (this.client as Client).close();
     }
   }
 
@@ -55,7 +36,7 @@ export class CalendarClientService implements OnModuleInit, OnModuleDestroy {
     }
 
     return new Promise((resolve, reject) => {
-      this.client!.calculatePlannedDate(request, (error, response) => {
+      this.client.calculatePlannedDate(request, (error: any, response: CalculatePlannedDateResponse) => {
         if (error) {
           reject(error);
           return;

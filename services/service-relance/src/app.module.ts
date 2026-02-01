@@ -8,8 +8,6 @@ import { RegleRelanceModule } from './modules/regle-relance/regle-relance.module
 import { HistoriqueRelanceModule } from './modules/historique-relance/historique-relance.module';
 import { EngineModule } from './modules/engine/engine.module';
 
-import { RelanceController } from './relance.controller';
-
 import { RegleRelanceEntity } from './modules/regle-relance/entities/regle-relance.entity';
 import { HistoriqueRelanceEntity } from './modules/historique-relance/entities/historique-relance.entity';
 
@@ -53,6 +51,6 @@ import { HistoriqueRelanceEntity } from './modules/historique-relance/entities/h
     HistoriqueRelanceModule,
     EngineModule,
   ],
-  controllers: [RelanceController],
+  controllers: [],
 })
 export class AppModule {}

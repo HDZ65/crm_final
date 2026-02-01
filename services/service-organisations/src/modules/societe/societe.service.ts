@@ -18,13 +18,13 @@ export class SocieteService {
     organisationId: string;
     raisonSociale: string;
     siren: string;
-    numeroTVA: string;
+    numeroTva: string;
   }): Promise<SocieteEntity> {
     const entity = this.repository.create({
       organisationId: input.organisationId,
       raisonSociale: input.raisonSociale,
       siren: input.siren,
-      numeroTVA: input.numeroTVA,
+      numeroTva: input.numeroTva,
     });
     return this.repository.save(entity);
   }
@@ -33,13 +33,13 @@ export class SocieteService {
     id: string;
     raisonSociale?: string;
     siren?: string;
-    numeroTVA?: string;
+    numeroTva?: string;
   }): Promise<SocieteEntity> {
     const entity = await this.findById(input.id);
 
     if (input.raisonSociale !== undefined) entity.raisonSociale = input.raisonSociale;
     if (input.siren !== undefined) entity.siren = input.siren;
-    if (input.numeroTVA !== undefined) entity.numeroTVA = input.numeroTVA;
+    if (input.numeroTva !== undefined) entity.numeroTva = input.numeroTva;
 
     return this.repository.save(entity);
   }

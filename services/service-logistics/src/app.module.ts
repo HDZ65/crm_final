@@ -16,9 +16,6 @@ import { ColisEntity } from './modules/colis/entities/colis.entity.js';
 import { TrackingEventEntity } from './modules/tracking/entities/tracking-event.entity.js';
 import { CarrierAccountEntity } from './modules/carrier/entities/carrier-account.entity.js';
 
-// Logistics gRPC Controller
-import { LogisticsController } from './logistics.controller.js';
-
 @Module({
   imports: [
     // Configuration
@@ -64,7 +61,7 @@ import { LogisticsController } from './logistics.controller.js';
     CarrierModule,
     MailevaModule,
   ],
-  controllers: [LogisticsController],
+  controllers: [],
   providers: [],
 })
 export class AppModule {}

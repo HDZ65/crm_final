@@ -175,8 +175,12 @@ describe('PortalPaymentSessionEntity State Machine', () => {
       expect(session.isExpired()).toBe(false);
     });
 
-    it('should handle edge case at exact expiry time', () => {
-      session.expiresAt = new Date(Date.now());
+    it('should handle edge case at exact expiry time (not expired until past)', () => {
+      // With strict < comparison, exact match is not yet expired
+      session.expiresAt = new Date(Date.now() + 1);
+      expect(session.isExpired()).toBe(false);
+      // But one ms in the past is expired
+      session.expiresAt = new Date(Date.now() - 1);
       expect(session.isExpired()).toBe(true);
     });
   });

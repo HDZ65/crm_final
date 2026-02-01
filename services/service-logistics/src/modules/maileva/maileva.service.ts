@@ -1,7 +1,7 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { v4 as uuid } from 'uuid';
+import { randomUUID as uuid } from 'crypto';
 import {
   MailevaAuthResponse,
   MailevaTrackingResponse,

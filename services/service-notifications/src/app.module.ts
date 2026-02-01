@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { NotificationModule } from './modules/notification/notification.module';
 import { WebSocketModule } from './modules/websocket/websocket.module';
-import { NotificationsController } from './notifications.controller';
 import { NotificationEntity } from './modules/notification/entities/notification.entity';
 
 @Module({
@@ -45,6 +44,6 @@ import { NotificationEntity } from './modules/notification/entities/notification
     WebSocketModule,
     NotificationModule,
   ],
-  controllers: [NotificationsController],
+  controllers: [],
 })
 export class AppModule {}

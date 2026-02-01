@@ -11,7 +11,7 @@ import type {
   ListFacturesRequest,
   CreateLigneFactureItem,
   PaginationRequest,
-} from '@proto/factures/factures';
+} from '@crm/proto/factures';
 
 export interface CreateFactureInput {
   organisationId: string;

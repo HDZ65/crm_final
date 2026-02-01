@@ -8,7 +8,6 @@ import { ContratModule } from './modules/contrat/contrat.module';
 import { LigneContratModule } from './modules/ligne-contrat/ligne-contrat.module';
 import { HistoriqueStatutContratModule } from './modules/historique-statut-contrat/historique-statut-contrat.module';
 import { OrchestrationModule } from './modules/orchestration/orchestration.module';
-import { ContratsController } from './contrats.controller';
 
 @Module({
   imports: [
@@ -43,6 +42,6 @@ import { ContratsController } from './contrats.controller';
     HistoriqueStatutContratModule,
     OrchestrationModule,
   ],
-  controllers: [ContratsController],
+  controllers: [],
 })
 export class AppModule {}

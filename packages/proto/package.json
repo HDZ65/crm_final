@@ -1,0 +1,57 @@
+{
+  "name": "@crm/proto",
+  "version": "1.0.0",
+  "description": "Protocol Buffer definitions and generated TypeScript types for CRM gRPC services",
+  "main": "./gen/ts/index.ts",
+  "types": "./gen/ts/index.ts",
+  "exports": {
+    ".": "./gen/ts/index.ts",
+    "./activites": "./gen/ts/activites/activites.ts",
+    "./calendar": "./gen/ts/calendar/calendar.ts",
+    "./clients": "./gen/ts/clients/clients.ts",
+    "./commerciaux": "./gen/ts/commerciaux/commerciaux.ts",
+    "./commission": "./gen/ts/commission/commission.ts",
+    "./contrats": "./gen/ts/contrats/contrats.ts",
+    "./dashboard": "./gen/ts/dashboard/dashboard.ts",
+    "./documents": "./gen/ts/documents/documents.ts",
+    "./email": "./gen/ts/email/email.ts",
+    "./factures": "./gen/ts/factures/factures.ts",
+    "./logistics": "./gen/ts/logistics/logistics.ts",
+    "./notifications": "./gen/ts/notifications/notifications.ts",
+    "./organisations": "./gen/ts/organisations/organisations.ts",
+    "./users": "./gen/ts/organisations/users.ts",
+    "./payments": "./gen/ts/payments/payment.ts",
+    "./products": "./gen/ts/products/products.ts",
+    "./referentiel": "./gen/ts/referentiel/referentiel.ts",
+    "./relance": "./gen/ts/relance/relance.ts",
+    "./retry": "./gen/ts/retry/am04_retry_service.ts",
+    "./retry/types": "./gen/ts/retry/am04_retry.ts"
+  },
+  "files": [
+    "src/**/*.proto",
+    "gen/**/*.js",
+    "gen/**/*.d.ts",
+    "gen/**/*.ts"
+  ],
+  "scripts": {
+    "clean": "rimraf gen",
+    "generate": "buf generate",
+    "build": "npm run clean && npm run generate",
+    "lint": "buf lint",
+    "format": "buf format -w"
+  },
+  "keywords": ["crm", "proto", "grpc", "protobuf"],
+  "author": "CRM Team",
+  "license": "PROPRIETARY",
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.0.0"
+  },
+  "devDependencies": {
+    "rimraf": "^6.1.2"
+  },
+  "peerDependencies": {
+    "@grpc/grpc-js": "^1.9.0",
+    "@nestjs/microservices": "^10.0.0 || ^11.0.0",
+    "rxjs": "^7.8.0"
+  }
+}

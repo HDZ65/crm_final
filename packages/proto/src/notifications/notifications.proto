@@ -1,0 +1,275 @@
+syntax = "proto3";
+
+package notifications;
+
+// ============================================
+// NOTIFICATIONS MICROSERVICE - gRPC Service Definition
+// ============================================
+
+service NotificationService {
+  // ===== CRUD Operations =====
+  rpc CreateNotification(CreateNotificationRequest) returns (NotificationResponse);
+  rpc GetNotification(GetNotificationRequest) returns (NotificationResponse);
+  rpc GetNotifications(GetNotificationsRequest) returns (NotificationListResponse);
+  rpc GetNotificationsByUser(GetNotificationsByUserRequest) returns (NotificationListResponse);
+  rpc GetUnreadNotificationsByUser(GetNotificationsByUserRequest) returns (NotificationListResponse);
+  rpc UpdateNotification(UpdateNotificationRequest) returns (NotificationResponse);
+  rpc DeleteNotification(DeleteNotificationRequest) returns (DeleteResponse);
+
+  // ===== Read Status Management =====
+  rpc MarkAsRead(MarkAsReadRequest) returns (NotificationResponse);
+  rpc MarkAllAsRead(MarkAllAsReadRequest) returns (OperationResponse);
+  rpc GetUnreadCount(GetUnreadCountRequest) returns (UnreadCountResponse);
+
+  // ===== Batch Operations =====
+  rpc DeleteAllByUser(DeleteAllByUserRequest) returns (OperationResponse);
+  rpc DeleteOlderThan(DeleteOlderThanRequest) returns (OperationResponse);
+
+  // ===== Business Notifications =====
+  rpc NotifyNewClient(NotifyNewClientRequest) returns (NotificationResponse);
+  rpc NotifyNewContrat(NotifyNewContratRequest) returns (NotificationResponse);
+  rpc NotifyContratExpiringSoon(NotifyContratExpiringRequest) returns (NotificationResponse);
+  rpc NotifyContratExpired(NotifyContratExpiringRequest) returns (NotificationResponse);
+  rpc NotifyImpaye(NotifyImpayeRequest) returns (NotificationResponse);
+  rpc NotifyTacheAssignee(NotifyTacheRequest) returns (NotificationResponse);
+  rpc NotifyRappel(NotifyRappelRequest) returns (NotificationResponse);
+  rpc NotifyAlerte(NotifyAlerteRequest) returns (NotificationResponse);
+  rpc NotifyInfo(NotifyInfoRequest) returns (NotificationResponse);
+
+  // ===== Broadcast =====
+  rpc NotifyOrganisation(NotifyOrganisationRequest) returns (OperationResponse);
+
+  // ===== WebSocket Status =====
+  rpc GetConnectedUsersCount(EmptyRequest) returns (ConnectedUsersResponse);
+  rpc IsUserConnected(IsUserConnectedRequest) returns (IsUserConnectedResponse);
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+  NOTIFICATION_TYPE_CONTRAT_EXPIRE = 1;
+  NOTIFICATION_TYPE_CONTRAT_BIENTOT_EXPIRE = 2;
+  NOTIFICATION_TYPE_IMPAYE = 3;
+  NOTIFICATION_TYPE_NOUVEAU_CLIENT = 4;
+  NOTIFICATION_TYPE_NOUVEAU_CONTRAT = 5;
+  NOTIFICATION_TYPE_TACHE_ASSIGNEE = 6;
+  NOTIFICATION_TYPE_RAPPEL = 7;
+  NOTIFICATION_TYPE_ALERTE = 8;
+  NOTIFICATION_TYPE_INFO = 9;
+  NOTIFICATION_TYPE_SYSTEME = 10;
+}
+
+// ============================================
+// COMMON MESSAGES
+// ============================================
+
+message EmptyRequest {}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message OperationResponse {
+  bool success = 1;
+  string message = 2;
+  int32 affected_count = 3;
+}
+
+// ============================================
+// NOTIFICATION MESSAGES
+// ============================================
+
+message Notification {
+  string id = 1;
+  string organisation_id = 2;
+  string utilisateur_id = 3;
+  NotificationType type = 4;
+  string titre = 5;
+  string message = 6;
+  bool lu = 7;
+  map<string, string> metadata = 8;
+  optional string lien_url = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+message CreateNotificationRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  NotificationType type = 3;
+  string titre = 4;
+  string message = 5;
+  map<string, string> metadata = 6;
+  optional string lien_url = 7;
+  bool broadcast_websocket = 8;
+}
+
+message GetNotificationRequest {
+  string id = 1;
+}
+
+message GetNotificationsRequest {
+  string organisation_id = 1;
+  optional int32 limit = 2;
+  optional int32 offset = 3;
+  optional NotificationType type_filter = 4;
+  optional bool unread_only = 5;
+}
+
+message GetNotificationsByUserRequest {
+  string utilisateur_id = 1;
+  optional int32 limit = 2;
+  optional int32 offset = 3;
+}
+
+message UpdateNotificationRequest {
+  string id = 1;
+  optional string titre = 2;
+  optional string message = 3;
+  optional bool lu = 4;
+  map<string, string> metadata = 5;
+  optional string lien_url = 6;
+}
+
+message DeleteNotificationRequest {
+  string id = 1;
+}
+
+message NotificationResponse {
+  Notification notification = 1;
+}
+
+message NotificationListResponse {
+  repeated Notification notifications = 1;
+  int32 total = 2;
+}
+
+// ============================================
+// READ STATUS MESSAGES
+// ============================================
+
+message MarkAsReadRequest {
+  string id = 1;
+}
+
+message MarkAllAsReadRequest {
+  string utilisateur_id = 1;
+}
+
+message GetUnreadCountRequest {
+  string utilisateur_id = 1;
+}
+
+message UnreadCountResponse {
+  int32 total = 1;
+  int32 unread = 2;
+}
+
+// ============================================
+// BATCH OPERATIONS
+// ============================================
+
+message DeleteAllByUserRequest {
+  string utilisateur_id = 1;
+}
+
+message DeleteOlderThanRequest {
+  string date = 1;
+}
+
+// ============================================
+// BUSINESS NOTIFICATION REQUESTS
+// ============================================
+
+message NotifyNewClientRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string client_id = 3;
+  string client_nom = 4;
+}
+
+message NotifyNewContratRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string contrat_id = 3;
+  string contrat_numero = 4;
+  string client_nom = 5;
+}
+
+message NotifyContratExpiringRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string contrat_id = 3;
+  string contrat_numero = 4;
+  string date_expiration = 5;
+  int32 jours_restants = 6;
+}
+
+message NotifyImpayeRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string facture_id = 3;
+  string facture_numero = 4;
+  string client_nom = 5;
+  string montant = 6;
+}
+
+message NotifyTacheRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string tache_id = 3;
+  string tache_titre = 4;
+  string assigne_par = 5;
+}
+
+message NotifyRappelRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string titre = 3;
+  string message = 4;
+  optional string lien_url = 5;
+}
+
+message NotifyAlerteRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string titre = 3;
+  string message = 4;
+  string niveau = 5;
+}
+
+message NotifyInfoRequest {
+  string organisation_id = 1;
+  string utilisateur_id = 2;
+  string titre = 3;
+  string message = 4;
+}
+
+message NotifyOrganisationRequest {
+  string organisation_id = 1;
+  repeated string utilisateur_ids = 2;
+  NotificationType type = 3;
+  string titre = 4;
+  string message = 5;
+  map<string, string> metadata = 6;
+}
+
+// ============================================
+// WEBSOCKET STATUS
+// ============================================
+
+message ConnectedUsersResponse {
+  int32 count = 1;
+}
+
+message IsUserConnectedRequest {
+  string utilisateur_id = 1;
+}
+
+message IsUserConnectedResponse {
+  bool connected = 1;
+}

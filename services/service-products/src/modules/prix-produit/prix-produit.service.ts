@@ -11,7 +11,7 @@ import type {
   GetPrixForProduitRequest,
   DeletePrixProduitRequest,
   BulkCreatePrixProduitsRequest,
-} from '@proto/products/products';
+} from '@crm/proto/products';
 import { PrixProduitEntity } from './entities/prix-produit.entity';
 
 @Injectable()

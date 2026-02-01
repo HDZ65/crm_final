@@ -1,20 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { join } from 'path';
+import { getGrpcOptions } from '@crm/grpc-utils';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const grpcOptions = getGrpcOptions('organisations');
+  
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
     transport: Transport.GRPC,
-    options: {
-      package: 'organisations',
-      protoPath: join(__dirname, '../../proto/organisations.proto'),
-      url: `0.0.0.0:${process.env.GRPC_PORT || 50064}`,
-    },
+    options: grpcOptions,
   });
 
   await app.listen();
-  console.log('Service Organisations gRPC is listening on port', process.env.GRPC_PORT || 50064);
+  console.log(`Service service-organisations gRPC listening on ${grpcOptions.url}`);
 }
 
 bootstrap();

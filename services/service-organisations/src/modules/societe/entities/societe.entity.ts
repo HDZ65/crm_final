@@ -25,8 +25,8 @@ export class SocieteEntity {
   @Column({ type: 'varchar', length: 20 })
   siren: string;
 
-  @Column({ name: 'numero_tva', type: 'varchar', length: 50 })
-  numeroTVA: string;
+@Column({ name: 'numero_tva', type: 'varchar', length: 50 })
+  numeroTva: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

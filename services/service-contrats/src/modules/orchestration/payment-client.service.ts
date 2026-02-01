@@ -1,13 +1,13 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Client, ClientGrpc, Transport } from '@nestjs/microservices';
-import { join } from 'path';
-import { Observable, lastValueFrom, timeout, catchError, of } from 'rxjs';
+import { Client } from '@grpc/grpc-js';
+import { createGrpcClient } from '@crm/grpc-utils';
+import { timeout, catchError, of, from, lastValueFrom } from 'rxjs';
 import type {
   SetupGoCardlessMandateRequest as ProtoSetupGoCardlessMandateRequest,
   GoCardlessMandateResponse,
   GetGoCardlessMandateRequest,
-} from '@proto/payments/payment';
+} from '@crm/proto/payments';
 
 type SetupGoCardlessMandateRequest = Partial<ProtoSetupGoCardlessMandateRequest> & {
   societeId: string;
@@ -15,26 +15,28 @@ type SetupGoCardlessMandateRequest = Partial<ProtoSetupGoCardlessMandateRequest>
   successRedirectUrl: string;
 };
 
-interface PaymentServiceClient {
-  SetupGoCardlessMandate(request: SetupGoCardlessMandateRequest): Observable<GoCardlessMandateResponse>;
-  GetGoCardlessMandate(request: GetGoCardlessMandateRequest): Observable<GoCardlessMandateResponse>;
-}
-
 @Injectable()
-export class PaymentClientService implements OnModuleInit {
+export class PaymentClientService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PaymentClientService.name);
-  private paymentService: PaymentServiceClient;
-  private client: ClientGrpc;
+  private client: any = null;
 
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit() {
-    const paymentServiceUrl = this.configService.get<string>(
-      'PAYMENT_SERVICE_URL',
-      'localhost:50057',
-    );
+    const url = this.configService.get<string>('PAYMENT_SERVICE_URL', 'service-payments:50063');
 
-    this.logger.log(`Connecting to payment service at ${paymentServiceUrl}`);
+    try {
+      this.client = createGrpcClient('payments', 'GoCardlessService', { url });
+      this.logger.log(`Payment gRPC client connected to ${url}`);
+    } catch (error) {
+      this.logger.warn(`Failed to connect to Payment service: ${error}`);
+    }
+  }
+
+  onModuleDestroy(): void {
+    if (this.client) {
+      (this.client as Client).close();
+    }
   }
 
   async setupMandateForContract(params: {
@@ -89,14 +91,14 @@ export class PaymentClientService implements OnModuleInit {
   private async setupMandate(
     request: SetupGoCardlessMandateRequest,
   ): Promise<GoCardlessMandateResponse | null> {
-    if (!this.paymentService) {
+    if (!this.client) {
       this.logger.warn('Payment service client not initialized');
       return null;
     }
 
     try {
       const response = await lastValueFrom(
-        this.paymentService.SetupGoCardlessMandate(request).pipe(
+        from(this.callSetupGoCardlessMandate(request)).pipe(
           timeout(10000),
           catchError((err) => {
             this.logger.error(`gRPC call failed: ${err.message}`);
@@ -112,17 +114,26 @@ export class PaymentClientService implements OnModuleInit {
     }
   }
 
+  private callSetupGoCardlessMandate(request: SetupGoCardlessMandateRequest): Promise<GoCardlessMandateResponse> {
+    return new Promise((resolve, reject) => {
+      this.client.setupGoCardlessMandate(request, (error: any, response: GoCardlessMandateResponse) => {
+        if (error) reject(error);
+        else resolve(response);
+      });
+    });
+  }
+
   private async getExistingMandate(
     societeId: string,
     clientId: string,
   ): Promise<GoCardlessMandateResponse | null> {
-    if (!this.paymentService) {
+    if (!this.client) {
       return null;
     }
 
     try {
       const response = await lastValueFrom(
-        this.paymentService.GetGoCardlessMandate({ societeId, clientId }).pipe(
+        from(this.callGetGoCardlessMandate({ societeId, clientId })).pipe(
           timeout(5000),
           catchError(() => of(null)),
         ),
@@ -132,5 +143,14 @@ export class PaymentClientService implements OnModuleInit {
     } catch {
       return null;
     }
+  }
+
+  private callGetGoCardlessMandate(request: GetGoCardlessMandateRequest): Promise<GoCardlessMandateResponse> {
+    return new Promise((resolve, reject) => {
+      this.client.getGoCardlessMandate(request, (error: any, response: GoCardlessMandateResponse) => {
+        if (error) reject(error);
+        else resolve(response);
+      });
+    });
   }
 }

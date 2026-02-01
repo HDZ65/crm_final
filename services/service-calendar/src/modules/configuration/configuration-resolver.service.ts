@@ -6,7 +6,7 @@ import { SystemDebitConfigurationEntity, DebitDateMode, DebitBatch, DateShiftStr
 import { CompanyDebitConfigurationEntity } from './entities/company-debit-configuration.entity';
 import { ClientDebitConfigurationEntity } from './entities/client-debit-configuration.entity';
 import { ContractDebitConfigurationEntity } from './entities/contract-debit-configuration.entity';
-import type { ResolveConfigurationRequest } from '@proto/calendar/calendar';
+import type { ResolveConfigurationRequest } from '@crm/proto/calendar';
 
 export type ConfigurationLevel = 'contract' | 'client' | 'company' | 'system';
 

@@ -5,7 +5,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { MailboxModule } from './modules/mailbox/mailbox.module';
 import { GoogleOAuthModule } from './modules/oauth/google/google-oauth.module';
 import { MicrosoftOAuthModule } from './modules/oauth/microsoft/microsoft-oauth.module';
-import { EmailController } from './email.controller';
+import { OperationsModule } from './modules/operations/operations.module';
 import { MailboxEntity } from './modules/mailbox/entities/mailbox.entity';
 import { EncryptionService } from './common/encryption.service';
 
@@ -47,8 +47,9 @@ import { EncryptionService } from './common/encryption.service';
     MailboxModule,
     GoogleOAuthModule,
     MicrosoftOAuthModule,
+    OperationsModule,
   ],
-  controllers: [EmailController],
+  controllers: [],
   providers: [EncryptionService],
 })
 export class AppModule {}

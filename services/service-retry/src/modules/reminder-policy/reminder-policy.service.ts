@@ -7,7 +7,7 @@ import { ReminderPolicyEntity, ReminderTriggerRule } from './entities/reminder-p
 import type {
   CreateReminderPolicyRequest,
   UpdateReminderPolicyRequest,
-} from '@proto/retry/am04_retry_service';
+} from '@crm/proto/retry';
 
 export type CreateReminderPolicyInput = Omit<CreateReminderPolicyRequest, 'triggerRules'> & {
   triggerRules: ReminderTriggerRule[];

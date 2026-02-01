@@ -18,7 +18,7 @@ describe('ConfigurationResolverService', () => {
   const baseConfig = {
     mode: DebitDateMode.BATCH,
     batch: DebitBatch.L1,
-    fixedDay: null,
+    fixedDay: undefined,
     shiftStrategy: DateShiftStrategy.NEXT_BUSINESS_DAY,
     holidayZoneId: 'zone-fr',
     isActive: true,
@@ -26,43 +26,43 @@ describe('ConfigurationResolverService', () => {
     updatedAt: new Date(),
   };
 
-  const mockContractConfig: ContractDebitConfigurationEntity = {
+  const mockContractConfig = {
     ...baseConfig,
     id: 'contract-config-1',
     organisationId: 'org-1',
     contratId: 'contrat-1',
-  } as ContractDebitConfigurationEntity;
+  } as unknown as ContractDebitConfigurationEntity;
 
-  const mockClientConfig: ClientDebitConfigurationEntity = {
+  const mockClientConfig = {
     ...baseConfig,
     id: 'client-config-1',
     organisationId: 'org-1',
     clientId: 'client-1',
     batch: DebitBatch.L2,
-  } as ClientDebitConfigurationEntity;
+  } as unknown as ClientDebitConfigurationEntity;
 
-  const mockCompanyConfig: CompanyDebitConfigurationEntity = {
+  const mockCompanyConfig = {
     ...baseConfig,
     id: 'company-config-1',
     organisationId: 'org-1',
     societeId: 'societe-1',
     batch: DebitBatch.L3,
-    cutoffConfigId: null,
-  } as CompanyDebitConfigurationEntity;
+    cutoffConfigId: undefined,
+  } as unknown as CompanyDebitConfigurationEntity;
 
-  const mockSystemConfig: SystemDebitConfigurationEntity = {
+  const mockSystemConfig = {
     id: 'system-config-1',
     organisationId: 'org-1',
     defaultMode: DebitDateMode.BATCH,
     defaultBatch: DebitBatch.L4,
-    defaultFixedDay: null,
+    defaultFixedDay: undefined,
     shiftStrategy: DateShiftStrategy.NEXT_BUSINESS_DAY,
     holidayZoneId: 'zone-fr',
-    cutoffConfigId: null,
+    cutoffConfigId: undefined,
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-  } as SystemDebitConfigurationEntity;
+  } as unknown as SystemDebitConfigurationEntity;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

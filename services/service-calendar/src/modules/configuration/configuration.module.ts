@@ -8,6 +8,7 @@ import { ClientDebitConfigurationEntity } from './entities/client-debit-configur
 import { ContractDebitConfigurationEntity } from './entities/contract-debit-configuration.entity';
 import { ConfigurationResolverService } from './configuration-resolver.service';
 import { ConfigurationService } from './configuration.service';
+import { ConfigurationController } from './configuration.controller';
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { AuditModule } from '../audit/audit.module';
     ]),
     forwardRef(() => AuditModule),
   ],
+  controllers: [ConfigurationController],
   providers: [ConfigurationResolverService, ConfigurationService],
   exports: [ConfigurationResolverService, ConfigurationService, TypeOrmModule],
 })

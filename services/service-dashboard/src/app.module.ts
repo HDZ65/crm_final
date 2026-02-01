@@ -3,16 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
-// Modules
+// Modules - chaque module a son propre controleur
 import { KpisModule } from './modules/kpis/kpis.module';
 import { EvolutionCaModule } from './modules/evolution-ca/evolution-ca.module';
 import { RepartitionProduitsModule } from './modules/repartition-produits/repartition-produits.module';
 import { StatsSocietesModule } from './modules/stats-societes/stats-societes.module';
 import { AlertesModule } from './modules/alertes/alertes.module';
 import { KpisCommerciauxModule } from './modules/kpis-commerciaux/kpis-commerciaux.module';
-
-// Controller
-import { DashboardController } from './dashboard.controller';
 
 // Helper function to create a database connection config
 const createDbConfig = (configService: ConfigService, database: string) => ({
@@ -96,7 +93,8 @@ const createDbConfig = (configService: ConfigService, database: string) => ({
     AlertesModule,
     KpisCommerciauxModule,
   ],
-  controllers: [DashboardController],
+  // Plus de controleur monolithique ici - chaque module a le sien
+  controllers: [],
   providers: [],
 })
 export class AppModule {}

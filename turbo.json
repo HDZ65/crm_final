@@ -1,0 +1,55 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "*.ts", "tsconfig.json", "package.json"],
+      "outputs": ["dist/**", "gen/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "start:prod": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "start:dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "*.ts"]
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": ["src/**", "test/**", "*.ts"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "*.ts", "tsconfig.json"]
+    },
+    "@crm/proto#build": {
+      "inputs": ["src/**/*.proto", "buf.yaml", "buf.gen.yaml"],
+      "outputs": ["gen/**"]
+    },
+    "migration:run": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "migration:generate": {
+      "dependsOn": ["^build"],
+      "cache": false
+    }
+  }
+}

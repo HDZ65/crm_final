@@ -43,7 +43,7 @@ export function OrganisationProvider({
   initialUser = null,
   initialActiveOrgId = null,
 }: OrganisationProviderProps) {
-  const { ready, isAuthenticated, profile } = useAuth();
+  const { ready, isAuthenticated, user: authUser } = useAuth();
   const [user, setUser] = useState<AuthMeResponse | null>(initialUser);
   const [isLoading, setIsLoading] = useState(!initialUser);
   const [error, setError] = useState<Error | null>(null);
@@ -51,50 +51,50 @@ export function OrganisationProvider({
   const hasFetched = useRef(!!initialUser);
 
   const fetchMe = useCallback(async () => {
-    if (!profile?.id) return;
+    if (!authUser?.id) return;
 
     setIsLoading(true);
     setError(null);
     try {
       // Appel gRPC via Server Action
       // Pass user info for auto-creation if user doesn't exist
-      const result = await getCurrentUserByKeycloakId(profile.id, {
-        email: profile.email,
-        name: profile.fullName,
-        given_name: profile.firstName,
-        family_name: profile.lastName,
+      const result = await getCurrentUserByKeycloakId(authUser.id, {
+        email: authUser.email,
+        name: authUser.fullName,
+        given_name: authUser.firstName,
+        family_name: authUser.lastName,
       });
       if (result.error) {
         throw new Error(result.error);
       }
       setUser(result.data);
     } catch (err) {
-      console.error('[Organisation] Erreur lors de la récupération du profil:', err);
+      console.error('[Organisation] Erreur lors de la recuperation du profil:', err);
       setError(err instanceof Error ? err : new Error('Erreur inconnue'));
     } finally {
       setIsLoading(false);
     }
-  }, [profile?.id, profile?.email, profile?.fullName, profile?.firstName, profile?.lastName]);
+  }, [authUser?.id, authUser?.email, authUser?.fullName, authUser?.firstName, authUser?.lastName]);
 
-  // Fetch au montage quand authentifié (skip si initialUser provided)
+  // Fetch au montage quand authentifie (skip si initialUser provided)
   useEffect(() => {
-    if (ready && isAuthenticated && profile?.id && !hasFetched.current) {
+    if (ready && isAuthenticated && authUser?.id && !hasFetched.current) {
       hasFetched.current = true;
       fetchMe();
     }
 
-    // Si authentifié mais pas de profil, arrêter le loading
-    if (ready && isAuthenticated && !profile?.id) {
+    // Si authentifie mais pas de profil, arreter le loading
+    if (ready && isAuthenticated && !authUser?.id) {
       setIsLoading(false);
     }
 
-    // Reset si déconnecté
+    // Reset si deconnecte
     if (ready && !isAuthenticated) {
       setUser(null);
       setIsLoading(false);
       hasFetched.current = false;
     }
-  }, [ready, isAuthenticated, profile?.id, fetchMe]);
+  }, [ready, isAuthenticated, authUser?.id, fetchMe]);
 
   const refetch = useCallback(async () => {
     await fetchMe();

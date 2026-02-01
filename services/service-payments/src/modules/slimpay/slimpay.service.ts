@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createHmac } from 'crypto';
 import { SlimpayAccountEntity } from './entities/slimpay-account.entity';
-import { SlimpayToken } from '@proto/payments/payment.js';
+import { SlimpayToken } from '@crm/proto/payments';
 
 @Injectable()
 export class SlimpayService {
@@ -55,7 +55,7 @@ export class SlimpayService {
       throw new Error('Slimpay authentication failed');
     }
 
-    const data = await response.json();
+    const data = await response.json() as { access_token: string; expires_in?: number };
     const expiresIn = Number(data.expires_in ?? 3600);
     const token: SlimpayToken = {
       accessToken: data.access_token,

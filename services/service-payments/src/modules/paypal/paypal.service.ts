@@ -58,7 +58,7 @@ export class PaypalService {
       throw new Error('Failed to authenticate with PayPal');
     }
 
-    const data = await response.json();
+    const data = await response.json() as { access_token: string; expires_in: number; token_type: string };
 
     this.accessTokenCache.set(cacheKey, {
       ...data,
@@ -121,8 +121,8 @@ export class PaypalService {
       throw new Error('Failed to create PayPal order');
     }
 
-    const order = await response.json();
-    const approvalLink = order.links.find((link: any) => link.rel === 'approve');
+    const order = await response.json() as { id: string; links: Array<{ rel: string; href: string }> };
+    const approvalLink = order.links.find((link) => link.rel === 'approve');
 
     return {
       orderId: order.id,
@@ -161,7 +161,17 @@ export class PaypalService {
       throw new Error('Failed to capture PayPal order');
     }
 
-    const capture = await response.json();
+    const capture = await response.json() as {
+      status: string;
+      purchase_units: Array<{
+        payments?: {
+          captures?: Array<{
+            id: string;
+            amount?: { value: string; currency_code: string };
+          }>;
+        };
+      }>;
+    };
     const captureDetails = capture.purchase_units[0]?.payments?.captures?.[0];
 
     return {
@@ -235,7 +245,7 @@ export class PaypalService {
       throw new Error('Failed to create PayPal refund');
     }
 
-    const refund = await response.json();
+    const refund = await response.json() as { id: string; status: string };
 
     return {
       refundId: refund.id,

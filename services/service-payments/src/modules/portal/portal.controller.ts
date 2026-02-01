@@ -10,53 +10,26 @@ import {
   PortalSessionStatus,
   PSPProvider,
 } from './entities/portal-session.entity';
+import { PortalSessionAuditEntity } from './entities/portal-session-audit.entity';
 
-interface CreatePortalSessionRequest {
-  organisationId: string;
-  societeId: string;
-  customerId: string;
-  contractId?: string;
-  paymentIntentId?: string;
-  allowedActions: string[];
-  ttlSeconds?: number;
-  maxUses?: number;
-  amountCents: number;
-  currency?: string;
-  description?: string;
-  mandateId?: string;
-  rumMasked?: string;
-  idempotencyKey?: string;
-  metadata?: Record<string, string>;
-}
+// Import all types from proto definitions
+import type {
+  CreatePortalSessionRequest,
+  CreatePortalSessionResponse,
+  AccessPortalSessionRequest,
+  AccessPortalSessionResponse,
+  CancelPortalSessionRequest,
+  CancelPortalSessionResponse,
+  ListPortalSessionsRequest,
+  ListPortalSessionsResponse,
+  GetPortalSessionAuditRequest,
+  GetPortalSessionAuditResponse,
+  PortalPaymentSession,
+  PortalSessionAuditLog,
+  PortalRequestContext,
+} from '@crm/proto/payments';
 
-interface CreatePortalSessionResponse {
-  session: PortalSessionResponse;
-  portalUrl: string;
-  token: string;
-  wasIdempotentHit: boolean;
-}
-
-interface GetPortalSessionRequest {
-  token?: string;
-  sessionId?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  requestId?: string;
-}
-
-interface GetPortalSessionResponse {
-  session: PortalSessionResponse;
-}
-
-interface CancelPortalSessionRequest {
-  sessionId: string;
-  reason?: string;
-}
-
-interface CancelPortalSessionResponse {
-  session: PortalSessionResponse;
-}
-
+// Types for PSP operations (not yet in proto - internal service types)
 interface StartPSPRedirectRequest {
   token: string;
   paymentMethod: string;
@@ -70,7 +43,7 @@ interface StartPSPRedirectRequest {
 interface StartPSPRedirectResponse {
   redirectUrl: string;
   pspSessionId: string;
-  session: PortalSessionResponse;
+  session: PortalPaymentSession;
 }
 
 interface HandlePSPReturnRequest {
@@ -82,7 +55,7 @@ interface HandlePSPReturnRequest {
 }
 
 interface HandlePSPReturnResponse {
-  session: PortalSessionResponse;
+  session: PortalPaymentSession;
   paymentConfirmed: boolean;
   pendingConfirmation: boolean;
   message: string;
@@ -99,72 +72,6 @@ interface HandlePSPWebhookResponse {
   acknowledged: boolean;
   eventId: string;
   status: string;
-}
-
-interface ListPortalSessionsRequest {
-  organisationId: string;
-  customerId?: string;
-  contractId?: string;
-  status?: string;
-  createdAfter?: string;
-  createdBefore?: string;
-  page?: number;
-  limit?: number;
-}
-
-interface ListPortalSessionsResponse {
-  sessions: PortalSessionResponse[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-interface GetPortalSessionAuditRequest {
-  sessionId: string;
-  page?: number;
-  limit?: number;
-}
-
-interface GetPortalSessionAuditResponse {
-  events: AuditEventResponse[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-interface PortalSessionResponse {
-  id: string;
-  organisationId: string;
-  societeId: string;
-  customerId: string;
-  contractId?: string;
-  paymentIntentId?: string;
-  status: string;
-  allowedActions: string[];
-  expiresAt: string;
-  maxUses: number;
-  useCount: number;
-  amountCents: number;
-  currency: string;
-  description?: string;
-  mandateId?: string;
-  rumMasked?: string;
-  pspProvider?: string;
-  pspSessionId?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface AuditEventResponse {
-  id: string;
-  portalSessionId: string;
-  eventType: string;
-  actorType: string;
-  requestId?: string;
-  previousStatus?: string;
-  newStatus?: string;
-  data: Record<string, string>;
-  createdAt: string;
 }
 
 @Controller()
@@ -187,7 +94,7 @@ export class PortalController {
       customerId: data.customerId,
       contractId: data.contractId,
       paymentIntentId: data.paymentIntentId,
-      allowedActions: data.allowedActions.map((a) => a as PortalSessionAction),
+      allowedActions: (data.allowedActions || []).map((a) => a as unknown as PortalSessionAction),
       ttlSeconds: data.ttlSeconds,
       maxUses: data.maxUses,
       amountCents: data.amountCents,
@@ -200,7 +107,7 @@ export class PortalController {
     });
 
     return {
-      session: this.mapSessionToResponse(result.session),
+      session: this.mapSessionToProto(result.session),
       portalUrl: result.portalUrl,
       token: result.token,
       wasIdempotentHit: result.wasIdempotentHit,
@@ -208,25 +115,17 @@ export class PortalController {
   }
 
   @GrpcMethod('PortalSessionService', 'GetSession')
-  async getSession(data: GetPortalSessionRequest): Promise<GetPortalSessionResponse> {
+  async getSession(data: AccessPortalSessionRequest): Promise<AccessPortalSessionResponse> {
     const requestContext = this.buildRequestContext(data);
 
-    let session: PortalPaymentSessionEntity | null;
-
-    if (data.token) {
-      session = await this.portalSessionService.accessSession(data.token, requestContext);
-    } else if (data.sessionId) {
-      session = await this.portalSessionService.getSessionById(data.sessionId);
-    } else {
-      throw new Error('Either token or sessionId must be provided');
-    }
+    const session = await this.portalSessionService.accessSession(data.token, requestContext);
 
     if (!session) {
       throw new Error('Session not found');
     }
 
     return {
-      session: this.mapSessionToResponse(session),
+      session: this.mapSessionToProto(session),
     };
   }
 
@@ -237,7 +136,7 @@ export class PortalController {
     const session = await this.portalSessionService.cancelSession(data.sessionId, data.reason);
 
     return {
-      session: this.mapSessionToResponse(session),
+      session: this.mapSessionToProto(session),
     };
   }
 
@@ -258,7 +157,7 @@ export class PortalController {
     return {
       redirectUrl: result.redirectUrl,
       pspSessionId: result.pspSessionId,
-      session: this.mapSessionToResponse(result.session),
+      session: this.mapSessionToProto(result.session),
     };
   }
 
@@ -275,7 +174,7 @@ export class PortalController {
     });
 
     return {
-      session: this.mapSessionToResponse(result.session),
+      session: this.mapSessionToProto(result.session),
       paymentConfirmed: result.paymentConfirmed,
       pendingConfirmation: result.pendingConfirmation,
       message: result.message,
@@ -318,16 +217,16 @@ export class PortalController {
     const result = await this.portalQueryService.listSessions({
       organisationId: data.organisationId,
       customerId: data.customerId,
-      contractId: data.contractId,
-      status: data.status as PortalSessionStatus,
-      createdAfter: data.createdAfter ? new Date(data.createdAfter) : undefined,
-      createdBefore: data.createdBefore ? new Date(data.createdBefore) : undefined,
+      contractId: undefined, // Not in proto request
+      status: data.status as unknown as PortalSessionStatus,
+      createdAfter: data.fromDate ? new Date(data.fromDate) : undefined,
+      createdBefore: data.toDate ? new Date(data.toDate) : undefined,
       page: data.page,
       limit: data.limit,
     });
 
     return {
-      sessions: result.sessions.map((s) => this.mapSessionToResponse(s)),
+      sessions: result.sessions.map((s) => this.mapSessionToProto(s)),
       total: result.total,
       page: result.page,
       totalPages: result.totalPages,
@@ -340,29 +239,16 @@ export class PortalController {
 
     const result = await this.portalQueryService.getSessionAudit({
       sessionId: data.sessionId,
-      page: data.page,
-      limit: data.limit,
+      page: 1,
+      limit: 100,
     });
 
     return {
-      events: result.events.map((e) => ({
-        id: e.id,
-        portalSessionId: e.portalSessionId,
-        eventType: e.eventType,
-        actorType: e.actorType,
-        requestId: e.requestId ?? undefined,
-        previousStatus: e.previousStatus ?? undefined,
-        newStatus: e.newStatus ?? undefined,
-        data: e.data,
-        createdAt: e.createdAt.toISOString(),
-      })),
-      total: result.total,
-      page: result.page,
-      totalPages: result.totalPages,
+      logs: result.events.map((e) => this.mapAuditLogToProto(e)),
     };
   }
 
-  private mapSessionToResponse(session: PortalPaymentSessionEntity): PortalSessionResponse {
+  private mapSessionToProto(session: PortalPaymentSessionEntity): PortalPaymentSession {
     return {
       id: session.id,
       organisationId: session.organisationId,
@@ -370,20 +256,44 @@ export class PortalController {
       customerId: session.customerId,
       contractId: session.contractId ?? undefined,
       paymentIntentId: session.paymentIntentId ?? undefined,
-      status: session.status,
-      allowedActions: session.allowedActions,
+      tokenVersion: '', // Not exposed
+      status: session.status as unknown as number,
+      allowedActions: session.allowedActions as unknown as number[],
       expiresAt: session.expiresAt.toISOString(),
       maxUses: session.maxUses,
       useCount: session.useCount,
+      consumedAt: undefined,
+      revokedAt: undefined,
+      lastAccessedAt: undefined,
       amountCents: Number(session.amountCents),
       currency: session.currency,
       description: session.description ?? undefined,
       mandateId: session.mandateId ?? undefined,
       rumMasked: session.rumMasked ?? undefined,
-      pspProvider: session.pspProvider ?? undefined,
+      pspState: undefined,
+      pspRedirectUrl: undefined,
+      pspProvider: session.pspProvider as unknown as number | undefined,
       pspSessionId: session.pspSessionId ?? undefined,
+      metadata: session.metadata ?? {},
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
+    };
+  }
+
+  private mapAuditLogToProto(event: PortalSessionAuditEntity): PortalSessionAuditLog {
+    return {
+      id: event.id,
+      portalSessionId: event.portalSessionId,
+      eventType: event.eventType as unknown as number,
+      actorType: event.actorType as unknown as number,
+      previousStatus: event.previousStatus ?? undefined,
+      newStatus: event.newStatus ?? undefined,
+      ipAddressHash: undefined,
+      userAgentHash: undefined,
+      requestId: event.requestId ?? undefined,
+      correlationId: undefined,
+      data: event.data ?? {},
+      timestamp: event.createdAt.toISOString(),
     };
   }
 
@@ -391,10 +301,12 @@ export class PortalController {
     ipAddress?: string;
     userAgent?: string;
     requestId?: string;
+    ipAddressHash?: string;
+    userAgentHash?: string;
   }): RequestContext {
     return {
-      ipHash: data.ipAddress ? this.hashString(data.ipAddress) : undefined,
-      uaHash: data.userAgent ? this.hashString(data.userAgent) : undefined,
+      ipHash: data.ipAddressHash || (data.ipAddress ? this.hashString(data.ipAddress) : undefined),
+      uaHash: data.userAgentHash || (data.userAgent ? this.hashString(data.userAgent) : undefined),
       requestId: data.requestId,
     };
   }

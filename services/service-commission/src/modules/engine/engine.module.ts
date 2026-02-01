@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommissionEngineService } from './commission-engine.service';
+import { EngineController } from './engine.controller';
 import { CommissionModule } from '../commission/commission.module';
 import { BaremeModule } from '../bareme/bareme.module';
 import { BordereauModule } from '../bordereau/bordereau.module';
@@ -22,6 +23,7 @@ import { ReportNegatifModule } from '../report/report.module';
     RecurrenceModule,
     ReportNegatifModule,
   ],
+  controllers: [EngineController],
   providers: [CommissionEngineService],
   exports: [CommissionEngineService],
 })

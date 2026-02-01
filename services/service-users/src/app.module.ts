@@ -12,7 +12,6 @@ import { MembreCompteModule } from './modules/membre-compte/membre-compte.module
 import { InvitationCompteModule } from './modules/invitation-compte/invitation-compte.module';
 import { AuthSyncModule } from './modules/auth-sync/auth-sync.module';
 import { OrganisationsClientModule } from './modules/organisations-client/organisations-client.module';
-import { UsersController } from './users.controller';
 
 @Module({
   imports: [
@@ -51,6 +50,6 @@ import { UsersController } from './users.controller';
     AuthSyncModule,
     OrganisationsClientModule,
   ],
-  controllers: [UsersController],
+  controllers: [],
 })
 export class AppModule {}

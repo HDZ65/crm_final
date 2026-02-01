@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, FindOptionsWhere } from 'typeorm';
 
 import { CalendarAuditLogEntity, AuditSource } from './entities/calendar-audit-log.entity';
-import type { GetAuditLogsRequest } from '@proto/calendar/calendar';
+import type { GetAuditLogsRequest } from '@crm/proto/calendar';
 
 export interface CreateAuditLogInput {
   organisationId: string;

@@ -1,18 +1,17 @@
-# Dockerfile for Proto Code Generation with Buf
-FROM alpine:3.19
+# Proto Generator Dockerfile
+# Generates TypeScript code from .proto files
+FROM bufbuild/buf:1.28.1 AS buf
+FROM node:20-alpine
 
-# Install Buf CLI and dependencies
-RUN apk add --no-cache curl bash && \
-    curl -sSL "https://github.com/bufbuild/buf/releases/latest/download/buf-Linux-x86_64" -o /usr/local/bin/buf && \
-    chmod +x /usr/local/bin/buf && \
-    apk del curl
+# Install buf CLI
+COPY --from=buf /usr/local/bin/buf /usr/local/bin/buf
 
-# Set working directory
 WORKDIR /proto
 
-# Copy entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Install ts-proto for TypeScript generation
+RUN npm install -g ts-proto@1.181.0
 
-# Default command
-CMD ["/docker-entrypoint.sh"]
+# Copy proto files and config at runtime via volumes
+# See docker-compose.override.yml for volume mounts
+
+CMD ["sh", "/proto/docker-entrypoint.sh"]

@@ -1,76 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ValidationPipe } from '@nestjs/common';
-import { join } from 'path';
+import { getGrpcOptions } from '@crm/grpc-utils';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const grpcPort = process.env.GRPC_PORT || '50070';
-  const grpcUrl = process.env.GRPC_URL || `0.0.0.0:${grpcPort}`;
-
-  // In Docker: /app/proto/calendar.proto (proto/src/calendar is copied to ./proto)
-  // In dev: proto/src/calendar/calendar.proto (from project root)
-  const isDocker = process.env.NODE_ENV === 'production' || process.env.DB_HOST === 'postgres-main';
-  const protoPath = isDocker
-    ? join(process.cwd(), 'proto/calendar.proto')
-    : join(process.cwd(), '../../proto/src/calendar/calendar.proto');
-
+  const grpcOptions = getGrpcOptions('calendar');
+  
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
     transport: Transport.GRPC,
-    options: {
-      package: 'calendar',
-      protoPath,
-      url: grpcUrl,
-      maxReceiveMessageLength: 20 * 1024 * 1024,
-      maxSendMessageLength: 20 * 1024 * 1024,
-      loader: {
-        keepCase: false,
-        longs: String,
-        enums: String,
-        defaults: true,
-        oneofs: true,
-      },
-    },
+    options: grpcOptions,
   });
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-
   await app.listen();
-
-  const dbHost = process.env.DB_HOST || 'localhost';
-  const dbPort = process.env.DB_PORT || '5432';
-  const dbName = process.env.DB_DATABASE || 'calendar_db';
-
-  console.log(`
-╔══════════════════════════════════════════════════════════════╗
-║        📅 Service Calendar - gRPC Microservice               ║
-╠══════════════════════════════════════════════════════════════╣
-║   gRPC URL:    ${grpcUrl.padEnd(46)} ║
-║   Database:    ${`${dbHost}:${dbPort}/${dbName}`.padEnd(46)} ║
-║   Environment: ${(process.env.NODE_ENV || 'development').padEnd(46)} ║
-╠══════════════════════════════════════════════════════════════╣
-║   Features:                                                  ║
-║   - Calendar Engine (plannedDebitDate calculation)           ║
-║   - Lots L1-L4 + Fixed Day configuration                     ║
-║   - Priority: Contract > Client > Company > System           ║
-║   - Holiday management by zone/country                       ║
-║   - CSV Import with dry-run validation                       ║
-║   - Volume heatmap & thresholds                              ║
-║   - Complete audit trail                                     ║
-╠══════════════════════════════════════════════════════════════╣
-║   gRPC Services:                                             ║
-║   - CalendarEngineService.CalculatePlannedDate               ║
-║   - DebitConfigurationService.ResolveConfiguration           ║
-║   - HolidayService.CheckDateEligibility                      ║
-║   - CalendarAdminService.GetCalendarView                     ║
-╚══════════════════════════════════════════════════════════════╝
-  `);
+  console.log(`Service service-calendar gRPC listening on ${grpcOptions.url}`);
 }
 
 bootstrap();

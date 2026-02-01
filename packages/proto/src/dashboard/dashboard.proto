@@ -1,0 +1,178 @@
+syntax = "proto3";
+
+package dashboard;
+
+// ===== COMMON =====
+
+message Empty {}
+
+message DashboardFilters {
+  string organisation_id = 1;
+  optional string societe_id = 2;
+  optional string produit_id = 3;
+  optional string canal = 4;
+  optional string date_debut = 5;
+  optional string date_fin = 6;
+  optional string periode_rapide = 7; // mois_courant, mois_dernier, trimestre_courant, annee_courante, personnalisee
+}
+
+message Variation {
+  double pourcentage = 1;
+  string tendance = 2; // hausse, baisse, stable
+}
+
+// ===== MAIN KPIs =====
+
+message GetKpisRequest {
+  DashboardFilters filters = 1;
+}
+
+message KpisResponse {
+  int32 contrats_actifs = 1;
+  Variation contrats_actifs_variation = 2;
+  double mrr = 3;
+  Variation mrr_variation = 4;
+  double taux_churn = 5;
+  Variation taux_churn_variation = 6;
+  double taux_impayes = 7;
+  Variation taux_impayes_variation = 8;
+}
+
+// ===== EVOLUTION CA =====
+
+message GetEvolutionCaRequest {
+  DashboardFilters filters = 1;
+}
+
+message EvolutionCaMensuelle {
+  string mois = 1;
+  double ca_realise = 2;
+  double objectif = 3;
+}
+
+message EvolutionCaResponse {
+  string periode_debut = 1;
+  string periode_fin = 2;
+  repeated EvolutionCaMensuelle donnees = 3;
+}
+
+// ===== REPARTITION PRODUITS =====
+
+message GetRepartitionProduitsRequest {
+  DashboardFilters filters = 1;
+}
+
+message RepartitionProduit {
+  string produit_id = 1;
+  string nom_produit = 2;
+  double ca = 3;
+  double pourcentage = 4;
+  string couleur = 5;
+}
+
+message RepartitionProduitsResponse {
+  double ca_total = 1;
+  repeated RepartitionProduit produits = 2;
+}
+
+// ===== STATS SOCIETES =====
+
+message GetStatsSocietesRequest {
+  DashboardFilters filters = 1;
+}
+
+message StatsSociete {
+  string societe_id = 1;
+  string nom_societe = 2;
+  int32 contrats_actifs = 3;
+  double mrr = 4;
+  double arr = 5;
+  int32 nouveaux_clients = 6;
+  double nouveaux_clients_variation = 7;
+  double taux_churn = 8;
+  double taux_impayes = 9;
+}
+
+message StatsSocietesResponse {
+  repeated StatsSociete societes = 1;
+  int32 total = 2;
+}
+
+// ===== ALERTES =====
+
+message GetAlertesRequest {
+  DashboardFilters filters = 1;
+}
+
+message Alerte {
+  string id = 1;
+  string titre = 2;
+  string description = 3;
+  string niveau = 4; // critique, avertissement, info
+  string type = 5; // taux_impayes, taux_churn, controles_qualite, objectif_ca, autre
+  double valeur_actuelle = 6;
+  double seuil = 7;
+  string date_detection = 8;
+  string entite_concernee = 9;
+  string entite_id = 10;
+}
+
+message AlertesResponse {
+  repeated Alerte alertes = 1;
+  int32 total = 2;
+  int32 nombre_critiques = 3;
+  int32 nombre_avertissements = 4;
+  int32 nombre_infos = 5;
+}
+
+// ===== KPIs COMMERCIAUX =====
+
+message GetKpisCommerciauxRequest {
+  DashboardFilters filters = 1;
+}
+
+message ClassementCommercial {
+  string commercial_id = 1;
+  string nom_complet = 2;
+  double valeur = 3;
+  int32 rang = 4;
+}
+
+message KpisCommerciauxResponse {
+  int32 nouveaux_clients_mois = 1;
+  Variation nouveaux_clients_variation = 2;
+  double taux_conversion = 3;
+  Variation taux_conversion_variation = 4;
+  double panier_moyen = 5;
+  Variation panier_moyen_variation = 6;
+  double ca_previsionnel_3_mois = 7;
+  repeated ClassementCommercial classement_par_ventes = 8;
+  repeated ClassementCommercial classement_par_ca = 9;
+  repeated ClassementCommercial classement_par_conversion = 10;
+}
+
+// ===== SERVICES =====
+
+service DashboardKpisService {
+  rpc GetKpis(GetKpisRequest) returns (KpisResponse);
+}
+
+service EvolutionCaService {
+  rpc GetEvolutionCa(GetEvolutionCaRequest) returns (EvolutionCaResponse);
+}
+
+service RepartitionProduitsService {
+  rpc GetRepartitionProduits(GetRepartitionProduitsRequest) returns (RepartitionProduitsResponse);
+}
+
+service StatsSocietesService {
+  rpc GetStatsSocietes(GetStatsSocietesRequest) returns (StatsSocietesResponse);
+}
+
+service AlertesService {
+  rpc GetAlertes(GetAlertesRequest) returns (AlertesResponse);
+}
+
+service KpisCommerciauxService {
+  rpc GetKpisCommerciaux(GetKpisCommerciauxRequest) returns (KpisCommerciauxResponse);
+}

@@ -12,7 +12,9 @@ import { RetryPolicyEntity } from '../retry-policy/entities/retry-policy.entity'
 import { RetryAuditLogEntity, AuditActorType } from '../audit-log/entities/retry-audit-log.entity';
 import { RetryPolicyService } from '../retry-policy/retry-policy.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import type { PaymentRejectedEvent as ProtoPaymentRejectedEvent } from '@proto/retry/am04_retry';
+
+// Import types from proto definitions
+import type { PaymentRejectedEvent as ProtoPaymentRejectedEvent } from '@crm/proto/retry/types';
 
 const NON_RETRYABLE_CODES = [
   'AC01_IBAN_INVALID',
@@ -32,25 +34,18 @@ const RETRYABLE_CODES = [
   'MS03_AGENT_REASON',
 ];
 
-export interface PaymentRejectedEvent {
-  eventId: string;
-  organisationId: string;
-  societeId: string;
-  paymentId: string;
-  scheduleId: string;
-  factureId?: string;
-  contratId?: string;
-  clientId: string;
-  reasonCode: string;
-  reasonMessage: string;
-  amountCents: number;
-  currency: string;
-  pspName: string;
-  pspPaymentId?: string;
+/**
+ * Service-level input type derived from proto PaymentRejectedEvent
+ * Converts Timestamp to Date for internal processing
+ */
+export type PaymentRejectedEvent = Omit<ProtoPaymentRejectedEvent, 'rejectedAt' | 'eventTimestamp'> & {
   rejectedAt: Date;
-  idempotencyKey: string;
-}
+  eventTimestamp?: Date;
+};
 
+/**
+ * Internal input type for processing due retries
+ */
 export interface ProcessDueRetriesInput {
   organisationId: string;
   targetDate: Date;

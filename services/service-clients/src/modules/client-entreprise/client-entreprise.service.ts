@@ -16,7 +16,7 @@ export class ClientEntrepriseService {
 
   async create(input: {
     raisonSociale: string;
-    numeroTVA: string;
+    numeroTva: string;
     siren: string;
   }): Promise<ClientEntrepriseEntity> {
     // Check for duplicate SIREN
@@ -30,7 +30,7 @@ export class ClientEntrepriseService {
 
     const entity = this.repository.create({
       raisonSociale: input.raisonSociale,
-      numeroTVA: input.numeroTVA,
+      numeroTva: input.numeroTva,
       siren: input.siren,
     });
     return this.repository.save(entity);
@@ -39,13 +39,13 @@ export class ClientEntrepriseService {
   async update(input: {
     id: string;
     raisonSociale?: string;
-    numeroTVA?: string;
+    numeroTva?: string;
     siren?: string;
   }): Promise<ClientEntrepriseEntity> {
     const entity = await this.findById(input.id);
 
     if (input.raisonSociale !== undefined) entity.raisonSociale = input.raisonSociale;
-    if (input.numeroTVA !== undefined) entity.numeroTVA = input.numeroTVA;
+    if (input.numeroTva !== undefined) entity.numeroTva = input.numeroTva;
     if (input.siren !== undefined) entity.siren = input.siren;
 
     return this.repository.save(entity);

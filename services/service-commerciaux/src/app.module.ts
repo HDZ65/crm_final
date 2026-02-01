@@ -6,7 +6,6 @@ import { ApporteurModule } from './modules/apporteur/apporteur.module';
 import { BaremeCommissionModule } from './modules/bareme-commission/bareme-commission.module';
 import { PalierCommissionModule } from './modules/palier-commission/palier-commission.module';
 import { ModeleDistributionModule } from './modules/modele-distribution/modele-distribution.module';
-import { CommerciauxController } from './commerciaux.controller';
 import { Apporteur } from './modules/apporteur/entities/apporteur.entity';
 import { BaremeCommission } from './modules/bareme-commission/entities/bareme-commission.entity';
 import { PalierCommission } from './modules/palier-commission/entities/palier-commission.entity';
@@ -44,6 +43,6 @@ import { ModeleDistribution } from './modules/modele-distribution/entities/model
     PalierCommissionModule,
     ModeleDistributionModule,
   ],
-  controllers: [CommerciauxController],
+  controllers: [],
 })
 export class AppModule {}

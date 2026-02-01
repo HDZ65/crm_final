@@ -9,7 +9,7 @@ import type {
   ListGammesRequest,
   GetGammeRequest,
   DeleteGammeRequest,
-} from '@proto/products/products';
+} from '@crm/proto/products';
 import { GammeEntity } from './entities/gamme.entity';
 
 @Injectable()

@@ -3,11 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import {
-  CategorieProduit as ProtoCategorieProduit,
-  TypeProduit as ProtoTypeProduit,
-  StatutCycleProduit as ProtoStatutCycleProduit,
-} from '@proto/products/products';
 import type {
   CreateProduitRequest,
   UpdateProduitRequest,
@@ -17,10 +12,39 @@ import type {
   DeleteProduitRequest,
   SetPromotionRequest,
   ClearPromotionRequest,
-} from '@proto/products/products';
+} from '@crm/proto/products';
 import { ProduitEntity, TypeProduit, CategorieProduit, StatutCycleProduit } from './entities/produit.entity';
 
-const categorieFromProto: Record<ProtoCategorieProduit, CategorieProduit> = {
+// Proto enum values (matching proto definitions to avoid ESM import issues)
+const ProtoCategorieProduit = {
+  CATEGORIE_PRODUIT_UNSPECIFIED: 0,
+  ASSURANCE: 1,
+  PREVOYANCE: 2,
+  EPARGNE: 3,
+  SERVICE: 4,
+  ACCESSOIRE: 5,
+} as const;
+
+const ProtoTypeProduit = {
+  TYPE_PRODUIT_UNSPECIFIED: 0,
+  INTERNE: 1,
+  PARTENAIRE: 2,
+} as const;
+
+const ProtoStatutCycleProduit = {
+  STATUT_CYCLE_PRODUIT_UNSPECIFIED: 0,
+  STATUT_CYCLE_PRODUIT_BROUILLON: 1,
+  STATUT_CYCLE_PRODUIT_TEST: 2,
+  STATUT_CYCLE_PRODUIT_ACTIF: 3,
+  STATUT_CYCLE_PRODUIT_GELE: 4,
+  STATUT_CYCLE_PRODUIT_RETIRE: 5,
+} as const;
+
+type ProtoCategorieProduitType = (typeof ProtoCategorieProduit)[keyof typeof ProtoCategorieProduit];
+type ProtoTypeProduitType = (typeof ProtoTypeProduit)[keyof typeof ProtoTypeProduit];
+type ProtoStatutCycleProduitType = (typeof ProtoStatutCycleProduit)[keyof typeof ProtoStatutCycleProduit];
+
+const categorieFromProto: Record<ProtoCategorieProduitType, CategorieProduit> = {
   [ProtoCategorieProduit.ASSURANCE]: CategorieProduit.ASSURANCE,
   [ProtoCategorieProduit.PREVOYANCE]: CategorieProduit.PREVOYANCE,
   [ProtoCategorieProduit.EPARGNE]: CategorieProduit.EPARGNE,
@@ -29,13 +53,13 @@ const categorieFromProto: Record<ProtoCategorieProduit, CategorieProduit> = {
   [ProtoCategorieProduit.CATEGORIE_PRODUIT_UNSPECIFIED]: CategorieProduit.SERVICE,
 };
 
-const typeFromProto: Record<ProtoTypeProduit, TypeProduit> = {
+const typeFromProto: Record<ProtoTypeProduitType, TypeProduit> = {
   [ProtoTypeProduit.INTERNE]: TypeProduit.INTERNE,
   [ProtoTypeProduit.PARTENAIRE]: TypeProduit.PARTENAIRE,
   [ProtoTypeProduit.TYPE_PRODUIT_UNSPECIFIED]: TypeProduit.INTERNE,
 };
 
-const statutCycleFromProto: Record<ProtoStatutCycleProduit, StatutCycleProduit> = {
+const statutCycleFromProto: Record<ProtoStatutCycleProduitType, StatutCycleProduit> = {
   [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_BROUILLON]: StatutCycleProduit.BROUILLON,
   [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_TEST]: StatutCycleProduit.TEST,
   [ProtoStatutCycleProduit.STATUT_CYCLE_PRODUIT_ACTIF]: StatutCycleProduit.ACTIF,

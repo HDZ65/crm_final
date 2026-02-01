@@ -1,5 +1,5 @@
 {
-  "name": "service-dashboard",
+  "name": "@crm/service-dashboard",
   "version": "1.0.0",
   "description": "Microservice gRPC pour les KPIs et tableaux de bord",
   "main": "dist/main.js",
@@ -17,7 +17,8 @@
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
-    "db:create": "ts-node src/scripts/create-database.ts"
+    "db:create": "ts-node src/scripts/create-database.ts",
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
@@ -30,13 +31,15 @@
     "@nestjs/typeorm": "^11.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
-    "dotenv": "^16.6.1",
-    "pg": "^8.17.1",
+    "dotenv": "^17.2.3",
+    "pg": "^8.17.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.28",
     "typeorm-naming-strategies": "^4.1.0",
-    "uuid": "^13.0.0"
+    "@crm/grpc-utils": "*",
+    "@crm/proto": "*",
+    "@crm/shared": "*"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
@@ -44,7 +47,7 @@
     "@nestjs/testing": "^11.1.12",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.0.9",
+    "@types/node": "^25.0.10",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
     "eslint": "^9.39.2",
@@ -52,6 +55,7 @@
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "rimraf": "^6.1.2"
   }
 }

@@ -39,7 +39,7 @@ export interface CompanyBranding {
 /**
  * Convertit le branding gRPC en interface interne
  */
-export function toCompanyBranding(grpcBranding: any): CompanyBranding | undefined {
+export function toCompanyBranding(grpcBranding: Partial<CompanyBranding> | undefined | null): CompanyBranding | undefined {
   if (!grpcBranding) return undefined;
 
   return {

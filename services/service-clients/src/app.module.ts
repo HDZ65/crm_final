@@ -8,7 +8,6 @@ import { AdresseModule } from './modules/adresse/adresse.module';
 import { ClientBaseModule } from './modules/client-base/client-base.module';
 import { ClientEntrepriseModule } from './modules/client-entreprise/client-entreprise.module';
 import { ClientPartenaireModule } from './modules/client-partenaire/client-partenaire.module';
-import { ClientsController } from './clients.controller';
 
 @Module({
   imports: [
@@ -45,6 +44,7 @@ import { ClientsController } from './clients.controller';
     ClientEntrepriseModule,
     ClientPartenaireModule,
   ],
-  controllers: [ClientsController],
+  // Plus de controleur monolithique ici - chaque module a le sien
+  controllers: [],
 })
 export class AppModule {}

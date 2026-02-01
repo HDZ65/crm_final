@@ -11,7 +11,7 @@ import type {
   CalculatePlannedDateRequest,
   CalculatePlannedDateResponse,
   DateResolutionStep,
-} from '@proto/calendar/calendar';
+} from '@crm/proto/calendar';
 
 export interface CalculatePlannedDateInput {
   organisationId: string;

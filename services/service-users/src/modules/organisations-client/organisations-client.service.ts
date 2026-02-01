@@ -1,67 +1,43 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { credentials, loadPackageDefinition } from '@grpc/grpc-js';
-import { loadSync } from '@grpc/proto-loader';
-import { join } from 'path';
+import { createGrpcClient, getGrpcClientConfig } from '@crm/grpc-utils';
 import type {
-  CreateOrganisationRequest as ProtoCreateOrganisationRequest,
-  Organisation as ProtoOrganisation,
-} from '@proto/organisations/organisations';
-
-type CreateOrganisationRequest = Partial<ProtoCreateOrganisationRequest>;
-type Organisation = ProtoOrganisation;
+  CreateOrganisationRequest,
+  Organisation,
+} from '@crm/proto/organisations';
 
 @Injectable()
 export class OrganisationsClientService implements OnModuleInit {
   private readonly logger = new Logger(OrganisationsClientService.name);
-  private organisationService: any;
+  private organisationService: any = null;
+  private serviceUrl: string = '';
 
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit(): void {
-    const url = this.configService.get<string>('ORGANISATIONS_GRPC_URL', 'service-organisations:50062');
-    
-    // Try Docker path first, then dev path
-    const dockerProtoPath = join(process.cwd(), 'proto/organisations.proto');
-    const devProtoPath = join(process.cwd(), 'proto/src/organisations/organisations.proto');
-    
-    const fs = require('fs');
-    const protoPath = fs.existsSync(dockerProtoPath) ? dockerProtoPath : devProtoPath;
-    const includeDirs = fs.existsSync(dockerProtoPath) 
-      ? [join(process.cwd(), 'proto')]
-      : [join(process.cwd(), 'proto/src')];
+    this.serviceUrl = this.configService.get<string>('ORGANISATIONS_GRPC_URL', 'service-organisations:50062');
 
     try {
-      const packageDef = loadSync(protoPath, {
-        keepCase: false,
-        longs: String,
-        enums: String,
-        defaults: true,
-        oneofs: true,
-        includeDirs,
-      });
-
-      const grpcObj = loadPackageDefinition(packageDef) as any;
-      this.organisationService = new grpcObj.organisations.OrganisationService(
-        url,
-        credentials.createInsecure()
+      this.organisationService = createGrpcClient(
+        'organisations',
+        'OrganisationService',
+        { url: this.serviceUrl }
       );
-      this.logger.log(`Connected to organisations service at ${url}`);
+      this.logger.log(`Connected to organisations service at ${this.serviceUrl}`);
     } catch (error) {
       this.logger.error(`Failed to connect to organisations service: ${error}`);
     }
   }
 
   /**
-   * Create an organisation with a specific ID (to match compte ID)
+   * Create an organisation
    */
-  async createOrganisation(request: CreateOrganisationRequest): Promise<Organisation> {
-    return new Promise((resolve, reject) => {
-      if (!this.organisationService) {
-        reject(new Error('Organisations service not connected'));
-        return;
-      }
+  async createOrganisation(request: Partial<CreateOrganisationRequest>): Promise<Organisation> {
+    if (!this.organisationService) {
+      throw new Error('Organisations service not connected');
+    }
 
+    return new Promise((resolve, reject) => {
       this.organisationService.create(request, (error: any, response: Organisation) => {
         if (error) {
           this.logger.error(`Failed to create organisation: ${error.message}`);

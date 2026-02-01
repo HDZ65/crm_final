@@ -1,0 +1,19 @@
+version: v2
+
+plugins:
+  # NestJS-compatible types with gRPC support for backend services
+  - remote: buf.build/community/stephenh-ts-proto
+    out: gen/ts
+    opt:
+      - nestJs=true
+      - snakeToCamel=true
+      - addGrpcMetadata=true
+      - outputServices=grpc-js
+      - esModuleInterop=true
+      - useOptionals=messages
+      - exportCommonSymbols=false
+      - unrecognizedEnum=false
+      - forceLong=number
+
+inputs:
+  - directory: src

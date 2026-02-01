@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { parse } from 'csv-parse/sync';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'crypto';
 
 import { CompanyDebitConfigurationEntity } from '../configuration/entities/company-debit-configuration.entity';
 import { ClientDebitConfigurationEntity } from '../configuration/entities/client-debit-configuration.entity';
@@ -11,7 +11,7 @@ import { HolidayEntity, HolidayType } from '../holidays/entities/holiday.entity'
 import { AuditService } from '../audit/audit.service';
 import { AuditSource } from '../audit/entities/calendar-audit-log.entity';
 import { DebitDateMode, DebitBatch, DateShiftStrategy } from '../configuration/entities/system-debit-configuration.entity';
-import type { ImportCsvResponse, CsvValidationError } from '@proto/calendar/calendar';
+import type { ImportCsvResponse, CsvValidationError } from '@crm/proto/calendar';
 
 export interface CsvImportResult {
   importId: string;

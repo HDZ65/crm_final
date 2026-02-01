@@ -4,7 +4,7 @@ import { Repository, Between } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { RetryJobEntity, RetryJobStatus } from './entities/retry-job.entity';
-import type { PaginationRequest } from '@proto/retry/am04_retry_service';
+import type { PaginationRequest } from '@crm/proto/retry';
 
 export interface ListRetryJobsInput {
   organisationId: string;

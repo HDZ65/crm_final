@@ -8,7 +8,7 @@ import type {
   CreateRetryPolicyRequest,
   UpdateRetryPolicyRequest,
   PaginationRequest,
-} from '@proto/retry/am04_retry_service';
+} from '@crm/proto/retry';
 
 export interface CreateRetryPolicyInput {
   organisationId: string;

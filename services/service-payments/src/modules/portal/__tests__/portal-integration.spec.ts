@@ -15,6 +15,9 @@ import { PortalSessionAuditEntity, AuditEventType } from '../entities/portal-ses
 import { PSPEventInboxEntity, WebhookEventStatus } from '../entities/psp-event-inbox.entity';
 import { StripeService } from '../../stripe/stripe.service';
 import { GoCardlessService } from '../../gocardless/gocardless.service';
+import { SlimpayService } from '../../slimpay/slimpay.service';
+import { MultiSafepayService } from '../../multisafepay/multisafepay.service';
+import { EmerchantpayService } from '../../emerchantpay/emerchantpay.service';
 
 describe('Portal Integration Tests', () => {
   let portalSessionService: PortalSessionService;
@@ -57,6 +60,19 @@ describe('Portal Integration Tests', () => {
     getActiveMandate: jest.fn(),
   };
 
+  const mockSlimpayService = {
+    createPayment: jest.fn(),
+    createMandate: jest.fn(),
+  };
+
+  const mockMultiSafepayService = {
+    createPayment: jest.fn(),
+  };
+
+  const mockEmerchantpayService = {
+    createPayment: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -83,6 +99,18 @@ describe('Portal Integration Tests', () => {
           provide: GoCardlessService,
           useValue: mockGoCardlessService,
         },
+        {
+          provide: SlimpayService,
+          useValue: mockSlimpayService,
+        },
+        {
+          provide: MultiSafepayService,
+          useValue: mockMultiSafepayService,
+        },
+        {
+          provide: EmerchantpayService,
+          useValue: mockEmerchantpayService,
+        },
       ],
     }).compile();
 
@@ -93,7 +121,7 @@ describe('Portal Integration Tests', () => {
     auditRepository = module.get(getRepositoryToken(PortalSessionAuditEntity));
     eventInboxRepository = module.get(getRepositoryToken(PSPEventInboxEntity));
 
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('Complete Payment Flow', () => {
@@ -367,12 +395,14 @@ describe('Portal Integration Tests', () => {
 
   describe('Session Expiration', () => {
     it('should mark expired sessions', async () => {
-      const expiredSessions = [
+      const expiredCreatedSessions = [
         {
           id: 'expired-1',
           status: PortalSessionStatus.CREATED,
           expiresAt: new Date(Date.now() - 60000),
         },
+      ];
+      const expiredActiveSessions = [
         {
           id: 'expired-2',
           status: PortalSessionStatus.ACTIVE,
@@ -380,7 +410,10 @@ describe('Portal Integration Tests', () => {
         },
       ];
 
-      mockSessionRepository.find.mockResolvedValue(expiredSessions);
+      // findExpiredSessions returns CREATED sessions, findActiveSessions returns ACTIVE sessions
+      mockSessionRepository.find
+        .mockResolvedValueOnce(expiredCreatedSessions)
+        .mockResolvedValueOnce(expiredActiveSessions);
       mockSessionRepository.save.mockImplementation((session) => Promise.resolve(session));
       mockAuditRepository.create.mockReturnValue({});
       mockAuditRepository.save.mockResolvedValue({});

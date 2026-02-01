@@ -1,16 +1,24 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { loginSchema, type LoginFormData, signupSchema, type SignupFormData } from "@/lib/schemas/auth";
+import {
+  loginSchema,
+  type LoginFormData,
+  signupSchema,
+} from "@/lib/schemas/auth";
 import { parseFormData } from "@/lib/form-validation";
 import { users, membresCompte, comptes, roles } from "@/lib/grpc";
 import type { FormState } from "@/lib/form-state";
 import type {
-  UserProfile,
   UserOrganisation,
   UserRole,
   Utilisateur,
 } from "@proto/organisations/users";
+import { COOKIE_NAMES, TOKEN_CONFIG } from "@/lib/auth";
+
+// =============================================================================
+// Types
+// =============================================================================
 
 export interface AuthMeResponse {
   utilisateur: Utilisateur;
@@ -23,160 +31,93 @@ export interface ActionResult<T> {
   error: string | null;
 }
 
+// =============================================================================
+// Organisation Cookie Management
+// =============================================================================
+
 /**
  * Get the current user's organisation ID from cookies
- * This is a workaround since we can't access NextAuth session directly in server actions
  */
 export async function getActiveOrganisationId(): Promise<string | null> {
   const cookieStore = await cookies();
-  // Try to get stored organisation ID from cookie
-  const orgCookie = cookieStore.get("active_organisation_id");
-  return orgCookie?.value || null;
+  return cookieStore.get(COOKIE_NAMES.ACTIVE_ORG)?.value ?? null;
 }
 
 /**
  * Set the active organisation ID in cookies
  */
-export async function setActiveOrganisationId(organisationId: string): Promise<void> {
+export async function setActiveOrganisationId(
+  organisationId: string
+): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.set("active_organisation_id", organisationId, {
+  cookieStore.set(COOKIE_NAMES.ACTIVE_ORG, organisationId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    maxAge: TOKEN_CONFIG.ORG_COOKIE_MAX_AGE,
   });
+}
+
+// =============================================================================
+// User Profile Fetching (via gRPC)
+// =============================================================================
+
+interface UserInfo {
+  email?: string;
+  name?: string;
+  given_name?: string;
+  family_name?: string;
 }
 
 /**
  * Get current user by Keycloak ID via gRPC
- * This replaces the REST API /auth/me endpoint
- * If user doesn't exist, creates them automatically
+ * Creates user automatically if they don't exist
  */
 export async function getCurrentUserByKeycloakId(
   keycloakId: string,
-  userInfo?: { email?: string; name?: string; given_name?: string; family_name?: string }
+  userInfo?: UserInfo
 ): Promise<ActionResult<AuthMeResponse>> {
   try {
-    let user;
-    
-    try {
-      // Try to get user by keycloak ID
-      user = await users.getByKeycloakId({ keycloakId });
-    } catch (err) {
-      // User doesn't exist - create them if we have userInfo
-      const error = err as { code?: number; details?: string };
-      const isNotFound = error.code === 5 || error.details?.includes("not found") || error.details?.includes("NOT_FOUND");
-      
-      if (isNotFound && userInfo?.email) {
-        console.log(`[getCurrentUserByKeycloakId] User not found, creating new user for keycloakId: ${keycloakId}`);
-        
-        // Parse name from userInfo
-        let nom = "";
-        let prenom = "";
-        
-        if (userInfo.family_name) {
-          nom = userInfo.family_name;
-        }
-        if (userInfo.given_name) {
-          prenom = userInfo.given_name;
-        }
-        // Fallback: split the full name
-        if (!nom && !prenom && userInfo.name) {
-          const nameParts = userInfo.name.trim().split(" ");
-          if (nameParts.length >= 2) {
-            prenom = nameParts[0];
-            nom = nameParts.slice(1).join(" ");
-          } else {
-            nom = userInfo.name;
-          }
-        }
-        
-        // Create the user
-        user = await users.create({
-          keycloakId,
-          email: userInfo.email,
-          nom: nom || "Utilisateur",
-          prenom: prenom || "",
-          telephone: "",
-          actif: true,
-        });
-        
-        console.log(`[getCurrentUserByKeycloakId] User created successfully: ${user.id}`);
-      } else {
-        // Re-throw if not a "not found" error or no userInfo
-        throw err;
-      }
-    }
+    const user = await getOrCreateUser(keycloakId, userInfo);
+    const organisations = await fetchUserOrganisations(user.id);
 
-    // Get user's organisations via membre_compte
-    const membresResponse = await membresCompte.listByUtilisateur({
-      utilisateurId: user.id,
-    });
-
-    // Fetch organisation and role details for each membre
-    const userOrganisations: UserOrganisation[] = await Promise.all(
-      (membresResponse.membres || []).map(async (m) => {
-        // Fetch compte/organisation details (comptes are in service-users, not service-organisations)
-        let organisationNom = "";
-        try {
-          const compte = await comptes.get({ id: m.organisationId });
-          organisationNom = compte.nom;
-        } catch {
-          console.warn(`[getCurrentUserByKeycloakId] Could not fetch compte ${m.organisationId}`);
-        }
-
-        // Fetch role details
-        let role: UserRole = { id: "", code: "", nom: "" };
-        try {
-          const roleData = await roles.get({ id: m.roleId });
-          role = { id: roleData.id, code: roleData.code, nom: roleData.nom };
-        } catch {
-          console.warn(`[getCurrentUserByKeycloakId] Could not fetch role ${m.roleId}`);
-        }
-
-        return {
-          organisationId: m.organisationId,
-          organisationNom,
-          role,
-          etat: m.etat || "actif",
-        };
-      })
-    );
-
-    const data: AuthMeResponse = {
-      utilisateur: {
-        id: user.id,
-        keycloakId: user.keycloakId,
-        email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        telephone: user.telephone || "",
-        actif: user.actif,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
+    return {
+      data: {
+        utilisateur: {
+          id: user.id,
+          keycloakId: user.keycloakId,
+          email: user.email,
+          nom: user.nom,
+          prenom: user.prenom,
+          telephone: user.telephone || "",
+          actif: user.actif,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+        organisations,
+        hasOrganisation: organisations.length > 0,
       },
-      organisations: userOrganisations,
-      hasOrganisation: userOrganisations.length > 0,
+      error: null,
     };
-
-    return { data, error: null };
   } catch (err) {
-    console.error("[getCurrentUserByKeycloakId] error:", err);
+    console.error("[getCurrentUserByKeycloakId] Error:", err);
     return {
       data: null,
-      error: err instanceof Error ? err.message : "Erreur lors de la récupération du profil",
+      error:
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de la recuperation du profil",
     };
   }
 }
 
-// ============================================================================
-// Form Actions (Next.js 15 native pattern)
-// ============================================================================
+// =============================================================================
+// Form Actions (Next.js 15 pattern)
+// =============================================================================
 
 /**
- * Action de validation du formulaire de connexion
- * Valide les données côté serveur et retourne les erreurs ou succès
- * Note: L'authentification réelle est gérée par signIn de NextAuth côté client
+ * Validate login form data
+ * Note: Actual authentication is handled by signIn from NextAuth on client
  */
 export async function validateLoginAction(
   prevState: FormState<LoginFormData>,
@@ -191,7 +132,6 @@ export async function validateLoginAction(
     };
   }
 
-  // Validation réussie - retourner les données pour que le client appelle signIn
   return {
     success: true,
     data: result.data,
@@ -199,7 +139,7 @@ export async function validateLoginAction(
 }
 
 /**
- * Action de validation et création de compte
+ * Validate and create account
  */
 export async function signupAction(
   prevState: FormState<{ success: boolean }>,
@@ -215,12 +155,14 @@ export async function signupAction(
   }
 
   try {
-    // Appeler l'API d'inscription
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(result.data),
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || ""}/api/auth/register`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(result.data),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -234,10 +176,116 @@ export async function signupAction(
       success: true,
       data: { success: true },
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
-      errors: { _form: ["Une erreur est survenue. Veuillez réessayer."] },
+      errors: { _form: ["Une erreur est survenue. Veuillez reessayer."] },
     };
   }
+}
+
+// =============================================================================
+// Internal Helpers
+// =============================================================================
+
+/**
+ * Get existing user or create new one
+ */
+async function getOrCreateUser(keycloakId: string, userInfo?: UserInfo) {
+  try {
+    return await users.getByKeycloakId({ keycloakId });
+  } catch (err) {
+    const error = err as { code?: number; details?: string };
+    const isNotFound =
+      error.code === 5 ||
+      error.details?.includes("not found") ||
+      error.details?.includes("NOT_FOUND");
+
+    if (!isNotFound || !userInfo?.email) {
+      throw err;
+    }
+
+    console.log(
+      `[getOrCreateUser] Creating new user for keycloakId: ${keycloakId}`
+    );
+
+    const { nom, prenom } = parseNameFromUserInfo(userInfo);
+
+    const user = await users.create({
+      keycloakId,
+      email: userInfo.email,
+      nom,
+      prenom,
+      telephone: "",
+      actif: true,
+    });
+
+    console.log(`[getOrCreateUser] User created: ${user.id}`);
+    return user;
+  }
+}
+
+/**
+ * Parse name from user info
+ */
+function parseNameFromUserInfo(userInfo: UserInfo): {
+  nom: string;
+  prenom: string;
+} {
+  let nom = userInfo.family_name || "";
+  let prenom = userInfo.given_name || "";
+
+  if (!nom && !prenom && userInfo.name) {
+    const nameParts = userInfo.name.trim().split(" ");
+    if (nameParts.length >= 2) {
+      prenom = nameParts[0];
+      nom = nameParts.slice(1).join(" ");
+    } else {
+      nom = userInfo.name;
+    }
+  }
+
+  return {
+    nom: nom || "Utilisateur",
+    prenom: prenom || "",
+  };
+}
+
+/**
+ * Fetch user organisations with details
+ */
+async function fetchUserOrganisations(
+  userId: string
+): Promise<UserOrganisation[]> {
+  const membresResponse = await membresCompte.listByUtilisateur({
+    utilisateurId: userId,
+  });
+
+  return Promise.all(
+    (membresResponse.membres || []).map(async (membre) => {
+      const [compteResult, roleResult] = await Promise.allSettled([
+        comptes.get({ id: membre.organisationId }),
+        roles.get({ id: membre.roleId }),
+      ]);
+
+      const organisationNom =
+        compteResult.status === "fulfilled" ? compteResult.value.nom : "";
+
+      const role: UserRole =
+        roleResult.status === "fulfilled"
+          ? {
+              id: roleResult.value.id,
+              code: roleResult.value.code,
+              nom: roleResult.value.nom,
+            }
+          : { id: "", code: "", nom: "" };
+
+      return {
+        organisationId: membre.organisationId,
+        organisationNom,
+        role,
+        etat: membre.etat || "actif",
+      };
+    })
+  );
 }

@@ -11,7 +11,7 @@ import type {
   GetGrilleTarifaireActiveRequest,
   DeleteGrilleTarifaireRequest,
   SetGrilleParDefautRequest,
-} from '@proto/products/products';
+} from '@crm/proto/products';
 import { GrilleTarifaireEntity } from './entities/grille-tarifaire.entity';
 
 @Injectable()

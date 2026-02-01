@@ -32,9 +32,9 @@ import { SlimpayAccountEntity } from './modules/slimpay/entities/slimpay-account
 import { MultiSafepayAccountEntity } from './modules/multisafepay/entities/multisafepay-account.entity';
 import { EmerchantpayAccountEntity } from './modules/emerchantpay/entities/emerchantpay-account.entity';
 
-// Payment gRPC Controller
-import { PaymentController } from './payment.controller';
+// Portal Controller
 import { PortalController } from './modules/portal/portal.controller';
+import { PspAccountsModule } from './modules/psp-accounts/psp-accounts.module';
 
 @Module({
   imports: [
@@ -84,7 +84,7 @@ import { PortalController } from './modules/portal/portal.controller';
       }),
     }),
 
-// Feature Modules
+    // Feature Modules
     StripeModule,
     PaypalModule,
     GoCardlessModule,
@@ -96,8 +96,9 @@ import { PortalController } from './modules/portal/portal.controller';
     AuditModule,
     CalendarModule,
     RetryModule,
+    PspAccountsModule,
   ],
-  controllers: [PaymentController, PortalController],
+  controllers: [PortalController],
   providers: [],
 })
 export class AppModule {}

@@ -46,7 +46,7 @@ describe('PortalSessionService', () => {
     sessionRepository = module.get(getRepositoryToken(PortalPaymentSessionEntity));
     auditRepository = module.get(getRepositoryToken(PortalSessionAuditEntity));
 
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('Token Generation', () => {

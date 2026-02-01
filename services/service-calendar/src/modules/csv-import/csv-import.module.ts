@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CompanyDebitConfigurationEntity } from '../configuration/entities/company-debit-configuration.entity';
@@ -16,7 +16,7 @@ import { AuditModule } from '../audit/audit.module';
       ContractDebitConfigurationEntity,
       HolidayEntity,
     ]),
-    AuditModule,
+    forwardRef(() => AuditModule),
   ],
   providers: [CsvImportService],
   exports: [CsvImportService],

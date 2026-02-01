@@ -15,8 +15,8 @@ import {
 import type {
   CreatePortalSessionRequest,
   PortalRequestContext,
-} from '@proto/payments/payment';
-import { PortalErrorCode as ProtoPortalErrorCode } from '@proto/payments/payment';
+} from '@crm/proto/payments';
+import { PortalErrorCode as ProtoPortalErrorCode } from '@crm/proto/payments';
 
 export type CreateSessionParams = Omit<CreatePortalSessionRequest, 'allowedActions'> & {
   allowedActions: PortalSessionAction[];

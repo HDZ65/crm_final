@@ -2,67 +2,110 @@
 
 import { useAuth } from "@/hooks/auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
+import { AUTH_URLS } from "@/lib/auth";
+
+// =============================================================================
+// Types
+// =============================================================================
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  /** Required roles (user must have at least one) */
   roles?: string[];
+  /** URL to redirect if not authenticated */
   fallbackUrl?: string;
+  /** Custom loading component */
+  loadingComponent?: ReactNode;
 }
 
+// =============================================================================
+// Component
+// =============================================================================
+
+/**
+ * Client-side route protection wrapper
+ * 
+ * Note: For better UX, prefer server-side protection via middleware.
+ * Use this component for role-based access control.
+ * 
+ * @example
+ * ```tsx
+ * <ProtectedRoute roles={['admin']}>
+ *   <AdminPanel />
+ * </ProtectedRoute>
+ * ```
+ */
 export function ProtectedRoute({
   children,
   roles,
-  fallbackUrl = "/login",
+  fallbackUrl = AUTH_URLS.LOGIN,
+  loadingComponent,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, ready, hasAnyRole } = useAuth();
+  const { isAuthenticated, isLoading, hasAnyRole } = useAuth();
   const router = useRouter();
 
+  const hasRequiredRoles = !roles?.length || hasAnyRole(roles);
+
+  // Handle redirects
   useEffect(() => {
-    if (ready && !isAuthenticated) {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
       router.push(fallbackUrl);
+      return;
     }
 
-    if (ready && isAuthenticated && roles && roles.length > 0) {
-      if (!hasAnyRole(roles)) {
-        // User doesn't have required roles
-        router.push("/unauthorized");
-      }
+    if (!hasRequiredRoles) {
+      router.push(AUTH_URLS.UNAUTHORIZED);
     }
-  }, [ready, isAuthenticated, roles, hasAnyRole, router, fallbackUrl]);
+  }, [isLoading, isAuthenticated, hasRequiredRoles, router, fallbackUrl]);
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold">Vérification de l&apos;authentification...</h2>
-        </div>
-      </div>
-    );
+  // Loading state
+  if (isLoading) {
+    return loadingComponent ?? <LoadingScreen message="Verification de l'authentification..." />;
   }
 
+  // Not authenticated - show redirect message
   if (!isAuthenticated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold">Redirection vers la connexion...</h2>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Redirection vers la connexion..." />;
   }
 
-  if (roles && roles.length > 0 && !hasAnyRole(roles)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-600">Accès non autorisé</h2>
-          <p className="mt-2 text-gray-600">
-            Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
-          </p>
-        </div>
-      </div>
-    );
+  // Missing roles
+  if (!hasRequiredRoles) {
+    return <UnauthorizedScreen />;
   }
 
+  // Authorized
   return <>{children}</>;
+}
+
+// =============================================================================
+// Sub-components
+// =============================================================================
+
+function LoadingScreen({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+        <p className="text-muted-foreground">{message}</p>
+      </div>
+    </div>
+  );
+}
+
+function UnauthorizedScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center max-w-md px-4">
+        <h2 className="text-xl font-semibold text-destructive mb-2">
+          Acces non autorise
+        </h2>
+        <p className="text-muted-foreground">
+          Vous n'avez pas les permissions necessaires pour acceder a cette page.
+        </p>
+      </div>
+    </div>
+  );
 }

@@ -17,7 +17,7 @@ export class PartenaireMarqueBlancheService {
   async create(input: {
     denomination: string;
     siren: string;
-    numeroTVA: string;
+    numeroTva: string;
     contactSupportEmail: string;
     telephone: string;
     statutId: string;
@@ -25,7 +25,7 @@ export class PartenaireMarqueBlancheService {
     const entity = this.repository.create({
       denomination: input.denomination,
       siren: input.siren,
-      numeroTVA: input.numeroTVA,
+      numeroTva: input.numeroTva,
       contactSupportEmail: input.contactSupportEmail,
       telephone: input.telephone,
       statutId: input.statutId,
@@ -37,7 +37,7 @@ export class PartenaireMarqueBlancheService {
     id: string;
     denomination?: string;
     siren?: string;
-    numeroTVA?: string;
+    numeroTva?: string;
     contactSupportEmail?: string;
     telephone?: string;
     statutId?: string;
@@ -46,7 +46,7 @@ export class PartenaireMarqueBlancheService {
 
     if (input.denomination !== undefined) entity.denomination = input.denomination;
     if (input.siren !== undefined) entity.siren = input.siren;
-    if (input.numeroTVA !== undefined) entity.numeroTVA = input.numeroTVA;
+    if (input.numeroTva !== undefined) entity.numeroTva = input.numeroTva;
     if (input.contactSupportEmail !== undefined) entity.contactSupportEmail = input.contactSupportEmail;
     if (input.telephone !== undefined) entity.telephone = input.telephone;
     if (input.statutId !== undefined) entity.statutId = input.statutId;

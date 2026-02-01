@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RetryAuditLogEntity, AuditActorType } from './entities/retry-audit-log.entity';
-import type { PaginationRequest } from '@proto/retry/am04_retry_service';
+import type { PaginationRequest } from '@crm/proto/retry';
 
 export interface CreateAuditLogInput {
   organisationId: string;

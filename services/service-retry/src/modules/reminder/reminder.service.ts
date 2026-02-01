@@ -14,7 +14,7 @@ import {
 import { ReminderPolicyService } from '../reminder-policy/reminder-policy.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AuditActorType } from '../audit-log/entities/retry-audit-log.entity';
-import type { PaginationRequest } from '@proto/retry/am04_retry_service';
+import type { PaginationRequest } from '@crm/proto/retry';
 
 export interface CreateReminderInput {
   organisationId: string;

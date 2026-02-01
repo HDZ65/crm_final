@@ -119,7 +119,7 @@ export class InvoicesController {
    * Après validation, la facture devient IMMUTABLE
    */
   @GrpcMethod('InvoiceService', 'ValidateInvoice')
-  async validateInvoice(data: { id: string; branding?: any }) {
+  async validateInvoice(data: { id: string; branding?: Partial<import('../../common/interfaces/company-branding.interface').CompanyBranding> }) {
     try {
       const branding = toCompanyBranding(data.branding);
       return await this.invoicesService.validate(data.id, branding);

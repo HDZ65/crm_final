@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { FactureSettingsEntity, LogoPosition } from './entities/facture-settings.entity';
-import type { CreateFactureSettingsRequest } from '@proto/factures/factures';
+import type { CreateFactureSettingsRequest } from '@crm/proto/factures';
 
 export type CreateSettingsInput = Omit<CreateFactureSettingsRequest, 'logoPosition'> & {
   logoPosition?: LogoPosition;

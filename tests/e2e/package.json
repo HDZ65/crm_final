@@ -1,0 +1,18 @@
+{
+  "name": "@crm/e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tests E2E pour la communication gRPC inter-services",
+  "scripts": {
+    "test": "tsx grpc-client.test.ts",
+    "test:mock": "cross-env MOCK_MODE=true tsx grpc-client.test.ts",
+    "test:live": "cross-env GRPC_HOST=localhost tsx grpc-client.test.ts"
+  },
+  "devDependencies": {
+    "@grpc/grpc-js": "^1.12.5",
+    "@grpc/proto-loader": "^0.7.13",
+    "cross-env": "^10.1.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

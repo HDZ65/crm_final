@@ -10,16 +10,13 @@ import { StatutFactureEntity } from './modules/statut-facture/entities/statut-fa
 import { EmissionFactureEntity } from './modules/emission-facture/entities/emission-facture.entity';
 import { FactureSettingsEntity } from './modules/facture-settings/entities/facture-settings.entity';
 
-// Modules
+// Modules - chaque module a son propre controleur
 import { FactureModule } from './modules/facture/facture.module';
 import { LigneFactureModule } from './modules/ligne-facture/ligne-facture.module';
 import { StatutFactureModule } from './modules/statut-facture/statut-facture.module';
 import { EmissionFactureModule } from './modules/emission-facture/emission-facture.module';
 import { FactureSettingsModule } from './modules/facture-settings/facture-settings.module';
 import { GenerationModule } from './modules/generation/generation.module';
-
-// Controller
-import { FacturesController } from './factures.controller';
 
 @Module({
   imports: [
@@ -60,7 +57,7 @@ import { FacturesController } from './factures.controller';
       inject: [ConfigService],
     }),
 
-    // Modules métier
+    // Modules métier - chaque module importe son propre controleur
     StatutFactureModule,
     EmissionFactureModule,
     LigneFactureModule,
@@ -68,7 +65,8 @@ import { FacturesController } from './factures.controller';
     FactureSettingsModule,
     GenerationModule,
   ],
-  controllers: [FacturesController],
+  // Plus de controleur monolithique ici - chaque module a le sien
+  controllers: [],
   providers: [],
 })
 export class AppModule {}

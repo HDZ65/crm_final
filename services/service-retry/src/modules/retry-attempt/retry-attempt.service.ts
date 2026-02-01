@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { RetryAttemptEntity, RetryAttemptStatus } from './entities/retry-attempt.entity';
-import type { PaginationRequest } from '@proto/retry/am04_retry_service';
+import type { PaginationRequest } from '@crm/proto/retry';
 
 export interface ListRetryAttemptsInput {
   retryScheduleId?: string;

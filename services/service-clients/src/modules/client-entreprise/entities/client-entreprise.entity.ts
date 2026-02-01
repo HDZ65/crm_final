@@ -14,8 +14,8 @@ export class ClientEntrepriseEntity {
   @Column({ name: 'raison_sociale', length: 255 })
   raisonSociale: string;
 
-  @Column({ name: 'numero_tva', length: 50 })
-  numeroTVA: string;
+@Column({ name: 'numero_tva', length: 50 })
+  numeroTva: string;
 
   @Column({ length: 20 })
   siren: string;

@@ -3,16 +3,28 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import {
-  TypeDocumentProduit as ProtoTypeDocumentProduit,
+import type {
   CreateProduitDocumentRequest,
   UpdateProduitDocumentRequest,
   ListProduitDocumentsRequest,
   GetProduitDocumentRequest,
-} from '@proto/products/products';
+} from '@crm/proto/products';
 import { DocumentProduitEntity, TypeDocumentProduit } from './entities/document-produit.entity';
 
-const typeDocumentFromProto: Record<ProtoTypeDocumentProduit, TypeDocumentProduit> = {
+// Proto enum values (matching proto definitions to avoid ESM import issues)
+const ProtoTypeDocumentProduit = {
+  TYPE_DOCUMENT_PRODUIT_UNSPECIFIED: 0,
+  TYPE_DOCUMENT_PRODUIT_DIPA: 1,
+  TYPE_DOCUMENT_PRODUIT_CG: 2,
+  TYPE_DOCUMENT_PRODUIT_CP: 3,
+  TYPE_DOCUMENT_PRODUIT_TARIF: 4,
+  TYPE_DOCUMENT_PRODUIT_SCRIPT: 5,
+  TYPE_DOCUMENT_PRODUIT_MEDIA: 6,
+} as const;
+
+type ProtoTypeDocumentProduitType = (typeof ProtoTypeDocumentProduit)[keyof typeof ProtoTypeDocumentProduit];
+
+const typeDocumentFromProto: Record<ProtoTypeDocumentProduitType, TypeDocumentProduit> = {
   [ProtoTypeDocumentProduit.TYPE_DOCUMENT_PRODUIT_DIPA]: TypeDocumentProduit.DIPA,
   [ProtoTypeDocumentProduit.TYPE_DOCUMENT_PRODUIT_CG]: TypeDocumentProduit.CG,
   [ProtoTypeDocumentProduit.TYPE_DOCUMENT_PRODUIT_CP]: TypeDocumentProduit.CP,

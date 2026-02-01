@@ -5,6 +5,7 @@ import { PlannedDebitEntity } from './entities/planned-debit.entity';
 import { VolumeForecastEntity } from './entities/volume-forecast.entity';
 import { VolumeThresholdEntity } from './entities/volume-threshold.entity';
 import { CalendarEngineService } from './calendar-engine.service';
+import { EngineController } from './engine.controller';
 import { ConfigurationModule } from '../configuration/configuration.module';
 import { HolidaysModule } from '../holidays/holidays.module';
 
@@ -18,6 +19,7 @@ import { HolidaysModule } from '../holidays/holidays.module';
     forwardRef(() => ConfigurationModule),
     forwardRef(() => HolidaysModule),
   ],
+  controllers: [EngineController],
   providers: [CalendarEngineService],
   exports: [CalendarEngineService],
 })

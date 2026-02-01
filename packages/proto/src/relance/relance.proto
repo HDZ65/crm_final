@@ -1,0 +1,303 @@
+syntax = "proto3";
+
+package relance;
+
+// ===== COMMON =====
+
+message Empty {}
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+// ===== ENUMS =====
+
+enum RelanceDeclencheur {
+  DECLENCHEUR_UNSPECIFIED = 0;
+  IMPAYE = 1;
+  CONTRAT_BIENTOT_EXPIRE = 2;
+  CONTRAT_EXPIRE = 3;
+  NOUVEAU_CLIENT = 4;
+  INACTIVITE_CLIENT = 5;
+}
+
+enum RelanceActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  CREER_TACHE = 1;
+  ENVOYER_EMAIL = 2;
+  NOTIFICATION = 3;
+  TACHE_ET_EMAIL = 4;
+}
+
+enum Priorite {
+  PRIORITE_UNSPECIFIED = 0;
+  HAUTE = 1;
+  MOYENNE = 2;
+  BASSE = 3;
+}
+
+enum RelanceResultat {
+  RESULTAT_UNSPECIFIED = 0;
+  SUCCES = 1;
+  ECHEC = 2;
+  IGNORE = 3;
+}
+
+// ===== REGLE RELANCE =====
+
+message RegleRelance {
+  string id = 1;
+  string organisation_id = 2;
+  string nom = 3;
+  string description = 4;
+  RelanceDeclencheur declencheur = 5;
+  int32 delai_jours = 6;
+  RelanceActionType action_type = 7;
+  Priorite priorite_tache = 8;
+  string template_email_id = 9;
+  string template_titre_tache = 10;
+  string template_description_tache = 11;
+  string assigne_par_defaut = 12;
+  bool actif = 13;
+  int32 ordre = 14;
+  string metadata = 15;
+  string created_at = 16;
+  string updated_at = 17;
+}
+
+message CreateRegleRelanceRequest {
+  string organisation_id = 1;
+  string nom = 2;
+  string description = 3;
+  RelanceDeclencheur declencheur = 4;
+  int32 delai_jours = 5;
+  RelanceActionType action_type = 6;
+  Priorite priorite_tache = 7;
+  string template_email_id = 8;
+  string template_titre_tache = 9;
+  string template_description_tache = 10;
+  string assigne_par_defaut = 11;
+  int32 ordre = 12;
+}
+
+message UpdateRegleRelanceRequest {
+  string id = 1;
+  optional string nom = 2;
+  optional string description = 3;
+  optional RelanceDeclencheur declencheur = 4;
+  optional int32 delai_jours = 5;
+  optional RelanceActionType action_type = 6;
+  optional Priorite priorite_tache = 7;
+  optional string template_email_id = 8;
+  optional string template_titre_tache = 9;
+  optional string template_description_tache = 10;
+  optional string assigne_par_defaut = 11;
+  optional bool actif = 12;
+  optional int32 ordre = 13;
+}
+
+message GetRegleRelanceRequest {
+  string id = 1;
+}
+
+message ListReglesRelanceRequest {
+  string organisation_id = 1;
+  optional bool actif = 2;
+  optional RelanceDeclencheur declencheur = 3;
+  PaginationRequest pagination = 4;
+}
+
+message ListReglesRelanceResponse {
+  repeated RegleRelance regles = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteRegleRelanceRequest {
+  string id = 1;
+}
+
+message DeleteRegleRelanceResponse {
+  bool success = 1;
+}
+
+message ActivateRegleRequest {
+  string id = 1;
+}
+
+message DeactivateRegleRequest {
+  string id = 1;
+}
+
+// ===== HISTORIQUE RELANCE =====
+
+message HistoriqueRelance {
+  string id = 1;
+  string organisation_id = 2;
+  string regle_relance_id = 3;
+  string client_id = 4;
+  string contrat_id = 5;
+  string facture_id = 6;
+  string tache_creee_id = 7;
+  string date_execution = 8;
+  RelanceResultat resultat = 9;
+  string message_erreur = 10;
+  string metadata = 11;
+  string created_at = 12;
+  string updated_at = 13;
+  // Relations
+  RegleRelance regle = 14;
+}
+
+message CreateHistoriqueRelanceRequest {
+  string organisation_id = 1;
+  string regle_relance_id = 2;
+  string client_id = 3;
+  string contrat_id = 4;
+  string facture_id = 5;
+  string tache_creee_id = 6;
+  RelanceResultat resultat = 7;
+  string message_erreur = 8;
+  string metadata = 9;
+}
+
+message GetHistoriqueRelanceRequest {
+  string id = 1;
+}
+
+message ListHistoriquesRelanceRequest {
+  string organisation_id = 1;
+  optional string regle_relance_id = 2;
+  optional string client_id = 3;
+  optional string contrat_id = 4;
+  optional string facture_id = 5;
+  optional RelanceResultat resultat = 6;
+  optional string date_from = 7;
+  optional string date_to = 8;
+  PaginationRequest pagination = 9;
+}
+
+message ListHistoriquesRelanceResponse {
+  repeated HistoriqueRelance historiques = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteHistoriqueRelanceRequest {
+  string id = 1;
+}
+
+message DeleteHistoriqueRelanceResponse {
+  bool success = 1;
+}
+
+message ExistsForTodayRequest {
+  string regle_relance_id = 1;
+  string client_id = 2;
+  string contrat_id = 3;
+  string facture_id = 4;
+}
+
+message ExistsForTodayResponse {
+  bool exists = 1;
+}
+
+// ===== ENGINE =====
+
+message ExecuteRelancesRequest {
+  string organisation_id = 1;
+}
+
+message ExecuteRelancesResponse {
+  bool success = 1;
+  string message = 2;
+  int32 relances_executees = 3;
+  int32 relances_echouees = 4;
+}
+
+message ExecuteRegleRequest {
+  string regle_id = 1;
+}
+
+message ExecuteRegleResponse {
+  bool success = 1;
+  string message = 2;
+  int32 actions_creees = 3;
+}
+
+// Event data for relance triggers (received from other services)
+message RelanceEventData {
+  string organisation_id = 1;
+  RelanceDeclencheur declencheur = 2;
+  string client_id = 3;
+  string contrat_id = 4;
+  string facture_id = 5;
+  string metadata = 6;
+}
+
+message ProcessEventRequest {
+  RelanceEventData event = 1;
+}
+
+message ProcessEventResponse {
+  bool success = 1;
+  string message = 2;
+  repeated string actions_created = 3;
+}
+
+// Statistics
+message GetStatistiquesRequest {
+  string organisation_id = 1;
+  string date_from = 2;
+  string date_to = 3;
+}
+
+message GetStatistiquesResponse {
+  int32 total_relances = 1;
+  int32 relances_succes = 2;
+  int32 relances_echec = 3;
+  int32 relances_ignore = 4;
+  repeated StatParDeclencheur stats_par_declencheur = 5;
+}
+
+message StatParDeclencheur {
+  RelanceDeclencheur declencheur = 1;
+  int32 count = 2;
+  int32 succes = 3;
+  int32 echec = 4;
+}
+
+// ===== SERVICES =====
+
+service RegleRelanceService {
+  rpc Create(CreateRegleRelanceRequest) returns (RegleRelance);
+  rpc Update(UpdateRegleRelanceRequest) returns (RegleRelance);
+  rpc Get(GetRegleRelanceRequest) returns (RegleRelance);
+  rpc List(ListReglesRelanceRequest) returns (ListReglesRelanceResponse);
+  rpc Delete(DeleteRegleRelanceRequest) returns (DeleteRegleRelanceResponse);
+  rpc Activate(ActivateRegleRequest) returns (RegleRelance);
+  rpc Deactivate(DeactivateRegleRequest) returns (RegleRelance);
+}
+
+service HistoriqueRelanceService {
+  rpc Create(CreateHistoriqueRelanceRequest) returns (HistoriqueRelance);
+  rpc Get(GetHistoriqueRelanceRequest) returns (HistoriqueRelance);
+  rpc List(ListHistoriquesRelanceRequest) returns (ListHistoriquesRelanceResponse);
+  rpc Delete(DeleteHistoriqueRelanceRequest) returns (DeleteHistoriqueRelanceResponse);
+  rpc ExistsForToday(ExistsForTodayRequest) returns (ExistsForTodayResponse);
+}
+
+service RelanceEngineService {
+  rpc ExecuteRelances(ExecuteRelancesRequest) returns (ExecuteRelancesResponse);
+  rpc ExecuteRegle(ExecuteRegleRequest) returns (ExecuteRegleResponse);
+  rpc ProcessEvent(ProcessEventRequest) returns (ProcessEventResponse);
+  rpc GetStatistiques(GetStatistiquesRequest) returns (GetStatistiquesResponse);
+}

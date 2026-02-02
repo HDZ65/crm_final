@@ -2,11 +2,16 @@ import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import * as fs from 'fs';
 import { status as GrpcStatus } from '@grpc/grpc-js';
+import { v4 as uuidv4 } from 'uuid';
+import { NatsService } from '@crm/nats-utils';
+import { InvoiceCreatedEvent } from '@crm/proto/events/invoice';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { ImmutabilityInterceptor } from '../../common/interceptors/immutability.interceptor';
 import { toCompanyBranding } from '../../common/interfaces/company-branding.interface';
+
+const INVOICE_CREATED_SUBJECT = 'crm.events.invoice.created';
 
 /**
  * Controller gRPC pour la gestion des factures
@@ -15,7 +20,10 @@ import { toCompanyBranding } from '../../common/interfaces/company-branding.inte
 @Controller()
 @UseInterceptors(ImmutabilityInterceptor)
 export class InvoicesController {
-  constructor(private readonly invoicesService: InvoicesService) {}
+  constructor(
+    private readonly invoicesService: InvoicesService,
+    private readonly natsService: NatsService,
+  ) {}
 
   /**
    * gRPC: CreateInvoice
@@ -27,6 +35,22 @@ export class InvoicesController {
       console.log('[CreateInvoice] Received data:', JSON.stringify(data, null, 2));
       const result = await this.invoicesService.create(data);
       console.log('[CreateInvoice] Success:', result.invoiceNumber);
+
+      const event: InvoiceCreatedEvent = {
+        eventId: uuidv4(),
+        timestamp: Date.now(),
+        correlationId: '',
+        invoiceId: result.id,
+        clientId: result.customerSiret || '',
+        montant: Number(result.totalTTC) || 0,
+        dateEcheance: result.dueDate
+          ? { seconds: Math.floor(new Date(result.dueDate).getTime() / 1000), nanos: 0 }
+          : undefined,
+      };
+
+      await this.natsService.publishProto(INVOICE_CREATED_SUBJECT, event, InvoiceCreatedEvent);
+      console.log('[CreateInvoice] Published InvoiceCreatedEvent:', event.eventId);
+
       return result;
     } catch (error) {
       console.error('[CreateInvoice] ERROR:', error.message);

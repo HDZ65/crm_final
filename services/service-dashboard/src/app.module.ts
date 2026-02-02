@@ -1,4 +1,5 @@
 @nestjs/core';
+import { NatsModule } from '@crm/nats-utils';
 import { AuthInterceptor } from '@crm/grpc-utils';
 
 import { Module } from '@nestjs/common';;

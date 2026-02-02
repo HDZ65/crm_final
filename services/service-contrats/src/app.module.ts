@@ -1,11 +1,10 @@
-@nestjs/core';
-import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
+import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuthInterceptor } from '@crm/grpc-utils';
+import { NatsModule } from '@crm/nats-utils';
 
 import { StatutContratModule } from './modules/statut-contrat/statut-contrat.module';
 import { ContratModule } from './modules/contrat/contrat.module';
@@ -40,6 +39,7 @@ import { OrchestrationModule } from './modules/orchestration/orchestration.modul
         },
       }),
     }),
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     StatutContratModule,
     ContratModule,
     LigneContratModule,

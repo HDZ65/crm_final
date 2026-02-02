@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { AuthInterceptor } from '@crm/grpc-utils';
+import { NatsModule } from '@crm/nats-utils';
 
 import { StatutClientModule } from './modules/statut-client/statut-client.module';
 import { AdresseModule } from './modules/adresse/adresse.module';
@@ -40,6 +41,7 @@ import { ClientPartenaireModule } from './modules/client-partenaire/client-parte
         },
       }),
     }),
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     StatutClientModule,
     AdresseModule,
     ClientBaseModule,

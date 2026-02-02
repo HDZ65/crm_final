@@ -1,4 +1,5 @@
 @nestjs/core';
+import { NatsModule } from '@crm/nats-utils';
 import { AuthInterceptor } from '@crm/grpc-utils';
 
 import { Module } from '@nestjs/common';;
@@ -39,7 +40,9 @@ import { BoiteMail } from './modules/boite-mail/entities/boite-mail.entity';
       inject: [ConfigService],
     }),
     PieceJointeModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     BoiteMailModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
   ],
   controllers: [],
 })

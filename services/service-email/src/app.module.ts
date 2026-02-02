@@ -1,11 +1,10 @@
-@nestjs/core';
-import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
+import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuthInterceptor } from '@crm/grpc-utils';
+import { NatsModule } from '@crm/nats-utils';
 import { MailboxModule } from './modules/mailbox/mailbox.module';
 import { GoogleOAuthModule } from './modules/oauth/google/google-oauth.module';
 import { MicrosoftOAuthModule } from './modules/oauth/microsoft/microsoft-oauth.module';

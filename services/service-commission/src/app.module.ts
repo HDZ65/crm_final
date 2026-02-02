@@ -1,4 +1,5 @@
 @nestjs/core';
+import { NatsModule } from '@crm/nats-utils';
 import { AuthInterceptor } from '@crm/grpc-utils';
 
 import { Module } from '@nestjs/common';;
@@ -78,16 +79,27 @@ import { ReportNegatifEntity } from './modules/report/entities/report-negatif.en
     }),
     // Chaque module importe son propre controleur
     CommissionModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     BaremeModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     PalierModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     BordereauModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     LigneBordereauModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RepriseModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     StatutModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     EngineModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     CommissionAuditModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RecurrenceModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     ReportNegatifModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
   ],
   // Plus de controleur monolithique ici - chaque module a le sien
   controllers: [],

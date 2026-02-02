@@ -1,8 +1,8 @@
-@nestjs/core';
-import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { AuthInterceptor } from '@crm/grpc-utils';
+import { NatsModule } from '@crm/nats-utils';
+
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
@@ -12,6 +12,7 @@ import { NotificationEntity } from './modules/notification/entities/notification
 
 @Module({
   imports: [
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],

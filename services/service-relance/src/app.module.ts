@@ -1,4 +1,5 @@
 @nestjs/core';
+import { NatsModule } from '@crm/nats-utils';
 import { AuthInterceptor } from '@crm/grpc-utils';
 
 import { Module } from '@nestjs/common';;
@@ -52,8 +53,11 @@ import { HistoriqueRelanceEntity } from './modules/historique-relance/entities/h
       }),
     }),
     RegleRelanceModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     HistoriqueRelanceModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     EngineModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
   ],
   controllers: [],
 })

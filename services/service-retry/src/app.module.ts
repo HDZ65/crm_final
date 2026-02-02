@@ -1,4 +1,5 @@
 @nestjs/core';
+import { NatsModule } from '@crm/nats-utils';
 import { AuthInterceptor } from '@crm/grpc-utils';
 
 import { Module } from '@nestjs/common';;
@@ -70,13 +71,21 @@ synchronize: false, // Désactivé - utiliser les migrations
       }),
     }),
     RetryPolicyModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RetryScheduleModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RetryAttemptModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RetryJobModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     ReminderPolicyModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     ReminderModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     AuditLogModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     SchedulerModule,
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
   ],
   controllers: [],
 })

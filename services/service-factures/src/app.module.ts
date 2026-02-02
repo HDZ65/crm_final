@@ -1,11 +1,10 @@
-@nestjs/core';
-import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
+import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuthInterceptor } from '@crm/grpc-utils';
+import { NatsModule } from '@crm/nats-utils';
 
 // Entities
 import { FactureEntity } from './modules/facture/entities/facture.entity';
@@ -60,6 +59,8 @@ import { GenerationModule } from './modules/generation/generation.module';
       }),
       inject: [ConfigService],
     }),
+
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
 
     // Modules métier - chaque module importe son propre controleur
     StatutFactureModule,

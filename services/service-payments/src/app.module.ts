@@ -1,11 +1,10 @@
-@nestjs/core';
-import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
+import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuthInterceptor } from '@crm/grpc-utils';
+import { NatsModule } from '@crm/nats-utils';
 
 // Feature Modules
 import { StripeModule } from './modules/stripe/stripe.module';
@@ -87,6 +86,8 @@ import { PspAccountsModule } from './modules/psp-accounts/psp-accounts.module';
         },
       }),
     }),
+
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
 
     // Feature Modules
     StripeModule,

@@ -21,10 +21,9 @@ export const TOKEN_CONFIG = {
   ORG_COOKIE_MAX_AGE: 60 * 60 * 24 * 30, // 30 jours
 } as const;
 
-// Noms des cookies
 export const COOKIE_NAMES = {
-  SESSION_TOKEN: 'next-auth.session-token',
-  CSRF_TOKEN: 'next-auth.csrf-token',
+  SESSION_TOKEN: 'authjs.session-token',
+  CSRF_TOKEN: 'authjs.csrf-token',
   ACTIVE_ORG: 'active_organisation_id',
 } as const;
 

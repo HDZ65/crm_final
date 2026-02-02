@@ -1,4 +1,7 @@
-import { getServerSession, type NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
+import type { NextAuthConfig } from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { Session, User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { users, membresCompte, comptes, roles } from "@/lib/grpc";
@@ -12,7 +15,6 @@ import {
   COOKIE_NAMES,
 } from "@/lib/auth/index";
 
-// Re-export auth utilities for convenience
 export {
   parseJWT,
   getKeycloakIdFromToken,
@@ -28,11 +30,7 @@ export {
   type TokenData,
 } from "@/lib/auth/index";
 
-// =============================================================================
-// NextAuth Configuration
-// =============================================================================
-
-export const authOptions: NextAuthOptions = {
+const authConfig: NextAuthConfig = {
   providers: [
     Credentials({
       id: "credentials",
@@ -47,8 +45,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         const { user, error } = await authenticateWithCredentials(
-          credentials.email,
-          credentials.password
+          credentials.email as string,
+          credentials.password as string
         );
 
         if (error || !user) {
@@ -63,8 +61,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
-      // Premier login - stocker les tokens
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
         const userData = user as {
           accessToken?: string;
@@ -79,16 +76,14 @@ export const authOptions: NextAuthOptions = {
         };
       }
 
-      // Verifier si le token doit etre rafraichi
       const expiresAt = token.expiresAt as number;
       if (!shouldRefreshToken(expiresAt)) {
         return token;
       }
 
-      // Rafraichir le token
       return refreshAccessToken(token);
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       session.accessToken = token.accessToken as string;
       session.error = token.error as string | undefined;
       
@@ -104,36 +99,23 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-// =============================================================================
-// Server-side Auth Helpers
-// =============================================================================
+export const { auth, handlers, signIn, signOut } = NextAuth(authConfig);
 
-/**
- * Get server session - use in Server Components
- */
+export { authConfig };
+
+/** @deprecated Use `auth()` directly */
 export async function getServerAuth() {
-  return getServerSession(authOptions);
+  return auth();
 }
 
-/**
- * Get active organisation ID from cookie (server-side)
- */
 export async function getActiveOrgIdFromCookie(): Promise<string | null> {
   const cookieStore = await cookies();
   return cookieStore.get(COOKIE_NAMES.ACTIVE_ORG)?.value ?? null;
 }
 
-// =============================================================================
-// User Profile Fetching
-// =============================================================================
-
-/**
- * Get user profile server-side - fetches all data in one go
- * Creates user automatically if they don't exist
- */
 export async function getServerUserProfile(): Promise<AuthMeResponse | null> {
   try {
-    const session = await getServerAuth();
+    const session = await auth();
     if (!session?.accessToken) {
       return null;
     }
@@ -173,10 +155,6 @@ export async function getServerUserProfile(): Promise<AuthMeResponse | null> {
   }
 }
 
-// =============================================================================
-// Internal Helpers
-// =============================================================================
-
 interface TokenPayloadInfo {
   sub?: string;
   email?: string;
@@ -185,9 +163,6 @@ interface TokenPayloadInfo {
   family_name?: string;
 }
 
-/**
- * Get existing user or create new one
- */
 async function getOrCreateUser(
   keycloakId: string,
   tokenPayload: TokenPayloadInfo
@@ -205,7 +180,6 @@ async function getOrCreateUser(
       throw err;
     }
 
-    // Create new user
     console.log(
       `[getOrCreateUser] Creating new user for keycloakId: ${keycloakId}`
     );
@@ -226,9 +200,6 @@ async function getOrCreateUser(
   }
 }
 
-/**
- * Parse name from token payload
- */
 function parseNameFromToken(tokenPayload: TokenPayloadInfo): {
   nom: string;
   prenom: string;
@@ -236,7 +207,6 @@ function parseNameFromToken(tokenPayload: TokenPayloadInfo): {
   let nom = tokenPayload.family_name || "";
   let prenom = tokenPayload.given_name || "";
 
-  // Fallback: split full name
   if (!nom && !prenom && tokenPayload.name) {
     const nameParts = tokenPayload.name.trim().split(" ");
     if (nameParts.length >= 2) {
@@ -253,9 +223,6 @@ function parseNameFromToken(tokenPayload: TokenPayloadInfo): {
   };
 }
 
-/**
- * Fetch user organisations with details
- */
 async function fetchUserOrganisations(
   userId: string
 ): Promise<UserOrganisation[]> {

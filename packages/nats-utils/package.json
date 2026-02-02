@@ -24,7 +24,9 @@
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/microservices": "^10.0.0",
-    "nats": "^2.17.0"
+    "@nestjs/typeorm": "^10.0.0",
+    "nats": "^2.17.0",
+    "typeorm": "^0.3.28"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

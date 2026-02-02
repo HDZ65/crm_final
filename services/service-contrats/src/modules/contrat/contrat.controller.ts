@@ -1,5 +1,8 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
+import { v4 as uuidv4 } from 'uuid';
+import { NatsService } from '@crm/nats-utils';
+import { ContractSignedEvent } from '@crm/proto/events/contract';
 import { ContratService } from './contrat.service';
 
 import type {
@@ -11,9 +14,16 @@ import type {
   DeleteContratRequest,
 } from '@crm/proto/contrats';
 
+const CONTRACT_SIGNED_SUBJECT = 'crm.events.contract.signed';
+
 @Controller()
 export class ContratController {
-  constructor(private readonly contratService: ContratService) {}
+  private readonly logger = new Logger(ContratController.name);
+
+  constructor(
+    private readonly contratService: ContratService,
+    private readonly natsService: NatsService,
+  ) {}
 
   @GrpcMethod('ContratService', 'Create')
   async createContrat(data: CreateContratRequest) {
@@ -41,7 +51,10 @@ export class ContratController {
 
   @GrpcMethod('ContratService', 'Update')
   async updateContrat(data: UpdateContratRequest) {
-    return this.contratService.update({
+    const contratBeforeUpdate = await this.contratService.findById(data.id);
+    const wasNotSignedBefore = contratBeforeUpdate.statut !== 'SIGNE';
+
+    const contrat = await this.contratService.update({
       id: data.id,
       reference: data.reference,
       titre: data.titre,
@@ -61,6 +74,29 @@ export class ContratController {
       societeId: data.societeId,
       notes: data.notes,
     });
+
+    const contractJustSigned = wasNotSignedBefore && contrat.statut === 'SIGNE' && contrat.dateSignature;
+    if (contractJustSigned) {
+      const signatureDate = new Date(contrat.dateSignature!);
+      const event: ContractSignedEvent = {
+        eventId: uuidv4(),
+        timestamp: Date.now(),
+        correlationId: '',
+        contratId: contrat.id,
+        clientId: contrat.clientId,
+        produitId: '',
+        montantTotal: contrat.montant ?? 0,
+        dateSignature: {
+          seconds: Math.floor(signatureDate.getTime() / 1000),
+          nanos: 0,
+        },
+      };
+
+      await this.natsService.publishProto(CONTRACT_SIGNED_SUBJECT, event, ContractSignedEvent);
+      this.logger.log(`Published contract.signed event for contrat ${contrat.id}`);
+    }
+
+    return contrat;
   }
 
   @GrpcMethod('ContratService', 'Get')

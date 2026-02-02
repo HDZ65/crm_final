@@ -1,0 +1,48 @@
+# CRM Development - Infrastructure (Database, Networks, Volumes)
+# 
+# Contains shared infrastructure components for development environment
+# - PostgreSQL database
+# - Networks
+# - Volumes
+
+version: '3.8'
+
+services:
+  # ============================================
+  # DATABASE
+  # ============================================
+  postgres-main:
+    image: postgres:16-alpine
+    container_name: crm-postgres-main
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: crm_main
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    volumes:
+      - postgres_main_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+# ============================================
+# NETWORKS & VOLUMES
+# ============================================
+networks:
+  crm-network:
+    driver: bridge
+
+volumes:
+  postgres_main_data:

@@ -1,0 +1,341 @@
+# CRM Development - Microservices
+# 
+# Contains all 19 microservices configuration for development environment
+# Services depend on infrastructure.yml for database and networks
+
+version: '3.8'
+
+x-service-base: &service-base
+  restart: unless-stopped
+  networks:
+    - crm-network
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+      reservations:
+        memory: 128M
+
+x-db-env: &db-env
+  DB_HOST: postgres-main
+  DB_PORT: 5432
+  DB_USERNAME: ${DB_USERNAME:-postgres}
+  DB_PASSWORD: ${DB_PASSWORD:-postgres}
+
+services:
+  # ============================================
+  # MICROSERVICES (19 services)
+  # ============================================
+  service-activites:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-activites/Dockerfile
+    container_name: crm-service-activites
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50051
+      DB_DATABASE: activites_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-clients:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-clients/Dockerfile
+    container_name: crm-service-clients
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50052
+      DB_DATABASE: clients_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-commerciaux:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-commerciaux/Dockerfile
+    container_name: crm-service-commerciaux
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50053
+      DB_DATABASE: commerciaux_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-commission:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-commission/Dockerfile
+    container_name: crm-service-commission
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50054
+      DB_DATABASE: commission_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-contrats:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-contrats/Dockerfile
+    container_name: crm-service-contrats
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50055
+      DB_DATABASE: contrats_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-dashboard:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-dashboard/Dockerfile
+    container_name: crm-service-dashboard
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50056
+      DB_DATABASE: dashboard_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-documents:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-documents/Dockerfile
+    container_name: crm-service-documents
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50057
+      DB_DATABASE: documents_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-email:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-email/Dockerfile
+    container_name: crm-service-email
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50058
+      DB_DATABASE: email_db
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-factures:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-factures/Dockerfile
+    container_name: crm-service-factures
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50059
+      DB_DATABASE: factures_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-logistics:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-logistics/Dockerfile
+    container_name: crm-service-logistics
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50060
+      DB_DATABASE: logistics_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-notifications:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-notifications/Dockerfile
+    container_name: crm-service-notifications
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50061
+      WS_PORT: 3001
+      DB_DATABASE: notifications_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-organisations:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-organisations/Dockerfile
+    container_name: crm-service-organisations
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50062
+      DB_DATABASE: organisations_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-payments:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-payments/Dockerfile
+    container_name: crm-service-payments
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50063
+      DB_DATABASE: payments_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-products:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-products/Dockerfile
+    container_name: crm-service-products
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50064
+      DB_DATABASE: products_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-referentiel:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-referentiel/Dockerfile
+    container_name: crm-service-referentiel
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50065
+      DB_DATABASE: referentiel_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-relance:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-relance/Dockerfile
+    container_name: crm-service-relance
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50066
+      CRON_ENABLED: "true"
+      DB_DATABASE: relance_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-users:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-users/Dockerfile
+    container_name: crm-service-users
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50067
+      DB_DATABASE: users_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-calendar:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-calendar/Dockerfile
+    container_name: crm-service-calendar
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50068
+      DB_DATABASE: calendar_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+  service-retry:
+    <<: *service-base
+    build:
+      context: .
+      dockerfile: services/service-retry/Dockerfile
+    container_name: crm-service-retry
+    environment:
+      <<: *db-env
+      NODE_ENV: production
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50070
+      DB_DATABASE: retry_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+
+networks:
+  crm-network:
+    driver: bridge
+
+volumes:
+  postgres_main_data:

@@ -1,0 +1,40 @@
+# CRM Production - Infrastructure (Database, Networks, Volumes)
+# 
+# Skeleton for production environment infrastructure
+# To be configured with production-specific settings
+
+version: '3.8'
+
+services:
+  postgres-main:
+    image: postgres:16-alpine
+    container_name: crm-postgres-main-prod
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: crm_main
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    volumes:
+      - postgres_main_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+networks:
+  crm-network:
+    driver: bridge
+
+volumes:
+  postgres_main_data_prod:

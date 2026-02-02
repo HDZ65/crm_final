@@ -1,0 +1,36 @@
+{
+  "name": "@crm/nats-utils",
+  "version": "1.0.0",
+  "description": "NATS JetStream utilities for CRM microservices",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["crm", "nats", "jetstream", "microservices"],
+  "author": "CRM Team",
+  "license": "PROPRIETARY",
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/microservices": "^10.0.0",
+    "nats": "^2.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@crm/proto": "^1.0.0"
+  }
+}

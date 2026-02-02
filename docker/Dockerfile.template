@@ -1,0 +1,95 @@
+# ==========================================
+# Dockerfile Template - 4 Stage Build
+# ==========================================
+# This template is used to generate service-specific Dockerfiles
+# via scripts/generate-dockerfiles.ts
+#
+# Stages:
+#   1. deps       - Install dependencies
+#   2. development - Development environment with source code
+#   3. builder    - Build stage (compile TypeScript)
+#   4. production - Final production image with dumb-init
+#
+# Usage:
+#   docker build -f services/service-xxx/Dockerfile -t crm/service-xxx .
+#
+# Build context must be the monorepo root to access shared packages
+# ==========================================
+
+# ==========================================
+# Stage 1: Dependencies
+# ==========================================
+FROM node:20-alpine AS deps
+
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy monorepo configuration
+COPY package.json package-lock.json turbo.json ./
+
+# Copy shared packages
+COPY packages/proto/package.json ./packages/proto/
+COPY packages/grpc-utils/package.json ./packages/grpc-utils/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies (service-specific package.json will be copied by generated Dockerfile)
+RUN npm ci
+
+# ==========================================
+# Stage 2: Development
+# ==========================================
+FROM deps AS development
+
+ENV NODE_ENV=development
+
+# Copy source code of shared packages
+COPY packages/proto/ ./packages/proto/
+COPY packages/grpc-utils/ ./packages/grpc-utils/
+COPY packages/shared/ ./packages/shared/
+
+# Service-specific source will be copied by generated Dockerfile
+# CMD will be set by generated Dockerfile (e.g., npm run start:dev)
+
+# ==========================================
+# Stage 3: Builder
+# ==========================================
+FROM deps AS builder
+
+# Copy source code of shared packages
+COPY packages/proto/ ./packages/proto/
+COPY packages/grpc-utils/ ./packages/grpc-utils/
+COPY packages/shared/ ./packages/shared/
+
+# Service-specific source will be copied by generated Dockerfile
+
+# Build will be executed by generated Dockerfile
+# RUN npm run build --workspace=@crm/grpc-utils && \
+#     npm run build --workspace=@crm/shared && \
+#     npm run build --workspace=@crm/service-xxx
+
+# ==========================================
+# Stage 4: Production
+# ==========================================
+FROM node:20-alpine AS production
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
+WORKDIR /app
+
+# Copy node_modules and compiled code from builder
+# (specific paths will be set by generated Dockerfile)
+
+USER nestjs
+
+ENV NODE_ENV=production
+
+# Use dumb-init as entrypoint for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+
+# Default command (will be overridden by generated Dockerfile)
+CMD ["node", "dist/src/main.js"]

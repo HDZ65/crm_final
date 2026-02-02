@@ -12,8 +12,7 @@ async function bootstrap() {
   });
 
   await app.listen();
-  console.log(`Service Clients gRPC listening on ${grpcOptions.url}`);
-  console.log(`Using proto: ${grpcOptions.protoPath}`);
+  console.log(`Service service-clients gRPC listening on ${grpcOptions.url}`);
 }
 
 bootstrap();

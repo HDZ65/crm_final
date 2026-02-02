@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// CLIENT EVENTS
+// ============================================================================
+// Events related to client lifecycle management
+// ============================================================================
+
+// Client created event
+message ClientCreatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string client_id = 4;                             // Client ID
+  string organisation_id = 5;                       // Organisation ID (tenant)
+  string nom = 6;                                   // Last name
+  string prenom = 7;                                // First name
+  string email = 8;                                 // Email address
+  google.protobuf.Timestamp created_at = 9;        // Creation timestamp
+}

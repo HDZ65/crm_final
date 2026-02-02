@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// INVOICE EVENTS
+// ============================================================================
+// Events related to invoice lifecycle management
+// ============================================================================
+
+// Invoice created event
+message InvoiceCreatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string invoice_id = 4;                            // Invoice ID
+  string client_id = 5;                             // Client ID
+  double montant = 6;                               // Amount in EUR
+  google.protobuf.Timestamp date_echeance = 7;     // Due date
+}

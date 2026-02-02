@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// COMMON EVENT TYPES
+// ============================================================================
+// Shared event structures and enums used across all events
+// ============================================================================
+
+// Event envelope for all domain events
+message EventEnvelope {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  string event_type = 2;                            // Type of event (e.g., "client.created")
+  int64 timestamp = 3;                              // Unix timestamp in milliseconds
+  string correlation_id = 4;                        // Optional, for tracing
+  string causation_id = 5;                          // Optional, for causality tracking
+
+  // Tenant context
+  string organisation_id = 6;                       // Organisation ID (tenant)
+
+  // Event payload (serialized as JSON)
+  string payload = 7;                               // Event-specific data as JSON string
+}
+
+// Event status enum
+enum EventStatus {
+  EVENT_STATUS_UNSPECIFIED = 0;
+  EVENT_STATUS_PENDING = 1;
+  EVENT_STATUS_PUBLISHED = 2;
+  EVENT_STATUS_FAILED = 3;
+  EVENT_STATUS_DEAD_LETTER = 4;
+}
+
+// Event store record
+message EventRecord {
+  string id = 1;                                    // Record ID
+  string event_id = 2;                              // Event ID (UUID)
+  string event_type = 3;                            // Event type
+  string aggregate_id = 4;                          // Aggregate root ID
+  string aggregate_type = 5;                        // Aggregate type (e.g., "Client")
+  int64 version = 6;                                // Event version/sequence
+  int64 timestamp = 7;                              // Unix timestamp in milliseconds
+  string correlation_id = 8;                        // Correlation ID for tracing
+  string causation_id = 9;                          // Causation ID
+  string organisation_id = 10;                      // Organisation ID (tenant)
+  string payload = 11;                              // Event payload as JSON
+  EventStatus status = 12;                          // Event status
+  string error_message = 13;                        // Error message if failed
+  int32 retry_count = 14;                           // Number of retry attempts
+  google.protobuf.Timestamp created_at = 15;       // Creation timestamp
+  google.protobuf.Timestamp published_at = 16;     // Publication timestamp
+}

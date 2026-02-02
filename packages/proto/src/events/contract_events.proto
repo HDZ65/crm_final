@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// CONTRACT EVENTS
+// ============================================================================
+// Events related to contract lifecycle management
+// ============================================================================
+
+// Contract signed event
+message ContractSignedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string contrat_id = 4;                            // Contract ID
+  string client_id = 5;                             // Client ID
+  string produit_id = 6;                            // Product ID
+  double montant_total = 7;                         // Total amount in EUR
+  google.protobuf.Timestamp date_signature = 8;    // Signature date
+}

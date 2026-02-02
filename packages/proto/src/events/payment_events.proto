@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// PAYMENT EVENTS
+// ============================================================================
+// Events related to payment lifecycle management
+// ============================================================================
+
+// Payment received event
+message PaymentReceivedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string payment_id = 4;                            // Payment ID
+  string schedule_id = 5;                           // Payment schedule ID
+  string client_id = 6;                             // Client ID
+  double montant = 7;                               // Amount in EUR
+  google.protobuf.Timestamp date_reception = 8;    // Reception date
+}
+
+// Payment rejected event
+message PaymentRejectedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string payment_id = 4;                            // Payment ID
+  string schedule_id = 5;                           // Payment schedule ID
+  string client_id = 6;                             // Client ID
+  string motif_rejet = 7;                           // Rejection reason (e.g., AM04)
+  google.protobuf.Timestamp date_rejet = 8;        // Rejection date
+}

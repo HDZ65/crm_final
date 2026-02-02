@@ -1,6 +1,9 @@
 import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import { v4 as uuidv4 } from 'uuid';
+import { NatsService } from '@crm/nats-utils';
+import { PaymentReceivedEvent } from '@crm/proto/events/payment';
 import { SchedulesService } from './schedules.service';
 import { RetryClientService } from '../retry/retry-client.service';
 import { PaymentProvider, ScheduleFrequency, ScheduleEntity } from './entities/schedule.entity';
@@ -75,6 +78,8 @@ const mapPaymentIntentToResponse = (intent: PaymentIntentEntity): PaymentIntentR
   updatedAt: intent.updatedAt?.toISOString() || '',
 });
 
+const PAYMENT_RECEIVED_SUBJECT = 'crm.events.payment.received';
+
 @Controller()
 export class SchedulesController {
   private readonly logger = new Logger(SchedulesController.name);
@@ -82,6 +87,7 @@ export class SchedulesController {
   constructor(
     private readonly schedulesService: SchedulesService,
     private readonly retryClient: RetryClientService,
+    private readonly natsService: NatsService,
   ) {}
 
   @GrpcMethod('PaymentService', 'CreateSchedule')
@@ -264,7 +270,9 @@ export class SchedulesController {
         data.errorMessage,
       );
 
-      if (intentStatus === PaymentIntentStatus.FAILED) {
+      if (intentStatus === PaymentIntentStatus.SUCCEEDED) {
+        await this.handlePaymentSuccess(intent);
+      } else if (intentStatus === PaymentIntentStatus.FAILED) {
         await this.handlePaymentRejection(intent, data);
       }
 
@@ -272,6 +280,27 @@ export class SchedulesController {
     } catch (e: unknown) {
       this.logger.error('UpdatePaymentIntent failed', e);
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  private async handlePaymentSuccess(intent: PaymentIntentEntity): Promise<void> {
+    try {
+      const event: PaymentReceivedEvent = {
+        eventId: uuidv4(),
+        timestamp: Date.now(),
+        correlationId: '',
+        paymentId: intent.id,
+        scheduleId: intent.scheduleId ?? '',
+        clientId: intent.clientId ?? '',
+        montant: intent.amount,
+        dateReception: { seconds: Math.floor(Date.now() / 1000), nanos: 0 },
+      };
+
+      await this.natsService.publishProto(PAYMENT_RECEIVED_SUBJECT, event, PaymentReceivedEvent);
+      this.logger.log(`Published PaymentReceivedEvent: ${event.eventId} for payment ${intent.id}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to publish PaymentReceivedEvent for payment ${intent.id}: ${errorMessage}`);
     }
   }
 

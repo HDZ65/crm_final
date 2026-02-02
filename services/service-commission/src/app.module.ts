@@ -1,9 +1,7 @@
-@nestjs/core';
+import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { NatsModule } from '@crm/nats-utils';
 import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
-import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
@@ -20,6 +18,7 @@ import { EngineModule } from './modules/engine/engine.module';
 import { CommissionAuditModule } from './modules/audit/audit.module';
 import { RecurrenceModule } from './modules/recurrence/recurrence.module';
 import { ReportNegatifModule } from './modules/report/report.module';
+import { EventsModule } from './modules/events/events.module';
 
 // Entities
 import { CommissionEntity } from './modules/commission/entities/commission.entity';
@@ -100,6 +99,7 @@ import { ReportNegatifEntity } from './modules/report/entities/report-negatif.en
     NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     ReportNegatifModule,
     NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
+    EventsModule,
   ],
   // Plus de controleur monolithique ici - chaque module a le sien
   controllers: [],

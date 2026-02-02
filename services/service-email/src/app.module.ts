@@ -5,10 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { AuthInterceptor } from '@crm/grpc-utils';
 import { NatsModule } from '@crm/nats-utils';
+import { ProcessedEvent } from '@crm/nats-utils';
 import { MailboxModule } from './modules/mailbox/mailbox.module';
 import { GoogleOAuthModule } from './modules/oauth/google/google-oauth.module';
 import { MicrosoftOAuthModule } from './modules/oauth/microsoft/microsoft-oauth.module';
 import { OperationsModule } from './modules/operations/operations.module';
+import { EventsModule } from './modules/events/events.module';
 import { MailboxEntity } from './modules/mailbox/entities/mailbox.entity';
 import { EncryptionService } from './common/encryption.service';
 
@@ -29,9 +31,9 @@ import { EncryptionService } from './common/encryption.service';
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_DATABASE', 'email_db'),
         namingStrategy: new SnakeNamingStrategy(),
-        entities: [MailboxEntity],
-        synchronize: false, // Désactivé - utiliser les migrations
-        migrationsRun: true, // Exécute les migrations au démarrage
+        entities: [MailboxEntity, ProcessedEvent],
+        synchronize: false,
+        migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get<string>('NODE_ENV') === 'development',
         ssl:
@@ -47,13 +49,17 @@ import { EncryptionService } from './common/encryption.service';
         },
       }),
     }),
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     MailboxModule,
     GoogleOAuthModule,
     MicrosoftOAuthModule,
     OperationsModule,
+    EventsModule,
   ],
   controllers: [],
-  providers: [EncryptionService  {
+  providers: [
+    EncryptionService,
+    {
       provide: APP_INTERCEPTOR,
       useClass: AuthInterceptor,
     },

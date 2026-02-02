@@ -25,7 +25,12 @@
     "./referentiel": "./gen/ts/referentiel/referentiel.ts",
     "./relance": "./gen/ts/relance/relance.ts",
     "./retry": "./gen/ts/retry/am04_retry_service.ts",
-    "./retry/types": "./gen/ts/retry/am04_retry.ts"
+    "./retry/types": "./gen/ts/retry/am04_retry.ts",
+    "./events/client": "./gen/ts/events/client_events.ts",
+    "./events/common": "./gen/ts/events/common_events.ts",
+    "./events/contract": "./gen/ts/events/contract_events.ts",
+    "./events/invoice": "./gen/ts/events/invoice_events.ts",
+    "./events/payment": "./gen/ts/events/payment_events.ts"
   },
   "files": [
     "src/**/*.proto",

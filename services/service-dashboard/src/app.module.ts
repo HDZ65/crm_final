@@ -1,23 +1,21 @@
-@nestjs/core';
-import { NatsModule } from '@crm/nats-utils';
-import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
+import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuthInterceptor } from '@crm/grpc-utils';
+import { NatsModule, ProcessedEvent } from '@crm/nats-utils';
 
-// Modules - chaque module a son propre controleur
 import { KpisModule } from './modules/kpis/kpis.module';
 import { EvolutionCaModule } from './modules/evolution-ca/evolution-ca.module';
 import { RepartitionProduitsModule } from './modules/repartition-produits/repartition-produits.module';
 import { StatsSocietesModule } from './modules/stats-societes/stats-societes.module';
 import { AlertesModule } from './modules/alertes/alertes.module';
 import { KpisCommerciauxModule } from './modules/kpis-commerciaux/kpis-commerciaux.module';
+import { EventsModule } from './modules/events/events.module';
 
 // Helper function to create a database connection config
-const createDbConfig = (configService: ConfigService, database: string) => ({
+const createDbConfig = (configService: ConfigService, database: string, entities: any[] = []) => ({
   type: 'postgres' as const,
   host: configService.get<string>('DB_HOST', 'localhost'),
   port: configService.get<number>('DB_PORT', 5432),
@@ -25,8 +23,8 @@ const createDbConfig = (configService: ConfigService, database: string) => ({
   password: configService.get<string>('DB_PASSWORD', 'postgres'),
   database,
   namingStrategy: new SnakeNamingStrategy(),
-  entities: [], // No entities - using raw queries
-  synchronize: false, // Never sync - read-only
+  entities,
+  synchronize: false,
   logging: configService.get<string>('NODE_ENV') === 'development',
   extra: {
     max: 10,
@@ -43,10 +41,9 @@ const createDbConfig = (configService: ConfigService, database: string) => ({
       envFilePath: '.env',
     }),
 
-    // Default connection - contrats_db (for contracts data)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => createDbConfig(configService, 'contrats_db'),
+      useFactory: (configService: ConfigService) => createDbConfig(configService, 'contrats_db', [ProcessedEvent]),
       inject: [ConfigService],
     }),
 
@@ -90,13 +87,14 @@ const createDbConfig = (configService: ConfigService, database: string) => ({
       inject: [ConfigService],
     }),
 
-    // Dashboard modules
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     KpisModule,
     EvolutionCaModule,
     RepartitionProduitsModule,
     StatsSocietesModule,
     AlertesModule,
     KpisCommerciauxModule,
+    EventsModule,
   ],
   // Plus de controleur monolithique ici - chaque module a le sien
   controllers: [],

@@ -1,5 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
+import { v4 as uuidv4 } from 'uuid';
+import { NatsService } from '@crm/nats-utils';
+import { ClientCreatedEvent } from '@crm/proto/events/client';
 import { ClientBaseService } from './client-base.service';
 
 import type {
@@ -11,13 +14,34 @@ import type {
   SearchClientRequest,
 } from '@crm/proto/clients';
 
+const CLIENT_CREATED_SUBJECT = 'crm.events.client.created';
+
 @Controller()
 export class ClientBaseController {
-  constructor(private readonly clientBaseService: ClientBaseService) {}
+  constructor(
+    private readonly clientBaseService: ClientBaseService,
+    private readonly natsService: NatsService,
+  ) {}
 
   @GrpcMethod('ClientBaseService', 'Create')
   async createClientBase(data: CreateClientBaseRequest) {
-    return this.clientBaseService.create(data);
+    const client = await this.clientBaseService.create(data);
+
+    const event: ClientCreatedEvent = {
+      eventId: uuidv4(),
+      timestamp: Date.now(),
+      correlationId: '',
+      clientId: client.id,
+      organisationId: client.organisationId,
+      nom: client.nom,
+      prenom: client.prenom || '',
+      email: client.email || '',
+      createdAt: { seconds: Math.floor(client.dateCreation.getTime() / 1000), nanos: 0 },
+    };
+
+    await this.natsService.publishProto(CLIENT_CREATED_SUBJECT, event, ClientCreatedEvent);
+
+    return client;
   }
 
   @GrpcMethod('ClientBaseService', 'Update')

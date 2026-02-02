@@ -1,4 +1,8 @@
-import { Module } from '@nestjs/common';
+@nestjs/core';
+import { AuthInterceptor } from '@crm/grpc-utils';
+
+import { Module } from '@nestjs/common';;
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
@@ -99,6 +103,10 @@ import { PspAccountsModule } from './modules/psp-accounts/psp-accounts.module';
     PspAccountsModule,
   ],
   controllers: [PortalController],
-  providers: [],
+  providers: [  {
+      provide: APP_INTERCEPTOR,
+      useClass: AuthInterceptor,
+    },
+  ],
 })
 export class AppModule {}

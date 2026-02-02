@@ -1,4 +1,8 @@
-import { Module } from '@nestjs/common';
+@nestjs/core';
+import { AuthInterceptor } from '@crm/grpc-utils';
+
+import { Module } from '@nestjs/common';;
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
@@ -95,6 +99,10 @@ const createDbConfig = (configService: ConfigService, database: string) => ({
   ],
   // Plus de controleur monolithique ici - chaque module a le sien
   controllers: [],
-  providers: [],
+  providers: [  {
+      provide: APP_INTERCEPTOR,
+      useClass: AuthInterceptor,
+    },
+  ],
 })
 export class AppModule {}

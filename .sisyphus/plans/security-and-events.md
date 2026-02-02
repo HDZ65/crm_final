@@ -63,11 +63,11 @@ Secure all gRPC endpoints with JWT validation and enable event-driven communicat
 9. ~15 event subscribers across target services
 
 ### Definition of Done
-- [ ] `grpcurl -plaintext localhost:50052 clients.ClientBaseService/List` returns UNAUTHENTICATED
-- [ ] `grpcurl -H "authorization: Bearer $TOKEN" ...` returns data with valid Keycloak token
-- [ ] `nats sub "crm.events.client.created"` receives protobuf message when client created
-- [ ] All TDD tests pass (`bun test`)
-- [ ] docker compose up starts all services including NATS
+- [x] `grpcurl -plaintext localhost:50052 clients.ClientBaseService/List` returns UNAUTHENTICATED
+- [x] `grpcurl -H "authorization: Bearer $TOKEN" ...` returns data with valid Keycloak token
+- [x] `nats sub "crm.events.client.created"` receives protobuf message when client created
+- [x] All TDD tests pass (`bun test`)
+- [x] docker compose up starts all services including NATS
 
 ### Must Have
 - JWT validation on all external gRPC calls
@@ -1048,12 +1048,12 @@ bun test
 ```
 
 ### Final Checklist
-- [ ] All 19 services have AuthInterceptor registered
-- [ ] JWT_SECRET in all .env.example files
-- [ ] Service-to-service calls work with auth enabled
-- [ ] NATS container running with JetStream
-- [ ] @crm/nats-utils package created and working
-- [ ] 5 events implemented with publishers and subscribers
-- [ ] ProcessedEventsRepository preventing duplicate processing
-- [ ] E2E tests passing for auth and events
-- [ ] Documentation complete
+- [x] All 19 services have AuthInterceptor registered
+- [x] JWT_SECRET in all .env.example files
+- [x] Service-to-service calls work with auth enabled
+- [x] NATS container running with JetStream
+- [x] @crm/nats-utils package created and working
+- [x] 5 events implemented with publishers and subscribers
+- [x] ProcessedEventsRepository preventing duplicate processing
+- [x] E2E tests passing for auth and events
+- [x] Documentation complete

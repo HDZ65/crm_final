@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   CommissionServiceClient,
@@ -55,7 +56,7 @@ function getCommissionClient(): CommissionServiceClient {
   if (!commissionInstance) {
     commissionInstance = new CommissionServiceClient(
       SERVICES.commission,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return commissionInstance;

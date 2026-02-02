@@ -1,13 +1,11 @@
-@nestjs/core';
-import { NatsModule } from '@crm/nats-utils';
-import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
+import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { NatsModule, ProcessedEvent } from '@crm/nats-utils';
+import { AuthInterceptor } from '@crm/grpc-utils';
 
 import { RetryPolicyModule } from './modules/retry-policy/retry-policy.module';
 import { RetryScheduleModule } from './modules/retry-schedule/retry-schedule.module';
@@ -17,6 +15,7 @@ import { ReminderPolicyModule } from './modules/reminder-policy/reminder-policy.
 import { ReminderModule } from './modules/reminder/reminder.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
+import { EventsModule } from './modules/events/events.module';
 
 import { RetryPolicyEntity } from './modules/retry-policy/entities/retry-policy.entity';
 import { RetryScheduleEntity } from './modules/retry-schedule/entities/retry-schedule.entity';
@@ -52,9 +51,10 @@ import { RetryAuditLogEntity } from './modules/audit-log/entities/retry-audit-lo
           ReminderPolicyEntity,
           ReminderEntity,
           RetryAuditLogEntity,
+          ProcessedEvent,
         ],
-synchronize: false, // Désactivé - utiliser les migrations
-        migrationsRun: true, // Exécute les migrations au démarrage
+        synchronize: false,
+        migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get<string>('NODE_ENV') === 'development',
         ssl:
@@ -70,23 +70,23 @@ synchronize: false, // Désactivé - utiliser les migrations
         },
       }),
     }),
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RetryPolicyModule,
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RetryScheduleModule,
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RetryAttemptModule,
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     RetryJobModule,
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     ReminderPolicyModule,
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     ReminderModule,
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     AuditLogModule,
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
     SchedulerModule,
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
+    EventsModule,
   ],
   controllers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuthInterceptor,
+    },
+  ],
 })
 export class AppModule {}

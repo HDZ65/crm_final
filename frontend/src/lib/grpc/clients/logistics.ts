@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   LogisticsServiceClient,
@@ -17,7 +18,7 @@ function getLogisticsClient(): LogisticsServiceClient {
   if (!logisticsInstance) {
     logisticsInstance = new LogisticsServiceClient(
       SERVICES.logistics,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return logisticsInstance;

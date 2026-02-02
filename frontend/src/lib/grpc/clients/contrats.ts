@@ -2,6 +2,7 @@
  * Contrats Service gRPC Client
  */
 
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   ContratServiceClient,
@@ -21,7 +22,7 @@ function getContratClient(): ContratServiceClient {
   if (!contratInstance) {
     contratInstance = new ContratServiceClient(
       SERVICES.contrats,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return contratInstance;

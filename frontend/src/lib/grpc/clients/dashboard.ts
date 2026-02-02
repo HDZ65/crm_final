@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   DashboardKpisServiceClient,
@@ -31,7 +32,7 @@ function getDashboardKpisClient(): DashboardKpisServiceClient {
   if (!dashboardKpisInstance) {
     dashboardKpisInstance = new DashboardKpisServiceClient(
       SERVICES.dashboard,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return dashboardKpisInstance;
@@ -41,7 +42,7 @@ function getEvolutionCaClient(): EvolutionCaServiceClient {
   if (!evolutionCaInstance) {
     evolutionCaInstance = new EvolutionCaServiceClient(
       SERVICES.dashboard,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return evolutionCaInstance;
@@ -51,7 +52,7 @@ function getRepartitionProduitsClient(): RepartitionProduitsServiceClient {
   if (!repartitionProduitsInstance) {
     repartitionProduitsInstance = new RepartitionProduitsServiceClient(
       SERVICES.dashboard,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return repartitionProduitsInstance;
@@ -61,7 +62,7 @@ function getStatsSocietesClient(): StatsSocietesServiceClient {
   if (!statsSocietesInstance) {
     statsSocietesInstance = new StatsSocietesServiceClient(
       SERVICES.dashboard,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return statsSocietesInstance;
@@ -71,7 +72,7 @@ function getKpisCommerciauxClient(): KpisCommerciauxServiceClient {
   if (!kpisCommerciauxInstance) {
     kpisCommerciauxInstance = new KpisCommerciauxServiceClient(
       SERVICES.dashboard,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return kpisCommerciauxInstance;
@@ -81,7 +82,7 @@ function getAlertesClient(): AlertesServiceClient {
   if (!alertesInstance) {
     alertesInstance = new AlertesServiceClient(
       SERVICES.dashboard,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return alertesInstance;

@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   GammeServiceClient,
@@ -54,7 +55,7 @@ function getGammeClient(): GammeServiceClient {
   if (!gammeInstance) {
     gammeInstance = new GammeServiceClient(
       SERVICES.products,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return gammeInstance;
@@ -64,7 +65,7 @@ function getProduitClient(): ProduitServiceClient {
   if (!produitInstance) {
     produitInstance = new ProduitServiceClient(
       SERVICES.products,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return produitInstance;
@@ -74,7 +75,7 @@ function getProduitVersionClient(): ProduitVersionServiceClient {
   if (!produitVersionInstance) {
     produitVersionInstance = new ProduitVersionServiceClient(
       SERVICES.products,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return produitVersionInstance;
@@ -84,7 +85,7 @@ function getProduitDocumentClient(): ProduitDocumentServiceClient {
   if (!produitDocumentInstance) {
     produitDocumentInstance = new ProduitDocumentServiceClient(
       SERVICES.products,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return produitDocumentInstance;
@@ -94,7 +95,7 @@ function getProduitPublicationClient(): ProduitPublicationServiceClient {
   if (!produitPublicationInstance) {
     produitPublicationInstance = new ProduitPublicationServiceClient(
       SERVICES.products,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return produitPublicationInstance;

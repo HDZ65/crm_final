@@ -2,6 +2,7 @@
  * Payments Service gRPC Client
  */
 
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   PaymentServiceClient,
@@ -24,7 +25,7 @@ function getPaymentClient(): PaymentServiceClient {
   if (!paymentInstance) {
     paymentInstance = new PaymentServiceClient(
       SERVICES.payments,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return paymentInstance;

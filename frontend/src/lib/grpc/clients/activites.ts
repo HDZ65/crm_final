@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   TacheServiceClient,
@@ -61,7 +62,7 @@ function getTacheClient(): TacheServiceClient {
   if (!tacheInstance) {
     tacheInstance = new TacheServiceClient(
       SERVICES.activites,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return tacheInstance;
@@ -71,7 +72,7 @@ function getTypeActiviteClient(): TypeActiviteServiceClient {
   if (!typeActiviteInstance) {
     typeActiviteInstance = new TypeActiviteServiceClient(
       SERVICES.activites,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return typeActiviteInstance;
@@ -81,7 +82,7 @@ function getActiviteClient(): ActiviteServiceClient {
   if (!activiteInstance) {
     activiteInstance = new ActiviteServiceClient(
       SERVICES.activites,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return activiteInstance;
@@ -91,7 +92,7 @@ function getEvenementSuiviClient(): EvenementSuiviServiceClient {
   if (!evenementSuiviInstance) {
     evenementSuiviInstance = new EvenementSuiviServiceClient(
       SERVICES.activites,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return evenementSuiviInstance;

@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   ApporteurServiceClient,
@@ -18,7 +19,7 @@ function getApporteurClient(): ApporteurServiceClient {
   if (!apporteurInstance) {
     apporteurInstance = new ApporteurServiceClient(
       SERVICES.commerciaux,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return apporteurInstance;

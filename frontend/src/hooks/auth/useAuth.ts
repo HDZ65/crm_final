@@ -3,7 +3,7 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useMemo, useCallback } from "react";
 import { api } from "@/lib/api";
-import { parseJWT, AUTH_URLS, type JWTPayload } from "@/lib/auth";
+import { parseJWT, AUTH_URLS, type JWTPayload } from "@/lib/auth/index";
 
 // =============================================================================
 // Types

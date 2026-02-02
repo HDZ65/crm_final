@@ -2,6 +2,7 @@
  * Factures Service gRPC Client
  */
 
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   FactureServiceClient,
@@ -29,7 +30,7 @@ function getFactureClient(): FactureServiceClient {
   if (!factureInstance) {
     factureInstance = new FactureServiceClient(
       SERVICES.factures,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return factureInstance;
@@ -83,7 +84,7 @@ function getStatutFactureClient(): StatutFactureServiceClient {
   if (!statutFactureInstance) {
     statutFactureInstance = new StatutFactureServiceClient(
       SERVICES.factures,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return statutFactureInstance;

@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   UtilisateurServiceClient,
@@ -44,7 +45,7 @@ function getUtilisateurClient(): UtilisateurServiceClient {
   if (!utilisateurInstance) {
     utilisateurInstance = new UtilisateurServiceClient(
       SERVICES.users,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return utilisateurInstance;
@@ -54,7 +55,7 @@ function getMembreCompteClient(): MembreCompteServiceClient {
   if (!membreCompteInstance) {
     membreCompteInstance = new MembreCompteServiceClient(
       SERVICES.users,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return membreCompteInstance;
@@ -64,7 +65,7 @@ function getCompteClient(): CompteServiceClient {
   if (!compteInstance) {
     compteInstance = new CompteServiceClient(
       SERVICES.users,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return compteInstance;
@@ -74,7 +75,7 @@ function getRoleClient(): RoleServiceClient {
   if (!roleInstance) {
     roleInstance = new RoleServiceClient(
       SERVICES.users,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return roleInstance;

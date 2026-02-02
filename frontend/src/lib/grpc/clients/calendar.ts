@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   CalendarEngineServiceClient,
@@ -86,7 +87,7 @@ function getCalendarEngineClient(): CalendarEngineServiceClient {
   if (!calendarEngineInstance) {
     calendarEngineInstance = new CalendarEngineServiceClient(
       SERVICES.calendar,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return calendarEngineInstance;
@@ -96,7 +97,7 @@ function getDebitConfigClient(): DebitConfigurationServiceClient {
   if (!debitConfigInstance) {
     debitConfigInstance = new DebitConfigurationServiceClient(
       SERVICES.calendar,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return debitConfigInstance;
@@ -106,7 +107,7 @@ function getHolidayClient(): HolidayServiceClient {
   if (!holidayInstance) {
     holidayInstance = new HolidayServiceClient(
       SERVICES.calendar,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return holidayInstance;
@@ -116,7 +117,7 @@ function getCalendarAdminClient(): CalendarAdminServiceClient {
   if (!calendarAdminInstance) {
     calendarAdminInstance = new CalendarAdminServiceClient(
       SERVICES.calendar,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return calendarAdminInstance;

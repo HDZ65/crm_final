@@ -6,7 +6,7 @@ import { OrganizationGuard } from "@/components/organization-guard";
 import { OrganisationProvider } from "@/contexts/organisation-context";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { AiHealthProvider } from "@/contexts/ai-health-context";
-import { getServerUserProfile, getActiveOrgIdFromCookie } from "@/lib/auth";
+import { getServerUserProfile, getActiveOrgIdFromCookie } from "@/lib/auth.server";
 import { getServerNotifications } from "@/lib/server-data";
 
 export default async function MainLayout({

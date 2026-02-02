@@ -4,9 +4,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { AuthInterceptor } from '@crm/grpc-utils';
-import { NatsModule } from '@crm/nats-utils';
+import { NatsModule, ProcessedEvent } from '@crm/nats-utils';
 
-// Feature Modules
+import { EventsModule } from './modules/events/events.module';
 import { StripeModule } from './modules/stripe/stripe.module';
 import { PaypalModule } from './modules/paypal/paypal.module';
 import { GoCardlessModule } from './modules/gocardless/gocardless.module';
@@ -18,6 +18,7 @@ import { PortalModule } from './modules/portal/portal.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
 import { RetryModule } from './modules/retry/retry.module';
+import { PaymentEmissionModule } from './modules/payment-emission/payment-emission.module';
 
 // Entities
 import { StripeAccountEntity } from './modules/stripe/entities/stripe-account.entity';
@@ -74,6 +75,7 @@ import { PspAccountsModule } from './modules/psp-accounts/psp-accounts.module';
           SlimpayAccountEntity,
           MultiSafepayAccountEntity,
           EmerchantpayAccountEntity,
+          ProcessedEvent,
         ],
         synchronize: false, // Désactivé - utiliser les migrations
         migrationsRun: true, // Exécute les migrations au démarrage
@@ -102,6 +104,8 @@ import { PspAccountsModule } from './modules/psp-accounts/psp-accounts.module';
     CalendarModule,
     RetryModule,
     PspAccountsModule,
+    PaymentEmissionModule,
+    EventsModule,
   ],
   controllers: [PortalController],
   providers: [  {

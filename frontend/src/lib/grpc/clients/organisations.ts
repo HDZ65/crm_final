@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   SocieteServiceClient,
@@ -62,7 +63,7 @@ function getSocieteClient(): SocieteServiceClient {
   if (!societeInstance) {
     societeInstance = new SocieteServiceClient(
       SERVICES.organisations,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return societeInstance;
@@ -72,7 +73,7 @@ function getOrganisationClient(): OrganisationServiceClient {
   if (!organisationInstance) {
     organisationInstance = new OrganisationServiceClient(
       SERVICES.organisations,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return organisationInstance;
@@ -82,7 +83,7 @@ function getRolePartenaireClient(): RolePartenaireServiceClient {
   if (!rolePartenaireInstance) {
     rolePartenaireInstance = new RolePartenaireServiceClient(
       SERVICES.organisations,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return rolePartenaireInstance;
@@ -92,7 +93,7 @@ function getMembrePartenaireClient(): MembrePartenaireServiceClient {
   if (!membrePartenaireInstance) {
     membrePartenaireInstance = new MembrePartenaireServiceClient(
       SERVICES.organisations,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return membrePartenaireInstance;
@@ -102,7 +103,7 @@ function getInvitationCompteClient(): InvitationCompteServiceClient {
   if (!invitationCompteInstance) {
     invitationCompteInstance = new InvitationCompteServiceClient(
       SERVICES.organisations,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return invitationCompteInstance;

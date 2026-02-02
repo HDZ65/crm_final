@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   NotificationServiceClient,
@@ -19,7 +20,7 @@ function getNotificationClient(): NotificationServiceClient {
   if (!notificationInstance) {
     notificationInstance = new NotificationServiceClient(
       SERVICES.notifications,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return notificationInstance;

@@ -1,3 +1,4 @@
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   RegleRelanceServiceClient,
@@ -28,7 +29,7 @@ function getRegleRelanceClient(): RegleRelanceServiceClient {
   if (!regleRelanceInstance) {
     regleRelanceInstance = new RegleRelanceServiceClient(
       SERVICES.relance,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return regleRelanceInstance;
@@ -38,7 +39,7 @@ function getHistoriqueRelanceClient(): HistoriqueRelanceServiceClient {
   if (!historiqueRelanceInstance) {
     historiqueRelanceInstance = new HistoriqueRelanceServiceClient(
       SERVICES.relance,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return historiqueRelanceInstance;
@@ -48,7 +49,7 @@ function getRelanceEngineClient(): RelanceEngineServiceClient {
   if (!relanceEngineInstance) {
     relanceEngineInstance = new RelanceEngineServiceClient(
       SERVICES.relance,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return relanceEngineInstance;

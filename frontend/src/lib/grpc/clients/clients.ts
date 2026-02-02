@@ -2,6 +2,7 @@
  * Client Service gRPC Client
  */
 
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify } from "./config";
 import {
   ClientBaseServiceClient,
@@ -23,7 +24,7 @@ function getClientBaseClient(): ClientBaseServiceClient {
   if (!clientBaseInstance) {
     clientBaseInstance = new ClientBaseServiceClient(
       SERVICES.clients,
-      credentials.createInsecure()
+      createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return clientBaseInstance;

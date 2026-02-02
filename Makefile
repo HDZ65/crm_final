@@ -1,226 +1,262 @@
-# CRM Final - Project Makefile
-# Usage: make <target>
+# ============================================================================
+# Makefile - CRM Final Monorepo
+# ============================================================================
+# Environment-specific makefiles:
+#   - make/dev.mk     : Development commands (default)
+#   - make/staging.mk : Staging commands
+#   - make/prod.mk    : Production commands
+# ============================================================================
 
-.PHONY: help up down logs ps build clean install dev dev-frontend dev-backend dev-services proto
+include make/dev.mk
+include make/staging.mk
+include make/prod.mk
 
-# Default target
-help:
-	@echo "CRM Final - Available Commands"
-	@echo ""
-	@echo "  Docker Commands:"
-	@echo "    make up              - Start all services with Docker"
-	@echo "    make down            - Stop all services"
-	@echo "    make logs            - View logs (all services)"
-	@echo "    make logs-f          - Follow logs (all services)"
-	@echo "    make ps              - Show running containers"
-	@echo "    make build           - Build all Docker images"
-	@echo "    make clean           - Stop and remove all containers, volumes"
-	@echo ""
-	@echo "  Development Commands:"
-	@echo "    make install         - Install dependencies for all projects"
-	@echo "    make dev             - Start full dev environment (requires tmux)"
-	@echo "    make dev-simple      - Start frontend + backend only"
-	@echo "    make dev-frontend    - Start frontend only"
-	@echo "    make dev-backend     - Start backend only"
-	@echo ""
-	@echo "  Database Commands:"
-	@echo "    make db-up           - Start PostgreSQL only"
-	@echo "    make db-down         - Stop PostgreSQL"
-	@echo "    make db-reset        - Reset database (drop and recreate)"
-	@echo ""
-	@echo "  Proto Commands:"
-	@echo "    make proto           - Generate protobuf/gRPC files"
-	@echo "    make proto-lint      - Lint proto files with Buf"
-	@echo "    make proto-logs      - Show proto generator logs"
-	@echo ""
-	@echo "  Utility Commands:"
-	@echo "    make lint            - Run linters on all projects"
-	@echo "    make test            - Run tests on all projects"
+.PHONY: up down restart logs ps clean \
+	proto-generate proto-clean proto-build \
+	build-all build-packages build-services \
+	install install-packages install-services \
+	test lint typecheck \
+	help
 
-# ============================================
-# DOCKER COMMANDS
-# ============================================
+# ============================================================================
+# Quick Aliases (Dev by default)
+# ============================================================================
 
-up:
-	@echo "Starting all services..."
-	docker-compose up -d
-	@echo ""
-	@echo "Services started! Access:"
-	@echo "  Frontend: http://localhost:3000"
-	@echo "  Backend:  http://localhost:4000"
-	@echo "  API Docs: http://localhost:4000/docs"
+up: dev-up
+down: dev-down
+restart: dev-restart
+logs: dev-logs
+ps: dev-ps
+clean: dev-clean
+migrate-all: dev-migrate-all
+health-check: dev-health-check
 
-down:
-	@echo "Stopping all services..."
-	docker-compose down
+# ============================================================================
+# Proto Generation Commands
+# ============================================================================
 
-logs:
-	docker-compose logs
+proto-generate:
+	@echo "=== Generating proto files with buf ==="
+	cd packages/proto && npm run generate
+	@echo "Proto files generated in packages/proto/gen/"
 
-logs-f:
-	docker-compose logs -f
+proto-clean:
+	@echo "=== Cleaning generated proto files ==="
+	rm -rf packages/proto/gen/ts/*
+	rm -rf packages/proto/gen/ts-frontend/*
+	@echo "Proto files cleaned"
 
-ps:
-	docker-compose ps
+proto-build: proto-generate
+	@echo "=== Proto files generated ==="
 
-build:
-	@echo "Building all Docker images..."
-	docker-compose build
+# ============================================================================
+# Build Commands
+# ============================================================================
 
-clean:
-	@echo "Cleaning up..."
-	docker-compose down -v --remove-orphans
-	docker system prune -f
+build-all: build-packages build-services
+	@echo "=== All builds completed ==="
 
-# ============================================
-# DATABASE COMMANDS
-# ============================================
+build-packages:
+	@echo "=== Building shared packages ==="
+	cd packages/grpc-utils && npm run build
+	cd packages/shared && npm run build
+	cd packages/nats-utils && npm run build
+	@echo "Packages built"
 
-db-up:
-	docker-compose up -d postgres-main
-	@echo "PostgreSQL started on port 5432"
+build-services:
+	@echo "=== Building all 19 services ==="
+	@for service in services/service-*; do \
+		echo "Building $$service..."; \
+		cd $$service && npm run build && cd ../..; \
+	done
+	@echo "All services built"
 
-db-down:
-	docker-compose stop postgres-main
+# ============================================================================
+# Install Commands
+# ============================================================================
 
-db-reset:
-	docker-compose stop postgres-main
-	docker-compose rm -f postgres-main
-	docker volume rm crm_final_postgres_main_data || true
-	docker-compose up -d postgres-main
-	@echo "Database reset complete"
+install: install-packages install-services
+	@echo "=== All dependencies installed ==="
 
-# ============================================
-# DEVELOPMENT COMMANDS
-# ============================================
+install-packages:
+	@echo "=== Installing package dependencies ==="
+	cd packages/proto && npm install
+	cd packages/grpc-utils && npm install
+	cd packages/shared && npm install
+	cd packages/nats-utils && npm install
 
-install:
-	@echo "Installing dependencies..."
-	@echo ">> Backend"
-	cd backend && npm install
-	@echo ">> Frontend"
+install-services:
+	@echo "=== Installing service dependencies ==="
+	@for service in services/service-*; do \
+		echo "Installing $$service..."; \
+		cd $$service && npm install && cd ../..; \
+	done
+
+install-frontend:
+	@echo "=== Installing frontend dependencies ==="
 	cd frontend && npm install
-	@echo ""
-	@echo "Dependencies installed!"
 
-dev-frontend:
-	@echo "Starting frontend development server..."
-	cd frontend && npm run dev
+install-all: install install-frontend
+	@echo "=== All dependencies installed ==="
 
-dev-backend:
-	@echo "Starting backend development server..."
-	@echo "Using existing PostgreSQL on port 5433"
-	cd backend && npm run start:4000
+# ============================================================================
+# Test & Quality Commands
+# ============================================================================
 
-dev-simple:
-	@echo "Starting simple dev environment..."
-	@echo "This requires two terminals or use 'make dev' with tmux"
-	@echo ""
-	@echo "Terminal 1: make dev-backend"
-	@echo "Terminal 2: make dev-frontend"
-	@echo ""
-	@echo "Or run: make db-up && (cd backend && npm run start:4000 &) && cd frontend && npm run dev"
+test:
+	@echo "=== Running tests ==="
+	cd tests/e2e && npm run test:all
 
-# Start EVERYTHING (17 microservices + frontend)
-start:
-	@echo "Starting CRM Full Stack..."
-	@echo ""
-	@echo "Step 1: Building and starting 17 microservices (Docker)..."
-	docker-compose -f docker-compose.services.yml up -d --build
-	@echo ""
-	@echo "Step 2: Starting Frontend..."
-	@echo ""
-	@echo "Frontend: http://localhost:3000"
-	@echo "Keycloak: http://localhost:8080"
-	@echo ""
-	@echo "Press Ctrl+C to stop frontend (services keep running)"
-	@echo "Use 'make stop' to stop everything"
-	@echo ""
-	cd frontend && npm run dev
+test-auth:
+	cd tests/e2e && npm run test:auth
 
-# Stop everything
-stop:
-	@echo "Stopping all services..."
-	docker-compose -f docker-compose.services.yml down
-	@pkill -f "next dev" || true
-	@echo "All services stopped"
-
-# Start only microservices (Docker)
-start-services:
-	@echo "Starting 17 microservices..."
-	docker-compose -f docker-compose.services.yml up -d --build
-	@echo "Services started! Use 'docker-compose -f docker-compose.services.yml logs -f' to see logs"
-
-# Start only frontend (no microservices)
-start-frontend:
-	@echo "Starting Frontend only..."
-	@echo "Frontend: http://localhost:3000"
-	cd frontend && npm run dev
-
-# Full dev environment with tmux
-dev:
-	@if ! command -v tmux &> /dev/null; then \
-		echo "tmux is not installed. Please install it or use 'make start'"; \
-		exit 1; \
-	fi
-	@echo "Starting full development environment with tmux..."
-	@./scripts/dev.sh
-
-# ============================================
-# UTILITY COMMANDS
-# ============================================
-
-proto:
-	@echo "Generating protobuf files with Buf..."
-	@echo "This will restart the proto-generator container"
-	docker-compose restart proto-generator
-	docker-compose logs proto-generator
-	@echo "Protobuf generation complete"
-
-proto-lint:
-	@echo "Linting proto files..."
-	cd proto && buf lint
-
-proto-logs:
-	docker-compose logs -f proto-generator
+test-events:
+	cd tests/e2e && npm run test:events
 
 lint:
-	@echo "Running linters..."
-	cd backend && npm run lint
+	@echo "=== Running linters ==="
 	cd frontend && npm run lint
 	@echo "Linting complete"
 
-test:
-	@echo "Running tests..."
-	cd backend && npm run test
-	@echo "Tests complete"
+typecheck:
+	@echo "=== Running TypeScript checks ==="
+	cd frontend && npm run typecheck 2>/dev/null || npx tsc --noEmit
+	@echo "Typecheck complete"
 
-# ============================================
-# SERVICE-SPECIFIC COMMANDS
-# ============================================
+# ============================================================================
+# NATS Commands
+# ============================================================================
 
-up-backend:
-	docker-compose up -d postgres-main backend
+nats-up:
+	docker compose -f compose/dev/infrastructure.yml up -d nats
+	@echo "NATS started on localhost:4222"
 
-up-frontend:
-	docker-compose up -d frontend
+nats-down:
+	docker compose -f compose/dev/infrastructure.yml stop nats
 
-up-services:
-	docker-compose up -d \
-		service-activites \
-		service-clients \
-		service-commerciaux \
-		service-commission \
-		service-contrats \
-		service-dashboard \
-		service-documents \
-		service-email \
-		service-factures \
-		service-logistics \
-		service-notifications \
-		service-organisations \
-		service-payments \
-		service-products \
-		service-referentiel \
-		service-relance \
-		service-users
+nats-logs:
+	docker compose -f compose/dev/infrastructure.yml logs -f nats
+
+nats-sub:
+	@echo "Subscribing to all CRM events..."
+	@echo "Usage: nats sub 'crm.events.>'"
+	nats sub "crm.events.>" 2>/dev/null || echo "Install nats CLI: go install github.com/nats-io/natscli/nats@latest"
+
+nats-status:
+	@curl -s http://localhost:8222/varz | jq '{server_name, version, connections, subscriptions}' 2>/dev/null || echo "NATS not running"
+
+# ============================================================================
+# Docker Commands
+# ============================================================================
+
+docker-build-all:
+	@echo "=== Building all Docker images ==="
+	docker compose -f compose/dev/services.yml build
+
+docker-build-service:
+	@echo "Usage: make docker-build-service SERVICE=service-clients"
+	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified"; exit 1; fi
+	docker compose -f compose/dev/services.yml build $(SERVICE)
+
+docker-prune:
+	@echo "=== Pruning Docker resources ==="
+	docker system prune -f
+	docker volume prune -f
+
+# ============================================================================
+# Help
+# ============================================================================
+
+help:
+	@echo ""
+	@echo "CRM FINAL MAKEFILE"
+	@echo "=================="
+	@echo ""
+	@echo "ENVIRONMENTS"
+	@echo "------------"
+	@echo "  Dev (default):  make up / make dev-up"
+	@echo "  Staging:        make staging-up"
+	@echo "  Production:     make prod-up"
+	@echo ""
+	@echo "DEV COMMANDS (make/dev.mk)"
+	@echo "--------------------------"
+	@echo "  make dev-infra-up      Start infrastructure (PostgreSQL, NATS)"
+	@echo "  make dev-up            Start all dev services"
+	@echo "  make dev-down          Stop all dev services"
+	@echo "  make dev-logs          View dev logs"
+	@echo "  make dev-ps            List dev containers"
+	@echo "  make dev-health-check  Check services health"
+	@echo "  make dev-clean         Remove containers and volumes"
+	@echo ""
+	@echo "  Service commands:"
+	@echo "    make dev-clients-up|down|logs|restart"
+	@echo "    make dev-users-up|down|logs"
+	@echo "    make dev-payments-up|down|logs"
+	@echo "    make dev-contrats-up|down|logs"
+	@echo "    make dev-factures-up|down|logs"
+	@echo ""
+	@echo "PROTO COMMANDS"
+	@echo "--------------"
+	@echo "  make proto-generate    Generate proto files with buf"
+	@echo "  make proto-clean       Clean generated proto files"
+	@echo ""
+	@echo "BUILD COMMANDS"
+	@echo "--------------"
+	@echo "  make build-all         Build packages + services"
+	@echo "  make build-packages    Build shared packages only"
+	@echo "  make build-services    Build all 19 services"
+	@echo ""
+	@echo "INSTALL COMMANDS"
+	@echo "----------------"
+	@echo "  make install           Install all dependencies"
+	@echo "  make install-frontend  Install frontend dependencies"
+	@echo ""
+	@echo "NATS COMMANDS"
+	@echo "-------------"
+	@echo "  make nats-up           Start NATS server"
+	@echo "  make nats-down         Stop NATS server"
+	@echo "  make nats-status       Check NATS status"
+	@echo "  make nats-sub          Subscribe to all events"
+	@echo ""
+	@echo "TEST COMMANDS"
+	@echo "-------------"
+	@echo "  make test              Run all E2E tests"
+	@echo "  make test-auth         Run auth tests"
+	@echo "  make test-events       Run event tests"
+	@echo "  make lint              Run linters"
+	@echo "  make typecheck         Run TypeScript checks"
+	@echo ""
+	@echo "DOCKER COMMANDS"
+	@echo "---------------"
+	@echo "  make docker-build-all  Build all Docker images"
+	@echo "  make docker-prune      Clean Docker resources"
+	@echo ""
+	@echo "SERVICE PORTS"
+	@echo "-------------"
+	@echo "  Service            | Port"
+	@echo "  -------------------|------"
+	@echo "  service-activites  | 50051"
+	@echo "  service-clients    | 50052"
+	@echo "  service-commerciaux| 50053"
+	@echo "  service-commission | 50054"
+	@echo "  service-contrats   | 50055"
+	@echo "  service-dashboard  | 50056"
+	@echo "  service-documents  | 50057"
+	@echo "  service-email      | 50058"
+	@echo "  service-factures   | 50059"
+	@echo "  service-logistics  | 50060"
+	@echo "  service-notifications| 50061"
+	@echo "  service-organisations| 50062"
+	@echo "  service-payments   | 50063"
+	@echo "  service-products   | 50064"
+	@echo "  service-referentiel| 50065"
+	@echo "  service-relance    | 50066"
+	@echo "  service-users      | 50067"
+	@echo "  service-calendar   | 50068"
+	@echo "  service-retry      | 50070"
+	@echo ""
+	@echo "  Frontend           | 3000"
+	@echo "  PostgreSQL         | 5432"
+	@echo "  NATS               | 4222"
+	@echo "  NATS Monitoring    | 8222"
+	@echo ""

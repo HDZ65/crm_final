@@ -1,0 +1,126 @@
+# ==========================================
+# DOCKER COMPOSE TEMPLATE - SHARED DOCKERFILE
+# ==========================================
+# This example shows how to use the shared Dockerfile.service template
+# to build multiple services with a single Dockerfile.
+#
+# BENEFITS:
+#   - Single source of truth for all service builds
+#   - Easier maintenance and updates
+#   - Consistent build process across all services
+#   - Reduced duplication (19 Dockerfiles → 1 template)
+#
+# USAGE:
+#   docker-compose -f compose/docker-compose.template.yml up
+#
+# ==========================================
+
+version: '3.9'
+
+services:
+  # ==========================================
+  # Service: Activites (Port 50051)
+  # ==========================================
+  service-activites:
+    build:
+      context: .
+      dockerfile: compose/Dockerfile.service
+      args:
+        SERVICE_NAME: service-activites
+      target: production
+    container_name: crm-service-activites
+    ports:
+      - "50051:50051"
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50051, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+  # ==========================================
+  # Service: Clients (Port 50052)
+  # ==========================================
+  service-clients:
+    build:
+      context: .
+      dockerfile: compose/Dockerfile.service
+      args:
+        SERVICE_NAME: service-clients
+      target: production
+    container_name: crm-service-clients
+    ports:
+      - "50052:50052"
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50052, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+  # ==========================================
+  # Service: Commerciaux (Port 50053)
+  # ==========================================
+  service-commerciaux:
+    build:
+      context: .
+      dockerfile: compose/Dockerfile.service
+      args:
+        SERVICE_NAME: service-commerciaux
+      target: production
+    container_name: crm-service-commerciaux
+    ports:
+      - "50053:50053"
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50053, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+networks:
+  crm-network:
+    driver: bridge
+
+# ==========================================
+# DEVELOPMENT EXAMPLE
+# ==========================================
+# To use development target with hot-reload:
+#
+#   service-activites-dev:
+#     build:
+#       context: .
+#       dockerfile: compose/Dockerfile.service
+#       args:
+#         SERVICE_NAME: service-activites
+#       target: development
+#     container_name: crm-service-activites-dev
+#     ports:
+#       - "50051:50051"
+#     volumes:
+#       - ./services/service-activites:/app/services/service-activites
+#       - ./packages:/app/packages
+#     environment:
+#       NODE_ENV: development
+#     networks:
+#       - crm-network
+#
+# ==========================================

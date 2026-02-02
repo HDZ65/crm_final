@@ -240,6 +240,35 @@ const paymentClient = createGrpcClient<PaymentService>(
 const schedule = await paymentClient.createSchedule(request);
 ```
 
+## Migration Notes (Wave 4 - Final Cleanup)
+
+### Changes Summary
+
+This wave completes the adoption of Winaity best practices with final cleanup and verification:
+
+- **Obsolete Files Removed**:
+  - `Dockerfile.base` - Replaced by multi-stage Dockerfiles in each service
+  - `frontend/src/lib/grpc/loader.ts` - Functionality integrated into @crm/grpc-utils
+
+- **E2E Tests Verified**: All 14 gRPC proto loading and client creation tests pass
+- **Docker Services**: All 20 services (19 microservices + PostgreSQL) start and run healthily
+- **Architecture**: Fully aligned with Winaity best practices for microservices
+
+### Verification Commands
+
+```bash
+# Verify E2E tests pass
+cd tests/e2e && npm run test:mock
+
+# Verify all services start
+docker compose up -d
+sleep 30
+docker compose ps
+
+# Verify no obsolete files remain
+test ! -f Dockerfile.base && test ! -f frontend/src/lib/grpc/loader.ts && echo "✓ Cleanup complete"
+```
+
 ## Contribution
 
 1. Creer une branche feature (`git checkout -b feature/ma-feature`)

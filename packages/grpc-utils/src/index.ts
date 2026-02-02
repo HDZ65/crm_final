@@ -61,3 +61,12 @@ export {
 	type ServiceConfig,
 	type ServiceName,
 } from "./service-config";
+
+// Health check utilities
+export {
+	HealthService,
+	HealthController,
+	ServingStatus,
+	type HealthCheckRequest,
+	type HealthCheckResponse,
+} from "./health/health.service";

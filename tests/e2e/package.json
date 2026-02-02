@@ -6,12 +6,18 @@
   "scripts": {
     "test": "tsx grpc-client.test.ts",
     "test:mock": "cross-env MOCK_MODE=true tsx grpc-client.test.ts",
-    "test:live": "cross-env GRPC_HOST=localhost tsx grpc-client.test.ts"
+    "test:live": "cross-env GRPC_HOST=localhost tsx grpc-client.test.ts",
+    "test:auth": "cross-env MOCK_MODE=true tsx auth.test.ts",
+    "test:auth:live": "cross-env GRPC_HOST=localhost tsx auth.test.ts",
+    "test:events": "cross-env MOCK_MODE=true tsx events.test.ts",
+    "test:events:live": "cross-env NATS_URL=nats://localhost:4222 tsx events.test.ts",
+    "test:all": "npm run test:mock && npm run test:auth && npm run test:events"
   },
   "devDependencies": {
     "@grpc/grpc-js": "^1.12.5",
     "@grpc/proto-loader": "^0.7.13",
     "cross-env": "^10.1.0",
+    "nats": "^2.28.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

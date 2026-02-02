@@ -177,7 +177,54 @@ GRPC_PORT=50051
 
 # Environnement
 NODE_ENV=development
+
+# Authentication
+JWT_SECRET=your-256-bit-secret-key-here
+
+# Events (NATS)
+NATS_URL=nats://localhost:4222
 ```
+
+## Authentication (JWT)
+
+All gRPC endpoints require JWT authentication via `AuthInterceptor`.
+
+```bash
+# Without token (returns UNAUTHENTICATED)
+grpcurl -plaintext localhost:50052 clients.ClientBaseService/List
+
+# With valid token
+grpcurl -plaintext -H "authorization: Bearer $TOKEN" localhost:50052 clients.ClientBaseService/List
+
+# Health check (public, no token needed)
+grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
+```
+
+Service-to-service calls use `x-internal-service` header to bypass auth.
+
+See [docs/auth-and-events.md](docs/auth-and-events.md) for details.
+
+## Event-Driven Architecture (NATS)
+
+Services communicate asynchronously via NATS JetStream:
+
+| Event | Publisher | Subscribers |
+|-------|-----------|-------------|
+| client.created | service-clients | email, notifications, dashboard, relance |
+| invoice.created | service-factures | email, notifications, dashboard, relance |
+| payment.received | service-payments | notifications, dashboard, relance, commission |
+| payment.rejected | service-payments | retry, relance, notifications, email |
+| contract.signed | service-contrats | payments, email, documents |
+
+```bash
+# Start NATS
+docker compose -f compose/dev/infrastructure.yml up -d nats
+
+# Subscribe to events
+nats sub "crm.events.>"
+```
+
+See [docs/auth-and-events.md](docs/auth-and-events.md) for details.
 
 ## Tests
 

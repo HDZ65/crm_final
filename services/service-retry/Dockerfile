@@ -1,82 +1,110 @@
 # ==========================================
 # service-retry Dockerfile
 # ==========================================
+# Generated from docker/Dockerfile.template
+# Build: docker build -f services/service-retry/Dockerfile -t crm/service-retry .
+# Run:   docker run -p 50070:50070 crm/service-retry
+# ==========================================
 
-FROM node:20-alpine AS builder
+# ==========================================
+# Stage 1: Dependencies
+# ==========================================
+FROM node:20-alpine AS deps
 
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# Copier les fichiers package du monorepo
+# Copy monorepo configuration
 COPY package.json package-lock.json turbo.json ./
 
-# Copier tous les package.json des packages et services
+# Copy shared packages
 COPY packages/proto/package.json ./packages/proto/
 COPY packages/grpc-utils/package.json ./packages/grpc-utils/
 COPY packages/shared/package.json ./packages/shared/
-COPY frontend/package.json ./frontend/
-COPY services/service-activites/package.json ./services/service-activites/
-COPY services/service-calendar/package.json ./services/service-calendar/
-COPY services/service-clients/package.json ./services/service-clients/
-COPY services/service-commerciaux/package.json ./services/service-commerciaux/
-COPY services/service-commission/package.json ./services/service-commission/
-COPY services/service-contrats/package.json ./services/service-contrats/
-COPY services/service-dashboard/package.json ./services/service-dashboard/
-COPY services/service-documents/package.json ./services/service-documents/
-COPY services/service-email/package.json ./services/service-email/
-COPY services/service-factures/package.json ./services/service-factures/
-COPY services/service-logistics/package.json ./services/service-logistics/
-COPY services/service-notifications/package.json ./services/service-notifications/
-COPY services/service-organisations/package.json ./services/service-organisations/
-COPY services/service-payments/package.json ./services/service-payments/
-COPY services/service-products/package.json ./services/service-products/
-COPY services/service-referentiel/package.json ./services/service-referentiel/
-COPY services/service-relance/package.json ./services/service-relance/
-COPY services/service-retry/package.json ./services/service-retry/
-COPY services/service-users/package.json ./services/service-users/
 
-# Installer les dependances
+# Copy service package.json
+COPY services/service-retry/package.json ./services/service-retry/
+
+# Install dependencies
 RUN npm ci
 
-# Copier le code source des packages
+# ==========================================
+# Stage 2: Development
+# ==========================================
+FROM deps AS development
+
+ENV NODE_ENV=development
+ENV PROTO_ROOT=./proto
+
+WORKDIR /app
+
+# Copy source code of shared packages
 COPY packages/proto/ ./packages/proto/
 COPY packages/grpc-utils/ ./packages/grpc-utils/
 COPY packages/shared/ ./packages/shared/
 
-# Copier le code source du service
+# Copy service source code
 COPY services/service-retry/ ./services/service-retry/
-
-# Build des packages puis du service
-RUN npm run build --workspace=@crm/grpc-utils &&     npm run build --workspace=@crm/shared &&     npm run build --workspace=@crm/service-retry
-
-# ==========================================
-# Stage 2: Production
-# ==========================================
-FROM node:20-alpine AS production
-
-RUN addgroup -g 1001 -S nodejs &&     adduser -S nestjs -u 1001
 
 WORKDIR /app/services/service-retry
 
-# Copier node_modules racine
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules /app/node_modules
+CMD ["npm", "run", "start:dev"]
 
-# Copier node_modules du service (pour les deps non-hoisted comme @nestjs/typeorm)
-COPY --from=builder --chown=nestjs:nodejs /app/services/service-retry/node_modules ./node_modules
+# ==========================================
+# Stage 3: Builder
+# ==========================================
+FROM deps AS builder
 
-# Copier le dist du service
-COPY --from=builder --chown=nestjs:nodejs /app/services/service-retry/dist ./dist
+WORKDIR /app
 
-# Copier les packages compiles
-COPY --from=builder --chown=nestjs:nodejs /app/packages/proto /app/packages/proto
-COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/dist /app/packages/grpc-utils/dist
-COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/package.json /app/packages/grpc-utils/
-COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/dist /app/packages/shared/dist
-COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/package.json /app/packages/shared/
+# Copy source code of shared packages
+COPY packages/proto/ ./packages/proto/
+COPY packages/grpc-utils/ ./packages/grpc-utils/
+COPY packages/shared/ ./packages/shared/
 
-# Copier le package.json du service
-COPY --from=builder --chown=nestjs:nodejs /app/services/service-retry/package.json ./
+# Copy service source code
+COPY services/service-retry/ ./services/service-retry/
+
+# Build packages and service
+RUN npm run build --workspace=@crm/grpc-utils && \
+    npm run build --workspace=@crm/shared && \
+    npm run build --workspace=@crm/service-retry
+
+# Remove source maps to reduce image size
+RUN find services/service-retry/dist -name "*.map" -type f -delete
+
+# ==========================================
+# Stage 4: Production
+# ==========================================
+FROM node:20-alpine AS production
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
+WORKDIR /app
+
+# Copy node_modules from deps stage
+COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+
+# Copy service node_modules (for non-hoisted dependencies)
+COPY --from=builder --chown=nestjs:nodejs /app/services/service-retry/node_modules ./services/service-retry/node_modules
+
+# Copy compiled service
+COPY --from=builder --chown=nestjs:nodejs /app/services/service-retry/dist ./services/service-retry/dist
+
+# Copy compiled shared packages
+COPY --from=builder --chown=nestjs:nodejs /app/packages/proto ./packages/proto
+COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/dist ./packages/grpc-utils/dist
+COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/package.json ./packages/grpc-utils/
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/package.json ./packages/shared/
+
+# Copy service package.json
+COPY --from=builder --chown=nestjs:nodejs /app/services/service-retry/package.json ./services/service-retry/
 
 USER nestjs
 
@@ -85,6 +113,10 @@ ENV GRPC_PORT=50070
 
 EXPOSE 50070
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3   CMD node -e "require('net').connect({port:50070,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('net').connect({port:50070,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
 
-CMD ["node", "dist/main.js"]
+# Use dumb-init as entrypoint for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["node", "services/service-retry/dist/src/main.js"]

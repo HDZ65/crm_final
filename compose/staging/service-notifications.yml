@@ -1,0 +1,25 @@
+services:
+  crm-service-notifications:
+    build:
+      context: ../..
+      dockerfile: services/service-notifications/Dockerfile
+      target: production
+    container_name: staging-crm-service-notifications
+    ports:
+      - "51061:50061"
+    env_file:
+      - ../../services/service-notifications/.env.staging
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50061, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

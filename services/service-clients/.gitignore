@@ -26,3 +26,6 @@ npm-debug.log*
 # Test
 /coverage
 /.nyc_output
+
+# Generated proto files
+proto/generated/

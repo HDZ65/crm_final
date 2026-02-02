@@ -1,0 +1,25 @@
+services:
+  crm-service-referentiel:
+    build:
+      context: ../..
+      dockerfile: services/service-referentiel/Dockerfile
+      target: production
+    container_name: staging-crm-service-referentiel
+    ports:
+      - "51065:50065"
+    env_file:
+      - ../../services/service-referentiel/.env.staging
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50065, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

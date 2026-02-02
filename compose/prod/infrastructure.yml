@@ -1,14 +1,7 @@
-# CRM Production - Infrastructure (Database, Networks, Volumes)
-# 
-# Skeleton for production environment infrastructure
-# To be configured with production-specific settings
-
-version: '3.8'
-
 services:
   postgres-main:
     image: postgres:16-alpine
-    container_name: crm-postgres-main-prod
+    container_name: prod-crm-postgres-main
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
@@ -31,6 +24,22 @@ services:
           memory: 2G
         reservations:
           memory: 512M
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: prod-crm-nats
+    command: "-js -m 8222"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+    restart: unless-stopped
 
 networks:
   crm-network:

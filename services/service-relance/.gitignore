@@ -32,3 +32,6 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+
+# Generated proto files
+proto/generated/

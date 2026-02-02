@@ -1,0 +1,25 @@
+services:
+  crm-service-clients:
+    build:
+      context: ../..
+      dockerfile: services/service-clients/Dockerfile
+      target: production
+    container_name: prod-crm-service-clients
+    ports:
+      - "50052:50052"
+    env_file:
+      - ../../services/service-clients/.env.production
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50052, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

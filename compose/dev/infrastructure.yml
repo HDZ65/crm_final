@@ -1,20 +1,42 @@
-# CRM Development - Infrastructure (Database, Networks, Volumes)
-# 
-# Contains shared infrastructure components for development environment
-# - PostgreSQL database
-# - NATS JetStream message broker
-# - Networks
-# - Volumes
-
-version: '3.8'
-
 services:
-  # ============================================
-  # DATABASE
-  # ============================================
+  consul:
+    image: hashicorp/consul:1.17
+    container_name: dev-crm-consul
+    command: agent -dev -client=0.0.0.0 -ui
+    ports:
+      - "8500:8500"
+    volumes:
+      - crm_consul_data:/consul/data
+    healthcheck:
+      test: ["CMD", "consul", "info"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - crm-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.4-alpine
+    container_name: dev-crm-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - crm_redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+    restart: unless-stopped
+
   postgres-main:
     image: postgres:16-alpine
-    container_name: crm-postgres-main
+    container_name: dev-crm-postgres-main
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
@@ -38,12 +60,9 @@ services:
         reservations:
           memory: 512M
 
-  # ============================================
-  # MESSAGE BROKER
-  # ============================================
   nats:
     image: nats:2.10-alpine
-    container_name: crm-nats
+    container_name: dev-crm-nats
     command: "-js -m 8222"
     ports:
       - "4222:4222"
@@ -57,12 +76,11 @@ services:
       - crm-network
     restart: unless-stopped
 
-# ============================================
-# NETWORKS & VOLUMES
-# ============================================
 networks:
   crm-network:
     driver: bridge
 
 volumes:
+  crm_consul_data:
+  crm_redis_data:
   postgres_main_data:

@@ -1,0 +1,27 @@
+services:
+  crm-service-contrats:
+    build:
+      context: ../..
+      dockerfile: services/service-contrats/Dockerfile
+      target: development
+    container_name: dev-crm-service-contrats
+    ports:
+      - "50055:50055"
+    env_file:
+      - ../../services/service-contrats/.env.development
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    volumes:
+      - ../../services/service-contrats/src:/app/services/service-contrats/src
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50055, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

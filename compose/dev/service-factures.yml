@@ -1,0 +1,27 @@
+services:
+  crm-service-factures:
+    build:
+      context: ../..
+      dockerfile: services/service-factures/Dockerfile
+      target: development
+    container_name: dev-crm-service-factures
+    ports:
+      - "50059:50059"
+    env_file:
+      - ../../services/service-factures/.env.development
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    volumes:
+      - ../../services/service-factures/src:/app/services/service-factures/src
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50059, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

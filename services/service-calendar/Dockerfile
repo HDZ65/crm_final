@@ -1,12 +1,4 @@
 # ==========================================
-# service-calendar Dockerfile
-# ==========================================
-# Generated from docker/Dockerfile.template
-# Build: docker build -f services/service-calendar/Dockerfile -t crm/service-calendar .
-# Run:   docker run -p 50068:50068 crm/service-calendar
-# ==========================================
-
-# ==========================================
 # Stage 1: Dependencies
 # ==========================================
 FROM node:20-alpine AS deps
@@ -29,13 +21,17 @@ COPY services/service-calendar/package.json ./services/service-calendar/
 # Install dependencies
 RUN npm ci
 
+# Copy proto source files and generate TypeScript
+COPY packages/proto/src ./packages/proto/src
+COPY packages/proto/buf.yaml packages/proto/buf.gen.yaml ./packages/proto/
+RUN cd packages/proto && npx buf generate
+
 # ==========================================
-# Stage 2: Development
+# Stage 2: Development (target: development)
 # ==========================================
 FROM deps AS development
 
 ENV NODE_ENV=development
-ENV PROTO_ROOT=./proto
 
 WORKDIR /app
 
@@ -75,11 +71,10 @@ RUN npm run build --workspace=@crm/grpc-utils && \
 RUN find services/service-calendar/dist -name "*.map" -type f -delete
 
 # ==========================================
-# Stage 4: Production
+# Stage 4: Production (target: production)
 # ==========================================
 FROM node:20-alpine AS production
 
-# Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
 
 RUN addgroup -g 1001 -S nodejs && \
@@ -109,14 +104,12 @@ COPY --from=builder --chown=nestjs:nodejs /app/services/service-calendar/package
 USER nestjs
 
 ENV NODE_ENV=production
-ENV GRPC_PORT=50068
 
 EXPOSE 50068
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('net').connect({port:50068,host:'0.0.0.0'}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "require('net').connect(50068, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
 
-# Use dumb-init as entrypoint for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 
 CMD ["node", "services/service-calendar/dist/src/main.js"]

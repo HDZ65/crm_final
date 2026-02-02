@@ -1,0 +1,9 @@
+# Generated files - regenerate with: npm run generate
+gen/
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+*.tsbuildinfo
+.turbo/

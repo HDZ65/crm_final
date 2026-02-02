@@ -1,0 +1,27 @@
+services:
+  crm-service-retry:
+    build:
+      context: ../..
+      dockerfile: services/service-retry/Dockerfile
+      target: development
+    container_name: dev-crm-service-retry
+    ports:
+      - "50070:50070"
+    env_file:
+      - ../../services/service-retry/.env.development
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    volumes:
+      - ../../services/service-retry/src:/app/services/service-retry/src
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50070, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

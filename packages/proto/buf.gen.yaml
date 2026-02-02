@@ -1,33 +1,33 @@
 version: v2
-
+managed:
+  enabled: true
 plugins:
-  # Backend (NestJS) - NestJS-compatible types with gRPC support for backend services
-  - remote: buf.build/community/stephenh-ts-proto
+  # TypeScript/NestJS generation (pour backend)
+  # Services copy files from gen/ts via their proto:generate scripts
+  - local: protoc-gen-ts_proto
     out: gen/ts
     opt:
       - nestJs=true
-      - snakeToCamel=true
       - addGrpcMetadata=true
+      - snakeToCamel=false
       - outputServices=grpc-js
       - esModuleInterop=true
-      - useOptionals=messages
-      - exportCommonSymbols=false
-      - unrecognizedEnum=false
-      - forceLong=number
+      - useOptionals=none
+      - outputClientImpl=false
+      - outputServicesImpl=false
+      - addNestjsRestParameter=true
 
-  # Frontend (without NestJS) - Pure TypeScript types for frontend consumption
-  - remote: buf.build/community/stephenh-ts-proto
+  # TypeScript/Frontend generation (pour Next.js - sans NestJS)
+  - local: protoc-gen-ts_proto
     out: gen/ts-frontend
     opt:
       - nestJs=false
-      - snakeToCamel=true
       - addGrpcMetadata=true
+      - snakeToCamel=true
       - outputServices=grpc-js
       - esModuleInterop=true
-      - useOptionals=messages
-      - exportCommonSymbols=false
-      - unrecognizedEnum=false
-      - forceLong=number
+      - useOptionals=none
+      - outputClientImpl=false
 
 inputs:
   - directory: src

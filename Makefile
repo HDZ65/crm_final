@@ -38,22 +38,28 @@ health-check: dev-health-check
 proto-generate:
 	@echo "=== Generating proto files with buf ==="
 	cd packages/proto && npm run generate
-	@echo "Proto files generated in packages/proto/gen/"
+	@echo "Proto files generated:"
+	@echo "  Backend (NestJS): packages/proto/gen/ts/"
+	@echo "  Frontend:         packages/proto/gen/ts-frontend/"
 
 proto-clean:
 	@echo "=== Cleaning generated proto files ==="
-	rm -rf packages/proto/gen/ts/*
-	rm -rf packages/proto/gen/ts-frontend/*
+	rm -rf packages/proto/gen/ts packages/proto/gen/ts-frontend
 	@echo "Proto files cleaned"
 
-proto-build: proto-generate
-	@echo "=== Proto files generated ==="
+proto-build: proto-clean proto-generate
+	@echo "=== Proto rebuild complete ==="
+
+proto-install:
+	@echo "=== Installing proto dependencies ==="
+	cd packages/proto && npm install
+	@echo "Proto dependencies installed"
 
 # ============================================================================
 # Build Commands
 # ============================================================================
 
-build-all: build-packages build-services
+build-all: proto-generate build-packages build-services
 	@echo "=== All builds completed ==="
 
 build-packages:
@@ -151,12 +157,16 @@ nats-status:
 
 docker-build-all:
 	@echo "=== Building all Docker images ==="
-	docker compose -f compose/dev/services.yml build
+	@for service in services/service-*; do \
+		name=$$(basename $$service); \
+		echo "Building $$name..."; \
+		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$name.yml build; \
+	done
 
 docker-build-service:
 	@echo "Usage: make docker-build-service SERVICE=service-clients"
 	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified"; exit 1; fi
-	docker compose -f compose/dev/services.yml build $(SERVICE)
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/$(SERVICE).yml build
 
 docker-prune:
 	@echo "=== Pruning Docker resources ==="
@@ -189,6 +199,7 @@ help:
 	@echo "  make dev-clean         Remove containers and volumes"
 	@echo ""
 	@echo "  Service commands:"
+	@echo "    make dev-frontend-up|down|logs|build"
 	@echo "    make dev-clients-up|down|logs|restart"
 	@echo "    make dev-users-up|down|logs"
 	@echo "    make dev-payments-up|down|logs"

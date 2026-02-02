@@ -39,11 +39,15 @@
     "gen/**/*.ts"
   ],
   "scripts": {
-    "clean": "rimraf gen",
-    "generate": "buf generate",
-    "build": "npm run clean && npm run generate",
+    "gen": "buf generate",
+    "gen:clean": "rm -rf gen/ts gen/ts-frontend",
+    "gen:all": "npm run gen:clean && npm run gen",
+    "gen:deps": "buf mod update",
+    "generate": "npm run gen",
+    "clean": "npm run gen:clean",
+    "build": "npm run gen:all",
     "lint": "buf lint",
-    "format": "buf format -w"
+    "breaking": "buf breaking --against '.git#branch=main'"
   },
   "keywords": ["crm", "proto", "grpc", "protobuf"],
   "author": "CRM Team",
@@ -52,7 +56,8 @@
     "@bufbuild/protobuf": "^2.0.0"
   },
   "devDependencies": {
-    "rimraf": "^6.1.2"
+    "rimraf": "^6.1.2",
+    "ts-proto": "^2.6.1"
   },
   "peerDependencies": {
     "@grpc/grpc-js": "^1.9.0",

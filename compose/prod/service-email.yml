@@ -1,0 +1,25 @@
+services:
+  crm-service-email:
+    build:
+      context: ../..
+      dockerfile: services/service-email/Dockerfile
+      target: production
+    container_name: prod-crm-service-email
+    ports:
+      - "50058:50058"
+    env_file:
+      - ../../services/service-email/.env.production
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50058, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

@@ -7,3 +7,6 @@ coverage/
 .vscode/
 *.swp
 *.swo
+
+# Generated proto files
+proto/generated/

@@ -1,0 +1,29 @@
+services:
+  crm-frontend:
+    build:
+      context: ../..
+      dockerfile: frontend/Dockerfile
+      target: production
+      args:
+        BUILD_ENV: production
+    container_name: prod-crm-frontend
+    ports:
+      - "3200:3200"
+    env_file:
+      - ../../frontend/.env.production
+    environment:
+      PORT: 3200
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3200/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

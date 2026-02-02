@@ -1,0 +1,25 @@
+services:
+  crm-service-dashboard:
+    build:
+      context: ../..
+      dockerfile: services/service-dashboard/Dockerfile
+      target: production
+    container_name: prod-crm-service-dashboard
+    ports:
+      - "50056:50056"
+    env_file:
+      - ../../services/service-dashboard/.env.production
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50056, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

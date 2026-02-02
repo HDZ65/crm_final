@@ -1,0 +1,25 @@
+services:
+  crm-service-commission:
+    build:
+      context: ../..
+      dockerfile: services/service-commission/Dockerfile
+      target: production
+    container_name: staging-crm-service-commission
+    ports:
+      - "51054:50054"
+    env_file:
+      - ../../services/service-commission/.env.staging
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50054, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

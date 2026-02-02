@@ -28,3 +28,6 @@ coverage/
 
 # Storage
 storage/temp/
+
+# Generated proto files
+proto/generated/

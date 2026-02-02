@@ -106,3 +106,8 @@ temp/
 .turbo
 .vercel
 .cache
+
+# ============================================
+# OBSOLETE DIRECTORIES (DO NOT USE)
+# ============================================
+backend/

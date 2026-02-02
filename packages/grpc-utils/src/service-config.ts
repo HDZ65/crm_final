@@ -126,12 +126,12 @@ export const SERVICE_REGISTRY: Record<string, ServiceConfig> = {
     defaultPort: 50068,
     serviceName: 'CalendarService',
   },
-  retry: {
-    package: 'retry',
-    protoFile: 'retry/am04_retry_service.proto',
-    defaultPort: 50070,
-    serviceName: 'RetryService',
-  },
+   retry: {
+     package: 'retry',
+     protoFile: 'retry/am04_retry_service.proto',
+     defaultPort: 50069,
+     serviceName: 'RetryService',
+   },
 } as const;
 
 export type ServiceName = keyof typeof SERVICE_REGISTRY;

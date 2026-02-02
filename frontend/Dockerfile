@@ -21,15 +21,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ .
 
-# Copy generated proto files:
-# @proto-grpc/* = gRPC clients WITHOUT NestJS (for lib/grpc server-side calls)
-# @proto-frontend/* = frontend types only (no gRPC, for client components)
+# Copy proto files from proto/gen/ts-grpc/ (gRPC clients for backend calls)
+# These are needed for service-to-service communication
 COPY proto/gen/ts-grpc/ ./proto/gen/ts-grpc/
-COPY proto/gen/ts-frontend/ ./proto/gen/ts-frontend/
 
-# Update tsconfig.json paths for Docker build context
-RUN sed -i 's|"../proto/gen/ts-grpc/\*"|"./proto/gen/ts-grpc/*"|g' tsconfig.json && \
-    sed -i 's|"../proto/gen/ts-frontend/\*"|"./proto/gen/ts-frontend/*"|g' tsconfig.json
+# Automate proto:copy - copy proto files to src/proto/ for build
+RUN mkdir -p src/proto && \
+    cp -r ./proto/gen/ts-grpc/* ./src/proto/
 
 ENV NEXT_TELEMETRY_DISABLED=1
 

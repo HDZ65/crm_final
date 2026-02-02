@@ -25,7 +25,11 @@
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
     "db:create": "ts-node src/scripts/create-database.ts",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "proto:generate": "mkdir -p proto/generated && cp -r ../../packages/proto/gen/ts/common ./proto/generated/ && cp -r ../../packages/proto/gen/ts/payments ./proto/generated/ && cp -r ../../packages/proto/gen/ts/events ./proto/generated/",
+    "proto:clean": "rm -rf proto/generated/*",
+    "prebuild": "npm run proto:clean && npm run proto:generate",
+    "prestart:dev": "npm run proto:generate"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
@@ -60,6 +64,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.10",
+    "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
     "eslint": "^9.39.2",
@@ -67,13 +72,13 @@
     "eslint-plugin-prettier": "^5.5.5",
     "jest": "^30.2.0",
     "prettier": "^3.8.1",
+    "rimraf": "^6.1.2",
     "source-map-support": "^0.5.21",
     "ts-jest": "^29.4.6",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.3",
-    "rimraf": "^6.1.2"
+    "typescript": "^5.9.3"
   },
   "jest": {
     "moduleFileExtensions": [

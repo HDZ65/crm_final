@@ -25,7 +25,11 @@
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
     "db:create": "ts-node src/scripts/create-database.ts",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "proto:generate": "mkdir -p proto/generated && cp -r ../../packages/proto/gen/ts/common ./proto/generated/ && cp -r ../../packages/proto/gen/ts/calendar ./proto/generated/",
+    "proto:clean": "rm -rf proto/generated/*",
+    "prebuild": "npm run proto:clean && npm run proto:generate",
+    "prestart:dev": "npm run proto:generate"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",

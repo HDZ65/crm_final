@@ -1,0 +1,29 @@
+services:
+  crm-service-identity:
+    build:
+      context: ../..
+      dockerfile: services/service-identity/Dockerfile
+      target: development
+    container_name: dev-crm-service-identity
+    ports:
+      - "50052:50051"
+    env_file:
+      - ../../services/service-identity/.env.development
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      identity_db:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    volumes:
+      - ../../services/service-identity/src:/app/services/service-identity/src
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50051, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

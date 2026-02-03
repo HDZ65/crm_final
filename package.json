@@ -59,8 +59,12 @@
   "license": "PROPRIETARY",
   "devDependencies": {
     "@bufbuild/buf": "^1.64.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/microservices": "^11.0.0",
     "dotenv": "^17.2.3",
     "pg": "^8.17.2",
+    "rxjs": "^7.0.0",
     "turbo": "^2.7.6"
   }
 }

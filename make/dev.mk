@@ -5,8 +5,8 @@
 # Port base: 50051-50070 (gRPC), 3000 (frontend), 5432 (postgres), 4222 (nats)
 # ============================================================================
 
-.PHONY: dev-infra-up dev-infra-down dev-up dev-down dev-restart dev-logs dev-ps \
-	dev-migrate-all dev-health-check dev-clean dev-shell
+.PHONY: dev-infra-up dev-infra-down dev-up dev-up-sequential dev-down dev-restart dev-logs dev-ps \
+	dev-migrate-all dev-health-check dev-clean dev-shell dev-build-sequential
 
 # Service list for batch operations
 DEV_SERVICES := service-activites service-calendar service-clients service-commerciaux \
@@ -48,6 +48,23 @@ dev-up: dev-infra-up
 	@echo "  Frontend:      http://localhost:3000"
 	@echo "  gRPC Services: localhost:50051-50070"
 
+# Sequential build for low-memory environments (WSL, limited RAM)
+dev-up-sequential: dev-infra-up
+	@echo "=== Building and starting services sequentially (low-memory mode) ==="
+	@for service in $(DEV_SERVICES); do \
+		echo "Building $$service..."; \
+		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml build --parallel 1 2>/dev/null || \
+		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml build; \
+		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml up -d; \
+	done
+	@echo "Building frontend..."
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/frontend.yml build
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/frontend.yml up -d
+	@echo ""
+	@echo "All services started (sequential mode)!"
+	@echo "  Frontend:      http://localhost:3000"
+	@echo "  gRPC Services: localhost:50051-50070"
+
 dev-down:
 	@echo "=== Stopping all dev services ==="
 	docker compose $(DEV_COMPOSE_FILES) down
@@ -66,6 +83,20 @@ dev-clean:
 	@echo "=== Cleaning dev environment ==="
 	docker compose $(DEV_COMPOSE_FILES) down -v --remove-orphans
 	@echo "Dev environment cleaned"
+
+# Build all images sequentially (for low-memory environments like WSL)
+dev-build-sequential:
+	@echo "=== Building all images sequentially (low-memory mode) ==="
+	@for service in $(DEV_SERVICES); do \
+		echo ""; \
+		echo ">>> Building $$service..."; \
+		DOCKER_BUILDKIT=1 docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml build; \
+	done
+	@echo ""
+	@echo ">>> Building frontend..."
+	DOCKER_BUILDKIT=1 docker compose -f compose/dev/infrastructure.yml -f compose/dev/frontend.yml build
+	@echo ""
+	@echo "=== All images built! Now run: make dev-up ==="
 
 # ============================================================================
 # Single Service Commands (Per-Service Compose Pattern)

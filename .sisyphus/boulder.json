@@ -1,10 +1,8 @@
 {
-  "active_plan": "/home/alex/dev/crm_final/.sisyphus/plans/bun-migration.md",
-  "started_at": "2026-02-03T09:22:27.264Z",
-  "completed_at": "2026-02-03T09:55:00.000Z",
-  "session_ids": ["ses_3dd5efa81ffeRROyRA43a6hVgU"],
-  "plan_name": "bun-migration",
-  "status": "completed",
-  "tasks_completed": 21,
-  "tasks_total": 21
+  "active_plan": "/home/alex/dev/crm_final/.sisyphus/plans/service-consolidation.md",
+  "started_at": "2026-02-03T12:19:26.333Z",
+  "session_ids": [
+    "ses_3dcb31b17ffegSlJ5DxgciotLG"
+  ],
+  "plan_name": "service-consolidation"
 }

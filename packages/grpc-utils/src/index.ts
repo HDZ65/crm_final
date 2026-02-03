@@ -65,8 +65,8 @@ export {
 // Health check utilities
 export {
 	HealthService,
-	HealthController,
 	ServingStatus,
 	type HealthCheckRequest,
 	type HealthCheckResponse,
 } from "./health/health.service";
+export { HealthController } from "./health/health.controller";

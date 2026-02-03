@@ -52,12 +52,12 @@ export class PaymentClientService implements OnModuleInit, OnModuleDestroy {
         params.clientId,
       );
 
-      if (existingMandate && existingMandate.status === 'active') {
-        this.logger.log(
-          `Active mandate already exists for client ${params.clientId}: ${existingMandate.mandateId}`,
-        );
-        return { mandateId: existingMandate.mandateId, redirectUrl: '' };
-      }
+       if (existingMandate && existingMandate.status === 'active') {
+         this.logger.log(
+           `Active mandate already exists for client ${params.clientId}: ${existingMandate.mandate_id}`,
+         );
+         return { mandateId: existingMandate.mandate_id, redirectUrl: '' };
+       }
 
       const successUrl = `${params.redirectBaseUrl}/contrats/${params.contratId}/mandate-callback`;
 
@@ -78,10 +78,10 @@ export class PaymentClientService implements OnModuleInit, OnModuleDestroy {
         `Mandate setup initiated for contract ${params.contratId}: ${response.id}`,
       );
 
-      return {
-        mandateId: response.id,
-        redirectUrl: response.redirectUrl || '',
-      };
+       return {
+         mandateId: response.mandate_id,
+         redirectUrl: response.redirect_url || '',
+       };
     } catch (error: any) {
       this.logger.error(`Failed to setup mandate: ${error.message}`);
       return null;
@@ -132,12 +132,12 @@ export class PaymentClientService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const response = await lastValueFrom(
-        from(this.callGetGoCardlessMandate({ societeId, clientId })).pipe(
-          timeout(5000),
-          catchError(() => of(null)),
-        ),
-      );
+       const response = await lastValueFrom(
+         from(this.callGetGoCardlessMandate({ societe_id: societeId, client_id: clientId })).pipe(
+           timeout(5000),
+           catchError(() => of(null)),
+         ),
+       );
 
       return response;
     } catch {

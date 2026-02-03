@@ -23,36 +23,36 @@ export class InvoiceCreatedHandler implements OnModuleInit {
     this.logger.log(`Subscribed to ${INVOICE_CREATED_SUBJECT}`);
   }
 
-  private async handleInvoiceCreated(event: InvoiceCreatedEvent): Promise<void> {
-    const exists = await this.processedEventsRepo.exists(event.eventId);
-    if (exists) {
-      this.logger.debug(`Event ${event.eventId} already processed, skipping`);
-      return;
-    }
+   private async handleInvoiceCreated(event: InvoiceCreatedEvent): Promise<void> {
+     const exists = await this.processedEventsRepo.exists(event.event_id);
+     if (exists) {
+       this.logger.debug(`Event ${event.event_id} already processed, skipping`);
+       return;
+     }
 
-    try {
-      let reminderDate: Date | null = null;
+     try {
+       let reminderDate: Date | null = null;
 
-      if (event.dateEcheance?.seconds) {
-        const dueDate = new Date(event.dateEcheance.seconds * 1000);
-        reminderDate = new Date(dueDate);
-        reminderDate.setDate(reminderDate.getDate() - REMINDER_DAYS_BEFORE_DUE);
-      }
+       if (event.date_echeance?.seconds) {
+         const dueDate = new Date(event.date_echeance.seconds * 1000);
+         reminderDate = new Date(dueDate);
+         reminderDate.setDate(reminderDate.getDate() - REMINDER_DAYS_BEFORE_DUE);
+       }
 
-      if (reminderDate && reminderDate > new Date()) {
-        this.logger.log(
-          `Scheduled payment reminder for invoice ${event.invoiceId} on ${reminderDate.toISOString().split('T')[0]} (J-${REMINDER_DAYS_BEFORE_DUE} before due date)`,
-        );
-      } else {
-        this.logger.log(
-          `Invoice ${event.invoiceId} created without valid due date, skipping reminder scheduling`,
-        );
-      }
+       if (reminderDate && reminderDate > new Date()) {
+         this.logger.log(
+           `Scheduled payment reminder for invoice ${event.invoice_id} on ${reminderDate.toISOString().split('T')[0]} (J-${REMINDER_DAYS_BEFORE_DUE} before due date)`,
+         );
+       } else {
+         this.logger.log(
+           `Invoice ${event.invoice_id} created without valid due date, skipping reminder scheduling`,
+         );
+       }
 
-      await this.processedEventsRepo.markProcessed(event.eventId, 'invoice.created');
-    } catch (error) {
-      this.logger.error(`Failed to process invoice.created event ${event.eventId}: ${error}`);
-      throw error;
-    }
-  }
+       await this.processedEventsRepo.markProcessed(event.event_id, 'invoice.created');
+     } catch (error) {
+       this.logger.error(`Failed to process invoice.created event ${event.event_id}: ${error}`);
+       throw error;
+     }
+   }
 }

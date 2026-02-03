@@ -27,33 +27,33 @@ export class InvoiceCreatedHandler implements OnModuleInit {
     this.logger.log(`Subscribed to ${INVOICE_CREATED_SUBJECT}`);
   }
 
-  private async handleInvoiceCreated(event: InvoiceCreatedEvent): Promise<void> {
-    const exists = await this.processedEventsRepo.exists(event.eventId);
-    if (exists) {
-      this.logger.debug(`Event ${event.eventId} already processed, skipping`);
-      return;
-    }
+   private async handleInvoiceCreated(event: InvoiceCreatedEvent): Promise<void> {
+     const exists = await this.processedEventsRepo.exists(event.event_id);
+     if (exists) {
+       this.logger.debug(`Event ${event.event_id} already processed, skipping`);
+       return;
+     }
 
-    try {
-      await this.notificationService.create({
-        organisationId: FINANCE_TEAM_ORG_ID,
-        utilisateurId: SYSTEM_USER_ID,
-        type: NotificationType.INFO,
-        titre: 'Nouvelle facture',
-        message: `Facture ${event.invoiceId} créée pour ${event.montant}EUR`,
-        metadata: {
-          invoiceId: event.invoiceId,
-          clientId: event.clientId,
-          montant: event.montant,
-        },
-        lienUrl: `/factures/${event.invoiceId}`,
-      });
+     try {
+       await this.notificationService.create({
+         organisationId: FINANCE_TEAM_ORG_ID,
+         utilisateurId: SYSTEM_USER_ID,
+         type: NotificationType.INFO,
+         titre: 'Nouvelle facture',
+         message: `Facture ${event.invoice_id} créée pour ${event.montant}EUR`,
+         metadata: {
+           invoiceId: event.invoice_id,
+           clientId: event.client_id,
+           montant: event.montant,
+         },
+         lienUrl: `/factures/${event.invoice_id}`,
+       });
 
-      this.logger.log(`Created notification for invoice ${event.invoiceId}`);
-      await this.processedEventsRepo.markProcessed(event.eventId, 'invoice.created');
-    } catch (error) {
-      this.logger.error(`Failed to process invoice.created event ${event.eventId}: ${error}`);
-      throw error;
-    }
-  }
+       this.logger.log(`Created notification for invoice ${event.invoice_id}`);
+       await this.processedEventsRepo.markProcessed(event.event_id, 'invoice.created');
+     } catch (error) {
+       this.logger.error(`Failed to process invoice.created event ${event.event_id}: ${error}`);
+       throw error;
+     }
+   }
 }

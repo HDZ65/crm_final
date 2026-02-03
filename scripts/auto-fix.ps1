@@ -1,7 +1,7 @@
 # auto-fix.ps1 - Lance le build et appelle Claude Code si erreur
 param(
     [int]$MaxAttempts = 3,
-    [string]$BuildCommand = "npm run build"
+    [string]$BuildCommand = "bun run build"
 )
 
 $ProjectPath = "C:\Users\kille\Desktop\app\crm_final"

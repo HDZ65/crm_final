@@ -2,7 +2,7 @@
 /**
  * CRM Final - Database Migration Manager
  * 
- * Usage: node scripts/db-setup.js [command]
+ * Usage: bun scripts/db-setup.js [command]
  * 
  * Commands:
  *   migrate   - Run pending migrations on all services (default)
@@ -10,7 +10,7 @@
  *   status    - Show migration status for all services
  *   help      - Show this help message
  * 
- * Note: Use 'npm run db:create' to create databases first
+ * Note: Use 'bun run db:create' to create databases first
  */
 
 const { execSync } = require('child_process');
@@ -93,7 +93,7 @@ async function runMigrations() {
     }
 
     process.stdout.write(`  ◉  ${service}: `);
-    const result = runCommand('npm run migration:run --silent', servicePath, true);
+    const result = runCommand('bun run migration:run --silent', servicePath, true);
     
     if (result.success) {
       log('done', 'green');
@@ -119,7 +119,7 @@ async function generateMigrations() {
     process.stdout.write(`  ◉  ${service}: `);
     
     const result = runCommand(
-      'npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/datasource.ts migration:generate src/migrations/Migration',
+      'bunx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/datasource.ts migration:generate src/migrations/Migration',
       servicePath,
       true
     );
@@ -149,7 +149,7 @@ async function showStatus() {
       continue;
     }
     
-    runCommand('npm run migration:show --silent', servicePath, false);
+    runCommand('bun run migration:show --silent', servicePath, false);
   }
 }
 
@@ -166,13 +166,13 @@ Commands:
   help        Show this help message
 
 Examples:
-  npm run db:migrate          # Run all pending migrations
-  npm run db:generate         # Generate migrations for changed entities
-  npm run db:status           # Check migration status
+  bun run db:migrate          # Run all pending migrations
+  bun run db:generate         # Generate migrations for changed entities
+  bun run db:status           # Check migration status
 
 Prerequisites:
-  1. PostgreSQL must be running: npm run docker:db
-  2. Databases must exist: npm run db:create
+  1. PostgreSQL must be running: bun run docker:db
+  2. Databases must exist: bun run db:create
 `);
 }
 

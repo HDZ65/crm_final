@@ -1,30 +1,34 @@
 # ==========================================
 # Stage 1: Dependencies
 # ==========================================
-FROM node:20-alpine AS deps
+FROM oven/bun:1-alpine AS deps
 
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
 # Copy monorepo configuration
-COPY package.json package-lock.json turbo.json ./
+COPY package.json bun.lock turbo.json ./
 
 # Copy shared packages
 COPY packages/proto/package.json ./packages/proto/
 COPY packages/grpc-utils/package.json ./packages/grpc-utils/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/nats-utils/package.json ./packages/nats-utils/
+COPY frontend/package.json ./frontend/
+COPY services ./services
+RUN find services -mindepth 2 -maxdepth 2 ! -name package.json -exec rm -rf {} +
 
 # Copy service package.json
 COPY services/service-payments/package.json ./services/service-payments/
 
 # Install dependencies
-RUN npm ci
+RUN bun install --frozen-lockfile
 
 # Copy proto source files and generate TypeScript
 COPY packages/proto/src ./packages/proto/src
 COPY packages/proto/buf.yaml packages/proto/buf.gen.yaml ./packages/proto/
-RUN cd packages/proto && npx buf generate
+RUN cd packages/proto && bunx buf generate
 
 # ==========================================
 # Stage 2: Development (target: development)
@@ -45,7 +49,7 @@ COPY services/service-payments/ ./services/service-payments/
 
 WORKDIR /app/services/service-payments
 
-CMD ["npm", "run", "start:dev"]
+CMD ["bun", "run", "start:dev"]
 
 # ==========================================
 # Stage 3: Builder
@@ -63,9 +67,9 @@ COPY packages/shared/ ./packages/shared/
 COPY services/service-payments/ ./services/service-payments/
 
 # Build packages and service
-RUN npm run build --workspace=@crm/grpc-utils && \
-    npm run build --workspace=@crm/shared && \
-    npm run build --workspace=@crm/service-payments
+RUN bun run build --workspace=@crm/grpc-utils && \
+    bun run build --workspace=@crm/shared && \
+    bun run build --workspace=@crm/service-payments
 
 # Remove source maps to reduce image size
 RUN find services/service-payments/dist -name "*.map" -type f -delete
@@ -73,7 +77,7 @@ RUN find services/service-payments/dist -name "*.map" -type f -delete
 # ==========================================
 # Stage 4: Production (target: production)
 # ==========================================
-FROM node:20-alpine AS production
+FROM oven/bun:1-alpine AS production
 
 RUN apk add --no-cache dumb-init
 
@@ -82,11 +86,22 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copy node_modules from deps stage
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY package.json bun.lock turbo.json ./
 
-# Copy service node_modules (for non-hoisted dependencies)
-COPY --from=builder --chown=nestjs:nodejs /app/services/service-payments/node_modules ./services/service-payments/node_modules
+# Copy shared packages
+COPY packages/proto/package.json ./packages/proto/
+COPY packages/grpc-utils/package.json ./packages/grpc-utils/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/nats-utils/package.json ./packages/nats-utils/
+COPY frontend/package.json ./frontend/
+COPY services ./services
+RUN find services -mindepth 2 -maxdepth 2 ! -name package.json -exec rm -rf {} +
+
+# Copy service package.json
+COPY services/service-payments/package.json ./services/service-payments/
+
+# Install production dependencies
+RUN bun install --production --frozen-lockfile
 
 # Copy compiled service
 COPY --from=builder --chown=nestjs:nodejs /app/services/service-payments/dist ./services/service-payments/dist
@@ -98,9 +113,6 @@ COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/package.json 
 COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/package.json ./packages/shared/
 
-# Copy service package.json
-COPY --from=builder --chown=nestjs:nodejs /app/services/service-payments/package.json ./services/service-payments/
-
 USER nestjs
 
 ENV NODE_ENV=production
@@ -108,8 +120,8 @@ ENV NODE_ENV=production
 EXPOSE 50063
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('net').connect(50063, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
+  CMD bun -e "require('net').connect(50063, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
 
 ENTRYPOINT ["dumb-init", "--"]
 
-CMD ["node", "services/service-payments/dist/src/main.js"]
+CMD ["bun", "services/service-payments/dist/src/main.js"]

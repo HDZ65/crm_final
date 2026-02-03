@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table-basic"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { AuditLog } from "@proto/commission/commission"
-import { AuditAction, AuditScope } from "@/lib/proto-enums"
+import { AuditAction, AuditScope } from "@/lib/proto/enums"
 
 interface AuditLogViewerProps {
   logs: AuditLog[]

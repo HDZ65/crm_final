@@ -15,26 +15,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
         run: |
-          npm install
+          bun install
 
       - name: Buf lint
         run: |
-          npm run proto:lint
+          bun run proto:lint
 
       - name: Buf format
         run: |
-          npm run proto:format
+          bun run proto:format
 
       - name: Generate proto code
         run: |
-          npm run proto:generate
+          bun run proto:generate
 
       - name: Upload generated code as artifact
         uses: actions/upload-artifact@v4

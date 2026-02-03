@@ -233,5 +233,5 @@ for (const serviceName of services) {
 
 console.log('Migration complete!');
 console.log('Next steps:');
-console.log('1. Run: npm install');
-console.log('2. Run: npx turbo run build');
+console.log('1. Run: bun install');
+console.log('2. Run: bunx turbo run build');

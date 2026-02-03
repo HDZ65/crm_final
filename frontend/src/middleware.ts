@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth.server";
+import { auth } from "@/lib/auth/auth.server";
 import {
   PUBLIC_ROUTES,
   COOKIE_NAMES,
   AUTH_URLS,
   AUTH_ERRORS,
-} from "@/lib/auth/constants";
+} from "@/lib/auth/auth.config";
 
 export const config = {
   matcher: [

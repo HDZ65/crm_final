@@ -1,4 +1,4 @@
-import { getActiveOrgId } from "@/lib/server-data";
+import { getActiveOrgId } from "@/lib/server/data";
 import { getCalendarView } from "@/actions/calendar-admin";
 import { listHolidayZones } from "@/actions/calendar-holidays";
 import { getSystemConfig } from "@/actions/calendar-config";

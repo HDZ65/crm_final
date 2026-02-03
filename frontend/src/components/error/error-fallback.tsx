@@ -3,7 +3,7 @@
 import { AlertCircle, RefreshCw, Home, ArrowLeft, Bug } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { getSuggestedAction } from "@/lib/error-messages"
+import { getSuggestedAction } from "@/lib/errors/messages"
 
 // ============================================
 // Types

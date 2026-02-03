@@ -90,7 +90,7 @@ prod-migrate-all:
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
 	@for service in service-clients service-users service-payments service-contrats service-factures; do \
 		echo "Migrating $$service..."; \
-		docker compose -f compose/prod/infrastructure.yml -f compose/prod/$$service.yml exec crm-$$service npm run migration:run 2>/dev/null || true; \
+		docker compose -f compose/prod/infrastructure.yml -f compose/prod/$$service.yml exec crm-$$service bun run migration:run 2>/dev/null || true; \
 	done
 	@echo "Migrations complete"
 

@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
 import { useAppStore } from "@/stores/app-store"
-import { translateBackendError, extractValidationErrors } from "@/lib/error-messages"
+import { translateBackendError, extractValidationErrors } from "@/lib/errors/messages"
 
 // ============================================
 // Types

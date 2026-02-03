@@ -146,4 +146,4 @@ for (const serviceName of services) {
   console.log('');
 }
 
-console.log('Done! Now rebuild services: npm run build --workspaces');
+console.log('Done! Now rebuild services: bun run build --workspaces');

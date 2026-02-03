@@ -49,13 +49,19 @@
     "lint": "buf lint",
     "breaking": "buf breaking --against '.git#branch=main'"
   },
-  "keywords": ["crm", "proto", "grpc", "protobuf"],
+  "keywords": [
+    "crm",
+    "proto",
+    "grpc",
+    "protobuf"
+  ],
   "author": "CRM Team",
   "license": "PROPRIETARY",
   "dependencies": {
     "@bufbuild/protobuf": "^2.0.0"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.64.0",
     "rimraf": "^6.1.2",
     "ts-proto": "^2.6.1"
   },

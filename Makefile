@@ -37,7 +37,7 @@ health-check: dev-health-check
 
 proto-generate:
 	@echo "=== Generating proto files with buf ==="
-	cd packages/proto && npm run generate
+	cd packages/proto && bun run generate
 	@echo "Proto files generated:"
 	@echo "  Backend (NestJS): packages/proto/gen/ts/"
 	@echo "  Frontend:         packages/proto/gen/ts-frontend/"
@@ -52,7 +52,7 @@ proto-build: proto-clean proto-generate
 
 proto-install:
 	@echo "=== Installing proto dependencies ==="
-	cd packages/proto && npm install
+	cd packages/proto && bun install
 	@echo "Proto dependencies installed"
 
 # ============================================================================
@@ -64,16 +64,16 @@ build-all: proto-generate build-packages build-services
 
 build-packages:
 	@echo "=== Building shared packages ==="
-	cd packages/grpc-utils && npm run build
-	cd packages/shared && npm run build
-	cd packages/nats-utils && npm run build
+	cd packages/grpc-utils && bun run build
+	cd packages/shared && bun run build
+	cd packages/nats-utils && bun run build
 	@echo "Packages built"
 
 build-services:
 	@echo "=== Building all 19 services ==="
 	@for service in services/service-*; do \
 		echo "Building $$service..."; \
-		cd $$service && npm run build && cd ../..; \
+		cd $$service && bun run build && cd ../..; \
 	done
 	@echo "All services built"
 
@@ -86,21 +86,21 @@ install: install-packages install-services
 
 install-packages:
 	@echo "=== Installing package dependencies ==="
-	cd packages/proto && npm install
-	cd packages/grpc-utils && npm install
-	cd packages/shared && npm install
-	cd packages/nats-utils && npm install
+	cd packages/proto && bun install
+	cd packages/grpc-utils && bun install
+	cd packages/shared && bun install
+	cd packages/nats-utils && bun install
 
 install-services:
 	@echo "=== Installing service dependencies ==="
 	@for service in services/service-*; do \
 		echo "Installing $$service..."; \
-		cd $$service && npm install && cd ../..; \
+		cd $$service && bun install && cd ../..; \
 	done
 
 install-frontend:
 	@echo "=== Installing frontend dependencies ==="
-	cd frontend && npm install
+	cd frontend && bun install
 
 install-all: install install-frontend
 	@echo "=== All dependencies installed ==="
@@ -111,22 +111,22 @@ install-all: install install-frontend
 
 test:
 	@echo "=== Running tests ==="
-	cd tests/e2e && npm run test:all
+	cd tests/e2e && bun run test:all
 
 test-auth:
-	cd tests/e2e && npm run test:auth
+	cd tests/e2e && bun run test:auth
 
 test-events:
-	cd tests/e2e && npm run test:events
+	cd tests/e2e && bun run test:events
 
 lint:
 	@echo "=== Running linters ==="
-	cd frontend && npm run lint
+	cd frontend && bun run lint
 	@echo "Linting complete"
 
 typecheck:
 	@echo "=== Running TypeScript checks ==="
-	cd frontend && npm run typecheck 2>/dev/null || npx tsc --noEmit
+	cd frontend && bun run typecheck 2>/dev/null || bunx tsc --noEmit
 	@echo "Typecheck complete"
 
 # ============================================================================

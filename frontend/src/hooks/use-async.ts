@@ -11,7 +11,7 @@
 import { useState, useCallback, useRef } from "react"
 import { toast } from "sonner"
 import { useAppStore, createErrorFromException } from "@/stores/app-store"
-import { translateBackendError } from "@/lib/error-messages"
+import { translateBackendError } from "@/lib/errors/messages"
 
 // ============================================
 // Types

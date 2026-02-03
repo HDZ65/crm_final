@@ -14,40 +14,40 @@ help: ## Affiche cette aide
 
 install: ## Installe les dépendances
 	@echo "$(BLUE)Installation des dépendances...$(NC)"
-	npm install
+	bun install
 
 build: ## Compile le projet TypeScript
 	@echo "$(BLUE)Compilation du projet...$(NC)"
-	npm run build
+	bun run build
 	@echo "$(GREEN)✓ Build terminé$(NC)"
 
 start: ## Démarre le service en production
 	@echo "$(BLUE)Démarrage du service...$(NC)"
-	npm run start:prod
+	bun run start:prod
 
 dev: ## Démarre le service en mode développement
 	@echo "$(BLUE)Démarrage en mode développement...$(NC)"
-	npm run start:dev
+	bun run start:dev
 
 test: ## Lance les tests unitaires
 	@echo "$(BLUE)Exécution des tests...$(NC)"
-	npm run test
+	bun run test
 
 test-e2e: ## Lance les tests end-to-end
 	@echo "$(BLUE)Exécution des tests e2e...$(NC)"
-	npm run test:e2e
+	bun run test:e2e
 
 test-cov: ## Lance les tests avec couverture
 	@echo "$(BLUE)Exécution des tests avec couverture...$(NC)"
-	npm run test:cov
+	bun run test:cov
 
 lint: ## Vérifie le code avec ESLint
 	@echo "$(BLUE)Vérification du code...$(NC)"
-	npm run lint
+	bun run lint
 
 format: ## Formate le code avec Prettier
 	@echo "$(BLUE)Formatage du code...$(NC)"
-	npx prettier --write "src/**/*.ts" "test/**/*.ts"
+	bunx prettier --write "src/**/*.ts" "test/**/*.ts"
 
 clean: ## Nettoie les fichiers générés
 	@echo "$(BLUE)Nettoyage...$(NC)"
@@ -151,6 +151,6 @@ status: ## Affiche le statut des services
 version: ## Affiche les versions
 	@echo "$(BLUE)Versions:$(NC)"
 	@echo "  Node.js:     $$(node --version)"
-	@echo "  npm:         $$(npm --version)"
-	@echo "  TypeScript:  $$(npx tsc --version)"
+	@echo "  bun:         $$(bun --version)"
+	@echo "  TypeScript:  $$(bunx tsc --version)"
 	@echo "  Docker:      $$(docker --version 2>/dev/null || echo 'Non installé')"

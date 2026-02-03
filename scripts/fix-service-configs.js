@@ -110,4 +110,4 @@ for (const serviceName of services) {
   console.log('');
 }
 
-console.log('Done! Now run: npm run build --workspaces');
+console.log('Done! Now run: bun run build --workspaces');

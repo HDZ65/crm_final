@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Script to generate service-specific Dockerfiles from the template
- * Usage: npx ts-node scripts/generate-dockerfiles.ts
- * or:    node scripts/generate-dockerfiles.js (after compilation)
+ * Usage: bunx ts-node scripts/generate-dockerfiles.ts
+ * or:    bun scripts/generate-dockerfiles.js (after compilation)
  */
 
 import fs from 'fs';
@@ -49,14 +49,14 @@ function generateDockerfile(serviceName: string, port: number): string {
 # ==========================================
 # Stage 1: Dependencies
 # ==========================================
-FROM node:20-alpine AS deps
+FROM oven/bun:1-alpine AS deps
 
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
 # Copy monorepo configuration
-COPY package.json package-lock.json turbo.json ./
+COPY package.json bun.lock turbo.json ./
 
 # Copy shared packages
 COPY packages/proto/package.json ./packages/proto/
@@ -67,7 +67,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY services/${serviceName}/package.json ./services/${serviceName}/
 
 # Install dependencies
-RUN npm ci
+RUN bun install --frozen-lockfile
 
 # ==========================================
 # Stage 2: Development
@@ -89,7 +89,7 @@ COPY services/${serviceName}/ ./services/${serviceName}/
 
 WORKDIR /app/services/${serviceName}
 
-CMD ["npm", "run", "start:dev"]
+CMD ["bun", "run", "start:dev"]
 
 # ==========================================
 # Stage 3: Builder
@@ -107,9 +107,9 @@ COPY packages/shared/ ./packages/shared/
 COPY services/${serviceName}/ ./services/${serviceName}/
 
 # Build packages and service
-RUN npm run build --workspace=@crm/grpc-utils && \\
-    npm run build --workspace=@crm/shared && \\
-    npm run build --workspace=@crm/${serviceName}
+RUN bun run build --workspace=@crm/grpc-utils && \\
+    bun run build --workspace=@crm/shared && \\
+    bun run build --workspace=@crm/${serviceName}
 
 # Remove source maps to reduce image size
 RUN find services/${serviceName}/dist -name "*.map" -type f -delete
@@ -117,7 +117,7 @@ RUN find services/${serviceName}/dist -name "*.map" -type f -delete
 # ==========================================
 # Stage 4: Production
 # ==========================================
-FROM node:20-alpine AS production
+FROM oven/bun:1-alpine AS production
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init

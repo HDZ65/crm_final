@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table-basic"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { RecurrenceCommission } from "@proto/commission/commission"
-import { StatutRecurrence } from "@/lib/proto-enums"
+import { StatutRecurrence } from "@/lib/proto/enums"
 
 interface RecurrencesListProps {
   recurrences: RecurrenceCommission[]

@@ -1,38 +1,38 @@
 # ============================================================================
-# Frontend Dockerfile - Multi-stage build for Next.js with npm
+# Frontend Dockerfile - Multi-stage build for Next.js with bun
 # ============================================================================
 
 # ---------------------------------------------------------
 # Stage 1: Proto Generation
 # ---------------------------------------------------------
-FROM node:20-alpine AS proto
+FROM oven/bun:1-alpine AS proto
 
 WORKDIR /app
 
-COPY packages/proto/package.json packages/proto/package-lock.json* ./packages/proto/
-RUN cd packages/proto && npm ci
+COPY packages/proto/package.json packages/proto/bun.lock* ./packages/proto/
+RUN cd packages/proto && bun install --frozen-lockfile
 
 COPY packages/proto/src ./packages/proto/src
 COPY packages/proto/buf.yaml packages/proto/buf.gen.yaml ./packages/proto/
-RUN cd packages/proto && npx buf generate
+RUN cd packages/proto && bunx buf generate
 
 # ---------------------------------------------------------
 # Stage 2: Dependencies - Install all dependencies (cache friendly)
 # ---------------------------------------------------------
-FROM node:20-alpine AS deps
+FROM oven/bun:1-alpine AS deps
 
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json* ./
+COPY frontend/package.json frontend/bun.lock* ./
 
-RUN npm ci --legacy-peer-deps
+RUN bun install --frozen-lockfile
 
 # ---------------------------------------------------------
 # Stage 2: Development - Hot-reload mode (target: development)
 # ---------------------------------------------------------
-FROM node:20-alpine AS development
+FROM oven/bun:1-alpine AS development
 
 WORKDIR /app
 
@@ -54,12 +54,12 @@ ENV HOSTNAME="0.0.0.0"
 EXPOSE 3000
 
 # Copy proto files at startup and run dev server
-CMD sh -c "mkdir -p src/proto && cp -r /packages/proto/gen/ts-frontend/* src/proto/ 2>/dev/null || true && npm run dev"
+CMD sh -c "mkdir -p src/proto && cp -r /packages/proto/gen/ts-frontend/* src/proto/ 2>/dev/null || true && bun --bun run dev"
 
 # ---------------------------------------------------------
 # Stage 3: Builder - Build the application
 # ---------------------------------------------------------
-FROM node:20-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
@@ -96,12 +96,12 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build Next.js application
-RUN npm run build
+RUN bun --bun run build
 
 # ---------------------------------------------------------
 # Stage 4: Production - Runtime image (target: production)
 # ---------------------------------------------------------
-FROM node:20-alpine AS production
+FROM oven/bun:1-alpine AS production
 
 WORKDIR /app
 
@@ -129,6 +129,6 @@ USER nextjs
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+  CMD bun -e "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-CMD ["node", "server.js"]
+CMD ["bun", "run", "server.js"]

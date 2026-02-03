@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Script pour generer les Dockerfiles de tous les services
- * Usage: node scripts/generate-dockerfiles.js
+ * Usage: bun scripts/generate-dockerfiles.js
  */
 
 const fs = require('fs');
@@ -40,14 +40,14 @@ function generateDockerfile(serviceName, port) {
 # ==========================================
 # Stage 1: Build
 # ==========================================
-FROM node:20-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
 # Copier les fichiers package du monorepo
-COPY package.json package-lock.json turbo.json ./
+COPY package.json bun.lock turbo.json ./
 
 # Copier les packages partages
 COPY packages/proto/package.json ./packages/proto/
@@ -58,7 +58,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY services/${serviceName}/package.json ./services/${serviceName}/
 
 # Installer les dependances
-RUN npm ci --workspace=@crm/proto --workspace=@crm/grpc-utils --workspace=@crm/shared --workspace=@crm/${serviceName}
+RUN bun install --frozen-lockfile
 
 # Copier le code source des packages
 COPY packages/proto/ ./packages/proto/
@@ -69,17 +69,17 @@ COPY packages/shared/ ./packages/shared/
 COPY services/${serviceName}/ ./services/${serviceName}/
 
 # Build des packages puis du service
-RUN npm run build --workspace=@crm/grpc-utils && \\
-    npm run build --workspace=@crm/shared && \\
-    npm run build --workspace=@crm/${serviceName}
+RUN bun run build --workspace=@crm/grpc-utils && \\
+    bun run build --workspace=@crm/shared && \\
+    bun run build --workspace=@crm/${serviceName}
 
 # Pruner les devDependencies
-RUN npm prune --production --workspace=@crm/${serviceName}
+RUN bun prune --production --workspace=@crm/${serviceName}
 
 # ==========================================
 # Stage 2: Production
 # ==========================================
-FROM node:20-alpine AS production
+FROM oven/bun:1-alpine AS production
 
 RUN addgroup -g 1001 -S nodejs && \\
     adduser -S nestjs -u 1001

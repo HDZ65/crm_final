@@ -1,4 +1,4 @@
-import { getServerAuth } from "@/lib/auth.server";
+import { getServerAuth } from "@/lib/auth/auth.server";
 
 // Use require to bypass ESM bundling issues
 // eslint-disable-next-line @typescript-eslint/no-require-imports

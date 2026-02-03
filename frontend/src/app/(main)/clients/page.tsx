@@ -1,6 +1,6 @@
 import { getClientsByOrganisation } from "@/actions/clients"
-import { getActiveOrgId } from "@/lib/server-data"
-import { getServerUserProfile } from "@/lib/auth.server"
+import { getActiveOrgId } from "@/lib/server/data"
+import { getServerUserProfile } from "@/lib/auth/auth.server"
 import { ClientsPageClient } from "./clients-page-client"
 import { STATUTS_CLIENT } from "@/constants/statuts-client"
 

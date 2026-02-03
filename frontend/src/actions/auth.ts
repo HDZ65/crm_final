@@ -6,15 +6,15 @@ import {
   type LoginFormData,
   signupSchema,
 } from "@/lib/schemas/auth";
-import { parseFormData } from "@/lib/form-validation";
+import { parseFormData } from "@/lib/forms/validation";
 import { users, membresCompte, comptes, roles } from "@/lib/grpc";
-import type { FormState } from "@/lib/form-state";
+import type { FormState } from "@/lib/forms/state";
 import type {
   UserOrganisation,
   UserRole,
   Utilisateur,
 } from "@proto/organisations/users";
-import { COOKIE_NAMES, TOKEN_CONFIG } from "@/lib/auth";
+import { COOKIE_NAMES, TOKEN_CONFIG } from "@/lib/auth/auth.config";
 
 // =============================================================================
 // Types

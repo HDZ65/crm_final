@@ -165,7 +165,7 @@ dev-migrate-all:
 	@echo "=== Running all migrations ==="
 	@for service in service-clients service-users service-payments service-contrats service-factures; do \
 		echo "Migrating $$service..."; \
-		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml exec crm-$$service npm run migration:run 2>/dev/null || true; \
+		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml exec crm-$$service bun run migration:run 2>/dev/null || true; \
 	done
 	@echo "Migrations complete"
 
@@ -191,9 +191,9 @@ dev-health-check:
 
 dev-local-frontend:
 	@echo "Starting frontend locally..."
-	cd frontend && npm run dev
+	cd frontend && bun run dev
 
 dev-local-service:
 	@echo "Usage: make dev-local-service SERVICE=service-clients"
 	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified"; exit 1; fi
-	cd services/$(SERVICE) && npm run start:dev
+	cd services/$(SERVICE) && bun run start:dev

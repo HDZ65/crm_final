@@ -8,13 +8,11 @@
     "frontend",
     "services/*"
   ],
-  "packageManager": "npm@10.9.2",
+  "packageManager": "bun@1.2.0",
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
-    "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn')!==-1)throw new Error('Use npm, not yarn')\"",
     "build": "turbo run build",
     "build:packages": "turbo run build --filter=@crm/proto --filter=@crm/shared --filter=@crm/grpc-utils",
     "build:services": "turbo run build --filter=./services/*",

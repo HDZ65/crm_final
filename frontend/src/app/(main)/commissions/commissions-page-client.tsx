@@ -72,7 +72,7 @@ import type { Commission, Reprise, Bordereau, AuditLog, RecurrenceCommission, Re
 import type { DateRange } from "react-day-picker"
 import type { Apporteur } from "@proto/commerciaux/commerciaux"
 // Use local enums to avoid importing gRPC code in browser
-import { AuditAction, AuditScope, StatutRecurrence, StatutReport } from "@/lib/proto-enums"
+import { AuditAction, AuditScope, StatutRecurrence, StatutReport } from "@/lib/proto/enums"
 
 // Simple type for statuts from server action
 interface SimpleStatut {

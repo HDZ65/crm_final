@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
-import { AUTH_URLS } from "@/lib/auth/index";
+import { AUTH_URLS } from "@/lib/auth/auth.config";
 
 // =============================================================================
 // Types

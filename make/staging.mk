@@ -86,7 +86,7 @@ staging-migrate-all:
 	@echo "=== Running staging migrations ==="
 	@for service in service-clients service-users service-payments service-contrats service-factures; do \
 		echo "Migrating $$service..."; \
-		docker compose -f compose/staging/infrastructure.yml -f compose/staging/$$service.yml exec crm-$$service npm run migration:run 2>/dev/null || true; \
+		docker compose -f compose/staging/infrastructure.yml -f compose/staging/$$service.yml exec crm-$$service bun run migration:run 2>/dev/null || true; \
 	done
 	@echo "Migrations complete"
 
@@ -105,7 +105,7 @@ staging-health-check:
 
 staging-frontend-up:
 	@echo "Starting staging frontend on port 3100..."
-	cd frontend && PORT=3100 npm run start
+	cd frontend && PORT=3100 bun run start
 
 funnel-staging-on:
 	@echo "Exposing staging via Tailscale funnel on :8100..."

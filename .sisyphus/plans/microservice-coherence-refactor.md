@@ -460,7 +460,7 @@ Phase 4: Validation
 
 ### Phase 3: Harmonisation des conventions
 
-- [ ] 10. Harmoniser les scripts et versions
+- [x] 10. Harmoniser les scripts et versions
 
   **What to do**:
   - Ajouter script `test` manquant dans service-commercial
@@ -492,7 +492,7 @@ Phase 4: Validation
 
 ### Phase 4: Validation finale
 
-- [ ] 11. Validation complète et documentation
+- [x] 11. Validation complète et documentation
 
   **What to do**:
   - Exécuter `bun run build` sur tous les services

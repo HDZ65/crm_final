@@ -25,10 +25,34 @@ This project implements a **6-service microservices architecture** for CRM (Cust
 ## Architecture
 
 - **Framework**: NestJS with gRPC microservices
+- **Design Pattern**: Domain-Driven Design (DDD) with strict layer separation
 - **Event Bus**: NATS for async communication
 - **Database**: PostgreSQL (4 instances)
 - **Protocol Buffers**: Contract-driven architecture
 - **Docker**: Containerized deployment
+
+### DDD Architecture
+
+All 5 backend services follow **Domain-Driven Design** principles with 4 architectural layers:
+
+```
+src/
+├── domain/              # Business entities & repository interfaces
+├── application/         # DTOs & service port interfaces  
+├── infrastructure/      # TypeORM repositories, NATS handlers
+└── interfaces/          # gRPC controllers
+```
+
+**Bounded Contexts** (12 total across 5 services):
+- **service-core**: users, organisations, clients, documents (26 entities)
+- **service-commercial**: commercial, contrats, products (24 entities)
+- **service-finance**: factures, payments, calendar (41 entities)
+- **service-engagement**: engagement (6 entities)
+- **service-logistics**: logistics (4 entities)
+
+**Total**: 101 entities migrated to DDD architecture
+
+See [DDD Architecture Guide](docs/DDD_ARCHITECTURE.md) for detailed documentation.
 
 ## Consolidation Summary
 
@@ -61,6 +85,7 @@ make dev-ps
 
 ## Documentation
 
+- [DDD Architecture Guide](docs/DDD_ARCHITECTURE.md) - Domain-Driven Design implementation
 - [Contract-Driven Architecture](docs/CONTRACT_DRIVEN_ARCHITECTURE.md)
 - [Migration Guide](docs/MIGRATION_GUIDE.md)
 - [Improvements Summary](docs/IMPROVEMENTS_SUMMARY.md)

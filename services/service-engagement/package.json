@@ -23,11 +23,7 @@
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
     "db:create": "ts-node src/scripts/create-database.ts",
-    "clean": "rimraf dist",
-    "proto:generate": "node -e \"const fs=require('fs'),p=require('path');['common','email','notifications','dashboard','events','activites'].forEach(d=>{const s=p.join('../../packages/proto/gen/ts',d),t=p.join('proto/generated',d);fs.cpSync(s,t,{recursive:true})})\"",
-    "proto:clean": "rimraf proto/generated && mkdir -p proto/generated",
-    "prebuild": "npm run proto:clean && npm run proto:generate",
-    "prestart:dev": "npm run proto:generate"
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",

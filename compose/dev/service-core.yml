@@ -1,0 +1,29 @@
+services:
+  crm-service-core:
+    build:
+      context: ../..
+      dockerfile: services/service-core/Dockerfile
+      target: development
+    container_name: dev-crm-service-core
+    ports:
+      - "50052:50052"
+      - "50056:50056"
+      - "50057:50057"
+    env_file:
+      - ../../services/service-core/.env.development
+    depends_on:
+      identity_db:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    volumes:
+      - ../../services/service-core/src:/app/services/service-core/src
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50052, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

@@ -60,5 +60,8 @@
     "collectCoverageFrom": ["**/*.(t|j)s", "!**/*.spec.ts", "!**/index.ts"],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "dependencies": {
+    "jose": "^6.1.3"
   }
 }

@@ -8,12 +8,8 @@
 .PHONY: dev-infra-up dev-infra-down dev-up dev-up-sequential dev-down dev-restart dev-logs dev-ps \
 	dev-migrate-all dev-health-check dev-clean dev-shell dev-build-sequential
 
-# Service list for batch operations
-DEV_SERVICES := service-activites service-calendar service-clients service-commerciaux \
-	service-commission service-contrats service-dashboard service-documents \
-	service-email service-factures service-logistics service-notifications \
-	service-organisations service-payments service-products service-referentiel \
-	service-relance service-retry service-users
+# Service list for batch operations (5 consolidated services)
+DEV_SERVICES := service-core service-commercial service-finance service-engagement service-logistics
 
 # Build compose command with all service files (including frontend)
 DEV_COMPOSE_FILES := -f compose/dev/infrastructure.yml $(foreach svc,$(DEV_SERVICES),-f compose/dev/$(svc).yml) -f compose/dev/frontend.yml
@@ -42,26 +38,19 @@ dev-infra-logs:
 
 dev-up: dev-infra-up
 	@echo "=== Starting all dev services ==="
-	docker compose $(DEV_COMPOSE_FILES) up -d
+	docker compose $(DEV_COMPOSE_FILES) up -d --remove-orphans
 	@echo ""
 	@echo "All services started! Access:"
 	@echo "  Frontend:      http://localhost:3000"
 	@echo "  gRPC Services: localhost:50051-50070"
 
-# Sequential build for low-memory environments (WSL, limited RAM)
-dev-up-sequential: dev-infra-up
-	@echo "=== Building and starting services sequentially (low-memory mode) ==="
-	@for service in $(DEV_SERVICES); do \
-		echo "Building $$service..."; \
-		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml build --parallel 1 2>/dev/null || \
-		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml build; \
-		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml up -d; \
-	done
-	@echo "Building frontend..."
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/frontend.yml build
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/frontend.yml up -d
+# Sequential build for low-memory environments (Windows-compatible, no bash loops)
+# Builds each service one at a time, then starts all together to avoid orphan issues
+dev-up-sequential: dev-infra-up dev-build-sequential
+	@echo "=== Starting all services ==="
+	docker compose $(DEV_COMPOSE_FILES) up -d
 	@echo ""
-	@echo "All services started (sequential mode)!"
+	@echo "All services started (sequential build mode)!"
 	@echo "  Frontend:      http://localhost:3000"
 	@echo "  gRPC Services: localhost:50051-50070"
 
@@ -84,17 +73,21 @@ dev-clean:
 	docker compose $(DEV_COMPOSE_FILES) down -v --remove-orphans
 	@echo "Dev environment cleaned"
 
-# Build all images sequentially (for low-memory environments like WSL)
+# Build all images sequentially (Windows-compatible, no bash loops)
 dev-build-sequential:
 	@echo "=== Building all images sequentially (low-memory mode) ==="
-	@for service in $(DEV_SERVICES); do \
-		echo ""; \
-		echo ">>> Building $$service..."; \
-		DOCKER_BUILDKIT=1 docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml build; \
-	done
-	@echo ""
+	@echo ">>> Building service-core..."
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-core.yml build
+	@echo ">>> Building service-commercial..."
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-commercial.yml build
+	@echo ">>> Building service-finance..."
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-finance.yml build
+	@echo ">>> Building service-engagement..."
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-engagement.yml build
+	@echo ">>> Building service-logistics..."
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-logistics.yml build
 	@echo ">>> Building frontend..."
-	DOCKER_BUILDKIT=1 docker compose -f compose/dev/infrastructure.yml -f compose/dev/frontend.yml build
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/frontend.yml build
 	@echo ""
 	@echo "=== All images built! Now run: make dev-up ==="
 
@@ -104,71 +97,94 @@ dev-build-sequential:
 
 # Usage: make dev-service-up SERVICE=service-clients
 dev-service-up:
-	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified. Usage: make dev-service-up SERVICE=service-clients"; exit 1; fi
+ifndef SERVICE
+	@echo "Error: SERVICE not specified. Usage: make dev-service-up SERVICE=service-clients"
+	@exit 1
+endif
 	@echo "=== Starting $(SERVICE) ==="
 	docker compose -f compose/dev/infrastructure.yml -f compose/dev/$(SERVICE).yml up -d
 
 dev-service-down:
-	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified"; exit 1; fi
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/$(SERVICE).yml stop $(subst service-,crm-service-,$(SERVICE))
+ifndef SERVICE
+	@echo "Error: SERVICE not specified"
+	@exit 1
+endif
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/$(SERVICE).yml stop crm-$(SERVICE)
 
 dev-service-logs:
-	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified"; exit 1; fi
+ifndef SERVICE
+	@echo "Error: SERVICE not specified"
+	@exit 1
+endif
 	docker compose -f compose/dev/infrastructure.yml -f compose/dev/$(SERVICE).yml logs -f
 
 dev-service-restart:
-	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified"; exit 1; fi
+ifndef SERVICE
+	@echo "Error: SERVICE not specified"
+	@exit 1
+endif
 	docker compose -f compose/dev/infrastructure.yml -f compose/dev/$(SERVICE).yml restart
 
 dev-service-build:
-	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified"; exit 1; fi
+ifndef SERVICE
+	@echo "Error: SERVICE not specified"
+	@exit 1
+endif
 	docker compose -f compose/dev/infrastructure.yml -f compose/dev/$(SERVICE).yml build
 
 # ============================================================================
 # Quick Service Shortcuts
 # ============================================================================
 
-# Service: clients (50052)
-dev-clients-up:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-clients.yml up -d
-dev-clients-down:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-clients.yml stop crm-service-clients
-dev-clients-logs:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-clients.yml logs -f
-dev-clients-restart:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-clients.yml restart
+# Service: core (50052, 50056, 50057 - identity, clients, documents)
+dev-core-up:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-core.yml up -d
+dev-core-down:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-core.yml stop crm-service-core
+dev-core-logs:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-core.yml logs -f
+dev-core-restart:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-core.yml restart
 
-# Service: users (50067)
-dev-users-up:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-users.yml up -d
-dev-users-down:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-users.yml stop crm-service-users
-dev-users-logs:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-users.yml logs -f
+# Service: commercial (50053)
+dev-commercial-up:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-commercial.yml up -d
+dev-commercial-down:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-commercial.yml stop crm-service-commercial
+dev-commercial-logs:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-commercial.yml logs -f
+dev-commercial-restart:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-commercial.yml restart
 
-# Service: payments (50063)
-dev-payments-up:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-payments.yml up -d
-dev-payments-down:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-payments.yml stop crm-service-payments
-dev-payments-logs:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-payments.yml logs -f
+# Service: finance (50059, 50063, 50068 - factures, payments, calendar)
+dev-finance-up:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-finance.yml up -d
+dev-finance-down:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-finance.yml stop crm-service-finance
+dev-finance-logs:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-finance.yml logs -f
+dev-finance-restart:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-finance.yml restart
 
-# Service: contrats (50055)
-dev-contrats-up:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-contrats.yml up -d
-dev-contrats-down:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-contrats.yml stop crm-service-contrats
-dev-contrats-logs:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-contrats.yml logs -f
+# Service: engagement (50061)
+dev-engagement-up:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-engagement.yml up -d
+dev-engagement-down:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-engagement.yml stop crm-service-engagement
+dev-engagement-logs:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-engagement.yml logs -f
+dev-engagement-restart:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-engagement.yml restart
 
-# Service: factures (50059)
-dev-factures-up:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-factures.yml up -d
-dev-factures-down:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-factures.yml stop crm-service-factures
-dev-factures-logs:
-	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-factures.yml logs -f
+# Service: logistics (50060)
+dev-logistics-up:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-logistics.yml up -d
+dev-logistics-down:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-logistics.yml stop crm-service-logistics
+dev-logistics-logs:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-logistics.yml logs -f
+dev-logistics-restart:
+	docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-logistics.yml restart
 
 # Frontend (3000)
 dev-frontend-up:
@@ -188,16 +204,22 @@ dev-db-reset:
 	@echo "=== Resetting dev database ==="
 	docker compose -f compose/dev/infrastructure.yml stop postgres-main
 	docker compose -f compose/dev/infrastructure.yml rm -f postgres-main
-	docker volume rm crm_final_postgres_main_data 2>/dev/null || true
+	-docker volume rm crm_final_postgres_main_data
 	docker compose -f compose/dev/infrastructure.yml up -d postgres-main
 	@echo "Database reset complete"
 
 dev-migrate-all:
 	@echo "=== Running all migrations ==="
-	@for service in service-clients service-users service-payments service-contrats service-factures; do \
-		echo "Migrating $$service..."; \
-		docker compose -f compose/dev/infrastructure.yml -f compose/dev/$$service.yml exec crm-$$service bun run migration:run 2>/dev/null || true; \
-	done
+	@echo "Migrating service-core..."
+	-docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-core.yml exec crm-service-core bun run migration:run
+	@echo "Migrating service-commercial..."
+	-docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-commercial.yml exec crm-service-commercial bun run migration:run
+	@echo "Migrating service-finance..."
+	-docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-finance.yml exec crm-service-finance bun run migration:run
+	@echo "Migrating service-engagement..."
+	-docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-engagement.yml exec crm-service-engagement bun run migration:run
+	@echo "Migrating service-logistics..."
+	-docker compose -f compose/dev/infrastructure.yml -f compose/dev/service-logistics.yml exec crm-service-logistics bun run migration:run
 	@echo "Migrations complete"
 
 # ============================================================================
@@ -208,13 +230,13 @@ dev-health-check:
 	@echo "=== Checking dev services health ==="
 	@echo ""
 	@echo "Infrastructure:"
-	@docker compose -f compose/dev/infrastructure.yml ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || echo "  Not running"
+	-docker compose -f compose/dev/infrastructure.yml ps --format "table {{.Name}}\t{{.Status}}"
 	@echo ""
 	@echo "Services:"
-	@docker compose $(DEV_COMPOSE_FILES) ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || echo "  Not running"
+	-docker compose $(DEV_COMPOSE_FILES) ps --format "table {{.Name}}\t{{.Status}}"
 	@echo ""
 	@echo "NATS Status:"
-	@curl -s http://localhost:8222/varz 2>/dev/null | jq -r '.server_name // "Not available"' || echo "  NATS not reachable"
+	-curl -s http://localhost:8222/varz
 
 # ============================================================================
 # Local Development (without Docker)
@@ -225,6 +247,9 @@ dev-local-frontend:
 	cd frontend && bun run dev
 
 dev-local-service:
+ifndef SERVICE
 	@echo "Usage: make dev-local-service SERVICE=service-clients"
-	@if [ -z "$(SERVICE)" ]; then echo "Error: SERVICE not specified"; exit 1; fi
+	@echo "Error: SERVICE not specified"
+	@exit 1
+endif
 	cd services/$(SERVICE) && bun run start:dev

@@ -17,7 +17,7 @@ services:
     volumes:
       - ../../frontend/src:/app/src
       - ../../frontend/public:/app/public
-      - ../../frontend/node_modules:/app/node_modules
+      # Note: node_modules intentionally NOT mounted - container uses its own Linux deps
       - ../../frontend/.next:/app/.next
       - ../../frontend/next.config.ts:/app/next.config.ts
       - ../../frontend/tsconfig.json:/app/tsconfig.json
@@ -33,3 +33,10 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1G
+

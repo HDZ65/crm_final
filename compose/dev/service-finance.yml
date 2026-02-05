@@ -1,0 +1,29 @@
+services:
+  crm-service-finance:
+    build:
+      context: ../..
+      dockerfile: services/service-finance/Dockerfile
+      target: development
+    container_name: dev-crm-service-finance
+    ports:
+      - "50059:50059"
+      - "50063:50063"
+      - "50068:50068"
+    env_file:
+      - ../../services/service-finance/.env.development
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    volumes:
+      - ../../services/service-finance/src:/app/services/service-finance/src
+    networks:
+      - crm-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50059, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

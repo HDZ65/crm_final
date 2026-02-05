@@ -213,7 +213,7 @@ Wave 3 (Finalization):
 
 ### Phase 3: Consolidation service-finance
 
-- [ ] 3. Fusionner service-factures + service-payments + service-calendar → service-finance
+- [x] 3. Fusionner service-factures + service-payments + service-calendar → service-finance
 
   **What to do**:
   - Créer service-finance avec les modules des 3 services
@@ -274,7 +274,7 @@ Wave 3 (Finalization):
 
 ### Phase 4: Consolidation service-commercial
 
-- [ ] 4. Fusionner service-commercial + service-contrats + service-products → service-commercial
+- [x] 4. Fusionner service-commercial + service-contrats + service-products → service-commercial
 
   **What to do**:
   - Étendre service-commercial avec les modules contrats et products
@@ -334,7 +334,7 @@ Wave 3 (Finalization):
 
 ### Phase 5: Consolidation service-core
 
-- [ ] 5. Fusionner service-identity + service-clients + service-documents → service-core
+- [x] 5. Fusionner service-identity + service-clients + service-documents → service-core
 
   **What to do**:
   - Créer service-core avec les modules des 3 services
@@ -394,7 +394,7 @@ Wave 3 (Finalization):
 
 ### Phase 6: Infrastructure et Docker
 
-- [ ] 6. Mettre à jour Docker Compose pour les 6 services
+- [x] 6. Mettre à jour Docker Compose pour les 6 services
 
   **What to do**:
   - Créer/mettre à jour compose/dev/service-core.yml
@@ -448,7 +448,7 @@ Wave 3 (Finalization):
 
 ### Phase 7: Cleanup et Tests
 
-- [ ] 7. Supprimer les anciens services et tester l'ensemble
+- [x] 7. Supprimer les anciens services et tester l'ensemble
 
   **What to do**:
   - Supprimer les dossiers des anciens services fusionnés
@@ -502,7 +502,7 @@ Wave 3 (Finalization):
 
 ---
 
-- [ ] 8. Mettre à jour la documentation
+- [x] 8. Mettre à jour la documentation
 
   **What to do**:
   - Mettre à jour README.md avec la nouvelle architecture

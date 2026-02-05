@@ -4,6 +4,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { AuthInterceptor } from '@crm/grpc-utils';
+import { NatsModule } from '@crm/nats-utils';
+
+// ============================================================================
+// DDD BOUNDED CONTEXT MODULES
+// ============================================================================
+import { UsersModule } from './users.module';
+import { OrganisationsModule } from './organisations.module';
+import { ClientsModule } from './clients.module';
+import { DocumentsModule } from './documents.module';
 
 @Module({
   imports: [
@@ -32,6 +41,13 @@ import { AuthInterceptor } from '@crm/grpc-utils';
         },
       }),
     }),
+    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
+
+    // DDD Bounded Context Modules
+    UsersModule,
+    OrganisationsModule,
+    ClientsModule,
+    DocumentsModule,
   ],
   controllers: [],
   providers: [

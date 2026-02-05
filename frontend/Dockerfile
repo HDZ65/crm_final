@@ -3,21 +3,7 @@
 # ============================================================================
 
 # ---------------------------------------------------------
-# Stage 1: Proto Generation
-# ---------------------------------------------------------
-FROM oven/bun:1-alpine AS proto
-
-WORKDIR /app
-
-COPY packages/proto/package.json packages/proto/bun.lock* ./packages/proto/
-RUN cd packages/proto && bun install --frozen-lockfile
-
-COPY packages/proto/src ./packages/proto/src
-COPY packages/proto/buf.yaml packages/proto/buf.gen.yaml ./packages/proto/
-RUN cd packages/proto && bunx buf generate
-
-# ---------------------------------------------------------
-# Stage 2: Dependencies - Install all dependencies (cache friendly)
+# Stage 1: Dependencies - Install all dependencies (cache friendly)
 # ---------------------------------------------------------
 FROM oven/bun:1-alpine AS deps
 
@@ -39,8 +25,8 @@ WORKDIR /app
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy generated proto files from proto stage
-COPY --from=proto /app/packages/proto/gen /packages/proto/gen
+# Copy pre-generated proto files
+COPY packages/proto/gen/ts-frontend /packages/proto/gen/ts-frontend
 
 # Copy package.json for scripts
 COPY frontend/package.json ./
@@ -66,8 +52,8 @@ WORKDIR /app
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy generated proto files from proto stage
-COPY --from=proto /app/packages/proto/gen /packages/proto/gen
+# Copy pre-generated proto files
+COPY packages/proto/gen/ts-frontend /packages/proto/gen/ts-frontend
 
 # Build argument for environment (development, staging, production)
 ARG BUILD_ENV=production

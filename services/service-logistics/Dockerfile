@@ -7,28 +7,17 @@ RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# Copy monorepo configuration
-COPY package.json bun.lock turbo.json ./
+# Copy shared packages (needed for file: references)
+COPY packages/proto/ ./packages/proto/
+COPY packages/grpc-utils/ ./packages/grpc-utils/
+COPY packages/shared/ ./packages/shared/
 
-# Copy shared packages
-COPY packages/proto/package.json ./packages/proto/
-COPY packages/grpc-utils/package.json ./packages/grpc-utils/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/nats-utils/package.json ./packages/nats-utils/
-COPY frontend/package.json ./frontend/
-COPY services ./services
-RUN find services -mindepth 2 -maxdepth 2 ! -name package.json -exec rm -rf {} +
+# Copy service
+COPY services/service-logistics/ ./services/service-logistics/
 
-# Copy service package.json
-COPY services/service-logistics/package.json ./services/service-logistics/
-
-# Install dependencies
-RUN bun install --frozen-lockfile
-
-# Copy proto source files and generate TypeScript
-COPY packages/proto/src ./packages/proto/src
-COPY packages/proto/buf.yaml packages/proto/buf.gen.yaml ./packages/proto/
-RUN cd packages/proto && bunx buf generate
+# Install dependencies from service directory
+WORKDIR /app/services/service-logistics
+RUN bun install
 
 # ==========================================
 # Stage 2: Development (target: development)
@@ -37,18 +26,6 @@ FROM deps AS development
 
 ENV NODE_ENV=development
 
-WORKDIR /app
-
-# Copy source code of shared packages
-COPY packages/proto/ ./packages/proto/
-COPY packages/grpc-utils/ ./packages/grpc-utils/
-COPY packages/shared/ ./packages/shared/
-
-# Copy service source code
-COPY services/service-logistics/ ./services/service-logistics/
-
-WORKDIR /app/services/service-logistics
-
 CMD ["bun", "run", "start:dev"]
 
 # ==========================================
@@ -56,23 +33,9 @@ CMD ["bun", "run", "start:dev"]
 # ==========================================
 FROM deps AS builder
 
-WORKDIR /app
-
-# Copy source code of shared packages
-COPY packages/proto/ ./packages/proto/
-COPY packages/grpc-utils/ ./packages/grpc-utils/
-COPY packages/shared/ ./packages/shared/
-
-# Copy service source code
-COPY services/service-logistics/ ./services/service-logistics/
-
-# Build packages and service
-RUN bun run build --workspace=@crm/grpc-utils && \
-    bun run build --workspace=@crm/shared && \
-    bun run build --workspace=@crm/service-logistics
-
-# Remove source maps to reduce image size
-RUN find services/service-logistics/dist -name "*.map" -type f -delete
+RUN bun run --cwd /app/packages/grpc-utils build && \
+    bun run --cwd /app/packages/shared build && \
+    bun run build
 
 # ==========================================
 # Stage 4: Production (target: production)
@@ -86,42 +49,19 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-COPY package.json bun.lock turbo.json ./
-
-# Copy shared packages
-COPY packages/proto/package.json ./packages/proto/
-COPY packages/grpc-utils/package.json ./packages/grpc-utils/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/nats-utils/package.json ./packages/nats-utils/
-COPY frontend/package.json ./frontend/
-COPY services ./services
-RUN find services -mindepth 2 -maxdepth 2 ! -name package.json -exec rm -rf {} +
-
-# Copy service package.json
-COPY services/service-logistics/package.json ./services/service-logistics/
-
-# Install production dependencies
-RUN bun install --production --frozen-lockfile
-
-# Copy compiled service
-COPY --from=builder --chown=nestjs:nodejs /app/services/service-logistics/dist ./services/service-logistics/dist
-
-# Copy compiled shared packages
-COPY --from=builder --chown=nestjs:nodejs /app/packages/proto ./packages/proto
-COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/dist ./packages/grpc-utils/dist
-COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/package.json ./packages/grpc-utils/
-COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/package.json ./packages/shared/
+COPY --from=builder --chown=nestjs:nodejs /app/services/service-logistics/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/services/service-logistics/package.json ./
+COPY --from=builder --chown=nestjs:nodejs /app/services/service-logistics/node_modules ./node_modules
 
 USER nestjs
 
 ENV NODE_ENV=production
 
-EXPOSE 50060
+EXPOSE 50051
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD bun -e "require('net').connect(50060, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
+  CMD bun -e "require('net').connect(50051, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
 
 ENTRYPOINT ["dumb-init", "--"]
 
-CMD ["bun", "services/service-logistics/dist/src/main.js"]
+CMD ["bun", "dist/src/main.js"]

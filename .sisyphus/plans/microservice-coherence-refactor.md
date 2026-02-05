@@ -410,7 +410,7 @@ Phase 4: Validation
 
 ---
 
-- [ ] 8. Restructurer service-engagement en DDD
+- [x] 8. Restructurer service-engagement en DDD
 
   **What to do**:
   - Appliquer le même pattern que service-core

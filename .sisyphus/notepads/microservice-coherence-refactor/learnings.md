@@ -232,3 +232,55 @@ type PieceJointe = PieceJointeEntity;
 - 3 bounded context modules (factures.module.ts, payments.module.ts, calendar.module.ts)
 - CLAUDE.md documentation
 
+
+## Service-Engagement DDD Refactoring (2026-02-05)
+
+### Completed
+- Migrated service-engagement from modules/ to DDD layers (domain, application, infrastructure, interfaces)
+- Created 1 bounded context: engagement (6 entities)
+- Build compiles successfully: `cd services/service-engagement && bun run build`
+
+### Bounded Context Breakdown
+
+**Engagement (6 entities)**:
+- NotificationEntity - User notifications with read/unread status
+- MailboxEntity - Email mailbox configuration (encrypted credentials)
+- ActiviteEntity - Activity records linked to clients/contracts
+- TacheEntity - Tasks with due dates and completion status
+- TypeActiviteEntity - Activity type referential
+- EvenementSuiviEntity - Event tracking/follow-up records
+
+### Key Learnings
+
+1. **Smaller Service**: service-engagement has only 6 entities (vs 42 in service-finance, 26 in service-core, 24 in service-commercial) - smallest service
+
+2. **Single Bounded Context**: Unlike other services with 3-4 bounded contexts, engagement is simple enough for a single context
+
+3. **Snake_case for Proto Types**: Controllers must use snake_case for proto response types (e.g., `notification_id` not `notificationId`) to match proto definitions
+
+4. **Dashboard Modules Removed**: Old dashboard modules queried external databases (not engagement entities) - removed during refactoring
+
+5. **Special Infrastructure**: 
+   - WebSocket gateway for real-time notifications
+   - EncryptionService for mailbox credential security
+
+### Files Created
+- 6 domain entities in engagement bounded context
+- 6 repository interfaces (INotificationRepository, IMailboxRepository, etc.)
+- 6 DTOs (one per entity)
+- 6 service port interfaces
+- 6 infrastructure services
+- 6 gRPC controllers
+- 1 bounded context module (engagement.module.ts)
+- 1 WebSocket gateway (notification.gateway.ts)
+- 1 common service (encryption.service.ts)
+- 1 NATS handler (client-created.handler.ts)
+- CLAUDE.md documentation
+
+### Pattern Consistency
+- Same DDD structure as service-core, service-commercial, service-finance
+- Repository interfaces in domain/engagement/repositories/
+- Service ports in application/engagement/ports/ with Symbol exports
+- Services in infrastructure/persistence/typeorm/repositories/engagement/
+- Controllers in interfaces/grpc/controllers/engagement/
+

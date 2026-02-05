@@ -7,46 +7,11 @@ import { AuthInterceptor } from '@crm/grpc-utils';
 import { NatsModule } from '@crm/nats-utils';
 
 // ============================================================================
-// FACTURES MODULES (from service-factures)
+// DDD BOUNDED CONTEXT MODULES
 // ============================================================================
-import { FactureModule } from './modules/facture/facture.module';
-import { LigneFactureModule } from './modules/ligne-facture/ligne-facture.module';
-import { StatutFactureModule } from './modules/statut-facture/statut-facture.module';
-import { EmissionFactureModule } from './modules/emission-facture/emission-facture.module';
-import { FactureSettingsModule } from './modules/facture-settings/facture-settings.module';
-import { GenerationModule } from './modules/generation/generation.module';
-// PDF Generation and Compliance modules don't have module.ts - just services
-// InvoicesModule is separate from FactureModule
-
-// ============================================================================
-// PAYMENTS MODULES (from service-payments)
-// ============================================================================
-import { StripeModule } from './modules/stripe/stripe.module';
-import { PaypalModule } from './modules/paypal/paypal.module';
-import { GoCardlessModule } from './modules/gocardless/gocardless.module';
-import { SlimpayModule } from './modules/slimpay/slimpay.module';
-import { MultiSafepayModule } from './modules/multisafepay/multisafepay.module';
-import { EmerchantpayModule } from './modules/emerchantpay/emerchantpay.module';
-import { SchedulesModule } from './modules/schedules/schedules.module';
-import { PortalModule } from './modules/portal/portal.module';
-import { CalendarModule } from './modules/calendar/calendar.module'; // gRPC client to calendar
-import { RetryModule } from './modules/retry/retry.module'; // gRPC client to retry
-import { PspAccountsModule } from './modules/psp-accounts/psp-accounts.module';
-import { PaymentEmissionModule } from './modules/payment-emission/payment-emission.module';
-import { EventsModule } from './modules/events/events.module'; // NATS event handlers
-import { PaymentAuditModule } from './modules/payment-audit/audit.module';
-
-// ============================================================================
-// CALENDAR MODULES (from service-calendar)
-// ============================================================================
-import { EngineModule } from './modules/engine/engine.module';
-import { ConfigurationModule } from './modules/configuration/configuration.module';
-import { HolidaysModule } from './modules/holidays/holidays.module';
-import { CsvImportModule } from './modules/csv-import/csv-import.module';
-import { CalendarAuditModule } from './modules/calendar-audit/audit.module';
-
-// Portal Controller (HTTP endpoints)
-import { PortalController } from './modules/portal/portal.controller';
+import { FacturesModule } from './factures.module';
+import { PaymentsModule } from './payments.module';
+import { CalendarModule } from './calendar.module';
 
 @Module({
   imports: [
@@ -55,7 +20,7 @@ import { PortalController } from './modules/portal/portal.controller';
     // ========================================================================
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env.local', '.env'],
     }),
 
     TypeOrmModule.forRootAsync({
@@ -69,13 +34,17 @@ import { PortalController } from './modules/portal/portal.controller';
         password: configService.get('DB_PASSWORD', 'postgres'),
         database: configService.get('DB_DATABASE', 'finance_db'),
         namingStrategy: new SnakeNamingStrategy(),
-        autoLoadEntities: true, // Auto-discovers entities from TypeOrmModule.forFeature()
+        autoLoadEntities: true,
         synchronize: false,
         migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get('NODE_ENV') === 'development',
+        ssl:
+          configService.get<string>('DB_SSL') === 'true'
+            ? { rejectUnauthorized: configService.get<string>('NODE_ENV') === 'production' }
+            : false,
         extra: {
-          max: 20, // Increased pool for consolidated service
+          max: 20,
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 2000,
         },
@@ -85,48 +54,14 @@ import { PortalController } from './modules/portal/portal.controller';
     NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
 
     // ========================================================================
-    // FACTURES MODULES
+    // DDD BOUNDED CONTEXT MODULES
     // ========================================================================
-    StatutFactureModule,
-    EmissionFactureModule,
-    LigneFactureModule,
-    FactureModule,
-    FactureSettingsModule,
-    GenerationModule,
-
-    // ========================================================================
-    // PAYMENTS MODULES (PSP integrations)
-    // ========================================================================
-    StripeModule,
-    PaypalModule,
-    GoCardlessModule,
-    SlimpayModule,
-    MultiSafepayModule,
-    EmerchantpayModule,
-
-    // ========================================================================
-    // PAYMENTS MODULES (Core functionality)
-    // ========================================================================
-    SchedulesModule,
-    PortalModule,
-    CalendarModule, // gRPC client for calendar service (internal call)
-    RetryModule, // gRPC client for retry service (internal call)
-    PspAccountsModule,
-    PaymentEmissionModule,
-    EventsModule,
-    PaymentAuditModule, // Global audit module for payments
-
-    // ========================================================================
-    // CALENDAR MODULES
-    // ========================================================================
-    EngineModule,
-    ConfigurationModule,
-    HolidaysModule,
-    CsvImportModule,
-    CalendarAuditModule,
+    FacturesModule,
+    PaymentsModule,
+    CalendarModule,
   ],
 
-  controllers: [PortalController],
+  controllers: [],
 
   providers: [
     {

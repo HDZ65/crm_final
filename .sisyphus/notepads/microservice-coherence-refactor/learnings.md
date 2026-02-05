@@ -182,3 +182,53 @@ type PieceJointe = PieceJointeEntity;
 - Controllers in interfaces/grpc/controllers/{context}/
 - Bounded context modules at src/{context}.module.ts
 
+
+## Service-Finance DDD Refactoring (2026-02-05)
+
+### Completed
+- Migrated service-finance from modules/ to DDD layers (domain, application, infrastructure, interfaces)
+- Created 3 bounded contexts: factures (10 entities), payments (21 entities), calendar (11 entities)
+- Build compiles successfully: `cd services/service-finance && bun run build`
+
+### Bounded Context Breakdown
+
+**Factures (10 entities)**:
+- Core: FactureEntity, LigneFactureEntity, StatutFactureEntity, EmissionFactureEntity, FactureSettingsEntity
+- Invoice: InvoiceEntity, InvoiceItemEntity
+- Relance: RegleRelanceEntity, HistoriqueRelanceEntity
+
+**Payments (21 entities)**:
+- Core: ScheduleEntity, PaymentIntentEntity, PaymentEventEntity
+- Portal: PortalSessionEntity, PortalSessionAuditEntity
+- PSP Accounts (7): Stripe, PayPal, GoCardless, SlimPay, MultiSafePay, EmerchantPay + GoCardlessMandate
+- Retry (7): RetryPolicyEntity, RetryScheduleEntity, RetryJobEntity, RetryAttemptEntity, ReminderEntity, ReminderPolicyEntity, RetryAuditLogEntity
+- Audit: PaymentAuditLogEntity, PspEventInboxEntity
+
+**Calendar (11 entities)**:
+- Configuration (5): SystemDebitConfiguration, CutoffConfiguration, CompanyDebitConfiguration, ClientDebitConfiguration, ContractDebitConfiguration
+- Holidays: HolidayEntity, HolidayZoneEntity
+- Planning: PlannedDebitEntity, VolumeForecastEntity, VolumeThresholdEntity
+- Audit: CalendarAuditLogEntity
+
+### Key Learnings
+
+1. **Large Entity Count**: service-finance has 42 entities (vs 26 in service-core, 24 in service-commercial) - largest service so far
+
+2. **Complex PSP Integration**: Payments context has 7 different PSP account entities - each PSP (Stripe, PayPal, GoCardless, etc.) has its own account entity
+
+3. **Retry Mechanism**: Payments has a sophisticated retry system with policies, schedules, jobs, attempts, and audit logs
+
+4. **Calendar Hierarchy**: Debit configuration follows a hierarchy: System → Company → Client → Contract (override pattern)
+
+5. **Build Success**: No DDD-related import errors - pattern is now well-established
+
+### Files Created
+- 42 domain entities across 3 bounded contexts
+- 12 repository interfaces (IFactureRepository, IPaymentIntentRepository, IScheduleRepository, etc.)
+- 9 DTOs (3 per bounded context)
+- 9 service port interfaces
+- 9 infrastructure services
+- 9 gRPC controllers
+- 3 bounded context modules (factures.module.ts, payments.module.ts, calendar.module.ts)
+- CLAUDE.md documentation
+

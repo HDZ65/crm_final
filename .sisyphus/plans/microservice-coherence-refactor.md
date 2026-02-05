@@ -386,7 +386,7 @@ Phase 4: Validation
 
 ---
 
-- [ ] 7. Restructurer service-finance en DDD
+- [x] 7. Restructurer service-finance en DDD
 
   **What to do**:
   - Appliquer le même pattern que service-core

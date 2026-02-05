@@ -6,6 +6,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
+// =============================================================================
+// EXISTING COMMERCIAL MODULES (14)
+// =============================================================================
 import { CommissionModule } from './modules/commission/commission.module';
 import { BaremeModule } from './modules/bareme/bareme.module';
 import { PalierModule } from './modules/palier/palier.module';
@@ -21,18 +24,26 @@ import { EventsModule } from './modules/events/events.module';
 import { ApporteurModule } from './modules/apporteur/apporteur.module';
 import { ModeleDistributionModule } from './modules/modele-distribution/modele-distribution.module';
 
-import { CommissionEntity } from './modules/commission/entities/commission.entity';
-import { BaremeCommissionEntity } from './modules/bareme/entities/bareme-commission.entity';
-import { PalierCommissionEntity } from './modules/palier/entities/palier-commission.entity';
-import { BordereauCommissionEntity } from './modules/bordereau/entities/bordereau-commission.entity';
-import { LigneBordereauEntity } from './modules/ligne-bordereau/entities/ligne-bordereau.entity';
-import { RepriseCommissionEntity } from './modules/reprise/entities/reprise-commission.entity';
-import { StatutCommissionEntity } from './modules/statut/entities/statut-commission.entity';
-import { CommissionAuditLogEntity } from './modules/audit/entities/commission-audit-log.entity';
-import { CommissionRecurrenteEntity } from './modules/recurrence/entities/commission-recurrente.entity';
-import { ReportNegatifEntity } from './modules/report/entities/report-negatif.entity';
-import { Apporteur } from './modules/apporteur/entities/apporteur.entity';
-import { ModeleDistribution } from './modules/modele-distribution/entities/modele-distribution.entity';
+// =============================================================================
+// FROM SERVICE-CONTRATS (5)
+// =============================================================================
+import { ContratModule } from './modules/contrat/contrat.module';
+import { LigneContratModule } from './modules/ligne-contrat/ligne-contrat.module';
+import { StatutContratModule } from './modules/statut-contrat/statut-contrat.module';
+import { HistoriqueStatutContratModule } from './modules/historique-statut-contrat/historique-statut-contrat.module';
+import { OrchestrationModule } from './modules/orchestration/orchestration.module';
+
+// =============================================================================
+// FROM SERVICE-PRODUCTS (8)
+// =============================================================================
+import { GammeModule } from './modules/gamme/gamme.module';
+import { ProduitModule } from './modules/produit/produit.module';
+import { GrilleTarifaireModule } from './modules/grille-tarifaire/grille-tarifaire.module';
+import { PrixProduitModule } from './modules/prix-produit/prix-produit.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { VersionProduitModule } from './modules/version-produit/version-produit.module';
+import { DocumentProduitModule } from './modules/document-produit/document-produit.module';
+import { PublicationProduitModule } from './modules/publication-produit/publication-produit.module';
 
 @Module({
   imports: [
@@ -51,20 +62,7 @@ import { ModeleDistribution } from './modules/modele-distribution/entities/model
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_DATABASE', 'commercial_db'),
         namingStrategy: new SnakeNamingStrategy(),
-        entities: [
-          CommissionEntity,
-          BaremeCommissionEntity,
-          PalierCommissionEntity,
-          BordereauCommissionEntity,
-          LigneBordereauEntity,
-          RepriseCommissionEntity,
-          StatutCommissionEntity,
-          CommissionAuditLogEntity,
-          CommissionRecurrenteEntity,
-          ReportNegatifEntity,
-          Apporteur,
-          ModeleDistribution,
-        ],
+        autoLoadEntities: true, // Auto-load all entities from TypeOrmModule.forFeature()
         synchronize: false,
         migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
@@ -81,6 +79,10 @@ import { ModeleDistribution } from './modules/modele-distribution/entities/model
       }),
     }),
     NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
+
+    // =========================================================================
+    // EXISTING COMMERCIAL MODULES (14)
+    // =========================================================================
     CommissionModule,
     BaremeModule,
     PalierModule,
@@ -95,6 +97,27 @@ import { ModeleDistribution } from './modules/modele-distribution/entities/model
     EventsModule,
     ApporteurModule,
     ModeleDistributionModule,
+
+    // =========================================================================
+    // FROM SERVICE-CONTRATS (5)
+    // =========================================================================
+    ContratModule,
+    LigneContratModule,
+    StatutContratModule,
+    HistoriqueStatutContratModule,
+    OrchestrationModule,
+
+    // =========================================================================
+    // FROM SERVICE-PRODUCTS (8)
+    // =========================================================================
+    GammeModule,
+    ProduitModule,
+    GrilleTarifaireModule,
+    PrixProduitModule,
+    CatalogModule,
+    VersionProduitModule,
+    DocumentProduitModule,
+    PublicationProduitModule,
   ],
   controllers: [],
   providers: [

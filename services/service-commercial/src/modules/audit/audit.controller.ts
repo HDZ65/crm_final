@@ -70,17 +70,17 @@ export class AuditController {
   async list(req: GetAuditLogsRequest): Promise<AuditLogListResponse> {
     try {
       const { logs, total } = await this.service.findAll({
-        organisationId: req.organisationId,
+        organisationId: req.organisation_id,
         scope: req.scope ? grpcToAuditScope(req.scope) : undefined,
         action: req.action ? grpcToAuditAction(req.action) : undefined,
-        refId: req.refId,
-        userId: req.userId,
-        apporteurId: req.apporteurId,
-        contratId: req.contratId,
-        baremeId: req.baremeId,
+        refId: req.ref_id,
+        userId: req.user_id,
+        apporteurId: req.apporteur_id,
+        contratId: req.contrat_id,
+        baremeId: req.bareme_id,
         periode: req.periode,
-        dateFrom: req.dateFrom ? new Date(req.dateFrom) : undefined,
-        dateTo: req.dateTo ? new Date(req.dateTo) : undefined,
+        dateFrom: req.date_from ? new Date(req.date_from) : undefined,
+        dateTo: req.date_to ? new Date(req.date_to) : undefined,
         limit: req.limit,
         offset: req.offset,
       });
@@ -97,7 +97,7 @@ export class AuditController {
       if (!scope) {
         throw new Error('Invalid scope');
       }
-      const logs = await this.service.findByRef(req.organisationId, scope, req.refId);
+      const logs = await this.service.findByRef(req.organisation_id, scope, req.ref_id);
       return { logs: logs as unknown as AuditLogListResponse['logs'], total: logs.length };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });
@@ -107,7 +107,7 @@ export class AuditController {
   @GrpcMethod('CommissionService', 'GetAuditLogsByCommission')
   async listByCommission(req: GetByCommissionRequest): Promise<AuditLogListResponse> {
     try {
-      const logs = await this.service.findByCommission('', req.commissionId);
+      const logs = await this.service.findByCommission('', req.commission_id);
       return { logs: logs as unknown as AuditLogListResponse['logs'], total: logs.length };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });

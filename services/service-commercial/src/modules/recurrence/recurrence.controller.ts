@@ -27,8 +27,8 @@ export class RecurrenceController {
   @GrpcMethod('CommissionService', 'GetRecurrences')
   async list(req: GetRecurrencesRequest): Promise<RecurrenceListResponse> {
     try {
-      const { recurrences, total } = await this.service.findByOrganisation(req.organisationId, {
-        apporteurId: req.apporteurId,
+      const { recurrences, total } = await this.service.findByOrganisation(req.organisation_id, {
+        apporteurId: req.apporteur_id,
         periode: req.periode,
         statut: req.statut ? grpcToStatutRecurrence(req.statut) : undefined,
         limit: req.limit,
@@ -43,7 +43,7 @@ export class RecurrenceController {
   @GrpcMethod('CommissionService', 'GetRecurrencesByContrat')
   async listByContrat(req: GetRecurrencesByContratRequest): Promise<RecurrenceListResponse> {
     try {
-      const recurrences = await this.service.findByContrat(req.organisationId, req.contratId);
+      const recurrences = await this.service.findByContrat(req.organisation_id, req.contrat_id);
       return { recurrences: recurrences as unknown as RecurrenceListResponse['recurrences'], total: recurrences.length };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });

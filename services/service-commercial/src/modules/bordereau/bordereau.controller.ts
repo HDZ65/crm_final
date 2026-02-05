@@ -26,12 +26,12 @@ export class BordereauController {
   async create(req: CreateBordereauRequest): Promise<BordereauResponse> {
     try {
       const bordereau = await this.service.create({
-        organisationId: req.organisationId,
+        organisationId: req.organisation_id,
         reference: req.reference,
         periode: req.periode,
-        apporteurId: req.apporteurId,
+        apporteurId: req.apporteur_id,
         commentaire: req.commentaire,
-        creePar: req.creePar,
+        creePar: req.cree_par,
       });
       return { bordereau: bordereau as unknown as BordereauResponse['bordereau'] };
     } catch (e: unknown) {
@@ -52,8 +52,8 @@ export class BordereauController {
   @GrpcMethod('CommissionService', 'GetBordereaux')
   async list(req: GetBordereauxRequest): Promise<BordereauListResponse> {
     try {
-      const { bordereaux, total } = await this.service.findByOrganisation(req.organisationId, {
-        apporteurId: req.apporteurId,
+      const { bordereaux, total } = await this.service.findByOrganisation(req.organisation_id, {
+        apporteurId: req.apporteur_id,
         periode: req.periode,
         statut: req.statut ? grpcToStatutBordereau(req.statut) : undefined,
         limit: req.limit,
@@ -68,7 +68,7 @@ export class BordereauController {
   @GrpcMethod('CommissionService', 'ValidateBordereau')
   async validate(req: ValidateBordereauRequest): Promise<BordereauResponse> {
     try {
-      const bordereau = await this.service.validate(req.id, req.validateurId);
+      const bordereau = await this.service.validate(req.id, req.validateur_id);
       return { bordereau: bordereau as unknown as BordereauResponse['bordereau'] };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });
@@ -81,8 +81,8 @@ export class BordereauController {
       const bordereau = await this.service.export(req.id);
       return { 
         success: true, 
-        pdfUrl: bordereau.fichierPdfUrl || '', 
-        excelUrl: bordereau.fichierExcelUrl || '',
+        pdf_url: bordereau.fichierPdfUrl || '', 
+        excel_url: bordereau.fichierExcelUrl || '',
       };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });

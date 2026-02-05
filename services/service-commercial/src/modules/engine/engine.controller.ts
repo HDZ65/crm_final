@@ -24,28 +24,28 @@ export class EngineController {
   async calculer(req: CalculerCommissionRequest): Promise<CalculerCommissionResponse> {
     try {
       const result = await this.engine.calculerCommission({
-        organisationId: req.organisationId,
-        apporteurId: req.apporteurId,
-        contratId: req.contratId,
-        produitId: req.produitId,
-        typeProduit: req.typeProduit,
-        profilRemuneration: req.profilRemuneration,
-        societeId: req.societeId,
-        canalVente: req.canalVente,
-        montantBase: parseFloat(req.montantBase),
+        organisationId: req.organisation_id,
+        apporteurId: req.apporteur_id,
+        contratId: req.contrat_id,
+        produitId: req.produit_id,
+        typeProduit: req.type_produit,
+        profilRemuneration: req.profil_remuneration,
+        societeId: req.societe_id,
+        canalVente: req.canal_vente,
+        montantBase: parseFloat(req.montant_base),
         periode: req.periode,
       });
 
       return {
         commission: result.commission as unknown as CalculerCommissionResponse['commission'],
-        baremeApplique: result.baremeApplique as unknown as CalculerCommissionResponse['baremeApplique'],
+        bareme_applique: result.baremeApplique as unknown as CalculerCommissionResponse['bareme_applique'],
         primes: result.primes.map(p => ({
-          palierId: p.palierId,
-          palierNom: p.palierNom,
+          palier_id: p.palierId,
+          palier_nom: p.palierNom,
           montant: String(p.montant),
           type: p.type,
         })),
-        montantTotal: String(result.montantTotal),
+        montant_total: String(result.montantTotal),
       };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });
@@ -56,21 +56,21 @@ export class EngineController {
   async genererBordereau(req: GenererBordereauRequest): Promise<GenererBordereauResponse> {
     try {
       const result = await this.engine.genererBordereau(
-        req.organisationId,
-        req.apporteurId,
+        req.organisation_id,
+        req.apporteur_id,
         req.periode,
-        req.creePar,
+        req.cree_par,
       );
 
       return {
         bordereau: result.bordereau as unknown as GenererBordereauResponse['bordereau'],
         summary: {
-          nombreCommissions: result.summary.nombreCommissions,
-          nombreReprises: result.summary.nombreReprises,
-          nombrePrimes: result.summary.nombrePrimes,
-          totalBrut: String(result.summary.totalBrut),
-          totalReprises: String(result.summary.totalReprises),
-          totalNet: String(result.summary.totalNet),
+          nombre_commissions: result.summary.nombreCommissions,
+          nombre_reprises: result.summary.nombreReprises,
+          nombre_primes: result.summary.nombrePrimes,
+          total_brut: String(result.summary.totalBrut),
+          total_reprises: String(result.summary.totalReprises),
+          total_net: String(result.summary.totalNet),
         },
       };
     } catch (e: unknown) {
@@ -82,9 +82,9 @@ export class EngineController {
   async declencherReprise(req: DeclencherRepriseRequest): Promise<RepriseResponse> {
     try {
       const reprise = await this.engine.declencherReprise(
-        req.commissionId,
-        grpcToTypeReprise(req.typeReprise),
-        new Date(req.dateEvenement),
+        req.commission_id,
+        grpcToTypeReprise(req.type_reprise),
+        new Date(req.date_evenement),
         req.motif,
       );
       return { reprise: reprise as unknown as RepriseResponse['reprise'] };

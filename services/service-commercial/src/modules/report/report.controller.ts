@@ -25,8 +25,8 @@ export class ReportController {
   @GrpcMethod('CommissionService', 'GetReportsNegatifs')
   async list(req: GetReportsNegatifsRequest): Promise<ReportNegatifListResponse> {
     try {
-      const { reports, total } = await this.service.findByOrganisation(req.organisationId, {
-        apporteurId: req.apporteurId,
+      const { reports, total } = await this.service.findByOrganisation(req.organisation_id, {
+        apporteurId: req.apporteur_id,
         statut: req.statut ? grpcToStatutReport(req.statut) : undefined,
         limit: req.limit,
         offset: req.offset,

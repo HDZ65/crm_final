@@ -25,7 +25,7 @@ export class StatutController {
         code: req.code,
         nom: req.nom,
         description: req.description || undefined,
-        ordreAffichage: req.ordreAffichage || 0,
+        ordreAffichage: req.ordre_affichage || 0,
       });
       return { statut: statut as unknown as StatutResponse['statut'] };
     } catch (e: unknown) {
@@ -69,7 +69,7 @@ export class StatutController {
       const data: Record<string, unknown> = {};
       if (req.nom) data.nom = req.nom;
       if (req.description !== undefined) data.description = req.description;
-      if (req.ordreAffichage !== undefined) data.ordreAffichage = req.ordreAffichage;
+      if (req.ordre_affichage !== undefined) data.ordreAffichage = req.ordre_affichage;
 
       const statut = await this.service.update(req.id, data);
       return { statut: statut as unknown as StatutResponse['statut'] };

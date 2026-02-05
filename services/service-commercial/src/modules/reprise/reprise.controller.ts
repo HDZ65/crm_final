@@ -29,19 +29,19 @@ export class RepriseController {
   async create(req: CreateRepriseRequest): Promise<RepriseResponse> {
     try {
       const reprise = await this.service.create({
-        organisationId: req.organisationId,
-        commissionOriginaleId: req.commissionOriginaleId,
-        contratId: req.contratId,
-        apporteurId: req.apporteurId,
+        organisationId: req.organisation_id,
+        commissionOriginaleId: req.commission_originale_id,
+        contratId: req.contrat_id,
+        apporteurId: req.apporteur_id,
         reference: req.reference,
-        typeReprise: grpcToTypeReprise(req.typeReprise),
-        montantReprise: parseFloat(req.montantReprise),
-        tauxReprise: parseFloat(req.tauxReprise),
-        montantOriginal: parseFloat(req.montantOriginal),
-        periodeOrigine: req.periodeOrigine,
-        periodeApplication: req.periodeApplication,
-        dateEvenement: new Date(req.dateEvenement),
-        dateLimite: new Date(req.dateLimite),
+        typeReprise: grpcToTypeReprise(req.type_reprise),
+        montantReprise: parseFloat(req.montant_reprise),
+        tauxReprise: parseFloat(req.taux_reprise),
+        montantOriginal: parseFloat(req.montant_original),
+        periodeOrigine: req.periode_origine,
+        periodeApplication: req.periode_application,
+        dateEvenement: new Date(req.date_evenement),
+        dateLimite: new Date(req.date_limite),
         motif: req.motif || null,
         commentaire: req.commentaire || null,
       });
@@ -64,8 +64,8 @@ export class RepriseController {
   @GrpcMethod('CommissionService', 'GetReprises')
   async list(req: GetReprisesRequest): Promise<RepriseListResponse> {
     try {
-      const { reprises, total } = await this.service.findByOrganisation(req.organisationId, {
-        apporteurId: req.apporteurId,
+      const { reprises, total } = await this.service.findByOrganisation(req.organisation_id, {
+        apporteurId: req.apporteur_id,
         statut: req.statut ? grpcToStatutReprise(req.statut) : undefined,
         limit: req.limit,
         offset: req.offset,
@@ -79,7 +79,7 @@ export class RepriseController {
   @GrpcMethod('CommissionService', 'GetReprisesByCommission')
   async listByCommission(req: GetByCommissionRequest): Promise<RepriseListResponse> {
     try {
-      const { reprises, total } = await this.service.findByCommission(req.commissionId);
+      const { reprises, total } = await this.service.findByCommission(req.commission_id);
       return { reprises: reprises as unknown as RepriseListResponse['reprises'], total };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });
@@ -89,7 +89,7 @@ export class RepriseController {
   @GrpcMethod('CommissionService', 'ApplyReprise')
   async apply(req: ApplyRepriseRequest): Promise<RepriseResponse> {
     try {
-      const reprise = await this.service.apply(req.id, req.bordereauId);
+      const reprise = await this.service.apply(req.id, req.bordereau_id);
       return { reprise: reprise as unknown as RepriseResponse['reprise'] };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });

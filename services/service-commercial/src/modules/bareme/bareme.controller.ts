@@ -29,29 +29,29 @@ export class BaremeController {
   async create(req: CreateBaremeRequest): Promise<BaremeResponse> {
     try {
       const bareme = await this.service.create({
-        organisationId: req.organisationId,
+        organisationId: req.organisation_id,
         code: req.code,
         nom: req.nom,
         description: req.description || undefined,
-        typeCalcul: grpcToTypeCalcul(req.typeCalcul),
-        baseCalcul: grpcToBaseCalcul(req.baseCalcul),
-        montantFixe: req.montantFixe ? parseFloat(req.montantFixe) : undefined,
-        tauxPourcentage: req.tauxPourcentage ? parseFloat(req.tauxPourcentage) : undefined,
-        recurrenceActive: req.recurrenceActive || false,
-        tauxRecurrence: req.tauxRecurrence ? parseFloat(req.tauxRecurrence) : undefined,
-        dureeRecurrenceMois: req.dureeRecurrenceMois || undefined,
-        dureeReprisesMois: req.dureeReprisesMois || 3,
-        tauxReprise: req.tauxReprise ? parseFloat(req.tauxReprise) : 100,
-        typeProduit: req.typeProduit || undefined,
-        profilRemuneration: req.profilRemuneration || undefined,
-        societeId: req.societeId || undefined,
-        canalVente: req.canalVente || undefined,
-        repartitionCommercial: parseFloat(req.repartitionCommercial || '100'),
-        repartitionManager: parseFloat(req.repartitionManager || '0'),
-        repartitionAgence: parseFloat(req.repartitionAgence || '0'),
-        repartitionEntreprise: parseFloat(req.repartitionEntreprise || '0'),
-        dateEffet: new Date(req.dateEffet),
-        dateFin: req.dateFin ? new Date(req.dateFin) : undefined,
+        typeCalcul: grpcToTypeCalcul(req.type_calcul),
+        baseCalcul: grpcToBaseCalcul(req.base_calcul),
+        montantFixe: req.montant_fixe ? parseFloat(req.montant_fixe) : undefined,
+        tauxPourcentage: req.taux_pourcentage ? parseFloat(req.taux_pourcentage) : undefined,
+        recurrenceActive: req.recurrence_active || false,
+        tauxRecurrence: req.taux_recurrence ? parseFloat(req.taux_recurrence) : undefined,
+        dureeRecurrenceMois: req.duree_recurrence_mois || undefined,
+        dureeReprisesMois: req.duree_reprises_mois || 3,
+        tauxReprise: req.taux_reprise ? parseFloat(req.taux_reprise) : 100,
+        typeProduit: req.type_produit || undefined,
+        profilRemuneration: req.profil_remuneration || undefined,
+        societeId: req.societe_id || undefined,
+        canalVente: req.canal_vente || undefined,
+        repartitionCommercial: parseFloat(req.repartition_commercial || '100'),
+        repartitionManager: parseFloat(req.repartition_manager || '0'),
+        repartitionAgence: parseFloat(req.repartition_agence || '0'),
+        repartitionEntreprise: parseFloat(req.repartition_entreprise || '0'),
+        dateEffet: new Date(req.date_effet),
+        dateFin: req.date_fin ? new Date(req.date_fin) : undefined,
       });
       return { bareme: bareme as unknown as BaremeResponse['bareme'] };
     } catch (e: unknown) {
@@ -74,9 +74,9 @@ export class BaremeController {
   @GrpcMethod('CommissionService', 'GetBaremes')
   async list(req: GetBaremesRequest): Promise<BaremeListResponse> {
     try {
-      const { baremes, total } = await this.service.findByOrganisation(req.organisationId, {
-        actifOnly: req.actifOnly,
-        typeProduit: req.typeProduit,
+      const { baremes, total } = await this.service.findByOrganisation(req.organisation_id, {
+        actifOnly: req.actif_only,
+        typeProduit: req.type_produit,
         limit: req.limit,
         offset: req.offset,
       });
@@ -89,11 +89,11 @@ export class BaremeController {
   @GrpcMethod('CommissionService', 'GetBaremeApplicable')
   async getApplicable(req: GetBaremeApplicableRequest): Promise<BaremeResponse> {
     try {
-      const bareme = await this.service.findApplicable(req.organisationId, {
-        typeProduit: req.typeProduit,
-        profilRemuneration: req.profilRemuneration,
-        societeId: req.societeId,
-        canalVente: req.canalVente,
+      const bareme = await this.service.findApplicable(req.organisation_id, {
+        typeProduit: req.type_produit,
+        profilRemuneration: req.profil_remuneration,
+        societeId: req.societe_id,
+        canalVente: req.canal_vente,
         date: req.date,
       });
       if (!bareme) {
@@ -111,12 +111,12 @@ export class BaremeController {
       const data: Record<string, unknown> = {};
       if (req.nom) data.nom = req.nom;
       if (req.description !== undefined) data.description = req.description;
-      if (req.typeCalcul) data.typeCalcul = grpcToTypeCalcul(req.typeCalcul);
-      if (req.baseCalcul) data.baseCalcul = grpcToBaseCalcul(req.baseCalcul);
-      if (req.montantFixe) data.montantFixe = parseFloat(req.montantFixe);
-      if (req.tauxPourcentage) data.tauxPourcentage = parseFloat(req.tauxPourcentage);
-      if (req.recurrenceActive !== undefined) data.recurrenceActive = req.recurrenceActive;
-      if (req.dateFin) data.dateFin = new Date(req.dateFin);
+      if (req.type_calcul) data.type_calcul = grpcToTypeCalcul(req.type_calcul);
+      if (req.base_calcul) data.base_calcul = grpcToBaseCalcul(req.base_calcul);
+      if (req.montant_fixe) data.montant_fixe = parseFloat(req.montant_fixe);
+      if (req.taux_pourcentage) data.taux_pourcentage = parseFloat(req.taux_pourcentage);
+      if (req.recurrence_active !== undefined) data.recurrence_active = req.recurrence_active;
+      if (req.date_fin) data.date_fin = new Date(req.date_fin);
       if (req.actif !== undefined) data.actif = req.actif;
 
       const bareme = await this.service.update(req.id, data);

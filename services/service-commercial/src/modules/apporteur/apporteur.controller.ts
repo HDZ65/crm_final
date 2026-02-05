@@ -20,7 +20,7 @@ export class ApporteurController {
   async create(data: CreateApporteurRequest) {
     return this.apporteurService.create({
       ...data,
-      societeId: data.societeId || null,
+      societeId: data.societe_id || null,
     });
   }
 
@@ -29,7 +29,7 @@ export class ApporteurController {
     const { id, ...updateData } = data;
     return this.apporteurService.update(id, {
       ...updateData,
-      societeId: updateData.societeId === '' ? null : updateData.societeId,
+      societeId: updateData.societe_id === '' ? null : updateData.societe_id,
     });
   }
 
@@ -40,13 +40,13 @@ export class ApporteurController {
 
   @GrpcMethod('ApporteurService', 'GetByUtilisateur')
   async getByUtilisateur(data: GetApporteurByUtilisateurRequest) {
-    return this.apporteurService.findByUtilisateur(data.utilisateurId);
+    return this.apporteurService.findByUtilisateur(data.utilisateur_id);
   }
 
   @GrpcMethod('ApporteurService', 'List')
   async list(data: ListApporteurRequest) {
     const result = await this.apporteurService.findAll(
-      { search: data.search, typeApporteur: data.typeApporteur, actif: data.actif },
+      { search: data.search, typeApporteur: data.type_apporteur, actif: data.actif },
       data.pagination,
     );
     return {
@@ -63,7 +63,7 @@ export class ApporteurController {
   @GrpcMethod('ApporteurService', 'ListByOrganisation')
   async listByOrganisation(data: ListApporteurByOrganisationRequest) {
     const result = await this.apporteurService.findByOrganisation(
-      data.organisationId,
+      data.organisation_id,
       data.actif,
       data.pagination,
     );

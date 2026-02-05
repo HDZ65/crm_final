@@ -25,19 +25,19 @@ export class PalierController {
   async create(req: CreatePalierRequest): Promise<PalierResponse> {
     try {
       const palier = await this.service.create({
-        organisationId: req.organisationId,
-        baremeId: req.baremeId,
+        organisationId: req.organisation_id,
+        baremeId: req.bareme_id,
         code: req.code,
         nom: req.nom,
         description: req.description || undefined,
-        typePalier: grpcToTypePalier(req.typePalier),
-        seuilMin: parseFloat(req.seuilMin),
-        seuilMax: req.seuilMax ? parseFloat(req.seuilMax) : undefined,
-        montantPrime: parseFloat(req.montantPrime),
-        tauxBonus: req.tauxBonus ? parseFloat(req.tauxBonus) : undefined,
+        typePalier: grpcToTypePalier(req.type_palier),
+        seuilMin: parseFloat(req.seuil_min),
+        seuilMax: req.seuil_max ? parseFloat(req.seuil_max) : undefined,
+        montantPrime: parseFloat(req.montant_prime),
+        tauxBonus: req.taux_bonus ? parseFloat(req.taux_bonus) : undefined,
         cumulable: req.cumulable || false,
-        parPeriode: req.parPeriode !== false,
-        typeProduit: req.typeProduit || undefined,
+        parPeriode: req.par_periode !== false,
+        typeProduit: req.type_produit || undefined,
         ordre: req.ordre || 0,
       });
       return { palier: palier as unknown as PalierResponse['palier'] };
@@ -59,7 +59,7 @@ export class PalierController {
   @GrpcMethod('CommissionService', 'GetPaliersByBareme')
   async listByBareme(req: GetByBaremeRequest): Promise<PalierListResponse> {
     try {
-      const { paliers, total } = await this.service.findByBareme(req.baremeId);
+      const { paliers, total } = await this.service.findByBareme(req.bareme_id);
       return { paliers: paliers as unknown as PalierListResponse['paliers'], total };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });
@@ -72,12 +72,12 @@ export class PalierController {
       const data: Record<string, unknown> = {};
       if (req.nom) data.nom = req.nom;
       if (req.description !== undefined) data.description = req.description;
-      if (req.seuilMin) data.seuilMin = parseFloat(req.seuilMin);
-      if (req.seuilMax) data.seuilMax = parseFloat(req.seuilMax);
-      if (req.montantPrime) data.montantPrime = parseFloat(req.montantPrime);
-      if (req.tauxBonus) data.tauxBonus = parseFloat(req.tauxBonus);
+      if (req.seuil_min) data.seuil_min = parseFloat(req.seuil_min);
+      if (req.seuil_max) data.seuil_max = parseFloat(req.seuil_max);
+      if (req.montant_prime) data.montantPrime = parseFloat(req.montant_prime);
+      if (req.taux_bonus) data.tauxBonus = parseFloat(req.taux_bonus);
       if (req.cumulable !== undefined) data.cumulable = req.cumulable;
-      if (req.parPeriode !== undefined) data.parPeriode = req.parPeriode;
+      if (req.par_periode !== undefined) data.parPeriode = req.par_periode;
       if (req.ordre !== undefined) data.ordre = req.ordre;
       if (req.actif !== undefined) data.actif = req.actif;
 

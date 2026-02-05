@@ -23,20 +23,20 @@ export class PaymentReceivedHandler implements OnModuleInit {
   }
 
   private async handlePaymentReceived(event: PaymentReceivedEvent): Promise<void> {
-    const exists = await this.processedEventsRepo.exists(event.eventId);
+    const exists = await this.processedEventsRepo.exists(event.event_id);
     if (exists) {
-      this.logger.debug(`Event ${event.eventId} already processed, skipping`);
+      this.logger.debug(`Event ${event.event_id} already processed, skipping`);
       return;
     }
 
     try {
       this.logger.log(
-        `Commission calculation triggered for payment ${event.paymentId} - ${event.montant}EUR from client ${event.clientId}`,
+        `Commission calculation triggered for payment ${event.payment_id} - ${event.montant}EUR from client ${event.client_id}`,
       );
 
-      await this.processedEventsRepo.markProcessed(event.eventId, 'payment.received');
+      await this.processedEventsRepo.markProcessed(event.event_id, 'payment.received');
     } catch (error) {
-      this.logger.error(`Failed to process payment.received event ${event.eventId}: ${error}`);
+      this.logger.error(`Failed to process payment.received event ${event.event_id}: ${error}`);
       throw error;
     }
   }

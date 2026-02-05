@@ -29,21 +29,21 @@ export class LigneBordereauController {
   async create(req: CreateLigneBordereauRequest): Promise<LigneBordereauResponse> {
     try {
       const ligne = await this.service.create({
-        organisationId: req.organisationId,
-        bordereauId: req.bordereauId,
-        commissionId: req.commissionId || null,
-        repriseId: req.repriseId || null,
-        typeLigne: grpcToTypeLigne(req.typeLigne),
-        contratId: req.contratId,
-        contratReference: req.contratReference,
-        clientNom: req.clientNom || null,
-        produitNom: req.produitNom || null,
-        montantBrut: parseFloat(req.montantBrut),
-        montantReprise: parseFloat(req.montantReprise),
-        montantNet: parseFloat(req.montantNet),
-        baseCalcul: req.baseCalcul || null,
-        tauxApplique: req.tauxApplique ? parseFloat(req.tauxApplique) : null,
-        baremeId: req.baremeId || null,
+        organisationId: req.organisation_id,
+        bordereauId: req.bordereau_id,
+        commissionId: req.commission_id || null,
+        repriseId: req.reprise_id || null,
+        typeLigne: grpcToTypeLigne(req.type_ligne),
+        contratId: req.contrat_id,
+        contratReference: req.contrat_reference,
+        clientNom: req.client_nom || null,
+        produitNom: req.produit_nom || null,
+        montantBrut: parseFloat(req.montant_brut),
+        montantReprise: parseFloat(req.montant_reprise),
+        montantNet: parseFloat(req.montant_net),
+        baseCalcul: req.base_calcul || null,
+        tauxApplique: req.taux_applique ? parseFloat(req.taux_applique) : null,
+        baremeId: req.bareme_id || null,
         ordre: req.ordre || 0,
       });
       return { ligne: ligne as unknown as LigneBordereauResponse['ligne'] };
@@ -65,7 +65,7 @@ export class LigneBordereauController {
   @GrpcMethod('CommissionService', 'GetLignesByBordereau')
   async listByBordereau(req: GetByBordereauRequest): Promise<LigneBordereauListResponse> {
     try {
-      const { lignes, total } = await this.service.findByBordereau(req.bordereauId);
+      const { lignes, total } = await this.service.findByBordereau(req.bordereau_id);
       return { lignes: lignes as unknown as LigneBordereauListResponse['lignes'], total };
     } catch (e: unknown) {
       throw new RpcException({ code: status.INTERNAL, message: e instanceof Error ? e.message : String(e) });
@@ -76,11 +76,11 @@ export class LigneBordereauController {
   async update(req: UpdateLigneBordereauRequest): Promise<LigneBordereauResponse> {
     try {
       const data: Record<string, unknown> = {};
-      if (req.montantBrut) data.montantBrut = parseFloat(req.montantBrut);
-      if (req.montantReprise) data.montantReprise = parseFloat(req.montantReprise);
-      if (req.montantNet) data.montantNet = parseFloat(req.montantNet);
+      if (req.montant_brut) data.montant_brut = parseFloat(req.montant_brut);
+      if (req.montant_reprise) data.montant_reprise = parseFloat(req.montant_reprise);
+      if (req.montant_net) data.montant_net = parseFloat(req.montant_net);
       if (req.selectionne !== undefined) data.selectionne = req.selectionne;
-      if (req.motifDeselection !== undefined) data.motifDeselection = req.motifDeselection;
+      if (req.motif_deselection !== undefined) data.motifDeselection = req.motif_deselection;
       if (req.ordre !== undefined) data.ordre = req.ordre;
 
       const ligne = await this.service.update(req.id, data);
@@ -95,7 +95,7 @@ export class LigneBordereauController {
     try {
       const ligne = await this.service.validate(
         req.id,
-        req.validateurId,
+        req.validateur_id,
         grpcToStatutLigne(req.statut),
         req.motif,
       );

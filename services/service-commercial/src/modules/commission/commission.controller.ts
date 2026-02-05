@@ -22,20 +22,20 @@ export class CommissionController {
   async create(req: CreateCommissionRequest): Promise<CommissionResponse> {
     try {
       const commission = await this.service.create({
-        organisationId: req.organisationId,
+        organisationId: req.organisation_id,
         reference: req.reference,
-        apporteurId: req.apporteurId,
-        contratId: req.contratId,
-        produitId: req.produitId || undefined,
+        apporteurId: req.apporteur_id,
+        contratId: req.contrat_id,
+        produitId: req.produit_id || undefined,
         compagnie: req.compagnie,
-        typeBase: req.typeBase,
-        montantBrut: parseFloat(req.montantBrut),
-        montantReprises: parseFloat(req.montantReprises || '0'),
-        montantAcomptes: parseFloat(req.montantAcomptes || '0'),
-        montantNetAPayer: parseFloat(req.montantNetAPayer),
-        statutId: req.statutId,
+        typeBase: req.type_base,
+        montantBrut: parseFloat(req.montant_brut),
+        montantReprises: parseFloat(req.montant_reprises || '0'),
+        montantAcomptes: parseFloat(req.montant_acomptes || '0'),
+        montantNetAPayer: parseFloat(req.montant_net_a_payer),
+        statutId: req.statut_id,
         periode: req.periode,
-        dateCreation: new Date(req.dateCreation),
+        dateCreation: new Date(req.date_creation),
       });
       return { commission: this.toProto(commission) };
     } catch (e: unknown) {
@@ -58,10 +58,10 @@ export class CommissionController {
   @GrpcMethod('CommissionService', 'GetCommissions')
   async list(req: GetCommissionsRequest): Promise<CommissionListResponse> {
     try {
-      const { commissions, total } = await this.service.findByOrganisation(req.organisationId, {
-        apporteurId: req.apporteurId,
+      const { commissions, total } = await this.service.findByOrganisation(req.organisation_id, {
+        apporteurId: req.apporteur_id,
         periode: req.periode,
-        statutId: req.statutId,
+        statutId: req.statut_id,
         limit: req.limit,
         offset: req.offset,
       });
@@ -80,12 +80,12 @@ export class CommissionController {
       const data: Record<string, unknown> = {};
       if (req.reference) data.reference = req.reference;
       if (req.compagnie) data.compagnie = req.compagnie;
-      if (req.typeBase) data.typeBase = req.typeBase;
-      if (req.montantBrut) data.montantBrut = parseFloat(req.montantBrut);
-      if (req.montantReprises) data.montantReprises = parseFloat(req.montantReprises);
-      if (req.montantAcomptes) data.montantAcomptes = parseFloat(req.montantAcomptes);
-      if (req.montantNetAPayer) data.montantNetAPayer = parseFloat(req.montantNetAPayer);
-      if (req.statutId) data.statutId = req.statutId;
+      if (req.type_base) data.type_base = req.type_base;
+      if (req.montant_brut) data.montant_brut = parseFloat(req.montant_brut);
+      if (req.montant_reprises) data.montant_reprises = parseFloat(req.montant_reprises);
+      if (req.montant_acomptes) data.montant_acomptes = parseFloat(req.montant_acomptes);
+      if (req.montant_net_a_payer) data.montant_net_a_payer = parseFloat(req.montant_net_a_payer);
+      if (req.statut_id) data.statut_id = req.statut_id;
       
       const commission = await this.service.update(req.id, data);
       return { commission: this.toProto(commission) };
@@ -108,22 +108,22 @@ export class CommissionController {
   private toProto(c: CommissionEntity) {
     return {
       id: c.id,
-      organisationId: c.organisationId,
+      organisation_id: c.organisationId,
       reference: c.reference,
-      apporteurId: c.apporteurId,
-      contratId: c.contratId,
-      produitId: c.produitId || '',
+      apporteur_id: c.apporteurId,
+      contrat_id: c.contratId,
+      produit_id: c.produitId || '',
       compagnie: c.compagnie,
-      typeBase: c.typeBase,
-      montantBrut: String(c.montantBrut),
-      montantReprises: String(c.montantReprises),
-      montantAcomptes: String(c.montantAcomptes),
-      montantNetAPayer: String(c.montantNetAPayer),
-      statutId: c.statutId,
+      type_base: c.typeBase,
+      montant_brut: String(c.montantBrut),
+      montant_reprises: String(c.montantReprises),
+      montant_acomptes: String(c.montantAcomptes),
+      montant_net_a_payer: String(c.montantNetAPayer),
+      statut_id: c.statutId,
       periode: c.periode,
-      dateCreation: c.dateCreation?.toISOString() || '',
-      createdAt: c.createdAt?.toISOString() || '',
-      updatedAt: c.updatedAt?.toISOString() || '',
+      date_creation: c.dateCreation?.toISOString() || '',
+      created_at: c.createdAt?.toISOString() || '',
+      updated_at: c.updatedAt?.toISOString() || '',
     };
   }
 }

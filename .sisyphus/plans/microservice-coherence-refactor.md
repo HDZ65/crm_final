@@ -434,7 +434,7 @@ Phase 4: Validation
 
 ---
 
-- [ ] 9. Restructurer service-logistics en DDD
+- [x] 9. Restructurer service-logistics en DDD
 
   **What to do**:
   - Appliquer le même pattern que service-core

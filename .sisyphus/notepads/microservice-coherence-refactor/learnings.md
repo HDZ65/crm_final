@@ -284,3 +284,54 @@ type PieceJointe = PieceJointeEntity;
 - Services in infrastructure/persistence/typeorm/repositories/engagement/
 - Controllers in interfaces/grpc/controllers/engagement/
 
+
+## 2026-02-05 - Service-Logistics DDD Refactoring (FINAL SERVICE)
+
+### Summary
+- Completed DDD refactoring for service-logistics (4 entities, 1 bounded context)
+- FINAL service in the refactoring sequence
+
+### Patterns Applied
+- **Single bounded context**: logistics (carrier, colis, expedition, tracking, maileva)
+- **External API integration**: Maileva service moved to infrastructure/external/maileva/
+- **Mock mode support**: MailevaService uses MAILEVA_USE_MOCK env var
+
+### Structure Created
+```
+src/
+├── domain/logistics/entities/ (4 entities)
+├── domain/logistics/repositories/ (4 interfaces)
+├── application/logistics/dtos/ (5 DTO sets)
+├── application/logistics/ports/ (5 service interfaces)
+├── infrastructure/persistence/typeorm/repositories/logistics/ (4 services)
+├── infrastructure/external/maileva/ (API types + service)
+├── interfaces/grpc/controllers/logistics/ (5 controllers)
+├── logistics.module.ts
+├── app.module.ts
+└── CLAUDE.md
+```
+
+### Key Learnings
+1. External API services go in infrastructure/external/{service-name}/
+2. Mock mode in external services allows testing without API credentials
+3. Small services (4 entities) benefit from single bounded context
+4. Maileva-specific types kept alongside service implementation
+
+### Build Verification
+- TypeScript compilation passes for DDD structure
+- Only external package errors (@crm/grpc-utils, @crm/proto/logistics) - pre-existing
+- Old modules/ directory deleted successfully
+
+### Entities Migrated
+1. CarrierAccountEntity - Carrier/organization credentials
+2. ColisEntity - Package details
+3. ExpeditionEntity - Shipment records
+4. TrackingEventEntity - Tracking history
+
+### ALL 5 SERVICES REFACTORED
+1. service-core (26 entities, 4 contexts) ✅
+2. service-commercial (24 entities, 3 contexts) ✅
+3. service-finance (41 entities, 3 contexts) ✅
+4. service-engagement (6 entities, 1 context) ✅
+5. service-logistics (4 entities, 1 context) ✅
+

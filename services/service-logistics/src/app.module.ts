@@ -1,31 +1,31 @@
-@nestjs/core';
-import { AuthInterceptor } from '@crm/grpc-utils';
-
-import { Module } from '@nestjs/common';;
+import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuthInterceptor } from '@crm/grpc-utils';
 
-// Feature Modules
-import { ExpeditionModule } from './modules/expedition/expedition.module.js';
-import { ColisModule } from './modules/colis/colis.module.js';
-import { TrackingModule } from './modules/tracking/tracking.module.js';
-import { CarrierModule } from './modules/carrier/carrier.module.js';
-import { MailevaModule } from './modules/maileva/maileva.module.js';
+// ============================================================================
+// DDD BOUNDED CONTEXT MODULES
+// ============================================================================
+import { LogisticsModule } from './logistics.module';
 
-// Entities
-import { ExpeditionEntity } from './modules/expedition/entities/expedition.entity.js';
-import { ColisEntity } from './modules/colis/entities/colis.entity.js';
-import { TrackingEventEntity } from './modules/tracking/entities/tracking-event.entity.js';
-import { CarrierAccountEntity } from './modules/carrier/entities/carrier-account.entity.js';
+// Domain entities for TypeORM configuration
+import {
+  CarrierAccountEntity,
+  ColisEntity,
+  ExpeditionEntity,
+  TrackingEventEntity,
+} from './domain/logistics/entities';
 
 @Module({
   imports: [
-    // Configuration
+    // ========================================================================
+    // CORE INFRASTRUCTURE
+    // ========================================================================
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env.local', '.env'],
     }),
 
     // Database
@@ -41,13 +41,13 @@ import { CarrierAccountEntity } from './modules/carrier/entities/carrier-account
         database: configService.get('DB_DATABASE', 'logistics_db'),
         namingStrategy: new SnakeNamingStrategy(),
         entities: [
-          ExpeditionEntity,
-          ColisEntity,
-          TrackingEventEntity,
           CarrierAccountEntity,
+          ColisEntity,
+          ExpeditionEntity,
+          TrackingEventEntity,
         ],
-        synchronize: false, // Désactivé - utiliser les migrations
-        migrationsRun: true, // Exécute les migrations au démarrage
+        synchronize: false,
+        migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get('NODE_ENV') === 'development',
         extra: {
@@ -58,15 +58,16 @@ import { CarrierAccountEntity } from './modules/carrier/entities/carrier-account
       }),
     }),
 
-    // Feature Modules
-    ExpeditionModule,
-    ColisModule,
-    TrackingModule,
-    CarrierModule,
-    MailevaModule,
+    // ========================================================================
+    // DDD BOUNDED CONTEXT MODULES
+    // ========================================================================
+    LogisticsModule,
   ],
+
   controllers: [],
-  providers: [  {
+
+  providers: [
+    {
       provide: APP_INTERCEPTOR,
       useClass: AuthInterceptor,
     },

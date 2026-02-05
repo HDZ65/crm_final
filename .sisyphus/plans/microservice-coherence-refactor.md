@@ -362,7 +362,7 @@ Phase 4: Validation
 
 ### Phase 2: Appliquer aux autres services
 
-- [ ] 6. Restructurer service-commercial en DDD
+- [x] 6. Restructurer service-commercial en DDD
 
   **What to do**:
   - Appliquer le même pattern que service-core

@@ -156,3 +156,29 @@ type PieceJointe = PieceJointeEntity;
 - Build: 37 errors (all pre-existing @crm/proto, @crm/grpc-utils, @crm/nats-utils)
 - No DDD structure import errors
 - Tests: Deleted with old modules/ (need recreation)
+
+
+## Service-Commercial DDD Refactoring (2026-02-05)
+
+### Completed
+- Migrated service-commercial from modules/ to DDD layers (domain, application, infrastructure, interfaces)
+- Created 3 bounded contexts: commercial (11 entities), contrats (5 entities), products (8 entities)
+- Build compiles successfully with: `cd services/service-commercial && bun run build`
+
+### Key Learnings
+
+1. **Shared DTOs**: When multiple contexts need PaginationDto, create a shared application layer (application/shared/dtos/) to avoid export conflicts
+
+2. **Entity Relations**: Entities within same bounded context should use relative imports (./entity.ts), not cross-context imports
+
+3. **Module Wiring**: Use forwardRef() for circular dependencies between bounded context modules
+
+4. **Proto Enums**: Services may need to maintain local proto enum mappings for type safety
+
+### Patterns Applied
+- Repository interfaces in domain/{context}/repositories/I{Entity}Repository.ts
+- Service ports in application/{context}/ports/I{Entity}Service.ts with Symbol exports
+- Services in infrastructure/persistence/typeorm/repositories/{context}/
+- Controllers in interfaces/grpc/controllers/{context}/
+- Bounded context modules at src/{context}.module.ts
+

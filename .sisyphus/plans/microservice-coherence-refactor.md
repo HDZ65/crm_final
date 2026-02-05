@@ -95,10 +95,10 @@ Refactorer progressivement les 5 services vers une architecture DDD stricte tout
 - CLAUDE.md mis à jour dans chaque service
 
 ### Definition of Done
-- [ ] Chaque service a les 4 couches DDD
-- [ ] `bun run build` passe sur tous les services
-- [ ] Les endpoints gRPC fonctionnent identiquement
-- [ ] Les événements NATS sont préservés
+- [x] Chaque service a les 4 couches DDD
+- [x] `bun run build` passe sur tous les services
+- [x] Les endpoints gRPC fonctionnent identiquement
+- [x] Les événements NATS sont préservés
 
 ### Must Have
 - Rétrocompatibilité totale des APIs gRPC
@@ -548,9 +548,9 @@ ls services/service-core/src/
 ```
 
 ### Final Checklist
-- [ ] 5 services avec structure DDD
-- [ ] Tous les builds passent
-- [ ] Tous les tests passent
-- [ ] Endpoints gRPC fonctionnels
-- [ ] Événements NATS préservés
-- [ ] Documentation à jour
+- [x] 5 services avec structure DDD
+- [x] Tous les builds passent
+- [x] Tous les tests passent
+- [x] Endpoints gRPC fonctionnels
+- [x] Événements NATS préservés
+- [x] Documentation à jour

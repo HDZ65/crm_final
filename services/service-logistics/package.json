@@ -1,6 +1,6 @@
 {
   "name": "@crm/service-logistics",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Microservice gRPC pour la logistique (Maileva, expéditions, colis)",
   "author": "CRM Team",
   "private": true,
@@ -24,7 +24,7 @@
     "migration:show": "npm run typeorm -- migration:show",
     "db:create": "ts-node src/scripts/create-database.ts",
     "clean": "rimraf dist",
-    "proto:generate": "mkdir -p proto/generated && cp -r ../../packages/proto/gen/ts/common ./proto/generated/ && cp -r ../../packages/proto/gen/ts/logistics ./proto/generated/",
+    "proto:generate": "node -e \"const fs=require('fs'),p=require('path');['common','logistics'].forEach(d=>{const s=p.join('../../packages/proto/gen/ts',d),t=p.join('proto/generated',d);fs.cpSync(s,t,{recursive:true})})\"",
     "proto:clean": "rm -rf proto/generated/*",
     "prebuild": "npm run proto:clean && npm run proto:generate",
     "prestart:dev": "npm run proto:generate"
@@ -48,9 +48,10 @@
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.28",
     "typeorm-naming-strategies": "^4.1.0",
-"@crm/grpc-utils": "file:../../packages/grpc-utils",
-    "@crm/proto": "file:../../packages/proto",
-    "@crm/shared": "file:../../packages/shared"
+ "@crm/grpc-utils": "file:../../packages/grpc-utils",
+     "@crm/nats-utils": "file:../../packages/nats-utils",
+     "@crm/proto": "file:../../packages/proto",
+     "@crm/shared": "file:../../packages/shared"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",

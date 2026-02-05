@@ -1,6 +1,6 @@
 {
   "name": "@crm/service-engagement",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Microservice gRPC pour l'engagement: emails, notifications WebSocket et dashboard KPIs",
   "author": "CRM Team",
   "private": true,
@@ -24,7 +24,7 @@
     "migration:show": "npm run typeorm -- migration:show",
     "db:create": "ts-node src/scripts/create-database.ts",
     "clean": "rimraf dist",
-    "proto:generate": "powershell -Command \"New-Item -ItemType Directory -Force -Path proto/generated; Copy-Item -Path ../../packages/proto/gen/ts/common -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/email -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/notifications -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/dashboard -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/events -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/activites -Destination ./proto/generated/ -Recurse -Force\"",
+    "proto:generate": "node -e \"const fs=require('fs'),p=require('path');['common','email','notifications','dashboard','events','activites'].forEach(d=>{const s=p.join('../../packages/proto/gen/ts',d),t=p.join('proto/generated',d);fs.cpSync(s,t,{recursive:true})})\"",
     "proto:clean": "rimraf proto/generated && mkdir -p proto/generated",
     "prebuild": "npm run proto:clean && npm run proto:generate",
     "prestart:dev": "npm run proto:generate"

@@ -23,9 +23,21 @@ import { KpisCommerciauxModule } from './modules/dashboard/kpis-commerciaux/kpis
 
 import { EventsModule } from './modules/events/events.module';
 
+// Activités modules (consolidated from service-activites)
+import { ActiviteModule } from './modules/activite/activite.module';
+import { TacheModule } from './modules/tache/tache.module';
+import { TypeActiviteModule } from './modules/type-activite/type-activite.module';
+import { EvenementSuiviModule } from './modules/evenement-suivi/evenement-suivi.module';
+
 import { MailboxEntity } from './modules/email/mailbox/entities/mailbox.entity';
 import { NotificationEntity } from './modules/notifications/notification/entities/notification.entity';
 import { EncryptionService } from './common/encryption.service';
+
+// Activités entities (consolidated from service-activites)
+import { Activite } from './modules/activite/entities/activite.entity';
+import { Tache } from './modules/tache/entities/tache.entity';
+import { TypeActivite } from './modules/type-activite/entities/type-activite.entity';
+import { EvenementSuivi } from './modules/evenement-suivi/entities/evenement-suivi.entity';
 
 const createDbConfig = (configService: ConfigService, database: string, entities: any[] = []) => ({
   type: 'postgres' as const,
@@ -62,7 +74,16 @@ const createDbConfig = (configService: ConfigService, database: string, entities
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
-        createDbConfig(configService, 'engagement_db', [MailboxEntity, NotificationEntity, ProcessedEvent]),
+        createDbConfig(configService, 'engagement_db', [
+          MailboxEntity,
+          NotificationEntity,
+          ProcessedEvent,
+          // Activités entities
+          Activite,
+          Tache,
+          TypeActivite,
+          EvenementSuivi,
+        ]),
     }),
 
     TypeOrmModule.forRootAsync({
@@ -122,9 +143,15 @@ const createDbConfig = (configService: ConfigService, database: string, entities
     RepartitionProduitsModule,
     StatsSocietesModule,
     AlertesModule,
-    KpisCommerciauxModule,
+KpisCommerciauxModule,
 
     EventsModule,
+
+    // Activités modules (consolidated from service-activites)
+    ActiviteModule,
+    TacheModule,
+    TypeActiviteModule,
+    EvenementSuiviModule,
   ],
   controllers: [],
   providers: [

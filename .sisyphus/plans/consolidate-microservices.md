@@ -155,7 +155,7 @@ Wave 3 (Finalization):
 
 ### Phase 2: Consolidation service-engagement
 
-- [ ] 2. Fusionner service-engagement + service-activites → service-engagement
+- [x] 2. Fusionner service-engagement + service-activites → service-engagement
 
   **What to do**:
   - Copier tous les modules de service-activites dans service-engagement

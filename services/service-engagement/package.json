@@ -24,8 +24,8 @@
     "migration:show": "npm run typeorm -- migration:show",
     "db:create": "ts-node src/scripts/create-database.ts",
     "clean": "rimraf dist",
-    "proto:generate": "mkdir -p proto/generated && cp -r ../../packages/proto/gen/ts/common ./proto/generated/ && cp -r ../../packages/proto/gen/ts/email ./proto/generated/ && cp -r ../../packages/proto/gen/ts/notifications ./proto/generated/ && cp -r ../../packages/proto/gen/ts/dashboard ./proto/generated/ && cp -r ../../packages/proto/gen/ts/events ./proto/generated/",
-    "proto:clean": "rm -rf proto/generated/*",
+    "proto:generate": "powershell -Command \"New-Item -ItemType Directory -Force -Path proto/generated; Copy-Item -Path ../../packages/proto/gen/ts/common -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/email -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/notifications -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/dashboard -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/events -Destination ./proto/generated/ -Recurse -Force; Copy-Item -Path ../../packages/proto/gen/ts/activites -Destination ./proto/generated/ -Recurse -Force\"",
+    "proto:clean": "rimraf proto/generated && mkdir -p proto/generated",
     "prebuild": "npm run proto:clean && npm run proto:generate",
     "prestart:dev": "npm run proto:generate"
   },
@@ -54,10 +54,10 @@
     "socket.io": "^4.8.3",
     "typeorm": "^0.3.28",
     "typeorm-naming-strategies": "^4.1.0",
-    "@crm/grpc-utils": "*",
-    "@crm/nats-utils": "*",
-    "@crm/proto": "*",
-    "@crm/shared": "*"
+"@crm/grpc-utils": "file:../../packages/grpc-utils",
+    "@crm/nats-utils": "file:../../packages/nats-utils",
+    "@crm/proto": "file:../../packages/proto",
+    "@crm/shared": "file:../../packages/shared"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",

@@ -57,6 +57,7 @@ export const SERVICES = {
   // not yet exposed
   referentiel: process.env.GRPC_REFERENTIEL_URL || "localhost:50052",
   relance: process.env.GRPC_RELANCE_URL || "localhost:50051",
+  agenda: process.env.GRPC_AGENDA_URL || "localhost:50051",
 } as const;
 
 /**

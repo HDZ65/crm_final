@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// DEPANSSUR EVENTS
+// ============================================================================
+// Events related to Depanssur domain (abonnements, dossiers, plafonds)
+// ============================================================================
+
+// Abonnement created event
+message AbonnementCreatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string abonnement_id = 4;                         // Abonnement ID
+  string client_id = 5;                             // Client ID
+  string organisation_id = 6;                       // Organisation ID (tenant)
+  string formule = 7;                               // Formule (ESSENTIEL, CONFORT, SERENITE)
+  string statut = 8;                                // Status (ACTIF, SUSPENDU, RESILIE)
+  google.protobuf.Timestamp date_debut = 9;        // Start date
+  google.protobuf.Timestamp created_at = 10;       // Creation timestamp
+}
+
+// Abonnement status changed event
+message AbonnementStatusChangedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string abonnement_id = 4;                         // Abonnement ID
+  string client_id = 5;                             // Client ID
+  string organisation_id = 6;                       // Organisation ID (tenant)
+  string ancien_statut = 7;                         // Previous status
+  string nouveau_statut = 8;                        // New status
+  string motif = 9;                                 // Reason for change (optional)
+  google.protobuf.Timestamp changed_at = 10;       // Change timestamp
+}
+
+// Abonnement upgraded event
+message AbonnementUpgradedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string abonnement_id = 4;                         // Abonnement ID
+  string client_id = 5;                             // Client ID
+  string organisation_id = 6;                       // Organisation ID (tenant)
+  string ancienne_formule = 7;                      // Previous formule
+  string nouvelle_formule = 8;                      // New formule
+  google.protobuf.Timestamp upgraded_at = 9;       // Upgrade timestamp
+}
+
+// Abonnement downgraded event
+message AbonnementDowngradedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string abonnement_id = 4;                         // Abonnement ID
+  string client_id = 5;                             // Client ID
+  string organisation_id = 6;                       // Organisation ID (tenant)
+  string ancienne_formule = 7;                      // Previous formule
+  string nouvelle_formule = 8;                      // New formule
+  google.protobuf.Timestamp downgraded_at = 9;     // Downgrade timestamp
+}
+
+// Dossier created event
+message DossierCreatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string dossier_id = 4;                            // Dossier ID
+  string abonnement_id = 5;                         // Abonnement ID
+  string client_id = 6;                             // Client ID
+  string organisation_id = 7;                       // Organisation ID (tenant)
+  string type_sinistre = 8;                         // Type of incident
+  double montant_declare = 9;                       // Declared amount
+  google.protobuf.Timestamp date_sinistre = 10;    // Incident date
+  google.protobuf.Timestamp created_at = 11;       // Creation timestamp
+}
+
+// Dossier status changed event
+message DossierStatusChangedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string dossier_id = 4;                            // Dossier ID
+  string abonnement_id = 5;                         // Abonnement ID
+  string client_id = 6;                             // Client ID
+  string organisation_id = 7;                       // Organisation ID (tenant)
+  string ancien_statut = 8;                         // Previous status
+  string nouveau_statut = 9;                        // New status
+  google.protobuf.Timestamp changed_at = 10;       // Change timestamp
+}
+
+// Dossier decision event
+message DossierDecisionEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string dossier_id = 4;                            // Dossier ID
+  string abonnement_id = 5;                         // Abonnement ID
+  string client_id = 6;                             // Client ID
+  string organisation_id = 7;                       // Organisation ID (tenant)
+  string decision = 8;                              // Decision (ACCEPTE, REFUSE, ACCEPTE_PARTIEL)
+  double montant_accorde = 9;                       // Granted amount
+  string motif_refus = 10;                          // Refusal reason (if applicable)
+  google.protobuf.Timestamp decided_at = 11;       // Decision timestamp
+}
+
+// Dossier closed event
+message DossierClosedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string dossier_id = 4;                            // Dossier ID
+  string abonnement_id = 5;                         // Abonnement ID
+  string client_id = 6;                             // Client ID
+  string organisation_id = 7;                       // Organisation ID (tenant)
+  string motif_cloture = 8;                         // Closure reason
+  google.protobuf.Timestamp closed_at = 9;         // Closure timestamp
+}
+
+// Plafond threshold reached event
+message PlafondThresholdReachedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string abonnement_id = 4;                         // Abonnement ID
+  string client_id = 5;                             // Client ID
+  string organisation_id = 6;                       // Organisation ID (tenant)
+  double plafond_annuel = 7;                        // Annual ceiling
+  double montant_utilise = 8;                       // Amount used
+  double pourcentage_utilise = 9;                   // Percentage used (e.g., 80.0 for 80%)
+  google.protobuf.Timestamp reached_at = 10;       // Threshold reached timestamp
+}
+
+// Plafond exceeded event
+message PlafondExceededEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string abonnement_id = 4;                         // Abonnement ID
+  string client_id = 5;                             // Client ID
+  string organisation_id = 6;                       // Organisation ID (tenant)
+  double plafond_annuel = 7;                        // Annual ceiling
+  double montant_utilise = 8;                       // Amount used
+  double montant_depasse = 9;                       // Amount exceeded
+  google.protobuf.Timestamp exceeded_at = 10;      // Exceeded timestamp
+}

@@ -4,7 +4,20 @@ import { status } from '@grpc/grpc-js';
 import { SubscriptionPreferenceSchemaService } from '../../persistence/typeorm/repositories/subscriptions/subscription-preference-schema.service';
 import { SubscriptionPreferenceService } from '../../persistence/typeorm/repositories/subscriptions/subscription-preference.service';
 import { SubscriptionPreferenceHistoryService } from '../../persistence/typeorm/repositories/subscriptions/subscription-preference-history.service';
+import { SubscriptionService } from '../../persistence/typeorm/repositories/subscriptions/subscription.service';
 import { PreferenceValidationService } from '../../../domain/subscriptions/services/preference-validation.service';
+import {
+  PreferenceCutoffService,
+  CutoffConfig,
+} from '../../../domain/subscriptions/services/preference-cutoff.service';
+import { AppliedCycle } from '../../../domain/subscriptions/entities/subscription-preference-history.entity';
+
+/** Default cut-off: Friday 17:00 Europe/Paris */
+const DEFAULT_CUTOFF_CONFIG: CutoffConfig = {
+  dayOfWeek: 5, // Friday
+  hour: 17, // 5 PM
+  timezone: 'Europe/Paris',
+};
 
 @Controller()
 export class SubscriptionPreferenceController {
@@ -14,7 +27,9 @@ export class SubscriptionPreferenceController {
     private readonly schemaService: SubscriptionPreferenceSchemaService,
     private readonly preferenceService: SubscriptionPreferenceService,
     private readonly historyService: SubscriptionPreferenceHistoryService,
+    private readonly subscriptionService: SubscriptionService,
     private readonly validationService: PreferenceValidationService,
+    private readonly cutoffService: PreferenceCutoffService,
   ) {}
 
   // ─── Schema endpoints ───
@@ -118,7 +133,30 @@ export class SubscriptionPreferenceController {
       });
     }
 
-    // 4. Save each preference + create history
+    // 4. Determine which cycle this change applies to
+    const subscription = await this.subscriptionService.findById(data.subscription_id);
+    let appliedCycleValue: string = AppliedCycle.CURRENT;
+
+    if (subscription) {
+      const currentCycle = {
+        cycleStart: subscription.currentPeriodStart || new Date(),
+        cycleEnd: subscription.currentPeriodEnd || new Date(),
+      };
+
+      const appliesFromCycle = this.cutoffService.getAppliesFromCycleNumber(
+        new Date(),
+        DEFAULT_CUTOFF_CONFIG,
+        currentCycle,
+        1, // TODO: Get actual current cycle number from subscription cycles
+      );
+
+      appliedCycleValue = appliesFromCycle > 1 ? AppliedCycle.NEXT : AppliedCycle.CURRENT;
+      this.logger.log(
+        `Preference change for subscription ${data.subscription_id} applies to cycle: ${appliedCycleValue}`,
+      );
+    }
+
+    // 5. Save each preference + create history
     const saved = [];
     for (const pref of data.preferences) {
       const schema = schemas.find((s) => s.code === pref.code);
@@ -138,12 +176,13 @@ export class SubscriptionPreferenceController {
         value: String(pref.value),
       });
 
-      // Create history entry
+      // Create history entry with cut-off cycle information
       await this.historyService.create({
         preferenceId: entity.id,
         oldValue,
         newValue: String(pref.value),
         changedBy: data.changed_by || 'system',
+        appliedCycle: appliedCycleValue,
       });
 
       saved.push(entity);

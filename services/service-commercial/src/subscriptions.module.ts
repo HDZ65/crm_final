@@ -15,6 +15,7 @@ import {
 
 // Domain services
 import { PreferenceValidationService } from './domain/subscriptions/services/preference-validation.service';
+import { PreferenceCutoffService } from './domain/subscriptions/services/preference-cutoff.service';
 
 // Infrastructure services (repositories) — Subscriptions
 import {
@@ -60,6 +61,7 @@ import {
     SubscriptionCycleService,
     SubscriptionStatusHistoryService,
     PreferenceValidationService,
+    PreferenceCutoffService,
     SubscriptionPreferenceSchemaService,
     SubscriptionPreferenceService,
     SubscriptionPreferenceHistoryService,
@@ -71,6 +73,7 @@ import {
     SubscriptionCycleService,
     SubscriptionStatusHistoryService,
     PreferenceValidationService,
+    PreferenceCutoffService,
     SubscriptionPreferenceSchemaService,
     SubscriptionPreferenceService,
     SubscriptionPreferenceHistoryService,

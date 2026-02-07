@@ -1,14 +1,25 @@
 import { credentials, type ServiceError } from '@grpc/grpc-js';
+import {
+  IdempotenceService,
+  type IdempotenceStore,
+  getServiceUrl,
+  loadGrpcPackage,
+  NatsService,
+} from '@crm/shared-kernel';
 import { Injectable, Logger, Optional } from '@nestjs/common';
-import { getServiceUrl, loadGrpcPackage, NatsService } from '@crm/shared-kernel';
-import type { SubscriptionEntity } from '../entities/subscription.entity';
+import {
+  StoreSource,
+  SubscriptionPlanType,
+  SubscriptionStatus,
+  type SubscriptionEntity,
+} from '../entities/subscription.entity';
+import { SubscriptionTriggeredBy } from '../entities/subscription-history.entity';
 import type { ISubscriptionRepository } from '../repositories/ISubscriptionRepository';
-
-const ACTIVE_STATUS = 'ACTIVE';
-const PAST_DUE_STATUS = 'PAST_DUE';
+import { SubscriptionLifecycleService } from './subscription-lifecycle.service';
 
 const SUBSCRIPTION_CHARGED_EVENT = 'SUBSCRIPTION_CHARGED';
 const SUBSCRIPTION_CHARGE_FAILED_EVENT = 'SUBSCRIPTION_CHARGE_FAILED';
+const SUBSCRIPTION_CHARGE_IDEMPOTENCE_EVENT = 'SUBSCRIPTION_CHARGE';
 
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_PSP_NAME = 'GOCARDLESS';
@@ -19,14 +30,17 @@ const DEFAULT_FACTURE_ADRESSE_ID = '';
 const DEFAULT_FACTURE_PRODUIT_ID = '';
 const DEFAULT_FACTURE_TAUX_TVA = 20;
 
+const WEB_DIRECT_SOURCES = new Set<StoreSource>([StoreSource.WEB_DIRECT, StoreSource.NONE]);
+
 export interface SubscriptionChargeSchedulingPort {
   getDueSubscriptions(organisationId: string, beforeDate: Date): Promise<SubscriptionEntity[]>;
-  calculateNextChargeAt(frequency: string, currentPeriodEnd: string): string;
+  calculateNextChargeAt(frequency: string, currentPeriodEnd: Date | string): Date | string;
 }
 
 export interface CreateSubscriptionPaymentIntentInput {
   organisationId: string;
   societeId: string;
+  clientId: string;
   pspName: string;
   amount: number;
   currency: string;
@@ -63,11 +77,6 @@ export interface SubscriptionFactureClient {
   createFacture(input: CreateSubscriptionFactureInput): Promise<SubscriptionFacture>;
 }
 
-export interface SubscriptionChargeIdempotencyStore {
-  isProcessed(idempotencyKey: string): Promise<boolean>;
-  markProcessed(idempotencyKey: string): Promise<void>;
-}
-
 export interface SubscriptionChargeOptions {
   maxRetries?: number;
   pspName?: string;
@@ -85,7 +94,7 @@ export interface SubscriptionChargeResult {
   reason?: string;
 }
 
-export interface SubscriptionChargeBatchResult {
+export interface ChargeResult {
   processedCount: number;
   successCount: number;
   failedCount: number;
@@ -93,9 +102,12 @@ export interface SubscriptionChargeBatchResult {
   results: SubscriptionChargeResult[];
 }
 
+export type SubscriptionChargeBatchResult = ChargeResult;
+
 interface CreatePaymentIntentGrpcRequest {
   organisation_id: string;
   societe_id: string;
+  client_id?: string;
   psp_name: string;
   amount: number;
   currency: string;
@@ -148,14 +160,18 @@ interface FactureServiceGrpcContract {
   ): void;
 }
 
-function resolveFinanceGrpcUrl(): string {
-  return process.env.FINANCE_GRPC_URL || getServiceUrl('factures');
+function resolvePaymentGrpcUrl(): string {
+  return process.env.FINANCE_GRPC_URL || process.env.PAYMENTS_GRPC_URL || getServiceUrl('payments');
+}
+
+function resolveFactureGrpcUrl(): string {
+  return process.env.FINANCE_GRPC_URL || process.env.FACTURES_GRPC_URL || getServiceUrl('factures');
 }
 
 export class PaymentServiceGrpcClient implements SubscriptionPaymentClient {
   private readonly client: PaymentServiceGrpcContract;
 
-  constructor(url: string = resolveFinanceGrpcUrl()) {
+  constructor(url: string = resolvePaymentGrpcUrl()) {
     const grpcPackage = loadGrpcPackage('payments');
     const PaymentServiceConstructor = grpcPackage?.payment?.PaymentService;
 
@@ -172,6 +188,7 @@ export class PaymentServiceGrpcClient implements SubscriptionPaymentClient {
     const request: CreatePaymentIntentGrpcRequest = {
       organisation_id: input.organisationId,
       societe_id: input.societeId,
+      client_id: input.clientId,
       psp_name: input.pspName,
       amount: input.amount,
       currency: input.currency,
@@ -228,7 +245,7 @@ export class FactureServiceGrpcClient implements SubscriptionFactureClient {
       throw new Error('FactureService gRPC constructor not found in factures proto package');
     }
 
-    const url = options.url || resolveFinanceGrpcUrl();
+    const url = options.url || resolveFactureGrpcUrl();
 
     this.client = new FactureServiceConstructor(url, credentials.createInsecure());
     this.statutId =
@@ -304,153 +321,228 @@ export class FactureServiceGrpcClient implements SubscriptionFactureClient {
   }
 }
 
-export class InMemorySubscriptionChargeIdempotencyStore
-  implements SubscriptionChargeIdempotencyStore
-{
+export class InMemorySubscriptionChargeIdempotencyStore implements IdempotenceStore {
   private readonly keys = new Set<string>();
 
-  async isProcessed(idempotencyKey: string): Promise<boolean> {
-    return this.keys.has(idempotencyKey);
+  async isEventProcessed(eventId: string): Promise<boolean> {
+    return this.keys.has(eventId);
   }
 
-  async markProcessed(idempotencyKey: string): Promise<void> {
-    this.keys.add(idempotencyKey);
+  async markEventProcessed(eventId: string): Promise<void> {
+    this.keys.add(eventId);
   }
+}
+
+type ChargeFailureTransitionPolicy = 'ON_MAX_RETRIES' | 'ALWAYS';
+
+interface ProcessSubscriptionChargeOptions {
+  allowedStatuses: SubscriptionStatus[];
+  failureTransitionPolicy: ChargeFailureTransitionPolicy;
+  failureReason: string;
+  source: 'RECURRING' | 'TRIAL_CONVERSION';
 }
 
 @Injectable()
 export class SubscriptionChargeService {
   private readonly logger = new Logger(SubscriptionChargeService.name);
+  private readonly idempotenceService: IdempotenceService;
 
   constructor(
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly schedulingService: SubscriptionChargeSchedulingPort,
+    private readonly lifecycleService: SubscriptionLifecycleService,
     private readonly paymentClient: SubscriptionPaymentClient = new PaymentServiceGrpcClient(),
     private readonly factureClient: SubscriptionFactureClient = new FactureServiceGrpcClient(),
-    private readonly idempotencyStore: SubscriptionChargeIdempotencyStore =
+    private readonly idempotencyStore: IdempotenceStore =
       new InMemorySubscriptionChargeIdempotencyStore(),
     @Optional() private readonly natsService?: NatsService,
     private readonly options: SubscriptionChargeOptions = {},
-  ) {}
+  ) {
+    this.idempotenceService = new IdempotenceService(this.idempotencyStore);
+  }
 
-  async processCharges(organisationId: string): Promise<SubscriptionChargeBatchResult> {
+  async processCharges(organisationId: string): Promise<ChargeResult> {
     const now = this.now();
     const dueSubscriptions = await this.schedulingService.getDueSubscriptions(organisationId, now);
     const results: SubscriptionChargeResult[] = [];
 
     for (const subscription of dueSubscriptions) {
-      if (subscription.status !== ACTIVE_STATUS) {
-        results.push({
-          subscriptionId: subscription.id,
-          idempotencyKey: this.buildIdempotencyKey(subscription.id, subscription.nextChargeAt),
-          status: 'SKIPPED',
-          reason: 'SUBSCRIPTION_NOT_ACTIVE',
-        });
+      if (subscription.organisationId !== organisationId) {
+        results.push(
+          this.buildSkippedResult(
+            subscription.id,
+            this.safeIdempotencyKey(subscription),
+            'ORGANISATION_MISMATCH',
+          ),
+        );
         continue;
       }
 
-      const idempotencyKey = this.buildIdempotencyKey(subscription.id, subscription.nextChargeAt);
-      const alreadyProcessed = await this.idempotencyStore.isProcessed(idempotencyKey);
+      const result = await this.processSubscriptionCharge(subscription, now, {
+        allowedStatuses: [SubscriptionStatus.ACTIVE],
+        failureTransitionPolicy: 'ON_MAX_RETRIES',
+        failureReason: 'recurring_charge_failed',
+        source: 'RECURRING',
+      });
 
-      if (alreadyProcessed) {
-        results.push({
-          subscriptionId: subscription.id,
-          idempotencyKey,
-          status: 'SKIPPED',
-          reason: 'ALREADY_CHARGED',
-        });
-        continue;
-      }
-
-      try {
-        const paymentIntent = await this.paymentClient.createPaymentIntent(
-          this.buildPaymentIntentInput(subscription, idempotencyKey),
-        );
-
-        const chargedAt = now.toISOString();
-        subscription.nextChargeAt = this.schedulingService.calculateNextChargeAt(
-          subscription.frequency,
-          subscription.nextChargeAt,
-        );
-        subscription.retryCount = 0;
-
-        const savedSubscription = await this.subscriptionRepository.save(subscription);
-
-        const facture = await this.factureClient.createFacture({
-          organisationId: savedSubscription.organisationId,
-          dateEmission: chargedAt,
-          clientBaseId: savedSubscription.clientId,
-          contratId: savedSubscription.contratId,
-          amount: Number(savedSubscription.amount || 0),
-          currency: savedSubscription.currency,
-          subscriptionId: savedSubscription.id,
-        });
-
-        await this.idempotencyStore.markProcessed(idempotencyKey);
-
-        await this.publishEvent(SUBSCRIPTION_CHARGED_EVENT, {
-          subscriptionId: savedSubscription.id,
-          organisationId: savedSubscription.organisationId,
-          clientId: savedSubscription.clientId,
-          amount: Number(savedSubscription.amount || 0),
-          currency: savedSubscription.currency,
-          invoiceId: facture.id,
-          paymentIntentId: paymentIntent.id,
-          idempotencyKey,
-          chargedAt,
-          nextChargeAt: savedSubscription.nextChargeAt,
-        });
-
-        results.push({
-          subscriptionId: savedSubscription.id,
-          idempotencyKey,
-          status: 'CHARGED',
-          paymentIntentId: paymentIntent.id,
-          invoiceId: facture.id,
-        });
-      } catch (error) {
-        const reason = this.errorMessage(error);
-        const nextRetryCount = Number(subscription.retryCount || 0) + 1;
-
-        subscription.retryCount = nextRetryCount;
-
-        if (nextRetryCount >= this.maxRetries()) {
-          subscription.status = PAST_DUE_STATUS;
-        }
-
-        const savedSubscription = await this.subscriptionRepository.save(subscription);
-
-        await this.publishEvent(SUBSCRIPTION_CHARGE_FAILED_EVENT, {
-          subscriptionId: savedSubscription.id,
-          organisationId: savedSubscription.organisationId,
-          clientId: savedSubscription.clientId,
-          amount: Number(savedSubscription.amount || 0),
-          currency: savedSubscription.currency,
-          idempotencyKey,
-          retryCount: nextRetryCount,
-          maxRetries: this.maxRetries(),
-          status: savedSubscription.status,
-          reason,
-          failedAt: now.toISOString(),
-        });
-
-        results.push({
-          subscriptionId: savedSubscription.id,
-          idempotencyKey,
-          status: 'FAILED',
-          retryCount: nextRetryCount,
-          reason,
-        });
-      }
+      results.push(result);
     }
 
-    return {
-      processedCount: results.filter((result) => result.status !== 'SKIPPED').length,
-      successCount: results.filter((result) => result.status === 'CHARGED').length,
-      failedCount: results.filter((result) => result.status === 'FAILED').length,
-      skippedCount: results.filter((result) => result.status === 'SKIPPED').length,
-      results,
-    };
+    return this.buildBatchResult(results);
+  }
+
+  async chargeTrialConversion(subscription: SubscriptionEntity): Promise<SubscriptionChargeResult> {
+    return this.processSubscriptionCharge(subscription, this.now(), {
+      allowedStatuses: [SubscriptionStatus.TRIAL],
+      failureTransitionPolicy: 'ALWAYS',
+      failureReason: 'trial_conversion_payment_failed',
+      source: 'TRIAL_CONVERSION',
+    });
+  }
+
+  private async processSubscriptionCharge(
+    subscription: SubscriptionEntity,
+    now: Date,
+    options: ProcessSubscriptionChargeOptions,
+  ): Promise<SubscriptionChargeResult> {
+    if (!this.isWebDirectSubscription(subscription)) {
+      return this.buildSkippedResult(
+        subscription.id,
+        this.safeIdempotencyKey(subscription),
+        'STORE_SOURCE_EXCLUDED',
+      );
+    }
+
+    if (subscription.planType === SubscriptionPlanType.FREE_AVOD) {
+      return this.buildSkippedResult(
+        subscription.id,
+        this.safeIdempotencyKey(subscription),
+        'FREE_PLAN_NO_CHARGE',
+      );
+    }
+
+    const status = subscription.status as SubscriptionStatus;
+    if (!options.allowedStatuses.includes(status)) {
+      return this.buildSkippedResult(
+        subscription.id,
+        this.safeIdempotencyKey(subscription),
+        'STATUS_NOT_ELIGIBLE',
+      );
+    }
+
+    if (!subscription.nextChargeAt) {
+      return this.buildSkippedResult(
+        subscription.id,
+        this.safeIdempotencyKey(subscription),
+        'NEXT_CHARGE_AT_MISSING',
+      );
+    }
+
+    const idempotencyKey = this.buildIdempotencyKey(subscription.id, subscription.nextChargeAt);
+    const alreadyProcessed = await this.idempotenceService.isProcessed(idempotencyKey);
+
+    if (alreadyProcessed) {
+      return this.buildSkippedResult(subscription.id, idempotencyKey, 'ALREADY_CHARGED');
+    }
+
+    try {
+      const paymentIntent = await this.paymentClient.createPaymentIntent(
+        this.buildPaymentIntentInput(subscription, idempotencyKey),
+      );
+
+      const chargedAt = now.toISOString();
+      const nextChargeAt = this.schedulingService.calculateNextChargeAt(
+        subscription.frequency,
+        this.toIsoDate(subscription.nextChargeAt),
+      );
+
+      subscription.nextChargeAt = this.toDate(nextChargeAt, 'nextChargeAt');
+      subscription.retryCount = 0;
+
+      const savedSubscription = await this.subscriptionRepository.save(subscription);
+
+      const facture = await this.factureClient.createFacture({
+        organisationId: savedSubscription.organisationId,
+        dateEmission: chargedAt,
+        clientBaseId: savedSubscription.clientId,
+        contratId: savedSubscription.contratId,
+        amount: Number(savedSubscription.amount || 0),
+        currency: savedSubscription.currency || 'EUR',
+        subscriptionId: savedSubscription.id,
+      });
+
+      await this.idempotenceService.markProcessed(
+        idempotencyKey,
+        SUBSCRIPTION_CHARGE_IDEMPOTENCE_EVENT,
+      );
+
+      await this.publishEvent(SUBSCRIPTION_CHARGED_EVENT, {
+        subscriptionId: savedSubscription.id,
+        organisationId: savedSubscription.organisationId,
+        clientId: savedSubscription.clientId,
+        amount: Number(savedSubscription.amount || 0),
+        currency: savedSubscription.currency || 'EUR',
+        invoiceId: facture.id,
+        paymentIntentId: paymentIntent.id,
+        idempotencyKey,
+        chargedAt,
+        nextChargeAt: savedSubscription.nextChargeAt
+          ? this.toIsoDate(savedSubscription.nextChargeAt)
+          : null,
+        source: options.source,
+      });
+
+      return {
+        subscriptionId: savedSubscription.id,
+        idempotencyKey,
+        status: 'CHARGED',
+        paymentIntentId: paymentIntent.id,
+        invoiceId: facture.id,
+      };
+    } catch (error) {
+      const reason = this.errorMessage(error);
+      const nextRetryCount = Number(subscription.retryCount || 0) + 1;
+
+      subscription.retryCount = nextRetryCount;
+      let savedSubscription = await this.subscriptionRepository.save(subscription);
+
+      if (this.shouldTransitionToPastDue(options.failureTransitionPolicy, nextRetryCount)) {
+        savedSubscription = await this.lifecycleService.markPastDue(savedSubscription.id, {
+          reason: options.failureReason,
+          triggeredBy: SubscriptionTriggeredBy.DUNNING,
+          metadata: {
+            source: options.source,
+            retryCount: nextRetryCount,
+            maxRetries: this.maxRetries(),
+            idempotencyKey,
+            failure: reason,
+          },
+        });
+      }
+
+      await this.publishEvent(SUBSCRIPTION_CHARGE_FAILED_EVENT, {
+        subscriptionId: savedSubscription.id,
+        organisationId: savedSubscription.organisationId,
+        clientId: savedSubscription.clientId,
+        amount: Number(savedSubscription.amount || 0),
+        currency: savedSubscription.currency || 'EUR',
+        idempotencyKey,
+        retryCount: nextRetryCount,
+        maxRetries: this.maxRetries(),
+        status: savedSubscription.status,
+        reason,
+        failedAt: now.toISOString(),
+        source: options.source,
+      });
+
+      return {
+        subscriptionId: savedSubscription.id,
+        idempotencyKey,
+        status: 'FAILED',
+        retryCount: nextRetryCount,
+        reason,
+      };
+    }
   }
 
   private buildPaymentIntentInput(
@@ -460,19 +552,91 @@ export class SubscriptionChargeService {
     return {
       organisationId: subscription.organisationId,
       societeId: this.resolveSocieteId(subscription),
+      clientId: subscription.clientId,
       pspName: this.pspName(),
       amount: this.toMinorUnits(subscription.amount),
-      currency: subscription.currency,
+      currency: subscription.currency || 'EUR',
       idempotencyKey,
       metadata: {
         subscription_id: subscription.id,
-        next_charge_at: subscription.nextChargeAt,
+        next_charge_at: this.toIsoDate(subscription.nextChargeAt),
       },
     };
   }
 
-  private buildIdempotencyKey(subscriptionId: string, nextChargeAt: string): string {
-    return `${subscriptionId}-${nextChargeAt}`;
+  private buildBatchResult(results: SubscriptionChargeResult[]): ChargeResult {
+    return {
+      processedCount: results.filter((result) => result.status !== 'SKIPPED').length,
+      successCount: results.filter((result) => result.status === 'CHARGED').length,
+      failedCount: results.filter((result) => result.status === 'FAILED').length,
+      skippedCount: results.filter((result) => result.status === 'SKIPPED').length,
+      results,
+    };
+  }
+
+  private buildSkippedResult(
+    subscriptionId: string,
+    idempotencyKey: string,
+    reason: string,
+  ): SubscriptionChargeResult {
+    return {
+      subscriptionId,
+      idempotencyKey,
+      status: 'SKIPPED',
+      reason,
+    };
+  }
+
+  private isWebDirectSubscription(subscription: SubscriptionEntity): boolean {
+    const normalized = this.normalizeStoreSource(subscription.storeSource);
+    return WEB_DIRECT_SOURCES.has(normalized);
+  }
+
+  private normalizeStoreSource(value: StoreSource | string | null | undefined): StoreSource {
+    const normalized = String(value || StoreSource.NONE).trim().toUpperCase();
+    if (Object.values(StoreSource).includes(normalized as StoreSource)) {
+      return normalized as StoreSource;
+    }
+    return StoreSource.NONE;
+  }
+
+  private safeIdempotencyKey(subscription: SubscriptionEntity): string {
+    if (!subscription.nextChargeAt) {
+      return `${subscription.id}-NO_NEXT_CHARGE_AT`;
+    }
+    return this.buildIdempotencyKey(subscription.id, subscription.nextChargeAt);
+  }
+
+  private shouldTransitionToPastDue(
+    policy: ChargeFailureTransitionPolicy,
+    retryCount: number,
+  ): boolean {
+    if (policy === 'ALWAYS') {
+      return true;
+    }
+    return retryCount >= this.maxRetries();
+  }
+
+  private buildIdempotencyKey(subscriptionId: string, nextChargeAt: Date | string): string {
+    return `${subscriptionId}-${this.toIsoDate(nextChargeAt)}`;
+  }
+
+  private toIsoDate(value: Date | string | null): string {
+    const date = this.toDate(value, 'date');
+    return date.toISOString();
+  }
+
+  private toDate(value: Date | string | null, field: string): Date {
+    if (!value) {
+      throw new Error(`${field} must be provided`);
+    }
+
+    const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new Error(`Invalid ${field}`);
+    }
+
+    return parsed;
   }
 
   private now(): Date {

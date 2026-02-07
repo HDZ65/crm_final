@@ -2,6 +2,61 @@ syntax = "proto3";
 
 package subscriptions;
 
+// ========== ENUMS ==========
+
+enum PlanType {
+  PLAN_TYPE_UNSPECIFIED = 0;
+  PLAN_TYPE_FREE_AVOD = 1;
+  PLAN_TYPE_PREMIUM_SVOD = 2;
+  PLAN_TYPE_VIP = 3;
+}
+
+enum SubscriptionStatus {
+  SUBSCRIPTION_STATUS_UNSPECIFIED = 0;
+  SUBSCRIPTION_STATUS_PENDING = 1;
+  SUBSCRIPTION_STATUS_TRIAL = 2;
+  SUBSCRIPTION_STATUS_ACTIVE = 3;
+  SUBSCRIPTION_STATUS_PAUSED = 4;
+  SUBSCRIPTION_STATUS_PAST_DUE = 5;
+  SUBSCRIPTION_STATUS_SUSPENDED = 6;
+  SUBSCRIPTION_STATUS_CANCELLED = 7;
+  SUBSCRIPTION_STATUS_EXPIRED = 8;
+}
+
+enum SubscriptionFrequency {
+  SUBSCRIPTION_FREQUENCY_UNSPECIFIED = 0;
+  SUBSCRIPTION_FREQUENCY_MONTHLY = 1;
+  SUBSCRIPTION_FREQUENCY_ANNUAL = 2;
+}
+
+enum StoreSource {
+  STORE_SOURCE_UNSPECIFIED = 0;
+  STORE_SOURCE_NONE = 1;
+  STORE_SOURCE_WEB_DIRECT = 2;
+  STORE_SOURCE_APPLE_STORE = 3;
+  STORE_SOURCE_GOOGLE_STORE = 4;
+  STORE_SOURCE_TV_STORE = 5;
+  STORE_SOURCE_BOX = 6;
+}
+
+enum BillingInterval {
+  BILLING_INTERVAL_UNSPECIFIED = 0;
+  BILLING_INTERVAL_WEEKLY = 1;
+  BILLING_INTERVAL_BIWEEKLY = 2;
+  BILLING_INTERVAL_MONTHLY = 3;
+  BILLING_INTERVAL_QUARTERLY = 4;
+  BILLING_INTERVAL_YEARLY = 5;
+}
+
+enum TriggeredBy {
+  TRIGGERED_BY_UNSPECIFIED = 0;
+  TRIGGERED_BY_USER = 1;
+  TRIGGERED_BY_SYSTEM = 2;
+  TRIGGERED_BY_IMS = 3;
+  TRIGGERED_BY_STORE = 4;
+  TRIGGERED_BY_DUNNING = 5;
+}
+
 // ========== SUBSCRIPTION PLAN SERVICE ==========
 service SubscriptionPlanService {
   rpc Create(CreateSubscriptionPlanRequest) returns (SubscriptionPlan);
@@ -15,39 +70,49 @@ service SubscriptionPlanService {
 message SubscriptionPlan {
   string id = 1;
   string organisation_id = 2;
-  string name = 3;
-  string description = 4;
-  double price = 5;
-  string currency = 6;
-  BillingInterval billing_interval = 7;
-  int32 billing_cycle_days = 8;
-  optional string trial_period_days = 9;
-  bool is_active = 10;
-  string created_at = 11;
-  string updated_at = 12;
+  string code = 3;                          // FREE_AVOD, PREMIUM_SVOD, VIP
+  string name = 4;
+  string description = 5;
+  PlanType plan_type = 6;
+  double price_monthly = 7;
+  double price_annual = 8;
+  string currency = 9;
+  BillingInterval billing_interval = 10;
+  int32 billing_cycle_days = 11;
+  int32 trial_days = 12;                    // 0 = no trial
+  string features = 13;                     // JSON string for plan features
+  bool is_active = 14;
+  string created_at = 15;
+  string updated_at = 16;
 }
 
 message CreateSubscriptionPlanRequest {
   string organisation_id = 1;
-  string name = 2;
-  string description = 3;
-  double price = 4;
-  string currency = 5;
-  BillingInterval billing_interval = 6;
-  int32 billing_cycle_days = 7;
-  optional string trial_period_days = 8;
+  string code = 2;
+  string name = 3;
+  string description = 4;
+  PlanType plan_type = 5;
+  double price_monthly = 6;
+  double price_annual = 7;
+  string currency = 8;
+  BillingInterval billing_interval = 9;
+  int32 billing_cycle_days = 10;
+  int32 trial_days = 11;
+  string features = 12;
 }
 
 message UpdateSubscriptionPlanRequest {
   string id = 1;
   optional string name = 2;
   optional string description = 3;
-  optional double price = 4;
-  optional string currency = 5;
-  optional BillingInterval billing_interval = 6;
-  optional int32 billing_cycle_days = 7;
-  optional string trial_period_days = 8;
-  optional bool is_active = 9;
+  optional double price_monthly = 4;
+  optional double price_annual = 5;
+  optional string currency = 6;
+  optional BillingInterval billing_interval = 7;
+  optional int32 billing_cycle_days = 8;
+  optional int32 trial_days = 9;
+  optional string features = 10;
+  optional bool is_active = 11;
 }
 
 message ListSubscriptionPlanRequest {
@@ -70,7 +135,11 @@ service SubscriptionService {
   rpc Pause(PauseSubscriptionRequest) returns (Subscription);
   rpc Resume(ResumeSubscriptionRequest) returns (Subscription);
   rpc Cancel(CancelSubscriptionRequest) returns (Subscription);
+  rpc Suspend(SuspendSubscriptionRequest) returns (Subscription);
+  rpc Reactivate(ReactivateSubscriptionRequest) returns (Subscription);
   rpc Expire(ExpireSubscriptionRequest) returns (Subscription);
+  rpc GetDueForCharge(GetDueForChargeRequest) returns (ListSubscriptionResponse);
+  rpc GetDueForTrialConversion(GetDueForTrialConversionRequest) returns (ListSubscriptionResponse);
   rpc ListByClient(ListByClientRequest) returns (ListSubscriptionResponse);
   rpc ListByPlan(ListByPlanRequest) returns (ListSubscriptionResponse);
 }
@@ -80,56 +149,112 @@ message Subscription {
   string organisation_id = 2;
   string client_id = 3;
   string plan_id = 4;
-  SubscriptionStatus status = 5;
-  string start_date = 6;
-  optional string end_date = 7;
-  optional string pause_date = 8;
-  optional string resume_date = 9;
-  optional string cancel_date = 10;
-  optional string cancellation_reason = 11;
-  string created_at = 12;
-  string updated_at = 13;
+  PlanType plan_type = 5;
+  SubscriptionStatus status = 6;
+  SubscriptionFrequency frequency = 7;
+  string trial_start = 8;
+  string trial_end = 9;
+  string current_period_start = 10;
+  string current_period_end = 11;
+  string next_charge_at = 12;
+  double amount = 13;
+  string currency = 14;
+  StoreSource store_source = 15;
+  optional string ims_subscription_id = 16;
+  optional string coupon_id = 17;
+  bool cancel_at_period_end = 18;
+  optional string cancelled_at = 19;
+  optional string suspended_at = 20;
+  optional string suspension_reason = 21;
+  string add_ons = 22;                      // JSON string for add-ons
+  string start_date = 23;
+  optional string end_date = 24;
+  optional string pause_date = 25;
+  optional string resume_date = 26;
+  optional string cancellation_reason = 27;
+  string created_at = 28;
+  string updated_at = 29;
 }
 
 message CreateSubscriptionRequest {
   string organisation_id = 1;
   string client_id = 2;
   string plan_id = 3;
-  string start_date = 4;
-  optional string cancellation_reason = 5;
+  PlanType plan_type = 4;
+  SubscriptionFrequency frequency = 5;
+  StoreSource store_source = 6;
+  string start_date = 7;
+  optional string ims_subscription_id = 8;
+  optional string coupon_id = 9;
+  optional string cancellation_reason = 10;
 }
 
 message UpdateSubscriptionRequest {
   string id = 1;
   optional string plan_id = 2;
-  optional string start_date = 3;
-  optional string end_date = 4;
+  optional PlanType plan_type = 3;
+  optional SubscriptionFrequency frequency = 4;
+  optional string start_date = 5;
+  optional string end_date = 6;
+  optional string add_ons = 7;
+  optional bool cancel_at_period_end = 8;
 }
 
 message ActivateSubscriptionRequest {
   string id = 1;
+  TriggeredBy triggered_by = 2;
 }
 
 message PauseSubscriptionRequest {
   string id = 1;
   optional string reason = 2;
+  TriggeredBy triggered_by = 3;
 }
 
 message ResumeSubscriptionRequest {
   string id = 1;
+  TriggeredBy triggered_by = 2;
 }
 
 message CancelSubscriptionRequest {
   string id = 1;
   optional string reason = 2;
+  TriggeredBy triggered_by = 3;
+}
+
+message SuspendSubscriptionRequest {
+  string id = 1;
+  optional string reason = 2;
+  TriggeredBy triggered_by = 3;
+}
+
+message ReactivateSubscriptionRequest {
+  string id = 1;
+  TriggeredBy triggered_by = 2;
 }
 
 message ExpireSubscriptionRequest {
   string id = 1;
 }
 
+message GetDueForChargeRequest {
+  string organisation_id = 1;
+  optional string before_date = 2;
+}
+
+message GetDueForTrialConversionRequest {
+  string organisation_id = 1;
+}
+
 message ListSubscriptionRequest {
-  Pagination pagination = 1;
+  string organisation_id = 1;
+  optional string client_id = 2;
+  optional string plan_id = 3;
+  optional SubscriptionStatus status = 4;
+  optional StoreSource store_source = 5;
+  optional PlanType plan_type = 6;
+  optional string search = 7;
+  Pagination pagination = 8;
 }
 
 message ListSubscriptionResponse {
@@ -147,7 +272,7 @@ message ListByPlanRequest {
   Pagination pagination = 2;
 }
 
-// ========== SUBSCRIPTION CYCLE SERVICE ==========
+// ========== SUBSCRIPTION CYCLE ==========
 message SubscriptionCycle {
   string id = 1;
   string subscription_id = 2;
@@ -162,7 +287,7 @@ message SubscriptionCycle {
   string updated_at = 11;
 }
 
-// ========== SUBSCRIPTION STATUS HISTORY SERVICE ==========
+// ========== SUBSCRIPTION STATUS HISTORY ==========
 message SubscriptionStatusHistory {
   string id = 1;
   string subscription_id = 2;
@@ -170,7 +295,9 @@ message SubscriptionStatusHistory {
   SubscriptionStatus new_status = 4;
   string changed_at = 5;
   optional string reason = 6;
-  string created_at = 7;
+  TriggeredBy triggered_by = 7;
+  string metadata = 8;                     // JSON string for extra context
+  string created_at = 9;
 }
 
 // ========== SUBSCRIPTION PREFERENCE SCHEMA SERVICE ==========
@@ -371,27 +498,6 @@ message UpdateWooCommerceConfigRequest {
   optional string api_secret = 3;
   optional string webhook_url = 4;
   optional bool is_active = 5;
-}
-
-// ========== ENUMS ==========
-
-enum SubscriptionStatus {
-  SUBSCRIPTION_STATUS_UNSPECIFIED = 0;
-  SUBSCRIPTION_STATUS_PENDING = 1;
-  SUBSCRIPTION_STATUS_ACTIVE = 2;
-  SUBSCRIPTION_STATUS_PAUSED = 3;
-  SUBSCRIPTION_STATUS_PAST_DUE = 4;
-  SUBSCRIPTION_STATUS_CANCELED = 5;
-  SUBSCRIPTION_STATUS_EXPIRED = 6;
-}
-
-enum BillingInterval {
-  BILLING_INTERVAL_UNSPECIFIED = 0;
-  BILLING_INTERVAL_WEEKLY = 1;
-  BILLING_INTERVAL_BIWEEKLY = 2;
-  BILLING_INTERVAL_MONTHLY = 3;
-  BILLING_INTERVAL_QUARTERLY = 4;
-  BILLING_INTERVAL_YEARLY = 5;
 }
 
 // ========== COMMON MESSAGES ==========

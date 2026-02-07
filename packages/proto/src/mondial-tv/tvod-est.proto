@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package mondial_tv;
+
+import "mondial-tv/common.proto";
+
+// ============================================================================
+// TVOD/EST SERVICE
+// ============================================================================
+// Transactional VOD and Electronic Sell-Through purchase tracking
+// CRM tracks financial side — content/rights are managed by IMS
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum PurchaseType {
+  PURCHASE_TYPE_UNSPECIFIED = 0;
+  PURCHASE_TYPE_TVOD = 1;                  // Transactional VOD (rental)
+  PURCHASE_TYPE_EST = 2;                   // Electronic Sell-Through (purchase)
+}
+
+enum TvodPaymentMethod {
+  TVOD_PAYMENT_METHOD_UNSPECIFIED = 0;
+  TVOD_PAYMENT_METHOD_CB_DIRECT = 1;
+  TVOD_PAYMENT_METHOD_APPLE_STORE = 2;
+  TVOD_PAYMENT_METHOD_GOOGLE_STORE = 3;
+}
+
+enum TvodPurchaseStatus {
+  TVOD_PURCHASE_STATUS_UNSPECIFIED = 0;
+  TVOD_PURCHASE_STATUS_PENDING = 1;
+  TVOD_PURCHASE_STATUS_COMPLETED = 2;
+  TVOD_PURCHASE_STATUS_REFUNDED = 3;
+}
+
+// ========== TVOD/EST SERVICE ==========
+service TvodEstService {
+  rpc Create(CreateTvodEstPurchaseRequest) returns (TvodEstPurchase);
+  rpc Get(GetTvodEstPurchaseRequest) returns (TvodEstPurchase);
+  rpc List(ListTvodEstPurchasesRequest) returns (ListTvodEstPurchasesResponse);
+  rpc GetByClient(GetByClientRequest) returns (ListTvodEstPurchasesResponse);
+  rpc Refund(RefundTvodEstPurchaseRequest) returns (TvodEstPurchase);
+}
+
+// ========== MESSAGES ==========
+
+message TvodEstPurchase {
+  string id = 1;
+  string organisation_id = 2;
+  string client_id = 3;
+  string content_id = 4;                   // IMS content ID
+  string content_title = 5;
+  PurchaseType purchase_type = 6;
+  int64 amount = 7;                        // Amount in cents
+  string currency = 8;
+  TvodPaymentMethod payment_method = 9;
+  string store_source = 10;               // NONE, WEB_DIRECT, APPLE_STORE, etc.
+  optional string store_transaction_id = 11;
+  string ims_transaction_id = 12;
+  optional string invoice_id = 13;         // Link to service-finance invoice
+  TvodPurchaseStatus status = 14;
+  optional string refunded_at = 15;
+  optional int64 refund_amount = 16;       // Refund amount in cents
+  string created_at = 17;
+  string updated_at = 18;
+}
+
+message CreateTvodEstPurchaseRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string content_id = 3;
+  string content_title = 4;
+  PurchaseType purchase_type = 5;
+  int64 amount = 6;
+  string currency = 7;
+  TvodPaymentMethod payment_method = 8;
+  string store_source = 9;
+  optional string store_transaction_id = 10;
+  string ims_transaction_id = 11;
+}
+
+message GetTvodEstPurchaseRequest {
+  string id = 1;
+}
+
+message GetByClientRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  optional PurchaseType purchase_type = 3;
+  Pagination pagination = 4;
+}
+
+message ListTvodEstPurchasesRequest {
+  string organisation_id = 1;
+  optional PurchaseType purchase_type = 2;
+  optional TvodPurchaseStatus status = 3;
+  optional string from_date = 4;
+  optional string to_date = 5;
+  Pagination pagination = 6;
+}
+
+message ListTvodEstPurchasesResponse {
+  repeated TvodEstPurchase purchases = 1;
+  PaginationResult pagination = 2;
+}
+
+message RefundTvodEstPurchaseRequest {
+  string id = 1;
+  optional int64 refund_amount = 2;        // Partial refund amount, if omitted = full refund
+}
+
+// Common messages (Pagination, PaginationResult) imported from mondial-tv/common.proto

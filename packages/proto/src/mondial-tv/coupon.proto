@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package mondial_tv;
+
+import "mondial-tv/common.proto";
+
+// ============================================================================
+// COUPON SERVICE
+// ============================================================================
+// Coupon management for OTT subscriptions
+// Supports percentage, fixed amount, and free trial extension discounts
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum DiscountType {
+  DISCOUNT_TYPE_UNSPECIFIED = 0;
+  DISCOUNT_TYPE_PERCENTAGE = 1;
+  DISCOUNT_TYPE_FIXED_AMOUNT = 2;
+  DISCOUNT_TYPE_FREE_TRIAL_EXTENSION = 3;
+}
+
+enum CouponStatus {
+  COUPON_STATUS_UNSPECIFIED = 0;
+  COUPON_STATUS_ACTIVE = 1;
+  COUPON_STATUS_INACTIVE = 2;
+  COUPON_STATUS_EXPIRED = 3;
+  COUPON_STATUS_EXHAUSTED = 4;             // max_uses reached
+}
+
+// ========== COUPON SERVICE ==========
+service CouponService {
+  rpc Create(CreateCouponRequest) returns (Coupon);
+  rpc Update(UpdateCouponRequest) returns (Coupon);
+  rpc Get(GetCouponRequest) returns (Coupon);
+  rpc List(ListCouponsRequest) returns (ListCouponsResponse);
+  rpc Validate(ValidateCouponRequest) returns (ValidateCouponResponse);
+  rpc Apply(ApplyCouponRequest) returns (ApplyCouponResponse);
+  rpc Deactivate(DeactivateCouponRequest) returns (Coupon);
+}
+
+// ========== MESSAGES ==========
+
+message Coupon {
+  string id = 1;
+  string organisation_id = 2;
+  string code = 3;                         // Unique coupon code
+  DiscountType discount_type = 4;
+  double discount_value = 5;               // Percentage (0-100) or fixed amount or extra trial days
+  repeated string applicable_plans = 6;    // Plan types this coupon applies to (empty = all)
+  int32 max_uses = 7;                      // 0 = unlimited
+  int32 current_uses = 8;
+  string valid_from = 9;
+  string valid_until = 10;
+  bool active = 11;
+  string created_at = 12;
+  string updated_at = 13;
+}
+
+message CreateCouponRequest {
+  string organisation_id = 1;
+  string code = 2;
+  DiscountType discount_type = 3;
+  double discount_value = 4;
+  repeated string applicable_plans = 5;
+  int32 max_uses = 6;
+  string valid_from = 7;
+  string valid_until = 8;
+}
+
+message UpdateCouponRequest {
+  string id = 1;
+  optional string code = 2;
+  optional DiscountType discount_type = 3;
+  optional double discount_value = 4;
+  repeated string applicable_plans = 5;
+  optional int32 max_uses = 6;
+  optional string valid_from = 7;
+  optional string valid_until = 8;
+  optional bool active = 9;
+}
+
+message GetCouponRequest {
+  string id = 1;
+}
+
+message ListCouponsRequest {
+  string organisation_id = 1;
+  optional bool active_only = 2;
+  optional DiscountType discount_type = 3;
+  Pagination pagination = 4;
+}
+
+message ListCouponsResponse {
+  repeated Coupon coupons = 1;
+  PaginationResult pagination = 2;
+}
+
+// Validate a coupon code for a specific plan
+message ValidateCouponRequest {
+  string organisation_id = 1;
+  string code = 2;
+  string plan_type = 3;                    // The plan being subscribed to
+}
+
+message ValidateCouponResponse {
+  bool valid = 1;
+  optional string reason = 2;             // If not valid, reason (expired, exhausted, not applicable)
+  optional Coupon coupon = 3;             // If valid, the coupon details
+}
+
+// Apply a coupon to a subscription
+message ApplyCouponRequest {
+  string organisation_id = 1;
+  string coupon_id = 2;
+  string subscription_id = 3;
+  string client_id = 4;
+}
+
+message ApplyCouponResponse {
+  bool success = 1;
+  optional string message = 2;
+  optional double discount_applied = 3;    // Actual discount amount
+  optional int32 extra_trial_days = 4;     // If FREE_TRIAL_EXTENSION
+}
+
+message DeactivateCouponRequest {
+  string id = 1;
+}
+
+// Common messages (Pagination, PaginationResult) imported from mondial-tv/common.proto

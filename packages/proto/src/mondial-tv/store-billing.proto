@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package mondial_tv;
+
+import "mondial-tv/common.proto";
+
+// ============================================================================
+// STORE BILLING SERVICE
+// ============================================================================
+// Mirror of Apple/Google/TV store billing events
+// CRM receives store events via IMS — does NOT interact with stores directly
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum StoreBillingStatus {
+  STORE_BILLING_STATUS_UNSPECIFIED = 0;
+  STORE_BILLING_STATUS_PAID = 1;
+  STORE_BILLING_STATUS_FAILED = 2;
+  STORE_BILLING_STATUS_REFUNDED = 3;
+  STORE_BILLING_STATUS_PENDING = 4;
+}
+
+enum StoreBillingEventType {
+  STORE_BILLING_EVENT_TYPE_UNSPECIFIED = 0;
+  STORE_BILLING_EVENT_TYPE_INITIAL_PURCHASE = 1;
+  STORE_BILLING_EVENT_TYPE_RENEWAL = 2;
+  STORE_BILLING_EVENT_TYPE_CANCELLATION = 3;
+  STORE_BILLING_EVENT_TYPE_REFUND = 4;
+}
+
+enum StoreType {
+  STORE_TYPE_UNSPECIFIED = 0;
+  STORE_TYPE_APPLE_STORE = 1;
+  STORE_TYPE_GOOGLE_STORE = 2;
+  STORE_TYPE_TV_STORE = 3;
+}
+
+// ========== STORE BILLING SERVICE ==========
+service StoreBillingService {
+  rpc Create(CreateStoreBillingRecordRequest) returns (StoreBillingRecord);
+  rpc Get(GetStoreBillingRecordRequest) returns (StoreBillingRecord);
+  rpc List(ListStoreBillingRecordsRequest) returns (ListStoreBillingRecordsResponse);
+  rpc GetBySubscription(GetBySubscriptionRequest) returns (ListStoreBillingRecordsResponse);
+  rpc GetRevenueByStore(GetRevenueByStoreRequest) returns (StoreRevenueResponse);
+}
+
+// ========== MESSAGES ==========
+
+message StoreBillingRecord {
+  string id = 1;
+  string organisation_id = 2;
+  string subscription_id = 3;
+  string client_id = 4;
+  StoreType store_source = 5;
+  string store_transaction_id = 6;         // Unique per store
+  string store_product_id = 7;
+  int64 amount = 8;                        // Amount in cents
+  string currency = 9;
+  StoreBillingStatus status = 10;
+  string receipt_data = 11;                // JSON — raw store receipt data
+  StoreBillingEventType event_type = 12;
+  optional string original_transaction_id = 13;  // For renewals — link to initial purchase
+  string event_date = 14;
+  string created_at = 15;
+  string updated_at = 16;
+}
+
+message CreateStoreBillingRecordRequest {
+  string organisation_id = 1;
+  string subscription_id = 2;
+  string client_id = 3;
+  StoreType store_source = 4;
+  string store_transaction_id = 5;
+  string store_product_id = 6;
+  int64 amount = 7;
+  string currency = 8;
+  StoreBillingStatus status = 9;
+  string receipt_data = 10;
+  StoreBillingEventType event_type = 11;
+  optional string original_transaction_id = 12;
+  string event_date = 13;
+}
+
+message GetStoreBillingRecordRequest {
+  string id = 1;
+}
+
+message GetBySubscriptionRequest {
+  string subscription_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListStoreBillingRecordsRequest {
+  string organisation_id = 1;
+  optional StoreType store_source = 2;
+  optional StoreBillingStatus status = 3;
+  optional StoreBillingEventType event_type = 4;
+  optional string from_date = 5;
+  optional string to_date = 6;
+  Pagination pagination = 7;
+}
+
+message ListStoreBillingRecordsResponse {
+  repeated StoreBillingRecord records = 1;
+  PaginationResult pagination = 2;
+}
+
+// ========== REVENUE AGGREGATION ==========
+
+message GetRevenueByStoreRequest {
+  string organisation_id = 1;
+  string from_date = 2;
+  string to_date = 3;
+}
+
+message StoreRevenueResponse {
+  int64 revenue_apple = 1;
+  int64 revenue_google = 2;
+  int64 revenue_tv_store = 3;
+  int64 total_store_revenue = 4;
+  string currency = 5;
+}
+
+// ========== STORE CONFIG ==========
+
+message StoreConfig {
+  string id = 1;
+  string organisation_id = 2;
+  StoreType store_type = 3;
+  string bundle_id = 4;
+  string shared_secret_hash = 5;           // Hashed — never stored in clear
+  string webhook_url = 6;
+  bool active = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+// Common messages (Pagination, PaginationResult) imported from mondial-tv/common.proto

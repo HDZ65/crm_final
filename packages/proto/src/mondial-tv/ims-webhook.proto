@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package mondial_tv;
+
+import "google/protobuf/timestamp.proto";
+import "mondial-tv/common.proto";
+
+// ============================================================================
+// IMS WEBHOOK SERVICE
+// ============================================================================
+// Receives and manages webhook events from IMS (content/rights management)
+// Pattern: PSPEventInbox (store raw event, process async via NATS)
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum ImsEventType {
+  IMS_EVENT_TYPE_UNSPECIFIED = 0;
+  IMS_EVENT_TYPE_USER_CREATED = 1;
+  IMS_EVENT_TYPE_USER_UPDATED = 2;
+  IMS_EVENT_TYPE_SUBSCRIPTION_CREATED = 3;
+  IMS_EVENT_TYPE_SUBSCRIPTION_UPDATED = 4;
+  IMS_EVENT_TYPE_SUBSCRIPTION_CANCELED = 5;
+  IMS_EVENT_TYPE_PAYMENT_SUCCEEDED = 6;
+  IMS_EVENT_TYPE_PAYMENT_FAILED = 7;
+  IMS_EVENT_TYPE_PAYMENT_REFUNDED = 8;
+  IMS_EVENT_TYPE_TVOD_PURCHASED = 9;
+  IMS_EVENT_TYPE_EST_PURCHASED = 10;
+}
+
+enum ImsEventProcessingStatus {
+  IMS_EVENT_PROCESSING_STATUS_UNSPECIFIED = 0;
+  IMS_EVENT_PROCESSING_STATUS_RECEIVED = 1;
+  IMS_EVENT_PROCESSING_STATUS_PROCESSING = 2;
+  IMS_EVENT_PROCESSING_STATUS_DONE = 3;
+  IMS_EVENT_PROCESSING_STATUS_FAILED = 4;
+}
+
+// ========== IMS WEBHOOK SERVICE ==========
+service ImsWebhookService {
+  rpc ReceiveWebhook(ImsWebhookRequest) returns (ImsWebhookResponse);
+  rpc GetEvent(GetImsEventRequest) returns (ImsWebhookEvent);
+  rpc ListEvents(ListImsEventsRequest) returns (ListImsEventsResponse);
+  rpc RetryEvent(RetryImsEventRequest) returns (ImsWebhookEvent);
+}
+
+// ========== MESSAGES ==========
+
+// Incoming webhook request from IMS
+message ImsWebhookRequest {
+  string organisation_id = 1;
+  string event_id = 2;                     // IMS event UUID for idempotency
+  string event_type = 3;                   // user.created, subscription.created, etc.
+  string payload = 4;                      // JSON string with event data
+  string hmac_signature = 5;               // HMAC-SHA256 signature for validation
+  string timestamp = 6;                    // ISO 8601 timestamp (Europe/Paris)
+}
+
+// Webhook response
+message ImsWebhookResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Stored webhook event (PSPEventInbox pattern)
+message ImsWebhookEvent {
+  string id = 1;
+  string organisation_id = 2;
+  string event_id = 3;                     // IMS event UUID (unique)
+  ImsEventType event_type = 4;
+  string payload = 5;                      // Raw JSON payload
+  bool hmac_valid = 6;
+  ImsEventProcessingStatus processing_status = 7;
+  optional string error_message = 8;
+  int32 retry_count = 9;
+  optional string processed_at = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+// Get single event
+message GetImsEventRequest {
+  string id = 1;
+}
+
+// List events with filters
+message ListImsEventsRequest {
+  string organisation_id = 1;
+  optional ImsEventType event_type = 2;
+  optional ImsEventProcessingStatus processing_status = 3;
+  optional string from_date = 4;
+  optional string to_date = 5;
+  Pagination pagination = 6;
+}
+
+message ListImsEventsResponse {
+  repeated ImsWebhookEvent events = 1;
+  PaginationResult pagination = 2;
+}
+
+// Retry a failed event
+message RetryImsEventRequest {
+  string id = 1;
+}
+
+// ============================================================================
+// IMS OUTBOUND CLIENT MESSAGES
+// ============================================================================
+// Messages for outbound calls TO IMS (mock in MVP)
+// ============================================================================
+
+message ImsNotifySuspensionRequest {
+  string organisation_id = 1;
+  string ims_subscription_id = 2;
+  string reason = 3;
+}
+
+message ImsNotifyReactivationRequest {
+  string organisation_id = 1;
+  string ims_subscription_id = 2;
+}
+
+message ImsNotifyCancellationRequest {
+  string organisation_id = 1;
+  string ims_subscription_id = 2;
+  string reason = 3;
+}
+
+message ImsCreateUserRequest {
+  string organisation_id = 1;
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+  optional string phone = 5;
+  string source_channel = 6;               // web, ios, android, samsung_tv, etc.
+}
+
+message ImsUpdateSubscriptionRequest {
+  string organisation_id = 1;
+  string ims_subscription_id = 2;
+  string changes = 3;                      // JSON string with changes
+}
+
+message ImsClientResponse {
+  bool success = 1;
+  string message = 2;
+  optional string ims_id = 3;              // Returned IMS ID on creation
+}
+
+// Common messages (Pagination, PaginationResult) imported from mondial-tv/common.proto

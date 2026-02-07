@@ -1,11 +1,14 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
 import {
-  SocieteServiceClient,
-  OrganisationServiceClient,
-  RolePartenaireServiceClient,
-  MembrePartenaireServiceClient,
-  InvitationCompteServiceClient,
+  SocieteServiceService,
+  OrganisationServiceService,
+  RolePartenaireServiceService,
+  MembrePartenaireServiceService,
+  InvitationCompteServiceService,
+  PartenaireMarqueBlancheServiceService,
+  ThemeMarqueServiceService,
+  StatutPartenaireServiceService,
   CreateInvitationCompteRequest,
   UpdateInvitationCompteRequest,
   type Societe,
@@ -51,17 +54,47 @@ import {
   type ExpireInvitationRequest,
   type DeleteInvitationCompteRequest,
   type DeleteResponse as InvitationCompteDeleteResponse,
+  // PartenaireMarqueBlanche
+  type PartenaireMarqueBlanche,
+  type CreatePartenaireRequest,
+  type UpdatePartenaireRequest,
+  type GetPartenaireRequest,
+  type ListPartenaireRequest,
+  type ListPartenaireResponse,
+  type DeletePartenaireRequest,
+  // ThemeMarque
+  type ThemeMarque,
+  type CreateThemeMarqueRequest,
+  type UpdateThemeMarqueRequest,
+  type GetThemeMarqueRequest,
+  type ListThemeMarqueRequest,
+  type ListThemeMarqueResponse,
+  type DeleteThemeMarqueRequest,
+  // StatutPartenaire
+  type StatutPartenaire,
+  type CreateStatutPartenaireRequest,
+  type UpdateStatutPartenaireRequest,
+  type GetStatutPartenaireRequest,
+  type GetStatutPartenaireByCodeRequest,
+  type ListStatutPartenaireRequest,
+  type ListStatutPartenaireResponse,
+  type DeleteStatutPartenaireRequest,
 } from "@proto/organisations/organisations";
 
-let societeInstance: SocieteServiceClient | null = null;
-let organisationInstance: OrganisationServiceClient | null = null;
-let rolePartenaireInstance: RolePartenaireServiceClient | null = null;
-let membrePartenaireInstance: MembrePartenaireServiceClient | null = null;
-let invitationCompteInstance: InvitationCompteServiceClient | null = null;
+let societeInstance: GrpcClient | null = null;
+let organisationInstance: GrpcClient | null = null;
+let rolePartenaireInstance: GrpcClient | null = null;
+let membrePartenaireInstance: GrpcClient | null = null;
+let invitationCompteInstance: GrpcClient | null = null;
+let partenaireMarqueBlancheInstance: GrpcClient | null = null;
+let themeMarqueInstance: GrpcClient | null = null;
+let statutPartenaireInstance: GrpcClient | null = null;
 
-function getSocieteClient(): SocieteServiceClient {
+function getSocieteClient(): GrpcClient {
   if (!societeInstance) {
-    societeInstance = new SocieteServiceClient(
+    societeInstance = makeClient(
+      SocieteServiceService,
+      "SocieteService",
       SERVICES.organisations,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -69,9 +102,11 @@ function getSocieteClient(): SocieteServiceClient {
   return societeInstance;
 }
 
-function getOrganisationClient(): OrganisationServiceClient {
+function getOrganisationClient(): GrpcClient {
   if (!organisationInstance) {
-    organisationInstance = new OrganisationServiceClient(
+    organisationInstance = makeClient(
+      OrganisationServiceService,
+      "OrganisationService",
       SERVICES.organisations,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -79,9 +114,11 @@ function getOrganisationClient(): OrganisationServiceClient {
   return organisationInstance;
 }
 
-function getRolePartenaireClient(): RolePartenaireServiceClient {
+function getRolePartenaireClient(): GrpcClient {
   if (!rolePartenaireInstance) {
-    rolePartenaireInstance = new RolePartenaireServiceClient(
+    rolePartenaireInstance = makeClient(
+      RolePartenaireServiceService,
+      "RolePartenaireService",
       SERVICES.organisations,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -89,9 +126,11 @@ function getRolePartenaireClient(): RolePartenaireServiceClient {
   return rolePartenaireInstance;
 }
 
-function getMembrePartenaireClient(): MembrePartenaireServiceClient {
+function getMembrePartenaireClient(): GrpcClient {
   if (!membrePartenaireInstance) {
-    membrePartenaireInstance = new MembrePartenaireServiceClient(
+    membrePartenaireInstance = makeClient(
+      MembrePartenaireServiceService,
+      "MembrePartenaireService",
       SERVICES.organisations,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -99,14 +138,52 @@ function getMembrePartenaireClient(): MembrePartenaireServiceClient {
   return membrePartenaireInstance;
 }
 
-function getInvitationCompteClient(): InvitationCompteServiceClient {
+function getInvitationCompteClient(): GrpcClient {
   if (!invitationCompteInstance) {
-    invitationCompteInstance = new InvitationCompteServiceClient(
+    invitationCompteInstance = makeClient(
+      InvitationCompteServiceService,
+      "InvitationCompteService",
       SERVICES.organisations,
       createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return invitationCompteInstance;
+}
+
+function getPartenaireMarqueBlancheClient(): GrpcClient {
+  if (!partenaireMarqueBlancheInstance) {
+    partenaireMarqueBlancheInstance = makeClient(
+      PartenaireMarqueBlancheServiceService,
+      "PartenaireMarqueBlancheService",
+      SERVICES.organisations,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return partenaireMarqueBlancheInstance;
+}
+
+function getThemeMarqueClient(): GrpcClient {
+  if (!themeMarqueInstance) {
+    themeMarqueInstance = makeClient(
+      ThemeMarqueServiceService,
+      "ThemeMarqueService",
+      SERVICES.organisations,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return themeMarqueInstance;
+}
+
+function getStatutPartenaireClient(): GrpcClient {
+  if (!statutPartenaireInstance) {
+    statutPartenaireInstance = makeClient(
+      StatutPartenaireServiceService,
+      "StatutPartenaireService",
+      SERVICES.organisations,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return statutPartenaireInstance;
 }
 
 export const societes = {
@@ -302,6 +379,108 @@ export const invitationsCompte = {
     )(request),
 };
 
+export const partenairesMarqueBlanche = {
+  create: (request: CreatePartenaireRequest): Promise<PartenaireMarqueBlanche> =>
+    promisify<CreatePartenaireRequest, PartenaireMarqueBlanche>(
+      getPartenaireMarqueBlancheClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdatePartenaireRequest): Promise<PartenaireMarqueBlanche> =>
+    promisify<UpdatePartenaireRequest, PartenaireMarqueBlanche>(
+      getPartenaireMarqueBlancheClient(),
+      "update"
+    )(request),
+
+  get: (request: GetPartenaireRequest): Promise<PartenaireMarqueBlanche> =>
+    promisify<GetPartenaireRequest, PartenaireMarqueBlanche>(
+      getPartenaireMarqueBlancheClient(),
+      "get"
+    )(request),
+
+  list: (request: ListPartenaireRequest): Promise<ListPartenaireResponse> =>
+    promisify<ListPartenaireRequest, ListPartenaireResponse>(
+      getPartenaireMarqueBlancheClient(),
+      "list"
+    )(request),
+
+  delete: (request: DeletePartenaireRequest): Promise<OrganisationDeleteResponse> =>
+    promisify<DeletePartenaireRequest, OrganisationDeleteResponse>(
+      getPartenaireMarqueBlancheClient(),
+      "delete"
+    )(request),
+};
+
+export const themesMarque = {
+  create: (request: CreateThemeMarqueRequest): Promise<ThemeMarque> =>
+    promisify<CreateThemeMarqueRequest, ThemeMarque>(
+      getThemeMarqueClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdateThemeMarqueRequest): Promise<ThemeMarque> =>
+    promisify<UpdateThemeMarqueRequest, ThemeMarque>(
+      getThemeMarqueClient(),
+      "update"
+    )(request),
+
+  get: (request: GetThemeMarqueRequest): Promise<ThemeMarque> =>
+    promisify<GetThemeMarqueRequest, ThemeMarque>(
+      getThemeMarqueClient(),
+      "get"
+    )(request),
+
+  list: (request: ListThemeMarqueRequest): Promise<ListThemeMarqueResponse> =>
+    promisify<ListThemeMarqueRequest, ListThemeMarqueResponse>(
+      getThemeMarqueClient(),
+      "list"
+    )(request),
+
+  delete: (request: DeleteThemeMarqueRequest): Promise<OrganisationDeleteResponse> =>
+    promisify<DeleteThemeMarqueRequest, OrganisationDeleteResponse>(
+      getThemeMarqueClient(),
+      "delete"
+    )(request),
+};
+
+export const statutsPartenaire = {
+  create: (request: CreateStatutPartenaireRequest): Promise<StatutPartenaire> =>
+    promisify<CreateStatutPartenaireRequest, StatutPartenaire>(
+      getStatutPartenaireClient(),
+      "create"
+    )(request),
+
+  update: (request: UpdateStatutPartenaireRequest): Promise<StatutPartenaire> =>
+    promisify<UpdateStatutPartenaireRequest, StatutPartenaire>(
+      getStatutPartenaireClient(),
+      "update"
+    )(request),
+
+  get: (request: GetStatutPartenaireRequest): Promise<StatutPartenaire> =>
+    promisify<GetStatutPartenaireRequest, StatutPartenaire>(
+      getStatutPartenaireClient(),
+      "get"
+    )(request),
+
+  getByCode: (request: GetStatutPartenaireByCodeRequest): Promise<StatutPartenaire> =>
+    promisify<GetStatutPartenaireByCodeRequest, StatutPartenaire>(
+      getStatutPartenaireClient(),
+      "getByCode"
+    )(request),
+
+  list: (request: ListStatutPartenaireRequest): Promise<ListStatutPartenaireResponse> =>
+    promisify<ListStatutPartenaireRequest, ListStatutPartenaireResponse>(
+      getStatutPartenaireClient(),
+      "list"
+    )(request),
+
+  delete: (request: DeleteStatutPartenaireRequest): Promise<OrganisationDeleteResponse> =>
+    promisify<DeleteStatutPartenaireRequest, OrganisationDeleteResponse>(
+      getStatutPartenaireClient(),
+      "delete"
+    )(request),
+};
+
 export type {
   Organisation,
   GetOrganisationRequest,
@@ -323,4 +502,23 @@ export type {
   UpdateInvitationCompteRequest,
   ListInvitationByOrganisationRequest,
   ListInvitationCompteResponse,
+  // PartenaireMarqueBlanche
+  PartenaireMarqueBlanche,
+  CreatePartenaireRequest,
+  UpdatePartenaireRequest,
+  ListPartenaireRequest,
+  ListPartenaireResponse,
+  // ThemeMarque
+  ThemeMarque,
+  CreateThemeMarqueRequest,
+  UpdateThemeMarqueRequest,
+  ListThemeMarqueRequest,
+  ListThemeMarqueResponse,
+  // StatutPartenaire
+  StatutPartenaire,
+  CreateStatutPartenaireRequest,
+  UpdateStatutPartenaireRequest,
+  GetStatutPartenaireByCodeRequest,
+  ListStatutPartenaireRequest,
+  ListStatutPartenaireResponse,
 };

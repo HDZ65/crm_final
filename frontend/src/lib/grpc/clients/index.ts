@@ -18,3 +18,7 @@ export * from "./conciergerie";
 export * from "./justi-plus";
 export * from "./wincash";
 export * from "./depanssur";
+export * from "./subscriptions";
+export * from "./woocommerce";
+export * from "./permissions";
+export * from "./documents";

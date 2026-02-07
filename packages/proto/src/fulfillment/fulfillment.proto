@@ -1,0 +1,186 @@
+syntax = "proto3";
+
+package fulfillment;
+
+// ========== FULFILLMENT BATCH SERVICE ==========
+service FulfillmentBatchService {
+  rpc Create(CreateFulfillmentBatchRequest) returns (FulfillmentBatch);
+  rpc Update(UpdateFulfillmentBatchRequest) returns (FulfillmentBatch);
+  rpc Get(GetByIdRequest) returns (FulfillmentBatch);
+  rpc List(ListFulfillmentBatchRequest) returns (ListFulfillmentBatchResponse);
+  rpc Delete(DeleteByIdRequest) returns (DeleteResponse);
+  rpc Lock(LockFulfillmentBatchRequest) returns (FulfillmentBatch);
+  rpc Dispatch(DispatchFulfillmentBatchRequest) returns (FulfillmentBatch);
+  rpc Complete(CompleteFulfillmentBatchRequest) returns (FulfillmentBatch);
+  rpc AddLine(AddFulfillmentBatchLineRequest) returns (FulfillmentBatchLine);
+  rpc RemoveLine(RemoveFulfillmentBatchLineRequest) returns (DeleteResponse);
+}
+
+// ========== FULFILLMENT CUTOFF CONFIG SERVICE ==========
+service FulfillmentCutoffConfigService {
+  rpc Create(CreateFulfillmentCutoffConfigRequest) returns (FulfillmentCutoffConfig);
+  rpc Update(UpdateFulfillmentCutoffConfigRequest) returns (FulfillmentCutoffConfig);
+  rpc Get(GetByIdRequest) returns (FulfillmentCutoffConfig);
+  rpc GetByOrganisation(GetByOrganisationRequest) returns (FulfillmentCutoffConfig);
+  rpc Delete(DeleteByIdRequest) returns (DeleteResponse);
+}
+
+// ========== FULFILLMENT BATCH MESSAGES ==========
+message FulfillmentBatch {
+  string id = 1;
+  string organisation_id = 2;
+  string label = 3;
+  BatchStatus status = 4;
+  string cutoff_date = 5;
+  string dispatch_date = 6;
+  int32 total_lines = 7;
+  int32 total_items = 8;
+  repeated FulfillmentBatchLine lines = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+message FulfillmentBatchLine {
+  string id = 1;
+  string batch_id = 2;
+  string subscription_id = 3;
+  string client_id = 4;
+  string product_id = 5;
+  string product_name = 6;
+  int32 quantity = 7;
+  BatchLineSnapshot snapshot = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+message BatchLineSnapshot {
+  string line1 = 1;
+  optional string line2 = 2;
+  string postal_code = 3;
+  string city = 4;
+  string country = 5;
+  map<string, string> preferences = 6;
+}
+
+message CreateFulfillmentBatchRequest {
+  string organisation_id = 1;
+  string label = 2;
+  string cutoff_date = 3;
+}
+
+message UpdateFulfillmentBatchRequest {
+  string id = 1;
+  optional string label = 2;
+  optional string cutoff_date = 3;
+}
+
+message ListFulfillmentBatchRequest {
+  string organisation_id = 1;
+  optional BatchStatus status = 2;
+  optional string search = 3;
+  Pagination pagination = 4;
+}
+
+message ListFulfillmentBatchResponse {
+  repeated FulfillmentBatch batches = 1;
+  PaginationResult pagination = 2;
+}
+
+message LockFulfillmentBatchRequest {
+  string id = 1;
+}
+
+message DispatchFulfillmentBatchRequest {
+  string id = 1;
+  string dispatch_date = 2;
+}
+
+message CompleteFulfillmentBatchRequest {
+  string id = 1;
+}
+
+message AddFulfillmentBatchLineRequest {
+  string batch_id = 1;
+  string subscription_id = 2;
+  string client_id = 3;
+  string product_id = 4;
+  string product_name = 5;
+  int32 quantity = 6;
+  BatchLineSnapshot snapshot = 7;
+}
+
+message RemoveFulfillmentBatchLineRequest {
+  string id = 1;
+}
+
+// ========== FULFILLMENT CUTOFF CONFIG MESSAGES ==========
+message FulfillmentCutoffConfig {
+  string id = 1;
+  string organisation_id = 2;
+  int32 cutoff_day_of_month = 3;
+  string cutoff_time = 4;
+  int32 processing_days = 5;
+  bool auto_lock = 6;
+  bool auto_dispatch = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateFulfillmentCutoffConfigRequest {
+  string organisation_id = 1;
+  int32 cutoff_day_of_month = 2;
+  string cutoff_time = 3;
+  int32 processing_days = 4;
+  bool auto_lock = 5;
+  bool auto_dispatch = 6;
+}
+
+message UpdateFulfillmentCutoffConfigRequest {
+  string id = 1;
+  optional int32 cutoff_day_of_month = 2;
+  optional string cutoff_time = 3;
+  optional int32 processing_days = 4;
+  optional bool auto_lock = 5;
+  optional bool auto_dispatch = 6;
+}
+
+message GetByOrganisationRequest {
+  string organisation_id = 1;
+}
+
+// ========== ENUMS ==========
+enum BatchStatus {
+  BATCH_STATUS_UNSPECIFIED = 0;
+  BATCH_STATUS_OPEN = 1;
+  BATCH_STATUS_LOCKED = 2;
+  BATCH_STATUS_DISPATCHED = 3;
+  BATCH_STATUS_COMPLETED = 4;
+  BATCH_STATUS_CANCELED = 5;
+}
+
+// ========== COMMON MESSAGES ==========
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message GetByIdRequest {
+  string id = 1;
+}
+
+message DeleteByIdRequest {
+  string id = 1;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}

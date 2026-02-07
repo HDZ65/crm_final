@@ -1,0 +1,428 @@
+syntax = "proto3";
+
+package subscriptions;
+
+// ========== SUBSCRIPTION PLAN SERVICE ==========
+service SubscriptionPlanService {
+  rpc Create(CreateSubscriptionPlanRequest) returns (SubscriptionPlan);
+  rpc Update(UpdateSubscriptionPlanRequest) returns (SubscriptionPlan);
+  rpc Get(GetByIdRequest) returns (SubscriptionPlan);
+  rpc List(ListSubscriptionPlanRequest) returns (ListSubscriptionPlanResponse);
+  rpc Delete(DeleteByIdRequest) returns (DeleteResponse);
+  rpc ListByOrganisation(ListByOrganisationRequest) returns (ListSubscriptionPlanResponse);
+}
+
+message SubscriptionPlan {
+  string id = 1;
+  string organisation_id = 2;
+  string name = 3;
+  string description = 4;
+  double price = 5;
+  string currency = 6;
+  BillingInterval billing_interval = 7;
+  int32 billing_cycle_days = 8;
+  optional string trial_period_days = 9;
+  bool is_active = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+message CreateSubscriptionPlanRequest {
+  string organisation_id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  string currency = 5;
+  BillingInterval billing_interval = 6;
+  int32 billing_cycle_days = 7;
+  optional string trial_period_days = 8;
+}
+
+message UpdateSubscriptionPlanRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional double price = 4;
+  optional string currency = 5;
+  optional BillingInterval billing_interval = 6;
+  optional int32 billing_cycle_days = 7;
+  optional string trial_period_days = 8;
+  optional bool is_active = 9;
+}
+
+message ListSubscriptionPlanRequest {
+  Pagination pagination = 1;
+}
+
+message ListSubscriptionPlanResponse {
+  repeated SubscriptionPlan plans = 1;
+  PaginationResult pagination = 2;
+}
+
+// ========== SUBSCRIPTION SERVICE ==========
+service SubscriptionService {
+  rpc Create(CreateSubscriptionRequest) returns (Subscription);
+  rpc Update(UpdateSubscriptionRequest) returns (Subscription);
+  rpc Get(GetByIdRequest) returns (Subscription);
+  rpc List(ListSubscriptionRequest) returns (ListSubscriptionResponse);
+  rpc Delete(DeleteByIdRequest) returns (DeleteResponse);
+  rpc Activate(ActivateSubscriptionRequest) returns (Subscription);
+  rpc Pause(PauseSubscriptionRequest) returns (Subscription);
+  rpc Resume(ResumeSubscriptionRequest) returns (Subscription);
+  rpc Cancel(CancelSubscriptionRequest) returns (Subscription);
+  rpc Expire(ExpireSubscriptionRequest) returns (Subscription);
+  rpc ListByClient(ListByClientRequest) returns (ListSubscriptionResponse);
+  rpc ListByPlan(ListByPlanRequest) returns (ListSubscriptionResponse);
+}
+
+message Subscription {
+  string id = 1;
+  string organisation_id = 2;
+  string client_id = 3;
+  string plan_id = 4;
+  SubscriptionStatus status = 5;
+  string start_date = 6;
+  optional string end_date = 7;
+  optional string pause_date = 8;
+  optional string resume_date = 9;
+  optional string cancel_date = 10;
+  optional string cancellation_reason = 11;
+  string created_at = 12;
+  string updated_at = 13;
+}
+
+message CreateSubscriptionRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string plan_id = 3;
+  string start_date = 4;
+  optional string cancellation_reason = 5;
+}
+
+message UpdateSubscriptionRequest {
+  string id = 1;
+  optional string plan_id = 2;
+  optional string start_date = 3;
+  optional string end_date = 4;
+}
+
+message ActivateSubscriptionRequest {
+  string id = 1;
+}
+
+message PauseSubscriptionRequest {
+  string id = 1;
+  optional string reason = 2;
+}
+
+message ResumeSubscriptionRequest {
+  string id = 1;
+}
+
+message CancelSubscriptionRequest {
+  string id = 1;
+  optional string reason = 2;
+}
+
+message ExpireSubscriptionRequest {
+  string id = 1;
+}
+
+message ListSubscriptionRequest {
+  Pagination pagination = 1;
+}
+
+message ListSubscriptionResponse {
+  repeated Subscription subscriptions = 1;
+  PaginationResult pagination = 2;
+}
+
+message ListByClientRequest {
+  string client_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListByPlanRequest {
+  string plan_id = 1;
+  Pagination pagination = 2;
+}
+
+// ========== SUBSCRIPTION CYCLE SERVICE ==========
+message SubscriptionCycle {
+  string id = 1;
+  string subscription_id = 2;
+  int32 cycle_number = 3;
+  string start_date = 4;
+  string end_date = 5;
+  double amount = 6;
+  string currency = 7;
+  string status = 8;
+  optional string invoice_id = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+// ========== SUBSCRIPTION STATUS HISTORY SERVICE ==========
+message SubscriptionStatusHistory {
+  string id = 1;
+  string subscription_id = 2;
+  SubscriptionStatus old_status = 3;
+  SubscriptionStatus new_status = 4;
+  string changed_at = 5;
+  optional string reason = 6;
+  string created_at = 7;
+}
+
+// ========== SUBSCRIPTION PREFERENCE SCHEMA SERVICE ==========
+service SubscriptionPreferenceSchemaService {
+  rpc Create(CreatePreferenceSchemaRequest) returns (PreferenceSchema);
+  rpc Update(UpdatePreferenceSchemaRequest) returns (PreferenceSchema);
+  rpc Get(GetByIdRequest) returns (PreferenceSchema);
+  rpc List(ListPreferenceSchemaRequest) returns (ListPreferenceSchemaResponse);
+  rpc Delete(DeleteByIdRequest) returns (DeleteResponse);
+}
+
+message PreferenceSchema {
+  string id = 1;
+  string organisation_id = 2;
+  string name = 3;
+  string description = 4;
+  repeated PreferenceField fields = 5;
+  bool is_active = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message PreferenceField {
+  string name = 1;
+  string type = 2;  // string, number, boolean, enum, date
+  string label = 3;
+  bool required = 4;
+  optional string default_value = 5;
+  repeated string enum_values = 6;
+}
+
+message CreatePreferenceSchemaRequest {
+  string organisation_id = 1;
+  string name = 2;
+  string description = 3;
+  repeated PreferenceField fields = 4;
+}
+
+message UpdatePreferenceSchemaRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  repeated PreferenceField fields = 4;
+  optional bool is_active = 5;
+}
+
+message ListPreferenceSchemaRequest {
+  Pagination pagination = 1;
+}
+
+message ListPreferenceSchemaResponse {
+  repeated PreferenceSchema schemas = 1;
+  PaginationResult pagination = 2;
+}
+
+// ========== SUBSCRIPTION PREFERENCE SERVICE ==========
+service SubscriptionPreferenceService {
+  rpc Create(CreatePreferenceRequest) returns (Preference);
+  rpc Update(UpdatePreferenceRequest) returns (Preference);
+  rpc Get(GetByIdRequest) returns (Preference);
+  rpc List(ListPreferenceRequest) returns (ListPreferenceResponse);
+  rpc Delete(DeleteByIdRequest) returns (DeleteResponse);
+  rpc GetBySubscription(GetBySubscriptionRequest) returns (Preference);
+}
+
+message Preference {
+  string id = 1;
+  string subscription_id = 2;
+  string schema_id = 3;
+  map<string, string> values = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message CreatePreferenceRequest {
+  string subscription_id = 1;
+  string schema_id = 2;
+  map<string, string> values = 3;
+}
+
+message UpdatePreferenceRequest {
+  string id = 1;
+  map<string, string> values = 2;
+}
+
+message ListPreferenceRequest {
+  Pagination pagination = 1;
+}
+
+message ListPreferenceResponse {
+  repeated Preference preferences = 1;
+  PaginationResult pagination = 2;
+}
+
+message GetBySubscriptionRequest {
+  string subscription_id = 1;
+}
+
+message PreferenceHistoryEntry {
+  string id = 1;
+  string preference_id = 2;
+  map<string, string> old_values = 3;
+  map<string, string> new_values = 4;
+  string changed_at = 5;
+  string created_at = 6;
+}
+
+// ========== WOOCOMMERCE SERVICE ==========
+service WooCommerceService {
+  rpc CreateMapping(CreateWooCommerceMappingRequest) returns (WooCommerceMapping);
+  rpc UpdateMapping(UpdateWooCommerceMappingRequest) returns (WooCommerceMapping);
+  rpc GetMapping(GetByIdRequest) returns (WooCommerceMapping);
+  rpc ListMappings(ListWooCommerceMappingRequest) returns (ListWooCommerceMappingResponse);
+  rpc DeleteMapping(DeleteByIdRequest) returns (DeleteResponse);
+  rpc ProcessWebhook(ProcessWooCommerceWebhookRequest) returns (WooCommerceWebhookResponse);
+  rpc GetConfig(GetWooCommerceConfigRequest) returns (WooCommerceConfig);
+  rpc UpdateConfig(UpdateWooCommerceConfigRequest) returns (WooCommerceConfig);
+}
+
+message WooCommerceMapping {
+  string id = 1;
+  string organisation_id = 2;
+  string woocommerce_store_id = 3;
+  string subscription_plan_id = 4;
+  string woocommerce_product_id = 5;
+  string woocommerce_subscription_id = 6;
+  bool is_active = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateWooCommerceMappingRequest {
+  string organisation_id = 1;
+  string woocommerce_store_id = 2;
+  string subscription_plan_id = 3;
+  string woocommerce_product_id = 4;
+}
+
+message UpdateWooCommerceMappingRequest {
+  string id = 1;
+  optional string woocommerce_product_id = 2;
+  optional bool is_active = 3;
+}
+
+message ListWooCommerceMappingRequest {
+  Pagination pagination = 1;
+}
+
+message ListWooCommerceMappingResponse {
+  repeated WooCommerceMapping mappings = 1;
+  PaginationResult pagination = 2;
+}
+
+message WooCommerceWebhookEvent {
+  string id = 1;
+  string organisation_id = 2;
+  string event_type = 3;  // subscription.created, subscription.updated, subscription.deleted, etc.
+  string woocommerce_subscription_id = 4;
+  string raw_payload = 5;  // JSON string
+  string received_at = 6;
+  bool processed = 7;
+  optional string processed_at = 8;
+  optional string error_message = 9;
+}
+
+message ProcessWooCommerceWebhookRequest {
+  string organisation_id = 1;
+  string event_type = 2;
+  string raw_payload = 3;  // JSON string
+}
+
+message WooCommerceWebhookResponse {
+  bool success = 1;
+  optional string message = 2;
+  optional string subscription_id = 3;
+}
+
+message WooCommerceConfig {
+  string id = 1;
+  string organisation_id = 2;
+  string woocommerce_store_id = 3;
+  string api_key = 4;
+  string api_secret = 5;
+  string webhook_url = 6;
+  bool is_active = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message GetWooCommerceConfigRequest {
+  string organisation_id = 1;
+  string woocommerce_store_id = 2;
+}
+
+message UpdateWooCommerceConfigRequest {
+  string id = 1;
+  optional string api_key = 2;
+  optional string api_secret = 3;
+  optional string webhook_url = 4;
+  optional bool is_active = 5;
+}
+
+// ========== ENUMS ==========
+
+enum SubscriptionStatus {
+  SUBSCRIPTION_STATUS_UNSPECIFIED = 0;
+  SUBSCRIPTION_STATUS_PENDING = 1;
+  SUBSCRIPTION_STATUS_ACTIVE = 2;
+  SUBSCRIPTION_STATUS_PAUSED = 3;
+  SUBSCRIPTION_STATUS_PAST_DUE = 4;
+  SUBSCRIPTION_STATUS_CANCELED = 5;
+  SUBSCRIPTION_STATUS_EXPIRED = 6;
+}
+
+enum BillingInterval {
+  BILLING_INTERVAL_UNSPECIFIED = 0;
+  BILLING_INTERVAL_WEEKLY = 1;
+  BILLING_INTERVAL_BIWEEKLY = 2;
+  BILLING_INTERVAL_MONTHLY = 3;
+  BILLING_INTERVAL_QUARTERLY = 4;
+  BILLING_INTERVAL_YEARLY = 5;
+}
+
+// ========== COMMON MESSAGES ==========
+
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message GetByIdRequest {
+  string id = 1;
+}
+
+message DeleteByIdRequest {
+  string id = 1;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}
+
+message ListByOrganisationRequest {
+  string organisation_id = 1;
+  Pagination pagination = 2;
+}

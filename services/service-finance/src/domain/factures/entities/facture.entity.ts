@@ -55,6 +55,15 @@ export class FactureEntity {
   @Column({ type: 'uuid' })
   adresseFacturationId: string;
 
+  @Column({ type: 'varchar', length: 20, default: 'FACTURE' })
+  typeDocument: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  factureOrigineId: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  motifAvoir: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -65,6 +74,10 @@ export class FactureEntity {
   @ManyToOne(() => StatutFactureEntity)
   @JoinColumn({ name: 'statut_id' })
   statut: StatutFactureEntity;
+
+  @ManyToOne(() => FactureEntity, { nullable: true })
+  @JoinColumn({ name: 'facture_origine_id' })
+  factureOrigine: FactureEntity | null;
 
   @OneToMany(() => LigneFactureEntity, (ligne) => ligne.facture, { cascade: true })
   lignes: LigneFactureEntity[];

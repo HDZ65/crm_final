@@ -200,10 +200,13 @@ message Facture {
   string adresse_facturation_id = 12;
   string created_at = 13;
   string updated_at = 14;
+  string type_document = 15;
+  string facture_origine_id = 16;
+  string motif_avoir = 17;
   // Relations
-  StatutFacture statut = 15;
-  ClientInfo client = 16;
-  repeated LigneFacture lignes = 17;
+  StatutFacture statut = 18;
+  ClientInfo client = 19;
+  repeated LigneFacture lignes = 20;
 }
 
 message CreateFactureRequest {
@@ -264,6 +267,29 @@ message DeleteFactureRequest {
 
 message DeleteFactureResponse {
   bool success = 1;
+}
+
+// Avoir (Credit Note)
+message CreateAvoirRequest {
+  string organisation_id = 1;
+  string facture_origine_id = 2;
+  string statut_id = 3;
+  string emission_facture_id = 4;
+  string client_base_id = 5;
+  string client_partenaire_id = 6;
+  string adresse_facturation_id = 7;
+  string motif_avoir = 8;
+  repeated CreateLigneFactureItem lignes = 9;
+}
+
+message ListAvoirsByFactureRequest {
+  string facture_origine_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListAvoirsResponse {
+  repeated Facture avoirs = 1;
+  PaginationResponse pagination = 2;
 }
 
 // Validation/Finalization
@@ -445,6 +471,8 @@ service FactureService {
   rpc Delete(DeleteFactureRequest) returns (DeleteFactureResponse);
   rpc Validate(ValidateFactureRequest) returns (ValidateFactureResponse);
   rpc Finalize(FinalizeFactureRequest) returns (Facture);
+  rpc CreateAvoir(CreateAvoirRequest) returns (Facture);
+  rpc ListAvoirsByFacture(ListAvoirsByFactureRequest) returns (ListAvoirsResponse);
 }
 
 service FactureSettingsService {

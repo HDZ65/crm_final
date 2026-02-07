@@ -1,17 +1,19 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { NatsModule } from '@crm/nats-utils';
-import { AuthInterceptor } from '@crm/grpc-utils';
+import { AuthInterceptor } from '@crm/shared-kernel';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuditSubscriber } from './infrastructure/persistence/typeorm/audit-subscriber';
 
 // ============================================================================
 // DDD BOUNDED CONTEXT MODULES
 // ============================================================================
 import { CommercialModule } from './commercial.module';
 import { ContratsModule } from './contrats.module';
+import { DashboardModule } from './dashboard.module';
 import { ProductsModule } from './products.module';
+import { SubscriptionsModule } from './subscriptions.module';
 
 @Module({
   imports: [
@@ -31,7 +33,7 @@ import { ProductsModule } from './products.module';
         database: configService.get<string>('DB_DATABASE', 'commercial_db'),
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
-        synchronize: false,
+        synchronize: configService.get('NODE_ENV') !== 'production',
         migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get<string>('NODE_ENV') === 'development',
@@ -46,12 +48,12 @@ import { ProductsModule } from './products.module';
         },
       }),
     }),
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
-
     // DDD Bounded Context Modules
     CommercialModule,
     ContratsModule,
+    DashboardModule,
     ProductsModule,
+    SubscriptionsModule,
   ],
   controllers: [],
   providers: [
@@ -59,6 +61,7 @@ import { ProductsModule } from './products.module';
       provide: APP_INTERCEPTOR,
       useClass: AuthInterceptor,
     },
+    AuditSubscriber,
   ],
 })
 export class AppModule {}

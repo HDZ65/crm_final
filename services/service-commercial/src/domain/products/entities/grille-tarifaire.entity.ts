@@ -34,11 +34,17 @@ export class GrilleTarifaireEntity {
   @Column({ name: 'est_par_defaut', default: false })
   estParDefaut: boolean;
 
-  @Column({ default: true })
-  actif: boolean;
+   @Column({ default: true })
+   actif: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

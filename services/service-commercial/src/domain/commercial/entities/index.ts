@@ -9,3 +9,6 @@ export * from './commission-recurrente.entity';
 export * from './report-negatif.entity';
 export * from './reprise-commission.entity';
 export * from './commission-audit-log.entity';
+export * from './contestation-commission.entity';
+export * from './partenaire-commercial.entity';
+export * from './partenaire-commercial-societe.entity';

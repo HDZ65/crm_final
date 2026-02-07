@@ -8,6 +8,34 @@ import {
 } from '../entities/woocommerce-mapping.entity';
 import type { ISubscriptionRepository } from '../../subscriptions/repositories/ISubscriptionRepository';
 
+// Re-define enums here to avoid circular dependency issues with TypeORM decorators in tests.
+// These MUST match the values defined in subscription.entity.ts.
+enum SubscriptionStatus {
+  PENDING = 'PENDING',
+  TRIAL = 'TRIAL',
+  ACTIVE = 'ACTIVE',
+  PAST_DUE = 'PAST_DUE',
+  SUSPENDED = 'SUSPENDED',
+  CANCELLED = 'CANCELLED',
+  EXPIRED = 'EXPIRED',
+}
+
+enum SubscriptionFrequency {
+  MONTHLY = 'MONTHLY',
+  ANNUAL = 'ANNUAL',
+}
+
+enum SubscriptionPlanType {
+  FREE_AVOD = 'FREE_AVOD',
+  PREMIUM_SVOD = 'PREMIUM_SVOD',
+  VIP = 'VIP',
+}
+
+enum StoreSource {
+  NONE = 'NONE',
+  WEB_DIRECT = 'WEB_DIRECT',
+}
+
 // ============================================================================
 // PORT INTERFACES (for cross-service calls)
 // ============================================================================
@@ -45,28 +73,29 @@ export interface CreateClientInput {
 
 /**
  * Maps WooCommerce frequency strings to CRM SubscriptionFrequency values.
+ * Only MONTHLY and ANNUAL are supported in the current schema.
  */
-const WOO_FREQUENCY_MAP: Record<string, string> = {
-  'day': 'DAILY',
-  'week': 'WEEKLY',
-  '2 weeks': 'BIWEEKLY',
-  'month': 'MONTHLY',
-  '2 months': 'BIMONTHLY',
-  '3 months': 'QUARTERLY',
-  '6 months': 'BIANNUAL',
-  'year': 'ANNUAL',
+const WOO_FREQUENCY_MAP: Record<string, SubscriptionFrequency> = {
+  'day': SubscriptionFrequency.MONTHLY, // fallback — closest
+  'week': SubscriptionFrequency.MONTHLY, // fallback — closest
+  '2 weeks': SubscriptionFrequency.MONTHLY,
+  'month': SubscriptionFrequency.MONTHLY,
+  '2 months': SubscriptionFrequency.MONTHLY, // fallback
+  '3 months': SubscriptionFrequency.ANNUAL, // closest match
+  '6 months': SubscriptionFrequency.ANNUAL,
+  'year': SubscriptionFrequency.ANNUAL,
 };
 
 /**
  * Maps WooCommerce subscription status to CRM status.
  */
-const WOO_STATUS_MAP: Record<string, string> = {
-  'active': 'ACTIVE',
-  'on-hold': 'PAUSED',
-  'pending': 'PENDING',
-  'cancelled': 'CANCELED',
-  'expired': 'EXPIRED',
-  'pending-cancel': 'ACTIVE', // Still active until period end
+const WOO_STATUS_MAP: Record<string, SubscriptionStatus> = {
+  'active': SubscriptionStatus.ACTIVE,
+  'on-hold': SubscriptionStatus.SUSPENDED,
+  'pending': SubscriptionStatus.PENDING,
+  'cancelled': SubscriptionStatus.CANCELLED,
+  'expired': SubscriptionStatus.EXPIRED,
+  'pending-cancel': SubscriptionStatus.ACTIVE, // Still active until period end
 };
 
 @Injectable()
@@ -214,17 +243,24 @@ export class WooCommerceSyncService {
     const subscription = {
       organisationId,
       clientId,
-      contratId: null,
+      planType: SubscriptionPlanType.PREMIUM_SVOD, // Default for WooCommerce imports
       status,
       frequency,
       amount,
       currency: payload.currency || 'EUR',
-      startDate: payload.start_date || new Date().toISOString(),
-      endDate: payload.end_date || null,
-      pausedAt: null,
-      resumedAt: null,
-      nextChargeAt: payload.next_payment_date || new Date().toISOString(),
-      retryCount: 0,
+      storeSource: StoreSource.WEB_DIRECT,
+      currentPeriodStart: payload.start_date ? new Date(payload.start_date) : new Date(),
+      currentPeriodEnd: payload.end_date ? new Date(payload.end_date) : null,
+      nextChargeAt: payload.next_payment_date ? new Date(payload.next_payment_date) : new Date(),
+      trialStart: null,
+      trialEnd: null,
+      imsSubscriptionId: null,
+      couponId: null,
+      cancelAtPeriodEnd: false,
+      cancelledAt: null,
+      suspendedAt: null,
+      suspensionReason: null,
+      addOns: null,
     };
 
     const saved = await this.subscriptionRepository.save(subscription as any);
@@ -404,14 +440,14 @@ export class WooCommerceSyncService {
   // HELPERS
   // ============================================================================
 
-  mapWooFrequency(wooPeriod: string | undefined): string {
-    if (!wooPeriod) return 'MONTHLY';
-    return WOO_FREQUENCY_MAP[wooPeriod.toLowerCase()] || 'MONTHLY';
+  mapWooFrequency(wooPeriod: string | undefined): SubscriptionFrequency {
+    if (!wooPeriod) return SubscriptionFrequency.MONTHLY;
+    return WOO_FREQUENCY_MAP[wooPeriod.toLowerCase()] || SubscriptionFrequency.MONTHLY;
   }
 
-  mapWooStatus(wooStatus: string | undefined): string {
-    if (!wooStatus) return 'PENDING';
-    return WOO_STATUS_MAP[wooStatus.toLowerCase()] || 'PENDING';
+  mapWooStatus(wooStatus: string | undefined): SubscriptionStatus {
+    if (!wooStatus) return SubscriptionStatus.PENDING;
+    return WOO_STATUS_MAP[wooStatus.toLowerCase()] || SubscriptionStatus.PENDING;
   }
 
   private parseAmount(value: unknown): number {

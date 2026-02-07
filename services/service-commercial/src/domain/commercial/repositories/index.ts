@@ -9,3 +9,4 @@ export * from './IReportNegatifRepository';
 export * from './IRepriseCommissionRepository';
 export * from './IStatutCommissionRepository';
 export * from './ICommissionAuditLogRepository';
+export * from './IPartenaireCommercialRepository';

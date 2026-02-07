@@ -6,7 +6,6 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { SubscriptionEntity } from './subscription.entity';
 
 @Entity('subscription_cycles')
 export class SubscriptionCycleEntity {
@@ -40,7 +39,7 @@ export class SubscriptionCycleEntity {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => SubscriptionEntity, (sub) => sub.cycles)
+  @ManyToOne('SubscriptionEntity', 'cycles')
   @JoinColumn({ name: 'subscription_id' })
-  subscription: SubscriptionEntity;
+  subscription: any;
 }

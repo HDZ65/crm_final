@@ -1,35 +1,48 @@
 import { describe, expect, it } from 'bun:test';
 import { DomainException } from '@crm/shared-kernel';
-import type { SubscriptionEntity } from '../../entities/subscription.entity';
-import type { ISubscriptionRepository } from '../../repositories/ISubscriptionRepository';
-import type { ISubscriptionStatusHistoryRepository } from '../../repositories/ISubscriptionStatusHistoryRepository';
 import {
-  SubscriptionLifecycleService,
+  SubscriptionEntity,
+  SubscriptionFrequency,
+  SubscriptionPlanType,
   SubscriptionStatus,
-} from '../subscription-lifecycle.service';
+  StoreSource,
+} from '../../entities/subscription.entity';
+import { SubscriptionTriggeredBy } from '../../entities/subscription-history.entity';
+import type { ISubscriptionHistoryRepository } from '../../repositories/ISubscriptionHistoryRepository';
+import type { ISubscriptionRepository } from '../../repositories/ISubscriptionRepository';
+import { SubscriptionLifecycleService } from '../subscription-lifecycle.service';
 
 function makeSubscription(overrides: Partial<SubscriptionEntity> = {}): SubscriptionEntity {
   return {
     id: 'sub-1',
     organisationId: 'org-1',
     clientId: 'client-1',
-    contratId: null,
+    planType: SubscriptionPlanType.PREMIUM_SVOD,
     status: SubscriptionStatus.PENDING,
-    frequency: 'MONTHLY',
+    frequency: SubscriptionFrequency.MONTHLY,
+    trialStart: null,
+    trialEnd: null,
+    currentPeriodStart: new Date('2026-01-01T00:00:00.000Z'),
+    currentPeriodEnd: new Date('2026-02-01T00:00:00.000Z'),
+    nextChargeAt: new Date('2026-02-01T00:00:00.000Z'),
     amount: 19.9,
     currency: 'EUR',
-    startDate: '2026-01-01T00:00:00.000Z',
-    endDate: null,
-    pausedAt: null,
-    resumedAt: null,
-    nextChargeAt: '2026-02-01T00:00:00.000Z',
-    retryCount: 0,
+    storeSource: StoreSource.WEB_DIRECT,
+    imsSubscriptionId: null,
+    couponId: null,
+    cancelAtPeriodEnd: false,
+    cancelledAt: null,
+    suspendedAt: null,
+    suspensionReason: null,
+    addOns: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-    lines: [],
     history: [],
+    lines: [],
     cycles: [],
     statusHistory: [],
+    contratId: null,
+    retryCount: 0,
     ...overrides,
   };
 }
@@ -37,14 +50,14 @@ function makeSubscription(overrides: Partial<SubscriptionEntity> = {}): Subscrip
 function createFixture(initialSubscription: SubscriptionEntity | null) {
   let subscription = initialSubscription ? { ...initialSubscription } : null;
   const savedSubscriptions: SubscriptionEntity[] = [];
-  const savedHistory: Array<{
-    subscriptionId: string;
-    previousStatus: string | null;
+  const historyEntries: Array<{
+    oldStatus: string | null;
     newStatus: string;
     reason: string | null;
+    triggeredBy: string;
+    metadata: Record<string, unknown> | null;
   }> = [];
   const publishedEvents: Array<{ subject: string; payload: Record<string, unknown> }> = [];
-  const schedulingCalls: Array<{ frequency: string; currentPeriodEnd: string }> = [];
 
   const subscriptionRepository = {
     findById: async (id: string) => {
@@ -56,33 +69,28 @@ function createFixture(initialSubscription: SubscriptionEntity | null) {
     save: async (entity: SubscriptionEntity) => {
       subscription = { ...entity };
       savedSubscriptions.push({ ...entity });
-      return entity;
+      return { ...entity };
     },
   } as unknown as ISubscriptionRepository;
 
-  const statusHistoryRepository = {
-    save: async (entity: {
-      subscriptionId: string;
-      previousStatus: string | null;
+  const historyRepository = {
+    create: async (input: {
+      oldStatus: string | null;
       newStatus: string;
-      reason: string | null;
+      reason?: string | null;
+      triggeredBy: string;
+      metadata?: Record<string, unknown> | null;
     }) => {
-      savedHistory.push({
-        subscriptionId: entity.subscriptionId,
-        previousStatus: entity.previousStatus,
-        newStatus: entity.newStatus,
-        reason: entity.reason,
+      historyEntries.push({
+        oldStatus: input.oldStatus,
+        newStatus: input.newStatus,
+        reason: input.reason || null,
+        triggeredBy: input.triggeredBy,
+        metadata: input.metadata || null,
       });
-      return entity;
+      return input as any;
     },
-  } as unknown as ISubscriptionStatusHistoryRepository;
-
-  const schedulingService = {
-    calculateNextChargeAt: (frequency: string, currentPeriodEnd: string) => {
-      schedulingCalls.push({ frequency, currentPeriodEnd });
-      return '2026-03-15T00:00:00.000Z';
-    },
-  };
+  } as unknown as ISubscriptionHistoryRepository;
 
   const natsService = {
     isConnected: () => true,
@@ -93,143 +101,277 @@ function createFixture(initialSubscription: SubscriptionEntity | null) {
 
   const service = new SubscriptionLifecycleService(
     subscriptionRepository,
-    statusHistoryRepository,
-    schedulingService,
+    historyRepository,
     natsService as any,
   );
 
   return {
     service,
     savedSubscriptions,
-    savedHistory,
+    historyEntries,
     publishedEvents,
-    schedulingCalls,
   };
 }
 
 describe('SubscriptionLifecycleService', () => {
-  it('activate: PENDING -> ACTIVE et historise + emit event', async () => {
-    const { service, savedSubscriptions, savedHistory, publishedEvents } = createFixture(
+  it('PENDING -> TRIAL when trial_days > 0', async () => {
+    const { service, savedSubscriptions, historyEntries, publishedEvents } = createFixture(
       makeSubscription({ status: SubscriptionStatus.PENDING }),
     );
 
-    const updated = await service.activate('sub-1');
+    const updated = await service.startTrial('sub-1', {
+      trialDays: 7,
+      triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+    });
+
+    expect(updated.status).toBe(SubscriptionStatus.TRIAL);
+    expect(updated.trialStart).toBeTruthy();
+    expect(updated.trialEnd).toBeTruthy();
+    expect(savedSubscriptions[0].status).toBe(SubscriptionStatus.TRIAL);
+    expect(historyEntries[0].oldStatus).toBe(SubscriptionStatus.PENDING);
+    expect(historyEntries[0].newStatus).toBe(SubscriptionStatus.TRIAL);
+    expect(historyEntries[0].triggeredBy).toBe(SubscriptionTriggeredBy.SYSTEM);
+    expect(publishedEvents[0].subject).toBe('subscription.trial_started');
+  });
+
+  it('PENDING -> ACTIVE when no trial days', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
+      makeSubscription({ status: SubscriptionStatus.PENDING }),
+    );
+
+    const updated = await service.activateFromPending('sub-1', {
+      trialDays: 0,
+      triggeredBy: SubscriptionTriggeredBy.USER,
+    });
 
     expect(updated.status).toBe(SubscriptionStatus.ACTIVE);
-    expect(savedSubscriptions[0].status).toBe(SubscriptionStatus.ACTIVE);
-    expect(savedHistory[0]).toEqual({
-      subscriptionId: 'sub-1',
-      previousStatus: SubscriptionStatus.PENDING,
-      newStatus: SubscriptionStatus.ACTIVE,
-      reason: null,
-    });
+    expect(historyEntries[0].newStatus).toBe(SubscriptionStatus.ACTIVE);
+    expect(historyEntries[0].triggeredBy).toBe(SubscriptionTriggeredBy.USER);
     expect(publishedEvents[0].subject).toBe('subscription.activated');
   });
 
-  it('pause: ACTIVE -> PAUSED avec reason', async () => {
-    const { service, savedHistory, publishedEvents } = createFixture(
-      makeSubscription({ status: SubscriptionStatus.ACTIVE }),
-    );
-
-    const updated = await service.pause('sub-1', 'manual intervention');
-
-    expect(updated.status).toBe(SubscriptionStatus.PAUSED);
-    expect(updated.pausedAt).toBeTruthy();
-    expect(savedHistory[0].reason).toBe('manual intervention');
-    expect(publishedEvents[0].subject).toBe('subscription.paused');
-  });
-
-  it('resume: PAUSED -> ACTIVE recalcule next_charge_at', async () => {
-    const { service, schedulingCalls, publishedEvents } = createFixture(
+  it('PENDING -> ACTIVE for FREE_AVOD even when trial_days > 0', async () => {
+    const { service } = createFixture(
       makeSubscription({
-        status: SubscriptionStatus.PAUSED,
-        pausedAt: '2026-02-10T00:00:00.000Z',
-        nextChargeAt: '2026-02-12T00:00:00.000Z',
+        status: SubscriptionStatus.PENDING,
+        planType: SubscriptionPlanType.FREE_AVOD,
       }),
     );
 
-    const updated = await service.resume('sub-1');
+    const updated = await service.activateFromPending('sub-1', {
+      trialDays: 14,
+      triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+    });
 
     expect(updated.status).toBe(SubscriptionStatus.ACTIVE);
-    expect(updated.pausedAt).toBeNull();
-    expect(updated.resumedAt).toBeTruthy();
-    expect(updated.nextChargeAt).toBe('2026-03-15T00:00:00.000Z');
-    expect(schedulingCalls[0]).toEqual({
-      frequency: 'MONTHLY',
-      currentPeriodEnd: '2026-02-12T00:00:00.000Z',
-    });
-    expect(publishedEvents[0].subject).toBe('subscription.resumed');
   });
 
-  it('markPastDue: ACTIVE -> PAST_DUE', async () => {
-    const { service, savedHistory, publishedEvents } = createFixture(
+  it('TRIAL -> ACTIVE on conversion', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
+      makeSubscription({
+        status: SubscriptionStatus.TRIAL,
+        trialStart: new Date('2026-01-01T00:00:00.000Z'),
+        trialEnd: new Date('2026-01-08T00:00:00.000Z'),
+      }),
+    );
+
+    const updated = await service.activateFromTrial('sub-1', {
+      triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+    });
+
+    expect(updated.status).toBe(SubscriptionStatus.ACTIVE);
+    expect(historyEntries[0].oldStatus).toBe(SubscriptionStatus.TRIAL);
+    expect(publishedEvents[0].subject).toBe('subscription.activated');
+  });
+
+  it('ACTIVE -> PAST_DUE when payment fails', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
       makeSubscription({ status: SubscriptionStatus.ACTIVE }),
     );
 
-    const updated = await service.markPastDue('sub-1');
+    const updated = await service.markPastDue('sub-1', {
+      reason: 'payment_failed',
+      triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+    });
 
     expect(updated.status).toBe(SubscriptionStatus.PAST_DUE);
-    expect(savedHistory[0].newStatus).toBe(SubscriptionStatus.PAST_DUE);
+    expect(historyEntries[0].reason).toBe('payment_failed');
     expect(publishedEvents[0].subject).toBe('subscription.past_due');
   });
 
-  it('cancel: any -> CANCELED avec reason + cancelAtPeriodEnd', async () => {
-    const { service, savedHistory, publishedEvents } = createFixture(
-      makeSubscription({ status: SubscriptionStatus.PAUSED }),
+  it('ACTIVE -> SUSPENDED on dunning/admin', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
+      makeSubscription({ status: SubscriptionStatus.ACTIVE }),
     );
 
-    const updated = await service.cancel('sub-1', 'client request', true);
+    const updated = await service.suspend('sub-1', {
+      reason: 'dunning_j10',
+      triggeredBy: SubscriptionTriggeredBy.DUNNING,
+    });
 
-    expect(updated.status).toBe(SubscriptionStatus.CANCELED);
-    expect(savedHistory[0].reason).toBe('client request');
-    expect(publishedEvents[0].subject).toBe('subscription.canceled');
-    expect(publishedEvents[0].payload.cancelAtPeriodEnd).toBe(true);
+    expect(updated.status).toBe(SubscriptionStatus.SUSPENDED);
+    expect(updated.suspendedAt).toBeTruthy();
+    expect(updated.suspensionReason).toBe('dunning_j10');
+    expect(historyEntries[0].triggeredBy).toBe(SubscriptionTriggeredBy.DUNNING);
+    expect(publishedEvents[0].subject).toBe('subscription.suspended');
   });
 
-  it('expire: ACTIVE -> EXPIRED', async () => {
-    const { service, savedHistory, publishedEvents } = createFixture(
+  it('ACTIVE -> CANCELLED on user request', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
       makeSubscription({ status: SubscriptionStatus.ACTIVE }),
+    );
+
+    const updated = await service.cancel('sub-1', {
+      reason: 'user_request',
+      triggeredBy: SubscriptionTriggeredBy.USER,
+      cancelAtPeriodEnd: true,
+    });
+
+    expect(updated.status).toBe(SubscriptionStatus.CANCELLED);
+    expect(updated.cancelAtPeriodEnd).toBe(true);
+    expect(historyEntries[0].newStatus).toBe(SubscriptionStatus.CANCELLED);
+    expect(historyEntries[0].triggeredBy).toBe(SubscriptionTriggeredBy.USER);
+    expect(publishedEvents[0].subject).toBe('subscription.cancelled');
+  });
+
+  it('PAST_DUE -> ACTIVE on payment success', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
+      makeSubscription({ status: SubscriptionStatus.PAST_DUE }),
+    );
+
+    const updated = await service.reactivateFromPastDue('sub-1', {
+      triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+      reason: 'payment_recovered',
+    });
+
+    expect(updated.status).toBe(SubscriptionStatus.ACTIVE);
+    expect(historyEntries[0].oldStatus).toBe(SubscriptionStatus.PAST_DUE);
+    expect(publishedEvents[0].subject).toBe('subscription.reactivated');
+  });
+
+  it('PAST_DUE -> SUSPENDED on dunning J+10', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
+      makeSubscription({ status: SubscriptionStatus.PAST_DUE }),
+    );
+
+    const updated = await service.suspendFromPastDue('sub-1', {
+      reason: 'dunning_j10',
+      triggeredBy: SubscriptionTriggeredBy.DUNNING,
+    });
+
+    expect(updated.status).toBe(SubscriptionStatus.SUSPENDED);
+    expect(historyEntries[0].oldStatus).toBe(SubscriptionStatus.PAST_DUE);
+    expect(publishedEvents[0].subject).toBe('subscription.suspended');
+  });
+
+  it('SUSPENDED -> ACTIVE on reactivation', async () => {
+    const { service, publishedEvents } = createFixture(
+      makeSubscription({
+        status: SubscriptionStatus.SUSPENDED,
+        suspendedAt: new Date('2026-02-10T00:00:00.000Z'),
+        suspensionReason: 'dunning_j10',
+      }),
+    );
+
+    const updated = await service.reactivateFromSuspended('sub-1', {
+      triggeredBy: SubscriptionTriggeredBy.USER,
+    });
+
+    expect(updated.status).toBe(SubscriptionStatus.ACTIVE);
+    expect(updated.suspendedAt).toBeNull();
+    expect(updated.suspensionReason).toBeNull();
+    expect(publishedEvents[0].subject).toBe('subscription.reactivated');
+  });
+
+  it('CANCELLED -> EXPIRED at natural end', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
+      makeSubscription({ status: SubscriptionStatus.CANCELLED }),
     );
 
     const updated = await service.expire('sub-1');
 
     expect(updated.status).toBe(SubscriptionStatus.EXPIRED);
-    expect(savedHistory[0].newStatus).toBe(SubscriptionStatus.EXPIRED);
+    expect(historyEntries[0].oldStatus).toBe(SubscriptionStatus.CANCELLED);
+    expect(historyEntries[0].triggeredBy).toBe(SubscriptionTriggeredBy.SYSTEM);
     expect(publishedEvents[0].subject).toBe('subscription.expired');
   });
 
-  it('invalid: activate refuse si deja ACTIVE', async () => {
-    const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.ACTIVE }));
-    await expect(service.activate('sub-1')).rejects.toBeInstanceOf(DomainException);
-  });
-
-  it('invalid: pause refuse si deja PAUSED', async () => {
-    const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.PAUSED }));
-    await expect(service.pause('sub-1')).rejects.toBeInstanceOf(DomainException);
-  });
-
-  it('invalid: resume refuse si statut != PAUSED', async () => {
-    const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.ACTIVE }));
-    await expect(service.resume('sub-1')).rejects.toBeInstanceOf(DomainException);
-  });
-
-  it('invalid: markPastDue refuse si statut != ACTIVE', async () => {
-    const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.PAUSED }));
-    await expect(service.markPastDue('sub-1')).rejects.toBeInstanceOf(DomainException);
-  });
-
-  it('invalid: cancel refuse si deja CANCELED', async () => {
-    const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.CANCELED }));
-    await expect(service.cancel('sub-1', 'already canceled', false)).rejects.toBeInstanceOf(DomainException);
-  });
-
-  it('invalid: expire refuse si statut != ACTIVE', async () => {
+  it('rejects PENDING -> TRIAL when trial_days <= 0', async () => {
     const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.PENDING }));
+
+    await expect(
+      service.startTrial('sub-1', {
+        trialDays: 0,
+        triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+      }),
+    ).rejects.toBeInstanceOf(DomainException);
+  });
+
+  it('rejects PENDING -> ACTIVE when trial exists on paid plan', async () => {
+    const { service } = createFixture(
+      makeSubscription({
+        status: SubscriptionStatus.PENDING,
+        planType: SubscriptionPlanType.PREMIUM_SVOD,
+      }),
+    );
+
+    await expect(
+      service.activateFromPending('sub-1', {
+        trialDays: 7,
+        triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+      }),
+    ).rejects.toBeInstanceOf(DomainException);
+  });
+
+  it('rejects TRIAL -> ACTIVE via pending activation path', async () => {
+    const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.TRIAL }));
+
+    await expect(
+      service.activateFromPending('sub-1', {
+        trialDays: 0,
+        triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+      }),
+    ).rejects.toBeInstanceOf(DomainException);
+  });
+
+  it('rejects ACTIVE -> EXPIRED directly', async () => {
+    const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.ACTIVE }));
     await expect(service.expire('sub-1')).rejects.toBeInstanceOf(DomainException);
   });
 
-  it('invalid: operation refuse si subscription introuvable', async () => {
+  it('rejects SUSPENDED -> PAST_DUE path call', async () => {
+    const { service } = createFixture(makeSubscription({ status: SubscriptionStatus.SUSPENDED }));
+
+    await expect(
+      service.markPastDue('sub-1', {
+        triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+      }),
+    ).rejects.toBeInstanceOf(DomainException);
+  });
+
+  it('rejects when subscription does not exist', async () => {
     const { service } = createFixture(null);
-    await expect(service.activate('sub-1')).rejects.toBeInstanceOf(DomainException);
+
+    await expect(
+      service.startTrial('sub-1', {
+        trialDays: 7,
+        triggeredBy: SubscriptionTriggeredBy.SYSTEM,
+      }),
+    ).rejects.toBeInstanceOf(DomainException);
+  });
+
+  it('stores metadata and triggered_by in history payload', async () => {
+    const { service, historyEntries, publishedEvents } = createFixture(
+      makeSubscription({ status: SubscriptionStatus.ACTIVE }),
+    );
+
+    await service.markPastDue('sub-1', {
+      triggeredBy: SubscriptionTriggeredBy.DUNNING,
+      metadata: { attempt: 3, provider: 'stripe' },
+    });
+
+    expect(historyEntries[0].triggeredBy).toBe(SubscriptionTriggeredBy.DUNNING);
+    expect(historyEntries[0].metadata).toEqual({ attempt: 3, provider: 'stripe' });
+    expect(publishedEvents[0].payload.triggeredBy).toBe(SubscriptionTriggeredBy.DUNNING);
   });
 });

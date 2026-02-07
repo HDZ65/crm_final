@@ -15,6 +15,7 @@ import { ReportNegatifService } from '../../persistence/typeorm/repositories/com
 import { ContestationCommissionService } from '../../persistence/typeorm/repositories/commercial/contestation-commission.service';
 import { CommissionCalculationService } from '../../../domain/commercial/services/commission-calculation.service';
 import { RepriseCalculationService } from '../../../domain/commercial/services/reprise-calculation.service';
+import { GenererBordereauWorkflowService } from '../../../domain/commercial/services/generer-bordereau-workflow.service';
 import { TypeReprise } from '../../../domain/commercial/entities/reprise-commission.entity';
 import { ContestationWorkflowService } from '../../../domain/commercial/services/contestation-workflow.service';
 import { BordereauExportService } from '../../../domain/commercial/services/bordereau-export.service';
@@ -123,6 +124,7 @@ export class CommissionController {
     private readonly contestationService: ContestationCommissionService,
     private readonly commissionCalculationService: CommissionCalculationService,
     private readonly repriseCalculationService: RepriseCalculationService,
+    private readonly genererBordereauWorkflowService: GenererBordereauWorkflowService,
     private readonly contestationWorkflowService: ContestationWorkflowService,
     private readonly bordereauExportService: BordereauExportService,
     private readonly bordereauFileStorageService: BordereauFileStorageService,
@@ -758,21 +760,22 @@ export class CommissionController {
 
   @GrpcMethod('CommissionService', 'GenererBordereau')
   async genererBordereau(data: GenererBordereauRequest) {
-    // Create bordereau
-    const bordereau = await this.bordereauService.create({
+    const result = await this.genererBordereauWorkflowService.execute({
       organisationId: data.organisation_id,
-      reference: `BRD-${data.periode}-${Date.now()}`,
-      periode: data.periode,
       apporteurId: data.apporteur_id,
+      periode: data.periode,
       creePar: data.cree_par || null,
     });
 
     return {
-      bordereau_id: bordereau.id,
-      reference: bordereau.reference,
-      nombre_lignes: 0,
-      total_brut: '0',
-      total_net: '0',
+      bordereau: result.bordereau as any,
+      summary: result.summary,
+      bordereau_id: (result.bordereau as any)?.id,
+      reference: (result.bordereau as any)?.reference,
+      nombre_lignes: (result.bordereau as any)?.nombreLignes || 0,
+      total_brut: result.summary.total_brut,
+      total_reprises: result.summary.total_reprises,
+      total_net: result.summary.total_net,
     };
   }
 

@@ -22,6 +22,13 @@ message PaginationResponse {
 
 // ===== GAMME (Product Range/Category) =====
 
+enum TypeGamme {
+  TYPE_GAMME_UNSPECIFIED = 0;
+  RISQUE = 1;
+  FAMILLE = 2;
+  SOUS_FAMILLE = 3;
+}
+
 message Gamme {
   string id = 1;
   string organisation_id = 2;
@@ -31,8 +38,11 @@ message Gamme {
   string code = 6;
   int32 ordre = 7;
   bool actif = 8;
-  string created_at = 9;
-  string updated_at = 10;
+  optional string parent_id = 9;
+  int32 niveau = 10;
+  TypeGamme type_gamme = 11;
+  string created_at = 12;
+  string updated_at = 13;
 }
 
 message CreateGammeRequest {
@@ -77,6 +87,24 @@ message DeleteGammeResponse {
   bool success = 1;
 }
 
+message GammeNode {
+  string id = 1;
+  string nom = 2;
+  string code = 3;
+  int32 niveau = 4;
+  TypeGamme type_gamme = 5;
+  repeated GammeNode children = 6;
+}
+
+message GetGammeTreeRequest {
+  string organisation_id = 1;
+  optional string parent_id = 2;
+}
+
+message GetGammeTreeResponse {
+  repeated GammeNode roots = 1;
+}
+
 // ===== PRODUIT =====
 
 enum TypeProduit {
@@ -101,6 +129,17 @@ enum CategorieProduit {
   EPARGNE = 3;
   SERVICE = 4;
   ACCESSOIRE = 5;
+}
+
+enum TypeTarification {
+  TYPE_TARIFICATION_UNSPECIFIED = 0;
+  TYPE_TARIFICATION_FIXE = 1;
+  TYPE_TARIFICATION_PALIER = 2;
+  TYPE_TARIFICATION_RECURRENT = 3;
+  TYPE_TARIFICATION_USAGE = 4;
+  TYPE_TARIFICATION_BUNDLE = 5;
+  TYPE_TARIFICATION_NEGOCIE = 6;
+  TYPE_TARIFICATION_INDEXE = 7;
 }
 
 message Produit {
@@ -128,6 +167,21 @@ message Produit {
   // Relations
   Gamme gamme = 22;
   StatutCycleProduit statut_cycle = 23;
+  // Contractual terms
+  optional int32 duree_engagement_mois = 24;
+  string frequence_renouvellement = 25;
+  string conditions_resiliation = 26;
+  string unite_vente = 27;
+  // Accounting mapping
+  string code_comptable = 28;
+  string compte_produit = 29;
+  string journal_vente = 30;
+  // Partner & distribution
+  string partenaire_commercial_id = 31;
+  string modele_distribution_id = 32;
+  // Tarification model
+  TypeTarification type_tarification = 33;
+  string config_tarification = 34;
 }
 
 message CreateProduitRequest {
@@ -562,6 +616,7 @@ service GammeService {
   rpc Get(GetGammeRequest) returns (Gamme);
   rpc List(ListGammesRequest) returns (ListGammesResponse);
   rpc Delete(DeleteGammeRequest) returns (DeleteGammeResponse);
+  rpc GetTree(GetGammeTreeRequest) returns (GetGammeTreeResponse);
 }
 
 service ProduitService {

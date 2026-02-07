@@ -26,11 +26,17 @@ export class LigneContratEntity {
   @Column({ type: 'int' })
   quantite: number;
 
-  @Column({ name: 'prix_unitaire', type: 'decimal', precision: 15, scale: 2 })
-  prixUnitaire: number;
+   @Column({ name: 'prix_unitaire', type: 'decimal', precision: 15, scale: 2 })
+   prixUnitaire: number;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

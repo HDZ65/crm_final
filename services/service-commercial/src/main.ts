@@ -5,7 +5,9 @@ import { getMultiGrpcOptions } from '@crm/shared-kernel';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
 
   const grpcPort = process.env.GRPC_PORT || 50053;
   const grpcOptions = getMultiGrpcOptions(['commerciaux', 'contrats', 'products', 'commission', 'dashboard', 'bundle', 'subscriptions', 'subscription-plans', 'subscription-preferences', 'subscription-preference-schemas', 'woocommerce'], {

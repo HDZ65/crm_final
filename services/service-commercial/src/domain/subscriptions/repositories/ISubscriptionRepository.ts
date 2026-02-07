@@ -6,8 +6,9 @@ export interface ISubscriptionRepository {
   findAll(filters?: {
     organisationId?: string;
     clientId?: string;
-    contratId?: string;
     status?: string;
+    planType?: string;
+    storeSource?: string;
   }, pagination?: {
     page?: number;
     limit?: number;
@@ -17,6 +18,8 @@ export interface ISubscriptionRepository {
     subscriptions: SubscriptionEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }>;
+  getDueForCharge(organisationId: string, beforeDate: Date): Promise<SubscriptionEntity[]>;
+  getDueForTrialConversion(organisationId: string): Promise<SubscriptionEntity[]>;
   findDueForCharge(organisationId: string, beforeDate: string): Promise<SubscriptionEntity[]>;
   save(entity: SubscriptionEntity): Promise<SubscriptionEntity>;
   updateStatus(id: string, status: string): Promise<SubscriptionEntity>;

@@ -69,11 +69,17 @@ export class PalierCommissionEntity {
   @Column({ type: 'int', default: 0 })
   ordre: number;
 
-  @Column({ type: 'boolean', default: true })
-  actif: boolean;
+   @Column({ type: 'boolean', default: true })
+   actif: boolean;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;

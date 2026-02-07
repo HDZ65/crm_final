@@ -43,11 +43,17 @@ export class DocumentProduitEntity {
   @Column({ default: false })
   mandatory: boolean;
 
-  @Column({ name: 'published_at', type: 'timestamp', nullable: true })
-  publishedAt: Date | null;
+   @Column({ name: 'published_at', type: 'timestamp', nullable: true })
+   publishedAt: Date | null;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

@@ -10,3 +10,4 @@ export * from './commission-audit-log.service';
 export * from './commission-recurrente.service';
 export * from './report-negatif.service';
 export * from './contestation-commission.service';
+export * from './partenaire-commercial.service';

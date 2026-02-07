@@ -7,6 +7,7 @@ import {
   WooCommerceMappingEntity,
   WooCommerceWebhookEventEntity,
 } from './domain/woocommerce/entities';
+import { ImsWebhookEventEntity } from './domain/mondial-tv/entities/ims-webhook-event.entity';
 
 // Infrastructure services (TypeORM repositories)
 import {
@@ -14,6 +15,9 @@ import {
   WooCommerceMappingService,
   WooCommerceConfigService,
 } from './infrastructure/persistence/typeorm/repositories/woocommerce';
+import { ImsWebhookEventService } from './infrastructure/persistence/typeorm/repositories/mondial-tv/ims-webhook-event.service';
+import { MockImsClient } from './infrastructure/external/mondial-tv/mock-ims-client';
+import { IMS_CLIENT } from './domain/mondial-tv/ports/IImsClient';
 
 // Domain services
 import { WooCommerceWebhookService } from './domain/woocommerce/services/woocommerce-webhook.service';
@@ -22,6 +26,7 @@ import { WooCommerceNatsWorkersService } from './domain/woocommerce/services/woo
 
 // HTTP controllers
 import { WooCommerceWebhookController } from './infrastructure/http/woocommerce/webhook.controller';
+import { ImsWebhookController } from './infrastructure/http/mondial-tv/ims-webhook.controller';
 
 // gRPC controllers
 import { WooCommerceController } from './infrastructure/grpc/subscriptions/woocommerce.controller';
@@ -36,15 +41,22 @@ import { SubscriptionService } from './infrastructure/persistence/typeorm/reposi
       WooCommerceConfigEntity,
       WooCommerceMappingEntity,
       WooCommerceWebhookEventEntity,
+      ImsWebhookEventEntity,
     ]),
     forwardRef(() => SubscriptionsModule),
   ],
-  controllers: [WooCommerceWebhookController, WooCommerceController],
+  controllers: [WooCommerceWebhookController, ImsWebhookController, WooCommerceController],
   providers: [
     // TypeORM repository services
     WooCommerceWebhookEventService,
     WooCommerceMappingService,
     WooCommerceConfigService,
+    ImsWebhookEventService,
+    MockImsClient,
+    {
+      provide: IMS_CLIENT,
+      useExisting: MockImsClient,
+    },
     // Domain services
     {
       provide: WooCommerceWebhookService,
@@ -75,6 +87,9 @@ import { SubscriptionService } from './infrastructure/persistence/typeorm/reposi
     WooCommerceWebhookEventService,
     WooCommerceMappingService,
     WooCommerceConfigService,
+    ImsWebhookEventService,
+    MockImsClient,
+    IMS_CLIENT,
     WooCommerceWebhookService,
     WooCommerceSyncService,
   ],

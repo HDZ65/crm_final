@@ -7,6 +7,9 @@
   "license": "MIT",
   "scripts": {
     "build": "nest build",
+    "proto:clean": "rimraf proto/generated",
+    "proto:generate": "node -e \"const fs=require('fs');const path=require('path');const srcBase=path.resolve('..','..','packages','proto','gen','ts');const dstBase=path.resolve('proto','generated');const files=['commerciaux/commerciaux.ts','commission/commission.ts','contrats/contrats.ts','products/products.ts','dashboard/dashboard.ts','subscriptions/subscriptions.ts','services/bundle.ts'];fs.mkdirSync(dstBase,{recursive:true});for(const rel of files){fs.copyFileSync(path.join(srcBase,rel),path.join(dstBase,path.basename(rel)));}\"",
+    "prebuild": "bun run proto:clean && bun run proto:generate",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -14,6 +17,8 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/datasource.ts",
     "migration:generate": "npm run typeorm -- migration:generate src/migrations/$npm_config_name",
     "migration:create": "npm run typeorm -- migration:create src/migrations/$npm_config_name",
@@ -24,6 +29,9 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "^2.11.0",
+    "@crm/proto": "file:../../packages/proto",
+    "@crm/shared-kernel": "file:../../packages/shared-kernel",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "@nestjs/common": "^11.1.12",
@@ -35,15 +43,13 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "dotenv": "^17.2.3",
+    "exceljs": "^4.4.0",
+    "pdfkit": "^0.17.2",
     "pg": "^8.17.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.28",
-    "typeorm-naming-strategies": "^4.1.0",
-"@crm/grpc-utils": "file:../../packages/grpc-utils",
-    "@crm/nats-utils": "file:../../packages/nats-utils",
-    "@crm/proto": "file:../../packages/proto",
-    "@crm/shared": "file:../../packages/shared"
+    "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
@@ -52,6 +58,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.10",
+    "@types/pdfkit": "^0.17.4",
     "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",

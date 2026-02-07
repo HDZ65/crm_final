@@ -17,6 +17,10 @@ import type {
   ResumeSubscriptionRequest,
   CancelSubscriptionRequest,
   ExpireSubscriptionRequest,
+  GetDueForChargeRequest,
+  GetDueForTrialConversionRequest,
+  SuspendSubscriptionRequest,
+  ReactivateSubscriptionRequest,
 } from '@proto/subscriptions';
 
 @Controller()
@@ -231,5 +235,85 @@ export class SubscriptionController {
     });
 
     return saved;
+  }
+
+  @GrpcMethod('SubscriptionService', 'Suspend')
+  async suspend(data: SuspendSubscriptionRequest) {
+    const entity = await this.subscriptionService.findById(data.id);
+    if (!entity) {
+      throw new RpcException({ code: status.NOT_FOUND, message: `Subscription ${data.id} not found` });
+    }
+
+    const previousStatus = entity.status;
+    entity.status = 'SUSPENDED';
+    entity.suspendedAt = new Date();
+    entity.suspensionReason = data.reason || 'Suspended';
+    const saved = await this.subscriptionService.save(entity);
+
+    await this.statusHistoryService.create({
+      subscriptionId: data.id,
+      previousStatus,
+      newStatus: 'SUSPENDED',
+      reason: data.reason || 'Suspended',
+    });
+
+    return saved;
+  }
+
+  @GrpcMethod('SubscriptionService', 'Reactivate')
+  async reactivate(data: ReactivateSubscriptionRequest) {
+    const entity = await this.subscriptionService.findById(data.id);
+    if (!entity) {
+      throw new RpcException({ code: status.NOT_FOUND, message: `Subscription ${data.id} not found` });
+    }
+
+    const previousStatus = entity.status;
+    entity.status = 'ACTIVE';
+    entity.suspendedAt = null;
+    entity.suspensionReason = null;
+    const saved = await this.subscriptionService.save(entity);
+
+    await this.statusHistoryService.create({
+      subscriptionId: data.id,
+      previousStatus,
+      newStatus: 'ACTIVE',
+      reason: 'Reactivated',
+    });
+
+    return saved;
+  }
+
+  @GrpcMethod('SubscriptionService', 'GetDueForCharge')
+  async getDueForCharge(data: GetDueForChargeRequest) {
+    const beforeDate = data.before_date ? new Date(data.before_date) : new Date();
+    const subscriptions = await this.subscriptionService.getDueForCharge(
+      data.organisation_id,
+      beforeDate,
+    );
+    return {
+      subscriptions,
+      pagination: {
+        total: subscriptions.length,
+        page: 1,
+        limit: subscriptions.length,
+        total_pages: 1,
+      },
+    };
+  }
+
+  @GrpcMethod('SubscriptionService', 'GetDueForTrialConversion')
+  async getDueForTrialConversion(data: GetDueForTrialConversionRequest) {
+    const subscriptions = await this.subscriptionService.getDueForTrialConversion(
+      data.organisation_id,
+    );
+    return {
+      subscriptions,
+      pagination: {
+        total: subscriptions.length,
+        page: 1,
+        limit: subscriptions.length,
+        total_pages: 1,
+      },
+    };
   }
 }

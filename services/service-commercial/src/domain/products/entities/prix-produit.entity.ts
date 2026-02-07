@@ -38,11 +38,17 @@ export class PrixProduitEntity {
   @Column({ name: 'prix_maximum', type: 'decimal', precision: 12, scale: 2, nullable: true })
   prixMaximum: number | null;
 
-  @Column({ default: true })
-  actif: boolean;
+   @Column({ default: true })
+   actif: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

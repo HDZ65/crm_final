@@ -1,114 +1,169 @@
 import { describe, expect, it } from 'bun:test';
 import { DomainException } from '@crm/shared-kernel';
-import type { SubscriptionEntity } from '../../entities/subscription.entity';
-import type { ISubscriptionRepository } from '../../repositories/ISubscriptionRepository';
 import {
+  SubscriptionEntity,
   SubscriptionFrequency,
-  SubscriptionSchedulingService,
-} from '../subscription-scheduling.service';
+  SubscriptionPlanType,
+  SubscriptionStatus,
+  StoreSource,
+} from '../../entities/subscription.entity';
+import type { ISubscriptionRepository } from '../../repositories/ISubscriptionRepository';
+import { SubscriptionSchedulingService } from '../subscription-scheduling.service';
 
 function makeSubscription(overrides: Partial<SubscriptionEntity> = {}): SubscriptionEntity {
   return {
     id: 'sub-1',
     organisationId: 'org-1',
     clientId: 'client-1',
-    contratId: null,
-    status: 'ACTIVE',
+    planType: SubscriptionPlanType.PREMIUM_SVOD,
+    status: SubscriptionStatus.ACTIVE,
     frequency: SubscriptionFrequency.MONTHLY,
+    trialStart: null,
+    trialEnd: null,
+    currentPeriodStart: new Date('2026-01-01T00:00:00.000Z'),
+    currentPeriodEnd: new Date('2026-02-01T00:00:00.000Z'),
+    nextChargeAt: new Date('2026-02-01T00:00:00.000Z'),
     amount: 19.9,
     currency: 'EUR',
-    startDate: '2026-01-01T00:00:00.000Z',
-    endDate: null,
-    pausedAt: null,
-    resumedAt: null,
-    nextChargeAt: '2026-02-01T00:00:00.000Z',
-    retryCount: 0,
+    storeSource: StoreSource.WEB_DIRECT,
+    imsSubscriptionId: null,
+    couponId: null,
+    cancelAtPeriodEnd: false,
+    cancelledAt: null,
+    suspendedAt: null,
+    suspensionReason: null,
+    addOns: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-    lines: [],
     history: [],
+    lines: [],
     cycles: [],
     statusHistory: [],
+    contratId: null,
+    retryCount: 0,
     ...overrides,
   };
 }
 
 function createFixture(subscriptions: SubscriptionEntity[] = []) {
-  let lastQuery: { organisationId: string; beforeDate: string } | null = null;
+  let lastDueForChargeQuery: { organisationId: string; beforeDate: Date } | null = null;
+  let lastDueForTrialQuery: string | null = null;
 
-  const subscriptionRepository = {
-    findDueForCharge: async (organisationId: string, beforeDate: string) => {
-      lastQuery = { organisationId, beforeDate };
+  const repository = {
+    getDueForCharge: async (organisationId: string, beforeDate: Date) => {
+      lastDueForChargeQuery = { organisationId, beforeDate };
+      return subscriptions;
+    },
+    getDueForTrialConversion: async (organisationId: string) => {
+      lastDueForTrialQuery = organisationId;
       return subscriptions;
     },
   } as unknown as ISubscriptionRepository;
 
-  const service = new SubscriptionSchedulingService(subscriptionRepository);
+  const service = new SubscriptionSchedulingService(repository);
 
   return {
     service,
-    getLastQuery: () => lastQuery,
+    getLastDueForChargeQuery: () => lastDueForChargeQuery,
+    getLastDueForTrialQuery: () => lastDueForTrialQuery,
   };
 }
 
 describe('SubscriptionSchedulingService', () => {
-  it('calculateNextChargeAt: WEEKLY ajoute 7 jours', () => {
+  it('calculateNextChargeAt adds one month for MONTHLY frequency', () => {
     const { service } = createFixture();
-    const next = service.calculateNextChargeAt(SubscriptionFrequency.WEEKLY, '2026-01-01T00:00:00.000Z');
-    expect(next).toBe('2026-01-08T00:00:00.000Z');
-  });
 
-  it('calculateNextChargeAt: MONTHLY conserve jour si possible', () => {
-    const { service } = createFixture();
-    const next = service.calculateNextChargeAt(SubscriptionFrequency.MONTHLY, '2026-01-15T00:00:00.000Z');
-    expect(next).toBe('2026-02-15T00:00:00.000Z');
-  });
-
-  it('calculateNextChargeAt: QUARTERLY ajoute 3 mois', () => {
-    const { service } = createFixture();
-    const next = service.calculateNextChargeAt(SubscriptionFrequency.QUARTERLY, '2026-01-15T00:00:00.000Z');
-    expect(next).toBe('2026-04-15T00:00:00.000Z');
-  });
-
-  it('isChargeEligible: true si ACTIVE et next_charge_at <= now', () => {
-    const { service } = createFixture();
-    const eligible = service.isChargeEligible(
-      makeSubscription({ status: 'ACTIVE', nextChargeAt: '2026-02-01T00:00:00.000Z' }),
-      new Date('2026-02-01T00:00:00.000Z'),
+    const next = service.calculateNextChargeAt(
+      SubscriptionFrequency.MONTHLY,
+      new Date('2026-01-31T00:00:00.000Z'),
     );
-    expect(eligible).toBe(true);
+
+    expect(next.toISOString()).toBe('2026-02-28T00:00:00.000Z');
   });
 
-  it('isChargeEligible: false si statut != ACTIVE', () => {
+  it('calculateNextChargeAt adds one year for ANNUAL frequency', () => {
     const { service } = createFixture();
-    const eligible = service.isChargeEligible(
-      makeSubscription({ status: 'PAUSED', nextChargeAt: '2026-01-01T00:00:00.000Z' }),
-      new Date('2026-02-01T00:00:00.000Z'),
+
+    const next = service.calculateNextChargeAt(
+      SubscriptionFrequency.ANNUAL,
+      new Date('2026-01-15T00:00:00.000Z'),
     );
-    expect(eligible).toBe(false);
+
+    expect(next.toISOString()).toBe('2027-01-15T00:00:00.000Z');
   });
 
-  it('getDueSubscriptions: query repository + filtre subscriptions eligibles', async () => {
-    const beforeDate = new Date('2026-02-15T00:00:00.000Z');
-    const { service, getLastQuery } = createFixture([
-      makeSubscription({ id: 'eligible', status: 'ACTIVE', nextChargeAt: '2026-02-10T00:00:00.000Z' }),
-      makeSubscription({ id: 'paused', status: 'PAUSED', nextChargeAt: '2026-02-10T00:00:00.000Z' }),
-      makeSubscription({ id: 'future', status: 'ACTIVE', nextChargeAt: '2026-03-01T00:00:00.000Z' }),
+  it('throws DomainException for unsupported frequency', () => {
+    const { service } = createFixture();
+
+    expect(() => {
+      service.calculateNextChargeAt('WEEKLY' as SubscriptionFrequency, new Date('2026-01-15'));
+    }).toThrow(DomainException);
+  });
+
+  it('isTrialExpired returns true for TRIAL subscriptions beyond trial_end', () => {
+    const { service } = createFixture();
+
+    const expired = service.isTrialExpired(
+      makeSubscription({
+        status: SubscriptionStatus.TRIAL,
+        trialEnd: new Date('2026-01-05T00:00:00.000Z'),
+      }),
+      new Date('2026-01-06T00:00:00.000Z'),
+    );
+
+    expect(expired).toBe(true);
+  });
+
+  it('isTrialExpired returns false when status is not TRIAL', () => {
+    const { service } = createFixture();
+
+    const expired = service.isTrialExpired(
+      makeSubscription({
+        status: SubscriptionStatus.ACTIVE,
+        trialEnd: new Date('2026-01-05T00:00:00.000Z'),
+      }),
+      new Date('2026-01-06T00:00:00.000Z'),
+    );
+
+    expect(expired).toBe(false);
+  });
+
+  it('getDueForCharge delegates to repository query', async () => {
+    const due = makeSubscription({ id: 'sub-due' });
+    const { service, getLastDueForChargeQuery } = createFixture([due]);
+
+    const result = await service.getDueForCharge(
+      'org-1',
+      new Date('2026-02-15T00:00:00.000Z'),
+    );
+
+    expect(getLastDueForChargeQuery()).toEqual({
+      organisationId: 'org-1',
+      beforeDate: new Date('2026-02-15T00:00:00.000Z'),
+    });
+    expect(result.map((item) => item.id)).toEqual(['sub-due']);
+  });
+
+  it('getDueForTrialConversion filters expired trial subscriptions', async () => {
+    const { service, getLastDueForTrialQuery } = createFixture([
+      makeSubscription({
+        id: 'expired-trial',
+        status: SubscriptionStatus.TRIAL,
+        trialEnd: new Date('2026-02-01T00:00:00.000Z'),
+      }),
+      makeSubscription({
+        id: 'active-trial',
+        status: SubscriptionStatus.TRIAL,
+        trialEnd: new Date('2026-02-20T00:00:00.000Z'),
+      }),
     ]);
 
-    const due = await service.getDueSubscriptions('org-1', beforeDate);
-
-    expect(getLastQuery()).toEqual({
-      organisationId: 'org-1',
-      beforeDate: '2026-02-15T00:00:00.000Z',
-    });
-    expect(due.map((item) => item.id)).toEqual(['eligible']);
-  });
-
-  it('invalid: frequency inconnue throw DomainException', () => {
-    const { service } = createFixture();
-    expect(() => service.calculateNextChargeAt('FORTNIGHTLY', '2026-02-01T00:00:00.000Z')).toThrow(
-      DomainException,
+    const result = await service.getDueForTrialConversion(
+      'org-1',
+      new Date('2026-02-10T00:00:00.000Z'),
     );
+
+    expect(getLastDueForTrialQuery()).toBe('org-1');
+    expect(result.map((item) => item.id)).toEqual(['expired-trial']);
   });
 });

@@ -11,13 +11,15 @@ import {
   VersionProduitEntity,
   PublicationProduitEntity,
   DocumentProduitEntity,
+  ConfigurationBundleEntity,
+  FormuleProduitEntity,
 } from './domain/products/entities';
 
 // Infrastructure services
-import { ProduitService } from './infrastructure/persistence/typeorm/repositories/products';
+import { BundleEngineService, ProduitService, GammeService, FormuleProduitService } from './infrastructure/persistence/typeorm/repositories/products';
 
 // Interface controllers
-import { ProduitController } from './interfaces/grpc/controllers/products';
+import { BundleController, ProduitController, GammeController } from './infrastructure/grpc/products';
 
 // Cross-context dependencies
 import { ContratsModule } from './contrats.module';
@@ -33,17 +35,27 @@ import { ContratsModule } from './contrats.module';
       VersionProduitEntity,
       PublicationProduitEntity,
       DocumentProduitEntity,
+      ConfigurationBundleEntity,
+      FormuleProduitEntity,
     ]),
     forwardRef(() => ContratsModule),
   ],
   controllers: [
     ProduitController,
+    BundleController,
+    GammeController,
   ],
   providers: [
     ProduitService,
+    BundleEngineService,
+    GammeService,
+    FormuleProduitService,
   ],
   exports: [
     ProduitService,
+    BundleEngineService,
+    GammeService,
+    FormuleProduitService,
   ],
 })
 export class ProductsModule {}

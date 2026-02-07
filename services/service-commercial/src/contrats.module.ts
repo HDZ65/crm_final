@@ -14,7 +14,7 @@ import {
 import { ContratService } from './infrastructure/persistence/typeorm/repositories/contrats';
 
 // Interface controllers
-import { ContratController } from './interfaces/grpc/controllers/contrats';
+import { ContratController } from './infrastructure/grpc/contrats';
 
 // Cross-context dependencies
 import { CommercialModule } from './commercial.module';

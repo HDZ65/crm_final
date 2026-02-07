@@ -67,11 +67,17 @@ export class ContratEntity {
   @Column({ name: 'societe_id', type: 'uuid', nullable: true })
   societeId: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  notes: string | null;
+   @Column({ type: 'text', nullable: true })
+   notes: string | null;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

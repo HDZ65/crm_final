@@ -6,3 +6,5 @@ export * from './prix-produit.entity';
 export * from './version-produit.entity';
 export * from './publication-produit.entity';
 export * from './document-produit.entity';
+export * from './configuration-bundle.entity';
+export * from './formule-produit.entity';

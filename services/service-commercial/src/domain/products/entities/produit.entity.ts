@@ -10,8 +10,12 @@ import {
   Index,
 } from 'typeorm';
 import { GammeEntity } from './gamme.entity';
+import { ModeleDistributionEntity } from './modele-distribution.entity';
 import { PrixProduitEntity } from './prix-produit.entity';
 import { VersionProduitEntity } from './version-produit.entity';
+import { PartenaireCommercialEntity } from '../../commercial/entities/partenaire-commercial.entity';
+import { TypeTarification } from '../enums/type-tarification.enum';
+import { FormuleProduitEntity } from './formule-produit.entity';
 
 export enum TypeProduit {
   INTERNE = 'INTERNE',
@@ -108,11 +112,65 @@ export class ProduitEntity {
   @Column({ name: 'code_externe', type: 'varchar', length: 100, nullable: true })
   codeExterne: string | null;
 
-  @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, unknown> | null;
+  // --- Contractual terms ---
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  @Column({ name: 'duree_engagement_mois', type: 'int', nullable: true })
+  dureeEngagementMois: number | null;
+
+  @Column({ name: 'frequence_renouvellement', type: 'varchar', length: 50, nullable: true })
+  frequenceRenouvellement: string | null;
+
+  @Column({ name: 'conditions_resiliation', type: 'text', nullable: true })
+  conditionsResiliation: string | null;
+
+  @Column({ name: 'unite_vente', type: 'varchar', length: 50, default: 'UNITE' })
+  uniteVente: string;
+
+  // --- Accounting mapping ---
+
+  @Column({ name: 'code_comptable', type: 'varchar', length: 20, nullable: true })
+  codeComptable: string | null;
+
+  @Column({ name: 'compte_produit', type: 'varchar', length: 20, nullable: true })
+  compteProduit: string | null;
+
+  @Column({ name: 'journal_vente', type: 'varchar', length: 20, nullable: true })
+  journalVente: string | null;
+
+  // --- Partner & distribution FK ---
+
+  @Column({ name: 'partenaire_commercial_id', type: 'uuid', nullable: true })
+  @Index()
+  partenaireCommercialId: string | null;
+
+  @Column({ name: 'modele_distribution_id', type: 'uuid', nullable: true })
+  @Index()
+  modeleDistributionId: string | null;
+
+  // --- Tarification model ---
+
+  @Column({
+    name: 'type_tarification',
+    type: 'enum',
+    enum: TypeTarification,
+    default: TypeTarification.FIXE,
+  })
+  typeTarification: TypeTarification;
+
+  @Column({ name: 'config_tarification', type: 'jsonb', nullable: true })
+  configTarification: Record<string, unknown> | null;
+
+   @Column({ type: 'jsonb', nullable: true })
+   metadata: Record<string, unknown> | null;
+
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
@@ -122,9 +180,20 @@ export class ProduitEntity {
   @JoinColumn({ name: 'gamme_id' })
   gamme: GammeEntity | null;
 
+  @ManyToOne(() => PartenaireCommercialEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'partenaire_commercial_id' })
+  partenaireCommercial: PartenaireCommercialEntity | null;
+
+  @ManyToOne(() => ModeleDistributionEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'modele_distribution_id' })
+  modeleDistribution: ModeleDistributionEntity | null;
+
   @OneToMany(() => PrixProduitEntity, (prix) => prix.produit)
   prixProduits: PrixProduitEntity[];
 
   @OneToMany(() => VersionProduitEntity, (version) => version.produit)
   versions: VersionProduitEntity[];
+
+  @OneToMany(() => FormuleProduitEntity, (formule) => formule.produit)
+  formules: FormuleProduitEntity[];
 }

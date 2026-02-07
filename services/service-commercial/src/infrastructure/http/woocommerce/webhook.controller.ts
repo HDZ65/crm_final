@@ -7,10 +7,10 @@ import {
   HttpStatus,
   Logger,
   UnauthorizedException,
-  RawBodyRequest,
+
   Req,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import { type Request } from 'express';
 import { createHmac } from 'crypto';
 import { NatsService } from '@crm/shared-kernel';
 import { WooCommerceWebhookEventService } from '../../persistence/typeorm/repositories/woocommerce/woocommerce-webhook-event.service';
@@ -29,7 +29,7 @@ export class WooCommerceWebhookController {
   @Post('woocommerce')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
-    @Req() req: RawBodyRequest<Request>,
+    @Req() req: any,
     @Body() payload: any,
     @Headers('x-wc-webhook-signature') signature: string,
     @Headers('x-wc-webhook-topic') topic: string,

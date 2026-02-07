@@ -75,6 +75,9 @@ export class BordereauCommissionEntity {
   @Column({ name: 'fichier_excel_url', type: 'varchar', length: 500, nullable: true })
   fichierExcelUrl: string | null;
 
+  @Column({ name: 'hash_sha256', type: 'varchar', length: 64, nullable: true })
+  hashSha256: string | null;
+
   @Column({ type: 'text', nullable: true })
   commentaire: string | null;
 

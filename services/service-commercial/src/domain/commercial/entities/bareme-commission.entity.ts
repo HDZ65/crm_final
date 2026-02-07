@@ -105,14 +105,20 @@ export class BaremeCommissionEntity {
   @Column({ type: 'boolean', default: true })
   actif: boolean;
 
-  @Column({ name: 'cree_par', type: 'varchar', length: 255, nullable: true })
-  creePar: string | null;
+   @Column({ name: 'cree_par', type: 'varchar', length: 255, nullable: true })
+   creePar: string | null;
 
-  @Column({ name: 'modifie_par', type: 'varchar', length: 255, nullable: true })
-  modifiePar: string | null;
+   @Column({ name: 'modifie_par', type: 'varchar', length: 255, nullable: true })
+   modifiePar: string | null;
 
-  @Column({ name: 'motif_modification', type: 'text', nullable: true })
-  motifModification: string | null;
+   @Column({ name: 'motif_modification', type: 'text', nullable: true })
+   motifModification: string | null;
+
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
 
   @OneToMany(() => PalierCommissionEntity, (palier) => palier.bareme)
   paliers: PalierCommissionEntity[];

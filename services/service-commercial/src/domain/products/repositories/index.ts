@@ -6,3 +6,4 @@ export * from './IVersionProduitRepository';
 export * from './IPublicationProduitRepository';
 export * from './IDocumentProduitRepository';
 export * from './IModeleDistributionRepository';
+export * from './IFormuleProduitRepository';

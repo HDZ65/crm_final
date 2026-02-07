@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Domain entities
 import {
@@ -22,6 +23,7 @@ import {
 } from './infrastructure/persistence/typeorm/repositories/depanssur';
 import { RegleDepanssurService } from './domain/depanssur/services/regle-depanssur.service';
 import { DepanssurWebhookService } from './domain/depanssur/services/depanssur-webhook.service';
+import { DepanssurSchedulerService } from './domain/depanssur/services/depanssur-scheduler.service';
 
 // Interface controllers
 import { DepanssurController } from './infrastructure/grpc/depanssur';
@@ -42,6 +44,7 @@ import { ClientsModule } from './clients.module';
       HistoriqueStatutDossierEntity,
       WebhookEventLogEntity,
     ]),
+    ScheduleModule.forRoot(),
     forwardRef(() => ClientsModule),
   ],
   controllers: [
@@ -55,6 +58,7 @@ import { ClientsModule } from './clients.module';
     CompteurPlafondService,
     DossierDeclaratifService,
     DepanssurWebhookService,
+    DepanssurSchedulerService,
   ],
   exports: [
     RegleDepanssurService,

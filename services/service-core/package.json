@@ -8,6 +8,9 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "nest build",
+    "proto:clean": "rimraf proto/generated",
+    "proto:generate": "mkdir -p proto/generated && cp ../../packages/proto/gen/ts/clients/clients.ts ./proto/generated/clients.ts && cp ../../packages/proto/gen/ts/organisations/users.ts ./proto/generated/users.ts && cp ../../packages/proto/gen/ts/organisations/organisations.ts ./proto/generated/organisations.ts && cp ../../packages/proto/gen/ts/documents/documents.ts ./proto/generated/documents.ts && cp ../../packages/proto/gen/ts/referentiel/referentiel.ts ./proto/generated/referentiel.ts && cp ../../packages/proto/gen/ts/dashboard/dashboard.ts ./proto/generated/dashboard.ts && cp ../../packages/proto/gen/ts/depanssur/depanssur.ts ./proto/generated/depanssur.ts",
+    "prebuild": "npm run proto:clean && npm run proto:generate",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -15,6 +18,7 @@
     "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
+    "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/datasource.ts",
     "migration:generate": "npm run typeorm -- migration:generate src/migrations/$npm_config_name",
@@ -26,6 +30,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
+    "@crm/proto": "file:../../packages/proto",
+    "@crm/shared-kernel": "file:../../packages/shared-kernel",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "@nestjs/common": "^11.1.12",
@@ -33,6 +39,7 @@
     "@nestjs/core": "^11.1.12",
     "@nestjs/microservices": "^11.1.12",
     "@nestjs/platform-express": "^11.1.12",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/typeorm": "^11.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
@@ -41,11 +48,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.28",
-    "typeorm-naming-strategies": "^4.1.0",
-    "@crm/grpc-utils": "file:../../packages/grpc-utils",
-    "@crm/nats-utils": "file:../../packages/nats-utils",
-    "@crm/proto": "file:../../packages/proto",
-    "@crm/shared": "file:../../packages/shared"
+    "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
@@ -71,13 +74,19 @@
     "typescript": "^5.9.3"
   },
   "jest": {
-    "moduleFileExtensions": ["js", "json", "ts"],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
-    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   }

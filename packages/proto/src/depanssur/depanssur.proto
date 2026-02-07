@@ -1,0 +1,439 @@
+syntax = "proto3";
+
+package depanssur;
+
+// ============================================================================
+// DEPANSSUR SERVICE
+// ============================================================================
+// Bounded context for Depanssur home assistance subscriptions.
+// Manages: subscriptions, claims, options, ceiling counters, GDPR consents,
+// and inbound webhooks from the Depanssur partner platform.
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum StatutAbonnement {
+  STATUT_ABONNEMENT_UNSPECIFIED = 0;
+  STATUT_ABONNEMENT_ACTIF = 1;
+  STATUT_ABONNEMENT_PAUSE = 2;
+  STATUT_ABONNEMENT_SUSPENDU_IMPAYE = 3;
+  STATUT_ABONNEMENT_RESILIE = 4;
+}
+
+enum MotifResiliation {
+  MOTIF_RESILIATION_UNSPECIFIED = 0;
+  MOTIF_RESILIATION_VOLONTAIRE = 1;
+  MOTIF_RESILIATION_IMPAYE = 2;
+  MOTIF_RESILIATION_AUTRE = 3;
+}
+
+enum TypeDossier {
+  TYPE_DOSSIER_UNSPECIFIED = 0;
+  TYPE_DOSSIER_ELECTRICITE = 1;
+  TYPE_DOSSIER_PLOMBERIE = 2;
+  TYPE_DOSSIER_ELECTROMENAGER = 3;
+  TYPE_DOSSIER_SERRURERIE = 4;
+  TYPE_DOSSIER_AUTRE = 5;
+}
+
+enum StatutDossier {
+  STATUT_DOSSIER_UNSPECIFIED = 0;
+  STATUT_DOSSIER_ENREGISTRE = 1;
+  STATUT_DOSSIER_EN_ANALYSE = 2;
+  STATUT_DOSSIER_ACCEPTE = 3;
+  STATUT_DOSSIER_REFUSE = 4;
+  STATUT_DOSSIER_CLOTURE = 5;
+}
+
+enum TypeAdresse {
+  TYPE_ADRESSE_UNSPECIFIED = 0;
+  TYPE_ADRESSE_FACTURATION = 1;
+  TYPE_ADRESSE_RISQUE = 2;
+}
+
+enum TypeConsentement {
+  TYPE_CONSENTEMENT_UNSPECIFIED = 0;
+  TYPE_CONSENTEMENT_RGPD_EMAIL = 1;
+  TYPE_CONSENTEMENT_RGPD_SMS = 2;
+  TYPE_CONSENTEMENT_CGS_DEPANSSUR = 3;
+}
+
+// ========== PAGINATION ==========
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}
+
+// ========== ABONNEMENT DEPANSSUR ==========
+
+message AbonnementDepanssur {
+  string id = 1;
+  string organisation_id = 2;
+  string client_id = 3;
+  string plan_type = 4;                              // ESSENTIEL, STANDARD, PREMIUM
+  string periodicite = 5;                            // MENSUELLE, ANNUELLE
+  int32 periode_attente = 6;                         // Jours de carence
+  optional double franchise = 7;                     // Montant fixe par sinistre
+  optional double plafond_par_intervention = 8;      // Max par intervention
+  optional double plafond_annuel = 9;                // Plafond annuel glissant
+  optional int32 nb_interventions_max = 10;          // Max interventions/an
+  StatutAbonnement statut = 11;
+  optional MotifResiliation motif_resiliation = 12;
+  string date_souscription = 13;
+  string date_effet = 14;                            // Date d'effet
+  optional string date_fin = 15;
+  string prochaine_echeance = 16;                    // Prochaine facturation
+  double prix_ttc = 17;
+  double taux_tva = 18;
+  double montant_ht = 19;
+  optional string code_remise = 20;
+  optional double montant_remise = 21;
+  string created_at = 22;
+  string updated_at = 23;
+}
+
+message CreateAbonnementRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string plan_type = 3;
+  string periodicite = 4;
+  int32 periode_attente = 5;
+  optional double franchise = 6;
+  optional double plafond_par_intervention = 7;
+  optional double plafond_annuel = 8;
+  optional int32 nb_interventions_max = 9;
+  string date_souscription = 10;
+  string date_effet = 11;
+  optional string date_fin = 12;
+  string prochaine_echeance = 13;
+  double prix_ttc = 14;
+  double taux_tva = 15;
+  double montant_ht = 16;
+  optional string code_remise = 17;
+  optional double montant_remise = 18;
+}
+
+message UpdateAbonnementRequest {
+  string id = 1;
+  optional string plan_type = 2;
+  optional string periodicite = 3;
+  optional int32 periode_attente = 4;
+  optional double franchise = 5;
+  optional double plafond_par_intervention = 6;
+  optional double plafond_annuel = 7;
+  optional int32 nb_interventions_max = 8;
+  optional StatutAbonnement statut = 9;
+  optional MotifResiliation motif_resiliation = 10;
+  optional string date_fin = 11;
+  optional string prochaine_echeance = 12;
+  optional double prix_ttc = 13;
+  optional double taux_tva = 14;
+  optional double montant_ht = 15;
+  optional string code_remise = 16;
+  optional double montant_remise = 17;
+}
+
+message GetAbonnementRequest {
+  string id = 1;
+}
+
+message GetAbonnementByClientRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+}
+
+message ListAbonnementsRequest {
+  string organisation_id = 1;
+  optional string client_id = 2;
+  optional StatutAbonnement statut = 3;
+  optional string plan_type = 4;
+  optional string search = 5;
+  PaginationRequest pagination = 6;
+}
+
+message ListAbonnementsResponse {
+  repeated AbonnementDepanssur abonnements = 1;
+  PaginationResponse pagination = 2;
+}
+
+// ========== DOSSIER DECLARATIF ==========
+
+message DossierDeclaratif {
+  string id = 1;
+  string organisation_id = 2;
+  string abonnement_id = 3;
+  string client_id = 4;
+  string reference_externe = 5;                      // Ref outil externe (unique)
+  string date_ouverture = 6;
+  TypeDossier type = 7;
+  StatutDossier statut = 8;
+  optional string adresse_risque_id = 9;             // FK Adresse
+  optional double montant_estimatif = 10;
+  optional bool prise_en_charge = 11;                // Decision de couverture
+  optional double franchise_appliquee = 12;
+  optional double reste_a_charge = 13;
+  optional double montant_pris_en_charge = 14;
+  optional int32 nps_score = 15;                     // Score satisfaction 1-10
+  optional string nps_commentaire = 16;
+  optional string date_cloture = 17;
+  string created_at = 18;
+  string updated_at = 19;
+}
+
+message CreateDossierRequest {
+  string organisation_id = 1;
+  string abonnement_id = 2;
+  string client_id = 3;
+  string reference_externe = 4;
+  string date_ouverture = 5;
+  TypeDossier type = 6;
+  optional string adresse_risque_id = 7;
+  optional double montant_estimatif = 8;
+}
+
+message UpdateDossierRequest {
+  string id = 1;
+  optional StatutDossier statut = 2;
+  optional double montant_estimatif = 3;
+  optional bool prise_en_charge = 4;
+  optional double franchise_appliquee = 5;
+  optional double reste_a_charge = 6;
+  optional double montant_pris_en_charge = 7;
+  optional int32 nps_score = 8;
+  optional string nps_commentaire = 9;
+  optional string date_cloture = 10;
+  optional string adresse_risque_id = 11;
+}
+
+message GetDossierRequest {
+  string id = 1;
+}
+
+message GetDossierByReferenceRequest {
+  string organisation_id = 1;
+  string reference_externe = 2;
+}
+
+message ListDossiersRequest {
+  string organisation_id = 1;
+  optional string abonnement_id = 2;
+  optional string client_id = 3;
+  optional TypeDossier type = 4;
+  optional StatutDossier statut = 5;
+  optional string search = 6;
+  PaginationRequest pagination = 7;
+}
+
+message ListDossiersResponse {
+  repeated DossierDeclaratif dossiers = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteDossierRequest {
+  string id = 1;
+}
+
+// ========== OPTION ABONNEMENT ==========
+
+message OptionAbonnement {
+  string id = 1;
+  string abonnement_id = 2;
+  string type = 3;                                   // APPAREILS_ADDITIONNELS, DEPENDANCES, PRIORITE_24H
+  string label = 4;
+  double prix_ttc = 5;
+  bool actif = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message CreateOptionRequest {
+  string abonnement_id = 1;
+  string type = 2;
+  string label = 3;
+  double prix_ttc = 4;
+  optional bool actif = 5;
+}
+
+message UpdateOptionRequest {
+  string id = 1;
+  optional string label = 2;
+  optional double prix_ttc = 3;
+  optional bool actif = 4;
+}
+
+message GetOptionRequest {
+  string id = 1;
+}
+
+message ListOptionsRequest {
+  string abonnement_id = 1;
+  optional bool actif = 2;
+  PaginationRequest pagination = 3;
+}
+
+message ListOptionsResponse {
+  repeated OptionAbonnement options = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteOptionRequest {
+  string id = 1;
+}
+
+// ========== COMPTEUR PLAFOND ==========
+
+message CompteurPlafond {
+  string id = 1;
+  string abonnement_id = 2;
+  string annee_glissante_debut = 3;                  // Debut annee glissante
+  string annee_glissante_fin = 4;                    // Fin annee glissante
+  int32 nb_interventions_utilisees = 5;              // Default 0
+  double montant_cumule = 6;                         // Default 0
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message GetCompteurRequest {
+  string abonnement_id = 1;
+}
+
+message UpdateCompteurRequest {
+  string id = 1;
+  optional int32 nb_interventions_utilisees = 2;
+  optional double montant_cumule = 3;
+}
+
+message ResetCompteurRequest {
+  string abonnement_id = 1;
+  string annee_glissante_debut = 2;
+  string annee_glissante_fin = 3;
+}
+
+message ListCompteursRequest {
+  string abonnement_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListCompteursResponse {
+  repeated CompteurPlafond compteurs = 1;
+  PaginationResponse pagination = 2;
+}
+
+// ========== CONSENTEMENT RGPD ==========
+
+message ConsentementRGPD {
+  string id = 1;
+  string client_id = 2;
+  TypeConsentement type = 3;
+  bool accorde = 4;
+  string date_accord = 5;
+  optional string date_retrait = 6;
+  string source = 7;                                 // web, agent, import
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateConsentementRequest {
+  string client_id = 1;
+  TypeConsentement type = 2;
+  bool accorde = 3;
+  string date_accord = 4;
+  string source = 5;
+}
+
+message UpdateConsentementRequest {
+  string id = 1;
+  optional bool accorde = 2;
+  optional string date_retrait = 3;
+  optional string source = 4;
+}
+
+message GetConsentementRequest {
+  string id = 1;
+}
+
+message ListConsentementsRequest {
+  string client_id = 1;
+  optional TypeConsentement type = 2;
+  PaginationRequest pagination = 3;
+}
+
+message ListConsentementsResponse {
+  repeated ConsentementRGPD consentements = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteConsentementRequest {
+  string id = 1;
+}
+
+// ========== WEBHOOK DEPANSSUR ==========
+
+message HandleWebhookRequest {
+  string event_id = 1;                               // External event ID (idempotency)
+  string event_type = 2;                             // depanssur.customer.created, etc.
+  string payload = 3;                                // JSON payload
+  string signature = 4;                              // X-Depanssur-Signature HMAC
+}
+
+message HandleWebhookResponse {
+  bool success = 1;
+  string message = 2;
+  optional string entity_id = 3;                     // ID of created/updated entity
+}
+
+// ========== SERVICE ==========
+
+service DepanssurService {
+  // ---- Abonnement CRUD ----
+  rpc CreateAbonnement(CreateAbonnementRequest) returns (AbonnementDepanssur);
+  rpc GetAbonnement(GetAbonnementRequest) returns (AbonnementDepanssur);
+  rpc GetAbonnementByClient(GetAbonnementByClientRequest) returns (AbonnementDepanssur);
+  rpc UpdateAbonnement(UpdateAbonnementRequest) returns (AbonnementDepanssur);
+  rpc ListAbonnements(ListAbonnementsRequest) returns (ListAbonnementsResponse);
+
+  // ---- Dossier Declaratif CRUD ----
+  rpc CreateDossier(CreateDossierRequest) returns (DossierDeclaratif);
+  rpc GetDossier(GetDossierRequest) returns (DossierDeclaratif);
+  rpc GetDossierByReference(GetDossierByReferenceRequest) returns (DossierDeclaratif);
+  rpc UpdateDossier(UpdateDossierRequest) returns (DossierDeclaratif);
+  rpc ListDossiers(ListDossiersRequest) returns (ListDossiersResponse);
+  rpc DeleteDossier(DeleteDossierRequest) returns (DeleteResponse);
+
+  // ---- Option Abonnement CRUD ----
+  rpc CreateOption(CreateOptionRequest) returns (OptionAbonnement);
+  rpc GetOption(GetOptionRequest) returns (OptionAbonnement);
+  rpc UpdateOption(UpdateOptionRequest) returns (OptionAbonnement);
+  rpc ListOptions(ListOptionsRequest) returns (ListOptionsResponse);
+  rpc DeleteOption(DeleteOptionRequest) returns (DeleteResponse);
+
+  // ---- Compteur Plafond ----
+  rpc GetCompteur(GetCompteurRequest) returns (CompteurPlafond);
+  rpc UpdateCompteur(UpdateCompteurRequest) returns (CompteurPlafond);
+  rpc ResetCompteur(ResetCompteurRequest) returns (CompteurPlafond);
+  rpc ListCompteurs(ListCompteursRequest) returns (ListCompteursResponse);
+
+  // ---- Consentement RGPD CRUD ----
+  rpc CreateConsentement(CreateConsentementRequest) returns (ConsentementRGPD);
+  rpc GetConsentement(GetConsentementRequest) returns (ConsentementRGPD);
+  rpc UpdateConsentement(UpdateConsentementRequest) returns (ConsentementRGPD);
+  rpc ListConsentements(ListConsentementsRequest) returns (ListConsentementsResponse);
+  rpc DeleteConsentement(DeleteConsentementRequest) returns (DeleteResponse);
+
+  // ---- Webhook ----
+  rpc HandleWebhook(HandleWebhookRequest) returns (HandleWebhookResponse);
+}

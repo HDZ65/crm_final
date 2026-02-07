@@ -2,50 +2,83 @@
  * Shared gRPC configuration and utilities
  */
 
-// Use require to bypass ESM bundling issues
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const grpc = require("@grpc/grpc-js");
+import * as grpc from "@grpc/grpc-js";
 export const credentials = grpc.credentials;
 export type ServiceError = import("@grpc/grpc-js").ServiceError;
+export type GrpcClient = import("@grpc/grpc-js").Client;
+
+/**
+ * Create a gRPC client from a service definition (outputClientImpl=false pattern)
+ * Uses grpc.makeClientConstructor instead of generated client classes
+ */
+export function makeClient(
+  serviceDef: Record<string, unknown>,
+  serviceName: string,
+  address: string,
+  channelCredentials: unknown
+): GrpcClient {
+  const Constructor = grpc.makeClientConstructor(serviceDef, serviceName);
+  return new Constructor(address, channelCredentials);
+}
 
 // Service endpoints configuration
-// Note: Les ports correspondent aux conteneurs Docker des microservices
+// Each consolidated service exposes all its proto packages on a single gRPC port
 export const SERVICES = {
-  activites: process.env.GRPC_ACTIVITES_URL || "localhost:60051",
-  calendar: process.env.GRPC_CALENDAR_URL || "localhost:50070",
-  clients: process.env.GRPC_CLIENTS_URL || "localhost:60052",
-  commerciaux: process.env.GRPC_COMMERCIAUX_URL || "localhost:60053",
-  commission: process.env.GRPC_COMMISSION_URL || "localhost:60054",
-  contrats: process.env.GRPC_CONTRATS_URL || "localhost:60055",
-  dashboard: process.env.GRPC_DASHBOARD_URL || "localhost:60056",
-  documents: process.env.GRPC_DOCUMENTS_URL || "localhost:60057",
-  email: process.env.GRPC_EMAIL_URL || "localhost:60058",
-  factures: process.env.GRPC_FACTURES_URL || "localhost:60059",
-  logistics: process.env.GRPC_LOGISTICS_URL || "localhost:60060",
-  notifications: process.env.GRPC_NOTIFICATIONS_URL || "localhost:60061",
-  organisations: process.env.GRPC_ORGANISATIONS_URL || "localhost:60062",
-  payments: process.env.GRPC_PAYMENTS_URL || "localhost:60063",
-  products: process.env.GRPC_PRODUCTS_URL || "localhost:60064",
-  referentiel: process.env.GRPC_REFERENTIEL_URL || "localhost:60065",
-  relance: process.env.GRPC_RELANCE_URL || "localhost:60066",
-  users: process.env.GRPC_USERS_URL || "localhost:60067",
+  // service-engagement :50051
+  activites: process.env.GRPC_ACTIVITES_URL || "localhost:50051",
+  email: process.env.GRPC_EMAIL_URL || "localhost:50051",
+  notifications: process.env.GRPC_NOTIFICATIONS_URL || "localhost:50051",
+  bundle: process.env.GRPC_BUNDLE_URL || "localhost:50051",
+  conciergerie: process.env.GRPC_CONCIERGERIE_URL || "localhost:50051",
+  justiPlus: process.env.GRPC_JUSTI_PLUS_URL || "localhost:50051",
+  wincash: process.env.GRPC_WINCASH_URL || "localhost:50051",
+  // service-core :50052
+  users: process.env.GRPC_USERS_URL || "localhost:50052",
+  clients: process.env.GRPC_CLIENTS_URL || "localhost:50052",
+  dashboard: process.env.GRPC_DASHBOARD_URL || "localhost:50052",
+  documents: process.env.GRPC_DOCUMENTS_URL || "localhost:50052",
+  organisations: process.env.GRPC_ORGANISATIONS_URL || "localhost:50052",
+  // service-commercial :50053
+  commerciaux: process.env.GRPC_COMMERCIAUX_URL || "localhost:50053",
+  commission: process.env.GRPC_COMMISSION_URL || "localhost:50053",
+  contrats: process.env.GRPC_CONTRATS_URL || "localhost:50053",
+  products: process.env.GRPC_PRODUCTS_URL || "localhost:50053",
+  partenaires: process.env.GRPC_PARTENAIRES_URL || "localhost:50053",
+  // service-finance :50059
+  calendar: process.env.GRPC_CALENDAR_URL || "localhost:50059",
+  factures: process.env.GRPC_FACTURES_URL || "localhost:50059",
+  payments: process.env.GRPC_PAYMENTS_URL || "localhost:50059",
+  // service-logistics :50060
+  logistics: process.env.GRPC_LOGISTICS_URL || "localhost:50060",
+  // service-depanssur :50061
+  depanssur: process.env.GRPC_DEPANSSUR_URL || "localhost:50061",
+  subscriptions: process.env.GRPC_SUBSCRIPTIONS_URL || "localhost:50053",
+  woocommerce: process.env.GRPC_WOOCOMMERCE_URL || "localhost:50053",
+  // not yet exposed
+  referentiel: process.env.GRPC_REFERENTIEL_URL || "localhost:50052",
+  relance: process.env.GRPC_RELANCE_URL || "localhost:50051",
 } as const;
 
 /**
- * Promisify a gRPC callback-style method
+ * Promisify a gRPC callback-style method.
+ * Automatically injects auth metadata from the server session.
  */
 export function promisify<TRequest, TResponse>(
   client: unknown,
   method: string
 ): (request: TRequest) => Promise<TResponse> {
-  return (request: TRequest): Promise<TResponse> => {
+  return async (request: TRequest): Promise<TResponse> => {
+    const { getAuthMetadata } = await import("@/lib/grpc/auth");
+    const metadata = await getAuthMetadata();
+
     return new Promise((resolve, reject) => {
       const fn = (client as Record<string, unknown>)[method] as (
         request: TRequest,
+        metadata: grpc.Metadata,
         callback: (error: ServiceError | null, response: TResponse) => void
       ) => void;
 
-      fn.call(client, request, (error, response) => {
+      fn.call(client, request, metadata, (error, response) => {
         if (error) {
           reject(error);
         } else {

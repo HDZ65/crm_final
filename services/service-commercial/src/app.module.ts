@@ -14,6 +14,7 @@ import { ContratsModule } from './contrats.module';
 import { DashboardModule } from './dashboard.module';
 import { ProductsModule } from './products.module';
 import { SubscriptionsModule } from './subscriptions.module';
+import { WooCommerceModule } from './woocommerce.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { SubscriptionsModule } from './subscriptions.module';
     DashboardModule,
     ProductsModule,
     SubscriptionsModule,
+    WooCommerceModule,
   ],
   controllers: [],
   providers: [

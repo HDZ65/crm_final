@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Domain entities
@@ -10,6 +10,7 @@ import {
   HistoriqueStatutAbonnementEntity,
   DossierDeclaratifEntity,
   HistoriqueStatutDossierEntity,
+  WebhookEventLogEntity,
 } from './domain/depanssur/entities';
 
 // Infrastructure services
@@ -19,9 +20,15 @@ import {
   CompteurPlafondService,
   DossierDeclaratifService,
 } from './infrastructure/persistence/typeorm/repositories/depanssur';
+import { RegleDepanssurService } from './domain/depanssur/services/regle-depanssur.service';
+import { DepanssurWebhookService } from './domain/depanssur/services/depanssur-webhook.service';
 
 // Interface controllers
 import { DepanssurController } from './infrastructure/grpc/depanssur';
+import { DepanssurWebhookController } from './infrastructure/http/controllers/depanssur-webhook.controller';
+
+// Cross-context module imports
+import { ClientsModule } from './clients.module';
 
 @Module({
   imports: [
@@ -33,22 +40,29 @@ import { DepanssurController } from './infrastructure/grpc/depanssur';
       HistoriqueStatutAbonnementEntity,
       DossierDeclaratifEntity,
       HistoriqueStatutDossierEntity,
+      WebhookEventLogEntity,
     ]),
+    forwardRef(() => ClientsModule),
   ],
   controllers: [
     DepanssurController,
+    DepanssurWebhookController,
   ],
   providers: [
+    RegleDepanssurService,
     AbonnementService,
     OptionAbonnementService,
     CompteurPlafondService,
     DossierDeclaratifService,
+    DepanssurWebhookService,
   ],
   exports: [
+    RegleDepanssurService,
     AbonnementService,
     OptionAbonnementService,
     CompteurPlafondService,
     DossierDeclaratifService,
+    DepanssurWebhookService,
   ],
 })
 export class DepanssurModule {}

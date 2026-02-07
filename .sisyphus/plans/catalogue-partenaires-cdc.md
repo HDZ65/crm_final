@@ -295,7 +295,7 @@ Wave 6 (Tests & Finalisation — After Wave 5):
 
 ---
 
-- [ ] 2. Enrichir SocieteEntity — Logo, devise, paramètres comptables
+- [x] 2. Enrichir SocieteEntity — Logo, devise, paramètres comptables
 
   **What to do**:
   - Ajouter à `SocieteEntity` les colonnes: `logo_url TEXT NULL`, `devise VARCHAR(3) DEFAULT 'EUR'`, `ics VARCHAR(50) NULL` (Identifiant Créancier SEPA), `journal_vente VARCHAR(20) NULL`, `compte_produit_defaut VARCHAR(20) NULL`, `plan_comptable JSONB NULL`, `adresse_siege TEXT NULL`, `telephone VARCHAR(50) NULL`, `email_contact VARCHAR(255) NULL`, `parametres_fiscaux JSONB NULL`

@@ -3,8 +3,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { AuthInterceptor } from '@crm/grpc-utils';
-import { NatsModule } from '@crm/nats-utils';
+import { AuthInterceptor } from '@crm/shared-kernel';
+import { AuditSubscriber } from './infrastructure/persistence/typeorm/audit-subscriber';
 
 // ============================================================================
 // DDD BOUNDED CONTEXT MODULES
@@ -13,6 +13,8 @@ import { UsersModule } from './users.module';
 import { OrganisationsModule } from './organisations.module';
 import { ClientsModule } from './clients.module';
 import { DocumentsModule } from './documents.module';
+import { DashboardModule } from './dashboard.module';
+import { DepanssurModule } from './depanssur.module';
 
 @Module({
   imports: [
@@ -31,9 +33,14 @@ import { DocumentsModule } from './documents.module';
         database: configService.get('DB_DATABASE', 'core_db'),
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
-        synchronize: false,
+        synchronize: configService.get('NODE_ENV') !== 'production',
         migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
+        logging: configService.get('NODE_ENV') === 'development',
+        ssl:
+          configService.get<string>('DB_SSL') === 'true'
+            ? { rejectUnauthorized: configService.get<string>('NODE_ENV') === 'production' }
+            : false,
         extra: {
           max: 10,
           idleTimeoutMillis: 30000,
@@ -41,13 +48,13 @@ import { DocumentsModule } from './documents.module';
         },
       }),
     }),
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
-
     // DDD Bounded Context Modules
     UsersModule,
     OrganisationsModule,
     ClientsModule,
     DocumentsModule,
+    DashboardModule,
+    DepanssurModule,
   ],
   controllers: [],
   providers: [
@@ -55,6 +62,7 @@ import { DocumentsModule } from './documents.module';
       provide: APP_INTERCEPTOR,
       useClass: AuthInterceptor,
     },
+    AuditSubscriber,
   ],
 })
 export class AppModule {}

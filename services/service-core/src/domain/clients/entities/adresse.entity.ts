@@ -36,11 +36,14 @@ export class AdresseEntity {
   @Column({ length: 100, default: 'France' })
   pays: string;
 
-  @Column({ length: 50 })
-  type: string;
+   @Column({ length: 50 })
+   type: string;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+   @Column({ name: 'type_adresse', length: 50, default: 'FACTURATION', nullable: true })
+   typeAdresse: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

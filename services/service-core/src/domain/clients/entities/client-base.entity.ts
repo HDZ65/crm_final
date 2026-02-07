@@ -49,11 +49,41 @@ export class ClientBaseEntity {
   @Column({ name: 'societe_id', type: 'uuid', nullable: true })
   societeId: string | null;
 
-  @OneToMany('AdresseEntity', 'client')
-  adresses: AdresseEntity[];
+  @Column({ name: 'has_conciergerie', type: 'boolean', default: false })
+  hasConciergerie: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  @Column({ name: 'has_justi_plus', type: 'boolean', default: false })
+  hasJustiPlus: boolean;
+
+  @Column({ name: 'has_wincash', type: 'boolean', default: false })
+  hasWincash: boolean;
+
+  @Column({ name: 'uuid_wincash', type: 'uuid', nullable: true })
+  uuidWincash: string | null;
+
+  @Column({ name: 'uuid_justi_plus', type: 'uuid', nullable: true })
+  uuidJustiPlus: string | null;
+
+  @Column({ name: 'date_premiere_souscription', type: 'date', nullable: true })
+  datePremiereSouscription: Date | null;
+
+   @Column({ name: 'canal_acquisition', type: 'varchar', length: 100, nullable: true })
+   canalAcquisition: string | null;
+
+   @Column({ length: 50, nullable: true })
+   civilite: string | null;
+
+    @OneToMany('AdresseEntity', 'client')
+    adresses: AdresseEntity[];
+
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

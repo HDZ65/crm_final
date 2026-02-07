@@ -3,12 +3,13 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { AuthInterceptor } from '@crm/grpc-utils';
+import { AuthInterceptor, NatsModule } from '@crm/shared-kernel';
 
 // ============================================================================
 // DDD BOUNDED CONTEXT MODULES
 // ============================================================================
 import { LogisticsModule } from './logistics.module';
+import { FulfillmentModule } from './fulfillment.module';
 
 // Domain entities for TypeORM configuration
 import {
@@ -17,6 +18,13 @@ import {
   ExpeditionEntity,
   TrackingEventEntity,
 } from './domain/logistics/entities';
+import {
+  FulfillmentBatchEntity,
+  FulfillmentBatchLineEntity,
+  FulfillmentCutoffConfigEntity,
+  AddressSnapshotEntity,
+  PreferenceSnapshotEntity,
+} from './domain/fulfillment/entities';
 
 @Module({
   imports: [
@@ -45,11 +53,20 @@ import {
           ColisEntity,
           ExpeditionEntity,
           TrackingEventEntity,
+          FulfillmentBatchEntity,
+          FulfillmentBatchLineEntity,
+          FulfillmentCutoffConfigEntity,
+          AddressSnapshotEntity,
+          PreferenceSnapshotEntity,
         ],
-        synchronize: false,
+        synchronize: configService.get('NODE_ENV') !== 'production',
         migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get('NODE_ENV') === 'development',
+        ssl:
+          configService.get<string>('DB_SSL') === 'true'
+            ? { rejectUnauthorized: configService.get<string>('NODE_ENV') === 'production' }
+            : false,
         extra: {
           max: 10,
           idleTimeoutMillis: 30000,
@@ -58,10 +75,20 @@ import {
       }),
     }),
 
+    // NATS Messaging
+    NatsModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        servers: configService.get<string>('NATS_URL', 'nats://localhost:4222'),
+      }),
+    }),
+
     // ========================================================================
     // DDD BOUNDED CONTEXT MODULES
     // ========================================================================
     LogisticsModule,
+    FulfillmentModule,
   ],
 
   controllers: [],

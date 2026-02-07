@@ -3,9 +3,10 @@
  */
 
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, GrpcClient } from "./config";
 import {
-  ContratServiceClient,
+  ContratServiceService,
+  ContractOrchestrationServiceService,
   type Contrat,
   type CreateContratRequest,
   type UpdateContratRequest,
@@ -14,18 +15,35 @@ import {
   type ListContratResponse,
   type DeleteContratRequest,
   type DeleteResponse as ContratDeleteResponse,
+  type OrchestrationRequest,
+  type OrchestrationResponse,
 } from "@proto/contrats/contrats";
 
-let contratInstance: ContratServiceClient | null = null;
+let contratInstance: GrpcClient | null = null;
+let orchestrationInstance: GrpcClient | null = null;
 
-function getContratClient(): ContratServiceClient {
+function getContratClient(): GrpcClient {
   if (!contratInstance) {
-    contratInstance = new ContratServiceClient(
+    contratInstance = makeClient(
+      ContratServiceService,
+      "ContratService",
       SERVICES.contrats,
       createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return contratInstance;
+}
+
+function getOrchestrationClient(): GrpcClient {
+  if (!orchestrationInstance) {
+    orchestrationInstance = makeClient(
+      ContractOrchestrationServiceService,
+      "ContractOrchestrationService",
+      SERVICES.contrats,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return orchestrationInstance;
 }
 
 export const contrats = {
@@ -55,6 +73,31 @@ export const contrats = {
       getContratClient(),
       "delete"
     )(request),
+
+  // Orchestration methods
+  activate: (request: OrchestrationRequest): Promise<OrchestrationResponse> =>
+    promisify<OrchestrationRequest, OrchestrationResponse>(
+      getOrchestrationClient(),
+      "activate"
+    )(request),
+
+  suspend: (request: OrchestrationRequest): Promise<OrchestrationResponse> =>
+    promisify<OrchestrationRequest, OrchestrationResponse>(
+      getOrchestrationClient(),
+      "suspend"
+    )(request),
+
+  terminate: (request: OrchestrationRequest): Promise<OrchestrationResponse> =>
+    promisify<OrchestrationRequest, OrchestrationResponse>(
+      getOrchestrationClient(),
+      "terminate"
+    )(request),
+
+  portIn: (request: OrchestrationRequest): Promise<OrchestrationResponse> =>
+    promisify<OrchestrationRequest, OrchestrationResponse>(
+      getOrchestrationClient(),
+      "portIn"
+    )(request),
 };
 
 // Re-export types for convenience
@@ -63,4 +106,6 @@ export type {
   CreateContratRequest,
   ListContratRequest,
   ListContratResponse,
+  OrchestrationRequest,
+  OrchestrationResponse,
 };

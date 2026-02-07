@@ -163,6 +163,7 @@ export interface LigneContrat {
   periodeFacturationId: string;
   quantite: number;
   prixUnitaire: number;
+  canalVente: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -173,6 +174,7 @@ export interface CreateLigneContratRequest {
   periodeFacturationId: string;
   quantite: number;
   prixUnitaire: number;
+  canalVente?: string | undefined;
 }
 
 export interface UpdateLigneContratRequest {
@@ -181,6 +183,7 @@ export interface UpdateLigneContratRequest {
   periodeFacturationId: string;
   quantite: number;
   prixUnitaire: number;
+  canalVente?: string | undefined;
 }
 
 export interface GetLigneContratRequest {
@@ -2790,6 +2793,7 @@ function createBaseLigneContrat(): LigneContrat {
     periodeFacturationId: "",
     quantite: 0,
     prixUnitaire: 0,
+    canalVente: "",
     createdAt: "",
     updatedAt: "",
   };
@@ -2815,11 +2819,14 @@ export const LigneContrat: MessageFns<LigneContrat> = {
     if (message.prixUnitaire !== 0) {
       writer.uint32(49).double(message.prixUnitaire);
     }
+    if (message.canalVente !== "") {
+      writer.uint32(58).string(message.canalVente);
+    }
     if (message.createdAt !== "") {
-      writer.uint32(58).string(message.createdAt);
+      writer.uint32(66).string(message.createdAt);
     }
     if (message.updatedAt !== "") {
-      writer.uint32(66).string(message.updatedAt);
+      writer.uint32(74).string(message.updatedAt);
     }
     return writer;
   },
@@ -2884,11 +2891,19 @@ export const LigneContrat: MessageFns<LigneContrat> = {
             break;
           }
 
-          message.createdAt = reader.string();
+          message.canalVente = reader.string();
           continue;
         }
         case 8: {
           if (tag !== 66) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
             break;
           }
 
@@ -2928,6 +2943,11 @@ export const LigneContrat: MessageFns<LigneContrat> = {
         : isSet(object.prix_unitaire)
         ? globalThis.Number(object.prix_unitaire)
         : 0,
+      canalVente: isSet(object.canalVente)
+        ? globalThis.String(object.canalVente)
+        : isSet(object.canal_vente)
+        ? globalThis.String(object.canal_vente)
+        : "",
       createdAt: isSet(object.createdAt)
         ? globalThis.String(object.createdAt)
         : isSet(object.created_at)
@@ -2961,6 +2981,9 @@ export const LigneContrat: MessageFns<LigneContrat> = {
     if (message.prixUnitaire !== 0) {
       obj.prixUnitaire = message.prixUnitaire;
     }
+    if (message.canalVente !== "") {
+      obj.canalVente = message.canalVente;
+    }
     if (message.createdAt !== "") {
       obj.createdAt = message.createdAt;
     }
@@ -2981,6 +3004,7 @@ export const LigneContrat: MessageFns<LigneContrat> = {
     message.periodeFacturationId = object.periodeFacturationId ?? "";
     message.quantite = object.quantite ?? 0;
     message.prixUnitaire = object.prixUnitaire ?? 0;
+    message.canalVente = object.canalVente ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
     return message;
@@ -2988,7 +3012,14 @@ export const LigneContrat: MessageFns<LigneContrat> = {
 };
 
 function createBaseCreateLigneContratRequest(): CreateLigneContratRequest {
-  return { contratId: "", produitId: "", periodeFacturationId: "", quantite: 0, prixUnitaire: 0 };
+  return {
+    contratId: "",
+    produitId: "",
+    periodeFacturationId: "",
+    quantite: 0,
+    prixUnitaire: 0,
+    canalVente: undefined,
+  };
 }
 
 export const CreateLigneContratRequest: MessageFns<CreateLigneContratRequest> = {
@@ -3007,6 +3038,9 @@ export const CreateLigneContratRequest: MessageFns<CreateLigneContratRequest> = 
     }
     if (message.prixUnitaire !== 0) {
       writer.uint32(41).double(message.prixUnitaire);
+    }
+    if (message.canalVente !== undefined) {
+      writer.uint32(50).string(message.canalVente);
     }
     return writer;
   },
@@ -3058,6 +3092,14 @@ export const CreateLigneContratRequest: MessageFns<CreateLigneContratRequest> = 
           message.prixUnitaire = reader.double();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.canalVente = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3090,6 +3132,11 @@ export const CreateLigneContratRequest: MessageFns<CreateLigneContratRequest> = 
         : isSet(object.prix_unitaire)
         ? globalThis.Number(object.prix_unitaire)
         : 0,
+      canalVente: isSet(object.canalVente)
+        ? globalThis.String(object.canalVente)
+        : isSet(object.canal_vente)
+        ? globalThis.String(object.canal_vente)
+        : undefined,
     };
   },
 
@@ -3110,6 +3157,9 @@ export const CreateLigneContratRequest: MessageFns<CreateLigneContratRequest> = 
     if (message.prixUnitaire !== 0) {
       obj.prixUnitaire = message.prixUnitaire;
     }
+    if (message.canalVente !== undefined) {
+      obj.canalVente = message.canalVente;
+    }
     return obj;
   },
 
@@ -3123,12 +3173,13 @@ export const CreateLigneContratRequest: MessageFns<CreateLigneContratRequest> = 
     message.periodeFacturationId = object.periodeFacturationId ?? "";
     message.quantite = object.quantite ?? 0;
     message.prixUnitaire = object.prixUnitaire ?? 0;
+    message.canalVente = object.canalVente ?? undefined;
     return message;
   },
 };
 
 function createBaseUpdateLigneContratRequest(): UpdateLigneContratRequest {
-  return { id: "", produitId: "", periodeFacturationId: "", quantite: 0, prixUnitaire: 0 };
+  return { id: "", produitId: "", periodeFacturationId: "", quantite: 0, prixUnitaire: 0, canalVente: undefined };
 }
 
 export const UpdateLigneContratRequest: MessageFns<UpdateLigneContratRequest> = {
@@ -3147,6 +3198,9 @@ export const UpdateLigneContratRequest: MessageFns<UpdateLigneContratRequest> = 
     }
     if (message.prixUnitaire !== 0) {
       writer.uint32(41).double(message.prixUnitaire);
+    }
+    if (message.canalVente !== undefined) {
+      writer.uint32(50).string(message.canalVente);
     }
     return writer;
   },
@@ -3198,6 +3252,14 @@ export const UpdateLigneContratRequest: MessageFns<UpdateLigneContratRequest> = 
           message.prixUnitaire = reader.double();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.canalVente = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3226,6 +3288,11 @@ export const UpdateLigneContratRequest: MessageFns<UpdateLigneContratRequest> = 
         : isSet(object.prix_unitaire)
         ? globalThis.Number(object.prix_unitaire)
         : 0,
+      canalVente: isSet(object.canalVente)
+        ? globalThis.String(object.canalVente)
+        : isSet(object.canal_vente)
+        ? globalThis.String(object.canal_vente)
+        : undefined,
     };
   },
 
@@ -3246,6 +3313,9 @@ export const UpdateLigneContratRequest: MessageFns<UpdateLigneContratRequest> = 
     if (message.prixUnitaire !== 0) {
       obj.prixUnitaire = message.prixUnitaire;
     }
+    if (message.canalVente !== undefined) {
+      obj.canalVente = message.canalVente;
+    }
     return obj;
   },
 
@@ -3259,6 +3329,7 @@ export const UpdateLigneContratRequest: MessageFns<UpdateLigneContratRequest> = 
     message.periodeFacturationId = object.periodeFacturationId ?? "";
     message.quantite = object.quantite ?? 0;
     message.prixUnitaire = object.prixUnitaire ?? 0;
+    message.canalVente = object.canalVente ?? undefined;
     return message;
   },
 };

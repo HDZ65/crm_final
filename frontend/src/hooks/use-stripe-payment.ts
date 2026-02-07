@@ -1,7 +1,19 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { API_URL, getStripeErrorMessage } from '@/lib/stripe';
+import { getStripeErrorMessage } from '@/lib/payments/stripe';
+import {
+  createStripePaymentIntent as createStripePaymentIntentAction,
+  getStripePaymentIntent as getStripePaymentIntentAction,
+  cancelStripePaymentIntent as cancelStripePaymentIntentAction,
+  createStripeCheckoutSession as createStripeCheckoutSessionAction,
+  createStripeCustomer as createStripeCustomerAction,
+  getStripeCustomer as getStripeCustomerAction,
+  createStripeSubscription as createStripeSubscriptionAction,
+  getStripeSubscription as getStripeSubscriptionAction,
+  cancelStripeSubscription as cancelStripeSubscriptionAction,
+  createStripeRefund as createStripeRefundAction,
+} from '@/actions/payments';
 
 // Types
 export interface PaymentIntentResponse {
@@ -100,7 +112,11 @@ export interface UseStripePaymentReturn {
   clearError: () => void;
 }
 
-export function useStripePayment(): UseStripePaymentReturn {
+/**
+ * Hook for Stripe payment operations via gRPC server actions.
+ * @param societeId - Societe ID for multi-tenant context (resolved from auth if empty)
+ */
+export function useStripePayment(societeId: string = ''): UseStripePaymentReturn {
   const [error, setError] = useState<string | null>(null);
 
   const clearError = useCallback(() => setError(null), []);
@@ -110,73 +126,126 @@ export function useStripePayment(): UseStripePaymentReturn {
       setError(err.message);
     } else if (typeof err === 'object' && err !== null && 'code' in err) {
       setError(getStripeErrorMessage((err as { code: string }).code));
+    } else if (typeof err === 'string') {
+      setError(err);
     } else {
       setError('Une erreur est survenue');
     }
   }, []);
 
-  const apiCall = useCallback(async <T>(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<T | null> => {
-    setError(null);
-
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        ...options,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erreur HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data as T;
-    } catch (err) {
-      handleError(err);
-      return null;
-    }
-  }, [handleError]);
-
   // Payment Intent
   const createPaymentIntent = useCallback(async (
     params: CreatePaymentIntentParams
   ): Promise<PaymentIntentResponse | null> => {
-    return apiCall<PaymentIntentResponse>('/stripe/payment-intents', {
-      method: 'POST',
-      body: JSON.stringify({
-        ...params,
-        currency: params.currency || 'eur',
-      }),
-    });
-  }, [apiCall]);
+    setError(null);
+    try {
+      const result = await createStripePaymentIntentAction({
+        societeId,
+        amount: params.amount,
+        currency: params.currency,
+        customerId: params.customerId,
+        description: params.description,
+        metadata: params.metadata,
+      });
+      if (result.error) {
+        handleError(result.error);
+        return null;
+      }
+      if (!result.data) return null;
+      return {
+        id: result.data.id,
+        clientSecret: result.data.clientSecret || '',
+        amount: Number(result.data.amount),
+        currency: result.data.currency,
+        status: result.data.status,
+      };
+    } catch (err) {
+      handleError(err);
+      return null;
+    }
+  }, [handleError, societeId]);
 
   const getPaymentIntent = useCallback(async (
     id: string
   ): Promise<PaymentIntentResponse | null> => {
-    return apiCall<PaymentIntentResponse>(`/stripe/payment-intents/${id}`);
-  }, [apiCall]);
+    setError(null);
+    try {
+      const result = await getStripePaymentIntentAction(id, societeId);
+      if (result.error) {
+        handleError(result.error);
+        return null;
+      }
+      if (!result.data) return null;
+      return {
+        id: result.data.id,
+        clientSecret: result.data.clientSecret || '',
+        amount: Number(result.data.amount),
+        currency: result.data.currency,
+        status: result.data.status,
+      };
+    } catch (err) {
+      handleError(err);
+      return null;
+    }
+  }, [handleError, societeId]);
 
-  const cancelPaymentIntent = useCallback(async (id: string): Promise<boolean> => {
-    const result = await apiCall<{ success: boolean }>(`/stripe/payment-intents/${id}/cancel`, {
-      method: 'POST',
-    });
-    return result?.success ?? false;
-  }, [apiCall]);
+  const cancelPaymentIntent = useCallback(async (
+    id: string
+  ): Promise<boolean> => {
+    setError(null);
+    try {
+      const result = await cancelStripePaymentIntentAction(id, societeId);
+      if (result.error) {
+        handleError(result.error);
+        return false;
+      }
+      return result.data?.success ?? false;
+    } catch (err) {
+      handleError(err);
+      return false;
+    }
+  }, [handleError, societeId]);
 
   // Checkout Session
   const createCheckoutSession = useCallback(async (
     params: CreateCheckoutSessionParams
   ): Promise<CheckoutSessionResponse | null> => {
-    return apiCall<CheckoutSessionResponse>('/stripe/checkout/sessions', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    });
-  }, [apiCall]);
+    setError(null);
+    try {
+      const result = await createStripeCheckoutSessionAction({
+        societeId,
+        customerId: params.customerId,
+        customerEmail: params.customerEmail,
+        priceId: params.priceId,
+        amount: params.amount,
+        currency: params.currency,
+        mode: params.mode,
+        successUrl: params.successUrl,
+        cancelUrl: params.cancelUrl,
+        metadata: params.metadata,
+        lineItems: params.lineItems?.map((item) => ({
+          name: item.name,
+          description: item.description,
+          amount: item.amount,
+          quantity: item.quantity,
+          currency: item.currency,
+        })),
+      });
+      if (result.error) {
+        handleError(result.error);
+        return null;
+      }
+      if (!result.data) return null;
+      return {
+        id: result.data.id,
+        url: result.data.url,
+        subscriptionId: result.data.subscriptionId,
+      };
+    } catch (err) {
+      handleError(err);
+      return null;
+    }
+  }, [handleError, societeId]);
 
   const redirectToCheckout = useCallback(async (
     params: CreateCheckoutSessionParams
@@ -191,40 +260,123 @@ export function useStripePayment(): UseStripePaymentReturn {
   const createCustomer = useCallback(async (
     params: CreateCustomerParams
   ): Promise<CustomerResponse | null> => {
-    return apiCall<CustomerResponse>('/stripe/customers', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    });
-  }, [apiCall]);
+    setError(null);
+    try {
+      const result = await createStripeCustomerAction({
+        societeId,
+        email: params.email,
+        name: params.name,
+        phone: params.phone,
+        metadata: params.metadata,
+      });
+      if (result.error) {
+        handleError(result.error);
+        return null;
+      }
+      if (!result.data) return null;
+      return {
+        id: result.data.id,
+        email: result.data.email,
+        name: result.data.name,
+      };
+    } catch (err) {
+      handleError(err);
+      return null;
+    }
+  }, [handleError, societeId]);
 
   const getCustomer = useCallback(async (
     id: string
   ): Promise<CustomerResponse | null> => {
-    return apiCall<CustomerResponse>(`/stripe/customers/${id}`);
-  }, [apiCall]);
+    setError(null);
+    try {
+      const result = await getStripeCustomerAction(id, societeId);
+      if (result.error) {
+        handleError(result.error);
+        return null;
+      }
+      if (!result.data) return null;
+      return {
+        id: result.data.id,
+        email: result.data.email,
+        name: result.data.name,
+      };
+    } catch (err) {
+      handleError(err);
+      return null;
+    }
+  }, [handleError, societeId]);
 
   // Subscription
   const createSubscription = useCallback(async (
     params: CreateSubscriptionParams
   ): Promise<SubscriptionResponse | null> => {
-    return apiCall<SubscriptionResponse>('/stripe/subscriptions', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    });
-  }, [apiCall]);
+    setError(null);
+    try {
+      const result = await createStripeSubscriptionAction({
+        societeId,
+        customerId: params.customerId,
+        priceId: params.priceId,
+        metadata: params.metadata,
+      });
+      if (result.error) {
+        handleError(result.error);
+        return null;
+      }
+      if (!result.data) return null;
+      return {
+        id: result.data.id,
+        status: result.data.status,
+        currentPeriodStart: String(result.data.currentPeriodStart),
+        currentPeriodEnd: String(result.data.currentPeriodEnd),
+        cancelAtPeriodEnd: result.data.cancelAtPeriodEnd,
+      };
+    } catch (err) {
+      handleError(err);
+      return null;
+    }
+  }, [handleError, societeId]);
 
   const getSubscription = useCallback(async (
     id: string
   ): Promise<SubscriptionResponse | null> => {
-    return apiCall<SubscriptionResponse>(`/stripe/subscriptions/${id}`);
-  }, [apiCall]);
+    setError(null);
+    try {
+      const result = await getStripeSubscriptionAction(id, societeId);
+      if (result.error) {
+        handleError(result.error);
+        return null;
+      }
+      if (!result.data) return null;
+      return {
+        id: result.data.id,
+        status: result.data.status,
+        currentPeriodStart: String(result.data.currentPeriodStart),
+        currentPeriodEnd: String(result.data.currentPeriodEnd),
+        cancelAtPeriodEnd: result.data.cancelAtPeriodEnd,
+      };
+    } catch (err) {
+      handleError(err);
+      return null;
+    }
+  }, [handleError, societeId]);
 
-  const cancelSubscription = useCallback(async (id: string): Promise<boolean> => {
-    const result = await apiCall<{ success: boolean }>(`/stripe/subscriptions/${id}`, {
-      method: 'DELETE',
-    });
-    return result?.success ?? false;
-  }, [apiCall]);
+  const cancelSubscription = useCallback(async (
+    id: string
+  ): Promise<boolean> => {
+    setError(null);
+    try {
+      const result = await cancelStripeSubscriptionAction(id, societeId);
+      if (result.error) {
+        handleError(result.error);
+        return false;
+      }
+      return result.data?.success ?? false;
+    } catch (err) {
+      handleError(err);
+      return false;
+    }
+  }, [handleError, societeId]);
 
   // Refund
   const createRefund = useCallback(async (
@@ -232,16 +384,24 @@ export function useStripePayment(): UseStripePaymentReturn {
     amount?: number,
     reason?: string
   ): Promise<boolean> => {
-    const result = await apiCall<{ success: boolean }>('/stripe/refunds', {
-      method: 'POST',
-      body: JSON.stringify({
+    setError(null);
+    try {
+      const result = await createStripeRefundAction({
+        societeId,
         paymentIntentId,
         amount,
         reason,
-      }),
-    });
-    return result?.success ?? false;
-  }, [apiCall]);
+      });
+      if (result.error) {
+        handleError(result.error);
+        return false;
+      }
+      return result.data?.success ?? false;
+    } catch (err) {
+      handleError(err);
+      return false;
+    }
+  }, [handleError, societeId]);
 
   return {
     error,

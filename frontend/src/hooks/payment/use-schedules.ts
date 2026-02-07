@@ -1,35 +1,41 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useApi } from "../core/use-api"
-import { api } from "@/lib/api"
+import {
+  getSchedules,
+  getSchedule,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  triggerPaymentProcessing,
+} from "@/actions/payments"
 import type {
-  Schedule,
-  CreateScheduleDto,
-  UpdateScheduleDto,
-} from "@/types/schedule"
+  ScheduleResponse,
+  CreateScheduleRequest,
+  UpdateScheduleRequest,
+} from "@proto/payments/payment"
 
 export function useSchedules(filters?: { factureId?: string; contratId?: string }) {
-  const [schedules, setSchedules] = useState<Schedule[]>([])
-  const { error, execute } = useApi<Schedule[]>()
+  const [schedules, setSchedules] = useState<ScheduleResponse[]>([])
+  const [error, setError] = useState<Error | null>(null)
 
   const fetchSchedules = useCallback(async () => {
     try {
-      const params = new URLSearchParams()
-      if (filters?.factureId) params.append("factureId", filters.factureId)
-      if (filters?.contratId) params.append("contratId", filters.contratId)
-
-      const queryString = params.toString()
-      const endpoint = queryString ? `/schedules?${queryString}` : "/schedules"
-
-      const data = await execute(() => api.get(endpoint))
-      if (data) {
-        setSchedules(data)
+      setError(null)
+      const result = await getSchedules(filters || {})
+      if (result.error) {
+        setError(new Error(result.error))
+      } else if (result.data) {
+        setSchedules(result.data)
       }
-    } catch {
-      // Error handled by useApi
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err
+          : new Error("Erreur lors du chargement des schedules")
+      )
     }
-  }, [execute, filters?.factureId, filters?.contratId])
+  }, [filters])
 
   useEffect(() => {
     fetchSchedules()
@@ -43,7 +49,7 @@ export function useSchedules(filters?: { factureId?: string; contratId?: string 
 }
 
 export function useSchedule(scheduleId: string | null) {
-  const [schedule, setSchedule] = useState<Schedule | null>(null)
+  const [schedule, setSchedule] = useState<ScheduleResponse | null>(null)
   const [error, setError] = useState<Error | null>(null)
 
   const fetchSchedule = useCallback(async () => {
@@ -52,9 +58,11 @@ export function useSchedule(scheduleId: string | null) {
     setError(null)
 
     try {
-      const data: Schedule = await api.get(`/schedules/${scheduleId}`)
-      if (data) {
-        setSchedule(data)
+      const result = await getSchedule(scheduleId)
+      if (result.error) {
+        setError(new Error(result.error))
+      } else if (result.data) {
+        setSchedule(result.data)
       }
     } catch (err) {
       setError(
@@ -81,24 +89,27 @@ export function useSchedule(scheduleId: string | null) {
 export function useCreateSchedule() {
   const [error, setError] = useState<Error | null>(null)
 
-  const createSchedule = useCallback(async (data: CreateScheduleDto) => {
+  const createScheduleFn = useCallback(async (data: CreateScheduleRequest) => {
     setError(null)
 
     try {
-      const result = await api.post("/schedules", data)
-      return result
+      const result = await createSchedule(data)
+      if (result.error) {
+        setError(new Error(result.error))
+        throw new Error(result.error)
+      }
+      return result.data
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err
-          : new Error("Erreur lors de la création du schedule")
-      )
-      throw err
+      const error = err instanceof Error
+        ? err
+        : new Error("Erreur lors de la création du schedule")
+      setError(error)
+      throw error
     }
   }, [])
 
   return {
-    createSchedule,
+    createSchedule: createScheduleFn,
     error,
   }
 }
@@ -106,29 +117,35 @@ export function useCreateSchedule() {
 export function useUpdateSchedule(scheduleId: string | null) {
   const [error, setError] = useState<Error | null>(null)
 
-  const updateSchedule = useCallback(
-    async (data: UpdateScheduleDto) => {
+  const updateScheduleFn = useCallback(
+    async (data: UpdateScheduleRequest) => {
       if (!scheduleId) return
 
       setError(null)
 
       try {
-        const result = await api.put(`/schedules/${scheduleId}`, data)
-        return result
+        const result = await updateSchedule({
+          ...data,
+          id: scheduleId,
+        })
+        if (result.error) {
+          setError(new Error(result.error))
+          throw new Error(result.error)
+        }
+        return result.data
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Erreur lors de la mise à jour du schedule")
-        )
-        throw err
+        const error = err instanceof Error
+          ? err
+          : new Error("Erreur lors de la mise à jour du schedule")
+        setError(error)
+        throw error
       }
     },
     [scheduleId]
   )
 
   return {
-    updateSchedule,
+    updateSchedule: updateScheduleFn,
     error,
   }
 }
@@ -136,23 +153,26 @@ export function useUpdateSchedule(scheduleId: string | null) {
 export function useDeleteSchedule() {
   const [error, setError] = useState<Error | null>(null)
 
-  const deleteSchedule = useCallback(async (scheduleId: string) => {
+  const deleteScheduleFn = useCallback(async (scheduleId: string) => {
     setError(null)
 
     try {
-      await api.delete(`/schedules/${scheduleId}`)
+      const result = await deleteSchedule(scheduleId)
+      if (result.error) {
+        setError(new Error(result.error))
+        throw new Error(result.error)
+      }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err
-          : new Error("Erreur lors de la suppression du schedule")
-      )
-      throw err
+      const error = err instanceof Error
+        ? err
+        : new Error("Erreur lors de la suppression du schedule")
+      setError(error)
+      throw error
     }
   }, [])
 
   return {
-    deleteSchedule,
+    deleteSchedule: deleteScheduleFn,
     error,
   }
 }
@@ -164,24 +184,27 @@ export function useDeleteSchedule() {
 export function useTriggerPaymentProcessing() {
   const [error, setError] = useState<Error | null>(null)
 
-  const triggerProcessing = useCallback(async () => {
+  const triggerProcessingFn = useCallback(async () => {
     setError(null)
 
     try {
-      const result: { processed: number; failed: number } = await api.post("/schedules/process")
-      return result
+      const result = await triggerPaymentProcessing()
+      if (result.error) {
+        setError(new Error(result.error))
+        throw new Error(result.error)
+      }
+      return result.data
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err
-          : new Error("Erreur lors du traitement des paiements")
-      )
-      throw err
+      const error = err instanceof Error
+        ? err
+        : new Error("Erreur lors du traitement des paiements")
+      setError(error)
+      throw error
     }
   }, [])
 
   return {
-    triggerProcessing,
+    triggerProcessing: triggerProcessingFn,
     error,
   }
 }

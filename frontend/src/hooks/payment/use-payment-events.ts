@@ -1,41 +1,48 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useApi } from "../core/use-api"
-import { api } from "@/lib/api"
+import {
+  getPaymentEvents,
+  getPaymentEvent,
+  createPaymentEvent,
+  updatePaymentEvent,
+  deletePaymentEvent,
+} from "@/actions/payments"
 import type {
-  PaymentEvent,
-  CreatePaymentEventDto,
-  UpdatePaymentEventDto,
-} from "@/types/payment-event"
+  PaymentEventResponse,
+  CreatePaymentEventRequest,
+} from "@proto/payments/payment"
+
+interface UpdatePaymentEventDto {
+  processed?: boolean;
+  processedAt?: string;
+  errorMessage?: string;
+}
 
 export function usePaymentEvents(filters?: {
   paymentIntentId?: string
   unprocessed?: boolean
 }) {
-  const [paymentEvents, setPaymentEvents] = useState<PaymentEvent[]>([])
-  const { error, execute } = useApi<PaymentEvent[]>()
+  const [paymentEvents, setPaymentEvents] = useState<PaymentEventResponse[]>([])
+  const [error, setError] = useState<Error | null>(null)
 
   const fetchPaymentEvents = useCallback(async () => {
     try {
-      const params = new URLSearchParams()
-      if (filters?.paymentIntentId)
-        params.append("paymentIntentId", filters.paymentIntentId)
-      if (filters?.unprocessed) params.append("unprocessed", "true")
-
-      const queryString = params.toString()
-      const endpoint = queryString
-        ? `/payment-events?${queryString}`
-        : "/payment-events"
-
-      const data = await execute(() => api.get(endpoint))
-      if (data) {
-        setPaymentEvents(data)
+      setError(null)
+      const result = await getPaymentEvents(filters || {})
+      if (result.error) {
+        setError(new Error(result.error))
+      } else if (result.data) {
+        setPaymentEvents(result.data)
       }
-    } catch {
-      // Error handled by useApi
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err
+          : new Error("Erreur lors du chargement des payment events")
+      )
     }
-  }, [execute, filters?.paymentIntentId, filters?.unprocessed])
+  }, [filters])
 
   useEffect(() => {
     fetchPaymentEvents()
@@ -49,7 +56,7 @@ export function usePaymentEvents(filters?: {
 }
 
 export function usePaymentEvent(paymentEventId: string | null) {
-  const [paymentEvent, setPaymentEvent] = useState<PaymentEvent | null>(null)
+  const [paymentEvent, setPaymentEvent] = useState<PaymentEventResponse | null>(null)
   const [error, setError] = useState<Error | null>(null)
 
   const fetchPaymentEvent = useCallback(async () => {
@@ -58,11 +65,11 @@ export function usePaymentEvent(paymentEventId: string | null) {
     setError(null)
 
     try {
-      const data: PaymentEvent = await api.get(
-        `/payment-events/${paymentEventId}`
-      )
-      if (data) {
-        setPaymentEvent(data)
+      const result = await getPaymentEvent(paymentEventId)
+      if (result.error) {
+        setError(new Error(result.error))
+      } else if (result.data) {
+        setPaymentEvent(result.data)
       }
     } catch (err) {
       setError(
@@ -89,27 +96,30 @@ export function usePaymentEvent(paymentEventId: string | null) {
 export function useCreatePaymentEvent() {
   const [error, setError] = useState<Error | null>(null)
 
-  const createPaymentEvent = useCallback(
-    async (data: CreatePaymentEventDto) => {
+  const createPaymentEventFn = useCallback(
+    async (data: CreatePaymentEventRequest) => {
       setError(null)
 
       try {
-        const result = await api.post("/payment-events", data)
-        return result
+        const result = await createPaymentEvent(data)
+        if (result.error) {
+          setError(new Error(result.error))
+          throw new Error(result.error)
+        }
+        return result.data
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Erreur lors de la création du payment event")
-        )
-        throw err
+        const error = err instanceof Error
+          ? err
+          : new Error("Erreur lors de la création du payment event")
+        setError(error)
+        throw error
       }
     },
     []
   )
 
   return {
-    createPaymentEvent,
+    createPaymentEvent: createPaymentEventFn,
     error,
   }
 }
@@ -117,29 +127,32 @@ export function useCreatePaymentEvent() {
 export function useUpdatePaymentEvent(paymentEventId: string | null) {
   const [error, setError] = useState<Error | null>(null)
 
-  const updatePaymentEvent = useCallback(
+  const updatePaymentEventFn = useCallback(
     async (data: UpdatePaymentEventDto) => {
       if (!paymentEventId) return
 
       setError(null)
 
       try {
-        const result = await api.put(`/payment-events/${paymentEventId}`, data)
-        return result
+        const result = await updatePaymentEvent(paymentEventId, data)
+        if (result.error) {
+          setError(new Error(result.error))
+          throw new Error(result.error)
+        }
+        return result.data
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Erreur lors de la mise à jour du payment event")
-        )
-        throw err
+        const error = err instanceof Error
+          ? err
+          : new Error("Erreur lors de la mise à jour du payment event")
+        setError(error)
+        throw error
       }
     },
     [paymentEventId]
   )
 
   return {
-    updatePaymentEvent,
+    updatePaymentEvent: updatePaymentEventFn,
     error,
   }
 }
@@ -147,23 +160,26 @@ export function useUpdatePaymentEvent(paymentEventId: string | null) {
 export function useDeletePaymentEvent() {
   const [error, setError] = useState<Error | null>(null)
 
-  const deletePaymentEvent = useCallback(async (paymentEventId: string) => {
+  const deletePaymentEventFn = useCallback(async (paymentEventId: string) => {
     setError(null)
 
     try {
-      await api.delete(`/payment-events/${paymentEventId}`)
+      const result = await deletePaymentEvent(paymentEventId)
+      if (result.error) {
+        setError(new Error(result.error))
+        throw new Error(result.error)
+      }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err
-          : new Error("Erreur lors de la suppression du payment event")
-      )
-      throw err
+      const error = err instanceof Error
+        ? err
+        : new Error("Erreur lors de la suppression du payment event")
+      setError(error)
+      throw error
     }
   }, [])
 
   return {
-    deletePaymentEvent,
+    deletePaymentEvent: deletePaymentEventFn,
     error,
   }
 }

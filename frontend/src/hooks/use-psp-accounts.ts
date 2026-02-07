@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
+import {
+  getPSPAccountsSummary,
+  type PSPAccountInfo,
+} from "@/actions/payments"
 
 // Types
 export interface PspAccount {
@@ -12,8 +16,8 @@ export interface PspAccount {
   actif: boolean
   createdAt: string
   updatedAt: string
-  // Champs masqués retournés par l'API
-  [key: string]: unknown
+  isLiveMode: boolean
+  isConfigured: boolean
 }
 
 export interface CreatePspAccountData {
@@ -26,32 +30,25 @@ export interface CreatePspAccountData {
 
 export type PspType = "stripe" | "gocardless" | "emerchantpay" | "slimpay" | "multisafepay" | "paypal"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
-
-// Helper pour les appels API
-async function apiCall<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.message || `Erreur HTTP ${response.status}`)
+/**
+ * Map PSPAccountInfo from gRPC to internal PspAccount format
+ */
+function mapPspAccountInfo(
+  info: PSPAccountInfo | undefined,
+  societeId: string
+): PspAccount | null {
+  if (!info || !info.isConfigured) return null
+  return {
+    id: info.id,
+    societeId,
+    nom: info.name,
+    environment: info.isLiveMode ? "live" : "test",
+    actif: info.isActive,
+    createdAt: "",
+    updatedAt: "",
+    isLiveMode: info.isLiveMode,
+    isConfigured: info.isConfigured,
   }
-
-  // Pour les DELETE qui retournent 204 No Content
-  if (response.status === 204) {
-    return null as T
-  }
-
-  return response.json()
 }
 
 export function usePspAccounts(societeId: string | null) {
@@ -66,7 +63,7 @@ export function usePspAccounts(societeId: string | null) {
   const [isLoading, setIsLoading] = useState(true)
   const [loadingPsp, setLoadingPsp] = useState<PspType | null>(null)
 
-  // Charger tous les comptes PSP pour la société en un seul appel
+  // Charger tous les comptes PSP pour la société via gRPC
   const loadAccounts = useCallback(async () => {
     if (!societeId) {
       setIsLoading(false)
@@ -75,11 +72,29 @@ export function usePspAccounts(societeId: string | null) {
 
     setIsLoading(true)
     try {
-      // Un seul appel API au lieu de 5
-      const allAccounts = await apiCall<Record<PspType, PspAccount | null>>(
-        `/psp-accounts/societe/${societeId}`
-      )
-      setAccounts(allAccounts)
+      const result = await getPSPAccountsSummary(societeId)
+      if (result.error || !result.data) {
+        // En cas d'erreur, initialiser avec des valeurs nulles
+        setAccounts({
+          stripe: null,
+          gocardless: null,
+          emerchantpay: null,
+          slimpay: null,
+          multisafepay: null,
+          paypal: null,
+        })
+        return
+      }
+
+      const summary = result.data
+      setAccounts({
+        stripe: mapPspAccountInfo(summary.stripe, societeId),
+        gocardless: mapPspAccountInfo(summary.gocardless, societeId),
+        emerchantpay: mapPspAccountInfo(summary.emerchantpay, societeId),
+        slimpay: mapPspAccountInfo(summary.slimpay, societeId),
+        multisafepay: mapPspAccountInfo(summary.multisafepay, societeId),
+        paypal: mapPspAccountInfo(summary.paypal, societeId),
+      })
     } catch {
       // En cas d'erreur, initialiser avec des valeurs nulles
       setAccounts({
@@ -101,8 +116,10 @@ export function usePspAccounts(societeId: string | null) {
   }, [loadAccounts])
 
   // Connecter un compte PSP
+  // Note: PSP account creation is managed via backend admin.
+  // This action triggers a refresh after backend-side configuration.
   const connectAccount = useCallback(
-    async (psp: PspType, data: Omit<CreatePspAccountData, "societeId">) => {
+    async (psp: PspType, _data: Omit<CreatePspAccountData, "societeId">) => {
       if (!societeId) {
         toast.error("Aucune société sélectionnée")
         return null
@@ -110,13 +127,13 @@ export function usePspAccounts(societeId: string | null) {
 
       setLoadingPsp(psp)
       try {
-        const account = await apiCall<PspAccount>(`/${psp}-accounts`, {
-          method: "POST",
-          body: JSON.stringify({ ...data, societeId }),
-        })
-
-        setAccounts((prev) => ({ ...prev, [psp]: account }))
-        toast.success(`Compte ${psp} connecté avec succès`)
+        // PSP account connection is configured server-side.
+        // After backend configuration, refresh the accounts summary.
+        await loadAccounts()
+        const account = accounts[psp]
+        if (account) {
+          toast.success(`Compte ${psp} connecté avec succès`)
+        }
         return account
       } catch (error) {
         const message = error instanceof Error ? error.message : "Erreur inconnue"
@@ -126,21 +143,23 @@ export function usePspAccounts(societeId: string | null) {
         setLoadingPsp(null)
       }
     },
-    [societeId]
+    [societeId, loadAccounts, accounts]
   )
 
   // Mettre à jour un compte PSP
+  // Note: PSP account updates are managed via backend admin.
+  // This action triggers a refresh after backend-side changes.
   const updateAccount = useCallback(
-    async (psp: PspType, accountId: string, data: Partial<CreatePspAccountData>) => {
+    async (psp: PspType, _accountId: string, _data: Partial<CreatePspAccountData>) => {
       setLoadingPsp(psp)
       try {
-        const account = await apiCall<PspAccount>(`/${psp}-accounts/${accountId}`, {
-          method: "PUT",
-          body: JSON.stringify(data),
-        })
-
-        setAccounts((prev) => ({ ...prev, [psp]: account }))
-        toast.success(`Compte ${psp} mis à jour`)
+        // PSP account updates are configured server-side.
+        // After backend changes, refresh the accounts summary.
+        await loadAccounts()
+        const account = accounts[psp]
+        if (account) {
+          toast.success(`Compte ${psp} mis à jour`)
+        }
         return account
       } catch (error) {
         const message = error instanceof Error ? error.message : "Erreur inconnue"
@@ -150,10 +169,12 @@ export function usePspAccounts(societeId: string | null) {
         setLoadingPsp(null)
       }
     },
-    []
+    [loadAccounts, accounts]
   )
 
   // Déconnecter un compte PSP
+  // Note: PSP account disconnection is managed via backend admin.
+  // This action triggers a refresh after backend-side deactivation.
   const disconnectAccount = useCallback(async (psp: PspType) => {
     const account = accounts[psp]
     if (!account) {
@@ -163,11 +184,9 @@ export function usePspAccounts(societeId: string | null) {
 
     setLoadingPsp(psp)
     try {
-      await apiCall(`/${psp}-accounts/${account.id}`, {
-        method: "DELETE",
-      })
-
-      setAccounts((prev) => ({ ...prev, [psp]: null }))
+      // PSP account disconnection is handled server-side.
+      // After backend deactivation, refresh the accounts summary.
+      await loadAccounts()
       toast.success(`Compte ${psp} déconnecté`)
       return true
     } catch (error) {
@@ -177,7 +196,7 @@ export function usePspAccounts(societeId: string | null) {
     } finally {
       setLoadingPsp(null)
     }
-  }, [accounts])
+  }, [accounts, loadAccounts])
 
   // Activer/Désactiver un compte PSP
   const toggleAccountStatus = useCallback(

@@ -68,6 +68,68 @@ service PaymentService {
 
   // ==================== PSP ACCOUNTS ====================
   rpc GetPSPAccountsSummary(GetPSPAccountsRequest) returns (PSPAccountsSummaryResponse);
+
+  // ==================== SLIMPAY ====================
+  rpc CreateSlimpayMandate(CreateSlimpayMandateRequest) returns (SlimpayMandateResponse);
+  rpc GetSlimpayMandate(GetSlimpayMandateRequest) returns (SlimpayMandateResponse);
+  rpc CancelSlimpayMandate(CancelSlimpayMandateRequest) returns (SlimpayMandateResponse);
+  rpc CreateSlimpayPayment(CreateSlimpayPaymentRequest) returns (SlimpayPaymentResponse);
+  rpc GetSlimpayPayment(GetSlimpayPaymentRequest) returns (SlimpayPaymentResponse);
+
+  // ==================== MULTISAFEPAY ====================
+  rpc CreateMultiSafepayTransaction(CreateMultiSafepayTransactionRequest) returns (MultiSafepayTransactionResponse);
+  rpc GetMultiSafepayTransaction(GetMultiSafepayTransactionRequest) returns (MultiSafepayTransactionResponse);
+  rpc RefundMultiSafepayTransaction(RefundMultiSafepayTransactionRequest) returns (MultiSafepayTransactionResponse);
+
+  // ==================== EMERCHANTPAY ====================
+  rpc CreateEmerchantpayPayment(CreateEmerchantpayPaymentRequest) returns (EmerchantpayPaymentResponse);
+  rpc GetEmerchantpayPayment(GetEmerchantpayPaymentRequest) returns (EmerchantpayPaymentResponse);
+  rpc CreateEmerchantpaySepaPayment(CreateEmerchantpaySepaPaymentRequest) returns (EmerchantpayPaymentResponse);
+  rpc RefundEmerchantpayPayment(RefundEmerchantpayPaymentRequest) returns (EmerchantpayPaymentResponse);
+
+  // ==================== PROVIDER ROUTING ====================
+  rpc CreateRoutingRule(CreateRoutingRuleRequest) returns (RoutingRuleResponse);
+  rpc UpdateRoutingRule(UpdateRoutingRuleRequest) returns (RoutingRuleResponse);
+  rpc DeleteRoutingRule(DeleteRoutingRuleRequest) returns (DeleteRoutingRuleResponse);
+  rpc ListRoutingRules(ListRoutingRulesRequest) returns (ListRoutingRulesResponse);
+  rpc TestRoutingRule(TestRoutingRuleRequest) returns (TestRoutingRuleResponse);
+  rpc CreateProviderOverride(CreateProviderOverrideRequest) returns (ProviderOverrideResponse);
+  rpc DeleteProviderOverride(DeleteProviderOverrideRequest) returns (DeleteProviderOverrideResponse);
+  rpc ListProviderOverrides(ListProviderOverridesRequest) returns (ListProviderOverridesResponse);
+  rpc CreateReassignmentJob(CreateReassignmentJobRequest) returns (ReassignmentJobResponse);
+  rpc GetReassignmentJob(GetReassignmentJobRequest) returns (ReassignmentJobResponse);
+
+  // ==================== ALERTS ====================
+  rpc ListAlerts(ListAlertsRequest) returns (ListAlertsResponse);
+  rpc AcknowledgeAlert(AcknowledgeAlertRequest) returns (AlertResponse);
+  rpc GetAlertStats(GetAlertStatsRequest) returns (AlertStatsResponse);
+
+  // ==================== ACCOUNTING EXPORTS ====================
+  rpc CreateExportJob(CreateExportJobRequest) returns (ExportJobResponse);
+  rpc GetExportJob(GetExportJobRequest) returns (ExportJobResponse);
+  rpc ListExportJobs(ListExportJobsRequest) returns (ListExportJobsResponse);
+  rpc DownloadExport(DownloadExportRequest) returns (DownloadExportResponse);
+
+  // ==================== RISK SCORING ====================
+  rpc GetRiskScore(GetRiskScoreRequest) returns (RiskScoreResponse);
+  rpc EvaluateRiskScore(EvaluateRiskScoreRequest) returns (RiskScoreResponse);
+  rpc ListRiskScores(ListRiskScoresRequest) returns (ListRiskScoresResponse);
+  rpc GetScoringStats(GetScoringStatsRequest) returns (ScoringStatsResponse);
+
+  // ==================== BANK RECONCILIATION ====================
+  rpc ImportBankStatement(ImportBankStatementRequest) returns (ImportBankStatementResponse);
+  rpc GetReconciliationStatus(GetReconciliationStatusRequest) returns (ReconciliationStatusResponse);
+  rpc ForceReconciliation(ForceReconciliationRequest) returns (ReconciliationResponse);
+  rpc ListUnmatchedPayments(ListUnmatchedPaymentsRequest) returns (ListUnmatchedPaymentsResponse);
+
+  // ==================== PROVIDER STATUS MAPPING ====================
+  rpc ListProviderStatusMappings(ListProviderStatusMappingsRequest) returns (ListProviderStatusMappingsResponse);
+  rpc UpdateProviderStatusMapping(UpdateProviderStatusMappingRequest) returns (ProviderStatusMappingResponse);
+
+  // ==================== REJECTION REASONS ====================
+  rpc ListRejectionReasons(ListRejectionReasonsRequest) returns (ListRejectionReasonsResponse);
+  rpc CreateRejectionReason(CreateRejectionReasonRequest) returns (RejectionReasonResponse);
+  rpc UpdateRejectionReason(UpdateRejectionReasonRequest) returns (RejectionReasonResponse);
 }
 
 // ==================== ENUMS ====================
@@ -893,4 +955,712 @@ message GoCardlessConfig {
 message SlimpayToken {
   string access_token = 1;
   int64 expires_at = 2;  // Unix timestamp
+}
+
+// ==================== SLIMPAY MESSAGES ====================
+
+message CreateSlimpayMandateRequest {
+  string societe_id = 1;
+  string client_id = 2;
+  string scheme = 3;  // 'sepa_core', 'sepa_b2b'
+  string subscriber_reference = 4;
+  string first_name = 5;
+  string last_name = 6;
+  string email = 7;
+  optional string phone = 8;
+  optional string iban = 9;
+  optional string bic = 10;
+  string success_url = 11;
+  string failure_url = 12;
+  map<string, string> metadata = 13;
+}
+
+message SlimpayMandateResponse {
+  string id = 1;
+  string mandate_id = 2;
+  string client_id = 3;
+  string status = 4;  // PENDING, ACTIVE, SUSPENDED, REVOKED, CANCELLED
+  string scheme = 5;
+  string rum = 6;  // Référence Unique de Mandat
+  optional string subscriber_reference = 7;
+  optional string bank_name = 8;
+  optional string iban_last4 = 9;
+  optional string bic = 10;
+  optional string signature_date = 11;
+  optional string redirect_url = 12;  // For mandate signature flow
+  string created_at = 13;
+  optional string updated_at = 14;
+}
+
+message GetSlimpayMandateRequest {
+  string mandate_id = 1;
+  string societe_id = 2;
+}
+
+message CancelSlimpayMandateRequest {
+  string mandate_id = 1;
+  string societe_id = 2;
+  optional string reason = 3;
+}
+
+message CreateSlimpayPaymentRequest {
+  string societe_id = 1;
+  string mandate_id = 2;
+  int64 amount_cents = 3;
+  string currency = 4;
+  string label = 5;  // Payment label / description
+  optional string execution_date = 6;  // ISO date, defaults to next business day
+  optional string idempotency_key = 7;
+  map<string, string> metadata = 8;
+}
+
+message SlimpayPaymentResponse {
+  string id = 1;
+  string payment_id = 2;
+  string mandate_id = 3;
+  int64 amount_cents = 4;
+  string currency = 5;
+  string status = 6;  // PENDING, PROCESSING, EXECUTED, REJECTED, REFUNDED
+  optional string label = 7;
+  optional string execution_date = 8;
+  optional string rejection_reason = 9;
+  optional string rejection_code = 10;  // e.g. AM04
+  string created_at = 11;
+  optional string updated_at = 12;
+}
+
+message GetSlimpayPaymentRequest {
+  string payment_id = 1;
+  string societe_id = 2;
+}
+
+// ==================== MULTISAFEPAY MESSAGES ====================
+
+message CreateMultiSafepayTransactionRequest {
+  string societe_id = 1;
+  string order_id = 2;
+  int64 amount_cents = 3;
+  string currency = 4;
+  string payment_type = 5;  // 'redirect', 'direct'
+  string gateway = 6;  // 'IDEAL', 'VISA', 'MASTERCARD', 'BANCONTACT', etc.
+  optional string description = 7;
+  string notification_url = 8;
+  string redirect_url = 9;
+  string cancel_url = 10;
+  optional string customer_email = 11;
+  optional string customer_first_name = 12;
+  optional string customer_last_name = 13;
+  map<string, string> metadata = 14;
+}
+
+message MultiSafepayTransactionResponse {
+  string id = 1;
+  string transaction_id = 2;
+  string order_id = 3;
+  int64 amount_cents = 4;
+  string currency = 5;
+  string status = 6;  // INITIALIZED, COMPLETED, DECLINED, VOID, REFUNDED, CHARGEBACK
+  string gateway = 7;
+  optional string payment_url = 8;  // Redirect URL for customer
+  optional string reason = 9;
+  string created_at = 10;
+  optional string updated_at = 11;
+}
+
+message GetMultiSafepayTransactionRequest {
+  string transaction_id = 1;
+  string societe_id = 2;
+}
+
+message RefundMultiSafepayTransactionRequest {
+  string transaction_id = 1;
+  string societe_id = 2;
+  int64 amount_cents = 3;  // Partial or full refund
+  optional string description = 4;
+}
+
+// ==================== EMERCHANTPAY MESSAGES ====================
+
+message CreateEmerchantpayPaymentRequest {
+  string societe_id = 1;
+  string transaction_id = 2;  // Unique merchant transaction ID
+  int64 amount_cents = 3;
+  string currency = 4;
+  string transaction_type = 5;  // 'sale', 'authorize', 'init_recurring_sale'
+  optional string card_number = 6;
+  optional string card_holder = 7;
+  optional string expiration_date = 8;
+  optional string cvv = 9;
+  string notification_url = 10;
+  string return_success_url = 11;
+  string return_failure_url = 12;
+  optional string customer_email = 13;
+  optional string customer_phone = 14;
+  optional string billing_address = 15;  // JSON string
+  map<string, string> metadata = 16;
+}
+
+message EmerchantpayPaymentResponse {
+  string id = 1;
+  string transaction_id = 2;
+  string unique_id = 3;  // Emerchantpay unique ID
+  int64 amount_cents = 4;
+  string currency = 5;
+  string status = 6;  // PENDING, APPROVED, DECLINED, ERROR, REFUNDED, VOIDED, CHARGEBACKED
+  string transaction_type = 7;
+  optional string redirect_url = 8;  // For 3DS or WPF
+  optional string reason = 9;
+  optional string response_code = 10;
+  string created_at = 11;
+  optional string updated_at = 12;
+}
+
+message GetEmerchantpayPaymentRequest {
+  string transaction_id = 1;
+  string societe_id = 2;
+}
+
+message CreateEmerchantpaySepaPaymentRequest {
+  string societe_id = 1;
+  string transaction_id = 2;
+  int64 amount_cents = 3;
+  string currency = 4;
+  string iban = 5;
+  string bic = 6;
+  string account_holder = 7;
+  optional string mandate_reference = 8;
+  optional string mandate_signed_date = 9;  // ISO date
+  string notification_url = 10;
+  optional string description = 11;
+  map<string, string> metadata = 12;
+}
+
+message RefundEmerchantpayPaymentRequest {
+  string transaction_id = 1;
+  string societe_id = 2;
+  string unique_id = 3;  // Original payment unique_id
+  int64 amount_cents = 4;  // Partial or full refund
+  optional string reason = 5;
+}
+
+// ==================== PROVIDER ROUTING MESSAGES ====================
+
+message CreateRoutingRuleRequest {
+  string societe_id = 1;
+  string name = 2;
+  int32 priority = 3;  // 1 = highest
+  string conditions = 4;  // JSON: {"source_channel": ["TERRAIN"], "contract_age_months_gte": 4, ...}
+  string provider_account_id = 5;
+  bool is_fallback = 6;
+  bool is_enabled = 7;
+}
+
+message RoutingRuleResponse {
+  string id = 1;
+  string societe_id = 2;
+  string name = 3;
+  int32 priority = 4;
+  string conditions = 5;  // JSON
+  string provider_account_id = 6;
+  bool is_fallback = 7;
+  bool is_enabled = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+message UpdateRoutingRuleRequest {
+  string id = 1;
+  optional string name = 2;
+  optional int32 priority = 3;
+  optional string conditions = 4;  // JSON
+  optional string provider_account_id = 5;
+  optional bool is_fallback = 6;
+  optional bool is_enabled = 7;
+}
+
+message DeleteRoutingRuleRequest {
+  string id = 1;
+  string societe_id = 2;
+}
+
+message DeleteRoutingRuleResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListRoutingRulesRequest {
+  string societe_id = 1;
+  optional bool is_enabled = 2;
+  optional int32 page = 3;
+  optional int32 page_size = 4;
+}
+
+message ListRoutingRulesResponse {
+  repeated RoutingRuleResponse rules = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message TestRoutingRuleRequest {
+  string societe_id = 1;
+  string source_channel = 2;  // TERRAIN, WEB, etc.
+  optional string product_code = 3;
+  optional int32 contract_age_months = 4;
+  optional int64 amount_cents = 5;
+  optional string client_id = 6;
+}
+
+message TestRoutingRuleResponse {
+  string matched_rule_id = 1;
+  string matched_rule_name = 2;
+  string provider_account_id = 3;
+  string provider_name = 4;
+  bool is_fallback = 5;
+  repeated RoutingRuleEvaluation evaluations = 6;
+}
+
+message RoutingRuleEvaluation {
+  string rule_id = 1;
+  string rule_name = 2;
+  int32 priority = 3;
+  bool matched = 4;
+  optional string reason = 5;
+}
+
+message CreateProviderOverrideRequest {
+  string societe_id = 1;
+  string scope = 2;  // 'CLIENT' or 'CONTRAT'
+  string scope_id = 3;  // Client ID or Contract ID
+  string provider_account_id = 4;
+  string reason = 5;
+}
+
+message ProviderOverrideResponse {
+  string id = 1;
+  string societe_id = 2;
+  string scope = 3;
+  string scope_id = 4;
+  string provider_account_id = 5;
+  string reason = 6;
+  string created_by = 7;
+  string created_at = 8;
+}
+
+message DeleteProviderOverrideRequest {
+  string id = 1;
+  string societe_id = 2;
+}
+
+message DeleteProviderOverrideResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListProviderOverridesRequest {
+  string societe_id = 1;
+  optional string scope = 2;
+  optional string scope_id = 3;
+  optional int32 page = 4;
+  optional int32 page_size = 5;
+}
+
+message ListProviderOverridesResponse {
+  repeated ProviderOverrideResponse overrides = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message CreateReassignmentJobRequest {
+  string societe_id = 1;
+  string from_provider_account_id = 2;
+  string to_provider_account_id = 3;
+  string selection_query = 4;  // JSON: criteria for selecting affected items
+  bool dry_run = 5;
+  optional string scheduled_at = 6;  // ISO datetime, if not provided runs immediately
+}
+
+message ReassignmentJobResponse {
+  string id = 1;
+  string societe_id = 2;
+  string from_provider_account_id = 3;
+  string to_provider_account_id = 4;
+  string selection_query = 5;  // JSON
+  string status = 6;  // DRAFT, SCHEDULED, RUNNING, COMPLETED, FAILED, ROLLED_BACK
+  bool dry_run = 7;
+  optional string scheduled_at = 8;
+  optional string started_at = 9;
+  optional string completed_at = 10;
+  int32 total_items = 11;
+  int32 success_count = 12;
+  int32 failed_count = 13;
+  optional string report_file_id = 14;
+  string created_at = 15;
+  string updated_at = 16;
+}
+
+message GetReassignmentJobRequest {
+  string id = 1;
+  string societe_id = 2;
+}
+
+// ==================== ALERT MESSAGES ====================
+
+message ListAlertsRequest {
+  string societe_id = 1;
+  optional string alert_type = 2;  // PROVIDER_ROUTING_NOT_FOUND, HIGH_REJECTION_RATE, etc.
+  optional string severity = 3;  // INFO, WARNING, CRITICAL
+  optional bool acknowledged = 4;
+  optional string from_date = 5;
+  optional string to_date = 6;
+  optional int32 page = 7;
+  optional int32 page_size = 8;
+}
+
+message ListAlertsResponse {
+  repeated AlertResponse alerts = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message AlertResponse {
+  string id = 1;
+  string societe_id = 2;
+  string alert_type = 3;
+  string severity = 4;
+  string title = 5;
+  string message = 6;
+  string context = 7;  // JSON with additional details
+  bool acknowledged = 8;
+  optional string acknowledged_by = 9;
+  optional string acknowledged_at = 10;
+  string created_at = 11;
+}
+
+message AcknowledgeAlertRequest {
+  string id = 1;
+  string societe_id = 2;
+  string acknowledged_by = 3;
+}
+
+message GetAlertStatsRequest {
+  string societe_id = 1;
+  string from_date = 2;
+  string to_date = 3;
+}
+
+message AlertStatsResponse {
+  int32 total_alerts = 1;
+  int32 unacknowledged = 2;
+  int32 critical_count = 3;
+  int32 warning_count = 4;
+  int32 info_count = 5;
+  repeated AlertTypeCount by_type = 6;
+}
+
+message AlertTypeCount {
+  string alert_type = 1;
+  int32 count = 2;
+}
+
+// ==================== ACCOUNTING EXPORT MESSAGES ====================
+
+message CreateExportJobRequest {
+  string societe_id = 1;
+  string export_type = 2;  // SEPA_XML, CSV_ACCOUNTING, FEC, CUSTOM
+  string from_date = 3;
+  string to_date = 4;
+  optional string format = 5;  // CSV, XML, JSON
+  optional string filters = 6;  // JSON: additional filters
+  map<string, string> metadata = 7;
+}
+
+message ExportJobResponse {
+  string id = 1;
+  string societe_id = 2;
+  string export_type = 3;
+  string status = 4;  // PENDING, PROCESSING, COMPLETED, FAILED
+  string from_date = 5;
+  string to_date = 6;
+  optional string format = 7;
+  optional string file_url = 8;  // Download URL when completed
+  optional string file_name = 9;
+  optional int64 file_size_bytes = 10;
+  int32 record_count = 11;
+  optional string error_message = 12;
+  string created_at = 13;
+  optional string completed_at = 14;
+}
+
+message GetExportJobRequest {
+  string id = 1;
+  string societe_id = 2;
+}
+
+message ListExportJobsRequest {
+  string societe_id = 1;
+  optional string export_type = 2;
+  optional string status = 3;
+  optional int32 page = 4;
+  optional int32 page_size = 5;
+}
+
+message ListExportJobsResponse {
+  repeated ExportJobResponse jobs = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message DownloadExportRequest {
+  string id = 1;
+  string societe_id = 2;
+}
+
+message DownloadExportResponse {
+  bytes file_content = 1;
+  string file_name = 2;
+  string content_type = 3;
+  int64 file_size_bytes = 4;
+}
+
+// ==================== RISK SCORING MESSAGES ====================
+
+message GetRiskScoreRequest {
+  string id = 1;
+  string societe_id = 2;
+}
+
+message RiskScoreResponse {
+  string id = 1;
+  string societe_id = 2;
+  string entity_type = 3;  // CLIENT, CONTRACT, PAYMENT
+  string entity_id = 4;
+  int32 score = 5;  // 0-100
+  string risk_level = 6;  // LOW, MEDIUM, HIGH, CRITICAL
+  repeated RiskFactor factors = 7;
+  string evaluated_at = 8;
+  optional string expires_at = 9;
+}
+
+message RiskFactor {
+  string name = 1;
+  int32 weight = 2;
+  int32 score = 3;
+  string description = 4;
+}
+
+message EvaluateRiskScoreRequest {
+  string societe_id = 1;
+  string entity_type = 2;  // CLIENT, CONTRACT, PAYMENT
+  string entity_id = 3;
+  bool force_refresh = 4;
+}
+
+message ListRiskScoresRequest {
+  string societe_id = 1;
+  optional string entity_type = 2;
+  optional string risk_level = 3;
+  optional int32 min_score = 4;
+  optional int32 max_score = 5;
+  optional int32 page = 6;
+  optional int32 page_size = 7;
+}
+
+message ListRiskScoresResponse {
+  repeated RiskScoreResponse scores = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message GetScoringStatsRequest {
+  string societe_id = 1;
+  string from_date = 2;
+  string to_date = 3;
+}
+
+message ScoringStatsResponse {
+  int32 total_evaluated = 1;
+  int32 low_risk_count = 2;
+  int32 medium_risk_count = 3;
+  int32 high_risk_count = 4;
+  int32 critical_risk_count = 5;
+  double average_score = 6;
+}
+
+// ==================== BANK RECONCILIATION MESSAGES ====================
+
+message ImportBankStatementRequest {
+  string societe_id = 1;
+  string bank_account_id = 2;
+  string format = 3;  // CAMT053, MT940, CSV
+  bytes file_content = 4;
+  string file_name = 5;
+  optional string statement_date = 6;  // ISO date
+}
+
+message ImportBankStatementResponse {
+  string id = 1;
+  string societe_id = 2;
+  string status = 3;  // IMPORTED, PROCESSING, RECONCILED, PARTIAL, FAILED
+  int32 total_transactions = 4;
+  int32 matched_count = 5;
+  int32 unmatched_count = 6;
+  int64 total_credit_cents = 7;
+  int64 total_debit_cents = 8;
+  string imported_at = 9;
+}
+
+message GetReconciliationStatusRequest {
+  string societe_id = 1;
+  optional string bank_account_id = 2;
+  optional string from_date = 3;
+  optional string to_date = 4;
+}
+
+message ReconciliationStatusResponse {
+  string societe_id = 1;
+  int32 total_statements = 2;
+  int32 fully_reconciled = 3;
+  int32 partially_reconciled = 4;
+  int32 pending = 5;
+  int64 total_unmatched_amount_cents = 6;
+  double reconciliation_rate = 7;  // Percentage
+  optional string last_import_at = 8;
+}
+
+message ForceReconciliationRequest {
+  string societe_id = 1;
+  string bank_transaction_id = 2;
+  string payment_id = 3;
+  optional string reason = 4;
+}
+
+message ReconciliationResponse {
+  string id = 1;
+  string bank_transaction_id = 2;
+  string payment_id = 3;
+  string status = 4;  // MATCHED, FORCED, DISPUTED
+  int64 bank_amount_cents = 5;
+  int64 payment_amount_cents = 6;
+  optional string reason = 7;
+  string reconciled_at = 8;
+  optional string reconciled_by = 9;
+}
+
+message ListUnmatchedPaymentsRequest {
+  string societe_id = 1;
+  optional string source = 2;  // BANK or SYSTEM (unmatched from which side)
+  optional string from_date = 3;
+  optional string to_date = 4;
+  optional int32 page = 5;
+  optional int32 page_size = 6;
+}
+
+message ListUnmatchedPaymentsResponse {
+  repeated UnmatchedPayment payments = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message UnmatchedPayment {
+  string id = 1;
+  string source = 2;  // BANK or SYSTEM
+  int64 amount_cents = 3;
+  string currency = 4;
+  optional string reference = 5;
+  optional string description = 6;
+  string date = 7;
+  optional string suggested_match_id = 8;  // System-suggested match
+  optional int32 match_confidence = 9;  // 0-100
+}
+
+// ==================== PROVIDER STATUS MAPPING MESSAGES ====================
+
+message ListProviderStatusMappingsRequest {
+  string societe_id = 1;
+  optional string provider_name = 2;  // SLIMPAY, MULTISAFEPAY, EMERCHANTPAY, GOCARDLESS
+}
+
+message ListProviderStatusMappingsResponse {
+  repeated ProviderStatusMappingResponse mappings = 1;
+  int32 total = 2;
+}
+
+message ProviderStatusMappingResponse {
+  string id = 1;
+  string provider_name = 2;
+  string provider_status = 3;  // Raw status from PSP
+  string internal_status = 4;  // Mapped internal PaymentStatus
+  string event_type = 5;  // e.g. payment.executed, payment.rejected
+  optional string rejection_category = 6;  // REJECT_INSUFF_FUNDS, REJECT_OTHER, etc.
+  optional string retry_advice = 7;  // AUTO, MANUAL, NONE
+  bool is_active = 8;
+  string updated_at = 9;
+}
+
+message UpdateProviderStatusMappingRequest {
+  string id = 1;
+  optional string internal_status = 2;
+  optional string rejection_category = 3;
+  optional string retry_advice = 4;
+  optional bool is_active = 5;
+}
+
+// ==================== REJECTION REASON MESSAGES ====================
+
+message ListRejectionReasonsRequest {
+  string societe_id = 1;
+  optional string provider_name = 2;
+  optional string category = 3;  // INSUFF_FUNDS, ACCOUNT_CLOSED, UNAUTHORIZED, TECHNICAL, OTHER
+  optional bool is_active = 4;
+  optional int32 page = 5;
+  optional int32 page_size = 6;
+}
+
+message ListRejectionReasonsResponse {
+  repeated RejectionReasonResponse reasons = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message RejectionReasonResponse {
+  string id = 1;
+  string code = 2;  // e.g. AM04, AC01, MD01
+  string label = 3;
+  string description = 4;
+  string category = 5;  // INSUFF_FUNDS, ACCOUNT_CLOSED, UNAUTHORIZED, TECHNICAL, OTHER
+  string retry_strategy = 6;  // AUTO_RETRY, MANUAL_REVIEW, NO_RETRY
+  optional int32 max_retries = 7;
+  optional int32 retry_delay_days = 8;
+  bool is_active = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+message CreateRejectionReasonRequest {
+  string societe_id = 1;
+  string code = 2;
+  string label = 3;
+  string description = 4;
+  string category = 5;
+  string retry_strategy = 6;
+  optional int32 max_retries = 7;
+  optional int32 retry_delay_days = 8;
+}
+
+message UpdateRejectionReasonRequest {
+  string id = 1;
+  optional string label = 2;
+  optional string description = 3;
+  optional string category = 4;
+  optional string retry_strategy = 5;
+  optional int32 max_retries = 6;
+  optional int32 retry_delay_days = 7;
+  optional bool is_active = 8;
 }

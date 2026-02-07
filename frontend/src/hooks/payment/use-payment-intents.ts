@@ -1,36 +1,40 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useApi } from "../core/use-api"
-import { api } from "@/lib/api"
+import {
+  getPaymentIntents,
+  getPaymentIntent,
+  createPaymentIntent as createPaymentIntentAction,
+  updatePaymentIntent as updatePaymentIntentAction,
+  deletePaymentIntent as deletePaymentIntentAction,
+} from "@/actions/payments"
 import type {
-  PaymentIntent,
-  CreatePaymentIntentDto,
-  UpdatePaymentIntentDto,
-} from "@/types/payment-intent"
+  PaymentIntentResponse,
+  CreatePaymentIntentRequest,
+  UpdatePaymentIntentRequest,
+} from "@proto/payments/payment"
 
 export function usePaymentIntents(filters?: { scheduleId?: string }) {
-  const [paymentIntents, setPaymentIntents] = useState<PaymentIntent[]>([])
-  const { error, execute } = useApi<PaymentIntent[]>()
+  const [paymentIntents, setPaymentIntents] = useState<PaymentIntentResponse[]>([])
+  const [error, setError] = useState<Error | null>(null)
 
   const fetchPaymentIntents = useCallback(async () => {
     try {
-      const params = new URLSearchParams()
-      if (filters?.scheduleId) params.append("scheduleId", filters.scheduleId)
-
-      const queryString = params.toString()
-      const endpoint = queryString
-        ? `/payment-intents?${queryString}`
-        : "/payment-intents"
-
-      const data = await execute(() => api.get(endpoint))
-      if (data) {
-        setPaymentIntents(data)
+      setError(null)
+      const result = await getPaymentIntents(filters || {})
+      if (result.error) {
+        setError(new Error(result.error))
+      } else if (result.data) {
+        setPaymentIntents(result.data)
       }
-    } catch {
-      // Error handled by useApi
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err
+          : new Error("Erreur lors du chargement des payment intents")
+      )
     }
-  }, [execute, filters?.scheduleId])
+  }, [filters])
 
   useEffect(() => {
     fetchPaymentIntents()
@@ -44,7 +48,7 @@ export function usePaymentIntents(filters?: { scheduleId?: string }) {
 }
 
 export function usePaymentIntent(paymentIntentId: string | null) {
-  const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null)
+  const [paymentIntent, setPaymentIntent] = useState<PaymentIntentResponse | null>(null)
   const [error, setError] = useState<Error | null>(null)
 
   const fetchPaymentIntent = useCallback(async () => {
@@ -53,11 +57,11 @@ export function usePaymentIntent(paymentIntentId: string | null) {
     setError(null)
 
     try {
-      const data: PaymentIntent = await api.get(
-        `/payment-intents/${paymentIntentId}`
-      )
-      if (data) {
-        setPaymentIntent(data)
+      const result = await getPaymentIntent(paymentIntentId)
+      if (result.error) {
+        setError(new Error(result.error))
+      } else if (result.data) {
+        setPaymentIntent(result.data)
       }
     } catch (err) {
       setError(
@@ -85,19 +89,22 @@ export function useCreatePaymentIntent() {
   const [error, setError] = useState<Error | null>(null)
 
   const createPaymentIntent = useCallback(
-    async (data: CreatePaymentIntentDto) => {
+    async (data: CreatePaymentIntentRequest) => {
       setError(null)
 
       try {
-        const result = await api.post("/payment-intents", data)
-        return result
+        const result = await createPaymentIntentAction(data)
+        if (result.error) {
+          setError(new Error(result.error))
+          throw new Error(result.error)
+        }
+        return result.data
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Erreur lors de la création du payment intent")
-        )
-        throw err
+        const error = err instanceof Error
+          ? err
+          : new Error("Erreur lors de la création du payment intent")
+        setError(error)
+        throw error
       }
     },
     []
@@ -113,24 +120,27 @@ export function useUpdatePaymentIntent(paymentIntentId: string | null) {
   const [error, setError] = useState<Error | null>(null)
 
   const updatePaymentIntent = useCallback(
-    async (data: UpdatePaymentIntentDto) => {
+    async (data: UpdatePaymentIntentRequest) => {
       if (!paymentIntentId) return
 
       setError(null)
 
       try {
-        const result = await api.put(
-          `/payment-intents/${paymentIntentId}`,
-          data
-        )
-        return result
+        const result = await updatePaymentIntentAction({
+          ...data,
+          id: paymentIntentId,
+        })
+        if (result.error) {
+          setError(new Error(result.error))
+          throw new Error(result.error)
+        }
+        return result.data
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Erreur lors de la mise à jour du payment intent")
-        )
-        throw err
+        const error = err instanceof Error
+          ? err
+          : new Error("Erreur lors de la mise à jour du payment intent")
+        setError(error)
+        throw error
       }
     },
     [paymentIntentId]
@@ -149,14 +159,17 @@ export function useDeletePaymentIntent() {
     setError(null)
 
     try {
-      await api.delete(`/payment-intents/${paymentIntentId}`)
+      const result = await deletePaymentIntentAction(paymentIntentId)
+      if (result.error) {
+        setError(new Error(result.error))
+        throw new Error(result.error)
+      }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err
-          : new Error("Erreur lors de la suppression du payment intent")
-      )
-      throw err
+      const error = err instanceof Error
+        ? err
+        : new Error("Erreur lors de la suppression du payment intent")
+      setError(error)
+      throw error
     }
   }, [])
 

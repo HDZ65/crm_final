@@ -6,11 +6,7 @@ import type {
   Contrat,
   ListContratResponse,
 } from "@proto/contrats/contrats";
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ActionResult } from "@/lib/types/common";
 
 /**
  * Fetch liste des contrats par organisation via gRPC
@@ -186,6 +182,110 @@ export async function deleteContrat(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors de la suppression du contrat",
+    };
+  }
+}
+
+/**
+ * Activer un contrat via gRPC orchestration
+ */
+export async function activateContrat(
+  contractId: string,
+  payload?: Record<string, unknown>
+): Promise<ActionResult<{ success: boolean; message: string }>> {
+  try {
+    const response = await contrats.activate({
+      contractId,
+      payload: payload ? JSON.stringify(payload) : "",
+    });
+    revalidatePath("/contrats");
+    return {
+      data: { success: response.success, message: response.message },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[activateContrat] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de l'activation du contrat",
+    };
+  }
+}
+
+/**
+ * Suspendre un contrat via gRPC orchestration
+ */
+export async function suspendContrat(
+  contractId: string,
+  payload?: Record<string, unknown>
+): Promise<ActionResult<{ success: boolean; message: string }>> {
+  try {
+    const response = await contrats.suspend({
+      contractId,
+      payload: payload ? JSON.stringify(payload) : "",
+    });
+    revalidatePath("/contrats");
+    return {
+      data: { success: response.success, message: response.message },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[suspendContrat] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la suspension du contrat",
+    };
+  }
+}
+
+/**
+ * Résilier un contrat via gRPC orchestration
+ */
+export async function terminateContrat(
+  contractId: string,
+  payload?: Record<string, unknown>
+): Promise<ActionResult<{ success: boolean; message: string }>> {
+  try {
+    const response = await contrats.terminate({
+      contractId,
+      payload: payload ? JSON.stringify(payload) : "",
+    });
+    revalidatePath("/contrats");
+    return {
+      data: { success: response.success, message: response.message },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[terminateContrat] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la résiliation du contrat",
+    };
+  }
+}
+
+/**
+ * Effectuer une portabilité entrante sur un contrat via gRPC orchestration
+ */
+export async function portInContrat(
+  contractId: string,
+  payload?: Record<string, unknown>
+): Promise<ActionResult<{ success: boolean; message: string }>> {
+  try {
+    const response = await contrats.portIn({
+      contractId,
+      payload: payload ? JSON.stringify(payload) : "",
+    });
+    revalidatePath("/contrats");
+    return {
+      data: { success: response.success, message: response.message },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[portInContrat] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la portabilité entrante",
     };
   }
 }

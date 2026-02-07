@@ -179,30 +179,33 @@ service LigneContratService {
 }
 
 message LigneContrat {
-  string id = 1;
-  string contrat_id = 2;
-  string produit_id = 3;
-  string periode_facturation_id = 4;
-  int32 quantite = 5;
-  double prix_unitaire = 6;
-  string created_at = 7;
-  string updated_at = 8;
+   string id = 1;
+   string contrat_id = 2;
+   string produit_id = 3;
+   string periode_facturation_id = 4;
+   int32 quantite = 5;
+   double prix_unitaire = 6;
+   string canal_vente = 7;
+   string created_at = 8;
+   string updated_at = 9;
 }
 
 message CreateLigneContratRequest {
-  string contrat_id = 1;
-  string produit_id = 2;
-  string periode_facturation_id = 3;
-  int32 quantite = 4;
-  double prix_unitaire = 5;
+   string contrat_id = 1;
+   string produit_id = 2;
+   string periode_facturation_id = 3;
+   int32 quantite = 4;
+   double prix_unitaire = 5;
+   optional string canal_vente = 6;
 }
 
 message UpdateLigneContratRequest {
-  string id = 1;
-  string produit_id = 2;
-  string periode_facturation_id = 3;
-  int32 quantite = 4;
-  double prix_unitaire = 5;
+   string id = 1;
+   string produit_id = 2;
+   string periode_facturation_id = 3;
+   int32 quantite = 4;
+   double prix_unitaire = 5;
+   optional string canal_vente = 6;
 }
 
 message GetLigneContratRequest {

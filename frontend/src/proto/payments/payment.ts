@@ -1523,6 +1523,810 @@ export interface SlimpayToken {
   expiresAt: number;
 }
 
+export interface CreateSlimpayMandateRequest {
+  societeId: string;
+  clientId: string;
+  /** 'sepa_core', 'sepa_b2b' */
+  scheme: string;
+  subscriberReference: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string | undefined;
+  iban?: string | undefined;
+  bic?: string | undefined;
+  successUrl: string;
+  failureUrl: string;
+  metadata: { [key: string]: string };
+}
+
+export interface CreateSlimpayMandateRequest_MetadataEntry {
+  key: string;
+  value: string;
+}
+
+export interface SlimpayMandateResponse {
+  id: string;
+  mandateId: string;
+  clientId: string;
+  /** PENDING, ACTIVE, SUSPENDED, REVOKED, CANCELLED */
+  status: string;
+  scheme: string;
+  /** Référence Unique de Mandat */
+  rum: string;
+  subscriberReference?: string | undefined;
+  bankName?: string | undefined;
+  ibanLast4?: string | undefined;
+  bic?: string | undefined;
+  signatureDate?:
+    | string
+    | undefined;
+  /** For mandate signature flow */
+  redirectUrl?: string | undefined;
+  createdAt: string;
+  updatedAt?: string | undefined;
+}
+
+export interface GetSlimpayMandateRequest {
+  mandateId: string;
+  societeId: string;
+}
+
+export interface CancelSlimpayMandateRequest {
+  mandateId: string;
+  societeId: string;
+  reason?: string | undefined;
+}
+
+export interface CreateSlimpayPaymentRequest {
+  societeId: string;
+  mandateId: string;
+  amountCents: number;
+  currency: string;
+  /** Payment label / description */
+  label: string;
+  /** ISO date, defaults to next business day */
+  executionDate?: string | undefined;
+  idempotencyKey?: string | undefined;
+  metadata: { [key: string]: string };
+}
+
+export interface CreateSlimpayPaymentRequest_MetadataEntry {
+  key: string;
+  value: string;
+}
+
+export interface SlimpayPaymentResponse {
+  id: string;
+  paymentId: string;
+  mandateId: string;
+  amountCents: number;
+  currency: string;
+  /** PENDING, PROCESSING, EXECUTED, REJECTED, REFUNDED */
+  status: string;
+  label?: string | undefined;
+  executionDate?: string | undefined;
+  rejectionReason?:
+    | string
+    | undefined;
+  /** e.g. AM04 */
+  rejectionCode?: string | undefined;
+  createdAt: string;
+  updatedAt?: string | undefined;
+}
+
+export interface GetSlimpayPaymentRequest {
+  paymentId: string;
+  societeId: string;
+}
+
+export interface CreateMultiSafepayTransactionRequest {
+  societeId: string;
+  orderId: string;
+  amountCents: number;
+  currency: string;
+  /** 'redirect', 'direct' */
+  paymentType: string;
+  /** 'IDEAL', 'VISA', 'MASTERCARD', 'BANCONTACT', etc. */
+  gateway: string;
+  description?: string | undefined;
+  notificationUrl: string;
+  redirectUrl: string;
+  cancelUrl: string;
+  customerEmail?: string | undefined;
+  customerFirstName?: string | undefined;
+  customerLastName?: string | undefined;
+  metadata: { [key: string]: string };
+}
+
+export interface CreateMultiSafepayTransactionRequest_MetadataEntry {
+  key: string;
+  value: string;
+}
+
+export interface MultiSafepayTransactionResponse {
+  id: string;
+  transactionId: string;
+  orderId: string;
+  amountCents: number;
+  currency: string;
+  /** INITIALIZED, COMPLETED, DECLINED, VOID, REFUNDED, CHARGEBACK */
+  status: string;
+  gateway: string;
+  /** Redirect URL for customer */
+  paymentUrl?: string | undefined;
+  reason?: string | undefined;
+  createdAt: string;
+  updatedAt?: string | undefined;
+}
+
+export interface GetMultiSafepayTransactionRequest {
+  transactionId: string;
+  societeId: string;
+}
+
+export interface RefundMultiSafepayTransactionRequest {
+  transactionId: string;
+  societeId: string;
+  /** Partial or full refund */
+  amountCents: number;
+  description?: string | undefined;
+}
+
+export interface CreateEmerchantpayPaymentRequest {
+  societeId: string;
+  /** Unique merchant transaction ID */
+  transactionId: string;
+  amountCents: number;
+  currency: string;
+  /** 'sale', 'authorize', 'init_recurring_sale' */
+  transactionType: string;
+  cardNumber?: string | undefined;
+  cardHolder?: string | undefined;
+  expirationDate?: string | undefined;
+  cvv?: string | undefined;
+  notificationUrl: string;
+  returnSuccessUrl: string;
+  returnFailureUrl: string;
+  customerEmail?: string | undefined;
+  customerPhone?:
+    | string
+    | undefined;
+  /** JSON string */
+  billingAddress?: string | undefined;
+  metadata: { [key: string]: string };
+}
+
+export interface CreateEmerchantpayPaymentRequest_MetadataEntry {
+  key: string;
+  value: string;
+}
+
+export interface EmerchantpayPaymentResponse {
+  id: string;
+  transactionId: string;
+  /** Emerchantpay unique ID */
+  uniqueId: string;
+  amountCents: number;
+  currency: string;
+  /** PENDING, APPROVED, DECLINED, ERROR, REFUNDED, VOIDED, CHARGEBACKED */
+  status: string;
+  transactionType: string;
+  /** For 3DS or WPF */
+  redirectUrl?: string | undefined;
+  reason?: string | undefined;
+  responseCode?: string | undefined;
+  createdAt: string;
+  updatedAt?: string | undefined;
+}
+
+export interface GetEmerchantpayPaymentRequest {
+  transactionId: string;
+  societeId: string;
+}
+
+export interface CreateEmerchantpaySepaPaymentRequest {
+  societeId: string;
+  transactionId: string;
+  amountCents: number;
+  currency: string;
+  iban: string;
+  bic: string;
+  accountHolder: string;
+  mandateReference?:
+    | string
+    | undefined;
+  /** ISO date */
+  mandateSignedDate?: string | undefined;
+  notificationUrl: string;
+  description?: string | undefined;
+  metadata: { [key: string]: string };
+}
+
+export interface CreateEmerchantpaySepaPaymentRequest_MetadataEntry {
+  key: string;
+  value: string;
+}
+
+export interface RefundEmerchantpayPaymentRequest {
+  transactionId: string;
+  societeId: string;
+  /** Original payment unique_id */
+  uniqueId: string;
+  /** Partial or full refund */
+  amountCents: number;
+  reason?: string | undefined;
+}
+
+export interface CreateRoutingRuleRequest {
+  societeId: string;
+  name: string;
+  /** 1 = highest */
+  priority: number;
+  /** JSON: {"source_channel": ["TERRAIN"], "contract_age_months_gte": 4, ...} */
+  conditions: string;
+  providerAccountId: string;
+  isFallback: boolean;
+  isEnabled: boolean;
+}
+
+export interface RoutingRuleResponse {
+  id: string;
+  societeId: string;
+  name: string;
+  priority: number;
+  /** JSON */
+  conditions: string;
+  providerAccountId: string;
+  isFallback: boolean;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateRoutingRuleRequest {
+  id: string;
+  name?: string | undefined;
+  priority?:
+    | number
+    | undefined;
+  /** JSON */
+  conditions?: string | undefined;
+  providerAccountId?: string | undefined;
+  isFallback?: boolean | undefined;
+  isEnabled?: boolean | undefined;
+}
+
+export interface DeleteRoutingRuleRequest {
+  id: string;
+  societeId: string;
+}
+
+export interface DeleteRoutingRuleResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface ListRoutingRulesRequest {
+  societeId: string;
+  isEnabled?: boolean | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+}
+
+export interface ListRoutingRulesResponse {
+  rules: RoutingRuleResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface TestRoutingRuleRequest {
+  societeId: string;
+  /** TERRAIN, WEB, etc. */
+  sourceChannel: string;
+  productCode?: string | undefined;
+  contractAgeMonths?: number | undefined;
+  amountCents?: number | undefined;
+  clientId?: string | undefined;
+}
+
+export interface TestRoutingRuleResponse {
+  matchedRuleId: string;
+  matchedRuleName: string;
+  providerAccountId: string;
+  providerName: string;
+  isFallback: boolean;
+  evaluations: RoutingRuleEvaluation[];
+}
+
+export interface RoutingRuleEvaluation {
+  ruleId: string;
+  ruleName: string;
+  priority: number;
+  matched: boolean;
+  reason?: string | undefined;
+}
+
+export interface CreateProviderOverrideRequest {
+  societeId: string;
+  /** 'CLIENT' or 'CONTRAT' */
+  scope: string;
+  /** Client ID or Contract ID */
+  scopeId: string;
+  providerAccountId: string;
+  reason: string;
+}
+
+export interface ProviderOverrideResponse {
+  id: string;
+  societeId: string;
+  scope: string;
+  scopeId: string;
+  providerAccountId: string;
+  reason: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface DeleteProviderOverrideRequest {
+  id: string;
+  societeId: string;
+}
+
+export interface DeleteProviderOverrideResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface ListProviderOverridesRequest {
+  societeId: string;
+  scope?: string | undefined;
+  scopeId?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+}
+
+export interface ListProviderOverridesResponse {
+  overrides: ProviderOverrideResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface CreateReassignmentJobRequest {
+  societeId: string;
+  fromProviderAccountId: string;
+  toProviderAccountId: string;
+  /** JSON: criteria for selecting affected items */
+  selectionQuery: string;
+  dryRun: boolean;
+  /** ISO datetime, if not provided runs immediately */
+  scheduledAt?: string | undefined;
+}
+
+export interface ReassignmentJobResponse {
+  id: string;
+  societeId: string;
+  fromProviderAccountId: string;
+  toProviderAccountId: string;
+  /** JSON */
+  selectionQuery: string;
+  /** DRAFT, SCHEDULED, RUNNING, COMPLETED, FAILED, ROLLED_BACK */
+  status: string;
+  dryRun: boolean;
+  scheduledAt?: string | undefined;
+  startedAt?: string | undefined;
+  completedAt?: string | undefined;
+  totalItems: number;
+  successCount: number;
+  failedCount: number;
+  reportFileId?: string | undefined;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetReassignmentJobRequest {
+  id: string;
+  societeId: string;
+}
+
+export interface ListAlertsRequest {
+  societeId: string;
+  /** PROVIDER_ROUTING_NOT_FOUND, HIGH_REJECTION_RATE, etc. */
+  alertType?:
+    | string
+    | undefined;
+  /** INFO, WARNING, CRITICAL */
+  severity?: string | undefined;
+  acknowledged?: boolean | undefined;
+  fromDate?: string | undefined;
+  toDate?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+}
+
+export interface ListAlertsResponse {
+  alerts: AlertResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AlertResponse {
+  id: string;
+  societeId: string;
+  alertType: string;
+  severity: string;
+  title: string;
+  message: string;
+  /** JSON with additional details */
+  context: string;
+  acknowledged: boolean;
+  acknowledgedBy?: string | undefined;
+  acknowledgedAt?: string | undefined;
+  createdAt: string;
+}
+
+export interface AcknowledgeAlertRequest {
+  id: string;
+  societeId: string;
+  acknowledgedBy: string;
+}
+
+export interface GetAlertStatsRequest {
+  societeId: string;
+  fromDate: string;
+  toDate: string;
+}
+
+export interface AlertStatsResponse {
+  totalAlerts: number;
+  unacknowledged: number;
+  criticalCount: number;
+  warningCount: number;
+  infoCount: number;
+  byType: AlertTypeCount[];
+}
+
+export interface AlertTypeCount {
+  alertType: string;
+  count: number;
+}
+
+export interface CreateExportJobRequest {
+  societeId: string;
+  /** SEPA_XML, CSV_ACCOUNTING, FEC, CUSTOM */
+  exportType: string;
+  fromDate: string;
+  toDate: string;
+  /** CSV, XML, JSON */
+  format?:
+    | string
+    | undefined;
+  /** JSON: additional filters */
+  filters?: string | undefined;
+  metadata: { [key: string]: string };
+}
+
+export interface CreateExportJobRequest_MetadataEntry {
+  key: string;
+  value: string;
+}
+
+export interface ExportJobResponse {
+  id: string;
+  societeId: string;
+  exportType: string;
+  /** PENDING, PROCESSING, COMPLETED, FAILED */
+  status: string;
+  fromDate: string;
+  toDate: string;
+  format?:
+    | string
+    | undefined;
+  /** Download URL when completed */
+  fileUrl?: string | undefined;
+  fileName?: string | undefined;
+  fileSizeBytes?: number | undefined;
+  recordCount: number;
+  errorMessage?: string | undefined;
+  createdAt: string;
+  completedAt?: string | undefined;
+}
+
+export interface GetExportJobRequest {
+  id: string;
+  societeId: string;
+}
+
+export interface ListExportJobsRequest {
+  societeId: string;
+  exportType?: string | undefined;
+  status?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+}
+
+export interface ListExportJobsResponse {
+  jobs: ExportJobResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface DownloadExportRequest {
+  id: string;
+  societeId: string;
+}
+
+export interface DownloadExportResponse {
+  fileContent: Uint8Array;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+}
+
+export interface GetRiskScoreRequest {
+  id: string;
+  societeId: string;
+}
+
+export interface RiskScoreResponse {
+  id: string;
+  societeId: string;
+  /** CLIENT, CONTRACT, PAYMENT */
+  entityType: string;
+  entityId: string;
+  /** 0-100 */
+  score: number;
+  /** LOW, MEDIUM, HIGH, CRITICAL */
+  riskLevel: string;
+  factors: RiskFactor[];
+  evaluatedAt: string;
+  expiresAt?: string | undefined;
+}
+
+export interface RiskFactor {
+  name: string;
+  weight: number;
+  score: number;
+  description: string;
+}
+
+export interface EvaluateRiskScoreRequest {
+  societeId: string;
+  /** CLIENT, CONTRACT, PAYMENT */
+  entityType: string;
+  entityId: string;
+  forceRefresh: boolean;
+}
+
+export interface ListRiskScoresRequest {
+  societeId: string;
+  entityType?: string | undefined;
+  riskLevel?: string | undefined;
+  minScore?: number | undefined;
+  maxScore?: number | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+}
+
+export interface ListRiskScoresResponse {
+  scores: RiskScoreResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface GetScoringStatsRequest {
+  societeId: string;
+  fromDate: string;
+  toDate: string;
+}
+
+export interface ScoringStatsResponse {
+  totalEvaluated: number;
+  lowRiskCount: number;
+  mediumRiskCount: number;
+  highRiskCount: number;
+  criticalRiskCount: number;
+  averageScore: number;
+}
+
+export interface ImportBankStatementRequest {
+  societeId: string;
+  bankAccountId: string;
+  /** CAMT053, MT940, CSV */
+  format: string;
+  fileContent: Uint8Array;
+  fileName: string;
+  /** ISO date */
+  statementDate?: string | undefined;
+}
+
+export interface ImportBankStatementResponse {
+  id: string;
+  societeId: string;
+  /** IMPORTED, PROCESSING, RECONCILED, PARTIAL, FAILED */
+  status: string;
+  totalTransactions: number;
+  matchedCount: number;
+  unmatchedCount: number;
+  totalCreditCents: number;
+  totalDebitCents: number;
+  importedAt: string;
+}
+
+export interface GetReconciliationStatusRequest {
+  societeId: string;
+  bankAccountId?: string | undefined;
+  fromDate?: string | undefined;
+  toDate?: string | undefined;
+}
+
+export interface ReconciliationStatusResponse {
+  societeId: string;
+  totalStatements: number;
+  fullyReconciled: number;
+  partiallyReconciled: number;
+  pending: number;
+  totalUnmatchedAmountCents: number;
+  /** Percentage */
+  reconciliationRate: number;
+  lastImportAt?: string | undefined;
+}
+
+export interface ForceReconciliationRequest {
+  societeId: string;
+  bankTransactionId: string;
+  paymentId: string;
+  reason?: string | undefined;
+}
+
+export interface ReconciliationResponse {
+  id: string;
+  bankTransactionId: string;
+  paymentId: string;
+  /** MATCHED, FORCED, DISPUTED */
+  status: string;
+  bankAmountCents: number;
+  paymentAmountCents: number;
+  reason?: string | undefined;
+  reconciledAt: string;
+  reconciledBy?: string | undefined;
+}
+
+export interface ListUnmatchedPaymentsRequest {
+  societeId: string;
+  /** BANK or SYSTEM (unmatched from which side) */
+  source?: string | undefined;
+  fromDate?: string | undefined;
+  toDate?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+}
+
+export interface ListUnmatchedPaymentsResponse {
+  payments: UnmatchedPayment[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface UnmatchedPayment {
+  id: string;
+  /** BANK or SYSTEM */
+  source: string;
+  amountCents: number;
+  currency: string;
+  reference?: string | undefined;
+  description?: string | undefined;
+  date: string;
+  /** System-suggested match */
+  suggestedMatchId?:
+    | string
+    | undefined;
+  /** 0-100 */
+  matchConfidence?: number | undefined;
+}
+
+export interface ListProviderStatusMappingsRequest {
+  societeId: string;
+  /** SLIMPAY, MULTISAFEPAY, EMERCHANTPAY, GOCARDLESS */
+  providerName?: string | undefined;
+}
+
+export interface ListProviderStatusMappingsResponse {
+  mappings: ProviderStatusMappingResponse[];
+  total: number;
+}
+
+export interface ProviderStatusMappingResponse {
+  id: string;
+  providerName: string;
+  /** Raw status from PSP */
+  providerStatus: string;
+  /** Mapped internal PaymentStatus */
+  internalStatus: string;
+  /** e.g. payment.executed, payment.rejected */
+  eventType: string;
+  /** REJECT_INSUFF_FUNDS, REJECT_OTHER, etc. */
+  rejectionCategory?:
+    | string
+    | undefined;
+  /** AUTO, MANUAL, NONE */
+  retryAdvice?: string | undefined;
+  isActive: boolean;
+  updatedAt: string;
+}
+
+export interface UpdateProviderStatusMappingRequest {
+  id: string;
+  internalStatus?: string | undefined;
+  rejectionCategory?: string | undefined;
+  retryAdvice?: string | undefined;
+  isActive?: boolean | undefined;
+}
+
+export interface ListRejectionReasonsRequest {
+  societeId: string;
+  providerName?:
+    | string
+    | undefined;
+  /** INSUFF_FUNDS, ACCOUNT_CLOSED, UNAUTHORIZED, TECHNICAL, OTHER */
+  category?: string | undefined;
+  isActive?: boolean | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+}
+
+export interface ListRejectionReasonsResponse {
+  reasons: RejectionReasonResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface RejectionReasonResponse {
+  id: string;
+  /** e.g. AM04, AC01, MD01 */
+  code: string;
+  label: string;
+  description: string;
+  /** INSUFF_FUNDS, ACCOUNT_CLOSED, UNAUTHORIZED, TECHNICAL, OTHER */
+  category: string;
+  /** AUTO_RETRY, MANUAL_REVIEW, NO_RETRY */
+  retryStrategy: string;
+  maxRetries?: number | undefined;
+  retryDelayDays?: number | undefined;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRejectionReasonRequest {
+  societeId: string;
+  code: string;
+  label: string;
+  description: string;
+  category: string;
+  retryStrategy: string;
+  maxRetries?: number | undefined;
+  retryDelayDays?: number | undefined;
+}
+
+export interface UpdateRejectionReasonRequest {
+  id: string;
+  label?: string | undefined;
+  description?: string | undefined;
+  category?: string | undefined;
+  retryStrategy?: string | undefined;
+  maxRetries?: number | undefined;
+  retryDelayDays?: number | undefined;
+  isActive?: boolean | undefined;
+}
+
 function createBaseEmpty(): Empty {
   return {};
 }
@@ -14340,6 +15144,13010 @@ export const SlimpayToken: MessageFns<SlimpayToken> = {
   },
 };
 
+function createBaseCreateSlimpayMandateRequest(): CreateSlimpayMandateRequest {
+  return {
+    societeId: "",
+    clientId: "",
+    scheme: "",
+    subscriberReference: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: undefined,
+    iban: undefined,
+    bic: undefined,
+    successUrl: "",
+    failureUrl: "",
+    metadata: {},
+  };
+}
+
+export const CreateSlimpayMandateRequest: MessageFns<CreateSlimpayMandateRequest> = {
+  encode(message: CreateSlimpayMandateRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.scheme !== "") {
+      writer.uint32(26).string(message.scheme);
+    }
+    if (message.subscriberReference !== "") {
+      writer.uint32(34).string(message.subscriberReference);
+    }
+    if (message.firstName !== "") {
+      writer.uint32(42).string(message.firstName);
+    }
+    if (message.lastName !== "") {
+      writer.uint32(50).string(message.lastName);
+    }
+    if (message.email !== "") {
+      writer.uint32(58).string(message.email);
+    }
+    if (message.phone !== undefined) {
+      writer.uint32(66).string(message.phone);
+    }
+    if (message.iban !== undefined) {
+      writer.uint32(74).string(message.iban);
+    }
+    if (message.bic !== undefined) {
+      writer.uint32(82).string(message.bic);
+    }
+    if (message.successUrl !== "") {
+      writer.uint32(90).string(message.successUrl);
+    }
+    if (message.failureUrl !== "") {
+      writer.uint32(98).string(message.failureUrl);
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      CreateSlimpayMandateRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(106).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateSlimpayMandateRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSlimpayMandateRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.scheme = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.subscriberReference = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.firstName = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.lastName = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.email = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.phone = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.iban = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.bic = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.successUrl = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.failureUrl = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          const entry13 = CreateSlimpayMandateRequest_MetadataEntry.decode(reader, reader.uint32());
+          if (entry13.value !== undefined) {
+            message.metadata[entry13.key] = entry13.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSlimpayMandateRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      scheme: isSet(object.scheme) ? globalThis.String(object.scheme) : "",
+      subscriberReference: isSet(object.subscriberReference)
+        ? globalThis.String(object.subscriberReference)
+        : isSet(object.subscriber_reference)
+        ? globalThis.String(object.subscriber_reference)
+        : "",
+      firstName: isSet(object.firstName)
+        ? globalThis.String(object.firstName)
+        : isSet(object.first_name)
+        ? globalThis.String(object.first_name)
+        : "",
+      lastName: isSet(object.lastName)
+        ? globalThis.String(object.lastName)
+        : isSet(object.last_name)
+        ? globalThis.String(object.last_name)
+        : "",
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+      phone: isSet(object.phone) ? globalThis.String(object.phone) : undefined,
+      iban: isSet(object.iban) ? globalThis.String(object.iban) : undefined,
+      bic: isSet(object.bic) ? globalThis.String(object.bic) : undefined,
+      successUrl: isSet(object.successUrl)
+        ? globalThis.String(object.successUrl)
+        : isSet(object.success_url)
+        ? globalThis.String(object.success_url)
+        : "",
+      failureUrl: isSet(object.failureUrl)
+        ? globalThis.String(object.failureUrl)
+        : isSet(object.failure_url)
+        ? globalThis.String(object.failure_url)
+        : "",
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: CreateSlimpayMandateRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.scheme !== "") {
+      obj.scheme = message.scheme;
+    }
+    if (message.subscriberReference !== "") {
+      obj.subscriberReference = message.subscriberReference;
+    }
+    if (message.firstName !== "") {
+      obj.firstName = message.firstName;
+    }
+    if (message.lastName !== "") {
+      obj.lastName = message.lastName;
+    }
+    if (message.email !== "") {
+      obj.email = message.email;
+    }
+    if (message.phone !== undefined) {
+      obj.phone = message.phone;
+    }
+    if (message.iban !== undefined) {
+      obj.iban = message.iban;
+    }
+    if (message.bic !== undefined) {
+      obj.bic = message.bic;
+    }
+    if (message.successUrl !== "") {
+      obj.successUrl = message.successUrl;
+    }
+    if (message.failureUrl !== "") {
+      obj.failureUrl = message.failureUrl;
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateSlimpayMandateRequest>, I>>(base?: I): CreateSlimpayMandateRequest {
+    return CreateSlimpayMandateRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateSlimpayMandateRequest>, I>>(object: I): CreateSlimpayMandateRequest {
+    const message = createBaseCreateSlimpayMandateRequest();
+    message.societeId = object.societeId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.scheme = object.scheme ?? "";
+    message.subscriberReference = object.subscriberReference ?? "";
+    message.firstName = object.firstName ?? "";
+    message.lastName = object.lastName ?? "";
+    message.email = object.email ?? "";
+    message.phone = object.phone ?? undefined;
+    message.iban = object.iban ?? undefined;
+    message.bic = object.bic ?? undefined;
+    message.successUrl = object.successUrl ?? "";
+    message.failureUrl = object.failureUrl ?? "";
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseCreateSlimpayMandateRequest_MetadataEntry(): CreateSlimpayMandateRequest_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const CreateSlimpayMandateRequest_MetadataEntry: MessageFns<CreateSlimpayMandateRequest_MetadataEntry> = {
+  encode(message: CreateSlimpayMandateRequest_MetadataEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateSlimpayMandateRequest_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSlimpayMandateRequest_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSlimpayMandateRequest_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CreateSlimpayMandateRequest_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateSlimpayMandateRequest_MetadataEntry>, I>>(
+    base?: I,
+  ): CreateSlimpayMandateRequest_MetadataEntry {
+    return CreateSlimpayMandateRequest_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateSlimpayMandateRequest_MetadataEntry>, I>>(
+    object: I,
+  ): CreateSlimpayMandateRequest_MetadataEntry {
+    const message = createBaseCreateSlimpayMandateRequest_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseSlimpayMandateResponse(): SlimpayMandateResponse {
+  return {
+    id: "",
+    mandateId: "",
+    clientId: "",
+    status: "",
+    scheme: "",
+    rum: "",
+    subscriberReference: undefined,
+    bankName: undefined,
+    ibanLast4: undefined,
+    bic: undefined,
+    signatureDate: undefined,
+    redirectUrl: undefined,
+    createdAt: "",
+    updatedAt: undefined,
+  };
+}
+
+export const SlimpayMandateResponse: MessageFns<SlimpayMandateResponse> = {
+  encode(message: SlimpayMandateResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.mandateId !== "") {
+      writer.uint32(18).string(message.mandateId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(26).string(message.clientId);
+    }
+    if (message.status !== "") {
+      writer.uint32(34).string(message.status);
+    }
+    if (message.scheme !== "") {
+      writer.uint32(42).string(message.scheme);
+    }
+    if (message.rum !== "") {
+      writer.uint32(50).string(message.rum);
+    }
+    if (message.subscriberReference !== undefined) {
+      writer.uint32(58).string(message.subscriberReference);
+    }
+    if (message.bankName !== undefined) {
+      writer.uint32(66).string(message.bankName);
+    }
+    if (message.ibanLast4 !== undefined) {
+      writer.uint32(74).string(message.ibanLast4);
+    }
+    if (message.bic !== undefined) {
+      writer.uint32(82).string(message.bic);
+    }
+    if (message.signatureDate !== undefined) {
+      writer.uint32(90).string(message.signatureDate);
+    }
+    if (message.redirectUrl !== undefined) {
+      writer.uint32(98).string(message.redirectUrl);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(106).string(message.createdAt);
+    }
+    if (message.updatedAt !== undefined) {
+      writer.uint32(114).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SlimpayMandateResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSlimpayMandateResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.mandateId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.scheme = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.rum = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.subscriberReference = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.bankName = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.ibanLast4 = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.bic = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.signatureDate = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.redirectUrl = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SlimpayMandateResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      mandateId: isSet(object.mandateId)
+        ? globalThis.String(object.mandateId)
+        : isSet(object.mandate_id)
+        ? globalThis.String(object.mandate_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      scheme: isSet(object.scheme) ? globalThis.String(object.scheme) : "",
+      rum: isSet(object.rum) ? globalThis.String(object.rum) : "",
+      subscriberReference: isSet(object.subscriberReference)
+        ? globalThis.String(object.subscriberReference)
+        : isSet(object.subscriber_reference)
+        ? globalThis.String(object.subscriber_reference)
+        : undefined,
+      bankName: isSet(object.bankName)
+        ? globalThis.String(object.bankName)
+        : isSet(object.bank_name)
+        ? globalThis.String(object.bank_name)
+        : undefined,
+      ibanLast4: isSet(object.ibanLast4)
+        ? globalThis.String(object.ibanLast4)
+        : isSet(object.iban_last4)
+        ? globalThis.String(object.iban_last4)
+        : undefined,
+      bic: isSet(object.bic) ? globalThis.String(object.bic) : undefined,
+      signatureDate: isSet(object.signatureDate)
+        ? globalThis.String(object.signatureDate)
+        : isSet(object.signature_date)
+        ? globalThis.String(object.signature_date)
+        : undefined,
+      redirectUrl: isSet(object.redirectUrl)
+        ? globalThis.String(object.redirectUrl)
+        : isSet(object.redirect_url)
+        ? globalThis.String(object.redirect_url)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: SlimpayMandateResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.mandateId !== "") {
+      obj.mandateId = message.mandateId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.scheme !== "") {
+      obj.scheme = message.scheme;
+    }
+    if (message.rum !== "") {
+      obj.rum = message.rum;
+    }
+    if (message.subscriberReference !== undefined) {
+      obj.subscriberReference = message.subscriberReference;
+    }
+    if (message.bankName !== undefined) {
+      obj.bankName = message.bankName;
+    }
+    if (message.ibanLast4 !== undefined) {
+      obj.ibanLast4 = message.ibanLast4;
+    }
+    if (message.bic !== undefined) {
+      obj.bic = message.bic;
+    }
+    if (message.signatureDate !== undefined) {
+      obj.signatureDate = message.signatureDate;
+    }
+    if (message.redirectUrl !== undefined) {
+      obj.redirectUrl = message.redirectUrl;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== undefined) {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SlimpayMandateResponse>, I>>(base?: I): SlimpayMandateResponse {
+    return SlimpayMandateResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SlimpayMandateResponse>, I>>(object: I): SlimpayMandateResponse {
+    const message = createBaseSlimpayMandateResponse();
+    message.id = object.id ?? "";
+    message.mandateId = object.mandateId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.status = object.status ?? "";
+    message.scheme = object.scheme ?? "";
+    message.rum = object.rum ?? "";
+    message.subscriberReference = object.subscriberReference ?? undefined;
+    message.bankName = object.bankName ?? undefined;
+    message.ibanLast4 = object.ibanLast4 ?? undefined;
+    message.bic = object.bic ?? undefined;
+    message.signatureDate = object.signatureDate ?? undefined;
+    message.redirectUrl = object.redirectUrl ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetSlimpayMandateRequest(): GetSlimpayMandateRequest {
+  return { mandateId: "", societeId: "" };
+}
+
+export const GetSlimpayMandateRequest: MessageFns<GetSlimpayMandateRequest> = {
+  encode(message: GetSlimpayMandateRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mandateId !== "") {
+      writer.uint32(10).string(message.mandateId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetSlimpayMandateRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSlimpayMandateRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mandateId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSlimpayMandateRequest {
+    return {
+      mandateId: isSet(object.mandateId)
+        ? globalThis.String(object.mandateId)
+        : isSet(object.mandate_id)
+        ? globalThis.String(object.mandate_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetSlimpayMandateRequest): unknown {
+    const obj: any = {};
+    if (message.mandateId !== "") {
+      obj.mandateId = message.mandateId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSlimpayMandateRequest>, I>>(base?: I): GetSlimpayMandateRequest {
+    return GetSlimpayMandateRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetSlimpayMandateRequest>, I>>(object: I): GetSlimpayMandateRequest {
+    const message = createBaseGetSlimpayMandateRequest();
+    message.mandateId = object.mandateId ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseCancelSlimpayMandateRequest(): CancelSlimpayMandateRequest {
+  return { mandateId: "", societeId: "", reason: undefined };
+}
+
+export const CancelSlimpayMandateRequest: MessageFns<CancelSlimpayMandateRequest> = {
+  encode(message: CancelSlimpayMandateRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.mandateId !== "") {
+      writer.uint32(10).string(message.mandateId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.reason !== undefined) {
+      writer.uint32(26).string(message.reason);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CancelSlimpayMandateRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelSlimpayMandateRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mandateId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelSlimpayMandateRequest {
+    return {
+      mandateId: isSet(object.mandateId)
+        ? globalThis.String(object.mandateId)
+        : isSet(object.mandate_id)
+        ? globalThis.String(object.mandate_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : undefined,
+    };
+  },
+
+  toJSON(message: CancelSlimpayMandateRequest): unknown {
+    const obj: any = {};
+    if (message.mandateId !== "") {
+      obj.mandateId = message.mandateId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.reason !== undefined) {
+      obj.reason = message.reason;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CancelSlimpayMandateRequest>, I>>(base?: I): CancelSlimpayMandateRequest {
+    return CancelSlimpayMandateRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CancelSlimpayMandateRequest>, I>>(object: I): CancelSlimpayMandateRequest {
+    const message = createBaseCancelSlimpayMandateRequest();
+    message.mandateId = object.mandateId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.reason = object.reason ?? undefined;
+    return message;
+  },
+};
+
+function createBaseCreateSlimpayPaymentRequest(): CreateSlimpayPaymentRequest {
+  return {
+    societeId: "",
+    mandateId: "",
+    amountCents: 0,
+    currency: "",
+    label: "",
+    executionDate: undefined,
+    idempotencyKey: undefined,
+    metadata: {},
+  };
+}
+
+export const CreateSlimpayPaymentRequest: MessageFns<CreateSlimpayPaymentRequest> = {
+  encode(message: CreateSlimpayPaymentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.mandateId !== "") {
+      writer.uint32(18).string(message.mandateId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(24).int64(message.amountCents);
+    }
+    if (message.currency !== "") {
+      writer.uint32(34).string(message.currency);
+    }
+    if (message.label !== "") {
+      writer.uint32(42).string(message.label);
+    }
+    if (message.executionDate !== undefined) {
+      writer.uint32(50).string(message.executionDate);
+    }
+    if (message.idempotencyKey !== undefined) {
+      writer.uint32(58).string(message.idempotencyKey);
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      CreateSlimpayPaymentRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(66).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateSlimpayPaymentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSlimpayPaymentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.mandateId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.executionDate = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.idempotencyKey = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          const entry8 = CreateSlimpayPaymentRequest_MetadataEntry.decode(reader, reader.uint32());
+          if (entry8.value !== undefined) {
+            message.metadata[entry8.key] = entry8.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSlimpayPaymentRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      mandateId: isSet(object.mandateId)
+        ? globalThis.String(object.mandateId)
+        : isSet(object.mandate_id)
+        ? globalThis.String(object.mandate_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
+      executionDate: isSet(object.executionDate)
+        ? globalThis.String(object.executionDate)
+        : isSet(object.execution_date)
+        ? globalThis.String(object.execution_date)
+        : undefined,
+      idempotencyKey: isSet(object.idempotencyKey)
+        ? globalThis.String(object.idempotencyKey)
+        : isSet(object.idempotency_key)
+        ? globalThis.String(object.idempotency_key)
+        : undefined,
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: CreateSlimpayPaymentRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.mandateId !== "") {
+      obj.mandateId = message.mandateId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
+    if (message.executionDate !== undefined) {
+      obj.executionDate = message.executionDate;
+    }
+    if (message.idempotencyKey !== undefined) {
+      obj.idempotencyKey = message.idempotencyKey;
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateSlimpayPaymentRequest>, I>>(base?: I): CreateSlimpayPaymentRequest {
+    return CreateSlimpayPaymentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateSlimpayPaymentRequest>, I>>(object: I): CreateSlimpayPaymentRequest {
+    const message = createBaseCreateSlimpayPaymentRequest();
+    message.societeId = object.societeId ?? "";
+    message.mandateId = object.mandateId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.currency = object.currency ?? "";
+    message.label = object.label ?? "";
+    message.executionDate = object.executionDate ?? undefined;
+    message.idempotencyKey = object.idempotencyKey ?? undefined;
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseCreateSlimpayPaymentRequest_MetadataEntry(): CreateSlimpayPaymentRequest_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const CreateSlimpayPaymentRequest_MetadataEntry: MessageFns<CreateSlimpayPaymentRequest_MetadataEntry> = {
+  encode(message: CreateSlimpayPaymentRequest_MetadataEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateSlimpayPaymentRequest_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateSlimpayPaymentRequest_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSlimpayPaymentRequest_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CreateSlimpayPaymentRequest_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateSlimpayPaymentRequest_MetadataEntry>, I>>(
+    base?: I,
+  ): CreateSlimpayPaymentRequest_MetadataEntry {
+    return CreateSlimpayPaymentRequest_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateSlimpayPaymentRequest_MetadataEntry>, I>>(
+    object: I,
+  ): CreateSlimpayPaymentRequest_MetadataEntry {
+    const message = createBaseCreateSlimpayPaymentRequest_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseSlimpayPaymentResponse(): SlimpayPaymentResponse {
+  return {
+    id: "",
+    paymentId: "",
+    mandateId: "",
+    amountCents: 0,
+    currency: "",
+    status: "",
+    label: undefined,
+    executionDate: undefined,
+    rejectionReason: undefined,
+    rejectionCode: undefined,
+    createdAt: "",
+    updatedAt: undefined,
+  };
+}
+
+export const SlimpayPaymentResponse: MessageFns<SlimpayPaymentResponse> = {
+  encode(message: SlimpayPaymentResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.paymentId !== "") {
+      writer.uint32(18).string(message.paymentId);
+    }
+    if (message.mandateId !== "") {
+      writer.uint32(26).string(message.mandateId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(32).int64(message.amountCents);
+    }
+    if (message.currency !== "") {
+      writer.uint32(42).string(message.currency);
+    }
+    if (message.status !== "") {
+      writer.uint32(50).string(message.status);
+    }
+    if (message.label !== undefined) {
+      writer.uint32(58).string(message.label);
+    }
+    if (message.executionDate !== undefined) {
+      writer.uint32(66).string(message.executionDate);
+    }
+    if (message.rejectionReason !== undefined) {
+      writer.uint32(74).string(message.rejectionReason);
+    }
+    if (message.rejectionCode !== undefined) {
+      writer.uint32(82).string(message.rejectionCode);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(90).string(message.createdAt);
+    }
+    if (message.updatedAt !== undefined) {
+      writer.uint32(98).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SlimpayPaymentResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSlimpayPaymentResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.paymentId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.mandateId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.executionDate = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.rejectionReason = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.rejectionCode = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SlimpayPaymentResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      paymentId: isSet(object.paymentId)
+        ? globalThis.String(object.paymentId)
+        : isSet(object.payment_id)
+        ? globalThis.String(object.payment_id)
+        : "",
+      mandateId: isSet(object.mandateId)
+        ? globalThis.String(object.mandateId)
+        : isSet(object.mandate_id)
+        ? globalThis.String(object.mandate_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      label: isSet(object.label) ? globalThis.String(object.label) : undefined,
+      executionDate: isSet(object.executionDate)
+        ? globalThis.String(object.executionDate)
+        : isSet(object.execution_date)
+        ? globalThis.String(object.execution_date)
+        : undefined,
+      rejectionReason: isSet(object.rejectionReason)
+        ? globalThis.String(object.rejectionReason)
+        : isSet(object.rejection_reason)
+        ? globalThis.String(object.rejection_reason)
+        : undefined,
+      rejectionCode: isSet(object.rejectionCode)
+        ? globalThis.String(object.rejectionCode)
+        : isSet(object.rejection_code)
+        ? globalThis.String(object.rejection_code)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: SlimpayPaymentResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.paymentId !== "") {
+      obj.paymentId = message.paymentId;
+    }
+    if (message.mandateId !== "") {
+      obj.mandateId = message.mandateId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.label !== undefined) {
+      obj.label = message.label;
+    }
+    if (message.executionDate !== undefined) {
+      obj.executionDate = message.executionDate;
+    }
+    if (message.rejectionReason !== undefined) {
+      obj.rejectionReason = message.rejectionReason;
+    }
+    if (message.rejectionCode !== undefined) {
+      obj.rejectionCode = message.rejectionCode;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== undefined) {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SlimpayPaymentResponse>, I>>(base?: I): SlimpayPaymentResponse {
+    return SlimpayPaymentResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SlimpayPaymentResponse>, I>>(object: I): SlimpayPaymentResponse {
+    const message = createBaseSlimpayPaymentResponse();
+    message.id = object.id ?? "";
+    message.paymentId = object.paymentId ?? "";
+    message.mandateId = object.mandateId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.currency = object.currency ?? "";
+    message.status = object.status ?? "";
+    message.label = object.label ?? undefined;
+    message.executionDate = object.executionDate ?? undefined;
+    message.rejectionReason = object.rejectionReason ?? undefined;
+    message.rejectionCode = object.rejectionCode ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetSlimpayPaymentRequest(): GetSlimpayPaymentRequest {
+  return { paymentId: "", societeId: "" };
+}
+
+export const GetSlimpayPaymentRequest: MessageFns<GetSlimpayPaymentRequest> = {
+  encode(message: GetSlimpayPaymentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.paymentId !== "") {
+      writer.uint32(10).string(message.paymentId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetSlimpayPaymentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSlimpayPaymentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.paymentId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSlimpayPaymentRequest {
+    return {
+      paymentId: isSet(object.paymentId)
+        ? globalThis.String(object.paymentId)
+        : isSet(object.payment_id)
+        ? globalThis.String(object.payment_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetSlimpayPaymentRequest): unknown {
+    const obj: any = {};
+    if (message.paymentId !== "") {
+      obj.paymentId = message.paymentId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSlimpayPaymentRequest>, I>>(base?: I): GetSlimpayPaymentRequest {
+    return GetSlimpayPaymentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetSlimpayPaymentRequest>, I>>(object: I): GetSlimpayPaymentRequest {
+    const message = createBaseGetSlimpayPaymentRequest();
+    message.paymentId = object.paymentId ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateMultiSafepayTransactionRequest(): CreateMultiSafepayTransactionRequest {
+  return {
+    societeId: "",
+    orderId: "",
+    amountCents: 0,
+    currency: "",
+    paymentType: "",
+    gateway: "",
+    description: undefined,
+    notificationUrl: "",
+    redirectUrl: "",
+    cancelUrl: "",
+    customerEmail: undefined,
+    customerFirstName: undefined,
+    customerLastName: undefined,
+    metadata: {},
+  };
+}
+
+export const CreateMultiSafepayTransactionRequest: MessageFns<CreateMultiSafepayTransactionRequest> = {
+  encode(message: CreateMultiSafepayTransactionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.orderId !== "") {
+      writer.uint32(18).string(message.orderId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(24).int64(message.amountCents);
+    }
+    if (message.currency !== "") {
+      writer.uint32(34).string(message.currency);
+    }
+    if (message.paymentType !== "") {
+      writer.uint32(42).string(message.paymentType);
+    }
+    if (message.gateway !== "") {
+      writer.uint32(50).string(message.gateway);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(58).string(message.description);
+    }
+    if (message.notificationUrl !== "") {
+      writer.uint32(66).string(message.notificationUrl);
+    }
+    if (message.redirectUrl !== "") {
+      writer.uint32(74).string(message.redirectUrl);
+    }
+    if (message.cancelUrl !== "") {
+      writer.uint32(82).string(message.cancelUrl);
+    }
+    if (message.customerEmail !== undefined) {
+      writer.uint32(90).string(message.customerEmail);
+    }
+    if (message.customerFirstName !== undefined) {
+      writer.uint32(98).string(message.customerFirstName);
+    }
+    if (message.customerLastName !== undefined) {
+      writer.uint32(106).string(message.customerLastName);
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      CreateMultiSafepayTransactionRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(114).fork())
+        .join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateMultiSafepayTransactionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateMultiSafepayTransactionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.orderId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.paymentType = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.gateway = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.notificationUrl = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.redirectUrl = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.cancelUrl = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.customerEmail = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.customerFirstName = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.customerLastName = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          const entry14 = CreateMultiSafepayTransactionRequest_MetadataEntry.decode(reader, reader.uint32());
+          if (entry14.value !== undefined) {
+            message.metadata[entry14.key] = entry14.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateMultiSafepayTransactionRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      orderId: isSet(object.orderId)
+        ? globalThis.String(object.orderId)
+        : isSet(object.order_id)
+        ? globalThis.String(object.order_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      paymentType: isSet(object.paymentType)
+        ? globalThis.String(object.paymentType)
+        : isSet(object.payment_type)
+        ? globalThis.String(object.payment_type)
+        : "",
+      gateway: isSet(object.gateway) ? globalThis.String(object.gateway) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+      notificationUrl: isSet(object.notificationUrl)
+        ? globalThis.String(object.notificationUrl)
+        : isSet(object.notification_url)
+        ? globalThis.String(object.notification_url)
+        : "",
+      redirectUrl: isSet(object.redirectUrl)
+        ? globalThis.String(object.redirectUrl)
+        : isSet(object.redirect_url)
+        ? globalThis.String(object.redirect_url)
+        : "",
+      cancelUrl: isSet(object.cancelUrl)
+        ? globalThis.String(object.cancelUrl)
+        : isSet(object.cancel_url)
+        ? globalThis.String(object.cancel_url)
+        : "",
+      customerEmail: isSet(object.customerEmail)
+        ? globalThis.String(object.customerEmail)
+        : isSet(object.customer_email)
+        ? globalThis.String(object.customer_email)
+        : undefined,
+      customerFirstName: isSet(object.customerFirstName)
+        ? globalThis.String(object.customerFirstName)
+        : isSet(object.customer_first_name)
+        ? globalThis.String(object.customer_first_name)
+        : undefined,
+      customerLastName: isSet(object.customerLastName)
+        ? globalThis.String(object.customerLastName)
+        : isSet(object.customer_last_name)
+        ? globalThis.String(object.customer_last_name)
+        : undefined,
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: CreateMultiSafepayTransactionRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.orderId !== "") {
+      obj.orderId = message.orderId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.paymentType !== "") {
+      obj.paymentType = message.paymentType;
+    }
+    if (message.gateway !== "") {
+      obj.gateway = message.gateway;
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    if (message.notificationUrl !== "") {
+      obj.notificationUrl = message.notificationUrl;
+    }
+    if (message.redirectUrl !== "") {
+      obj.redirectUrl = message.redirectUrl;
+    }
+    if (message.cancelUrl !== "") {
+      obj.cancelUrl = message.cancelUrl;
+    }
+    if (message.customerEmail !== undefined) {
+      obj.customerEmail = message.customerEmail;
+    }
+    if (message.customerFirstName !== undefined) {
+      obj.customerFirstName = message.customerFirstName;
+    }
+    if (message.customerLastName !== undefined) {
+      obj.customerLastName = message.customerLastName;
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateMultiSafepayTransactionRequest>, I>>(
+    base?: I,
+  ): CreateMultiSafepayTransactionRequest {
+    return CreateMultiSafepayTransactionRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateMultiSafepayTransactionRequest>, I>>(
+    object: I,
+  ): CreateMultiSafepayTransactionRequest {
+    const message = createBaseCreateMultiSafepayTransactionRequest();
+    message.societeId = object.societeId ?? "";
+    message.orderId = object.orderId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.currency = object.currency ?? "";
+    message.paymentType = object.paymentType ?? "";
+    message.gateway = object.gateway ?? "";
+    message.description = object.description ?? undefined;
+    message.notificationUrl = object.notificationUrl ?? "";
+    message.redirectUrl = object.redirectUrl ?? "";
+    message.cancelUrl = object.cancelUrl ?? "";
+    message.customerEmail = object.customerEmail ?? undefined;
+    message.customerFirstName = object.customerFirstName ?? undefined;
+    message.customerLastName = object.customerLastName ?? undefined;
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseCreateMultiSafepayTransactionRequest_MetadataEntry(): CreateMultiSafepayTransactionRequest_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const CreateMultiSafepayTransactionRequest_MetadataEntry: MessageFns<
+  CreateMultiSafepayTransactionRequest_MetadataEntry
+> = {
+  encode(
+    message: CreateMultiSafepayTransactionRequest_MetadataEntry,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateMultiSafepayTransactionRequest_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateMultiSafepayTransactionRequest_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateMultiSafepayTransactionRequest_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CreateMultiSafepayTransactionRequest_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateMultiSafepayTransactionRequest_MetadataEntry>, I>>(
+    base?: I,
+  ): CreateMultiSafepayTransactionRequest_MetadataEntry {
+    return CreateMultiSafepayTransactionRequest_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateMultiSafepayTransactionRequest_MetadataEntry>, I>>(
+    object: I,
+  ): CreateMultiSafepayTransactionRequest_MetadataEntry {
+    const message = createBaseCreateMultiSafepayTransactionRequest_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseMultiSafepayTransactionResponse(): MultiSafepayTransactionResponse {
+  return {
+    id: "",
+    transactionId: "",
+    orderId: "",
+    amountCents: 0,
+    currency: "",
+    status: "",
+    gateway: "",
+    paymentUrl: undefined,
+    reason: undefined,
+    createdAt: "",
+    updatedAt: undefined,
+  };
+}
+
+export const MultiSafepayTransactionResponse: MessageFns<MultiSafepayTransactionResponse> = {
+  encode(message: MultiSafepayTransactionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.transactionId !== "") {
+      writer.uint32(18).string(message.transactionId);
+    }
+    if (message.orderId !== "") {
+      writer.uint32(26).string(message.orderId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(32).int64(message.amountCents);
+    }
+    if (message.currency !== "") {
+      writer.uint32(42).string(message.currency);
+    }
+    if (message.status !== "") {
+      writer.uint32(50).string(message.status);
+    }
+    if (message.gateway !== "") {
+      writer.uint32(58).string(message.gateway);
+    }
+    if (message.paymentUrl !== undefined) {
+      writer.uint32(66).string(message.paymentUrl);
+    }
+    if (message.reason !== undefined) {
+      writer.uint32(74).string(message.reason);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(82).string(message.createdAt);
+    }
+    if (message.updatedAt !== undefined) {
+      writer.uint32(90).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MultiSafepayTransactionResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMultiSafepayTransactionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.orderId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.gateway = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.paymentUrl = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MultiSafepayTransactionResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      orderId: isSet(object.orderId)
+        ? globalThis.String(object.orderId)
+        : isSet(object.order_id)
+        ? globalThis.String(object.order_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      gateway: isSet(object.gateway) ? globalThis.String(object.gateway) : "",
+      paymentUrl: isSet(object.paymentUrl)
+        ? globalThis.String(object.paymentUrl)
+        : isSet(object.payment_url)
+        ? globalThis.String(object.payment_url)
+        : undefined,
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: MultiSafepayTransactionResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.orderId !== "") {
+      obj.orderId = message.orderId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.gateway !== "") {
+      obj.gateway = message.gateway;
+    }
+    if (message.paymentUrl !== undefined) {
+      obj.paymentUrl = message.paymentUrl;
+    }
+    if (message.reason !== undefined) {
+      obj.reason = message.reason;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== undefined) {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MultiSafepayTransactionResponse>, I>>(base?: I): MultiSafepayTransactionResponse {
+    return MultiSafepayTransactionResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MultiSafepayTransactionResponse>, I>>(
+    object: I,
+  ): MultiSafepayTransactionResponse {
+    const message = createBaseMultiSafepayTransactionResponse();
+    message.id = object.id ?? "";
+    message.transactionId = object.transactionId ?? "";
+    message.orderId = object.orderId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.currency = object.currency ?? "";
+    message.status = object.status ?? "";
+    message.gateway = object.gateway ?? "";
+    message.paymentUrl = object.paymentUrl ?? undefined;
+    message.reason = object.reason ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetMultiSafepayTransactionRequest(): GetMultiSafepayTransactionRequest {
+  return { transactionId: "", societeId: "" };
+}
+
+export const GetMultiSafepayTransactionRequest: MessageFns<GetMultiSafepayTransactionRequest> = {
+  encode(message: GetMultiSafepayTransactionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.transactionId !== "") {
+      writer.uint32(10).string(message.transactionId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetMultiSafepayTransactionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetMultiSafepayTransactionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetMultiSafepayTransactionRequest {
+    return {
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetMultiSafepayTransactionRequest): unknown {
+    const obj: any = {};
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetMultiSafepayTransactionRequest>, I>>(
+    base?: I,
+  ): GetMultiSafepayTransactionRequest {
+    return GetMultiSafepayTransactionRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetMultiSafepayTransactionRequest>, I>>(
+    object: I,
+  ): GetMultiSafepayTransactionRequest {
+    const message = createBaseGetMultiSafepayTransactionRequest();
+    message.transactionId = object.transactionId ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseRefundMultiSafepayTransactionRequest(): RefundMultiSafepayTransactionRequest {
+  return { transactionId: "", societeId: "", amountCents: 0, description: undefined };
+}
+
+export const RefundMultiSafepayTransactionRequest: MessageFns<RefundMultiSafepayTransactionRequest> = {
+  encode(message: RefundMultiSafepayTransactionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.transactionId !== "") {
+      writer.uint32(10).string(message.transactionId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(24).int64(message.amountCents);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(34).string(message.description);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RefundMultiSafepayTransactionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRefundMultiSafepayTransactionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RefundMultiSafepayTransactionRequest {
+    return {
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+    };
+  },
+
+  toJSON(message: RefundMultiSafepayTransactionRequest): unknown {
+    const obj: any = {};
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RefundMultiSafepayTransactionRequest>, I>>(
+    base?: I,
+  ): RefundMultiSafepayTransactionRequest {
+    return RefundMultiSafepayTransactionRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RefundMultiSafepayTransactionRequest>, I>>(
+    object: I,
+  ): RefundMultiSafepayTransactionRequest {
+    const message = createBaseRefundMultiSafepayTransactionRequest();
+    message.transactionId = object.transactionId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.description = object.description ?? undefined;
+    return message;
+  },
+};
+
+function createBaseCreateEmerchantpayPaymentRequest(): CreateEmerchantpayPaymentRequest {
+  return {
+    societeId: "",
+    transactionId: "",
+    amountCents: 0,
+    currency: "",
+    transactionType: "",
+    cardNumber: undefined,
+    cardHolder: undefined,
+    expirationDate: undefined,
+    cvv: undefined,
+    notificationUrl: "",
+    returnSuccessUrl: "",
+    returnFailureUrl: "",
+    customerEmail: undefined,
+    customerPhone: undefined,
+    billingAddress: undefined,
+    metadata: {},
+  };
+}
+
+export const CreateEmerchantpayPaymentRequest: MessageFns<CreateEmerchantpayPaymentRequest> = {
+  encode(message: CreateEmerchantpayPaymentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.transactionId !== "") {
+      writer.uint32(18).string(message.transactionId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(24).int64(message.amountCents);
+    }
+    if (message.currency !== "") {
+      writer.uint32(34).string(message.currency);
+    }
+    if (message.transactionType !== "") {
+      writer.uint32(42).string(message.transactionType);
+    }
+    if (message.cardNumber !== undefined) {
+      writer.uint32(50).string(message.cardNumber);
+    }
+    if (message.cardHolder !== undefined) {
+      writer.uint32(58).string(message.cardHolder);
+    }
+    if (message.expirationDate !== undefined) {
+      writer.uint32(66).string(message.expirationDate);
+    }
+    if (message.cvv !== undefined) {
+      writer.uint32(74).string(message.cvv);
+    }
+    if (message.notificationUrl !== "") {
+      writer.uint32(82).string(message.notificationUrl);
+    }
+    if (message.returnSuccessUrl !== "") {
+      writer.uint32(90).string(message.returnSuccessUrl);
+    }
+    if (message.returnFailureUrl !== "") {
+      writer.uint32(98).string(message.returnFailureUrl);
+    }
+    if (message.customerEmail !== undefined) {
+      writer.uint32(106).string(message.customerEmail);
+    }
+    if (message.customerPhone !== undefined) {
+      writer.uint32(114).string(message.customerPhone);
+    }
+    if (message.billingAddress !== undefined) {
+      writer.uint32(122).string(message.billingAddress);
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      CreateEmerchantpayPaymentRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(130).fork())
+        .join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateEmerchantpayPaymentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateEmerchantpayPaymentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.transactionType = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.cardNumber = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.cardHolder = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.expirationDate = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.cvv = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.notificationUrl = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.returnSuccessUrl = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.returnFailureUrl = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.customerEmail = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.customerPhone = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.billingAddress = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          const entry16 = CreateEmerchantpayPaymentRequest_MetadataEntry.decode(reader, reader.uint32());
+          if (entry16.value !== undefined) {
+            message.metadata[entry16.key] = entry16.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateEmerchantpayPaymentRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      transactionType: isSet(object.transactionType)
+        ? globalThis.String(object.transactionType)
+        : isSet(object.transaction_type)
+        ? globalThis.String(object.transaction_type)
+        : "",
+      cardNumber: isSet(object.cardNumber)
+        ? globalThis.String(object.cardNumber)
+        : isSet(object.card_number)
+        ? globalThis.String(object.card_number)
+        : undefined,
+      cardHolder: isSet(object.cardHolder)
+        ? globalThis.String(object.cardHolder)
+        : isSet(object.card_holder)
+        ? globalThis.String(object.card_holder)
+        : undefined,
+      expirationDate: isSet(object.expirationDate)
+        ? globalThis.String(object.expirationDate)
+        : isSet(object.expiration_date)
+        ? globalThis.String(object.expiration_date)
+        : undefined,
+      cvv: isSet(object.cvv) ? globalThis.String(object.cvv) : undefined,
+      notificationUrl: isSet(object.notificationUrl)
+        ? globalThis.String(object.notificationUrl)
+        : isSet(object.notification_url)
+        ? globalThis.String(object.notification_url)
+        : "",
+      returnSuccessUrl: isSet(object.returnSuccessUrl)
+        ? globalThis.String(object.returnSuccessUrl)
+        : isSet(object.return_success_url)
+        ? globalThis.String(object.return_success_url)
+        : "",
+      returnFailureUrl: isSet(object.returnFailureUrl)
+        ? globalThis.String(object.returnFailureUrl)
+        : isSet(object.return_failure_url)
+        ? globalThis.String(object.return_failure_url)
+        : "",
+      customerEmail: isSet(object.customerEmail)
+        ? globalThis.String(object.customerEmail)
+        : isSet(object.customer_email)
+        ? globalThis.String(object.customer_email)
+        : undefined,
+      customerPhone: isSet(object.customerPhone)
+        ? globalThis.String(object.customerPhone)
+        : isSet(object.customer_phone)
+        ? globalThis.String(object.customer_phone)
+        : undefined,
+      billingAddress: isSet(object.billingAddress)
+        ? globalThis.String(object.billingAddress)
+        : isSet(object.billing_address)
+        ? globalThis.String(object.billing_address)
+        : undefined,
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: CreateEmerchantpayPaymentRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.transactionType !== "") {
+      obj.transactionType = message.transactionType;
+    }
+    if (message.cardNumber !== undefined) {
+      obj.cardNumber = message.cardNumber;
+    }
+    if (message.cardHolder !== undefined) {
+      obj.cardHolder = message.cardHolder;
+    }
+    if (message.expirationDate !== undefined) {
+      obj.expirationDate = message.expirationDate;
+    }
+    if (message.cvv !== undefined) {
+      obj.cvv = message.cvv;
+    }
+    if (message.notificationUrl !== "") {
+      obj.notificationUrl = message.notificationUrl;
+    }
+    if (message.returnSuccessUrl !== "") {
+      obj.returnSuccessUrl = message.returnSuccessUrl;
+    }
+    if (message.returnFailureUrl !== "") {
+      obj.returnFailureUrl = message.returnFailureUrl;
+    }
+    if (message.customerEmail !== undefined) {
+      obj.customerEmail = message.customerEmail;
+    }
+    if (message.customerPhone !== undefined) {
+      obj.customerPhone = message.customerPhone;
+    }
+    if (message.billingAddress !== undefined) {
+      obj.billingAddress = message.billingAddress;
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateEmerchantpayPaymentRequest>, I>>(
+    base?: I,
+  ): CreateEmerchantpayPaymentRequest {
+    return CreateEmerchantpayPaymentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateEmerchantpayPaymentRequest>, I>>(
+    object: I,
+  ): CreateEmerchantpayPaymentRequest {
+    const message = createBaseCreateEmerchantpayPaymentRequest();
+    message.societeId = object.societeId ?? "";
+    message.transactionId = object.transactionId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.currency = object.currency ?? "";
+    message.transactionType = object.transactionType ?? "";
+    message.cardNumber = object.cardNumber ?? undefined;
+    message.cardHolder = object.cardHolder ?? undefined;
+    message.expirationDate = object.expirationDate ?? undefined;
+    message.cvv = object.cvv ?? undefined;
+    message.notificationUrl = object.notificationUrl ?? "";
+    message.returnSuccessUrl = object.returnSuccessUrl ?? "";
+    message.returnFailureUrl = object.returnFailureUrl ?? "";
+    message.customerEmail = object.customerEmail ?? undefined;
+    message.customerPhone = object.customerPhone ?? undefined;
+    message.billingAddress = object.billingAddress ?? undefined;
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseCreateEmerchantpayPaymentRequest_MetadataEntry(): CreateEmerchantpayPaymentRequest_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const CreateEmerchantpayPaymentRequest_MetadataEntry: MessageFns<
+  CreateEmerchantpayPaymentRequest_MetadataEntry
+> = {
+  encode(
+    message: CreateEmerchantpayPaymentRequest_MetadataEntry,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateEmerchantpayPaymentRequest_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateEmerchantpayPaymentRequest_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateEmerchantpayPaymentRequest_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CreateEmerchantpayPaymentRequest_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateEmerchantpayPaymentRequest_MetadataEntry>, I>>(
+    base?: I,
+  ): CreateEmerchantpayPaymentRequest_MetadataEntry {
+    return CreateEmerchantpayPaymentRequest_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateEmerchantpayPaymentRequest_MetadataEntry>, I>>(
+    object: I,
+  ): CreateEmerchantpayPaymentRequest_MetadataEntry {
+    const message = createBaseCreateEmerchantpayPaymentRequest_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseEmerchantpayPaymentResponse(): EmerchantpayPaymentResponse {
+  return {
+    id: "",
+    transactionId: "",
+    uniqueId: "",
+    amountCents: 0,
+    currency: "",
+    status: "",
+    transactionType: "",
+    redirectUrl: undefined,
+    reason: undefined,
+    responseCode: undefined,
+    createdAt: "",
+    updatedAt: undefined,
+  };
+}
+
+export const EmerchantpayPaymentResponse: MessageFns<EmerchantpayPaymentResponse> = {
+  encode(message: EmerchantpayPaymentResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.transactionId !== "") {
+      writer.uint32(18).string(message.transactionId);
+    }
+    if (message.uniqueId !== "") {
+      writer.uint32(26).string(message.uniqueId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(32).int64(message.amountCents);
+    }
+    if (message.currency !== "") {
+      writer.uint32(42).string(message.currency);
+    }
+    if (message.status !== "") {
+      writer.uint32(50).string(message.status);
+    }
+    if (message.transactionType !== "") {
+      writer.uint32(58).string(message.transactionType);
+    }
+    if (message.redirectUrl !== undefined) {
+      writer.uint32(66).string(message.redirectUrl);
+    }
+    if (message.reason !== undefined) {
+      writer.uint32(74).string(message.reason);
+    }
+    if (message.responseCode !== undefined) {
+      writer.uint32(82).string(message.responseCode);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(90).string(message.createdAt);
+    }
+    if (message.updatedAt !== undefined) {
+      writer.uint32(98).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): EmerchantpayPaymentResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseEmerchantpayPaymentResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.uniqueId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.transactionType = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.redirectUrl = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.responseCode = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EmerchantpayPaymentResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      uniqueId: isSet(object.uniqueId)
+        ? globalThis.String(object.uniqueId)
+        : isSet(object.unique_id)
+        ? globalThis.String(object.unique_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      transactionType: isSet(object.transactionType)
+        ? globalThis.String(object.transactionType)
+        : isSet(object.transaction_type)
+        ? globalThis.String(object.transaction_type)
+        : "",
+      redirectUrl: isSet(object.redirectUrl)
+        ? globalThis.String(object.redirectUrl)
+        : isSet(object.redirect_url)
+        ? globalThis.String(object.redirect_url)
+        : undefined,
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : undefined,
+      responseCode: isSet(object.responseCode)
+        ? globalThis.String(object.responseCode)
+        : isSet(object.response_code)
+        ? globalThis.String(object.response_code)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: EmerchantpayPaymentResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.uniqueId !== "") {
+      obj.uniqueId = message.uniqueId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.transactionType !== "") {
+      obj.transactionType = message.transactionType;
+    }
+    if (message.redirectUrl !== undefined) {
+      obj.redirectUrl = message.redirectUrl;
+    }
+    if (message.reason !== undefined) {
+      obj.reason = message.reason;
+    }
+    if (message.responseCode !== undefined) {
+      obj.responseCode = message.responseCode;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== undefined) {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<EmerchantpayPaymentResponse>, I>>(base?: I): EmerchantpayPaymentResponse {
+    return EmerchantpayPaymentResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<EmerchantpayPaymentResponse>, I>>(object: I): EmerchantpayPaymentResponse {
+    const message = createBaseEmerchantpayPaymentResponse();
+    message.id = object.id ?? "";
+    message.transactionId = object.transactionId ?? "";
+    message.uniqueId = object.uniqueId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.currency = object.currency ?? "";
+    message.status = object.status ?? "";
+    message.transactionType = object.transactionType ?? "";
+    message.redirectUrl = object.redirectUrl ?? undefined;
+    message.reason = object.reason ?? undefined;
+    message.responseCode = object.responseCode ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetEmerchantpayPaymentRequest(): GetEmerchantpayPaymentRequest {
+  return { transactionId: "", societeId: "" };
+}
+
+export const GetEmerchantpayPaymentRequest: MessageFns<GetEmerchantpayPaymentRequest> = {
+  encode(message: GetEmerchantpayPaymentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.transactionId !== "") {
+      writer.uint32(10).string(message.transactionId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetEmerchantpayPaymentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetEmerchantpayPaymentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetEmerchantpayPaymentRequest {
+    return {
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetEmerchantpayPaymentRequest): unknown {
+    const obj: any = {};
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetEmerchantpayPaymentRequest>, I>>(base?: I): GetEmerchantpayPaymentRequest {
+    return GetEmerchantpayPaymentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetEmerchantpayPaymentRequest>, I>>(
+    object: I,
+  ): GetEmerchantpayPaymentRequest {
+    const message = createBaseGetEmerchantpayPaymentRequest();
+    message.transactionId = object.transactionId ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateEmerchantpaySepaPaymentRequest(): CreateEmerchantpaySepaPaymentRequest {
+  return {
+    societeId: "",
+    transactionId: "",
+    amountCents: 0,
+    currency: "",
+    iban: "",
+    bic: "",
+    accountHolder: "",
+    mandateReference: undefined,
+    mandateSignedDate: undefined,
+    notificationUrl: "",
+    description: undefined,
+    metadata: {},
+  };
+}
+
+export const CreateEmerchantpaySepaPaymentRequest: MessageFns<CreateEmerchantpaySepaPaymentRequest> = {
+  encode(message: CreateEmerchantpaySepaPaymentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.transactionId !== "") {
+      writer.uint32(18).string(message.transactionId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(24).int64(message.amountCents);
+    }
+    if (message.currency !== "") {
+      writer.uint32(34).string(message.currency);
+    }
+    if (message.iban !== "") {
+      writer.uint32(42).string(message.iban);
+    }
+    if (message.bic !== "") {
+      writer.uint32(50).string(message.bic);
+    }
+    if (message.accountHolder !== "") {
+      writer.uint32(58).string(message.accountHolder);
+    }
+    if (message.mandateReference !== undefined) {
+      writer.uint32(66).string(message.mandateReference);
+    }
+    if (message.mandateSignedDate !== undefined) {
+      writer.uint32(74).string(message.mandateSignedDate);
+    }
+    if (message.notificationUrl !== "") {
+      writer.uint32(82).string(message.notificationUrl);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(90).string(message.description);
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      CreateEmerchantpaySepaPaymentRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(98).fork())
+        .join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateEmerchantpaySepaPaymentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateEmerchantpaySepaPaymentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.iban = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.bic = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.accountHolder = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.mandateReference = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.mandateSignedDate = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.notificationUrl = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          const entry12 = CreateEmerchantpaySepaPaymentRequest_MetadataEntry.decode(reader, reader.uint32());
+          if (entry12.value !== undefined) {
+            message.metadata[entry12.key] = entry12.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateEmerchantpaySepaPaymentRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      iban: isSet(object.iban) ? globalThis.String(object.iban) : "",
+      bic: isSet(object.bic) ? globalThis.String(object.bic) : "",
+      accountHolder: isSet(object.accountHolder)
+        ? globalThis.String(object.accountHolder)
+        : isSet(object.account_holder)
+        ? globalThis.String(object.account_holder)
+        : "",
+      mandateReference: isSet(object.mandateReference)
+        ? globalThis.String(object.mandateReference)
+        : isSet(object.mandate_reference)
+        ? globalThis.String(object.mandate_reference)
+        : undefined,
+      mandateSignedDate: isSet(object.mandateSignedDate)
+        ? globalThis.String(object.mandateSignedDate)
+        : isSet(object.mandate_signed_date)
+        ? globalThis.String(object.mandate_signed_date)
+        : undefined,
+      notificationUrl: isSet(object.notificationUrl)
+        ? globalThis.String(object.notificationUrl)
+        : isSet(object.notification_url)
+        ? globalThis.String(object.notification_url)
+        : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: CreateEmerchantpaySepaPaymentRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.iban !== "") {
+      obj.iban = message.iban;
+    }
+    if (message.bic !== "") {
+      obj.bic = message.bic;
+    }
+    if (message.accountHolder !== "") {
+      obj.accountHolder = message.accountHolder;
+    }
+    if (message.mandateReference !== undefined) {
+      obj.mandateReference = message.mandateReference;
+    }
+    if (message.mandateSignedDate !== undefined) {
+      obj.mandateSignedDate = message.mandateSignedDate;
+    }
+    if (message.notificationUrl !== "") {
+      obj.notificationUrl = message.notificationUrl;
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateEmerchantpaySepaPaymentRequest>, I>>(
+    base?: I,
+  ): CreateEmerchantpaySepaPaymentRequest {
+    return CreateEmerchantpaySepaPaymentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateEmerchantpaySepaPaymentRequest>, I>>(
+    object: I,
+  ): CreateEmerchantpaySepaPaymentRequest {
+    const message = createBaseCreateEmerchantpaySepaPaymentRequest();
+    message.societeId = object.societeId ?? "";
+    message.transactionId = object.transactionId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.currency = object.currency ?? "";
+    message.iban = object.iban ?? "";
+    message.bic = object.bic ?? "";
+    message.accountHolder = object.accountHolder ?? "";
+    message.mandateReference = object.mandateReference ?? undefined;
+    message.mandateSignedDate = object.mandateSignedDate ?? undefined;
+    message.notificationUrl = object.notificationUrl ?? "";
+    message.description = object.description ?? undefined;
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseCreateEmerchantpaySepaPaymentRequest_MetadataEntry(): CreateEmerchantpaySepaPaymentRequest_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const CreateEmerchantpaySepaPaymentRequest_MetadataEntry: MessageFns<
+  CreateEmerchantpaySepaPaymentRequest_MetadataEntry
+> = {
+  encode(
+    message: CreateEmerchantpaySepaPaymentRequest_MetadataEntry,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateEmerchantpaySepaPaymentRequest_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateEmerchantpaySepaPaymentRequest_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateEmerchantpaySepaPaymentRequest_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CreateEmerchantpaySepaPaymentRequest_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateEmerchantpaySepaPaymentRequest_MetadataEntry>, I>>(
+    base?: I,
+  ): CreateEmerchantpaySepaPaymentRequest_MetadataEntry {
+    return CreateEmerchantpaySepaPaymentRequest_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateEmerchantpaySepaPaymentRequest_MetadataEntry>, I>>(
+    object: I,
+  ): CreateEmerchantpaySepaPaymentRequest_MetadataEntry {
+    const message = createBaseCreateEmerchantpaySepaPaymentRequest_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseRefundEmerchantpayPaymentRequest(): RefundEmerchantpayPaymentRequest {
+  return { transactionId: "", societeId: "", uniqueId: "", amountCents: 0, reason: undefined };
+}
+
+export const RefundEmerchantpayPaymentRequest: MessageFns<RefundEmerchantpayPaymentRequest> = {
+  encode(message: RefundEmerchantpayPaymentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.transactionId !== "") {
+      writer.uint32(10).string(message.transactionId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.uniqueId !== "") {
+      writer.uint32(26).string(message.uniqueId);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(32).int64(message.amountCents);
+    }
+    if (message.reason !== undefined) {
+      writer.uint32(42).string(message.reason);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RefundEmerchantpayPaymentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRefundEmerchantpayPaymentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.transactionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.uniqueId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RefundEmerchantpayPaymentRequest {
+    return {
+      transactionId: isSet(object.transactionId)
+        ? globalThis.String(object.transactionId)
+        : isSet(object.transaction_id)
+        ? globalThis.String(object.transaction_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      uniqueId: isSet(object.uniqueId)
+        ? globalThis.String(object.uniqueId)
+        : isSet(object.unique_id)
+        ? globalThis.String(object.unique_id)
+        : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : undefined,
+    };
+  },
+
+  toJSON(message: RefundEmerchantpayPaymentRequest): unknown {
+    const obj: any = {};
+    if (message.transactionId !== "") {
+      obj.transactionId = message.transactionId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.uniqueId !== "") {
+      obj.uniqueId = message.uniqueId;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.reason !== undefined) {
+      obj.reason = message.reason;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RefundEmerchantpayPaymentRequest>, I>>(
+    base?: I,
+  ): RefundEmerchantpayPaymentRequest {
+    return RefundEmerchantpayPaymentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RefundEmerchantpayPaymentRequest>, I>>(
+    object: I,
+  ): RefundEmerchantpayPaymentRequest {
+    const message = createBaseRefundEmerchantpayPaymentRequest();
+    message.transactionId = object.transactionId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.uniqueId = object.uniqueId ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.reason = object.reason ?? undefined;
+    return message;
+  },
+};
+
+function createBaseCreateRoutingRuleRequest(): CreateRoutingRuleRequest {
+  return {
+    societeId: "",
+    name: "",
+    priority: 0,
+    conditions: "",
+    providerAccountId: "",
+    isFallback: false,
+    isEnabled: false,
+  };
+}
+
+export const CreateRoutingRuleRequest: MessageFns<CreateRoutingRuleRequest> = {
+  encode(message: CreateRoutingRuleRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.priority !== 0) {
+      writer.uint32(24).int32(message.priority);
+    }
+    if (message.conditions !== "") {
+      writer.uint32(34).string(message.conditions);
+    }
+    if (message.providerAccountId !== "") {
+      writer.uint32(42).string(message.providerAccountId);
+    }
+    if (message.isFallback !== false) {
+      writer.uint32(48).bool(message.isFallback);
+    }
+    if (message.isEnabled !== false) {
+      writer.uint32(56).bool(message.isEnabled);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateRoutingRuleRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateRoutingRuleRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.priority = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.conditions = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.providerAccountId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.isFallback = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.isEnabled = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateRoutingRuleRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      priority: isSet(object.priority) ? globalThis.Number(object.priority) : 0,
+      conditions: isSet(object.conditions) ? globalThis.String(object.conditions) : "",
+      providerAccountId: isSet(object.providerAccountId)
+        ? globalThis.String(object.providerAccountId)
+        : isSet(object.provider_account_id)
+        ? globalThis.String(object.provider_account_id)
+        : "",
+      isFallback: isSet(object.isFallback)
+        ? globalThis.Boolean(object.isFallback)
+        : isSet(object.is_fallback)
+        ? globalThis.Boolean(object.is_fallback)
+        : false,
+      isEnabled: isSet(object.isEnabled)
+        ? globalThis.Boolean(object.isEnabled)
+        : isSet(object.is_enabled)
+        ? globalThis.Boolean(object.is_enabled)
+        : false,
+    };
+  },
+
+  toJSON(message: CreateRoutingRuleRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.priority !== 0) {
+      obj.priority = Math.round(message.priority);
+    }
+    if (message.conditions !== "") {
+      obj.conditions = message.conditions;
+    }
+    if (message.providerAccountId !== "") {
+      obj.providerAccountId = message.providerAccountId;
+    }
+    if (message.isFallback !== false) {
+      obj.isFallback = message.isFallback;
+    }
+    if (message.isEnabled !== false) {
+      obj.isEnabled = message.isEnabled;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateRoutingRuleRequest>, I>>(base?: I): CreateRoutingRuleRequest {
+    return CreateRoutingRuleRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateRoutingRuleRequest>, I>>(object: I): CreateRoutingRuleRequest {
+    const message = createBaseCreateRoutingRuleRequest();
+    message.societeId = object.societeId ?? "";
+    message.name = object.name ?? "";
+    message.priority = object.priority ?? 0;
+    message.conditions = object.conditions ?? "";
+    message.providerAccountId = object.providerAccountId ?? "";
+    message.isFallback = object.isFallback ?? false;
+    message.isEnabled = object.isEnabled ?? false;
+    return message;
+  },
+};
+
+function createBaseRoutingRuleResponse(): RoutingRuleResponse {
+  return {
+    id: "",
+    societeId: "",
+    name: "",
+    priority: 0,
+    conditions: "",
+    providerAccountId: "",
+    isFallback: false,
+    isEnabled: false,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const RoutingRuleResponse: MessageFns<RoutingRuleResponse> = {
+  encode(message: RoutingRuleResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.name !== "") {
+      writer.uint32(26).string(message.name);
+    }
+    if (message.priority !== 0) {
+      writer.uint32(32).int32(message.priority);
+    }
+    if (message.conditions !== "") {
+      writer.uint32(42).string(message.conditions);
+    }
+    if (message.providerAccountId !== "") {
+      writer.uint32(50).string(message.providerAccountId);
+    }
+    if (message.isFallback !== false) {
+      writer.uint32(56).bool(message.isFallback);
+    }
+    if (message.isEnabled !== false) {
+      writer.uint32(64).bool(message.isEnabled);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(74).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(82).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RoutingRuleResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRoutingRuleResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.priority = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.conditions = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.providerAccountId = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.isFallback = reader.bool();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.isEnabled = reader.bool();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RoutingRuleResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      priority: isSet(object.priority) ? globalThis.Number(object.priority) : 0,
+      conditions: isSet(object.conditions) ? globalThis.String(object.conditions) : "",
+      providerAccountId: isSet(object.providerAccountId)
+        ? globalThis.String(object.providerAccountId)
+        : isSet(object.provider_account_id)
+        ? globalThis.String(object.provider_account_id)
+        : "",
+      isFallback: isSet(object.isFallback)
+        ? globalThis.Boolean(object.isFallback)
+        : isSet(object.is_fallback)
+        ? globalThis.Boolean(object.is_fallback)
+        : false,
+      isEnabled: isSet(object.isEnabled)
+        ? globalThis.Boolean(object.isEnabled)
+        : isSet(object.is_enabled)
+        ? globalThis.Boolean(object.is_enabled)
+        : false,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: RoutingRuleResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.priority !== 0) {
+      obj.priority = Math.round(message.priority);
+    }
+    if (message.conditions !== "") {
+      obj.conditions = message.conditions;
+    }
+    if (message.providerAccountId !== "") {
+      obj.providerAccountId = message.providerAccountId;
+    }
+    if (message.isFallback !== false) {
+      obj.isFallback = message.isFallback;
+    }
+    if (message.isEnabled !== false) {
+      obj.isEnabled = message.isEnabled;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RoutingRuleResponse>, I>>(base?: I): RoutingRuleResponse {
+    return RoutingRuleResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RoutingRuleResponse>, I>>(object: I): RoutingRuleResponse {
+    const message = createBaseRoutingRuleResponse();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.name = object.name ?? "";
+    message.priority = object.priority ?? 0;
+    message.conditions = object.conditions ?? "";
+    message.providerAccountId = object.providerAccountId ?? "";
+    message.isFallback = object.isFallback ?? false;
+    message.isEnabled = object.isEnabled ?? false;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateRoutingRuleRequest(): UpdateRoutingRuleRequest {
+  return {
+    id: "",
+    name: undefined,
+    priority: undefined,
+    conditions: undefined,
+    providerAccountId: undefined,
+    isFallback: undefined,
+    isEnabled: undefined,
+  };
+}
+
+export const UpdateRoutingRuleRequest: MessageFns<UpdateRoutingRuleRequest> = {
+  encode(message: UpdateRoutingRuleRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== undefined) {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.priority !== undefined) {
+      writer.uint32(24).int32(message.priority);
+    }
+    if (message.conditions !== undefined) {
+      writer.uint32(34).string(message.conditions);
+    }
+    if (message.providerAccountId !== undefined) {
+      writer.uint32(42).string(message.providerAccountId);
+    }
+    if (message.isFallback !== undefined) {
+      writer.uint32(48).bool(message.isFallback);
+    }
+    if (message.isEnabled !== undefined) {
+      writer.uint32(56).bool(message.isEnabled);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateRoutingRuleRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateRoutingRuleRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.priority = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.conditions = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.providerAccountId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.isFallback = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.isEnabled = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateRoutingRuleRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : undefined,
+      priority: isSet(object.priority) ? globalThis.Number(object.priority) : undefined,
+      conditions: isSet(object.conditions) ? globalThis.String(object.conditions) : undefined,
+      providerAccountId: isSet(object.providerAccountId)
+        ? globalThis.String(object.providerAccountId)
+        : isSet(object.provider_account_id)
+        ? globalThis.String(object.provider_account_id)
+        : undefined,
+      isFallback: isSet(object.isFallback)
+        ? globalThis.Boolean(object.isFallback)
+        : isSet(object.is_fallback)
+        ? globalThis.Boolean(object.is_fallback)
+        : undefined,
+      isEnabled: isSet(object.isEnabled)
+        ? globalThis.Boolean(object.isEnabled)
+        : isSet(object.is_enabled)
+        ? globalThis.Boolean(object.is_enabled)
+        : undefined,
+    };
+  },
+
+  toJSON(message: UpdateRoutingRuleRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.name !== undefined) {
+      obj.name = message.name;
+    }
+    if (message.priority !== undefined) {
+      obj.priority = Math.round(message.priority);
+    }
+    if (message.conditions !== undefined) {
+      obj.conditions = message.conditions;
+    }
+    if (message.providerAccountId !== undefined) {
+      obj.providerAccountId = message.providerAccountId;
+    }
+    if (message.isFallback !== undefined) {
+      obj.isFallback = message.isFallback;
+    }
+    if (message.isEnabled !== undefined) {
+      obj.isEnabled = message.isEnabled;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateRoutingRuleRequest>, I>>(base?: I): UpdateRoutingRuleRequest {
+    return UpdateRoutingRuleRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateRoutingRuleRequest>, I>>(object: I): UpdateRoutingRuleRequest {
+    const message = createBaseUpdateRoutingRuleRequest();
+    message.id = object.id ?? "";
+    message.name = object.name ?? undefined;
+    message.priority = object.priority ?? undefined;
+    message.conditions = object.conditions ?? undefined;
+    message.providerAccountId = object.providerAccountId ?? undefined;
+    message.isFallback = object.isFallback ?? undefined;
+    message.isEnabled = object.isEnabled ?? undefined;
+    return message;
+  },
+};
+
+function createBaseDeleteRoutingRuleRequest(): DeleteRoutingRuleRequest {
+  return { id: "", societeId: "" };
+}
+
+export const DeleteRoutingRuleRequest: MessageFns<DeleteRoutingRuleRequest> = {
+  encode(message: DeleteRoutingRuleRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteRoutingRuleRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteRoutingRuleRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteRoutingRuleRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: DeleteRoutingRuleRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteRoutingRuleRequest>, I>>(base?: I): DeleteRoutingRuleRequest {
+    return DeleteRoutingRuleRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteRoutingRuleRequest>, I>>(object: I): DeleteRoutingRuleRequest {
+    const message = createBaseDeleteRoutingRuleRequest();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteRoutingRuleResponse(): DeleteRoutingRuleResponse {
+  return { success: false, message: "" };
+}
+
+export const DeleteRoutingRuleResponse: MessageFns<DeleteRoutingRuleResponse> = {
+  encode(message: DeleteRoutingRuleResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteRoutingRuleResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteRoutingRuleResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteRoutingRuleResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: DeleteRoutingRuleResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteRoutingRuleResponse>, I>>(base?: I): DeleteRoutingRuleResponse {
+    return DeleteRoutingRuleResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteRoutingRuleResponse>, I>>(object: I): DeleteRoutingRuleResponse {
+    const message = createBaseDeleteRoutingRuleResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseListRoutingRulesRequest(): ListRoutingRulesRequest {
+  return { societeId: "", isEnabled: undefined, page: undefined, pageSize: undefined };
+}
+
+export const ListRoutingRulesRequest: MessageFns<ListRoutingRulesRequest> = {
+  encode(message: ListRoutingRulesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.isEnabled !== undefined) {
+      writer.uint32(16).bool(message.isEnabled);
+    }
+    if (message.page !== undefined) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListRoutingRulesRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListRoutingRulesRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.isEnabled = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListRoutingRulesRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      isEnabled: isSet(object.isEnabled)
+        ? globalThis.Boolean(object.isEnabled)
+        : isSet(object.is_enabled)
+        ? globalThis.Boolean(object.is_enabled)
+        : undefined,
+      page: isSet(object.page) ? globalThis.Number(object.page) : undefined,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListRoutingRulesRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.isEnabled !== undefined) {
+      obj.isEnabled = message.isEnabled;
+    }
+    if (message.page !== undefined) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListRoutingRulesRequest>, I>>(base?: I): ListRoutingRulesRequest {
+    return ListRoutingRulesRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListRoutingRulesRequest>, I>>(object: I): ListRoutingRulesRequest {
+    const message = createBaseListRoutingRulesRequest();
+    message.societeId = object.societeId ?? "";
+    message.isEnabled = object.isEnabled ?? undefined;
+    message.page = object.page ?? undefined;
+    message.pageSize = object.pageSize ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListRoutingRulesResponse(): ListRoutingRulesResponse {
+  return { rules: [], total: 0, page: 0, pageSize: 0 };
+}
+
+export const ListRoutingRulesResponse: MessageFns<ListRoutingRulesResponse> = {
+  encode(message: ListRoutingRulesResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.rules) {
+      RoutingRuleResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.page !== 0) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.pageSize !== 0) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListRoutingRulesResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListRoutingRulesResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.rules.push(RoutingRuleResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListRoutingRulesResponse {
+    return {
+      rules: globalThis.Array.isArray(object?.rules)
+        ? object.rules.map((e: any) => RoutingRuleResponse.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : 0,
+    };
+  },
+
+  toJSON(message: ListRoutingRulesResponse): unknown {
+    const obj: any = {};
+    if (message.rules?.length) {
+      obj.rules = message.rules.map((e) => RoutingRuleResponse.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== 0) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListRoutingRulesResponse>, I>>(base?: I): ListRoutingRulesResponse {
+    return ListRoutingRulesResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListRoutingRulesResponse>, I>>(object: I): ListRoutingRulesResponse {
+    const message = createBaseListRoutingRulesResponse();
+    message.rules = object.rules?.map((e) => RoutingRuleResponse.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.page = object.page ?? 0;
+    message.pageSize = object.pageSize ?? 0;
+    return message;
+  },
+};
+
+function createBaseTestRoutingRuleRequest(): TestRoutingRuleRequest {
+  return {
+    societeId: "",
+    sourceChannel: "",
+    productCode: undefined,
+    contractAgeMonths: undefined,
+    amountCents: undefined,
+    clientId: undefined,
+  };
+}
+
+export const TestRoutingRuleRequest: MessageFns<TestRoutingRuleRequest> = {
+  encode(message: TestRoutingRuleRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.sourceChannel !== "") {
+      writer.uint32(18).string(message.sourceChannel);
+    }
+    if (message.productCode !== undefined) {
+      writer.uint32(26).string(message.productCode);
+    }
+    if (message.contractAgeMonths !== undefined) {
+      writer.uint32(32).int32(message.contractAgeMonths);
+    }
+    if (message.amountCents !== undefined) {
+      writer.uint32(40).int64(message.amountCents);
+    }
+    if (message.clientId !== undefined) {
+      writer.uint32(50).string(message.clientId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestRoutingRuleRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestRoutingRuleRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.sourceChannel = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.productCode = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.contractAgeMonths = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestRoutingRuleRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      sourceChannel: isSet(object.sourceChannel)
+        ? globalThis.String(object.sourceChannel)
+        : isSet(object.source_channel)
+        ? globalThis.String(object.source_channel)
+        : "",
+      productCode: isSet(object.productCode)
+        ? globalThis.String(object.productCode)
+        : isSet(object.product_code)
+        ? globalThis.String(object.product_code)
+        : undefined,
+      contractAgeMonths: isSet(object.contractAgeMonths)
+        ? globalThis.Number(object.contractAgeMonths)
+        : isSet(object.contract_age_months)
+        ? globalThis.Number(object.contract_age_months)
+        : undefined,
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : undefined,
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : undefined,
+    };
+  },
+
+  toJSON(message: TestRoutingRuleRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.sourceChannel !== "") {
+      obj.sourceChannel = message.sourceChannel;
+    }
+    if (message.productCode !== undefined) {
+      obj.productCode = message.productCode;
+    }
+    if (message.contractAgeMonths !== undefined) {
+      obj.contractAgeMonths = Math.round(message.contractAgeMonths);
+    }
+    if (message.amountCents !== undefined) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.clientId !== undefined) {
+      obj.clientId = message.clientId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TestRoutingRuleRequest>, I>>(base?: I): TestRoutingRuleRequest {
+    return TestRoutingRuleRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TestRoutingRuleRequest>, I>>(object: I): TestRoutingRuleRequest {
+    const message = createBaseTestRoutingRuleRequest();
+    message.societeId = object.societeId ?? "";
+    message.sourceChannel = object.sourceChannel ?? "";
+    message.productCode = object.productCode ?? undefined;
+    message.contractAgeMonths = object.contractAgeMonths ?? undefined;
+    message.amountCents = object.amountCents ?? undefined;
+    message.clientId = object.clientId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseTestRoutingRuleResponse(): TestRoutingRuleResponse {
+  return {
+    matchedRuleId: "",
+    matchedRuleName: "",
+    providerAccountId: "",
+    providerName: "",
+    isFallback: false,
+    evaluations: [],
+  };
+}
+
+export const TestRoutingRuleResponse: MessageFns<TestRoutingRuleResponse> = {
+  encode(message: TestRoutingRuleResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.matchedRuleId !== "") {
+      writer.uint32(10).string(message.matchedRuleId);
+    }
+    if (message.matchedRuleName !== "") {
+      writer.uint32(18).string(message.matchedRuleName);
+    }
+    if (message.providerAccountId !== "") {
+      writer.uint32(26).string(message.providerAccountId);
+    }
+    if (message.providerName !== "") {
+      writer.uint32(34).string(message.providerName);
+    }
+    if (message.isFallback !== false) {
+      writer.uint32(40).bool(message.isFallback);
+    }
+    for (const v of message.evaluations) {
+      RoutingRuleEvaluation.encode(v!, writer.uint32(50).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TestRoutingRuleResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTestRoutingRuleResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.matchedRuleId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.matchedRuleName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.providerAccountId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.providerName = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.isFallback = reader.bool();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.evaluations.push(RoutingRuleEvaluation.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TestRoutingRuleResponse {
+    return {
+      matchedRuleId: isSet(object.matchedRuleId)
+        ? globalThis.String(object.matchedRuleId)
+        : isSet(object.matched_rule_id)
+        ? globalThis.String(object.matched_rule_id)
+        : "",
+      matchedRuleName: isSet(object.matchedRuleName)
+        ? globalThis.String(object.matchedRuleName)
+        : isSet(object.matched_rule_name)
+        ? globalThis.String(object.matched_rule_name)
+        : "",
+      providerAccountId: isSet(object.providerAccountId)
+        ? globalThis.String(object.providerAccountId)
+        : isSet(object.provider_account_id)
+        ? globalThis.String(object.provider_account_id)
+        : "",
+      providerName: isSet(object.providerName)
+        ? globalThis.String(object.providerName)
+        : isSet(object.provider_name)
+        ? globalThis.String(object.provider_name)
+        : "",
+      isFallback: isSet(object.isFallback)
+        ? globalThis.Boolean(object.isFallback)
+        : isSet(object.is_fallback)
+        ? globalThis.Boolean(object.is_fallback)
+        : false,
+      evaluations: globalThis.Array.isArray(object?.evaluations)
+        ? object.evaluations.map((e: any) => RoutingRuleEvaluation.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: TestRoutingRuleResponse): unknown {
+    const obj: any = {};
+    if (message.matchedRuleId !== "") {
+      obj.matchedRuleId = message.matchedRuleId;
+    }
+    if (message.matchedRuleName !== "") {
+      obj.matchedRuleName = message.matchedRuleName;
+    }
+    if (message.providerAccountId !== "") {
+      obj.providerAccountId = message.providerAccountId;
+    }
+    if (message.providerName !== "") {
+      obj.providerName = message.providerName;
+    }
+    if (message.isFallback !== false) {
+      obj.isFallback = message.isFallback;
+    }
+    if (message.evaluations?.length) {
+      obj.evaluations = message.evaluations.map((e) => RoutingRuleEvaluation.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TestRoutingRuleResponse>, I>>(base?: I): TestRoutingRuleResponse {
+    return TestRoutingRuleResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TestRoutingRuleResponse>, I>>(object: I): TestRoutingRuleResponse {
+    const message = createBaseTestRoutingRuleResponse();
+    message.matchedRuleId = object.matchedRuleId ?? "";
+    message.matchedRuleName = object.matchedRuleName ?? "";
+    message.providerAccountId = object.providerAccountId ?? "";
+    message.providerName = object.providerName ?? "";
+    message.isFallback = object.isFallback ?? false;
+    message.evaluations = object.evaluations?.map((e) => RoutingRuleEvaluation.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseRoutingRuleEvaluation(): RoutingRuleEvaluation {
+  return { ruleId: "", ruleName: "", priority: 0, matched: false, reason: undefined };
+}
+
+export const RoutingRuleEvaluation: MessageFns<RoutingRuleEvaluation> = {
+  encode(message: RoutingRuleEvaluation, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.ruleId !== "") {
+      writer.uint32(10).string(message.ruleId);
+    }
+    if (message.ruleName !== "") {
+      writer.uint32(18).string(message.ruleName);
+    }
+    if (message.priority !== 0) {
+      writer.uint32(24).int32(message.priority);
+    }
+    if (message.matched !== false) {
+      writer.uint32(32).bool(message.matched);
+    }
+    if (message.reason !== undefined) {
+      writer.uint32(42).string(message.reason);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RoutingRuleEvaluation {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRoutingRuleEvaluation();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ruleId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.ruleName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.priority = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.matched = reader.bool();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RoutingRuleEvaluation {
+    return {
+      ruleId: isSet(object.ruleId)
+        ? globalThis.String(object.ruleId)
+        : isSet(object.rule_id)
+        ? globalThis.String(object.rule_id)
+        : "",
+      ruleName: isSet(object.ruleName)
+        ? globalThis.String(object.ruleName)
+        : isSet(object.rule_name)
+        ? globalThis.String(object.rule_name)
+        : "",
+      priority: isSet(object.priority) ? globalThis.Number(object.priority) : 0,
+      matched: isSet(object.matched) ? globalThis.Boolean(object.matched) : false,
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : undefined,
+    };
+  },
+
+  toJSON(message: RoutingRuleEvaluation): unknown {
+    const obj: any = {};
+    if (message.ruleId !== "") {
+      obj.ruleId = message.ruleId;
+    }
+    if (message.ruleName !== "") {
+      obj.ruleName = message.ruleName;
+    }
+    if (message.priority !== 0) {
+      obj.priority = Math.round(message.priority);
+    }
+    if (message.matched !== false) {
+      obj.matched = message.matched;
+    }
+    if (message.reason !== undefined) {
+      obj.reason = message.reason;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RoutingRuleEvaluation>, I>>(base?: I): RoutingRuleEvaluation {
+    return RoutingRuleEvaluation.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RoutingRuleEvaluation>, I>>(object: I): RoutingRuleEvaluation {
+    const message = createBaseRoutingRuleEvaluation();
+    message.ruleId = object.ruleId ?? "";
+    message.ruleName = object.ruleName ?? "";
+    message.priority = object.priority ?? 0;
+    message.matched = object.matched ?? false;
+    message.reason = object.reason ?? undefined;
+    return message;
+  },
+};
+
+function createBaseCreateProviderOverrideRequest(): CreateProviderOverrideRequest {
+  return { societeId: "", scope: "", scopeId: "", providerAccountId: "", reason: "" };
+}
+
+export const CreateProviderOverrideRequest: MessageFns<CreateProviderOverrideRequest> = {
+  encode(message: CreateProviderOverrideRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.scope !== "") {
+      writer.uint32(18).string(message.scope);
+    }
+    if (message.scopeId !== "") {
+      writer.uint32(26).string(message.scopeId);
+    }
+    if (message.providerAccountId !== "") {
+      writer.uint32(34).string(message.providerAccountId);
+    }
+    if (message.reason !== "") {
+      writer.uint32(42).string(message.reason);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateProviderOverrideRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateProviderOverrideRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.scope = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.scopeId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.providerAccountId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateProviderOverrideRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      scope: isSet(object.scope) ? globalThis.String(object.scope) : "",
+      scopeId: isSet(object.scopeId)
+        ? globalThis.String(object.scopeId)
+        : isSet(object.scope_id)
+        ? globalThis.String(object.scope_id)
+        : "",
+      providerAccountId: isSet(object.providerAccountId)
+        ? globalThis.String(object.providerAccountId)
+        : isSet(object.provider_account_id)
+        ? globalThis.String(object.provider_account_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+    };
+  },
+
+  toJSON(message: CreateProviderOverrideRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.scope !== "") {
+      obj.scope = message.scope;
+    }
+    if (message.scopeId !== "") {
+      obj.scopeId = message.scopeId;
+    }
+    if (message.providerAccountId !== "") {
+      obj.providerAccountId = message.providerAccountId;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateProviderOverrideRequest>, I>>(base?: I): CreateProviderOverrideRequest {
+    return CreateProviderOverrideRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateProviderOverrideRequest>, I>>(
+    object: I,
+  ): CreateProviderOverrideRequest {
+    const message = createBaseCreateProviderOverrideRequest();
+    message.societeId = object.societeId ?? "";
+    message.scope = object.scope ?? "";
+    message.scopeId = object.scopeId ?? "";
+    message.providerAccountId = object.providerAccountId ?? "";
+    message.reason = object.reason ?? "";
+    return message;
+  },
+};
+
+function createBaseProviderOverrideResponse(): ProviderOverrideResponse {
+  return {
+    id: "",
+    societeId: "",
+    scope: "",
+    scopeId: "",
+    providerAccountId: "",
+    reason: "",
+    createdBy: "",
+    createdAt: "",
+  };
+}
+
+export const ProviderOverrideResponse: MessageFns<ProviderOverrideResponse> = {
+  encode(message: ProviderOverrideResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.scope !== "") {
+      writer.uint32(26).string(message.scope);
+    }
+    if (message.scopeId !== "") {
+      writer.uint32(34).string(message.scopeId);
+    }
+    if (message.providerAccountId !== "") {
+      writer.uint32(42).string(message.providerAccountId);
+    }
+    if (message.reason !== "") {
+      writer.uint32(50).string(message.reason);
+    }
+    if (message.createdBy !== "") {
+      writer.uint32(58).string(message.createdBy);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(66).string(message.createdAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ProviderOverrideResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseProviderOverrideResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.scope = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.scopeId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.providerAccountId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.createdBy = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ProviderOverrideResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      scope: isSet(object.scope) ? globalThis.String(object.scope) : "",
+      scopeId: isSet(object.scopeId)
+        ? globalThis.String(object.scopeId)
+        : isSet(object.scope_id)
+        ? globalThis.String(object.scope_id)
+        : "",
+      providerAccountId: isSet(object.providerAccountId)
+        ? globalThis.String(object.providerAccountId)
+        : isSet(object.provider_account_id)
+        ? globalThis.String(object.provider_account_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      createdBy: isSet(object.createdBy)
+        ? globalThis.String(object.createdBy)
+        : isSet(object.created_by)
+        ? globalThis.String(object.created_by)
+        : "",
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+    };
+  },
+
+  toJSON(message: ProviderOverrideResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.scope !== "") {
+      obj.scope = message.scope;
+    }
+    if (message.scopeId !== "") {
+      obj.scopeId = message.scopeId;
+    }
+    if (message.providerAccountId !== "") {
+      obj.providerAccountId = message.providerAccountId;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.createdBy !== "") {
+      obj.createdBy = message.createdBy;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ProviderOverrideResponse>, I>>(base?: I): ProviderOverrideResponse {
+    return ProviderOverrideResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ProviderOverrideResponse>, I>>(object: I): ProviderOverrideResponse {
+    const message = createBaseProviderOverrideResponse();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.scope = object.scope ?? "";
+    message.scopeId = object.scopeId ?? "";
+    message.providerAccountId = object.providerAccountId ?? "";
+    message.reason = object.reason ?? "";
+    message.createdBy = object.createdBy ?? "";
+    message.createdAt = object.createdAt ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteProviderOverrideRequest(): DeleteProviderOverrideRequest {
+  return { id: "", societeId: "" };
+}
+
+export const DeleteProviderOverrideRequest: MessageFns<DeleteProviderOverrideRequest> = {
+  encode(message: DeleteProviderOverrideRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteProviderOverrideRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteProviderOverrideRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteProviderOverrideRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: DeleteProviderOverrideRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteProviderOverrideRequest>, I>>(base?: I): DeleteProviderOverrideRequest {
+    return DeleteProviderOverrideRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteProviderOverrideRequest>, I>>(
+    object: I,
+  ): DeleteProviderOverrideRequest {
+    const message = createBaseDeleteProviderOverrideRequest();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteProviderOverrideResponse(): DeleteProviderOverrideResponse {
+  return { success: false, message: "" };
+}
+
+export const DeleteProviderOverrideResponse: MessageFns<DeleteProviderOverrideResponse> = {
+  encode(message: DeleteProviderOverrideResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteProviderOverrideResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteProviderOverrideResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteProviderOverrideResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: DeleteProviderOverrideResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteProviderOverrideResponse>, I>>(base?: I): DeleteProviderOverrideResponse {
+    return DeleteProviderOverrideResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteProviderOverrideResponse>, I>>(
+    object: I,
+  ): DeleteProviderOverrideResponse {
+    const message = createBaseDeleteProviderOverrideResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseListProviderOverridesRequest(): ListProviderOverridesRequest {
+  return { societeId: "", scope: undefined, scopeId: undefined, page: undefined, pageSize: undefined };
+}
+
+export const ListProviderOverridesRequest: MessageFns<ListProviderOverridesRequest> = {
+  encode(message: ListProviderOverridesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.scope !== undefined) {
+      writer.uint32(18).string(message.scope);
+    }
+    if (message.scopeId !== undefined) {
+      writer.uint32(26).string(message.scopeId);
+    }
+    if (message.page !== undefined) {
+      writer.uint32(32).int32(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      writer.uint32(40).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListProviderOverridesRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListProviderOverridesRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.scope = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.scopeId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListProviderOverridesRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      scope: isSet(object.scope) ? globalThis.String(object.scope) : undefined,
+      scopeId: isSet(object.scopeId)
+        ? globalThis.String(object.scopeId)
+        : isSet(object.scope_id)
+        ? globalThis.String(object.scope_id)
+        : undefined,
+      page: isSet(object.page) ? globalThis.Number(object.page) : undefined,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListProviderOverridesRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.scope !== undefined) {
+      obj.scope = message.scope;
+    }
+    if (message.scopeId !== undefined) {
+      obj.scopeId = message.scopeId;
+    }
+    if (message.page !== undefined) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListProviderOverridesRequest>, I>>(base?: I): ListProviderOverridesRequest {
+    return ListProviderOverridesRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListProviderOverridesRequest>, I>>(object: I): ListProviderOverridesRequest {
+    const message = createBaseListProviderOverridesRequest();
+    message.societeId = object.societeId ?? "";
+    message.scope = object.scope ?? undefined;
+    message.scopeId = object.scopeId ?? undefined;
+    message.page = object.page ?? undefined;
+    message.pageSize = object.pageSize ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListProviderOverridesResponse(): ListProviderOverridesResponse {
+  return { overrides: [], total: 0, page: 0, pageSize: 0 };
+}
+
+export const ListProviderOverridesResponse: MessageFns<ListProviderOverridesResponse> = {
+  encode(message: ListProviderOverridesResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.overrides) {
+      ProviderOverrideResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.page !== 0) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.pageSize !== 0) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListProviderOverridesResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListProviderOverridesResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.overrides.push(ProviderOverrideResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListProviderOverridesResponse {
+    return {
+      overrides: globalThis.Array.isArray(object?.overrides)
+        ? object.overrides.map((e: any) => ProviderOverrideResponse.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : 0,
+    };
+  },
+
+  toJSON(message: ListProviderOverridesResponse): unknown {
+    const obj: any = {};
+    if (message.overrides?.length) {
+      obj.overrides = message.overrides.map((e) => ProviderOverrideResponse.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== 0) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListProviderOverridesResponse>, I>>(base?: I): ListProviderOverridesResponse {
+    return ListProviderOverridesResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListProviderOverridesResponse>, I>>(
+    object: I,
+  ): ListProviderOverridesResponse {
+    const message = createBaseListProviderOverridesResponse();
+    message.overrides = object.overrides?.map((e) => ProviderOverrideResponse.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.page = object.page ?? 0;
+    message.pageSize = object.pageSize ?? 0;
+    return message;
+  },
+};
+
+function createBaseCreateReassignmentJobRequest(): CreateReassignmentJobRequest {
+  return {
+    societeId: "",
+    fromProviderAccountId: "",
+    toProviderAccountId: "",
+    selectionQuery: "",
+    dryRun: false,
+    scheduledAt: undefined,
+  };
+}
+
+export const CreateReassignmentJobRequest: MessageFns<CreateReassignmentJobRequest> = {
+  encode(message: CreateReassignmentJobRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.fromProviderAccountId !== "") {
+      writer.uint32(18).string(message.fromProviderAccountId);
+    }
+    if (message.toProviderAccountId !== "") {
+      writer.uint32(26).string(message.toProviderAccountId);
+    }
+    if (message.selectionQuery !== "") {
+      writer.uint32(34).string(message.selectionQuery);
+    }
+    if (message.dryRun !== false) {
+      writer.uint32(40).bool(message.dryRun);
+    }
+    if (message.scheduledAt !== undefined) {
+      writer.uint32(50).string(message.scheduledAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateReassignmentJobRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateReassignmentJobRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.fromProviderAccountId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.toProviderAccountId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.selectionQuery = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.dryRun = reader.bool();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.scheduledAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateReassignmentJobRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      fromProviderAccountId: isSet(object.fromProviderAccountId)
+        ? globalThis.String(object.fromProviderAccountId)
+        : isSet(object.from_provider_account_id)
+        ? globalThis.String(object.from_provider_account_id)
+        : "",
+      toProviderAccountId: isSet(object.toProviderAccountId)
+        ? globalThis.String(object.toProviderAccountId)
+        : isSet(object.to_provider_account_id)
+        ? globalThis.String(object.to_provider_account_id)
+        : "",
+      selectionQuery: isSet(object.selectionQuery)
+        ? globalThis.String(object.selectionQuery)
+        : isSet(object.selection_query)
+        ? globalThis.String(object.selection_query)
+        : "",
+      dryRun: isSet(object.dryRun)
+        ? globalThis.Boolean(object.dryRun)
+        : isSet(object.dry_run)
+        ? globalThis.Boolean(object.dry_run)
+        : false,
+      scheduledAt: isSet(object.scheduledAt)
+        ? globalThis.String(object.scheduledAt)
+        : isSet(object.scheduled_at)
+        ? globalThis.String(object.scheduled_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: CreateReassignmentJobRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.fromProviderAccountId !== "") {
+      obj.fromProviderAccountId = message.fromProviderAccountId;
+    }
+    if (message.toProviderAccountId !== "") {
+      obj.toProviderAccountId = message.toProviderAccountId;
+    }
+    if (message.selectionQuery !== "") {
+      obj.selectionQuery = message.selectionQuery;
+    }
+    if (message.dryRun !== false) {
+      obj.dryRun = message.dryRun;
+    }
+    if (message.scheduledAt !== undefined) {
+      obj.scheduledAt = message.scheduledAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateReassignmentJobRequest>, I>>(base?: I): CreateReassignmentJobRequest {
+    return CreateReassignmentJobRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateReassignmentJobRequest>, I>>(object: I): CreateReassignmentJobRequest {
+    const message = createBaseCreateReassignmentJobRequest();
+    message.societeId = object.societeId ?? "";
+    message.fromProviderAccountId = object.fromProviderAccountId ?? "";
+    message.toProviderAccountId = object.toProviderAccountId ?? "";
+    message.selectionQuery = object.selectionQuery ?? "";
+    message.dryRun = object.dryRun ?? false;
+    message.scheduledAt = object.scheduledAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseReassignmentJobResponse(): ReassignmentJobResponse {
+  return {
+    id: "",
+    societeId: "",
+    fromProviderAccountId: "",
+    toProviderAccountId: "",
+    selectionQuery: "",
+    status: "",
+    dryRun: false,
+    scheduledAt: undefined,
+    startedAt: undefined,
+    completedAt: undefined,
+    totalItems: 0,
+    successCount: 0,
+    failedCount: 0,
+    reportFileId: undefined,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const ReassignmentJobResponse: MessageFns<ReassignmentJobResponse> = {
+  encode(message: ReassignmentJobResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.fromProviderAccountId !== "") {
+      writer.uint32(26).string(message.fromProviderAccountId);
+    }
+    if (message.toProviderAccountId !== "") {
+      writer.uint32(34).string(message.toProviderAccountId);
+    }
+    if (message.selectionQuery !== "") {
+      writer.uint32(42).string(message.selectionQuery);
+    }
+    if (message.status !== "") {
+      writer.uint32(50).string(message.status);
+    }
+    if (message.dryRun !== false) {
+      writer.uint32(56).bool(message.dryRun);
+    }
+    if (message.scheduledAt !== undefined) {
+      writer.uint32(66).string(message.scheduledAt);
+    }
+    if (message.startedAt !== undefined) {
+      writer.uint32(74).string(message.startedAt);
+    }
+    if (message.completedAt !== undefined) {
+      writer.uint32(82).string(message.completedAt);
+    }
+    if (message.totalItems !== 0) {
+      writer.uint32(88).int32(message.totalItems);
+    }
+    if (message.successCount !== 0) {
+      writer.uint32(96).int32(message.successCount);
+    }
+    if (message.failedCount !== 0) {
+      writer.uint32(104).int32(message.failedCount);
+    }
+    if (message.reportFileId !== undefined) {
+      writer.uint32(114).string(message.reportFileId);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(122).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(130).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ReassignmentJobResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReassignmentJobResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.fromProviderAccountId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.toProviderAccountId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.selectionQuery = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.dryRun = reader.bool();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.scheduledAt = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.startedAt = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.completedAt = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.totalItems = reader.int32();
+          continue;
+        }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.successCount = reader.int32();
+          continue;
+        }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.failedCount = reader.int32();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.reportFileId = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ReassignmentJobResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      fromProviderAccountId: isSet(object.fromProviderAccountId)
+        ? globalThis.String(object.fromProviderAccountId)
+        : isSet(object.from_provider_account_id)
+        ? globalThis.String(object.from_provider_account_id)
+        : "",
+      toProviderAccountId: isSet(object.toProviderAccountId)
+        ? globalThis.String(object.toProviderAccountId)
+        : isSet(object.to_provider_account_id)
+        ? globalThis.String(object.to_provider_account_id)
+        : "",
+      selectionQuery: isSet(object.selectionQuery)
+        ? globalThis.String(object.selectionQuery)
+        : isSet(object.selection_query)
+        ? globalThis.String(object.selection_query)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      dryRun: isSet(object.dryRun)
+        ? globalThis.Boolean(object.dryRun)
+        : isSet(object.dry_run)
+        ? globalThis.Boolean(object.dry_run)
+        : false,
+      scheduledAt: isSet(object.scheduledAt)
+        ? globalThis.String(object.scheduledAt)
+        : isSet(object.scheduled_at)
+        ? globalThis.String(object.scheduled_at)
+        : undefined,
+      startedAt: isSet(object.startedAt)
+        ? globalThis.String(object.startedAt)
+        : isSet(object.started_at)
+        ? globalThis.String(object.started_at)
+        : undefined,
+      completedAt: isSet(object.completedAt)
+        ? globalThis.String(object.completedAt)
+        : isSet(object.completed_at)
+        ? globalThis.String(object.completed_at)
+        : undefined,
+      totalItems: isSet(object.totalItems)
+        ? globalThis.Number(object.totalItems)
+        : isSet(object.total_items)
+        ? globalThis.Number(object.total_items)
+        : 0,
+      successCount: isSet(object.successCount)
+        ? globalThis.Number(object.successCount)
+        : isSet(object.success_count)
+        ? globalThis.Number(object.success_count)
+        : 0,
+      failedCount: isSet(object.failedCount)
+        ? globalThis.Number(object.failedCount)
+        : isSet(object.failed_count)
+        ? globalThis.Number(object.failed_count)
+        : 0,
+      reportFileId: isSet(object.reportFileId)
+        ? globalThis.String(object.reportFileId)
+        : isSet(object.report_file_id)
+        ? globalThis.String(object.report_file_id)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: ReassignmentJobResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.fromProviderAccountId !== "") {
+      obj.fromProviderAccountId = message.fromProviderAccountId;
+    }
+    if (message.toProviderAccountId !== "") {
+      obj.toProviderAccountId = message.toProviderAccountId;
+    }
+    if (message.selectionQuery !== "") {
+      obj.selectionQuery = message.selectionQuery;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.dryRun !== false) {
+      obj.dryRun = message.dryRun;
+    }
+    if (message.scheduledAt !== undefined) {
+      obj.scheduledAt = message.scheduledAt;
+    }
+    if (message.startedAt !== undefined) {
+      obj.startedAt = message.startedAt;
+    }
+    if (message.completedAt !== undefined) {
+      obj.completedAt = message.completedAt;
+    }
+    if (message.totalItems !== 0) {
+      obj.totalItems = Math.round(message.totalItems);
+    }
+    if (message.successCount !== 0) {
+      obj.successCount = Math.round(message.successCount);
+    }
+    if (message.failedCount !== 0) {
+      obj.failedCount = Math.round(message.failedCount);
+    }
+    if (message.reportFileId !== undefined) {
+      obj.reportFileId = message.reportFileId;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ReassignmentJobResponse>, I>>(base?: I): ReassignmentJobResponse {
+    return ReassignmentJobResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ReassignmentJobResponse>, I>>(object: I): ReassignmentJobResponse {
+    const message = createBaseReassignmentJobResponse();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.fromProviderAccountId = object.fromProviderAccountId ?? "";
+    message.toProviderAccountId = object.toProviderAccountId ?? "";
+    message.selectionQuery = object.selectionQuery ?? "";
+    message.status = object.status ?? "";
+    message.dryRun = object.dryRun ?? false;
+    message.scheduledAt = object.scheduledAt ?? undefined;
+    message.startedAt = object.startedAt ?? undefined;
+    message.completedAt = object.completedAt ?? undefined;
+    message.totalItems = object.totalItems ?? 0;
+    message.successCount = object.successCount ?? 0;
+    message.failedCount = object.failedCount ?? 0;
+    message.reportFileId = object.reportFileId ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseGetReassignmentJobRequest(): GetReassignmentJobRequest {
+  return { id: "", societeId: "" };
+}
+
+export const GetReassignmentJobRequest: MessageFns<GetReassignmentJobRequest> = {
+  encode(message: GetReassignmentJobRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetReassignmentJobRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetReassignmentJobRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetReassignmentJobRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetReassignmentJobRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetReassignmentJobRequest>, I>>(base?: I): GetReassignmentJobRequest {
+    return GetReassignmentJobRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetReassignmentJobRequest>, I>>(object: I): GetReassignmentJobRequest {
+    const message = createBaseGetReassignmentJobRequest();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseListAlertsRequest(): ListAlertsRequest {
+  return {
+    societeId: "",
+    alertType: undefined,
+    severity: undefined,
+    acknowledged: undefined,
+    fromDate: undefined,
+    toDate: undefined,
+    page: undefined,
+    pageSize: undefined,
+  };
+}
+
+export const ListAlertsRequest: MessageFns<ListAlertsRequest> = {
+  encode(message: ListAlertsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.alertType !== undefined) {
+      writer.uint32(18).string(message.alertType);
+    }
+    if (message.severity !== undefined) {
+      writer.uint32(26).string(message.severity);
+    }
+    if (message.acknowledged !== undefined) {
+      writer.uint32(32).bool(message.acknowledged);
+    }
+    if (message.fromDate !== undefined) {
+      writer.uint32(42).string(message.fromDate);
+    }
+    if (message.toDate !== undefined) {
+      writer.uint32(50).string(message.toDate);
+    }
+    if (message.page !== undefined) {
+      writer.uint32(56).int32(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      writer.uint32(64).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListAlertsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListAlertsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.alertType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.severity = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.acknowledged = reader.bool();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.fromDate = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.toDate = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListAlertsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      alertType: isSet(object.alertType)
+        ? globalThis.String(object.alertType)
+        : isSet(object.alert_type)
+        ? globalThis.String(object.alert_type)
+        : undefined,
+      severity: isSet(object.severity) ? globalThis.String(object.severity) : undefined,
+      acknowledged: isSet(object.acknowledged) ? globalThis.Boolean(object.acknowledged) : undefined,
+      fromDate: isSet(object.fromDate)
+        ? globalThis.String(object.fromDate)
+        : isSet(object.from_date)
+        ? globalThis.String(object.from_date)
+        : undefined,
+      toDate: isSet(object.toDate)
+        ? globalThis.String(object.toDate)
+        : isSet(object.to_date)
+        ? globalThis.String(object.to_date)
+        : undefined,
+      page: isSet(object.page) ? globalThis.Number(object.page) : undefined,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListAlertsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.alertType !== undefined) {
+      obj.alertType = message.alertType;
+    }
+    if (message.severity !== undefined) {
+      obj.severity = message.severity;
+    }
+    if (message.acknowledged !== undefined) {
+      obj.acknowledged = message.acknowledged;
+    }
+    if (message.fromDate !== undefined) {
+      obj.fromDate = message.fromDate;
+    }
+    if (message.toDate !== undefined) {
+      obj.toDate = message.toDate;
+    }
+    if (message.page !== undefined) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListAlertsRequest>, I>>(base?: I): ListAlertsRequest {
+    return ListAlertsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListAlertsRequest>, I>>(object: I): ListAlertsRequest {
+    const message = createBaseListAlertsRequest();
+    message.societeId = object.societeId ?? "";
+    message.alertType = object.alertType ?? undefined;
+    message.severity = object.severity ?? undefined;
+    message.acknowledged = object.acknowledged ?? undefined;
+    message.fromDate = object.fromDate ?? undefined;
+    message.toDate = object.toDate ?? undefined;
+    message.page = object.page ?? undefined;
+    message.pageSize = object.pageSize ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListAlertsResponse(): ListAlertsResponse {
+  return { alerts: [], total: 0, page: 0, pageSize: 0 };
+}
+
+export const ListAlertsResponse: MessageFns<ListAlertsResponse> = {
+  encode(message: ListAlertsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.alerts) {
+      AlertResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.page !== 0) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.pageSize !== 0) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListAlertsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListAlertsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.alerts.push(AlertResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListAlertsResponse {
+    return {
+      alerts: globalThis.Array.isArray(object?.alerts) ? object.alerts.map((e: any) => AlertResponse.fromJSON(e)) : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : 0,
+    };
+  },
+
+  toJSON(message: ListAlertsResponse): unknown {
+    const obj: any = {};
+    if (message.alerts?.length) {
+      obj.alerts = message.alerts.map((e) => AlertResponse.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== 0) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListAlertsResponse>, I>>(base?: I): ListAlertsResponse {
+    return ListAlertsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListAlertsResponse>, I>>(object: I): ListAlertsResponse {
+    const message = createBaseListAlertsResponse();
+    message.alerts = object.alerts?.map((e) => AlertResponse.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.page = object.page ?? 0;
+    message.pageSize = object.pageSize ?? 0;
+    return message;
+  },
+};
+
+function createBaseAlertResponse(): AlertResponse {
+  return {
+    id: "",
+    societeId: "",
+    alertType: "",
+    severity: "",
+    title: "",
+    message: "",
+    context: "",
+    acknowledged: false,
+    acknowledgedBy: undefined,
+    acknowledgedAt: undefined,
+    createdAt: "",
+  };
+}
+
+export const AlertResponse: MessageFns<AlertResponse> = {
+  encode(message: AlertResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.alertType !== "") {
+      writer.uint32(26).string(message.alertType);
+    }
+    if (message.severity !== "") {
+      writer.uint32(34).string(message.severity);
+    }
+    if (message.title !== "") {
+      writer.uint32(42).string(message.title);
+    }
+    if (message.message !== "") {
+      writer.uint32(50).string(message.message);
+    }
+    if (message.context !== "") {
+      writer.uint32(58).string(message.context);
+    }
+    if (message.acknowledged !== false) {
+      writer.uint32(64).bool(message.acknowledged);
+    }
+    if (message.acknowledgedBy !== undefined) {
+      writer.uint32(74).string(message.acknowledgedBy);
+    }
+    if (message.acknowledgedAt !== undefined) {
+      writer.uint32(82).string(message.acknowledgedAt);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(90).string(message.createdAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AlertResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAlertResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.alertType = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.severity = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.context = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.acknowledged = reader.bool();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.acknowledgedBy = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.acknowledgedAt = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AlertResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      alertType: isSet(object.alertType)
+        ? globalThis.String(object.alertType)
+        : isSet(object.alert_type)
+        ? globalThis.String(object.alert_type)
+        : "",
+      severity: isSet(object.severity) ? globalThis.String(object.severity) : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      context: isSet(object.context) ? globalThis.String(object.context) : "",
+      acknowledged: isSet(object.acknowledged) ? globalThis.Boolean(object.acknowledged) : false,
+      acknowledgedBy: isSet(object.acknowledgedBy)
+        ? globalThis.String(object.acknowledgedBy)
+        : isSet(object.acknowledged_by)
+        ? globalThis.String(object.acknowledged_by)
+        : undefined,
+      acknowledgedAt: isSet(object.acknowledgedAt)
+        ? globalThis.String(object.acknowledgedAt)
+        : isSet(object.acknowledged_at)
+        ? globalThis.String(object.acknowledged_at)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+    };
+  },
+
+  toJSON(message: AlertResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.alertType !== "") {
+      obj.alertType = message.alertType;
+    }
+    if (message.severity !== "") {
+      obj.severity = message.severity;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.context !== "") {
+      obj.context = message.context;
+    }
+    if (message.acknowledged !== false) {
+      obj.acknowledged = message.acknowledged;
+    }
+    if (message.acknowledgedBy !== undefined) {
+      obj.acknowledgedBy = message.acknowledgedBy;
+    }
+    if (message.acknowledgedAt !== undefined) {
+      obj.acknowledgedAt = message.acknowledgedAt;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AlertResponse>, I>>(base?: I): AlertResponse {
+    return AlertResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AlertResponse>, I>>(object: I): AlertResponse {
+    const message = createBaseAlertResponse();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.alertType = object.alertType ?? "";
+    message.severity = object.severity ?? "";
+    message.title = object.title ?? "";
+    message.message = object.message ?? "";
+    message.context = object.context ?? "";
+    message.acknowledged = object.acknowledged ?? false;
+    message.acknowledgedBy = object.acknowledgedBy ?? undefined;
+    message.acknowledgedAt = object.acknowledgedAt ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    return message;
+  },
+};
+
+function createBaseAcknowledgeAlertRequest(): AcknowledgeAlertRequest {
+  return { id: "", societeId: "", acknowledgedBy: "" };
+}
+
+export const AcknowledgeAlertRequest: MessageFns<AcknowledgeAlertRequest> = {
+  encode(message: AcknowledgeAlertRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.acknowledgedBy !== "") {
+      writer.uint32(26).string(message.acknowledgedBy);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AcknowledgeAlertRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAcknowledgeAlertRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.acknowledgedBy = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AcknowledgeAlertRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      acknowledgedBy: isSet(object.acknowledgedBy)
+        ? globalThis.String(object.acknowledgedBy)
+        : isSet(object.acknowledged_by)
+        ? globalThis.String(object.acknowledged_by)
+        : "",
+    };
+  },
+
+  toJSON(message: AcknowledgeAlertRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.acknowledgedBy !== "") {
+      obj.acknowledgedBy = message.acknowledgedBy;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AcknowledgeAlertRequest>, I>>(base?: I): AcknowledgeAlertRequest {
+    return AcknowledgeAlertRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AcknowledgeAlertRequest>, I>>(object: I): AcknowledgeAlertRequest {
+    const message = createBaseAcknowledgeAlertRequest();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.acknowledgedBy = object.acknowledgedBy ?? "";
+    return message;
+  },
+};
+
+function createBaseGetAlertStatsRequest(): GetAlertStatsRequest {
+  return { societeId: "", fromDate: "", toDate: "" };
+}
+
+export const GetAlertStatsRequest: MessageFns<GetAlertStatsRequest> = {
+  encode(message: GetAlertStatsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.fromDate !== "") {
+      writer.uint32(18).string(message.fromDate);
+    }
+    if (message.toDate !== "") {
+      writer.uint32(26).string(message.toDate);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetAlertStatsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetAlertStatsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.fromDate = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.toDate = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetAlertStatsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      fromDate: isSet(object.fromDate)
+        ? globalThis.String(object.fromDate)
+        : isSet(object.from_date)
+        ? globalThis.String(object.from_date)
+        : "",
+      toDate: isSet(object.toDate)
+        ? globalThis.String(object.toDate)
+        : isSet(object.to_date)
+        ? globalThis.String(object.to_date)
+        : "",
+    };
+  },
+
+  toJSON(message: GetAlertStatsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.fromDate !== "") {
+      obj.fromDate = message.fromDate;
+    }
+    if (message.toDate !== "") {
+      obj.toDate = message.toDate;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetAlertStatsRequest>, I>>(base?: I): GetAlertStatsRequest {
+    return GetAlertStatsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetAlertStatsRequest>, I>>(object: I): GetAlertStatsRequest {
+    const message = createBaseGetAlertStatsRequest();
+    message.societeId = object.societeId ?? "";
+    message.fromDate = object.fromDate ?? "";
+    message.toDate = object.toDate ?? "";
+    return message;
+  },
+};
+
+function createBaseAlertStatsResponse(): AlertStatsResponse {
+  return { totalAlerts: 0, unacknowledged: 0, criticalCount: 0, warningCount: 0, infoCount: 0, byType: [] };
+}
+
+export const AlertStatsResponse: MessageFns<AlertStatsResponse> = {
+  encode(message: AlertStatsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.totalAlerts !== 0) {
+      writer.uint32(8).int32(message.totalAlerts);
+    }
+    if (message.unacknowledged !== 0) {
+      writer.uint32(16).int32(message.unacknowledged);
+    }
+    if (message.criticalCount !== 0) {
+      writer.uint32(24).int32(message.criticalCount);
+    }
+    if (message.warningCount !== 0) {
+      writer.uint32(32).int32(message.warningCount);
+    }
+    if (message.infoCount !== 0) {
+      writer.uint32(40).int32(message.infoCount);
+    }
+    for (const v of message.byType) {
+      AlertTypeCount.encode(v!, writer.uint32(50).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AlertStatsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAlertStatsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.totalAlerts = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.unacknowledged = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.criticalCount = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.warningCount = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.infoCount = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.byType.push(AlertTypeCount.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AlertStatsResponse {
+    return {
+      totalAlerts: isSet(object.totalAlerts)
+        ? globalThis.Number(object.totalAlerts)
+        : isSet(object.total_alerts)
+        ? globalThis.Number(object.total_alerts)
+        : 0,
+      unacknowledged: isSet(object.unacknowledged) ? globalThis.Number(object.unacknowledged) : 0,
+      criticalCount: isSet(object.criticalCount)
+        ? globalThis.Number(object.criticalCount)
+        : isSet(object.critical_count)
+        ? globalThis.Number(object.critical_count)
+        : 0,
+      warningCount: isSet(object.warningCount)
+        ? globalThis.Number(object.warningCount)
+        : isSet(object.warning_count)
+        ? globalThis.Number(object.warning_count)
+        : 0,
+      infoCount: isSet(object.infoCount)
+        ? globalThis.Number(object.infoCount)
+        : isSet(object.info_count)
+        ? globalThis.Number(object.info_count)
+        : 0,
+      byType: globalThis.Array.isArray(object?.byType)
+        ? object.byType.map((e: any) => AlertTypeCount.fromJSON(e))
+        : globalThis.Array.isArray(object?.by_type)
+        ? object.by_type.map((e: any) => AlertTypeCount.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: AlertStatsResponse): unknown {
+    const obj: any = {};
+    if (message.totalAlerts !== 0) {
+      obj.totalAlerts = Math.round(message.totalAlerts);
+    }
+    if (message.unacknowledged !== 0) {
+      obj.unacknowledged = Math.round(message.unacknowledged);
+    }
+    if (message.criticalCount !== 0) {
+      obj.criticalCount = Math.round(message.criticalCount);
+    }
+    if (message.warningCount !== 0) {
+      obj.warningCount = Math.round(message.warningCount);
+    }
+    if (message.infoCount !== 0) {
+      obj.infoCount = Math.round(message.infoCount);
+    }
+    if (message.byType?.length) {
+      obj.byType = message.byType.map((e) => AlertTypeCount.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AlertStatsResponse>, I>>(base?: I): AlertStatsResponse {
+    return AlertStatsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AlertStatsResponse>, I>>(object: I): AlertStatsResponse {
+    const message = createBaseAlertStatsResponse();
+    message.totalAlerts = object.totalAlerts ?? 0;
+    message.unacknowledged = object.unacknowledged ?? 0;
+    message.criticalCount = object.criticalCount ?? 0;
+    message.warningCount = object.warningCount ?? 0;
+    message.infoCount = object.infoCount ?? 0;
+    message.byType = object.byType?.map((e) => AlertTypeCount.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseAlertTypeCount(): AlertTypeCount {
+  return { alertType: "", count: 0 };
+}
+
+export const AlertTypeCount: MessageFns<AlertTypeCount> = {
+  encode(message: AlertTypeCount, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.alertType !== "") {
+      writer.uint32(10).string(message.alertType);
+    }
+    if (message.count !== 0) {
+      writer.uint32(16).int32(message.count);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AlertTypeCount {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAlertTypeCount();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.alertType = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.count = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AlertTypeCount {
+    return {
+      alertType: isSet(object.alertType)
+        ? globalThis.String(object.alertType)
+        : isSet(object.alert_type)
+        ? globalThis.String(object.alert_type)
+        : "",
+      count: isSet(object.count) ? globalThis.Number(object.count) : 0,
+    };
+  },
+
+  toJSON(message: AlertTypeCount): unknown {
+    const obj: any = {};
+    if (message.alertType !== "") {
+      obj.alertType = message.alertType;
+    }
+    if (message.count !== 0) {
+      obj.count = Math.round(message.count);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AlertTypeCount>, I>>(base?: I): AlertTypeCount {
+    return AlertTypeCount.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AlertTypeCount>, I>>(object: I): AlertTypeCount {
+    const message = createBaseAlertTypeCount();
+    message.alertType = object.alertType ?? "";
+    message.count = object.count ?? 0;
+    return message;
+  },
+};
+
+function createBaseCreateExportJobRequest(): CreateExportJobRequest {
+  return {
+    societeId: "",
+    exportType: "",
+    fromDate: "",
+    toDate: "",
+    format: undefined,
+    filters: undefined,
+    metadata: {},
+  };
+}
+
+export const CreateExportJobRequest: MessageFns<CreateExportJobRequest> = {
+  encode(message: CreateExportJobRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.exportType !== "") {
+      writer.uint32(18).string(message.exportType);
+    }
+    if (message.fromDate !== "") {
+      writer.uint32(26).string(message.fromDate);
+    }
+    if (message.toDate !== "") {
+      writer.uint32(34).string(message.toDate);
+    }
+    if (message.format !== undefined) {
+      writer.uint32(42).string(message.format);
+    }
+    if (message.filters !== undefined) {
+      writer.uint32(50).string(message.filters);
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      CreateExportJobRequest_MetadataEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateExportJobRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateExportJobRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.exportType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.fromDate = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.toDate = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.format = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.filters = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          const entry7 = CreateExportJobRequest_MetadataEntry.decode(reader, reader.uint32());
+          if (entry7.value !== undefined) {
+            message.metadata[entry7.key] = entry7.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateExportJobRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      exportType: isSet(object.exportType)
+        ? globalThis.String(object.exportType)
+        : isSet(object.export_type)
+        ? globalThis.String(object.export_type)
+        : "",
+      fromDate: isSet(object.fromDate)
+        ? globalThis.String(object.fromDate)
+        : isSet(object.from_date)
+        ? globalThis.String(object.from_date)
+        : "",
+      toDate: isSet(object.toDate)
+        ? globalThis.String(object.toDate)
+        : isSet(object.to_date)
+        ? globalThis.String(object.to_date)
+        : "",
+      format: isSet(object.format) ? globalThis.String(object.format) : undefined,
+      filters: isSet(object.filters) ? globalThis.String(object.filters) : undefined,
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: CreateExportJobRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.exportType !== "") {
+      obj.exportType = message.exportType;
+    }
+    if (message.fromDate !== "") {
+      obj.fromDate = message.fromDate;
+    }
+    if (message.toDate !== "") {
+      obj.toDate = message.toDate;
+    }
+    if (message.format !== undefined) {
+      obj.format = message.format;
+    }
+    if (message.filters !== undefined) {
+      obj.filters = message.filters;
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateExportJobRequest>, I>>(base?: I): CreateExportJobRequest {
+    return CreateExportJobRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateExportJobRequest>, I>>(object: I): CreateExportJobRequest {
+    const message = createBaseCreateExportJobRequest();
+    message.societeId = object.societeId ?? "";
+    message.exportType = object.exportType ?? "";
+    message.fromDate = object.fromDate ?? "";
+    message.toDate = object.toDate ?? "";
+    message.format = object.format ?? undefined;
+    message.filters = object.filters ?? undefined;
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseCreateExportJobRequest_MetadataEntry(): CreateExportJobRequest_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const CreateExportJobRequest_MetadataEntry: MessageFns<CreateExportJobRequest_MetadataEntry> = {
+  encode(message: CreateExportJobRequest_MetadataEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateExportJobRequest_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateExportJobRequest_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateExportJobRequest_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CreateExportJobRequest_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateExportJobRequest_MetadataEntry>, I>>(
+    base?: I,
+  ): CreateExportJobRequest_MetadataEntry {
+    return CreateExportJobRequest_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateExportJobRequest_MetadataEntry>, I>>(
+    object: I,
+  ): CreateExportJobRequest_MetadataEntry {
+    const message = createBaseCreateExportJobRequest_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseExportJobResponse(): ExportJobResponse {
+  return {
+    id: "",
+    societeId: "",
+    exportType: "",
+    status: "",
+    fromDate: "",
+    toDate: "",
+    format: undefined,
+    fileUrl: undefined,
+    fileName: undefined,
+    fileSizeBytes: undefined,
+    recordCount: 0,
+    errorMessage: undefined,
+    createdAt: "",
+    completedAt: undefined,
+  };
+}
+
+export const ExportJobResponse: MessageFns<ExportJobResponse> = {
+  encode(message: ExportJobResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.exportType !== "") {
+      writer.uint32(26).string(message.exportType);
+    }
+    if (message.status !== "") {
+      writer.uint32(34).string(message.status);
+    }
+    if (message.fromDate !== "") {
+      writer.uint32(42).string(message.fromDate);
+    }
+    if (message.toDate !== "") {
+      writer.uint32(50).string(message.toDate);
+    }
+    if (message.format !== undefined) {
+      writer.uint32(58).string(message.format);
+    }
+    if (message.fileUrl !== undefined) {
+      writer.uint32(66).string(message.fileUrl);
+    }
+    if (message.fileName !== undefined) {
+      writer.uint32(74).string(message.fileName);
+    }
+    if (message.fileSizeBytes !== undefined) {
+      writer.uint32(80).int64(message.fileSizeBytes);
+    }
+    if (message.recordCount !== 0) {
+      writer.uint32(88).int32(message.recordCount);
+    }
+    if (message.errorMessage !== undefined) {
+      writer.uint32(98).string(message.errorMessage);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(106).string(message.createdAt);
+    }
+    if (message.completedAt !== undefined) {
+      writer.uint32(114).string(message.completedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ExportJobResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExportJobResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.exportType = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.fromDate = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.toDate = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.format = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.fileUrl = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.fileName = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.fileSizeBytes = longToNumber(reader.int64());
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.recordCount = reader.int32();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.errorMessage = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.completedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExportJobResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      exportType: isSet(object.exportType)
+        ? globalThis.String(object.exportType)
+        : isSet(object.export_type)
+        ? globalThis.String(object.export_type)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      fromDate: isSet(object.fromDate)
+        ? globalThis.String(object.fromDate)
+        : isSet(object.from_date)
+        ? globalThis.String(object.from_date)
+        : "",
+      toDate: isSet(object.toDate)
+        ? globalThis.String(object.toDate)
+        : isSet(object.to_date)
+        ? globalThis.String(object.to_date)
+        : "",
+      format: isSet(object.format) ? globalThis.String(object.format) : undefined,
+      fileUrl: isSet(object.fileUrl)
+        ? globalThis.String(object.fileUrl)
+        : isSet(object.file_url)
+        ? globalThis.String(object.file_url)
+        : undefined,
+      fileName: isSet(object.fileName)
+        ? globalThis.String(object.fileName)
+        : isSet(object.file_name)
+        ? globalThis.String(object.file_name)
+        : undefined,
+      fileSizeBytes: isSet(object.fileSizeBytes)
+        ? globalThis.Number(object.fileSizeBytes)
+        : isSet(object.file_size_bytes)
+        ? globalThis.Number(object.file_size_bytes)
+        : undefined,
+      recordCount: isSet(object.recordCount)
+        ? globalThis.Number(object.recordCount)
+        : isSet(object.record_count)
+        ? globalThis.Number(object.record_count)
+        : 0,
+      errorMessage: isSet(object.errorMessage)
+        ? globalThis.String(object.errorMessage)
+        : isSet(object.error_message)
+        ? globalThis.String(object.error_message)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      completedAt: isSet(object.completedAt)
+        ? globalThis.String(object.completedAt)
+        : isSet(object.completed_at)
+        ? globalThis.String(object.completed_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ExportJobResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.exportType !== "") {
+      obj.exportType = message.exportType;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.fromDate !== "") {
+      obj.fromDate = message.fromDate;
+    }
+    if (message.toDate !== "") {
+      obj.toDate = message.toDate;
+    }
+    if (message.format !== undefined) {
+      obj.format = message.format;
+    }
+    if (message.fileUrl !== undefined) {
+      obj.fileUrl = message.fileUrl;
+    }
+    if (message.fileName !== undefined) {
+      obj.fileName = message.fileName;
+    }
+    if (message.fileSizeBytes !== undefined) {
+      obj.fileSizeBytes = Math.round(message.fileSizeBytes);
+    }
+    if (message.recordCount !== 0) {
+      obj.recordCount = Math.round(message.recordCount);
+    }
+    if (message.errorMessage !== undefined) {
+      obj.errorMessage = message.errorMessage;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.completedAt !== undefined) {
+      obj.completedAt = message.completedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ExportJobResponse>, I>>(base?: I): ExportJobResponse {
+    return ExportJobResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ExportJobResponse>, I>>(object: I): ExportJobResponse {
+    const message = createBaseExportJobResponse();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.exportType = object.exportType ?? "";
+    message.status = object.status ?? "";
+    message.fromDate = object.fromDate ?? "";
+    message.toDate = object.toDate ?? "";
+    message.format = object.format ?? undefined;
+    message.fileUrl = object.fileUrl ?? undefined;
+    message.fileName = object.fileName ?? undefined;
+    message.fileSizeBytes = object.fileSizeBytes ?? undefined;
+    message.recordCount = object.recordCount ?? 0;
+    message.errorMessage = object.errorMessage ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.completedAt = object.completedAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetExportJobRequest(): GetExportJobRequest {
+  return { id: "", societeId: "" };
+}
+
+export const GetExportJobRequest: MessageFns<GetExportJobRequest> = {
+  encode(message: GetExportJobRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetExportJobRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetExportJobRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetExportJobRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetExportJobRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetExportJobRequest>, I>>(base?: I): GetExportJobRequest {
+    return GetExportJobRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetExportJobRequest>, I>>(object: I): GetExportJobRequest {
+    const message = createBaseGetExportJobRequest();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseListExportJobsRequest(): ListExportJobsRequest {
+  return { societeId: "", exportType: undefined, status: undefined, page: undefined, pageSize: undefined };
+}
+
+export const ListExportJobsRequest: MessageFns<ListExportJobsRequest> = {
+  encode(message: ListExportJobsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.exportType !== undefined) {
+      writer.uint32(18).string(message.exportType);
+    }
+    if (message.status !== undefined) {
+      writer.uint32(26).string(message.status);
+    }
+    if (message.page !== undefined) {
+      writer.uint32(32).int32(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      writer.uint32(40).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListExportJobsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListExportJobsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.exportType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListExportJobsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      exportType: isSet(object.exportType)
+        ? globalThis.String(object.exportType)
+        : isSet(object.export_type)
+        ? globalThis.String(object.export_type)
+        : undefined,
+      status: isSet(object.status) ? globalThis.String(object.status) : undefined,
+      page: isSet(object.page) ? globalThis.Number(object.page) : undefined,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListExportJobsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.exportType !== undefined) {
+      obj.exportType = message.exportType;
+    }
+    if (message.status !== undefined) {
+      obj.status = message.status;
+    }
+    if (message.page !== undefined) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListExportJobsRequest>, I>>(base?: I): ListExportJobsRequest {
+    return ListExportJobsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListExportJobsRequest>, I>>(object: I): ListExportJobsRequest {
+    const message = createBaseListExportJobsRequest();
+    message.societeId = object.societeId ?? "";
+    message.exportType = object.exportType ?? undefined;
+    message.status = object.status ?? undefined;
+    message.page = object.page ?? undefined;
+    message.pageSize = object.pageSize ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListExportJobsResponse(): ListExportJobsResponse {
+  return { jobs: [], total: 0, page: 0, pageSize: 0 };
+}
+
+export const ListExportJobsResponse: MessageFns<ListExportJobsResponse> = {
+  encode(message: ListExportJobsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.jobs) {
+      ExportJobResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.page !== 0) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.pageSize !== 0) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListExportJobsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListExportJobsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.jobs.push(ExportJobResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListExportJobsResponse {
+    return {
+      jobs: globalThis.Array.isArray(object?.jobs) ? object.jobs.map((e: any) => ExportJobResponse.fromJSON(e)) : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : 0,
+    };
+  },
+
+  toJSON(message: ListExportJobsResponse): unknown {
+    const obj: any = {};
+    if (message.jobs?.length) {
+      obj.jobs = message.jobs.map((e) => ExportJobResponse.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== 0) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListExportJobsResponse>, I>>(base?: I): ListExportJobsResponse {
+    return ListExportJobsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListExportJobsResponse>, I>>(object: I): ListExportJobsResponse {
+    const message = createBaseListExportJobsResponse();
+    message.jobs = object.jobs?.map((e) => ExportJobResponse.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.page = object.page ?? 0;
+    message.pageSize = object.pageSize ?? 0;
+    return message;
+  },
+};
+
+function createBaseDownloadExportRequest(): DownloadExportRequest {
+  return { id: "", societeId: "" };
+}
+
+export const DownloadExportRequest: MessageFns<DownloadExportRequest> = {
+  encode(message: DownloadExportRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DownloadExportRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDownloadExportRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DownloadExportRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: DownloadExportRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DownloadExportRequest>, I>>(base?: I): DownloadExportRequest {
+    return DownloadExportRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DownloadExportRequest>, I>>(object: I): DownloadExportRequest {
+    const message = createBaseDownloadExportRequest();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseDownloadExportResponse(): DownloadExportResponse {
+  return { fileContent: new Uint8Array(0), fileName: "", contentType: "", fileSizeBytes: 0 };
+}
+
+export const DownloadExportResponse: MessageFns<DownloadExportResponse> = {
+  encode(message: DownloadExportResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.fileContent.length !== 0) {
+      writer.uint32(10).bytes(message.fileContent);
+    }
+    if (message.fileName !== "") {
+      writer.uint32(18).string(message.fileName);
+    }
+    if (message.contentType !== "") {
+      writer.uint32(26).string(message.contentType);
+    }
+    if (message.fileSizeBytes !== 0) {
+      writer.uint32(32).int64(message.fileSizeBytes);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DownloadExportResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDownloadExportResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fileContent = reader.bytes();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.fileName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.contentType = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.fileSizeBytes = longToNumber(reader.int64());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DownloadExportResponse {
+    return {
+      fileContent: isSet(object.fileContent)
+        ? bytesFromBase64(object.fileContent)
+        : isSet(object.file_content)
+        ? bytesFromBase64(object.file_content)
+        : new Uint8Array(0),
+      fileName: isSet(object.fileName)
+        ? globalThis.String(object.fileName)
+        : isSet(object.file_name)
+        ? globalThis.String(object.file_name)
+        : "",
+      contentType: isSet(object.contentType)
+        ? globalThis.String(object.contentType)
+        : isSet(object.content_type)
+        ? globalThis.String(object.content_type)
+        : "",
+      fileSizeBytes: isSet(object.fileSizeBytes)
+        ? globalThis.Number(object.fileSizeBytes)
+        : isSet(object.file_size_bytes)
+        ? globalThis.Number(object.file_size_bytes)
+        : 0,
+    };
+  },
+
+  toJSON(message: DownloadExportResponse): unknown {
+    const obj: any = {};
+    if (message.fileContent.length !== 0) {
+      obj.fileContent = base64FromBytes(message.fileContent);
+    }
+    if (message.fileName !== "") {
+      obj.fileName = message.fileName;
+    }
+    if (message.contentType !== "") {
+      obj.contentType = message.contentType;
+    }
+    if (message.fileSizeBytes !== 0) {
+      obj.fileSizeBytes = Math.round(message.fileSizeBytes);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DownloadExportResponse>, I>>(base?: I): DownloadExportResponse {
+    return DownloadExportResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DownloadExportResponse>, I>>(object: I): DownloadExportResponse {
+    const message = createBaseDownloadExportResponse();
+    message.fileContent = object.fileContent ?? new Uint8Array(0);
+    message.fileName = object.fileName ?? "";
+    message.contentType = object.contentType ?? "";
+    message.fileSizeBytes = object.fileSizeBytes ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetRiskScoreRequest(): GetRiskScoreRequest {
+  return { id: "", societeId: "" };
+}
+
+export const GetRiskScoreRequest: MessageFns<GetRiskScoreRequest> = {
+  encode(message: GetRiskScoreRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetRiskScoreRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetRiskScoreRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetRiskScoreRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetRiskScoreRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetRiskScoreRequest>, I>>(base?: I): GetRiskScoreRequest {
+    return GetRiskScoreRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetRiskScoreRequest>, I>>(object: I): GetRiskScoreRequest {
+    const message = createBaseGetRiskScoreRequest();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseRiskScoreResponse(): RiskScoreResponse {
+  return {
+    id: "",
+    societeId: "",
+    entityType: "",
+    entityId: "",
+    score: 0,
+    riskLevel: "",
+    factors: [],
+    evaluatedAt: "",
+    expiresAt: undefined,
+  };
+}
+
+export const RiskScoreResponse: MessageFns<RiskScoreResponse> = {
+  encode(message: RiskScoreResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.entityType !== "") {
+      writer.uint32(26).string(message.entityType);
+    }
+    if (message.entityId !== "") {
+      writer.uint32(34).string(message.entityId);
+    }
+    if (message.score !== 0) {
+      writer.uint32(40).int32(message.score);
+    }
+    if (message.riskLevel !== "") {
+      writer.uint32(50).string(message.riskLevel);
+    }
+    for (const v of message.factors) {
+      RiskFactor.encode(v!, writer.uint32(58).fork()).join();
+    }
+    if (message.evaluatedAt !== "") {
+      writer.uint32(66).string(message.evaluatedAt);
+    }
+    if (message.expiresAt !== undefined) {
+      writer.uint32(74).string(message.expiresAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RiskScoreResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRiskScoreResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.entityType = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.entityId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.score = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.riskLevel = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.factors.push(RiskFactor.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.evaluatedAt = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.expiresAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RiskScoreResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      entityType: isSet(object.entityType)
+        ? globalThis.String(object.entityType)
+        : isSet(object.entity_type)
+        ? globalThis.String(object.entity_type)
+        : "",
+      entityId: isSet(object.entityId)
+        ? globalThis.String(object.entityId)
+        : isSet(object.entity_id)
+        ? globalThis.String(object.entity_id)
+        : "",
+      score: isSet(object.score) ? globalThis.Number(object.score) : 0,
+      riskLevel: isSet(object.riskLevel)
+        ? globalThis.String(object.riskLevel)
+        : isSet(object.risk_level)
+        ? globalThis.String(object.risk_level)
+        : "",
+      factors: globalThis.Array.isArray(object?.factors)
+        ? object.factors.map((e: any) => RiskFactor.fromJSON(e))
+        : [],
+      evaluatedAt: isSet(object.evaluatedAt)
+        ? globalThis.String(object.evaluatedAt)
+        : isSet(object.evaluated_at)
+        ? globalThis.String(object.evaluated_at)
+        : "",
+      expiresAt: isSet(object.expiresAt)
+        ? globalThis.String(object.expiresAt)
+        : isSet(object.expires_at)
+        ? globalThis.String(object.expires_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: RiskScoreResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.entityType !== "") {
+      obj.entityType = message.entityType;
+    }
+    if (message.entityId !== "") {
+      obj.entityId = message.entityId;
+    }
+    if (message.score !== 0) {
+      obj.score = Math.round(message.score);
+    }
+    if (message.riskLevel !== "") {
+      obj.riskLevel = message.riskLevel;
+    }
+    if (message.factors?.length) {
+      obj.factors = message.factors.map((e) => RiskFactor.toJSON(e));
+    }
+    if (message.evaluatedAt !== "") {
+      obj.evaluatedAt = message.evaluatedAt;
+    }
+    if (message.expiresAt !== undefined) {
+      obj.expiresAt = message.expiresAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RiskScoreResponse>, I>>(base?: I): RiskScoreResponse {
+    return RiskScoreResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RiskScoreResponse>, I>>(object: I): RiskScoreResponse {
+    const message = createBaseRiskScoreResponse();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.entityType = object.entityType ?? "";
+    message.entityId = object.entityId ?? "";
+    message.score = object.score ?? 0;
+    message.riskLevel = object.riskLevel ?? "";
+    message.factors = object.factors?.map((e) => RiskFactor.fromPartial(e)) || [];
+    message.evaluatedAt = object.evaluatedAt ?? "";
+    message.expiresAt = object.expiresAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseRiskFactor(): RiskFactor {
+  return { name: "", weight: 0, score: 0, description: "" };
+}
+
+export const RiskFactor: MessageFns<RiskFactor> = {
+  encode(message: RiskFactor, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.weight !== 0) {
+      writer.uint32(16).int32(message.weight);
+    }
+    if (message.score !== 0) {
+      writer.uint32(24).int32(message.score);
+    }
+    if (message.description !== "") {
+      writer.uint32(34).string(message.description);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RiskFactor {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRiskFactor();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.weight = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.score = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RiskFactor {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      weight: isSet(object.weight) ? globalThis.Number(object.weight) : 0,
+      score: isSet(object.score) ? globalThis.Number(object.score) : 0,
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+    };
+  },
+
+  toJSON(message: RiskFactor): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.weight !== 0) {
+      obj.weight = Math.round(message.weight);
+    }
+    if (message.score !== 0) {
+      obj.score = Math.round(message.score);
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RiskFactor>, I>>(base?: I): RiskFactor {
+    return RiskFactor.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RiskFactor>, I>>(object: I): RiskFactor {
+    const message = createBaseRiskFactor();
+    message.name = object.name ?? "";
+    message.weight = object.weight ?? 0;
+    message.score = object.score ?? 0;
+    message.description = object.description ?? "";
+    return message;
+  },
+};
+
+function createBaseEvaluateRiskScoreRequest(): EvaluateRiskScoreRequest {
+  return { societeId: "", entityType: "", entityId: "", forceRefresh: false };
+}
+
+export const EvaluateRiskScoreRequest: MessageFns<EvaluateRiskScoreRequest> = {
+  encode(message: EvaluateRiskScoreRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.entityType !== "") {
+      writer.uint32(18).string(message.entityType);
+    }
+    if (message.entityId !== "") {
+      writer.uint32(26).string(message.entityId);
+    }
+    if (message.forceRefresh !== false) {
+      writer.uint32(32).bool(message.forceRefresh);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): EvaluateRiskScoreRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseEvaluateRiskScoreRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.entityType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.entityId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.forceRefresh = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EvaluateRiskScoreRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      entityType: isSet(object.entityType)
+        ? globalThis.String(object.entityType)
+        : isSet(object.entity_type)
+        ? globalThis.String(object.entity_type)
+        : "",
+      entityId: isSet(object.entityId)
+        ? globalThis.String(object.entityId)
+        : isSet(object.entity_id)
+        ? globalThis.String(object.entity_id)
+        : "",
+      forceRefresh: isSet(object.forceRefresh)
+        ? globalThis.Boolean(object.forceRefresh)
+        : isSet(object.force_refresh)
+        ? globalThis.Boolean(object.force_refresh)
+        : false,
+    };
+  },
+
+  toJSON(message: EvaluateRiskScoreRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.entityType !== "") {
+      obj.entityType = message.entityType;
+    }
+    if (message.entityId !== "") {
+      obj.entityId = message.entityId;
+    }
+    if (message.forceRefresh !== false) {
+      obj.forceRefresh = message.forceRefresh;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<EvaluateRiskScoreRequest>, I>>(base?: I): EvaluateRiskScoreRequest {
+    return EvaluateRiskScoreRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<EvaluateRiskScoreRequest>, I>>(object: I): EvaluateRiskScoreRequest {
+    const message = createBaseEvaluateRiskScoreRequest();
+    message.societeId = object.societeId ?? "";
+    message.entityType = object.entityType ?? "";
+    message.entityId = object.entityId ?? "";
+    message.forceRefresh = object.forceRefresh ?? false;
+    return message;
+  },
+};
+
+function createBaseListRiskScoresRequest(): ListRiskScoresRequest {
+  return {
+    societeId: "",
+    entityType: undefined,
+    riskLevel: undefined,
+    minScore: undefined,
+    maxScore: undefined,
+    page: undefined,
+    pageSize: undefined,
+  };
+}
+
+export const ListRiskScoresRequest: MessageFns<ListRiskScoresRequest> = {
+  encode(message: ListRiskScoresRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.entityType !== undefined) {
+      writer.uint32(18).string(message.entityType);
+    }
+    if (message.riskLevel !== undefined) {
+      writer.uint32(26).string(message.riskLevel);
+    }
+    if (message.minScore !== undefined) {
+      writer.uint32(32).int32(message.minScore);
+    }
+    if (message.maxScore !== undefined) {
+      writer.uint32(40).int32(message.maxScore);
+    }
+    if (message.page !== undefined) {
+      writer.uint32(48).int32(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      writer.uint32(56).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListRiskScoresRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListRiskScoresRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.entityType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.riskLevel = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.minScore = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.maxScore = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListRiskScoresRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      entityType: isSet(object.entityType)
+        ? globalThis.String(object.entityType)
+        : isSet(object.entity_type)
+        ? globalThis.String(object.entity_type)
+        : undefined,
+      riskLevel: isSet(object.riskLevel)
+        ? globalThis.String(object.riskLevel)
+        : isSet(object.risk_level)
+        ? globalThis.String(object.risk_level)
+        : undefined,
+      minScore: isSet(object.minScore)
+        ? globalThis.Number(object.minScore)
+        : isSet(object.min_score)
+        ? globalThis.Number(object.min_score)
+        : undefined,
+      maxScore: isSet(object.maxScore)
+        ? globalThis.Number(object.maxScore)
+        : isSet(object.max_score)
+        ? globalThis.Number(object.max_score)
+        : undefined,
+      page: isSet(object.page) ? globalThis.Number(object.page) : undefined,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListRiskScoresRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.entityType !== undefined) {
+      obj.entityType = message.entityType;
+    }
+    if (message.riskLevel !== undefined) {
+      obj.riskLevel = message.riskLevel;
+    }
+    if (message.minScore !== undefined) {
+      obj.minScore = Math.round(message.minScore);
+    }
+    if (message.maxScore !== undefined) {
+      obj.maxScore = Math.round(message.maxScore);
+    }
+    if (message.page !== undefined) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListRiskScoresRequest>, I>>(base?: I): ListRiskScoresRequest {
+    return ListRiskScoresRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListRiskScoresRequest>, I>>(object: I): ListRiskScoresRequest {
+    const message = createBaseListRiskScoresRequest();
+    message.societeId = object.societeId ?? "";
+    message.entityType = object.entityType ?? undefined;
+    message.riskLevel = object.riskLevel ?? undefined;
+    message.minScore = object.minScore ?? undefined;
+    message.maxScore = object.maxScore ?? undefined;
+    message.page = object.page ?? undefined;
+    message.pageSize = object.pageSize ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListRiskScoresResponse(): ListRiskScoresResponse {
+  return { scores: [], total: 0, page: 0, pageSize: 0 };
+}
+
+export const ListRiskScoresResponse: MessageFns<ListRiskScoresResponse> = {
+  encode(message: ListRiskScoresResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.scores) {
+      RiskScoreResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.page !== 0) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.pageSize !== 0) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListRiskScoresResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListRiskScoresResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.scores.push(RiskScoreResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListRiskScoresResponse {
+    return {
+      scores: globalThis.Array.isArray(object?.scores)
+        ? object.scores.map((e: any) => RiskScoreResponse.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : 0,
+    };
+  },
+
+  toJSON(message: ListRiskScoresResponse): unknown {
+    const obj: any = {};
+    if (message.scores?.length) {
+      obj.scores = message.scores.map((e) => RiskScoreResponse.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== 0) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListRiskScoresResponse>, I>>(base?: I): ListRiskScoresResponse {
+    return ListRiskScoresResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListRiskScoresResponse>, I>>(object: I): ListRiskScoresResponse {
+    const message = createBaseListRiskScoresResponse();
+    message.scores = object.scores?.map((e) => RiskScoreResponse.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.page = object.page ?? 0;
+    message.pageSize = object.pageSize ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetScoringStatsRequest(): GetScoringStatsRequest {
+  return { societeId: "", fromDate: "", toDate: "" };
+}
+
+export const GetScoringStatsRequest: MessageFns<GetScoringStatsRequest> = {
+  encode(message: GetScoringStatsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.fromDate !== "") {
+      writer.uint32(18).string(message.fromDate);
+    }
+    if (message.toDate !== "") {
+      writer.uint32(26).string(message.toDate);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetScoringStatsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetScoringStatsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.fromDate = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.toDate = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetScoringStatsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      fromDate: isSet(object.fromDate)
+        ? globalThis.String(object.fromDate)
+        : isSet(object.from_date)
+        ? globalThis.String(object.from_date)
+        : "",
+      toDate: isSet(object.toDate)
+        ? globalThis.String(object.toDate)
+        : isSet(object.to_date)
+        ? globalThis.String(object.to_date)
+        : "",
+    };
+  },
+
+  toJSON(message: GetScoringStatsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.fromDate !== "") {
+      obj.fromDate = message.fromDate;
+    }
+    if (message.toDate !== "") {
+      obj.toDate = message.toDate;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetScoringStatsRequest>, I>>(base?: I): GetScoringStatsRequest {
+    return GetScoringStatsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetScoringStatsRequest>, I>>(object: I): GetScoringStatsRequest {
+    const message = createBaseGetScoringStatsRequest();
+    message.societeId = object.societeId ?? "";
+    message.fromDate = object.fromDate ?? "";
+    message.toDate = object.toDate ?? "";
+    return message;
+  },
+};
+
+function createBaseScoringStatsResponse(): ScoringStatsResponse {
+  return {
+    totalEvaluated: 0,
+    lowRiskCount: 0,
+    mediumRiskCount: 0,
+    highRiskCount: 0,
+    criticalRiskCount: 0,
+    averageScore: 0,
+  };
+}
+
+export const ScoringStatsResponse: MessageFns<ScoringStatsResponse> = {
+  encode(message: ScoringStatsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.totalEvaluated !== 0) {
+      writer.uint32(8).int32(message.totalEvaluated);
+    }
+    if (message.lowRiskCount !== 0) {
+      writer.uint32(16).int32(message.lowRiskCount);
+    }
+    if (message.mediumRiskCount !== 0) {
+      writer.uint32(24).int32(message.mediumRiskCount);
+    }
+    if (message.highRiskCount !== 0) {
+      writer.uint32(32).int32(message.highRiskCount);
+    }
+    if (message.criticalRiskCount !== 0) {
+      writer.uint32(40).int32(message.criticalRiskCount);
+    }
+    if (message.averageScore !== 0) {
+      writer.uint32(49).double(message.averageScore);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ScoringStatsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseScoringStatsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.totalEvaluated = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.lowRiskCount = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.mediumRiskCount = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.highRiskCount = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.criticalRiskCount = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 49) {
+            break;
+          }
+
+          message.averageScore = reader.double();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ScoringStatsResponse {
+    return {
+      totalEvaluated: isSet(object.totalEvaluated)
+        ? globalThis.Number(object.totalEvaluated)
+        : isSet(object.total_evaluated)
+        ? globalThis.Number(object.total_evaluated)
+        : 0,
+      lowRiskCount: isSet(object.lowRiskCount)
+        ? globalThis.Number(object.lowRiskCount)
+        : isSet(object.low_risk_count)
+        ? globalThis.Number(object.low_risk_count)
+        : 0,
+      mediumRiskCount: isSet(object.mediumRiskCount)
+        ? globalThis.Number(object.mediumRiskCount)
+        : isSet(object.medium_risk_count)
+        ? globalThis.Number(object.medium_risk_count)
+        : 0,
+      highRiskCount: isSet(object.highRiskCount)
+        ? globalThis.Number(object.highRiskCount)
+        : isSet(object.high_risk_count)
+        ? globalThis.Number(object.high_risk_count)
+        : 0,
+      criticalRiskCount: isSet(object.criticalRiskCount)
+        ? globalThis.Number(object.criticalRiskCount)
+        : isSet(object.critical_risk_count)
+        ? globalThis.Number(object.critical_risk_count)
+        : 0,
+      averageScore: isSet(object.averageScore)
+        ? globalThis.Number(object.averageScore)
+        : isSet(object.average_score)
+        ? globalThis.Number(object.average_score)
+        : 0,
+    };
+  },
+
+  toJSON(message: ScoringStatsResponse): unknown {
+    const obj: any = {};
+    if (message.totalEvaluated !== 0) {
+      obj.totalEvaluated = Math.round(message.totalEvaluated);
+    }
+    if (message.lowRiskCount !== 0) {
+      obj.lowRiskCount = Math.round(message.lowRiskCount);
+    }
+    if (message.mediumRiskCount !== 0) {
+      obj.mediumRiskCount = Math.round(message.mediumRiskCount);
+    }
+    if (message.highRiskCount !== 0) {
+      obj.highRiskCount = Math.round(message.highRiskCount);
+    }
+    if (message.criticalRiskCount !== 0) {
+      obj.criticalRiskCount = Math.round(message.criticalRiskCount);
+    }
+    if (message.averageScore !== 0) {
+      obj.averageScore = message.averageScore;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ScoringStatsResponse>, I>>(base?: I): ScoringStatsResponse {
+    return ScoringStatsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ScoringStatsResponse>, I>>(object: I): ScoringStatsResponse {
+    const message = createBaseScoringStatsResponse();
+    message.totalEvaluated = object.totalEvaluated ?? 0;
+    message.lowRiskCount = object.lowRiskCount ?? 0;
+    message.mediumRiskCount = object.mediumRiskCount ?? 0;
+    message.highRiskCount = object.highRiskCount ?? 0;
+    message.criticalRiskCount = object.criticalRiskCount ?? 0;
+    message.averageScore = object.averageScore ?? 0;
+    return message;
+  },
+};
+
+function createBaseImportBankStatementRequest(): ImportBankStatementRequest {
+  return {
+    societeId: "",
+    bankAccountId: "",
+    format: "",
+    fileContent: new Uint8Array(0),
+    fileName: "",
+    statementDate: undefined,
+  };
+}
+
+export const ImportBankStatementRequest: MessageFns<ImportBankStatementRequest> = {
+  encode(message: ImportBankStatementRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.bankAccountId !== "") {
+      writer.uint32(18).string(message.bankAccountId);
+    }
+    if (message.format !== "") {
+      writer.uint32(26).string(message.format);
+    }
+    if (message.fileContent.length !== 0) {
+      writer.uint32(34).bytes(message.fileContent);
+    }
+    if (message.fileName !== "") {
+      writer.uint32(42).string(message.fileName);
+    }
+    if (message.statementDate !== undefined) {
+      writer.uint32(50).string(message.statementDate);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ImportBankStatementRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImportBankStatementRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.bankAccountId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.format = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.fileContent = reader.bytes();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.fileName = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.statementDate = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ImportBankStatementRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      bankAccountId: isSet(object.bankAccountId)
+        ? globalThis.String(object.bankAccountId)
+        : isSet(object.bank_account_id)
+        ? globalThis.String(object.bank_account_id)
+        : "",
+      format: isSet(object.format) ? globalThis.String(object.format) : "",
+      fileContent: isSet(object.fileContent)
+        ? bytesFromBase64(object.fileContent)
+        : isSet(object.file_content)
+        ? bytesFromBase64(object.file_content)
+        : new Uint8Array(0),
+      fileName: isSet(object.fileName)
+        ? globalThis.String(object.fileName)
+        : isSet(object.file_name)
+        ? globalThis.String(object.file_name)
+        : "",
+      statementDate: isSet(object.statementDate)
+        ? globalThis.String(object.statementDate)
+        : isSet(object.statement_date)
+        ? globalThis.String(object.statement_date)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ImportBankStatementRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.bankAccountId !== "") {
+      obj.bankAccountId = message.bankAccountId;
+    }
+    if (message.format !== "") {
+      obj.format = message.format;
+    }
+    if (message.fileContent.length !== 0) {
+      obj.fileContent = base64FromBytes(message.fileContent);
+    }
+    if (message.fileName !== "") {
+      obj.fileName = message.fileName;
+    }
+    if (message.statementDate !== undefined) {
+      obj.statementDate = message.statementDate;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ImportBankStatementRequest>, I>>(base?: I): ImportBankStatementRequest {
+    return ImportBankStatementRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ImportBankStatementRequest>, I>>(object: I): ImportBankStatementRequest {
+    const message = createBaseImportBankStatementRequest();
+    message.societeId = object.societeId ?? "";
+    message.bankAccountId = object.bankAccountId ?? "";
+    message.format = object.format ?? "";
+    message.fileContent = object.fileContent ?? new Uint8Array(0);
+    message.fileName = object.fileName ?? "";
+    message.statementDate = object.statementDate ?? undefined;
+    return message;
+  },
+};
+
+function createBaseImportBankStatementResponse(): ImportBankStatementResponse {
+  return {
+    id: "",
+    societeId: "",
+    status: "",
+    totalTransactions: 0,
+    matchedCount: 0,
+    unmatchedCount: 0,
+    totalCreditCents: 0,
+    totalDebitCents: 0,
+    importedAt: "",
+  };
+}
+
+export const ImportBankStatementResponse: MessageFns<ImportBankStatementResponse> = {
+  encode(message: ImportBankStatementResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.status !== "") {
+      writer.uint32(26).string(message.status);
+    }
+    if (message.totalTransactions !== 0) {
+      writer.uint32(32).int32(message.totalTransactions);
+    }
+    if (message.matchedCount !== 0) {
+      writer.uint32(40).int32(message.matchedCount);
+    }
+    if (message.unmatchedCount !== 0) {
+      writer.uint32(48).int32(message.unmatchedCount);
+    }
+    if (message.totalCreditCents !== 0) {
+      writer.uint32(56).int64(message.totalCreditCents);
+    }
+    if (message.totalDebitCents !== 0) {
+      writer.uint32(64).int64(message.totalDebitCents);
+    }
+    if (message.importedAt !== "") {
+      writer.uint32(74).string(message.importedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ImportBankStatementResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImportBankStatementResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.totalTransactions = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.matchedCount = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.unmatchedCount = reader.int32();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.totalCreditCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.totalDebitCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.importedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ImportBankStatementResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      totalTransactions: isSet(object.totalTransactions)
+        ? globalThis.Number(object.totalTransactions)
+        : isSet(object.total_transactions)
+        ? globalThis.Number(object.total_transactions)
+        : 0,
+      matchedCount: isSet(object.matchedCount)
+        ? globalThis.Number(object.matchedCount)
+        : isSet(object.matched_count)
+        ? globalThis.Number(object.matched_count)
+        : 0,
+      unmatchedCount: isSet(object.unmatchedCount)
+        ? globalThis.Number(object.unmatchedCount)
+        : isSet(object.unmatched_count)
+        ? globalThis.Number(object.unmatched_count)
+        : 0,
+      totalCreditCents: isSet(object.totalCreditCents)
+        ? globalThis.Number(object.totalCreditCents)
+        : isSet(object.total_credit_cents)
+        ? globalThis.Number(object.total_credit_cents)
+        : 0,
+      totalDebitCents: isSet(object.totalDebitCents)
+        ? globalThis.Number(object.totalDebitCents)
+        : isSet(object.total_debit_cents)
+        ? globalThis.Number(object.total_debit_cents)
+        : 0,
+      importedAt: isSet(object.importedAt)
+        ? globalThis.String(object.importedAt)
+        : isSet(object.imported_at)
+        ? globalThis.String(object.imported_at)
+        : "",
+    };
+  },
+
+  toJSON(message: ImportBankStatementResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.totalTransactions !== 0) {
+      obj.totalTransactions = Math.round(message.totalTransactions);
+    }
+    if (message.matchedCount !== 0) {
+      obj.matchedCount = Math.round(message.matchedCount);
+    }
+    if (message.unmatchedCount !== 0) {
+      obj.unmatchedCount = Math.round(message.unmatchedCount);
+    }
+    if (message.totalCreditCents !== 0) {
+      obj.totalCreditCents = Math.round(message.totalCreditCents);
+    }
+    if (message.totalDebitCents !== 0) {
+      obj.totalDebitCents = Math.round(message.totalDebitCents);
+    }
+    if (message.importedAt !== "") {
+      obj.importedAt = message.importedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ImportBankStatementResponse>, I>>(base?: I): ImportBankStatementResponse {
+    return ImportBankStatementResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ImportBankStatementResponse>, I>>(object: I): ImportBankStatementResponse {
+    const message = createBaseImportBankStatementResponse();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.status = object.status ?? "";
+    message.totalTransactions = object.totalTransactions ?? 0;
+    message.matchedCount = object.matchedCount ?? 0;
+    message.unmatchedCount = object.unmatchedCount ?? 0;
+    message.totalCreditCents = object.totalCreditCents ?? 0;
+    message.totalDebitCents = object.totalDebitCents ?? 0;
+    message.importedAt = object.importedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseGetReconciliationStatusRequest(): GetReconciliationStatusRequest {
+  return { societeId: "", bankAccountId: undefined, fromDate: undefined, toDate: undefined };
+}
+
+export const GetReconciliationStatusRequest: MessageFns<GetReconciliationStatusRequest> = {
+  encode(message: GetReconciliationStatusRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.bankAccountId !== undefined) {
+      writer.uint32(18).string(message.bankAccountId);
+    }
+    if (message.fromDate !== undefined) {
+      writer.uint32(26).string(message.fromDate);
+    }
+    if (message.toDate !== undefined) {
+      writer.uint32(34).string(message.toDate);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetReconciliationStatusRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetReconciliationStatusRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.bankAccountId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.fromDate = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.toDate = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetReconciliationStatusRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      bankAccountId: isSet(object.bankAccountId)
+        ? globalThis.String(object.bankAccountId)
+        : isSet(object.bank_account_id)
+        ? globalThis.String(object.bank_account_id)
+        : undefined,
+      fromDate: isSet(object.fromDate)
+        ? globalThis.String(object.fromDate)
+        : isSet(object.from_date)
+        ? globalThis.String(object.from_date)
+        : undefined,
+      toDate: isSet(object.toDate)
+        ? globalThis.String(object.toDate)
+        : isSet(object.to_date)
+        ? globalThis.String(object.to_date)
+        : undefined,
+    };
+  },
+
+  toJSON(message: GetReconciliationStatusRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.bankAccountId !== undefined) {
+      obj.bankAccountId = message.bankAccountId;
+    }
+    if (message.fromDate !== undefined) {
+      obj.fromDate = message.fromDate;
+    }
+    if (message.toDate !== undefined) {
+      obj.toDate = message.toDate;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetReconciliationStatusRequest>, I>>(base?: I): GetReconciliationStatusRequest {
+    return GetReconciliationStatusRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetReconciliationStatusRequest>, I>>(
+    object: I,
+  ): GetReconciliationStatusRequest {
+    const message = createBaseGetReconciliationStatusRequest();
+    message.societeId = object.societeId ?? "";
+    message.bankAccountId = object.bankAccountId ?? undefined;
+    message.fromDate = object.fromDate ?? undefined;
+    message.toDate = object.toDate ?? undefined;
+    return message;
+  },
+};
+
+function createBaseReconciliationStatusResponse(): ReconciliationStatusResponse {
+  return {
+    societeId: "",
+    totalStatements: 0,
+    fullyReconciled: 0,
+    partiallyReconciled: 0,
+    pending: 0,
+    totalUnmatchedAmountCents: 0,
+    reconciliationRate: 0,
+    lastImportAt: undefined,
+  };
+}
+
+export const ReconciliationStatusResponse: MessageFns<ReconciliationStatusResponse> = {
+  encode(message: ReconciliationStatusResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.totalStatements !== 0) {
+      writer.uint32(16).int32(message.totalStatements);
+    }
+    if (message.fullyReconciled !== 0) {
+      writer.uint32(24).int32(message.fullyReconciled);
+    }
+    if (message.partiallyReconciled !== 0) {
+      writer.uint32(32).int32(message.partiallyReconciled);
+    }
+    if (message.pending !== 0) {
+      writer.uint32(40).int32(message.pending);
+    }
+    if (message.totalUnmatchedAmountCents !== 0) {
+      writer.uint32(48).int64(message.totalUnmatchedAmountCents);
+    }
+    if (message.reconciliationRate !== 0) {
+      writer.uint32(57).double(message.reconciliationRate);
+    }
+    if (message.lastImportAt !== undefined) {
+      writer.uint32(66).string(message.lastImportAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ReconciliationStatusResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReconciliationStatusResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.totalStatements = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.fullyReconciled = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.partiallyReconciled = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.pending = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.totalUnmatchedAmountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 7: {
+          if (tag !== 57) {
+            break;
+          }
+
+          message.reconciliationRate = reader.double();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.lastImportAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ReconciliationStatusResponse {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      totalStatements: isSet(object.totalStatements)
+        ? globalThis.Number(object.totalStatements)
+        : isSet(object.total_statements)
+        ? globalThis.Number(object.total_statements)
+        : 0,
+      fullyReconciled: isSet(object.fullyReconciled)
+        ? globalThis.Number(object.fullyReconciled)
+        : isSet(object.fully_reconciled)
+        ? globalThis.Number(object.fully_reconciled)
+        : 0,
+      partiallyReconciled: isSet(object.partiallyReconciled)
+        ? globalThis.Number(object.partiallyReconciled)
+        : isSet(object.partially_reconciled)
+        ? globalThis.Number(object.partially_reconciled)
+        : 0,
+      pending: isSet(object.pending) ? globalThis.Number(object.pending) : 0,
+      totalUnmatchedAmountCents: isSet(object.totalUnmatchedAmountCents)
+        ? globalThis.Number(object.totalUnmatchedAmountCents)
+        : isSet(object.total_unmatched_amount_cents)
+        ? globalThis.Number(object.total_unmatched_amount_cents)
+        : 0,
+      reconciliationRate: isSet(object.reconciliationRate)
+        ? globalThis.Number(object.reconciliationRate)
+        : isSet(object.reconciliation_rate)
+        ? globalThis.Number(object.reconciliation_rate)
+        : 0,
+      lastImportAt: isSet(object.lastImportAt)
+        ? globalThis.String(object.lastImportAt)
+        : isSet(object.last_import_at)
+        ? globalThis.String(object.last_import_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ReconciliationStatusResponse): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.totalStatements !== 0) {
+      obj.totalStatements = Math.round(message.totalStatements);
+    }
+    if (message.fullyReconciled !== 0) {
+      obj.fullyReconciled = Math.round(message.fullyReconciled);
+    }
+    if (message.partiallyReconciled !== 0) {
+      obj.partiallyReconciled = Math.round(message.partiallyReconciled);
+    }
+    if (message.pending !== 0) {
+      obj.pending = Math.round(message.pending);
+    }
+    if (message.totalUnmatchedAmountCents !== 0) {
+      obj.totalUnmatchedAmountCents = Math.round(message.totalUnmatchedAmountCents);
+    }
+    if (message.reconciliationRate !== 0) {
+      obj.reconciliationRate = message.reconciliationRate;
+    }
+    if (message.lastImportAt !== undefined) {
+      obj.lastImportAt = message.lastImportAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ReconciliationStatusResponse>, I>>(base?: I): ReconciliationStatusResponse {
+    return ReconciliationStatusResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ReconciliationStatusResponse>, I>>(object: I): ReconciliationStatusResponse {
+    const message = createBaseReconciliationStatusResponse();
+    message.societeId = object.societeId ?? "";
+    message.totalStatements = object.totalStatements ?? 0;
+    message.fullyReconciled = object.fullyReconciled ?? 0;
+    message.partiallyReconciled = object.partiallyReconciled ?? 0;
+    message.pending = object.pending ?? 0;
+    message.totalUnmatchedAmountCents = object.totalUnmatchedAmountCents ?? 0;
+    message.reconciliationRate = object.reconciliationRate ?? 0;
+    message.lastImportAt = object.lastImportAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseForceReconciliationRequest(): ForceReconciliationRequest {
+  return { societeId: "", bankTransactionId: "", paymentId: "", reason: undefined };
+}
+
+export const ForceReconciliationRequest: MessageFns<ForceReconciliationRequest> = {
+  encode(message: ForceReconciliationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.bankTransactionId !== "") {
+      writer.uint32(18).string(message.bankTransactionId);
+    }
+    if (message.paymentId !== "") {
+      writer.uint32(26).string(message.paymentId);
+    }
+    if (message.reason !== undefined) {
+      writer.uint32(34).string(message.reason);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ForceReconciliationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseForceReconciliationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.bankTransactionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.paymentId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ForceReconciliationRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      bankTransactionId: isSet(object.bankTransactionId)
+        ? globalThis.String(object.bankTransactionId)
+        : isSet(object.bank_transaction_id)
+        ? globalThis.String(object.bank_transaction_id)
+        : "",
+      paymentId: isSet(object.paymentId)
+        ? globalThis.String(object.paymentId)
+        : isSet(object.payment_id)
+        ? globalThis.String(object.payment_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : undefined,
+    };
+  },
+
+  toJSON(message: ForceReconciliationRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.bankTransactionId !== "") {
+      obj.bankTransactionId = message.bankTransactionId;
+    }
+    if (message.paymentId !== "") {
+      obj.paymentId = message.paymentId;
+    }
+    if (message.reason !== undefined) {
+      obj.reason = message.reason;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ForceReconciliationRequest>, I>>(base?: I): ForceReconciliationRequest {
+    return ForceReconciliationRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ForceReconciliationRequest>, I>>(object: I): ForceReconciliationRequest {
+    const message = createBaseForceReconciliationRequest();
+    message.societeId = object.societeId ?? "";
+    message.bankTransactionId = object.bankTransactionId ?? "";
+    message.paymentId = object.paymentId ?? "";
+    message.reason = object.reason ?? undefined;
+    return message;
+  },
+};
+
+function createBaseReconciliationResponse(): ReconciliationResponse {
+  return {
+    id: "",
+    bankTransactionId: "",
+    paymentId: "",
+    status: "",
+    bankAmountCents: 0,
+    paymentAmountCents: 0,
+    reason: undefined,
+    reconciledAt: "",
+    reconciledBy: undefined,
+  };
+}
+
+export const ReconciliationResponse: MessageFns<ReconciliationResponse> = {
+  encode(message: ReconciliationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.bankTransactionId !== "") {
+      writer.uint32(18).string(message.bankTransactionId);
+    }
+    if (message.paymentId !== "") {
+      writer.uint32(26).string(message.paymentId);
+    }
+    if (message.status !== "") {
+      writer.uint32(34).string(message.status);
+    }
+    if (message.bankAmountCents !== 0) {
+      writer.uint32(40).int64(message.bankAmountCents);
+    }
+    if (message.paymentAmountCents !== 0) {
+      writer.uint32(48).int64(message.paymentAmountCents);
+    }
+    if (message.reason !== undefined) {
+      writer.uint32(58).string(message.reason);
+    }
+    if (message.reconciledAt !== "") {
+      writer.uint32(66).string(message.reconciledAt);
+    }
+    if (message.reconciledBy !== undefined) {
+      writer.uint32(74).string(message.reconciledBy);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ReconciliationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReconciliationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.bankTransactionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.paymentId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.bankAmountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.paymentAmountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.reconciledAt = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.reconciledBy = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ReconciliationResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      bankTransactionId: isSet(object.bankTransactionId)
+        ? globalThis.String(object.bankTransactionId)
+        : isSet(object.bank_transaction_id)
+        ? globalThis.String(object.bank_transaction_id)
+        : "",
+      paymentId: isSet(object.paymentId)
+        ? globalThis.String(object.paymentId)
+        : isSet(object.payment_id)
+        ? globalThis.String(object.payment_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      bankAmountCents: isSet(object.bankAmountCents)
+        ? globalThis.Number(object.bankAmountCents)
+        : isSet(object.bank_amount_cents)
+        ? globalThis.Number(object.bank_amount_cents)
+        : 0,
+      paymentAmountCents: isSet(object.paymentAmountCents)
+        ? globalThis.Number(object.paymentAmountCents)
+        : isSet(object.payment_amount_cents)
+        ? globalThis.Number(object.payment_amount_cents)
+        : 0,
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : undefined,
+      reconciledAt: isSet(object.reconciledAt)
+        ? globalThis.String(object.reconciledAt)
+        : isSet(object.reconciled_at)
+        ? globalThis.String(object.reconciled_at)
+        : "",
+      reconciledBy: isSet(object.reconciledBy)
+        ? globalThis.String(object.reconciledBy)
+        : isSet(object.reconciled_by)
+        ? globalThis.String(object.reconciled_by)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ReconciliationResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.bankTransactionId !== "") {
+      obj.bankTransactionId = message.bankTransactionId;
+    }
+    if (message.paymentId !== "") {
+      obj.paymentId = message.paymentId;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.bankAmountCents !== 0) {
+      obj.bankAmountCents = Math.round(message.bankAmountCents);
+    }
+    if (message.paymentAmountCents !== 0) {
+      obj.paymentAmountCents = Math.round(message.paymentAmountCents);
+    }
+    if (message.reason !== undefined) {
+      obj.reason = message.reason;
+    }
+    if (message.reconciledAt !== "") {
+      obj.reconciledAt = message.reconciledAt;
+    }
+    if (message.reconciledBy !== undefined) {
+      obj.reconciledBy = message.reconciledBy;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ReconciliationResponse>, I>>(base?: I): ReconciliationResponse {
+    return ReconciliationResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ReconciliationResponse>, I>>(object: I): ReconciliationResponse {
+    const message = createBaseReconciliationResponse();
+    message.id = object.id ?? "";
+    message.bankTransactionId = object.bankTransactionId ?? "";
+    message.paymentId = object.paymentId ?? "";
+    message.status = object.status ?? "";
+    message.bankAmountCents = object.bankAmountCents ?? 0;
+    message.paymentAmountCents = object.paymentAmountCents ?? 0;
+    message.reason = object.reason ?? undefined;
+    message.reconciledAt = object.reconciledAt ?? "";
+    message.reconciledBy = object.reconciledBy ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListUnmatchedPaymentsRequest(): ListUnmatchedPaymentsRequest {
+  return {
+    societeId: "",
+    source: undefined,
+    fromDate: undefined,
+    toDate: undefined,
+    page: undefined,
+    pageSize: undefined,
+  };
+}
+
+export const ListUnmatchedPaymentsRequest: MessageFns<ListUnmatchedPaymentsRequest> = {
+  encode(message: ListUnmatchedPaymentsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.source !== undefined) {
+      writer.uint32(18).string(message.source);
+    }
+    if (message.fromDate !== undefined) {
+      writer.uint32(26).string(message.fromDate);
+    }
+    if (message.toDate !== undefined) {
+      writer.uint32(34).string(message.toDate);
+    }
+    if (message.page !== undefined) {
+      writer.uint32(40).int32(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      writer.uint32(48).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListUnmatchedPaymentsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListUnmatchedPaymentsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.source = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.fromDate = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.toDate = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListUnmatchedPaymentsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      source: isSet(object.source) ? globalThis.String(object.source) : undefined,
+      fromDate: isSet(object.fromDate)
+        ? globalThis.String(object.fromDate)
+        : isSet(object.from_date)
+        ? globalThis.String(object.from_date)
+        : undefined,
+      toDate: isSet(object.toDate)
+        ? globalThis.String(object.toDate)
+        : isSet(object.to_date)
+        ? globalThis.String(object.to_date)
+        : undefined,
+      page: isSet(object.page) ? globalThis.Number(object.page) : undefined,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListUnmatchedPaymentsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.source !== undefined) {
+      obj.source = message.source;
+    }
+    if (message.fromDate !== undefined) {
+      obj.fromDate = message.fromDate;
+    }
+    if (message.toDate !== undefined) {
+      obj.toDate = message.toDate;
+    }
+    if (message.page !== undefined) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListUnmatchedPaymentsRequest>, I>>(base?: I): ListUnmatchedPaymentsRequest {
+    return ListUnmatchedPaymentsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListUnmatchedPaymentsRequest>, I>>(object: I): ListUnmatchedPaymentsRequest {
+    const message = createBaseListUnmatchedPaymentsRequest();
+    message.societeId = object.societeId ?? "";
+    message.source = object.source ?? undefined;
+    message.fromDate = object.fromDate ?? undefined;
+    message.toDate = object.toDate ?? undefined;
+    message.page = object.page ?? undefined;
+    message.pageSize = object.pageSize ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListUnmatchedPaymentsResponse(): ListUnmatchedPaymentsResponse {
+  return { payments: [], total: 0, page: 0, pageSize: 0 };
+}
+
+export const ListUnmatchedPaymentsResponse: MessageFns<ListUnmatchedPaymentsResponse> = {
+  encode(message: ListUnmatchedPaymentsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.payments) {
+      UnmatchedPayment.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.page !== 0) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.pageSize !== 0) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListUnmatchedPaymentsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListUnmatchedPaymentsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.payments.push(UnmatchedPayment.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListUnmatchedPaymentsResponse {
+    return {
+      payments: globalThis.Array.isArray(object?.payments)
+        ? object.payments.map((e: any) => UnmatchedPayment.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : 0,
+    };
+  },
+
+  toJSON(message: ListUnmatchedPaymentsResponse): unknown {
+    const obj: any = {};
+    if (message.payments?.length) {
+      obj.payments = message.payments.map((e) => UnmatchedPayment.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== 0) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListUnmatchedPaymentsResponse>, I>>(base?: I): ListUnmatchedPaymentsResponse {
+    return ListUnmatchedPaymentsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListUnmatchedPaymentsResponse>, I>>(
+    object: I,
+  ): ListUnmatchedPaymentsResponse {
+    const message = createBaseListUnmatchedPaymentsResponse();
+    message.payments = object.payments?.map((e) => UnmatchedPayment.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.page = object.page ?? 0;
+    message.pageSize = object.pageSize ?? 0;
+    return message;
+  },
+};
+
+function createBaseUnmatchedPayment(): UnmatchedPayment {
+  return {
+    id: "",
+    source: "",
+    amountCents: 0,
+    currency: "",
+    reference: undefined,
+    description: undefined,
+    date: "",
+    suggestedMatchId: undefined,
+    matchConfidence: undefined,
+  };
+}
+
+export const UnmatchedPayment: MessageFns<UnmatchedPayment> = {
+  encode(message: UnmatchedPayment, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.source !== "") {
+      writer.uint32(18).string(message.source);
+    }
+    if (message.amountCents !== 0) {
+      writer.uint32(24).int64(message.amountCents);
+    }
+    if (message.currency !== "") {
+      writer.uint32(34).string(message.currency);
+    }
+    if (message.reference !== undefined) {
+      writer.uint32(42).string(message.reference);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(50).string(message.description);
+    }
+    if (message.date !== "") {
+      writer.uint32(58).string(message.date);
+    }
+    if (message.suggestedMatchId !== undefined) {
+      writer.uint32(66).string(message.suggestedMatchId);
+    }
+    if (message.matchConfidence !== undefined) {
+      writer.uint32(72).int32(message.matchConfidence);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UnmatchedPayment {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUnmatchedPayment();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.source = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.amountCents = longToNumber(reader.int64());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.reference = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.date = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.suggestedMatchId = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.matchConfidence = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UnmatchedPayment {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      source: isSet(object.source) ? globalThis.String(object.source) : "",
+      amountCents: isSet(object.amountCents)
+        ? globalThis.Number(object.amountCents)
+        : isSet(object.amount_cents)
+        ? globalThis.Number(object.amount_cents)
+        : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      reference: isSet(object.reference) ? globalThis.String(object.reference) : undefined,
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+      date: isSet(object.date) ? globalThis.String(object.date) : "",
+      suggestedMatchId: isSet(object.suggestedMatchId)
+        ? globalThis.String(object.suggestedMatchId)
+        : isSet(object.suggested_match_id)
+        ? globalThis.String(object.suggested_match_id)
+        : undefined,
+      matchConfidence: isSet(object.matchConfidence)
+        ? globalThis.Number(object.matchConfidence)
+        : isSet(object.match_confidence)
+        ? globalThis.Number(object.match_confidence)
+        : undefined,
+    };
+  },
+
+  toJSON(message: UnmatchedPayment): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.source !== "") {
+      obj.source = message.source;
+    }
+    if (message.amountCents !== 0) {
+      obj.amountCents = Math.round(message.amountCents);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.reference !== undefined) {
+      obj.reference = message.reference;
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    if (message.date !== "") {
+      obj.date = message.date;
+    }
+    if (message.suggestedMatchId !== undefined) {
+      obj.suggestedMatchId = message.suggestedMatchId;
+    }
+    if (message.matchConfidence !== undefined) {
+      obj.matchConfidence = Math.round(message.matchConfidence);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UnmatchedPayment>, I>>(base?: I): UnmatchedPayment {
+    return UnmatchedPayment.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UnmatchedPayment>, I>>(object: I): UnmatchedPayment {
+    const message = createBaseUnmatchedPayment();
+    message.id = object.id ?? "";
+    message.source = object.source ?? "";
+    message.amountCents = object.amountCents ?? 0;
+    message.currency = object.currency ?? "";
+    message.reference = object.reference ?? undefined;
+    message.description = object.description ?? undefined;
+    message.date = object.date ?? "";
+    message.suggestedMatchId = object.suggestedMatchId ?? undefined;
+    message.matchConfidence = object.matchConfidence ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListProviderStatusMappingsRequest(): ListProviderStatusMappingsRequest {
+  return { societeId: "", providerName: undefined };
+}
+
+export const ListProviderStatusMappingsRequest: MessageFns<ListProviderStatusMappingsRequest> = {
+  encode(message: ListProviderStatusMappingsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.providerName !== undefined) {
+      writer.uint32(18).string(message.providerName);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListProviderStatusMappingsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListProviderStatusMappingsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.providerName = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListProviderStatusMappingsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      providerName: isSet(object.providerName)
+        ? globalThis.String(object.providerName)
+        : isSet(object.provider_name)
+        ? globalThis.String(object.provider_name)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListProviderStatusMappingsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.providerName !== undefined) {
+      obj.providerName = message.providerName;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListProviderStatusMappingsRequest>, I>>(
+    base?: I,
+  ): ListProviderStatusMappingsRequest {
+    return ListProviderStatusMappingsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListProviderStatusMappingsRequest>, I>>(
+    object: I,
+  ): ListProviderStatusMappingsRequest {
+    const message = createBaseListProviderStatusMappingsRequest();
+    message.societeId = object.societeId ?? "";
+    message.providerName = object.providerName ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListProviderStatusMappingsResponse(): ListProviderStatusMappingsResponse {
+  return { mappings: [], total: 0 };
+}
+
+export const ListProviderStatusMappingsResponse: MessageFns<ListProviderStatusMappingsResponse> = {
+  encode(message: ListProviderStatusMappingsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.mappings) {
+      ProviderStatusMappingResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListProviderStatusMappingsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListProviderStatusMappingsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mappings.push(ProviderStatusMappingResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListProviderStatusMappingsResponse {
+    return {
+      mappings: globalThis.Array.isArray(object?.mappings)
+        ? object.mappings.map((e: any) => ProviderStatusMappingResponse.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+    };
+  },
+
+  toJSON(message: ListProviderStatusMappingsResponse): unknown {
+    const obj: any = {};
+    if (message.mappings?.length) {
+      obj.mappings = message.mappings.map((e) => ProviderStatusMappingResponse.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListProviderStatusMappingsResponse>, I>>(
+    base?: I,
+  ): ListProviderStatusMappingsResponse {
+    return ListProviderStatusMappingsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListProviderStatusMappingsResponse>, I>>(
+    object: I,
+  ): ListProviderStatusMappingsResponse {
+    const message = createBaseListProviderStatusMappingsResponse();
+    message.mappings = object.mappings?.map((e) => ProviderStatusMappingResponse.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    return message;
+  },
+};
+
+function createBaseProviderStatusMappingResponse(): ProviderStatusMappingResponse {
+  return {
+    id: "",
+    providerName: "",
+    providerStatus: "",
+    internalStatus: "",
+    eventType: "",
+    rejectionCategory: undefined,
+    retryAdvice: undefined,
+    isActive: false,
+    updatedAt: "",
+  };
+}
+
+export const ProviderStatusMappingResponse: MessageFns<ProviderStatusMappingResponse> = {
+  encode(message: ProviderStatusMappingResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.providerName !== "") {
+      writer.uint32(18).string(message.providerName);
+    }
+    if (message.providerStatus !== "") {
+      writer.uint32(26).string(message.providerStatus);
+    }
+    if (message.internalStatus !== "") {
+      writer.uint32(34).string(message.internalStatus);
+    }
+    if (message.eventType !== "") {
+      writer.uint32(42).string(message.eventType);
+    }
+    if (message.rejectionCategory !== undefined) {
+      writer.uint32(50).string(message.rejectionCategory);
+    }
+    if (message.retryAdvice !== undefined) {
+      writer.uint32(58).string(message.retryAdvice);
+    }
+    if (message.isActive !== false) {
+      writer.uint32(64).bool(message.isActive);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(74).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ProviderStatusMappingResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseProviderStatusMappingResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.providerName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.providerStatus = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.internalStatus = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.eventType = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.rejectionCategory = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.retryAdvice = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.isActive = reader.bool();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ProviderStatusMappingResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      providerName: isSet(object.providerName)
+        ? globalThis.String(object.providerName)
+        : isSet(object.provider_name)
+        ? globalThis.String(object.provider_name)
+        : "",
+      providerStatus: isSet(object.providerStatus)
+        ? globalThis.String(object.providerStatus)
+        : isSet(object.provider_status)
+        ? globalThis.String(object.provider_status)
+        : "",
+      internalStatus: isSet(object.internalStatus)
+        ? globalThis.String(object.internalStatus)
+        : isSet(object.internal_status)
+        ? globalThis.String(object.internal_status)
+        : "",
+      eventType: isSet(object.eventType)
+        ? globalThis.String(object.eventType)
+        : isSet(object.event_type)
+        ? globalThis.String(object.event_type)
+        : "",
+      rejectionCategory: isSet(object.rejectionCategory)
+        ? globalThis.String(object.rejectionCategory)
+        : isSet(object.rejection_category)
+        ? globalThis.String(object.rejection_category)
+        : undefined,
+      retryAdvice: isSet(object.retryAdvice)
+        ? globalThis.String(object.retryAdvice)
+        : isSet(object.retry_advice)
+        ? globalThis.String(object.retry_advice)
+        : undefined,
+      isActive: isSet(object.isActive)
+        ? globalThis.Boolean(object.isActive)
+        : isSet(object.is_active)
+        ? globalThis.Boolean(object.is_active)
+        : false,
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: ProviderStatusMappingResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.providerName !== "") {
+      obj.providerName = message.providerName;
+    }
+    if (message.providerStatus !== "") {
+      obj.providerStatus = message.providerStatus;
+    }
+    if (message.internalStatus !== "") {
+      obj.internalStatus = message.internalStatus;
+    }
+    if (message.eventType !== "") {
+      obj.eventType = message.eventType;
+    }
+    if (message.rejectionCategory !== undefined) {
+      obj.rejectionCategory = message.rejectionCategory;
+    }
+    if (message.retryAdvice !== undefined) {
+      obj.retryAdvice = message.retryAdvice;
+    }
+    if (message.isActive !== false) {
+      obj.isActive = message.isActive;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ProviderStatusMappingResponse>, I>>(base?: I): ProviderStatusMappingResponse {
+    return ProviderStatusMappingResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ProviderStatusMappingResponse>, I>>(
+    object: I,
+  ): ProviderStatusMappingResponse {
+    const message = createBaseProviderStatusMappingResponse();
+    message.id = object.id ?? "";
+    message.providerName = object.providerName ?? "";
+    message.providerStatus = object.providerStatus ?? "";
+    message.internalStatus = object.internalStatus ?? "";
+    message.eventType = object.eventType ?? "";
+    message.rejectionCategory = object.rejectionCategory ?? undefined;
+    message.retryAdvice = object.retryAdvice ?? undefined;
+    message.isActive = object.isActive ?? false;
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateProviderStatusMappingRequest(): UpdateProviderStatusMappingRequest {
+  return {
+    id: "",
+    internalStatus: undefined,
+    rejectionCategory: undefined,
+    retryAdvice: undefined,
+    isActive: undefined,
+  };
+}
+
+export const UpdateProviderStatusMappingRequest: MessageFns<UpdateProviderStatusMappingRequest> = {
+  encode(message: UpdateProviderStatusMappingRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.internalStatus !== undefined) {
+      writer.uint32(18).string(message.internalStatus);
+    }
+    if (message.rejectionCategory !== undefined) {
+      writer.uint32(26).string(message.rejectionCategory);
+    }
+    if (message.retryAdvice !== undefined) {
+      writer.uint32(34).string(message.retryAdvice);
+    }
+    if (message.isActive !== undefined) {
+      writer.uint32(40).bool(message.isActive);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateProviderStatusMappingRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateProviderStatusMappingRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.internalStatus = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.rejectionCategory = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.retryAdvice = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.isActive = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateProviderStatusMappingRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      internalStatus: isSet(object.internalStatus)
+        ? globalThis.String(object.internalStatus)
+        : isSet(object.internal_status)
+        ? globalThis.String(object.internal_status)
+        : undefined,
+      rejectionCategory: isSet(object.rejectionCategory)
+        ? globalThis.String(object.rejectionCategory)
+        : isSet(object.rejection_category)
+        ? globalThis.String(object.rejection_category)
+        : undefined,
+      retryAdvice: isSet(object.retryAdvice)
+        ? globalThis.String(object.retryAdvice)
+        : isSet(object.retry_advice)
+        ? globalThis.String(object.retry_advice)
+        : undefined,
+      isActive: isSet(object.isActive)
+        ? globalThis.Boolean(object.isActive)
+        : isSet(object.is_active)
+        ? globalThis.Boolean(object.is_active)
+        : undefined,
+    };
+  },
+
+  toJSON(message: UpdateProviderStatusMappingRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.internalStatus !== undefined) {
+      obj.internalStatus = message.internalStatus;
+    }
+    if (message.rejectionCategory !== undefined) {
+      obj.rejectionCategory = message.rejectionCategory;
+    }
+    if (message.retryAdvice !== undefined) {
+      obj.retryAdvice = message.retryAdvice;
+    }
+    if (message.isActive !== undefined) {
+      obj.isActive = message.isActive;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateProviderStatusMappingRequest>, I>>(
+    base?: I,
+  ): UpdateProviderStatusMappingRequest {
+    return UpdateProviderStatusMappingRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateProviderStatusMappingRequest>, I>>(
+    object: I,
+  ): UpdateProviderStatusMappingRequest {
+    const message = createBaseUpdateProviderStatusMappingRequest();
+    message.id = object.id ?? "";
+    message.internalStatus = object.internalStatus ?? undefined;
+    message.rejectionCategory = object.rejectionCategory ?? undefined;
+    message.retryAdvice = object.retryAdvice ?? undefined;
+    message.isActive = object.isActive ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListRejectionReasonsRequest(): ListRejectionReasonsRequest {
+  return {
+    societeId: "",
+    providerName: undefined,
+    category: undefined,
+    isActive: undefined,
+    page: undefined,
+    pageSize: undefined,
+  };
+}
+
+export const ListRejectionReasonsRequest: MessageFns<ListRejectionReasonsRequest> = {
+  encode(message: ListRejectionReasonsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.providerName !== undefined) {
+      writer.uint32(18).string(message.providerName);
+    }
+    if (message.category !== undefined) {
+      writer.uint32(26).string(message.category);
+    }
+    if (message.isActive !== undefined) {
+      writer.uint32(32).bool(message.isActive);
+    }
+    if (message.page !== undefined) {
+      writer.uint32(40).int32(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      writer.uint32(48).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListRejectionReasonsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListRejectionReasonsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.providerName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.category = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.isActive = reader.bool();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListRejectionReasonsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      providerName: isSet(object.providerName)
+        ? globalThis.String(object.providerName)
+        : isSet(object.provider_name)
+        ? globalThis.String(object.provider_name)
+        : undefined,
+      category: isSet(object.category) ? globalThis.String(object.category) : undefined,
+      isActive: isSet(object.isActive)
+        ? globalThis.Boolean(object.isActive)
+        : isSet(object.is_active)
+        ? globalThis.Boolean(object.is_active)
+        : undefined,
+      page: isSet(object.page) ? globalThis.Number(object.page) : undefined,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListRejectionReasonsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.providerName !== undefined) {
+      obj.providerName = message.providerName;
+    }
+    if (message.category !== undefined) {
+      obj.category = message.category;
+    }
+    if (message.isActive !== undefined) {
+      obj.isActive = message.isActive;
+    }
+    if (message.page !== undefined) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== undefined) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListRejectionReasonsRequest>, I>>(base?: I): ListRejectionReasonsRequest {
+    return ListRejectionReasonsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListRejectionReasonsRequest>, I>>(object: I): ListRejectionReasonsRequest {
+    const message = createBaseListRejectionReasonsRequest();
+    message.societeId = object.societeId ?? "";
+    message.providerName = object.providerName ?? undefined;
+    message.category = object.category ?? undefined;
+    message.isActive = object.isActive ?? undefined;
+    message.page = object.page ?? undefined;
+    message.pageSize = object.pageSize ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListRejectionReasonsResponse(): ListRejectionReasonsResponse {
+  return { reasons: [], total: 0, page: 0, pageSize: 0 };
+}
+
+export const ListRejectionReasonsResponse: MessageFns<ListRejectionReasonsResponse> = {
+  encode(message: ListRejectionReasonsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.reasons) {
+      RejectionReasonResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.page !== 0) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.pageSize !== 0) {
+      writer.uint32(32).int32(message.pageSize);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListRejectionReasonsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListRejectionReasonsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.reasons.push(RejectionReasonResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pageSize = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListRejectionReasonsResponse {
+    return {
+      reasons: globalThis.Array.isArray(object?.reasons)
+        ? object.reasons.map((e: any) => RejectionReasonResponse.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      pageSize: isSet(object.pageSize)
+        ? globalThis.Number(object.pageSize)
+        : isSet(object.page_size)
+        ? globalThis.Number(object.page_size)
+        : 0,
+    };
+  },
+
+  toJSON(message: ListRejectionReasonsResponse): unknown {
+    const obj: any = {};
+    if (message.reasons?.length) {
+      obj.reasons = message.reasons.map((e) => RejectionReasonResponse.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.pageSize !== 0) {
+      obj.pageSize = Math.round(message.pageSize);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListRejectionReasonsResponse>, I>>(base?: I): ListRejectionReasonsResponse {
+    return ListRejectionReasonsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListRejectionReasonsResponse>, I>>(object: I): ListRejectionReasonsResponse {
+    const message = createBaseListRejectionReasonsResponse();
+    message.reasons = object.reasons?.map((e) => RejectionReasonResponse.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.page = object.page ?? 0;
+    message.pageSize = object.pageSize ?? 0;
+    return message;
+  },
+};
+
+function createBaseRejectionReasonResponse(): RejectionReasonResponse {
+  return {
+    id: "",
+    code: "",
+    label: "",
+    description: "",
+    category: "",
+    retryStrategy: "",
+    maxRetries: undefined,
+    retryDelayDays: undefined,
+    isActive: false,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const RejectionReasonResponse: MessageFns<RejectionReasonResponse> = {
+  encode(message: RejectionReasonResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.code !== "") {
+      writer.uint32(18).string(message.code);
+    }
+    if (message.label !== "") {
+      writer.uint32(26).string(message.label);
+    }
+    if (message.description !== "") {
+      writer.uint32(34).string(message.description);
+    }
+    if (message.category !== "") {
+      writer.uint32(42).string(message.category);
+    }
+    if (message.retryStrategy !== "") {
+      writer.uint32(50).string(message.retryStrategy);
+    }
+    if (message.maxRetries !== undefined) {
+      writer.uint32(56).int32(message.maxRetries);
+    }
+    if (message.retryDelayDays !== undefined) {
+      writer.uint32(64).int32(message.retryDelayDays);
+    }
+    if (message.isActive !== false) {
+      writer.uint32(72).bool(message.isActive);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(82).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(90).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RejectionReasonResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRejectionReasonResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.code = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.category = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.retryStrategy = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.maxRetries = reader.int32();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.retryDelayDays = reader.int32();
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.isActive = reader.bool();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RejectionReasonResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      code: isSet(object.code) ? globalThis.String(object.code) : "",
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      category: isSet(object.category) ? globalThis.String(object.category) : "",
+      retryStrategy: isSet(object.retryStrategy)
+        ? globalThis.String(object.retryStrategy)
+        : isSet(object.retry_strategy)
+        ? globalThis.String(object.retry_strategy)
+        : "",
+      maxRetries: isSet(object.maxRetries)
+        ? globalThis.Number(object.maxRetries)
+        : isSet(object.max_retries)
+        ? globalThis.Number(object.max_retries)
+        : undefined,
+      retryDelayDays: isSet(object.retryDelayDays)
+        ? globalThis.Number(object.retryDelayDays)
+        : isSet(object.retry_delay_days)
+        ? globalThis.Number(object.retry_delay_days)
+        : undefined,
+      isActive: isSet(object.isActive)
+        ? globalThis.Boolean(object.isActive)
+        : isSet(object.is_active)
+        ? globalThis.Boolean(object.is_active)
+        : false,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: RejectionReasonResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.category !== "") {
+      obj.category = message.category;
+    }
+    if (message.retryStrategy !== "") {
+      obj.retryStrategy = message.retryStrategy;
+    }
+    if (message.maxRetries !== undefined) {
+      obj.maxRetries = Math.round(message.maxRetries);
+    }
+    if (message.retryDelayDays !== undefined) {
+      obj.retryDelayDays = Math.round(message.retryDelayDays);
+    }
+    if (message.isActive !== false) {
+      obj.isActive = message.isActive;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RejectionReasonResponse>, I>>(base?: I): RejectionReasonResponse {
+    return RejectionReasonResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RejectionReasonResponse>, I>>(object: I): RejectionReasonResponse {
+    const message = createBaseRejectionReasonResponse();
+    message.id = object.id ?? "";
+    message.code = object.code ?? "";
+    message.label = object.label ?? "";
+    message.description = object.description ?? "";
+    message.category = object.category ?? "";
+    message.retryStrategy = object.retryStrategy ?? "";
+    message.maxRetries = object.maxRetries ?? undefined;
+    message.retryDelayDays = object.retryDelayDays ?? undefined;
+    message.isActive = object.isActive ?? false;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateRejectionReasonRequest(): CreateRejectionReasonRequest {
+  return {
+    societeId: "",
+    code: "",
+    label: "",
+    description: "",
+    category: "",
+    retryStrategy: "",
+    maxRetries: undefined,
+    retryDelayDays: undefined,
+  };
+}
+
+export const CreateRejectionReasonRequest: MessageFns<CreateRejectionReasonRequest> = {
+  encode(message: CreateRejectionReasonRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.code !== "") {
+      writer.uint32(18).string(message.code);
+    }
+    if (message.label !== "") {
+      writer.uint32(26).string(message.label);
+    }
+    if (message.description !== "") {
+      writer.uint32(34).string(message.description);
+    }
+    if (message.category !== "") {
+      writer.uint32(42).string(message.category);
+    }
+    if (message.retryStrategy !== "") {
+      writer.uint32(50).string(message.retryStrategy);
+    }
+    if (message.maxRetries !== undefined) {
+      writer.uint32(56).int32(message.maxRetries);
+    }
+    if (message.retryDelayDays !== undefined) {
+      writer.uint32(64).int32(message.retryDelayDays);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateRejectionReasonRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateRejectionReasonRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.code = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.category = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.retryStrategy = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.maxRetries = reader.int32();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.retryDelayDays = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateRejectionReasonRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      code: isSet(object.code) ? globalThis.String(object.code) : "",
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      category: isSet(object.category) ? globalThis.String(object.category) : "",
+      retryStrategy: isSet(object.retryStrategy)
+        ? globalThis.String(object.retryStrategy)
+        : isSet(object.retry_strategy)
+        ? globalThis.String(object.retry_strategy)
+        : "",
+      maxRetries: isSet(object.maxRetries)
+        ? globalThis.Number(object.maxRetries)
+        : isSet(object.max_retries)
+        ? globalThis.Number(object.max_retries)
+        : undefined,
+      retryDelayDays: isSet(object.retryDelayDays)
+        ? globalThis.Number(object.retryDelayDays)
+        : isSet(object.retry_delay_days)
+        ? globalThis.Number(object.retry_delay_days)
+        : undefined,
+    };
+  },
+
+  toJSON(message: CreateRejectionReasonRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.category !== "") {
+      obj.category = message.category;
+    }
+    if (message.retryStrategy !== "") {
+      obj.retryStrategy = message.retryStrategy;
+    }
+    if (message.maxRetries !== undefined) {
+      obj.maxRetries = Math.round(message.maxRetries);
+    }
+    if (message.retryDelayDays !== undefined) {
+      obj.retryDelayDays = Math.round(message.retryDelayDays);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateRejectionReasonRequest>, I>>(base?: I): CreateRejectionReasonRequest {
+    return CreateRejectionReasonRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateRejectionReasonRequest>, I>>(object: I): CreateRejectionReasonRequest {
+    const message = createBaseCreateRejectionReasonRequest();
+    message.societeId = object.societeId ?? "";
+    message.code = object.code ?? "";
+    message.label = object.label ?? "";
+    message.description = object.description ?? "";
+    message.category = object.category ?? "";
+    message.retryStrategy = object.retryStrategy ?? "";
+    message.maxRetries = object.maxRetries ?? undefined;
+    message.retryDelayDays = object.retryDelayDays ?? undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateRejectionReasonRequest(): UpdateRejectionReasonRequest {
+  return {
+    id: "",
+    label: undefined,
+    description: undefined,
+    category: undefined,
+    retryStrategy: undefined,
+    maxRetries: undefined,
+    retryDelayDays: undefined,
+    isActive: undefined,
+  };
+}
+
+export const UpdateRejectionReasonRequest: MessageFns<UpdateRejectionReasonRequest> = {
+  encode(message: UpdateRejectionReasonRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.label !== undefined) {
+      writer.uint32(18).string(message.label);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(26).string(message.description);
+    }
+    if (message.category !== undefined) {
+      writer.uint32(34).string(message.category);
+    }
+    if (message.retryStrategy !== undefined) {
+      writer.uint32(42).string(message.retryStrategy);
+    }
+    if (message.maxRetries !== undefined) {
+      writer.uint32(48).int32(message.maxRetries);
+    }
+    if (message.retryDelayDays !== undefined) {
+      writer.uint32(56).int32(message.retryDelayDays);
+    }
+    if (message.isActive !== undefined) {
+      writer.uint32(64).bool(message.isActive);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateRejectionReasonRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateRejectionReasonRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.category = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.retryStrategy = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.maxRetries = reader.int32();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.retryDelayDays = reader.int32();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.isActive = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateRejectionReasonRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      label: isSet(object.label) ? globalThis.String(object.label) : undefined,
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+      category: isSet(object.category) ? globalThis.String(object.category) : undefined,
+      retryStrategy: isSet(object.retryStrategy)
+        ? globalThis.String(object.retryStrategy)
+        : isSet(object.retry_strategy)
+        ? globalThis.String(object.retry_strategy)
+        : undefined,
+      maxRetries: isSet(object.maxRetries)
+        ? globalThis.Number(object.maxRetries)
+        : isSet(object.max_retries)
+        ? globalThis.Number(object.max_retries)
+        : undefined,
+      retryDelayDays: isSet(object.retryDelayDays)
+        ? globalThis.Number(object.retryDelayDays)
+        : isSet(object.retry_delay_days)
+        ? globalThis.Number(object.retry_delay_days)
+        : undefined,
+      isActive: isSet(object.isActive)
+        ? globalThis.Boolean(object.isActive)
+        : isSet(object.is_active)
+        ? globalThis.Boolean(object.is_active)
+        : undefined,
+    };
+  },
+
+  toJSON(message: UpdateRejectionReasonRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.label !== undefined) {
+      obj.label = message.label;
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    if (message.category !== undefined) {
+      obj.category = message.category;
+    }
+    if (message.retryStrategy !== undefined) {
+      obj.retryStrategy = message.retryStrategy;
+    }
+    if (message.maxRetries !== undefined) {
+      obj.maxRetries = Math.round(message.maxRetries);
+    }
+    if (message.retryDelayDays !== undefined) {
+      obj.retryDelayDays = Math.round(message.retryDelayDays);
+    }
+    if (message.isActive !== undefined) {
+      obj.isActive = message.isActive;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateRejectionReasonRequest>, I>>(base?: I): UpdateRejectionReasonRequest {
+    return UpdateRejectionReasonRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateRejectionReasonRequest>, I>>(object: I): UpdateRejectionReasonRequest {
+    const message = createBaseUpdateRejectionReasonRequest();
+    message.id = object.id ?? "";
+    message.label = object.label ?? undefined;
+    message.description = object.description ?? undefined;
+    message.category = object.category ?? undefined;
+    message.retryStrategy = object.retryStrategy ?? undefined;
+    message.maxRetries = object.maxRetries ?? undefined;
+    message.retryDelayDays = object.retryDelayDays ?? undefined;
+    message.isActive = object.isActive ?? undefined;
+    return message;
+  },
+};
+
 export type PaymentServiceService = typeof PaymentServiceService;
 export const PaymentServiceService = {
   /**
@@ -14763,6 +28571,478 @@ export const PaymentServiceService = {
       Buffer.from(PSPAccountsSummaryResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): PSPAccountsSummaryResponse => PSPAccountsSummaryResponse.decode(value),
   },
+  /** ==================== SLIMPAY ==================== */
+  createSlimpayMandate: {
+    path: "/payment.PaymentService/CreateSlimpayMandate",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateSlimpayMandateRequest): Buffer =>
+      Buffer.from(CreateSlimpayMandateRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateSlimpayMandateRequest => CreateSlimpayMandateRequest.decode(value),
+    responseSerialize: (value: SlimpayMandateResponse): Buffer =>
+      Buffer.from(SlimpayMandateResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SlimpayMandateResponse => SlimpayMandateResponse.decode(value),
+  },
+  getSlimpayMandate: {
+    path: "/payment.PaymentService/GetSlimpayMandate",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetSlimpayMandateRequest): Buffer =>
+      Buffer.from(GetSlimpayMandateRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetSlimpayMandateRequest => GetSlimpayMandateRequest.decode(value),
+    responseSerialize: (value: SlimpayMandateResponse): Buffer =>
+      Buffer.from(SlimpayMandateResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SlimpayMandateResponse => SlimpayMandateResponse.decode(value),
+  },
+  cancelSlimpayMandate: {
+    path: "/payment.PaymentService/CancelSlimpayMandate",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CancelSlimpayMandateRequest): Buffer =>
+      Buffer.from(CancelSlimpayMandateRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CancelSlimpayMandateRequest => CancelSlimpayMandateRequest.decode(value),
+    responseSerialize: (value: SlimpayMandateResponse): Buffer =>
+      Buffer.from(SlimpayMandateResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SlimpayMandateResponse => SlimpayMandateResponse.decode(value),
+  },
+  createSlimpayPayment: {
+    path: "/payment.PaymentService/CreateSlimpayPayment",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateSlimpayPaymentRequest): Buffer =>
+      Buffer.from(CreateSlimpayPaymentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateSlimpayPaymentRequest => CreateSlimpayPaymentRequest.decode(value),
+    responseSerialize: (value: SlimpayPaymentResponse): Buffer =>
+      Buffer.from(SlimpayPaymentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SlimpayPaymentResponse => SlimpayPaymentResponse.decode(value),
+  },
+  getSlimpayPayment: {
+    path: "/payment.PaymentService/GetSlimpayPayment",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetSlimpayPaymentRequest): Buffer =>
+      Buffer.from(GetSlimpayPaymentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetSlimpayPaymentRequest => GetSlimpayPaymentRequest.decode(value),
+    responseSerialize: (value: SlimpayPaymentResponse): Buffer =>
+      Buffer.from(SlimpayPaymentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SlimpayPaymentResponse => SlimpayPaymentResponse.decode(value),
+  },
+  /** ==================== MULTISAFEPAY ==================== */
+  createMultiSafepayTransaction: {
+    path: "/payment.PaymentService/CreateMultiSafepayTransaction",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateMultiSafepayTransactionRequest): Buffer =>
+      Buffer.from(CreateMultiSafepayTransactionRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateMultiSafepayTransactionRequest =>
+      CreateMultiSafepayTransactionRequest.decode(value),
+    responseSerialize: (value: MultiSafepayTransactionResponse): Buffer =>
+      Buffer.from(MultiSafepayTransactionResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): MultiSafepayTransactionResponse =>
+      MultiSafepayTransactionResponse.decode(value),
+  },
+  getMultiSafepayTransaction: {
+    path: "/payment.PaymentService/GetMultiSafepayTransaction",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetMultiSafepayTransactionRequest): Buffer =>
+      Buffer.from(GetMultiSafepayTransactionRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetMultiSafepayTransactionRequest =>
+      GetMultiSafepayTransactionRequest.decode(value),
+    responseSerialize: (value: MultiSafepayTransactionResponse): Buffer =>
+      Buffer.from(MultiSafepayTransactionResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): MultiSafepayTransactionResponse =>
+      MultiSafepayTransactionResponse.decode(value),
+  },
+  refundMultiSafepayTransaction: {
+    path: "/payment.PaymentService/RefundMultiSafepayTransaction",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: RefundMultiSafepayTransactionRequest): Buffer =>
+      Buffer.from(RefundMultiSafepayTransactionRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): RefundMultiSafepayTransactionRequest =>
+      RefundMultiSafepayTransactionRequest.decode(value),
+    responseSerialize: (value: MultiSafepayTransactionResponse): Buffer =>
+      Buffer.from(MultiSafepayTransactionResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): MultiSafepayTransactionResponse =>
+      MultiSafepayTransactionResponse.decode(value),
+  },
+  /** ==================== EMERCHANTPAY ==================== */
+  createEmerchantpayPayment: {
+    path: "/payment.PaymentService/CreateEmerchantpayPayment",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateEmerchantpayPaymentRequest): Buffer =>
+      Buffer.from(CreateEmerchantpayPaymentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateEmerchantpayPaymentRequest =>
+      CreateEmerchantpayPaymentRequest.decode(value),
+    responseSerialize: (value: EmerchantpayPaymentResponse): Buffer =>
+      Buffer.from(EmerchantpayPaymentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): EmerchantpayPaymentResponse => EmerchantpayPaymentResponse.decode(value),
+  },
+  getEmerchantpayPayment: {
+    path: "/payment.PaymentService/GetEmerchantpayPayment",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetEmerchantpayPaymentRequest): Buffer =>
+      Buffer.from(GetEmerchantpayPaymentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetEmerchantpayPaymentRequest => GetEmerchantpayPaymentRequest.decode(value),
+    responseSerialize: (value: EmerchantpayPaymentResponse): Buffer =>
+      Buffer.from(EmerchantpayPaymentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): EmerchantpayPaymentResponse => EmerchantpayPaymentResponse.decode(value),
+  },
+  createEmerchantpaySepaPayment: {
+    path: "/payment.PaymentService/CreateEmerchantpaySepaPayment",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateEmerchantpaySepaPaymentRequest): Buffer =>
+      Buffer.from(CreateEmerchantpaySepaPaymentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateEmerchantpaySepaPaymentRequest =>
+      CreateEmerchantpaySepaPaymentRequest.decode(value),
+    responseSerialize: (value: EmerchantpayPaymentResponse): Buffer =>
+      Buffer.from(EmerchantpayPaymentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): EmerchantpayPaymentResponse => EmerchantpayPaymentResponse.decode(value),
+  },
+  refundEmerchantpayPayment: {
+    path: "/payment.PaymentService/RefundEmerchantpayPayment",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: RefundEmerchantpayPaymentRequest): Buffer =>
+      Buffer.from(RefundEmerchantpayPaymentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): RefundEmerchantpayPaymentRequest =>
+      RefundEmerchantpayPaymentRequest.decode(value),
+    responseSerialize: (value: EmerchantpayPaymentResponse): Buffer =>
+      Buffer.from(EmerchantpayPaymentResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): EmerchantpayPaymentResponse => EmerchantpayPaymentResponse.decode(value),
+  },
+  /** ==================== PROVIDER ROUTING ==================== */
+  createRoutingRule: {
+    path: "/payment.PaymentService/CreateRoutingRule",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateRoutingRuleRequest): Buffer =>
+      Buffer.from(CreateRoutingRuleRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateRoutingRuleRequest => CreateRoutingRuleRequest.decode(value),
+    responseSerialize: (value: RoutingRuleResponse): Buffer => Buffer.from(RoutingRuleResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): RoutingRuleResponse => RoutingRuleResponse.decode(value),
+  },
+  updateRoutingRule: {
+    path: "/payment.PaymentService/UpdateRoutingRule",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateRoutingRuleRequest): Buffer =>
+      Buffer.from(UpdateRoutingRuleRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateRoutingRuleRequest => UpdateRoutingRuleRequest.decode(value),
+    responseSerialize: (value: RoutingRuleResponse): Buffer => Buffer.from(RoutingRuleResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): RoutingRuleResponse => RoutingRuleResponse.decode(value),
+  },
+  deleteRoutingRule: {
+    path: "/payment.PaymentService/DeleteRoutingRule",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteRoutingRuleRequest): Buffer =>
+      Buffer.from(DeleteRoutingRuleRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeleteRoutingRuleRequest => DeleteRoutingRuleRequest.decode(value),
+    responseSerialize: (value: DeleteRoutingRuleResponse): Buffer =>
+      Buffer.from(DeleteRoutingRuleResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DeleteRoutingRuleResponse => DeleteRoutingRuleResponse.decode(value),
+  },
+  listRoutingRules: {
+    path: "/payment.PaymentService/ListRoutingRules",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListRoutingRulesRequest): Buffer =>
+      Buffer.from(ListRoutingRulesRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListRoutingRulesRequest => ListRoutingRulesRequest.decode(value),
+    responseSerialize: (value: ListRoutingRulesResponse): Buffer =>
+      Buffer.from(ListRoutingRulesResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListRoutingRulesResponse => ListRoutingRulesResponse.decode(value),
+  },
+  testRoutingRule: {
+    path: "/payment.PaymentService/TestRoutingRule",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: TestRoutingRuleRequest): Buffer =>
+      Buffer.from(TestRoutingRuleRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): TestRoutingRuleRequest => TestRoutingRuleRequest.decode(value),
+    responseSerialize: (value: TestRoutingRuleResponse): Buffer =>
+      Buffer.from(TestRoutingRuleResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TestRoutingRuleResponse => TestRoutingRuleResponse.decode(value),
+  },
+  createProviderOverride: {
+    path: "/payment.PaymentService/CreateProviderOverride",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateProviderOverrideRequest): Buffer =>
+      Buffer.from(CreateProviderOverrideRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateProviderOverrideRequest => CreateProviderOverrideRequest.decode(value),
+    responseSerialize: (value: ProviderOverrideResponse): Buffer =>
+      Buffer.from(ProviderOverrideResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderOverrideResponse => ProviderOverrideResponse.decode(value),
+  },
+  deleteProviderOverride: {
+    path: "/payment.PaymentService/DeleteProviderOverride",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteProviderOverrideRequest): Buffer =>
+      Buffer.from(DeleteProviderOverrideRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeleteProviderOverrideRequest => DeleteProviderOverrideRequest.decode(value),
+    responseSerialize: (value: DeleteProviderOverrideResponse): Buffer =>
+      Buffer.from(DeleteProviderOverrideResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DeleteProviderOverrideResponse =>
+      DeleteProviderOverrideResponse.decode(value),
+  },
+  listProviderOverrides: {
+    path: "/payment.PaymentService/ListProviderOverrides",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListProviderOverridesRequest): Buffer =>
+      Buffer.from(ListProviderOverridesRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListProviderOverridesRequest => ListProviderOverridesRequest.decode(value),
+    responseSerialize: (value: ListProviderOverridesResponse): Buffer =>
+      Buffer.from(ListProviderOverridesResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListProviderOverridesResponse => ListProviderOverridesResponse.decode(value),
+  },
+  createReassignmentJob: {
+    path: "/payment.PaymentService/CreateReassignmentJob",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateReassignmentJobRequest): Buffer =>
+      Buffer.from(CreateReassignmentJobRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateReassignmentJobRequest => CreateReassignmentJobRequest.decode(value),
+    responseSerialize: (value: ReassignmentJobResponse): Buffer =>
+      Buffer.from(ReassignmentJobResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ReassignmentJobResponse => ReassignmentJobResponse.decode(value),
+  },
+  getReassignmentJob: {
+    path: "/payment.PaymentService/GetReassignmentJob",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetReassignmentJobRequest): Buffer =>
+      Buffer.from(GetReassignmentJobRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetReassignmentJobRequest => GetReassignmentJobRequest.decode(value),
+    responseSerialize: (value: ReassignmentJobResponse): Buffer =>
+      Buffer.from(ReassignmentJobResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ReassignmentJobResponse => ReassignmentJobResponse.decode(value),
+  },
+  /** ==================== ALERTS ==================== */
+  listAlerts: {
+    path: "/payment.PaymentService/ListAlerts",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListAlertsRequest): Buffer => Buffer.from(ListAlertsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListAlertsRequest => ListAlertsRequest.decode(value),
+    responseSerialize: (value: ListAlertsResponse): Buffer => Buffer.from(ListAlertsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListAlertsResponse => ListAlertsResponse.decode(value),
+  },
+  acknowledgeAlert: {
+    path: "/payment.PaymentService/AcknowledgeAlert",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: AcknowledgeAlertRequest): Buffer =>
+      Buffer.from(AcknowledgeAlertRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): AcknowledgeAlertRequest => AcknowledgeAlertRequest.decode(value),
+    responseSerialize: (value: AlertResponse): Buffer => Buffer.from(AlertResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): AlertResponse => AlertResponse.decode(value),
+  },
+  getAlertStats: {
+    path: "/payment.PaymentService/GetAlertStats",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetAlertStatsRequest): Buffer => Buffer.from(GetAlertStatsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetAlertStatsRequest => GetAlertStatsRequest.decode(value),
+    responseSerialize: (value: AlertStatsResponse): Buffer => Buffer.from(AlertStatsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): AlertStatsResponse => AlertStatsResponse.decode(value),
+  },
+  /** ==================== ACCOUNTING EXPORTS ==================== */
+  createExportJob: {
+    path: "/payment.PaymentService/CreateExportJob",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateExportJobRequest): Buffer =>
+      Buffer.from(CreateExportJobRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateExportJobRequest => CreateExportJobRequest.decode(value),
+    responseSerialize: (value: ExportJobResponse): Buffer => Buffer.from(ExportJobResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ExportJobResponse => ExportJobResponse.decode(value),
+  },
+  getExportJob: {
+    path: "/payment.PaymentService/GetExportJob",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetExportJobRequest): Buffer => Buffer.from(GetExportJobRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetExportJobRequest => GetExportJobRequest.decode(value),
+    responseSerialize: (value: ExportJobResponse): Buffer => Buffer.from(ExportJobResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ExportJobResponse => ExportJobResponse.decode(value),
+  },
+  listExportJobs: {
+    path: "/payment.PaymentService/ListExportJobs",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListExportJobsRequest): Buffer =>
+      Buffer.from(ListExportJobsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListExportJobsRequest => ListExportJobsRequest.decode(value),
+    responseSerialize: (value: ListExportJobsResponse): Buffer =>
+      Buffer.from(ListExportJobsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListExportJobsResponse => ListExportJobsResponse.decode(value),
+  },
+  downloadExport: {
+    path: "/payment.PaymentService/DownloadExport",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DownloadExportRequest): Buffer =>
+      Buffer.from(DownloadExportRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DownloadExportRequest => DownloadExportRequest.decode(value),
+    responseSerialize: (value: DownloadExportResponse): Buffer =>
+      Buffer.from(DownloadExportResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DownloadExportResponse => DownloadExportResponse.decode(value),
+  },
+  /** ==================== RISK SCORING ==================== */
+  getRiskScore: {
+    path: "/payment.PaymentService/GetRiskScore",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetRiskScoreRequest): Buffer => Buffer.from(GetRiskScoreRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetRiskScoreRequest => GetRiskScoreRequest.decode(value),
+    responseSerialize: (value: RiskScoreResponse): Buffer => Buffer.from(RiskScoreResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): RiskScoreResponse => RiskScoreResponse.decode(value),
+  },
+  evaluateRiskScore: {
+    path: "/payment.PaymentService/EvaluateRiskScore",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: EvaluateRiskScoreRequest): Buffer =>
+      Buffer.from(EvaluateRiskScoreRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): EvaluateRiskScoreRequest => EvaluateRiskScoreRequest.decode(value),
+    responseSerialize: (value: RiskScoreResponse): Buffer => Buffer.from(RiskScoreResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): RiskScoreResponse => RiskScoreResponse.decode(value),
+  },
+  listRiskScores: {
+    path: "/payment.PaymentService/ListRiskScores",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListRiskScoresRequest): Buffer =>
+      Buffer.from(ListRiskScoresRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListRiskScoresRequest => ListRiskScoresRequest.decode(value),
+    responseSerialize: (value: ListRiskScoresResponse): Buffer =>
+      Buffer.from(ListRiskScoresResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListRiskScoresResponse => ListRiskScoresResponse.decode(value),
+  },
+  getScoringStats: {
+    path: "/payment.PaymentService/GetScoringStats",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetScoringStatsRequest): Buffer =>
+      Buffer.from(GetScoringStatsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetScoringStatsRequest => GetScoringStatsRequest.decode(value),
+    responseSerialize: (value: ScoringStatsResponse): Buffer =>
+      Buffer.from(ScoringStatsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ScoringStatsResponse => ScoringStatsResponse.decode(value),
+  },
+  /** ==================== BANK RECONCILIATION ==================== */
+  importBankStatement: {
+    path: "/payment.PaymentService/ImportBankStatement",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ImportBankStatementRequest): Buffer =>
+      Buffer.from(ImportBankStatementRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ImportBankStatementRequest => ImportBankStatementRequest.decode(value),
+    responseSerialize: (value: ImportBankStatementResponse): Buffer =>
+      Buffer.from(ImportBankStatementResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ImportBankStatementResponse => ImportBankStatementResponse.decode(value),
+  },
+  getReconciliationStatus: {
+    path: "/payment.PaymentService/GetReconciliationStatus",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetReconciliationStatusRequest): Buffer =>
+      Buffer.from(GetReconciliationStatusRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetReconciliationStatusRequest => GetReconciliationStatusRequest.decode(value),
+    responseSerialize: (value: ReconciliationStatusResponse): Buffer =>
+      Buffer.from(ReconciliationStatusResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ReconciliationStatusResponse => ReconciliationStatusResponse.decode(value),
+  },
+  forceReconciliation: {
+    path: "/payment.PaymentService/ForceReconciliation",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ForceReconciliationRequest): Buffer =>
+      Buffer.from(ForceReconciliationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ForceReconciliationRequest => ForceReconciliationRequest.decode(value),
+    responseSerialize: (value: ReconciliationResponse): Buffer =>
+      Buffer.from(ReconciliationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ReconciliationResponse => ReconciliationResponse.decode(value),
+  },
+  listUnmatchedPayments: {
+    path: "/payment.PaymentService/ListUnmatchedPayments",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListUnmatchedPaymentsRequest): Buffer =>
+      Buffer.from(ListUnmatchedPaymentsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListUnmatchedPaymentsRequest => ListUnmatchedPaymentsRequest.decode(value),
+    responseSerialize: (value: ListUnmatchedPaymentsResponse): Buffer =>
+      Buffer.from(ListUnmatchedPaymentsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListUnmatchedPaymentsResponse => ListUnmatchedPaymentsResponse.decode(value),
+  },
+  /** ==================== PROVIDER STATUS MAPPING ==================== */
+  listProviderStatusMappings: {
+    path: "/payment.PaymentService/ListProviderStatusMappings",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListProviderStatusMappingsRequest): Buffer =>
+      Buffer.from(ListProviderStatusMappingsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListProviderStatusMappingsRequest =>
+      ListProviderStatusMappingsRequest.decode(value),
+    responseSerialize: (value: ListProviderStatusMappingsResponse): Buffer =>
+      Buffer.from(ListProviderStatusMappingsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListProviderStatusMappingsResponse =>
+      ListProviderStatusMappingsResponse.decode(value),
+  },
+  updateProviderStatusMapping: {
+    path: "/payment.PaymentService/UpdateProviderStatusMapping",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateProviderStatusMappingRequest): Buffer =>
+      Buffer.from(UpdateProviderStatusMappingRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateProviderStatusMappingRequest =>
+      UpdateProviderStatusMappingRequest.decode(value),
+    responseSerialize: (value: ProviderStatusMappingResponse): Buffer =>
+      Buffer.from(ProviderStatusMappingResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderStatusMappingResponse => ProviderStatusMappingResponse.decode(value),
+  },
+  /** ==================== REJECTION REASONS ==================== */
+  listRejectionReasons: {
+    path: "/payment.PaymentService/ListRejectionReasons",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListRejectionReasonsRequest): Buffer =>
+      Buffer.from(ListRejectionReasonsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListRejectionReasonsRequest => ListRejectionReasonsRequest.decode(value),
+    responseSerialize: (value: ListRejectionReasonsResponse): Buffer =>
+      Buffer.from(ListRejectionReasonsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListRejectionReasonsResponse => ListRejectionReasonsResponse.decode(value),
+  },
+  createRejectionReason: {
+    path: "/payment.PaymentService/CreateRejectionReason",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateRejectionReasonRequest): Buffer =>
+      Buffer.from(CreateRejectionReasonRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateRejectionReasonRequest => CreateRejectionReasonRequest.decode(value),
+    responseSerialize: (value: RejectionReasonResponse): Buffer =>
+      Buffer.from(RejectionReasonResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): RejectionReasonResponse => RejectionReasonResponse.decode(value),
+  },
+  updateRejectionReason: {
+    path: "/payment.PaymentService/UpdateRejectionReason",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateRejectionReasonRequest): Buffer =>
+      Buffer.from(UpdateRejectionReasonRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateRejectionReasonRequest => UpdateRejectionReasonRequest.decode(value),
+    responseSerialize: (value: RejectionReasonResponse): Buffer =>
+      Buffer.from(RejectionReasonResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): RejectionReasonResponse => RejectionReasonResponse.decode(value),
+  },
 } as const;
 
 export interface PaymentServiceServer extends UntypedServiceImplementation {
@@ -14819,6 +29099,83 @@ export interface PaymentServiceServer extends UntypedServiceImplementation {
   markEventProcessed: handleUnaryCall<MarkEventProcessedRequest, PaymentEventResponse>;
   /** ==================== PSP ACCOUNTS ==================== */
   getPspAccountsSummary: handleUnaryCall<GetPSPAccountsRequest, PSPAccountsSummaryResponse>;
+  /** ==================== SLIMPAY ==================== */
+  createSlimpayMandate: handleUnaryCall<CreateSlimpayMandateRequest, SlimpayMandateResponse>;
+  getSlimpayMandate: handleUnaryCall<GetSlimpayMandateRequest, SlimpayMandateResponse>;
+  cancelSlimpayMandate: handleUnaryCall<CancelSlimpayMandateRequest, SlimpayMandateResponse>;
+  createSlimpayPayment: handleUnaryCall<CreateSlimpayPaymentRequest, SlimpayPaymentResponse>;
+  getSlimpayPayment: handleUnaryCall<GetSlimpayPaymentRequest, SlimpayPaymentResponse>;
+  /** ==================== MULTISAFEPAY ==================== */
+  createMultiSafepayTransaction: handleUnaryCall<CreateMultiSafepayTransactionRequest, MultiSafepayTransactionResponse>;
+  getMultiSafepayTransaction: handleUnaryCall<GetMultiSafepayTransactionRequest, MultiSafepayTransactionResponse>;
+  refundMultiSafepayTransaction: handleUnaryCall<RefundMultiSafepayTransactionRequest, MultiSafepayTransactionResponse>;
+  /** ==================== EMERCHANTPAY ==================== */
+  createEmerchantpayPayment: handleUnaryCall<CreateEmerchantpayPaymentRequest, EmerchantpayPaymentResponse>;
+  getEmerchantpayPayment: handleUnaryCall<GetEmerchantpayPaymentRequest, EmerchantpayPaymentResponse>;
+  createEmerchantpaySepaPayment: handleUnaryCall<CreateEmerchantpaySepaPaymentRequest, EmerchantpayPaymentResponse>;
+  refundEmerchantpayPayment: handleUnaryCall<RefundEmerchantpayPaymentRequest, EmerchantpayPaymentResponse>;
+  /** ==================== PROVIDER ROUTING ==================== */
+  createRoutingRule: handleUnaryCall<CreateRoutingRuleRequest, RoutingRuleResponse>;
+  updateRoutingRule: handleUnaryCall<UpdateRoutingRuleRequest, RoutingRuleResponse>;
+  deleteRoutingRule: handleUnaryCall<DeleteRoutingRuleRequest, DeleteRoutingRuleResponse>;
+  listRoutingRules: handleUnaryCall<ListRoutingRulesRequest, ListRoutingRulesResponse>;
+  testRoutingRule: handleUnaryCall<TestRoutingRuleRequest, TestRoutingRuleResponse>;
+  createProviderOverride: handleUnaryCall<CreateProviderOverrideRequest, ProviderOverrideResponse>;
+  deleteProviderOverride: handleUnaryCall<DeleteProviderOverrideRequest, DeleteProviderOverrideResponse>;
+  listProviderOverrides: handleUnaryCall<ListProviderOverridesRequest, ListProviderOverridesResponse>;
+  createReassignmentJob: handleUnaryCall<CreateReassignmentJobRequest, ReassignmentJobResponse>;
+  getReassignmentJob: handleUnaryCall<GetReassignmentJobRequest, ReassignmentJobResponse>;
+  /** ==================== ALERTS ==================== */
+  listAlerts: handleUnaryCall<ListAlertsRequest, ListAlertsResponse>;
+  acknowledgeAlert: handleUnaryCall<AcknowledgeAlertRequest, AlertResponse>;
+  getAlertStats: handleUnaryCall<GetAlertStatsRequest, AlertStatsResponse>;
+  /** ==================== ACCOUNTING EXPORTS ==================== */
+  createExportJob: handleUnaryCall<CreateExportJobRequest, ExportJobResponse>;
+  getExportJob: handleUnaryCall<GetExportJobRequest, ExportJobResponse>;
+  listExportJobs: handleUnaryCall<ListExportJobsRequest, ListExportJobsResponse>;
+  downloadExport: handleUnaryCall<DownloadExportRequest, DownloadExportResponse>;
+  /** ==================== RISK SCORING ==================== */
+  getRiskScore: handleUnaryCall<GetRiskScoreRequest, RiskScoreResponse>;
+  evaluateRiskScore: handleUnaryCall<EvaluateRiskScoreRequest, RiskScoreResponse>;
+  listRiskScores: handleUnaryCall<ListRiskScoresRequest, ListRiskScoresResponse>;
+  getScoringStats: handleUnaryCall<GetScoringStatsRequest, ScoringStatsResponse>;
+  /** ==================== BANK RECONCILIATION ==================== */
+  importBankStatement: handleUnaryCall<ImportBankStatementRequest, ImportBankStatementResponse>;
+  getReconciliationStatus: handleUnaryCall<GetReconciliationStatusRequest, ReconciliationStatusResponse>;
+  forceReconciliation: handleUnaryCall<ForceReconciliationRequest, ReconciliationResponse>;
+  listUnmatchedPayments: handleUnaryCall<ListUnmatchedPaymentsRequest, ListUnmatchedPaymentsResponse>;
+  /** ==================== PROVIDER STATUS MAPPING ==================== */
+  listProviderStatusMappings: handleUnaryCall<ListProviderStatusMappingsRequest, ListProviderStatusMappingsResponse>;
+  updateProviderStatusMapping: handleUnaryCall<UpdateProviderStatusMappingRequest, ProviderStatusMappingResponse>;
+  /** ==================== REJECTION REASONS ==================== */
+  listRejectionReasons: handleUnaryCall<ListRejectionReasonsRequest, ListRejectionReasonsResponse>;
+  createRejectionReason: handleUnaryCall<CreateRejectionReasonRequest, RejectionReasonResponse>;
+  updateRejectionReason: handleUnaryCall<UpdateRejectionReasonRequest, RejectionReasonResponse>;
+}
+
+function bytesFromBase64(b64: string): Uint8Array {
+  if ((globalThis as any).Buffer) {
+    return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
+  } else {
+    const bin = globalThis.atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; ++i) {
+      arr[i] = bin.charCodeAt(i);
+    }
+    return arr;
+  }
+}
+
+function base64FromBytes(arr: Uint8Array): string {
+  if ((globalThis as any).Buffer) {
+    return globalThis.Buffer.from(arr).toString("base64");
+  } else {
+    const bin: string[] = [];
+    arr.forEach((byte) => {
+      bin.push(globalThis.String.fromCharCode(byte));
+    });
+    return globalThis.btoa(bin.join(""));
+  }
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

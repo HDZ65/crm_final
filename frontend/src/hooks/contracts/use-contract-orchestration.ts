@@ -1,8 +1,13 @@
 "use client"
 
 import { useState, useCallback, useMemo } from 'react'
-import { api, ApiError } from '@/lib/api'
 import { useAuth } from '@/hooks/auth/useAuth'
+import {
+  activateContrat,
+  suspendContrat,
+  terminateContrat,
+  portInContrat,
+} from '@/actions/contrats'
 
 export type OrchestrationAction = 'activate' | 'suspend' | 'terminate' | 'port-in'
 
@@ -19,7 +24,7 @@ export interface OrchestrationPayload {
 }
 
 export interface UseContractOrchestrationResult {
-  error: ApiError | null
+  error: string | null
   lastAction: OrchestrationAction | null
   canOrchestrate: boolean // Whether user has required roles
   activate: (payload?: OrchestrationPayload) => Promise<boolean>
@@ -50,7 +55,7 @@ export interface UseContractOrchestrationResult {
  */
 export function useContractOrchestration(contractId: string): UseContractOrchestrationResult {
   const { hasAnyRole } = useAuth()
-  const [error, setError] = useState<ApiError | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [lastAction, setLastAction] = useState<OrchestrationAction | null>(null)
 
   // Check if user has required roles for orchestration operations
@@ -64,13 +69,13 @@ export function useContractOrchestration(contractId: string): UseContractOrchest
     payload?: OrchestrationPayload
   ): Promise<boolean> => {
     if (!contractId) {
-      setError(new ApiError('ID de contrat manquant', 400))
+      setError('ID de contrat manquant')
       return false
     }
 
     // Check role before making API call to avoid 403
     if (!canOrchestrate) {
-      setError(new ApiError('Vous n\'avez pas les droits pour effectuer cette action', 403))
+      setError('Vous n\'avez pas les droits pour effectuer cette action')
       return false
     }
 
@@ -78,13 +83,36 @@ export function useContractOrchestration(contractId: string): UseContractOrchest
     setLastAction(action)
 
     try {
-      await api.post(`/orchestration/contracts/${contractId}/${action}`, payload || {})
+      let result: { data: { success: boolean; message: string } | null; error: string | null }
+      const payloadData = payload?.payload || {}
+
+      switch (action) {
+        case 'activate':
+          result = await activateContrat(contractId, payloadData)
+          break
+        case 'suspend':
+          result = await suspendContrat(contractId, payloadData)
+          break
+        case 'terminate':
+          result = await terminateContrat(contractId, payloadData)
+          break
+        case 'port-in':
+          result = await portInContrat(contractId, payloadData)
+          break
+        default:
+          setError('Action inconnue')
+          return false
+      }
+
+      if (result.error) {
+        setError(result.error)
+        return false
+      }
+
       return true
     } catch (err) {
-      const apiError = err instanceof ApiError
-        ? err
-        : new ApiError('Erreur lors de l\'opération', 500)
-      setError(apiError)
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'opération'
+      setError(errorMessage)
       return false
     }
   }, [contractId, canOrchestrate])

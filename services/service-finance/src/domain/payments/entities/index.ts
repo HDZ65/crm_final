@@ -30,3 +30,22 @@ export * from './retry-audit-log.entity';
 
 // Audit
 export * from './payment-audit-log.entity';
+
+// Dunning
+export * from './dunning-config.entity';
+
+// Archive
+export * from './payment-archive.entity';
+
+// CDC Payment entities
+export * from './payment-status.entity';
+export * from './rejection-reason.entity';
+export * from './provider-status-mapping.entity';
+export * from './provider-routing-rule.entity';
+export * from './provider-override.entity';
+export * from './provider-reassignment-job.entity';
+export * from './alert.entity';
+export * from './export-job.entity';
+export * from './risk-score.entity';
+export * from './customer-interaction.entity';
+export * from './reconciliation.entity';

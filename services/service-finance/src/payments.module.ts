@@ -1,5 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Domain entities
 import {
@@ -24,19 +26,71 @@ import {
   ReminderEntity,
   RetryAuditLogEntity,
   PaymentAuditLogEntity,
+  PaymentStatusEntity,
+  RejectionReasonEntity,
+  ProviderStatusMappingEntity,
+  ProviderRoutingRuleEntity,
+  ProviderOverrideEntity,
+  ProviderReassignmentJobEntity,
+  AlertEntity,
+  ExportJobEntity,
+  RiskScoreEntity,
+  CustomerInteractionEntity,
+  ReconciliationEntity,
+  PaymentArchiveEntity,
+  DunningConfigEntity,
 } from './domain/payments/entities';
 
 // Infrastructure services
-import { SchedulesService } from './infrastructure/persistence/typeorm/repositories/payments';
+import {
+  SchedulesService,
+  RumGeneratorService,
+  ArchiveSchedulerService,
+  CustomerInteractionService,
+  ScoringClientService,
+  SelectiveDunningService,
+} from './infrastructure/persistence/typeorm/repositories/payments';
+import { ProviderStatusMappingService } from './infrastructure/persistence/typeorm/repositories/payments/provider-status-mapping.service';
+import {
+  EncryptionService,
+  IbanMaskingService,
+  SensitiveDataInterceptor,
+} from './infrastructure/security';
+import {
+  MultiSafepayApiService,
+  MultiSafepayWebhookHandler,
+} from './infrastructure/psp/multisafepay';
+
+// PSP connectors
+import { SlimpayApiService, SlimpayWebhookHandler } from './infrastructure/psp/slimpay';
 
 // Interface controllers
-import { SchedulesController } from './interfaces/grpc/controllers/payments';
+import { SchedulesController, StatusMappingController } from './infrastructure/grpc/payments';
+import { SlimpayController } from './interfaces/grpc/controllers/payments/slimpay.controller';
+import { MultiSafepayController } from './interfaces/grpc/controllers/payments/multisafepay.controller';
+import { ArchiveController } from './interfaces/grpc/controllers/payments/archive.controller';
+import { ExportController } from './interfaces/grpc/controllers/payments/export.controller';
+import { ExportService } from './infrastructure/persistence/typeorm/repositories/payments/export.service';
+import { AlertController } from './interfaces/grpc/controllers/payments/alert.controller';
+import { AlertService } from './infrastructure/persistence/typeorm/repositories/payments/alert.service';
+import { DunningSeedService } from './infrastructure/persistence/typeorm/repositories/payments/dunning-seed.service';
+import { CbUpdateSessionService } from './infrastructure/persistence/typeorm/repositories/payments/cb-update-session.service';
+import { DunningMaxRetriesExceededHandler } from './infrastructure/messaging/nats/handlers/dunning-max-retries-exceeded.handler';
+import { DepanssurPaymentFailedHandler } from './infrastructure/messaging/nats/handlers/depanssur-payment-failed.handler';
+import { DepanssurPaymentSucceededHandler } from './infrastructure/messaging/nats/handlers/depanssur-payment-succeeded.handler';
+import { DunningDepanssurService } from './domain/payments/services/dunning-depanssur.service';
+import { SMS_SERVICE_TOKEN } from './infrastructure/external/sms/sms-service.interface';
+import { MockSmsService } from './infrastructure/external/sms/mock-sms.service';
+import { IMS_CLIENT_TOKEN } from './infrastructure/external/ims/ims-client.interface';
+import { MockImsClientService } from './infrastructure/external/ims/mock-ims-client.service';
+import { CbUpdateSessionController } from './interfaces/http/controllers/payments/cb-update-session.controller';
+import { FacturesModule } from './factures.module';
 
-// NATS handlers
-import { ContractSignedHandler } from './infrastructure/messaging/nats/handlers';
-
+@Global()
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
+    FacturesModule,
     TypeOrmModule.forFeature([
       ScheduleEntity,
       PaymentIntentEntity,
@@ -59,17 +113,90 @@ import { ContractSignedHandler } from './infrastructure/messaging/nats/handlers'
       ReminderEntity,
       RetryAuditLogEntity,
       PaymentAuditLogEntity,
+      PaymentStatusEntity,
+      RejectionReasonEntity,
+      ProviderStatusMappingEntity,
+      ProviderRoutingRuleEntity,
+      ProviderOverrideEntity,
+      ProviderReassignmentJobEntity,
+      AlertEntity,
+      ExportJobEntity,
+      RiskScoreEntity,
+      CustomerInteractionEntity,
+      ReconciliationEntity,
+      PaymentArchiveEntity,
+      DunningConfigEntity,
     ]),
   ],
   controllers: [
     SchedulesController,
+    StatusMappingController,
+    SlimpayController,
+    MultiSafepayController,
+    ArchiveController,
+    ExportController,
+    AlertController,
+    CbUpdateSessionController,
   ],
   providers: [
     SchedulesService,
-    ContractSignedHandler,
+    RumGeneratorService,
+    ProviderStatusMappingService,
+    EncryptionService,
+    IbanMaskingService,
+    SlimpayApiService,
+    SlimpayWebhookHandler,
+    MultiSafepayApiService,
+    MultiSafepayWebhookHandler,
+    ArchiveSchedulerService,
+    CustomerInteractionService,
+    ScoringClientService,
+    ExportService,
+    AlertService,
+    SelectiveDunningService,
+    DunningSeedService,
+    CbUpdateSessionService,
+    DunningMaxRetriesExceededHandler,
+    DunningDepanssurService,
+    DepanssurPaymentFailedHandler,
+    DepanssurPaymentSucceededHandler,
+    {
+      provide: SMS_SERVICE_TOKEN,
+      useClass: MockSmsService,
+    },
+    {
+      provide: IMS_CLIENT_TOKEN,
+      useClass: MockImsClientService,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: SensitiveDataInterceptor,
+    },
   ],
   exports: [
     SchedulesService,
+    RumGeneratorService,
+    ProviderStatusMappingService,
+    EncryptionService,
+    IbanMaskingService,
+    SlimpayApiService,
+    SlimpayWebhookHandler,
+    MultiSafepayApiService,
+    MultiSafepayWebhookHandler,
+    ArchiveSchedulerService,
+    CustomerInteractionService,
+    ScoringClientService,
+    ExportService,
+    AlertService,
+    SelectiveDunningService,
+    DunningSeedService,
+    CbUpdateSessionService,
+    DunningMaxRetriesExceededHandler,
+    DunningDepanssurService,
+    DepanssurPaymentFailedHandler,
+    DepanssurPaymentSucceededHandler,
+    SMS_SERVICE_TOKEN,
+    IMS_CLIENT_TOKEN,
   ],
 })
 export class PaymentsModule {}

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { AuthInterceptor } from '@crm/shared-kernel';
+import { AuthInterceptor, NatsModule } from '@crm/shared-kernel';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
@@ -46,6 +46,13 @@ import { SubscriptionsModule } from './subscriptions.module';
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 2000,
         },
+      }),
+    }),
+    NatsModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        servers: configService.get<string>('NATS_URL', 'nats://localhost:4222'),
       }),
     }),
     // DDD Bounded Context Modules

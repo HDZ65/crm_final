@@ -1,51 +1,36 @@
 /**
- * React hooks pour utiliser les services Maileva via l'API backend
- * Ces hooks peuvent être utilisés dans un frontend React/Next.js
+ * React hooks pour utiliser les services Maileva via gRPC (logistics service)
+ * Migrated from REST to gRPC — Wave 3 Task 8
+ *
+ * These hooks wrap the logistics gRPC client for label generation,
+ * shipment tracking, pricing simulation, and address validation.
  */
 
 import { useState, useCallback } from 'react';
+import { logistics } from '@/lib/grpc/clients/logistics';
 import type {
-  MailevaAddress,
-  MailevaLabelRequest,
-  MailevaLabelResponse,
-  MailevaTrackingResponse,
-  MailevaPricingRequest,
-  MailevaPricingResponse,
-  MailevaAddressValidationResponse,
-} from '@/types/maileva';
+  GenerateLabelRequest,
+  LabelResponse,
+  TrackingResponse,
+  SimulatePricingRequest,
+  PricingResponse,
+  AddressValidationResponse,
+} from '@proto/logistics/logistics';
 
 // ============================================================================
-// Configuration
-// ============================================================================
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-// ============================================================================
-// Hook: useMailevaLabel - Générer une étiquette d'envoi
+// Hook: useMailevaLabel - Générer une étiquette d'envoi via gRPC
 // ============================================================================
 
 export function useMailevaLabel() {
   const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<MailevaLabelResponse | null>(null);
+  const [data, setData] = useState<LabelResponse | null>(null);
 
   const generateLabel = useCallback(
-    async (request: MailevaLabelRequest): Promise<MailevaLabelResponse> => {
+    async (request: GenerateLabelRequest): Promise<LabelResponse> => {
       setError(null);
 
       try {
-        const response = await fetch(`${API_BASE_URL}/logistics/labels`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(request),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-
-        const result: MailevaLabelResponse = await response.json();
+        const result = await logistics.generateLabel(request);
         setData(result);
         return result;
       } catch (err) {
@@ -65,33 +50,19 @@ export function useMailevaLabel() {
 }
 
 // ============================================================================
-// Hook: useMailevaTracking - Suivre un envoi
+// Hook: useMailevaTracking - Suivre un envoi via gRPC
 // ============================================================================
 
 export function useMailevaTracking() {
   const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<MailevaTrackingResponse | null>(null);
+  const [data, setData] = useState<TrackingResponse | null>(null);
 
   const trackShipment = useCallback(
-    async (trackingNumber: string): Promise<MailevaTrackingResponse> => {
+    async (trackingNumber: string): Promise<TrackingResponse> => {
       setError(null);
 
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/logistics/tracking/${encodeURIComponent(trackingNumber)}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-
-        const result: MailevaTrackingResponse = await response.json();
+        const result = await logistics.trackShipment({ trackingNumber });
         setData(result);
         return result;
       } catch (err) {
@@ -111,31 +82,19 @@ export function useMailevaTracking() {
 }
 
 // ============================================================================
-// Hook: useMailevaPricing - Simuler le tarif d'un envoi
+// Hook: useMailevaPricing - Simuler le tarif d'un envoi via gRPC
 // ============================================================================
 
 export function useMailevaPricing() {
   const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<MailevaPricingResponse | null>(null);
+  const [data, setData] = useState<PricingResponse | null>(null);
 
   const simulatePricing = useCallback(
-    async (request: MailevaPricingRequest): Promise<MailevaPricingResponse> => {
+    async (request: SimulatePricingRequest): Promise<PricingResponse> => {
       setError(null);
 
       try {
-        const response = await fetch(`${API_BASE_URL}/logistics/pricing/simulate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(request),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-
-        const result: MailevaPricingResponse = await response.json();
+        const result = await logistics.simulatePricing(request);
         setData(result);
         return result;
       } catch (err) {
@@ -155,38 +114,20 @@ export function useMailevaPricing() {
 }
 
 // ============================================================================
-// Hook: useMailevaAddressValidation - Valider une adresse
+// Hook: useMailevaAddressValidation - Valider une adresse via gRPC
 // ============================================================================
 
 export function useMailevaAddressValidation() {
   const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<MailevaAddressValidationResponse | null>(
-    null
-  );
+  const [data, setData] = useState<AddressValidationResponse | null>(null);
 
   const validateAddress = useCallback(
-    async (
-      address: MailevaAddress
-    ): Promise<MailevaAddressValidationResponse> => {
+    async (addressInput: { line1: string; line2?: string; postalCode: string; city: string; country: string }): Promise<AddressValidationResponse> => {
       setError(null);
 
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/logistics/addresses/validate`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(address),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-
-        const result: MailevaAddressValidationResponse = await response.json();
+        // Wrap flat address into gRPC ValidateAddressRequest format
+        const result = await logistics.validateAddress({ address: addressInput });
         setData(result);
         return result;
       } catch (err) {
@@ -206,7 +147,7 @@ export function useMailevaAddressValidation() {
 }
 
 // ============================================================================
-// Hook combiné: useMaileva - Tous les services Maileva
+// Hook combiné: useMaileva - Tous les services Maileva via gRPC
 // ============================================================================
 
 export function useMaileva() {

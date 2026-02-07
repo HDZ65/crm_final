@@ -1,59 +1,124 @@
 /**
  * Depanssur gRPC Client
+ * Fixed in Wave 3 Task 8 — aligned with standard gRPC client pattern
  */
 
-import { grpcClient } from './config';
+import { createAuthChannelCredentials } from "@/lib/grpc/auth";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
+import {
+  DepanssurServiceService,
+  type AbonnementDepanssur,
+  type CreateAbonnementRequest,
+  type GetAbonnementRequest,
+  type GetAbonnementByClientRequest,
+  type UpdateAbonnementRequest,
+  type ListAbonnementsRequest,
+  type ListAbonnementsResponse,
+  type CreateDossierRequest,
+  type DossierDeclaratif,
+  type GetDossierRequest,
+  type GetDossierByReferenceRequest,
+  type UpdateDossierRequest,
+  type ListDossiersRequest,
+  type ListDossiersResponse,
+  type ListOptionsRequest,
+  type ListOptionsResponse,
+  type GetCompteurRequest,
+  type CompteurPlafond,
+} from "@proto/depanssur/depanssur";
+
+let depanssurInstance: GrpcClient | null = null;
+
+function getDepanssurClient(): GrpcClient {
+  if (!depanssurInstance) {
+    depanssurInstance = makeClient(
+      DepanssurServiceService,
+      "DepanssurService",
+      SERVICES.depanssur,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return depanssurInstance;
+}
 
 export const depanssurClient = {
-  // Abonnements
-  async createAbonnement(request: any) {
-    return grpcClient.depanssur.DepanssurService.CreateAbonnement(request);
-  },
+  // ==================== ABONNEMENTS ====================
 
-  async getAbonnement(request: { id: string; organisationId: string }) {
-    return grpcClient.depanssur.DepanssurService.GetAbonnement(request);
-  },
+  createAbonnement: (request: CreateAbonnementRequest): Promise<AbonnementDepanssur> =>
+    promisify<CreateAbonnementRequest, AbonnementDepanssur>(
+      getDepanssurClient(),
+      "createAbonnement"
+    )(request),
 
-  async getAbonnementByClient(request: { clientId: string; organisationId: string }) {
-    return grpcClient.depanssur.DepanssurService.GetAbonnementByClient(request);
-  },
+  getAbonnement: (request: GetAbonnementRequest): Promise<AbonnementDepanssur> =>
+    promisify<GetAbonnementRequest, AbonnementDepanssur>(
+      getDepanssurClient(),
+      "getAbonnement"
+    )(request),
 
-  async updateAbonnement(request: any) {
-    return grpcClient.depanssur.DepanssurService.UpdateAbonnement(request);
-  },
+  getAbonnementByClient: (request: GetAbonnementByClientRequest): Promise<AbonnementDepanssur> =>
+    promisify<GetAbonnementByClientRequest, AbonnementDepanssur>(
+      getDepanssurClient(),
+      "getAbonnementByClient"
+    )(request),
 
-  async listAbonnements(request: any) {
-    return grpcClient.depanssur.DepanssurService.ListAbonnements(request);
-  },
+  updateAbonnement: (request: UpdateAbonnementRequest): Promise<AbonnementDepanssur> =>
+    promisify<UpdateAbonnementRequest, AbonnementDepanssur>(
+      getDepanssurClient(),
+      "updateAbonnement"
+    )(request),
 
-  // Dossiers
-  async createDossier(request: any) {
-    return grpcClient.depanssur.DepanssurService.CreateDossier(request);
-  },
+  listAbonnements: (request: ListAbonnementsRequest): Promise<ListAbonnementsResponse> =>
+    promisify<ListAbonnementsRequest, ListAbonnementsResponse>(
+      getDepanssurClient(),
+      "listAbonnements"
+    )(request),
 
-  async getDossier(request: { id: string; organisationId: string }) {
-    return grpcClient.depanssur.DepanssurService.GetDossier(request);
-  },
+  // ==================== DOSSIERS ====================
 
-  async getDossierByReference(request: { referenceExterne: string; organisationId: string }) {
-    return grpcClient.depanssur.DepanssurService.GetDossierByReference(request);
-  },
+  createDossier: (request: CreateDossierRequest): Promise<DossierDeclaratif> =>
+    promisify<CreateDossierRequest, DossierDeclaratif>(
+      getDepanssurClient(),
+      "createDossier"
+    )(request),
 
-  async updateDossier(request: any) {
-    return grpcClient.depanssur.DepanssurService.UpdateDossier(request);
-  },
+  getDossier: (request: GetDossierRequest): Promise<DossierDeclaratif> =>
+    promisify<GetDossierRequest, DossierDeclaratif>(
+      getDepanssurClient(),
+      "getDossier"
+    )(request),
 
-  async listDossiers(request: any) {
-    return grpcClient.depanssur.DepanssurService.ListDossiers(request);
-  },
+  getDossierByReference: (request: GetDossierByReferenceRequest): Promise<DossierDeclaratif> =>
+    promisify<GetDossierByReferenceRequest, DossierDeclaratif>(
+      getDepanssurClient(),
+      "getDossierByReference"
+    )(request),
 
-  // Options
-  async listOptions(request: { abonnementId: string; organisationId: string }) {
-    return grpcClient.depanssur.DepanssurService.ListOptions(request);
-  },
+  updateDossier: (request: UpdateDossierRequest): Promise<DossierDeclaratif> =>
+    promisify<UpdateDossierRequest, DossierDeclaratif>(
+      getDepanssurClient(),
+      "updateDossier"
+    )(request),
 
-  // Compteurs
-  async getCurrentCompteur(request: { abonnementId: string; organisationId: string }) {
-    return grpcClient.depanssur.DepanssurService.GetCurrentCompteur(request);
-  },
+  listDossiers: (request: ListDossiersRequest): Promise<ListDossiersResponse> =>
+    promisify<ListDossiersRequest, ListDossiersResponse>(
+      getDepanssurClient(),
+      "listDossiers"
+    )(request),
+
+  // ==================== OPTIONS ====================
+
+  listOptions: (request: ListOptionsRequest): Promise<ListOptionsResponse> =>
+    promisify<ListOptionsRequest, ListOptionsResponse>(
+      getDepanssurClient(),
+      "listOptions"
+    )(request),
+
+  // ==================== COMPTEURS ====================
+
+  getCurrentCompteur: (request: GetCompteurRequest): Promise<CompteurPlafond> =>
+    promisify<GetCompteurRequest, CompteurPlafond>(
+      getDepanssurClient(),
+      "getCompteur"
+    )(request),
 };

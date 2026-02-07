@@ -13,3 +13,8 @@ export * from "./activites";
 export * from "./relance";
 export * from "./notifications";
 export * from "./calendar";
+export * from "./bundle";
+export * from "./conciergerie";
+export * from "./justi-plus";
+export * from "./wincash";
+export * from "./depanssur";

@@ -1,4 +1,15 @@
-﻿import { useState, useEffect } from "react"
+/**
+ * REST EXCEPTION — AI Health Check
+ *
+ * This hook intentionally uses REST (fetch) instead of gRPC because:
+ * 1. The AI health endpoint is a simple HTTP GET health check
+ * 2. It uses the Next.js API route proxy (/api/ai/health) as primary
+ * 3. Falls back to direct backend HTTP call
+ * 4. gRPC is not appropriate for browser-side health polling
+ *
+ * This is a documented exception in the REST→gRPC migration (Wave 3 Task 8).
+ */
+import { useState, useEffect } from "react"
 
 const NEXT_API_HEALTH_URL = "/api/ai/health"
 const DIRECT_BACKEND_HEALTH_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL

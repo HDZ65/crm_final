@@ -14,6 +14,13 @@ import {
   ListTodo,
   Receipt,
   Calendar,
+  Settings,
+  Rocket,
+  FlaskConical,
+  FileText,
+  CreditCard,
+  Bug,
+  ShieldCheck,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -65,6 +72,16 @@ const NAV_ITEMS = [
     icon: DollarSign,
   },
   {
+    title: "Validation ADV",
+    url: "/commissions/validation",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Reporting",
+    url: "/commissions/reporting",
+    icon: BarChart3,
+  },
+  {
     title: "Facturation",
     url: "/facturation",
     icon: Receipt,
@@ -83,6 +100,19 @@ const NAV_ITEMS = [
     title: "Statistiques",
     url: "/statistiques",
     icon: BarChart3,
+  },
+];
+
+const NAV_SECONDARY_ITEMS = [
+  {
+    title: "Paramètres",
+    url: "/parametres/types-activites",
+    icon: Settings,
+  },
+  {
+    title: "Onboarding",
+    url: "/onboarding",
+    icon: Rocket,
   },
 ];
 
@@ -322,6 +352,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarHeader>
       <SidebarContent>
         <NavMain items={NAV_ITEMS} />
+        <NavMain items={NAV_SECONDARY_ITEMS} label="Utilitaires & Dev" />
       </SidebarContent>
       <SidebarFooter>
         {isAuthenticated && userData ? (

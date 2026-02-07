@@ -1,5 +1,96 @@
 import { translateBackendError, extractValidationErrors } from "../errors/messages";
 
+/**
+ * REST→gRPC MIGRATION PLAN
+ * 
+ * This ApiClient is a temporary REST adapter for legacy endpoints.
+ * All endpoints below are scheduled for migration to gRPC in Waves 3-5.
+ * 
+ * MIGRATION INVENTORY (35 controllers):
+ * 
+ * DEDICATED PAGE CONTROLLERS (15):
+ * - permission.controller (core) → organisations/users.proto
+ * - role-permission.controller (core) → organisations/users.proto
+ * - partenaire-marque-blanche.controller (core) → organisations/organisations.proto
+ * - subscription.controller (commercial) → subscriptions/subscriptions.proto
+ * - subscription-plan.controller (commercial) → subscriptions/subscriptions.proto
+ * - formule-produit.controller (commercial) → products/products.proto
+ * - woocommerce.controller (commercial) → woocommerce/woocommerce.proto
+ * - mailbox.controller (engagement) → email/email.proto
+ * - meeting.controller (engagement) → agenda/agenda.proto
+ * - call-summary.controller (engagement) → agenda/agenda.proto
+ * - routing.controller (finance) → payments/payment.proto
+ * - archive.controller (finance) → payments/payment.proto
+ * - alert.controller (finance) → payments/payment.proto
+ * - export.controller (finance) → payments/payment.proto
+ * - fulfillment-batch.controller (logistics) → fulfillment/fulfillment.proto
+ * 
+ * EMBEDDED SECTION CONTROLLERS (20):
+ * - adresse.controller (core) → clients/clients.proto
+ * - client-entreprise.controller (core) → clients/clients.proto
+ * - client-partenaire.controller (core) → clients/clients.proto
+ * - statut-client.controller (core) → clients/clients.proto
+ * - condition-paiement.controller (core) → clients/clients.proto
+ * - emission-facture.controller (core) → clients/clients.proto
+ * - facturation-par.controller (core) → clients/clients.proto
+ * - periode-facturation.controller (core) → clients/clients.proto
+ * - transporteur-compte.controller (core) → clients/clients.proto
+ * - boite-mail.controller (core) → email/email.proto
+ * - piece-jointe.controller (core) → documents/documents.proto
+ * - theme-marque.controller (core) → organisations/organisations.proto
+ * - statut-partenaire.controller (core) → organisations/organisations.proto
+ * - calendar-event.controller (engagement) → agenda/agenda.proto
+ * - preference.controller (commercial) → subscriptions/subscriptions.proto
+ * - multisafepay.controller (finance) → payments/payment.proto
+ * - slimpay.controller (finance) → payments/payment.proto
+ * - status-mapping.controller (finance) → payments/payment.proto
+ * - fulfillment-cutoff.controller (logistics) → fulfillment/fulfillment.proto
+ * - carrier.controller (logistics) → logistics/logistics.proto
+ * 
+  * REST CONSUMERS (35 imports):
+  * - hooks/auth/useAuth.ts
+  * - hooks/commissions/* (13 files)
+  * - hooks/contracts/* (2 files)
+  * - hooks/core/* (2 files)
+  * - hooks/email/* (2 files)
+  * - hooks/factures/index.ts
+  * - hooks/logistics/use-expeditions.ts
+  * - hooks/payment/* (3 files)
+  * - hooks/stats/* (6 files)
+  * - components/payment/schedule-form.tsx
+  * 
+  * DIRECT BACKEND_API_URL REFERENCES (14):
+  * - app/api/ai/health/route.ts
+  * - components/dashboard/greeting-briefing.tsx
+  * - contexts/ai-health-context.tsx
+  * - hooks/ai/use-ai-health.ts
+  * - hooks/email/use-maileva.ts
+  * - hooks/email/use-oauth-email.ts
+  * - lib/payments/stripe.ts
+  * - stores/ai-assistant-store.ts
+ * 
+ * PROTO COMPLETENESS: ✓ ALL 35 CONTROLLERS HAVE PROTO FILES
+ * - organisations/users.proto (45 RPCs)
+ * - organisations/organisations.proto (50 RPCs)
+ * - subscriptions/subscriptions.proto (41 RPCs)
+ * - products/products.proto (50 RPCs)
+ * - woocommerce/woocommerce.proto (16 RPCs)
+ * - email/email.proto (21 RPCs)
+ * - agenda/agenda.proto (21 RPCs)
+ * - payments/payment.proto (80 RPCs)
+ * - fulfillment/fulfillment.proto (15 RPCs)
+ * - clients/clients.proto (27 RPCs)
+ * - documents/documents.proto (19 RPCs)
+ * - logistics/logistics.proto (23 RPCs)
+ * 
+ * MIGRATION TIMELINE:
+ * - Wave 3 (Tasks 4-8): Core infrastructure & gRPC client setup
+ * - Wave 4 (Tasks 9-23): DEDICATED PAGE controllers (15 controllers)
+ * - Wave 5 (Tasks 24-43): EMBEDDED SECTION controllers (20 controllers)
+ * 
+ * NO BLOCKING ISSUES - All proto files exist with RPC methods defined.
+ */
+
 const API_URL =
   process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:8000";
 

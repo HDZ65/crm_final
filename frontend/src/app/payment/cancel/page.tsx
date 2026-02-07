@@ -55,37 +55,20 @@ function PaymentCancelContent() {
       </CardContent>
 
       <CardFooter className="flex flex-col gap-2">
-        {isGoCardless ? (
-          <>
-            <Button asChild className="w-full">
-              <Link href="/test-payment">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Réessayer
-              </Link>
-            </Button>
-            {clientId && (
-              <Button variant="outline" asChild className="w-full">
-                <Link href={`/clients/${clientId}`}>
-                  Retour au client
-                </Link>
-              </Button>
-            )}
-          </>
-        ) : (
-          <Button asChild className="w-full">
-            <Link href="/test-stripe">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Réessayer le paiement
-            </Link>
-          </Button>
-        )}
-        <Button variant="ghost" asChild className="w-full">
-          <Link href="/">
-            <Home className="mr-2 h-4 w-4" />
-            Retour à l&apos;accueil
-          </Link>
-        </Button>
-      </CardFooter>
+         {clientId && (
+           <Button variant="outline" asChild className="w-full">
+             <Link href={`/clients/${clientId}`}>
+               Retour au client
+             </Link>
+           </Button>
+         )}
+         <Button variant="ghost" asChild className="w-full">
+           <Link href="/">
+             <Home className="mr-2 h-4 w-4" />
+             Retour à l&apos;accueil
+           </Link>
+         </Button>
+       </CardFooter>
     </Card>
   );
 }

@@ -44,19 +44,13 @@ export default function SubscriptionSuccessPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-2">
-          <Button asChild className="w-full">
-            <Link href="/">
-              <Home className="mr-2 h-4 w-4" />
-              Accéder au dashboard
-            </Link>
-          </Button>
-          <Button variant="outline" asChild className="w-full">
-            <Link href="/test-stripe">
-              <Settings className="mr-2 h-4 w-4" />
-              Retour aux tests Stripe
-            </Link>
-          </Button>
-        </CardFooter>
+           <Button asChild className="w-full">
+             <Link href="/">
+               <Home className="mr-2 h-4 w-4" />
+               Accéder au dashboard
+             </Link>
+           </Button>
+         </CardFooter>
       </Card>
     </div>
   );

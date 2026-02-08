@@ -19,13 +19,20 @@ import {
   desactiverApporteur,
 } from "@/actions/commerciaux"
 import { getBaremesByOrganisation } from "@/actions/commissions"
-import { commissionConfig } from "@/lib/commission-config"
-import type { ApporteurResponseDto, BaremeCommissionResponseDto } from "@/types/commission"
+import { commissionConfig } from "@/lib/config/commission"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
+import type { BaremeWithPaliers } from "@/lib/ui/display-types/commission"
 import { Users, Settings, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 interface CommissionConfigDialogProps {
   trigger: React.ReactNode
@@ -37,11 +44,12 @@ export function CommissionConfigDialog({ trigger }: CommissionConfigDialogProps)
   const [activeTab, setActiveTab] = React.useState("apporteurs")
 
   // State for apporteurs
-  const [apporteurs, setApporteurs] = React.useState<ApporteurResponseDto[]>([])
+  const [apporteurs, setApporteurs] = React.useState<Apporteur[]>([])
   const [loadingApporteurs, setLoadingApporteurs] = React.useState(false)
+  const [editingApporteur, setEditingApporteur] = React.useState<Apporteur | null>(null)
 
   // State for baremes
-  const [baremes, setBaremes] = React.useState<BaremeCommissionResponseDto[]>([])
+  const [baremes, setBaremes] = React.useState<BaremeWithPaliers[]>([])
   const [loadingBaremes, setLoadingBaremes] = React.useState(false)
   const [errorBaremes, setErrorBaremes] = React.useState<Error | null>(null)
 
@@ -51,16 +59,17 @@ export function CommissionConfigDialog({ trigger }: CommissionConfigDialogProps)
     setLoadingApporteurs(true)
     const result = await getApporteursByOrganisation(activeOrganisation.organisationId)
     if (result.data) {
-      // Map gRPC Apporteur to ApporteurResponseDto
-      const mapped: ApporteurResponseDto[] = (result.data.apporteurs || []).map((a) => ({
+      // Map gRPC Apporteur to Apporteur
+      const mapped: Apporteur[] = (result.data.apporteurs || []).map((a) => ({
         id: a.id,
         organisationId: a.organisationId,
-        utilisateurId: a.utilisateurId || null,
+        utilisateurId: a.utilisateurId,
         nom: a.nom,
         prenom: a.prenom,
-        typeApporteur: a.typeApporteur as ApporteurResponseDto["typeApporteur"],
-        email: a.email || null,
-        telephone: a.telephone || null,
+        typeApporteur: a.typeApporteur,
+        email: a.email,
+        telephone: a.telephone,
+        societeId: a.societeId,
         actif: a.actif,
         createdAt: a.createdAt,
         updatedAt: a.updatedAt,
@@ -77,7 +86,7 @@ export function CommissionConfigDialog({ trigger }: CommissionConfigDialogProps)
     setErrorBaremes(null)
     const result = await getBaremesByOrganisation({ organisationId: activeOrganisation.organisationId })
     if (result.data) {
-      setBaremes((result.data.baremes || []) as BaremeCommissionResponseDto[])
+      setBaremes((result.data.baremes || []) as BaremeWithPaliers[])
     } else if (result.error) {
       setErrorBaremes(new Error(result.error))
     }
@@ -126,8 +135,8 @@ export function CommissionConfigDialog({ trigger }: CommissionConfigDialogProps)
     }
   }
 
-  const handleEditApporteur = (apporteur: ApporteurResponseDto) => {
-    toast.info(`Modifier ${apporteur.prenom} ${apporteur.nom}`)
+  const handleEditApporteur = (apporteur: Apporteur) => {
+    setEditingApporteur(apporteur)
   }
 
   return (
@@ -193,9 +202,51 @@ export function CommissionConfigDialog({ trigger }: CommissionConfigDialogProps)
                 onBaremeUpdated={fetchBaremes}
               />
             )}
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
-  )
-}
+           </TabsContent>
+         </Tabs>
+
+         {editingApporteur && (
+           <Dialog open={!!editingApporteur} onOpenChange={(open) => !open && setEditingApporteur(null)}>
+             <DialogContent className="sm:max-w-[500px]">
+               <DialogHeader>
+                 <DialogTitle>Modifier l'apporteur</DialogTitle>
+                 <DialogDescription>
+                   Modification de {editingApporteur.prenom} {editingApporteur.nom}
+                 </DialogDescription>
+               </DialogHeader>
+               <div className="grid gap-4 py-4">
+                 <div className="grid gap-2">
+                   <Label htmlFor="edit-prenom">Prénom</Label>
+                   <Input id="edit-prenom" defaultValue={editingApporteur.prenom} />
+                 </div>
+                 <div className="grid gap-2">
+                   <Label htmlFor="edit-nom">Nom</Label>
+                   <Input id="edit-nom" defaultValue={editingApporteur.nom} />
+                 </div>
+                 <div className="grid gap-2">
+                   <Label htmlFor="edit-email">Email</Label>
+                   <Input id="edit-email" type="email" defaultValue={editingApporteur.email} />
+                 </div>
+                 <div className="grid gap-2">
+                   <Label htmlFor="edit-telephone">Téléphone</Label>
+                   <Input id="edit-telephone" defaultValue={editingApporteur.telephone || ""} />
+                 </div>
+               </div>
+               <DialogFooter>
+                 <Button variant="outline" onClick={() => setEditingApporteur(null)}>
+                   Annuler
+                 </Button>
+                 <Button onClick={() => {
+                   toast.info("Fonctionnalité de modification à implémenter")
+                   setEditingApporteur(null)
+                 }}>
+                   Enregistrer
+                 </Button>
+               </DialogFooter>
+             </DialogContent>
+           </Dialog>
+         )}
+       </DialogContent>
+     </Dialog>
+   )
+ }

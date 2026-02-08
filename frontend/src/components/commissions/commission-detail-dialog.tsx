@@ -26,15 +26,18 @@ import {
   FileText,
   Info,
 } from "lucide-react"
-import type { CommissionWithDetailsResponseDto, TypeApporteur } from "@/types/commission"
-import { getAuditLogsByCommission } from "@/actions/commissions"
+import type { CommissionWithDetails, TypeApporteur } from "@/lib/ui/display-types/commission"
+import { formatMontant, parseMontant } from "@/lib/ui/helpers/format"
+import { getAuditLogsByCommission, creerContestation } from "@/actions/commissions"
 import type { AuditLog } from "@proto/commission/commission"
-import { AuditAction, AuditScope } from "@/lib/proto/enums"
+import { AuditAction, AuditScope } from "@proto/commission/commission"
+import { CreerContestationDialog } from "./creer-contestation-dialog"
+import { toast } from "sonner"
 
 interface CommissionDetailDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  commission: CommissionWithDetailsResponseDto | null
+  commission: CommissionWithDetails | null
 }
 
 // Mapping des types d'apporteur pour l'affichage
@@ -58,13 +61,6 @@ export function CommissionDetailDialog({
   commission,
 }: CommissionDetailDialogProps) {
   if (!commission) return null
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount)
-  }
 
   const formatDate = (date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date
@@ -302,27 +298,27 @@ export function CommissionDetailDialog({
                 <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg border border-success/20">
                   <span className="text-sm font-medium text-success">Montant brut</span>
                   <span className="text-lg font-bold text-success">
-                    {formatCurrency(commission.montantBrut)}
+                    {formatMontant(commission.montantBrut)}
                   </span>
                 </div>
 
-                {commission.montantReprises > 0 && (
+                {parseMontant(commission.montantReprises) > 0 && (
                   <div className="flex justify-between items-center p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                     <span className="text-sm font-medium text-destructive flex items-center gap-1">
                       <RotateCcw className="size-4" />
                       Reprises
                     </span>
                     <span className="text-lg font-bold text-destructive">
-                      -{formatCurrency(commission.montantReprises)}
+                      -{formatMontant(commission.montantReprises)}
                     </span>
                   </div>
                 )}
 
-                {commission.montantAcomptes > 0 && (
+                {parseMontant(commission.montantAcomptes) > 0 && (
                   <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg border border-warning/20">
                     <span className="text-sm font-medium text-warning">Acomptes</span>
                     <span className="text-lg font-bold text-warning">
-                      -{formatCurrency(commission.montantAcomptes)}
+                      -{formatMontant(commission.montantAcomptes)}
                     </span>
                   </div>
                 )}
@@ -330,7 +326,7 @@ export function CommissionDetailDialog({
                 <div className="flex justify-between items-center p-3 bg-info/10 rounded-lg border-2 border-info/30">
                   <span className="text-base font-semibold text-info">Net à payer</span>
                   <span className="text-xl font-bold text-info">
-                    {formatCurrency(commission.montantNetAPayer)}
+                    {formatMontant(commission.montantNetAPayer)}
                   </span>
                 </div>
               </div>
@@ -402,7 +398,26 @@ export function CommissionDetailDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fermer
           </Button>
-          {isEnAttente && <Button variant="destructive">Contester</Button>}
+          {isEnAttente && (
+            <CreerContestationDialog
+              commissionId={commission.id}
+              bordereauId=""
+              apporteurId={commission.apporteur?.id || ""}
+              trigger={<Button variant="destructive">Contester</Button>}
+              onSubmit={async (payload) => {
+                const result = await creerContestation({
+                  ...payload,
+                  organisationId: commission.organisationId,
+                })
+                if (result.data) {
+                  toast.success("Contestation créée avec succès")
+                  onOpenChange(false)
+                } else {
+                  toast.error(result.error || "Erreur lors de la création de la contestation")
+                }
+              }}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

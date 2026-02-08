@@ -22,9 +22,12 @@ import {
   Copy,
   ExternalLink,
 } from "lucide-react"
-import type { Payment, PaymentStatus } from "@/types/payment"
+import type { Payment } from "@/lib/ui/display-types/payment"
+import type { PaymentStatus } from "@proto/payments/payment"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { ScoringWidget } from "@/components/scoring-widget"
+import type { PredictRequest } from "@/actions/scoring"
 
 interface PaymentDetailsDialogProps {
   payment: Payment | null
@@ -33,7 +36,7 @@ interface PaymentDetailsDialogProps {
 }
 
 const statusConfig: Record<
-  PaymentStatus,
+  string,
   {
     label: string
     icon: React.ElementType
@@ -101,6 +104,20 @@ export function PaymentDetailsDialog({
     navigator.clipboard.writeText(text)
     toast.success(`${label} copié`)
   }
+
+  // Build scoring request from payment data
+  const scoringRequest: PredictRequest | null = payment.contract_id
+    ? {
+        prev_rejects: payment.retry_count || 0,
+        channel: payment.source_channel || "INTERNET",
+        contract_age_months: 12, // TODO: Calculate from contract creation date
+        payment_history_count: 0, // TODO: Get from payment history
+        lot_code: payment.debit_lot || "L1",
+        provider: payment.psp_provider,
+        amount_cents: Math.round(payment.amount * 100),
+        preferred_debit_day: payment.preferred_debit_day || 15,
+      }
+    : null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -294,43 +311,11 @@ export function PaymentDetailsDialog({
             </dl>
           </div>
 
-          {/* Scoring & Risque */}
-          {(payment.risk_score !== undefined || payment.risk_tier) && (
+          {/* Scoring & Risque - Live ML Widget */}
+          {scoringRequest && (
             <>
               <Separator />
-              <div>
-                <h3 className="text-sm font-medium mb-3">Scoring & Risque</h3>
-                <dl className="grid grid-cols-2 gap-3 text-sm">
-                  {payment.risk_score !== undefined && (
-                    <div>
-                      <dt className="text-muted-foreground">Score de risque</dt>
-                      <dd className="font-medium">{payment.risk_score} / 100</dd>
-                    </div>
-                  )}
-                  {payment.risk_tier && (
-                    <div>
-                      <dt className="text-muted-foreground">Niveau de risque</dt>
-                      <dd>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            payment.risk_tier === "LOW" &&
-                              "bg-green-500/10 text-green-700 border-green-500/20",
-                            payment.risk_tier === "MEDIUM" &&
-                              "bg-orange-500/10 text-orange-700 border-orange-500/20",
-                            payment.risk_tier === "HIGH" &&
-                              "bg-red-500/10 text-red-700 border-red-500/20"
-                          )}
-                        >
-                          {payment.risk_tier === "LOW" && "Faible"}
-                          {payment.risk_tier === "MEDIUM" && "Moyen"}
-                          {payment.risk_tier === "HIGH" && "Élevé"}
-                        </Badge>
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
+              <ScoringWidget paymentData={scoringRequest} />
             </>
           )}
 

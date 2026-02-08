@@ -22,6 +22,7 @@ import {
   Bug,
   Shield,
   ShieldCheck,
+  Palette,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -119,6 +120,11 @@ const NAV_SECONDARY_ITEMS = [
     title: "Rôles & Permissions",
     url: "/parametres/roles-permissions",
     icon: ShieldCheck,
+  },
+  {
+    title: "Marque Blanche",
+    url: "/parametres/marque-blanche",
+    icon: Palette,
   },
   {
     title: "Onboarding",

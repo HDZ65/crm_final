@@ -20,12 +20,14 @@ import {
 import { CommissionDetailDialog } from "@/components/commissions/commission-detail-dialog"
 import { DeselectionReasonDialog } from "@/components/commissions/deselection-reason-dialog"
 import { ReprisesList } from "@/components/commissions/reprises-list"
+import { ContestationsList } from "@/components/commissions/contestations-list"
 import { BordereauxList } from "@/components/commissions/bordereaux-list"
 import { AuditLogViewer } from "@/components/commissions/audit-log-viewer"
 import { RecurrencesList } from "@/components/commissions/recurrences-list"
 import { ReportsNegatifsList } from "@/components/commissions/reports-negatifs-list"
 import { CalculateCommissionDialog } from "@/components/commissions/calculate-commission-dialog"
 import { TriggerRepriseDialog } from "@/components/commissions/trigger-reprise-dialog"
+import { CreerContestationDialog } from "@/components/commissions/creer-contestation-dialog"
 import { CommissionConfigDialog } from "@/components/commissions/commission-config-dialog"
 import { DataTable } from "@/components/data-table-basic"
 import { createColumns } from "./columns"
@@ -37,6 +39,9 @@ import {
   validerBordereau as validerBordereauAction,
   exportBordereau as exportBordereauAction,
   annulerReprise as annulerRepriseAction,
+  creerContestation as creerContestationAction,
+  resoudreContestation as resoudreContestationAction,
+  getContestationsByOrganisation,
   deselectionnerCommission as deselectionnerCommissionAction,
   getAuditLogs,
   getRecurrencesByOrganisation,
@@ -44,7 +49,13 @@ import {
 } from "@/actions/commissions"
 import { getApporteursByOrganisation } from "@/actions/commerciaux"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { CommissionWithDetailsResponseDto, RepriseCommissionResponseDto, BordereauWithDetailsResponseDto, ApporteurResponseDto, StatutCommissionResponseDto } from "@/types/commission"
+import type {
+  CommissionWithDetails,
+  RepriseWithDetails,
+  BordereauWithDetails,
+  StatutCommissionDisplay,
+  ContestationWithDetails,
+} from "@/lib/ui/display-types/commission"
 import {
   CheckCircle2,
   FileSpreadsheet,
@@ -56,23 +67,44 @@ import {
   Calculator,
   Receipt,
   FolderOpen,
+  ShieldAlert,
   Settings,
   Users,
   AlertTriangle,
   History,
   Repeat,
   AlertOctagon,
+  FileText,
+  Clock,
+  RefreshCw,
+  TrendingDown as TrendingDownIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty"
 
 // Import types for SSR data
-import type { Commission, Reprise, Bordereau, AuditLog, RecurrenceCommission, ReportNegatif } from "@proto/commission/commission"
-import type { DateRange } from "react-day-picker"
 import type { Apporteur } from "@proto/commerciaux/commerciaux"
-// Use local enums to avoid importing gRPC code in browser
-import { AuditAction, AuditScope, StatutRecurrence, StatutReport } from "@/lib/proto/enums"
+import type {
+  Commission,
+  Reprise,
+  Bordereau,
+  AuditLog,
+  RecurrenceCommission,
+  ReportNegatif,
+  Contestation,
+} from "@proto/commission/commission"
+import type { DateRange } from "react-day-picker"
+import { AuditAction, AuditScope, StatutRecurrence, StatutReport } from "@proto/commission/commission"
+import { formatMontant, parseMontant } from "@/lib/ui/helpers/format"
 
 // Simple type for statuts from server action
 interface SimpleStatut {
@@ -82,26 +114,30 @@ interface SimpleStatut {
 }
 
 interface CommissionsPageClientProps {
+  userId: string
   initialStatuts: SimpleStatut[]
   initialCommissions?: Commission[] | null
   initialApporteurs?: Apporteur[] | null
   initialReprises?: Reprise[] | null
   initialBordereaux?: Bordereau[] | null
+  initialContestations?: Contestation[] | null
 }
 
 export function CommissionsPageClient({
+  userId,
   initialStatuts,
   initialCommissions,
   initialApporteurs,
   initialReprises,
   initialBordereaux,
+  initialContestations,
 }: CommissionsPageClientProps) {
   const { activeOrganisation } = useOrganisation()
   const [activeTab, setActiveTab] = React.useState("commissions")
   const [filters, setFilters] = React.useState<CommissionFiltersState>({})
   const [selectedRows, setSelectedRows] = React.useState<Record<string, boolean>>({})
   const [detailCommission, setDetailCommission] =
-    React.useState<CommissionWithDetailsResponseDto | null>(null)
+    React.useState<CommissionWithDetails | null>(null)
   const [showDetailDialog, setShowDetailDialog] = React.useState(false)
 
   // Dialog de désélection
@@ -116,35 +152,43 @@ export function CommissionsPageClient({
   const hasFetchedApporteurs = React.useRef(!!initialApporteurs)
   const hasFetchedReprises = React.useRef(!!initialReprises)
   const hasFetchedBordereaux = React.useRef(!!initialBordereaux)
+  const hasFetchedContestations = React.useRef(!!initialContestations)
   const hasFetchedAuditLogs = React.useRef(false)
   const hasFetchedRecurrences = React.useRef(false)
   const hasFetchedReportsNegatifs = React.useRef(false)
 
   // Helper to map commissions from gRPC format
-  const mapCommission = React.useCallback((c: Commission): CommissionWithDetailsResponseDto => ({
+  const mapCommission = React.useCallback((c: Commission): CommissionWithDetails => ({
     id: c.id,
     reference: c.reference,
     organisationId: c.organisationId,
-    apporteurId: c.apporteurId,
-    contratId: c.contratId,
     periode: c.periode,
     compagnie: c.compagnie,
     typeBase: c.typeBase,
     produit: null,
     apporteur: null,
     contrat: null,
-    montantBrut: Number(c.montantBrut) || 0,
-    montantReprises: Number(c.montantReprises) || 0,
-    montantAcomptes: Number(c.montantAcomptes) || 0,
-    montantNetAPayer: Number(c.montantNetAPayer) || 0,
-    statut: null,
+    montantBrut: c.montantBrut,
+    montantReprises: c.montantReprises,
+    montantAcomptes: c.montantAcomptes,
+    montantNetAPayer: c.montantNetAPayer,
+    statut: (() => {
+      const statut = initialStatuts.find((s) => s.id === c.statutId)
+      return statut
+        ? {
+            id: statut.id,
+            code: statut.code,
+            nom: statut.nom,
+          }
+        : null
+    })(),
     dateCreation: c.dateCreation,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
-  }) as unknown as CommissionWithDetailsResponseDto, [])
+  }) as CommissionWithDetails, [initialStatuts])
 
   // Helper to map apporteurs from gRPC format
-  const mapApporteur = React.useCallback((a: Apporteur): ApporteurResponseDto => ({
+  const mapApporteur = React.useCallback((a: Apporteur): Apporteur => ({
     id: a.id,
     nom: a.nom,
     prenom: a.prenom,
@@ -154,22 +198,22 @@ export function CommissionsPageClient({
     organisationId: a.organisationId,
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,
-  }) as ApporteurResponseDto, [])
+  }) as Apporteur, [])
 
   // State pour les données - initialize with SSR data if available
-  const [apiCommissions, setApiCommissions] = React.useState<CommissionWithDetailsResponseDto[]>(
+  const [apiCommissions, setApiCommissions] = React.useState<CommissionWithDetails[]>(
     initialCommissions ? initialCommissions.map(mapCommission) : []
   )
   const [loadingCommissions, setLoadingCommissions] = React.useState(!initialCommissions)
   const [errorCommissions, setErrorCommissions] = React.useState<Error | null>(null)
 
-  const [apporteurs, setApporteurs] = React.useState<ApporteurResponseDto[]>(
+  const [apporteurs, setApporteurs] = React.useState<Apporteur[]>(
     initialApporteurs ? initialApporteurs.map(mapApporteur) : []
   )
   const [loadingApporteurs, setLoadingApporteurs] = React.useState(!initialApporteurs)
 
   // Mapper les statuts depuis les props
-  const statuts = React.useMemo((): StatutCommissionResponseDto[] =>
+  const statuts = React.useMemo((): StatutCommissionDisplay[] =>
     initialStatuts.map((s) => ({
       id: s.id,
       code: s.code,
@@ -185,7 +229,7 @@ export function CommissionsPageClient({
   const [loadingGeneration, setLoadingGeneration] = React.useState(false)
 
   // Helper to map reprises from gRPC format
-  const mapReprise = React.useCallback((r: Reprise): RepriseCommissionResponseDto => ({
+  const mapReprise = React.useCallback((r: Reprise): RepriseWithDetails => ({
     id: r.id,
     reference: r.reference,
     organisationId: r.organisationId,
@@ -193,21 +237,26 @@ export function CommissionsPageClient({
     contratId: r.contratId,
     apporteurId: r.apporteurId,
     typeReprise: String(r.typeReprise).replace("TYPE_REPRISE_", "").toLowerCase() as "resiliation" | "impaye" | "annulation" | "regularisation",
-    montantReprise: Number(r.montantReprise) || 0,
-    tauxReprise: Number(r.tauxReprise) || 0,
-    montantOriginal: Number(r.montantOriginal) || 0,
+    montantReprise: r.montantReprise,
+    tauxReprise: r.tauxReprise,
+    montantOriginal: r.montantOriginal,
     periodeOrigine: r.periodeOrigine,
     periodeApplication: r.periodeApplication,
     dateEvenement: r.dateEvenement,
     dateLimite: r.dateLimite,
+    dateApplication: r.dateApplication ?? null,
     statutReprise: String(r.statutReprise).replace("STATUT_REPRISE_", "").toLowerCase() as "en_attente" | "appliquee" | "annulee",
-    motif: r.motif,
+    bordereauId: r.bordereauId ?? null,
+    motif: r.motif ?? null,
+    commentaire: r.commentaire ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
-  }) as unknown as RepriseCommissionResponseDto, [])
+    apporteur: null,
+    contrat: null,
+  }) as RepriseWithDetails, [])
 
   // Helper to map bordereaux from gRPC format
-  const mapBordereau = React.useCallback((b: Bordereau): BordereauWithDetailsResponseDto => ({
+  const mapBordereau = React.useCallback((b: Bordereau): BordereauWithDetails => ({
     id: b.id,
     reference: b.reference,
     organisationId: b.organisationId,
@@ -215,32 +264,58 @@ export function CommissionsPageClient({
     apporteur: null,
     periode: b.periode,
     statutBordereau: String(b.statutBordereau).replace("STATUT_BORDEREAU_", "").toLowerCase() as "brouillon" | "valide" | "exporte" | "archive",
-    nombreCommissions: b.nombreLignes,
-    totalBrut: Number(b.totalBrut) || 0,
-    totalReprises: Number(b.totalReprises) || 0,
-    totalAcomptes: Number(b.totalAcomptes) || 0,
-    totalNetAPayer: Number(b.totalNetAPayer) || 0,
-    dateValidation: b.dateValidation,
-    dateExport: b.dateExport,
-    fichierPdfUrl: b.fichierPdfUrl,
-    fichierExcelUrl: b.fichierExcelUrl,
-    commentaire: b.commentaire,
+    nombreLignes: b.nombreLignes,
+    totalBrut: b.totalBrut,
+    totalReprises: b.totalReprises,
+    totalAcomptes: b.totalAcomptes,
+    totalNetAPayer: b.totalNetAPayer,
+    dateValidation: b.dateValidation ?? null,
+    validateurId: b.validateurId ?? null,
+    dateExport: b.dateExport ?? null,
+    fichierPdfUrl: b.fichierPdfUrl ?? null,
+    fichierExcelUrl: b.fichierExcelUrl ?? null,
+    commentaire: b.commentaire ?? null,
+    creePar: null,
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,
-    lignes: [],
-  }) as unknown as BordereauWithDetailsResponseDto, [])
+  }) as BordereauWithDetails, [])
 
-  const [reprisesData, setReprisesData] = React.useState<RepriseCommissionResponseDto[]>(
+  const [reprisesData, setReprisesData] = React.useState<RepriseWithDetails[]>(
     initialReprises ? initialReprises.map(mapReprise) : []
   )
   const [loadingReprises, setLoadingReprises] = React.useState(!initialReprises)
   const [errorReprises, setErrorReprises] = React.useState<Error | null>(null)
 
-  const [bordereauxData, setBordereauxData] = React.useState<BordereauWithDetailsResponseDto[]>(
+  const [bordereauxData, setBordereauxData] = React.useState<BordereauWithDetails[]>(
     initialBordereaux ? initialBordereaux.map(mapBordereau) : []
   )
   const [loadingBordereaux, setLoadingBordereaux] = React.useState(!initialBordereaux)
   const [errorBordereaux, setErrorBordereaux] = React.useState<Error | null>(null)
+
+  const mapContestation = React.useCallback((c: Contestation): ContestationWithDetails => ({
+    id: c.id,
+    organisationId: c.organisationId,
+    commissionId: c.commissionId,
+    bordereauId: c.bordereauId,
+    apporteurId: c.apporteurId,
+    motif: c.motif,
+    dateContestation: c.dateContestation,
+    dateLimite: c.dateLimite,
+    statut: String(c.statut).replace("STATUT_CONTESTATION_", "").toLowerCase() as "en_cours" | "acceptee" | "rejetee",
+    commentaireResolution: c.commentaireResolution ?? null,
+    resoluPar: c.resoluPar ?? null,
+    dateResolution: c.dateResolution ?? null,
+    ligneRegularisationId: c.ligneRegularisationId ?? null,
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt,
+    apporteur: null,
+  }) as ContestationWithDetails, [])
+
+  const [contestationsData, setContestationsData] = React.useState<ContestationWithDetails[]>(
+    initialContestations ? initialContestations.map(mapContestation) : []
+  )
+  const [loadingContestations, setLoadingContestations] = React.useState(!initialContestations)
+  const [errorContestations, setErrorContestations] = React.useState<Error | null>(null)
 
   const [auditLogs, setAuditLogs] = React.useState<AuditLog[]>([])
   const [loadingAuditLogs, setLoadingAuditLogs] = React.useState(false)
@@ -411,30 +486,10 @@ export function CommissionsPageClient({
     if (result.error) {
       setErrorCommissions(new Error(result.error))
     } else if (result.data) {
-      setApiCommissions(result.data.commissions.map((c) => ({
-        id: c.id,
-        reference: c.reference,
-        organisationId: c.organisationId,
-        apporteurId: c.apporteurId,
-        contratId: c.contratId,
-        periode: c.periode,
-        compagnie: c.compagnie,
-        typeBase: c.typeBase,
-        produit: null,
-        apporteur: null,
-        contrat: null,
-        montantBrut: Number(c.montantBrut) || 0,
-        montantReprises: Number(c.montantReprises) || 0,
-        montantAcomptes: Number(c.montantAcomptes) || 0,
-        montantNetAPayer: Number(c.montantNetAPayer) || 0,
-        statut: null,
-        dateCreation: c.dateCreation,
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-      })) as unknown as CommissionWithDetailsResponseDto[])
+      setApiCommissions(result.data.commissions.map(mapCommission))
     }
     setLoadingCommissions(false)
-  }, [activeOrganisation])
+  }, [activeOrganisation, mapCommission])
 
   // Fetch des apporteurs
   const fetchApporteurs = React.useCallback(async () => {
@@ -452,7 +507,7 @@ export function CommissionsPageClient({
         organisationId: a.organisationId,
         createdAt: a.createdAt,
         updatedAt: a.updatedAt,
-      })) as ApporteurResponseDto[])
+      })) as Apporteur[])
     }
     setLoadingApporteurs(false)
   }, [activeOrganisation])
@@ -468,29 +523,10 @@ export function CommissionsPageClient({
     if (result.error) {
       setErrorReprises(new Error(result.error))
     } else if (result.data) {
-      setReprisesData(result.data.reprises.map((r) => ({
-        id: r.id,
-        reference: r.reference,
-        organisationId: r.organisationId,
-        commissionOriginaleId: r.commissionOriginaleId,
-        contratId: r.contratId,
-        apporteurId: r.apporteurId,
-        typeReprise: String(r.typeReprise).replace("TYPE_REPRISE_", "").toLowerCase() as "resiliation" | "impaye" | "annulation" | "regularisation",
-        montantReprise: Number(r.montantReprise) || 0,
-        tauxReprise: Number(r.tauxReprise) || 0,
-        montantOriginal: Number(r.montantOriginal) || 0,
-        periodeOrigine: r.periodeOrigine,
-        periodeApplication: r.periodeApplication,
-        dateEvenement: r.dateEvenement,
-        dateLimite: r.dateLimite,
-        statutReprise: String(r.statutReprise).replace("STATUT_REPRISE_", "").toLowerCase() as "en_attente" | "appliquee" | "annulee",
-        motif: r.motif,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      })) as unknown as RepriseCommissionResponseDto[])
+      setReprisesData(result.data.reprises.map(mapReprise))
     }
     setLoadingReprises(false)
-  }, [activeOrganisation])
+  }, [activeOrganisation, mapReprise])
 
   // Fetch des bordereaux
   const refetchBordereaux = React.useCallback(async () => {
@@ -503,31 +539,25 @@ export function CommissionsPageClient({
     if (result.error) {
       setErrorBordereaux(new Error(result.error))
     } else if (result.data) {
-      setBordereauxData(result.data.bordereaux.map((b) => ({
-        id: b.id,
-        reference: b.reference,
-        organisationId: b.organisationId,
-        apporteurId: b.apporteurId,
-        apporteur: null,
-        periode: b.periode,
-        statutBordereau: String(b.statutBordereau).replace("STATUT_BORDEREAU_", "").toLowerCase() as "brouillon" | "valide" | "exporte" | "archive",
-        nombreCommissions: b.nombreLignes,
-        totalBrut: Number(b.totalBrut) || 0,
-        totalReprises: Number(b.totalReprises) || 0,
-        totalAcomptes: Number(b.totalAcomptes) || 0,
-        totalNetAPayer: Number(b.totalNetAPayer) || 0,
-        dateValidation: b.dateValidation,
-        dateExport: b.dateExport,
-        fichierPdfUrl: b.fichierPdfUrl,
-        fichierExcelUrl: b.fichierExcelUrl,
-        commentaire: b.commentaire,
-        createdAt: b.createdAt,
-        updatedAt: b.updatedAt,
-        lignes: [],
-      })) as unknown as BordereauWithDetailsResponseDto[])
+      setBordereauxData(result.data.bordereaux.map(mapBordereau))
     }
     setLoadingBordereaux(false)
-  }, [activeOrganisation])
+  }, [activeOrganisation, mapBordereau])
+
+  const refetchContestations = React.useCallback(async () => {
+    if (!activeOrganisation) return
+    setLoadingContestations(true)
+    setErrorContestations(null)
+    const result = await getContestationsByOrganisation({
+      organisationId: activeOrganisation.organisationId,
+    })
+    if (result.error) {
+      setErrorContestations(new Error(result.error))
+    } else if (result.data) {
+      setContestationsData(result.data.contestations.map(mapContestation))
+    }
+    setLoadingContestations(false)
+  }, [activeOrganisation, mapContestation])
 
   const refetchAuditLogs = React.useCallback(async (filters?: AuditFiltersState, page = auditPage) => {
     if (!activeOrganisation) return
@@ -653,6 +683,10 @@ export function CommissionsPageClient({
       hasFetchedBordereaux.current = true
       refetchBordereaux()
     }
+    if (!hasFetchedContestations.current) {
+      hasFetchedContestations.current = true
+      refetchContestations()
+    }
     if (!hasFetchedAuditLogs.current) {
       hasFetchedAuditLogs.current = true
       refetchAuditLogs()
@@ -665,14 +699,14 @@ export function CommissionsPageClient({
       hasFetchedReportsNegatifs.current = true
       refetchReportsNegatifs()
     }
-  }, [activeOrganisation, refetchCommissions, fetchApporteurs, refetchReprises, refetchBordereaux, refetchAuditLogs, refetchRecurrences, refetchReportsNegatifs])
+  }, [activeOrganisation, refetchCommissions, fetchApporteurs, refetchReprises, refetchBordereaux, refetchContestations, refetchAuditLogs, refetchRecurrences, refetchReportsNegatifs])
 
   // Les données sont déjà formatées dans les callbacks de fetch
   const reprises = reprisesData
   const bordereaux = bordereauxData
 
   const handleViewDetails = React.useCallback(
-    (commission: CommissionWithDetailsResponseDto) => {
+    (commission: CommissionWithDetails) => {
       setDetailCommission(commission)
       setShowDetailDialog(true)
     },
@@ -760,9 +794,9 @@ export function CommissionsPageClient({
   const { globalSummary, selectedSummary, selectedCount } = React.useMemo(() => {
     const globalSummary = filteredCommissions.reduce(
       (acc, c) => ({
-        totalBrut: acc.totalBrut + (c.montantBrut || 0),
-        totalReprises: acc.totalReprises + (c.montantReprises || 0),
-        totalNet: acc.totalNet + (c.montantNetAPayer || 0),
+        totalBrut: acc.totalBrut + parseMontant(c.montantBrut),
+        totalReprises: acc.totalReprises + parseMontant(c.montantReprises),
+        totalNet: acc.totalNet + parseMontant(c.montantNetAPayer),
       }),
       { totalBrut: 0, totalReprises: 0, totalNet: 0 }
     )
@@ -775,9 +809,9 @@ export function CommissionsPageClient({
 
     const selectedSummary = selectedCommissions.reduce(
       (acc, c) => ({
-        totalBrut: acc.totalBrut + (c.montantBrut || 0),
-        totalReprises: acc.totalReprises + (c.montantReprises || 0),
-        totalNet: acc.totalNet + (c.montantNetAPayer || 0),
+        totalBrut: acc.totalBrut + parseMontant(c.montantBrut),
+        totalReprises: acc.totalReprises + parseMontant(c.montantReprises),
+        totalNet: acc.totalNet + parseMontant(c.montantNetAPayer),
       }),
       { totalBrut: 0, totalReprises: 0, totalNet: 0 }
     )
@@ -834,7 +868,7 @@ export function CommissionsPageClient({
       })
 
       if (result.data?.summary) {
-        toast.success(`Bordereau généré: ${result.data.summary.nombreCommissions} commission(s), ${formatCurrency(Number(result.data.summary.totalNet) || 0)}`)
+        toast.success(`Bordereau généré: ${result.data.summary.nombreCommissions} commission(s), ${formatMontant(String(result.data.summary.totalNet ?? "0"))}`)
         setSelectedRows({})
         refetchCommissions()
         refetchBordereaux()
@@ -862,9 +896,9 @@ export function CommissionsPageClient({
       c.compagnie,
       c.produit?.nom || "",
       c.apporteur ? `${c.apporteur.prenom} ${c.apporteur.nom}` : "",
-      c.montantBrut.toFixed(2),
-      c.montantReprises.toFixed(2),
-      c.montantNetAPayer.toFixed(2),
+      parseMontant(c.montantBrut).toFixed(2),
+      parseMontant(c.montantReprises).toFixed(2),
+      parseMontant(c.montantNetAPayer).toFixed(2),
     ])
 
     const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(";")).join("\n")
@@ -893,9 +927,9 @@ export function CommissionsPageClient({
     }
   }
 
-  const handleViewRepriseDetails = (reprise: RepriseCommissionResponseDto) => {
+  const handleViewRepriseDetails = (reprise: RepriseWithDetails) => {
     toast.info(`Reprise ${reprise.reference}`, {
-      description: `Type: ${reprise.typeReprise} - Montant: ${formatCurrency(reprise.montantReprise)}`,
+      description: `Type: ${reprise.typeReprise} - Montant: ${formatMontant(reprise.montantReprise)}`,
     })
   }
 
@@ -905,10 +939,58 @@ export function CommissionsPageClient({
     refetchCommissions()
   }
 
+  const handleCreerContestation = async (payload: {
+    commissionId: string
+    bordereauId: string
+    apporteurId: string
+    motif: string
+  }) => {
+    if (!activeOrganisation) {
+      throw new Error("Organisation inactive")
+    }
+
+    const result = await creerContestationAction({
+      organisationId: activeOrganisation.organisationId,
+      commissionId: payload.commissionId,
+      bordereauId: payload.bordereauId,
+      apporteurId: payload.apporteurId,
+      motif: payload.motif,
+    })
+
+    if (!result.data?.contestation) {
+      throw new Error(result.error || "Erreur lors de la creation")
+    }
+
+    toast.success("Contestation creee")
+    refetchContestations()
+    refetchCommissions()
+  }
+
+   const handleResoudreContestation = async (payload: {
+    id: string
+    acceptee: boolean
+    commentaire: string
+  }) => {
+    const result = await resoudreContestationAction({
+      id: payload.id,
+      acceptee: payload.acceptee,
+      commentaire: payload.commentaire,
+      resoluPar: userId,
+    })
+
+    if (!result.data?.contestation) {
+      throw new Error(result.error || "Erreur lors de la resolution")
+    }
+
+    toast.success(payload.acceptee ? "Contestation acceptee" : "Contestation rejetee")
+    refetchContestations()
+    refetchCommissions()
+    refetchBordereaux()
+  }
+
   // Handlers bordereaux
   const handleValidateBordereau = async (bordereauId: string) => {
-    const validateurId = "current-user-id"
-    const result = await validerBordereauAction(bordereauId, validateurId)
+    const result = await validerBordereauAction(bordereauId, userId)
     if (result.data?.bordereau) {
       toast.success(`Bordereau ${result.data.bordereau.reference} validé`)
       refetchBordereaux()
@@ -938,6 +1020,7 @@ export function CommissionsPageClient({
   }
 
   const reprisesEnAttente = reprises.filter((r) => r.statutReprise === "en_attente").length
+  const contestationsEnCours = contestationsData.filter((c) => c.statut === "en_cours").length
   const bordereauxBrouillon = bordereaux.filter((b) => b.statutBordereau === "brouillon").length
   const auditCount = auditLogs.length
   const recurrencesCount = recurrencesData.length
@@ -1027,6 +1110,11 @@ export function CommissionsPageClient({
                 Reprises
                 {reprisesEnAttente > 0 && <Badge variant="destructive" className="ml-1">{reprisesEnAttente}</Badge>}
               </TabsTrigger>
+              <TabsTrigger value="contestations" className="gap-2">
+                <ShieldAlert className="size-4" />
+                Contestations
+                {contestationsEnCours > 0 && <Badge variant="default" className="ml-1 bg-warning text-warning-foreground">{contestationsEnCours}</Badge>}
+              </TabsTrigger>
               <TabsTrigger value="audit" className="gap-2">
                 <History className="size-4" />
                 Audit
@@ -1103,7 +1191,7 @@ export function CommissionsPageClient({
                       typesReprise={config.typesReprise}
                       loadingConfig={loadingConfig}
                       trigger={
-                        <Button variant="destructive" className="gap-2">
+                        <Button variant="outline" className="gap-2">
                           <AlertTriangle className="size-4" />
                           Déclencher reprise
                         </Button>
@@ -1113,19 +1201,33 @@ export function CommissionsPageClient({
                 </div>
 
                 <div className="flex-1 min-h-0 flex flex-col">
-                  <DataTable
-                    columns={columns}
-                    data={filteredCommissions}
-                    headerClassName="bg-sidebar hover:bg-sidebar"
-                    onRowSelectionChange={handleRowSelectionChange}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                   {filteredCommissions.length === 0 ? (
+                     <Empty>
+                       <EmptyHeader>
+                         <EmptyMedia>
+                           <DollarSign className="h-10 w-10 text-muted-foreground" />
+                         </EmptyMedia>
+                         <EmptyTitle>Aucune commission</EmptyTitle>
+                       </EmptyHeader>
+                       <EmptyContent>
+                         <EmptyDescription>Les commissions apparaîtront ici une fois les contrats validés et les calculs effectués.</EmptyDescription>
+                       </EmptyContent>
+                     </Empty>
+                   ) : (
+                     <DataTable
+                       columns={columns}
+                       data={filteredCommissions}
+                       headerClassName="bg-sidebar hover:bg-sidebar"
+                       onRowSelectionChange={handleRowSelectionChange}
+                     />
+                   )}
+                 </div>
+               </CardContent>
+             </Card>
+           </TabsContent>
 
-          {/* Onglet Bordereaux */}
-          <TabsContent value="bordereaux" className="flex-1 min-h-0 mt-4">
+           {/* Onglet Bordereaux */}
+           <TabsContent value="bordereaux" className="flex-1 min-h-0 mt-4">
             <Card className="flex-1 min-h-0 flex flex-col h-full">
               <CardHeader className="shrink-0 pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -1133,32 +1235,44 @@ export function CommissionsPageClient({
                   Bordereaux de commission
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0 flex flex-col">
-                {errorBordereaux ? (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Erreur</AlertTitle>
-                    <AlertDescription>
-                      {errorBordereaux.message}
-                      <Button variant="outline" size="sm" className="ml-4" onClick={() => refetchBordereaux()}>
-                        Réessayer
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <BordereauxList
-                    bordereaux={bordereaux}
-                    loading={loadingBordereaux}
-                    onValidate={handleValidateBordereau}
-                    onExportPDF={handleExportBordereauPDFClick}
-                    onExportExcel={handleExportBordereauExcelClick}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+               <CardContent className="flex-1 min-h-0 flex flex-col">
+                 {errorBordereaux ? (
+                   <Alert variant="destructive">
+                     <AlertCircle className="h-4 w-4" />
+                     <AlertTitle>Erreur</AlertTitle>
+                     <AlertDescription>
+                       {errorBordereaux.message}
+                       <Button variant="outline" size="sm" className="ml-4" onClick={() => refetchBordereaux()}>
+                         Réessayer
+                       </Button>
+                     </AlertDescription>
+                   </Alert>
+                 ) : bordereaux.length === 0 ? (
+                   <Empty>
+                     <EmptyHeader>
+                       <EmptyMedia>
+                         <FileText className="h-10 w-10 text-muted-foreground" />
+                       </EmptyMedia>
+                       <EmptyTitle>Aucun bordereau</EmptyTitle>
+                     </EmptyHeader>
+                     <EmptyContent>
+                       <EmptyDescription>Les bordereaux sont générés à partir des commissions sélectionnées.</EmptyDescription>
+                     </EmptyContent>
+                   </Empty>
+                 ) : (
+                   <BordereauxList
+                     bordereaux={bordereaux}
+                     loading={loadingBordereaux}
+                     onValidate={handleValidateBordereau}
+                     onExportPDF={handleExportBordereauPDFClick}
+                     onExportExcel={handleExportBordereauExcelClick}
+                   />
+                 )}
+               </CardContent>
+             </Card>
+           </TabsContent>
 
-          {/* Onglet Reprises */}
+           {/* Onglet Reprises */}
           <TabsContent value="reprises" className="flex-1 min-h-0 mt-4">
             <Card className="flex-1 min-h-0 flex flex-col h-full">
               <CardHeader className="shrink-0 pb-2">
@@ -1167,31 +1281,104 @@ export function CommissionsPageClient({
                   Reprises de commission
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0 flex flex-col">
-                {errorReprises ? (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Erreur</AlertTitle>
-                    <AlertDescription>
-                      {errorReprises.message}
-                      <Button variant="outline" size="sm" className="ml-4" onClick={() => refetchReprises()}>
-                        Réessayer
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <ReprisesList
-                    reprises={reprises}
-                    loading={loadingReprises}
-                    onCancel={handleCancelReprise}
-                    onViewDetails={handleViewRepriseDetails}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+               <CardContent className="flex-1 min-h-0 flex flex-col">
+                 {errorReprises ? (
+                   <Alert variant="destructive">
+                     <AlertCircle className="h-4 w-4" />
+                     <AlertTitle>Erreur</AlertTitle>
+                     <AlertDescription>
+                       {errorReprises.message}
+                       <Button variant="outline" size="sm" className="ml-4" onClick={() => refetchReprises()}>
+                         Réessayer
+                       </Button>
+                     </AlertDescription>
+                   </Alert>
+                 ) : reprises.length === 0 ? (
+                   <Empty>
+                     <EmptyHeader>
+                       <EmptyMedia>
+                         <RotateCcw className="h-10 w-10 text-muted-foreground" />
+                       </EmptyMedia>
+                       <EmptyTitle>Aucune reprise</EmptyTitle>
+                     </EmptyHeader>
+                     <EmptyContent>
+                       <EmptyDescription>Les reprises sont déclenchées en cas de résiliation, impayé ou annulation.</EmptyDescription>
+                     </EmptyContent>
+                   </Empty>
+                 ) : (
+                   <ReprisesList
+                     reprises={reprises}
+                     loading={loadingReprises}
+                     onCancel={handleCancelReprise}
+                     onViewDetails={handleViewRepriseDetails}
+                   />
+                 )}
+               </CardContent>
+             </Card>
+           </TabsContent>
 
-          <TabsContent value="audit" className="flex-1 min-h-0 mt-4">
+           <TabsContent value="contestations" className="flex-1 min-h-0 mt-4">
+            <Card className="flex-1 min-h-0 flex flex-col h-full">
+              <CardHeader className="shrink-0 pb-2">
+                <CardTitle className="text-base flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <ShieldAlert className="size-4" />
+                    Contestations commissions
+                  </span>
+                  <CreerContestationDialog
+                    commissionId={filteredCommissions[0]?.id || ""}
+                    bordereauId={bordereaux[0]?.id || ""}
+                    apporteurId={filteredCommissions[0]?.apporteur?.id || bordereaux[0]?.apporteurId || ""}
+                    onSubmit={handleCreerContestation}
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!filteredCommissions[0]?.id || !bordereaux[0]?.id}
+                      >
+                        Créer contestation
+                      </Button>
+                    }
+                  />
+                </CardTitle>
+              </CardHeader>
+               <CardContent className="flex-1 min-h-0 flex flex-col">
+                 {errorContestations ? (
+                   <Alert variant="destructive">
+                     <AlertCircle className="h-4 w-4" />
+                     <AlertTitle>Erreur</AlertTitle>
+                     <AlertDescription>
+                       {errorContestations.message}
+                       <Button variant="outline" size="sm" className="ml-4" onClick={() => refetchContestations()}>
+                         Réessayer
+                       </Button>
+                     </AlertDescription>
+                   </Alert>
+                 ) : loadingContestations ? (
+                   <div className="text-sm text-muted-foreground">Chargement...</div>
+                 ) : contestationsData.length === 0 ? (
+                   <Empty>
+                     <EmptyHeader>
+                       <EmptyMedia>
+                         <AlertTriangle className="h-10 w-10 text-muted-foreground" />
+                       </EmptyMedia>
+                       <EmptyTitle>Aucune contestation</EmptyTitle>
+                     </EmptyHeader>
+                     <EmptyContent>
+                       <EmptyDescription>Les contestations seront listées ici quand un apporteur conteste une commission.</EmptyDescription>
+                     </EmptyContent>
+                   </Empty>
+                 ) : (
+                   <ContestationsList
+                     contestations={contestationsData}
+                     onResoudre={handleResoudreContestation}
+                   />
+                 )}
+               </CardContent>
+             </Card>
+           </TabsContent>
+
+           <TabsContent value="audit" className="flex-1 min-h-0 mt-4">
             <Card className="flex-1 min-h-0 flex flex-col h-full">
               <CardHeader className="shrink-0 pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -1280,47 +1467,59 @@ export function CommissionsPageClient({
                       </Button>
                     </AlertDescription>
                   </Alert>
-                ) : (
-                  <>
-                    <AuditLogViewer logs={auditLogs} loading={loadingAuditLogs} />
-                    {auditTotalPages > 1 && (
-                      <div className="mt-4 flex items-center justify-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const next = Math.max(1, auditPage - 1)
-                            setAuditPage(next)
-                            refetchAuditLogs(auditFilters, next)
-                          }}
-                          disabled={auditPage === 1}
-                        >
-                          Précédent
-                        </Button>
-                        <span className="text-sm text-muted-foreground">
-                          Page {auditPage} sur {auditTotalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const next = Math.min(auditTotalPages, auditPage + 1)
-                            setAuditPage(next)
-                            refetchAuditLogs(auditFilters, next)
-                          }}
-                          disabled={auditPage === auditTotalPages}
-                        >
-                          Suivant
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                 ) : auditLogs.length === 0 ? (
+                   <Empty>
+                     <EmptyHeader>
+                       <EmptyMedia>
+                         <Clock className="h-10 w-10 text-muted-foreground" />
+                       </EmptyMedia>
+                       <EmptyTitle>Aucun log d'audit</EmptyTitle>
+                     </EmptyHeader>
+                     <EmptyContent>
+                       <EmptyDescription>L'historique des actions sur les commissions apparaîtra ici.</EmptyDescription>
+                     </EmptyContent>
+                   </Empty>
+                 ) : (
+                   <>
+                     <AuditLogViewer logs={auditLogs} loading={loadingAuditLogs} />
+                     {auditTotalPages > 1 && (
+                       <div className="mt-4 flex items-center justify-center gap-2">
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             const next = Math.max(1, auditPage - 1)
+                             setAuditPage(next)
+                             refetchAuditLogs(auditFilters, next)
+                           }}
+                           disabled={auditPage === 1}
+                         >
+                           Précédent
+                         </Button>
+                         <span className="text-sm text-muted-foreground">
+                           Page {auditPage} sur {auditTotalPages}
+                         </span>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             const next = Math.min(auditTotalPages, auditPage + 1)
+                             setAuditPage(next)
+                             refetchAuditLogs(auditFilters, next)
+                           }}
+                           disabled={auditPage === auditTotalPages}
+                         >
+                           Suivant
+                         </Button>
+                       </div>
+                     )}
+                   </>
+                 )}
+               </CardContent>
+             </Card>
+           </TabsContent>
 
-          <TabsContent value="recurrences" className="flex-1 min-h-0 mt-4">
+           <TabsContent value="recurrences" className="flex-1 min-h-0 mt-4">
             <Card className="flex-1 min-h-0 flex flex-col h-full">
               <CardHeader className="shrink-0 pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -1388,47 +1587,59 @@ export function CommissionsPageClient({
                       </Button>
                     </AlertDescription>
                   </Alert>
-                ) : (
-                  <>
-                    <RecurrencesList recurrences={recurrencesData} loading={loadingRecurrences} />
-                    {recurrencesTotalPages > 1 && (
-                      <div className="mt-4 flex items-center justify-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const next = Math.max(1, recurrencesPage - 1)
-                            setRecurrencesPage(next)
-                            refetchRecurrences(recurrenceFilters, next)
-                          }}
-                          disabled={recurrencesPage === 1}
-                        >
-                          Précédent
-                        </Button>
-                        <span className="text-sm text-muted-foreground">
-                          Page {recurrencesPage} sur {recurrencesTotalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const next = Math.min(recurrencesTotalPages, recurrencesPage + 1)
-                            setRecurrencesPage(next)
-                            refetchRecurrences(recurrenceFilters, next)
-                          }}
-                          disabled={recurrencesPage === recurrencesTotalPages}
-                        >
-                          Suivant
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                 ) : recurrencesData.length === 0 ? (
+                   <Empty>
+                     <EmptyHeader>
+                       <EmptyMedia>
+                         <RefreshCw className="h-10 w-10 text-muted-foreground" />
+                       </EmptyMedia>
+                       <EmptyTitle>Aucune récurrence</EmptyTitle>
+                     </EmptyHeader>
+                     <EmptyContent>
+                       <EmptyDescription>Les commissions récurrentes apparaîtront ici une fois configurées.</EmptyDescription>
+                     </EmptyContent>
+                   </Empty>
+                 ) : (
+                   <>
+                     <RecurrencesList recurrences={recurrencesData} loading={loadingRecurrences} />
+                     {recurrencesTotalPages > 1 && (
+                       <div className="mt-4 flex items-center justify-center gap-2">
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             const next = Math.max(1, recurrencesPage - 1)
+                             setRecurrencesPage(next)
+                             refetchRecurrences(recurrenceFilters, next)
+                           }}
+                           disabled={recurrencesPage === 1}
+                         >
+                           Précédent
+                         </Button>
+                         <span className="text-sm text-muted-foreground">
+                           Page {recurrencesPage} sur {recurrencesTotalPages}
+                         </span>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             const next = Math.min(recurrencesTotalPages, recurrencesPage + 1)
+                             setRecurrencesPage(next)
+                             refetchRecurrences(recurrenceFilters, next)
+                           }}
+                           disabled={recurrencesPage === recurrencesTotalPages}
+                         >
+                           Suivant
+                         </Button>
+                       </div>
+                     )}
+                   </>
+                 )}
+               </CardContent>
+             </Card>
+           </TabsContent>
 
-          <TabsContent value="reports-negatifs" className="flex-1 min-h-0 mt-4">
+           <TabsContent value="reports-negatifs" className="flex-1 min-h-0 mt-4">
             <Card className="flex-1 min-h-0 flex flex-col h-full">
               <CardHeader className="shrink-0 pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -1490,46 +1701,58 @@ export function CommissionsPageClient({
                       </Button>
                     </AlertDescription>
                   </Alert>
-                ) : (
-                  <>
-                    <ReportsNegatifsList reports={reportsNegatifsData} loading={loadingReportsNegatifs} />
-                    {reportsTotalPages > 1 && (
-                      <div className="mt-4 flex items-center justify-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const next = Math.max(1, reportsPage - 1)
-                            setReportsPage(next)
-                            refetchReportsNegatifs(reportFilters, next)
-                          }}
-                          disabled={reportsPage === 1}
-                        >
-                          Précédent
-                        </Button>
-                        <span className="text-sm text-muted-foreground">
-                          Page {reportsPage} sur {reportsTotalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const next = Math.min(reportsTotalPages, reportsPage + 1)
-                            setReportsPage(next)
-                            refetchReportsNegatifs(reportFilters, next)
-                          }}
-                          disabled={reportsPage === reportsTotalPages}
-                        >
-                          Suivant
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                 ) : reportsNegatifsData.length === 0 ? (
+                   <Empty>
+                     <EmptyHeader>
+                       <EmptyMedia>
+                         <TrendingDownIcon className="h-10 w-10 text-muted-foreground" />
+                       </EmptyMedia>
+                       <EmptyTitle>Aucun report négatif</EmptyTitle>
+                     </EmptyHeader>
+                     <EmptyContent>
+                       <EmptyDescription>Les soldes négatifs reportés entre périodes seront affichés ici.</EmptyDescription>
+                     </EmptyContent>
+                   </Empty>
+                 ) : (
+                   <>
+                     <ReportsNegatifsList reports={reportsNegatifsData} loading={loadingReportsNegatifs} />
+                     {reportsTotalPages > 1 && (
+                       <div className="mt-4 flex items-center justify-center gap-2">
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             const next = Math.max(1, reportsPage - 1)
+                             setReportsPage(next)
+                             refetchReportsNegatifs(reportFilters, next)
+                           }}
+                           disabled={reportsPage === 1}
+                         >
+                           Précédent
+                         </Button>
+                         <span className="text-sm text-muted-foreground">
+                           Page {reportsPage} sur {reportsTotalPages}
+                         </span>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             const next = Math.min(reportsTotalPages, reportsPage + 1)
+                             setReportsPage(next)
+                             refetchReportsNegatifs(reportFilters, next)
+                           }}
+                           disabled={reportsPage === reportsTotalPages}
+                         >
+                           Suivant
+                         </Button>
+                       </div>
+                     )}
+                   </>
+                 )}
+               </CardContent>
+             </Card>
+           </TabsContent>
+         </Tabs>
 
         <CommissionDetailDialog
           open={showDetailDialog}

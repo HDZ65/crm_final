@@ -14,22 +14,29 @@ import {
 
 export function NavMain({
   items,
+  label,
 }: {
   items: {
     title: string
     url: string
     icon?: LucideIcon
   }[]
+  label?: string
 }) {
   const pathname = usePathname()
 
   return (
     <SidebarGroup>
+      {label && (
+        <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {label}
+        </p>
+      )}
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => {
-            const isActive = pathname === item.url
-            return (
+           {items.map((item) => {
+             const isActive = pathname === item.url || (item.url !== '/' && pathname.startsWith(item.url + '/'))
+             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   asChild

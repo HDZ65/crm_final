@@ -42,7 +42,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import {
-  listWooCommerceConfigs,
+  getWooCommerceConfigByOrganisation,
   createWooCommerceConfig,
   updateWooCommerceConfig,
   deleteWooCommerceConfig,
@@ -50,7 +50,7 @@ import {
   createWooCommerceMapping,
   updateWooCommerceMapping,
   deleteWooCommerceMapping,
-  listWooCommerceWebhooks,
+  listWooCommerceWebhookEvents,
 } from "@/actions/woocommerce"
 import type {
   WooCommerceConfig,
@@ -60,12 +60,14 @@ import type {
 import { Plus, Pencil, Trash2, Loader2, ShoppingCart, Search, RefreshCw } from "lucide-react"
 
 interface WooCommercePageClientProps {
+  activeOrgId?: string | null
   initialConfigs?: WooCommerceConfig[] | null
   initialMappings?: WooCommerceMapping[] | null
   initialWebhooks?: WooCommerceWebhook[] | null
 }
 
 export function WooCommercePageClient({
+  activeOrgId,
   initialConfigs,
   initialMappings,
   initialWebhooks,
@@ -103,37 +105,40 @@ export function WooCommercePageClient({
 
   // Fetch functions
   const fetchConfigs = React.useCallback(async () => {
+    if (!activeOrgId) return
     setLoading(true)
-    const result = await listWooCommerceConfigs()
+    const result = await getWooCommerceConfigByOrganisation(activeOrgId)
     if (result.data) {
-      setConfigs(result.data.configs || [])
+      setConfigs([result.data])
     } else if (result.error) {
       toast.error(result.error)
     }
     setLoading(false)
-  }, [])
+  }, [activeOrgId])
 
   const fetchMappings = React.useCallback(async () => {
+    if (!activeOrgId) return
     setLoading(true)
-    const result = await listWooCommerceMappings()
+    const result = await listWooCommerceMappings({ organisationId: activeOrgId })
     if (result.data) {
       setMappings(result.data.mappings || [])
     } else if (result.error) {
       toast.error(result.error)
     }
     setLoading(false)
-  }, [])
+  }, [activeOrgId])
 
   const fetchWebhooks = React.useCallback(async () => {
+    if (!activeOrgId) return
     setLoading(true)
-    const result = await listWooCommerceWebhooks()
+    const result = await listWooCommerceWebhookEvents({ organisationId: activeOrgId })
     if (result.data) {
       setWebhooks(result.data.webhooks || [])
     } else if (result.error) {
       toast.error(result.error)
     }
     setLoading(false)
-  }, [])
+  }, [activeOrgId])
 
   // Config handlers
   const handleCreateConfig = () => {

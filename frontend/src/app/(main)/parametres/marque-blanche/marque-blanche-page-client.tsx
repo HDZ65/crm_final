@@ -43,17 +43,17 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import {
   listPartenairesMarqueBlanche,
-  createPartenaireMarqueBlanche,
-  updatePartenaireMarqueBlanche,
-  deletePartenaireMarqueBlanche,
+  createPartenaireMarqueBlancheAction,
+  updatePartenaireMarqueBlancheAction,
+  deletePartenaireMarqueBlancheAction,
   listThemesMarque,
-  createThemeMarque,
-  updateThemeMarque,
-  deleteThemeMarque,
+  createThemeMarqueAction,
+  updateThemeMarqueAction,
+  deleteThemeMarqueAction,
   listStatutsPartenaire,
-  createStatutPartenaire,
-  updateStatutPartenaire,
-  deleteStatutPartenaire,
+  createStatutPartenaireAction,
+  updateStatutPartenaireAction,
+  deleteStatutPartenaireAction,
 } from "@/actions/marque-blanche"
 import type {
   PartenaireMarqueBlanche,
@@ -187,7 +187,7 @@ export function MarqueBlanchePageClient({
     setLoading(true)
 
     if (selectedPartenaire) {
-      const result = await updatePartenaireMarqueBlanche({
+      const result = await updatePartenaireMarqueBlancheAction({
         id: selectedPartenaire.id,
         ...partenaireFormData,
       })
@@ -199,7 +199,7 @@ export function MarqueBlanchePageClient({
         fetchPartenaires()
       }
     } else {
-      const result = await createPartenaireMarqueBlanche(partenaireFormData)
+      const result = await createPartenaireMarqueBlancheAction(partenaireFormData)
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -216,7 +216,7 @@ export function MarqueBlanchePageClient({
     if (!selectedPartenaire) return
 
     setLoading(true)
-    const result = await deletePartenaireMarqueBlanche(selectedPartenaire.id)
+    const result = await deletePartenaireMarqueBlancheAction(selectedPartenaire.id)
 
     if (result.error) {
       toast.error(result.error)
@@ -262,7 +262,7 @@ export function MarqueBlanchePageClient({
     setLoading(true)
 
     if (selectedTheme) {
-      const result = await updateThemeMarque({
+      const result = await updateThemeMarqueAction({
         id: selectedTheme.id,
         ...themeFormData,
       })
@@ -274,7 +274,7 @@ export function MarqueBlanchePageClient({
         fetchThemes()
       }
     } else {
-      const result = await createThemeMarque(themeFormData)
+      const result = await createThemeMarqueAction(themeFormData)
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -291,7 +291,7 @@ export function MarqueBlanchePageClient({
     if (!selectedTheme) return
 
     setLoading(true)
-    const result = await deleteThemeMarque(selectedTheme.id)
+    const result = await deleteThemeMarqueAction(selectedTheme.id)
 
     if (result.error) {
       toast.error(result.error)
@@ -330,7 +330,7 @@ export function MarqueBlanchePageClient({
     setLoading(true)
 
     if (selectedStatut) {
-      const result = await updateStatutPartenaire({
+      const result = await updateStatutPartenaireAction({
         id: selectedStatut.id,
         ...statutFormData,
       })
@@ -342,7 +342,7 @@ export function MarqueBlanchePageClient({
         fetchStatuts()
       }
     } else {
-      const result = await createStatutPartenaire(statutFormData)
+      const result = await createStatutPartenaireAction(statutFormData)
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -359,7 +359,7 @@ export function MarqueBlanchePageClient({
     if (!selectedStatut) return
 
     setLoading(true)
-    const result = await deleteStatutPartenaire(selectedStatut.id)
+    const result = await deleteStatutPartenaireAction(selectedStatut.id)
 
     if (result.error) {
       toast.error(result.error)

@@ -13,6 +13,7 @@ import {
   Receipt,
   ListTodo,
   Calendar,
+  CalendarDays,
   Mail,
   GitBranch,
   Archive,
@@ -35,6 +36,7 @@ export interface NavItem {
   icon?: LucideIcon
   parentUrl?: string
   requiredRole?: string
+  description?: string
   children?: NavItem[]
 }
 
@@ -97,7 +99,8 @@ export const NAV_CRM_GROUP: NavGroup = {
     {
       title: "Calendrier",
       url: "/calendrier",
-      icon: Calendar,
+      icon: CalendarDays,
+      description: "Jours fériés & zones",
     },
   ],
 }

@@ -2,35 +2,14 @@
 
 import * as React from "react";
 import {
-  LayoutDashboard,
-  Users,
-  Briefcase,
-  Truck,
-  DollarSign,
-  BarChart3,
   LogIn,
   AudioWaveform,
-  Package,
-  ListTodo,
-  Receipt,
-  Calendar,
-  Mail,
-  Settings,
-  Rocket,
-  FlaskConical,
-  FileText,
-  CreditCard,
-  Bug,
-  Shield,
-  ShieldCheck,
-  Palette,
-  GitBranch,
-  Archive,
-  Bell,
-  FileDown,
+  ChevronRight,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-import { NavMain } from "@/components/nav-main";
+import { NAV_GROUPS, DASHBOARD_ITEM } from "@/lib/nav-config";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -40,153 +19,22 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth, useCreateInvitation, useOrganisationInvitations, useCancelInvitation, useOrganisationMembers, useDeleteOrganisation, useUpdateOrganisation, useLeaveOrganisation, useRemoveMember, useUpdateMemberRole, useAvailableRoles } from "@/hooks/auth";
 import { useOrganisation } from "@/contexts/organisation-context";
 import { TeamSwitcher } from "./team-switcher";
 import { OrganizationsDialog } from "./organizations-dialog";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 
-const NAV_ITEMS = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Clients",
-    url: "/clients",
-    icon: Users,
-  },
-  {
-    title: "Commerciaux",
-    url: "/commerciaux",
-    icon: Briefcase,
-  },
-  {
-    title: "Abonnements",
-    url: "/abonnements",
-    icon: CreditCard,
-  },
-  {
-    title: "Plans",
-    url: "/abonnements/plans",
-    icon: FileText,
-  },
-  {
-    title: "Catalogue",
-    url: "/catalogue",
-    icon: Package,
-  },
-  {
-    title: "Formules",
-    url: "/catalogue/formules",
-    icon: FlaskConical,
-  },
-  {
-    title: "Expéditions",
-    url: "/expeditions",
-    icon: Truck,
-  },
-  {
-    title: "Commissions",
-    url: "/commissions",
-    icon: DollarSign,
-  },
-  {
-    title: "Validation ADV",
-    url: "/commissions/validation",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Reporting",
-    url: "/commissions/reporting",
-    icon: BarChart3,
-  },
-  {
-    title: "Facturation",
-    url: "/facturation",
-    icon: Receipt,
-  },
-  {
-    title: "Tâches",
-    url: "/taches",
-    icon: ListTodo,
-  },
-  {
-    title: "Agenda",
-    url: "/agenda",
-    icon: Calendar,
-  },
-  {
-    title: "Calendrier",
-    url: "/calendrier",
-    icon: Calendar,
-  },
-  {
-    title: "Messagerie",
-    url: "/messagerie",
-    icon: Mail,
-  },
-  {
-    title: "Statistiques",
-    url: "/statistiques",
-    icon: BarChart3,
-  },
-];
-
-const NAV_PAIEMENTS_ITEMS = [
-  {
-    title: "Routage",
-    url: "/paiements/routing",
-    icon: GitBranch,
-  },
-  {
-    title: "Archives",
-    url: "/paiements/archives",
-    icon: Archive,
-  },
-  {
-    title: "Alertes",
-    url: "/paiements/alertes",
-    icon: Bell,
-  },
-  {
-    title: "Exports",
-    url: "/paiements/exports",
-    icon: FileDown,
-  },
-];
-
-const NAV_SECONDARY_ITEMS = [
-  {
-    title: "Paramètres",
-    url: "/parametres/types-activites",
-    icon: Settings,
-  },
-  {
-    title: "Permissions",
-    url: "/parametres/permissions",
-    icon: Shield,
-  },
-  {
-    title: "Rôles & Permissions",
-    url: "/parametres/roles-permissions",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Marque Blanche",
-    url: "/parametres/marque-blanche",
-    icon: Palette,
-  },
-  {
-    title: "Onboarding",
-    url: "/onboarding",
-    icon: Rocket,
-  },
-];
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
   const { profile, ready, isAuthenticated, login, logout } = useAuth();
   const { utilisateur, organisations, activeOrganisation, setActiveOrganisation, refetch, isOwner } = useOrganisation();
   const [manageDialogOpen, setManageDialogOpen] = React.useState(false);
@@ -419,9 +267,81 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           />
         </SidebarHeader>
       <SidebarContent>
-        <NavMain items={NAV_ITEMS} />
-        <NavMain items={NAV_PAIEMENTS_ITEMS} label="Paiements" />
-        <NavMain items={NAV_SECONDARY_ITEMS} label="Utilitaires & Dev" />
+        {/* Dashboard standalone */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname === "/"} tooltip={DASHBOARD_ITEM.title}>
+              <Link href={DASHBOARD_ITEM.url}>
+                {DASHBOARD_ITEM.icon && <DASHBOARD_ITEM.icon />}
+                <span>{DASHBOARD_ITEM.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
+        {/* 5 collapsible groups */}
+        {NAV_GROUPS.map((group) => (
+          <Collapsible key={group.id} defaultOpen={group.defaultOpen} className="group/collapsible">
+            <SidebarGroup>
+              <SidebarGroupLabel asChild>
+                <CollapsibleTrigger className="w-full">
+                  {group.label}
+                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item) => {
+                      const isActive = pathname === item.url || (item.url !== '/' && pathname.startsWith(item.url + '/'))
+                      
+                      if (item.children && item.children.length > 0) {
+                        // Item with sub-items
+                         return (
+                           <SidebarMenuItem key={item.title}>
+                             <SidebarMenuButton asChild isActive={isActive} tooltip={item.description ?? item.title}>
+                               <Link href={item.url}>
+                                 {item.icon && <item.icon />}
+                                 <span>{item.title}</span>
+                               </Link>
+                             </SidebarMenuButton>
+                            <SidebarMenuSub>
+                              {item.children.map((subItem) => {
+                                const subIsActive = pathname === subItem.url || (subItem.url !== '/' && pathname.startsWith(subItem.url + '/'))
+                                 return (
+                                   <SidebarMenuSubItem key={subItem.title}>
+                                     <SidebarMenuSubButton asChild isActive={subIsActive} tooltip={subItem.description ?? subItem.title}>
+                                       <Link href={subItem.url}>
+                                         {subItem.icon && <subItem.icon />}
+                                         <span>{subItem.title}</span>
+                                       </Link>
+                                     </SidebarMenuSubButton>
+                                   </SidebarMenuSubItem>
+                                 )
+                              })}
+                            </SidebarMenuSub>
+                          </SidebarMenuItem>
+                        )
+                      }
+                      
+                       // Regular item without children
+                       return (
+                         <SidebarMenuItem key={item.title}>
+                           <SidebarMenuButton asChild isActive={isActive} tooltip={item.description ?? item.title}>
+                             <Link href={item.url}>
+                               {item.icon && <item.icon />}
+                               <span>{item.title}</span>
+                             </Link>
+                           </SidebarMenuButton>
+                         </SidebarMenuItem>
+                       )
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        ))}
       </SidebarContent>
       <SidebarFooter>
         {isAuthenticated && userData ? (

@@ -13,27 +13,27 @@ import { columns } from "./columns"
 import { toast } from "sonner"
 import { getFacturesByOrganisation } from "@/actions/factures"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { Facture as FactureGrpc, StatutFacture as StatutFactureGrpc } from "@proto/factures/factures"
-import type { Facture, StatutFacture } from "@/types/facture"
+import type { Facture, StatutFacture } from "@proto/factures/factures"
 import { cn } from "@/lib/utils"
 
 // Mapper la facture gRPC vers le type frontend
-function mapFacture(f: FactureGrpc): Facture {
+function mapFacture(f: Facture): Facture {
   return {
     id: f.id,
     organisationId: f.organisationId,
     numero: f.numero,
     dateEmission: f.dateEmission,
-    montantHT: f.montantHt,
-    montantTTC: f.montantTtc,
+    montantHt: f.montantHt,
+    montantTtc: f.montantTtc,
     statutId: f.statutId,
     emissionFactureId: f.emissionFactureId,
     clientBaseId: f.clientBaseId,
-    contratId: f.contratId || null,
+    contratId: f.contratId || "",
     clientPartenaireId: f.clientPartenaireId,
     adresseFacturationId: f.adresseFacturationId,
     createdAt: f.createdAt,
     updatedAt: f.updatedAt,
+    lignes: f.lignes || [],
     client: f.client ? { id: f.client.id, nom: f.client.nom, prenom: f.client.prenom } : undefined,
     statut: f.statut ? {
       id: f.statut.id,
@@ -41,13 +41,15 @@ function mapFacture(f: FactureGrpc): Facture {
       nom: f.statut.nom,
       description: f.statut.description,
       ordreAffichage: f.statut.ordreAffichage,
+      createdAt: f.statut.createdAt,
+      updatedAt: f.statut.updatedAt,
     } : undefined,
   }
 }
 
 interface FacturationPageClientProps {
-  initialFactures?: FactureGrpc[] | null
-  statuts: StatutFactureGrpc[]
+  initialFactures?: Facture[] | null
+  statuts: StatutFacture[]
 }
 
 export function FacturationPageClient({ initialFactures, statuts }: FacturationPageClientProps) {
@@ -73,6 +75,8 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
       nom: s.nom,
       description: s.description,
       ordreAffichage: s.ordreAffichage,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
     })),
     [statuts]
   )
@@ -116,16 +120,19 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
 
   const refetch = fetchData
 
-  // Compter les filtres avancés actifs
-  const activeAdvancedFiltersCount = React.useMemo(() => {
-    let count = 0
-    if (filters.numero) count++
-    if (filters.client) count++
-    if (filters.statutId && filters.statutId !== "all") count++
-    if (filters.dateDebut) count++
-    if (filters.dateFin) count++
-    return count
-  }, [filters])
+   // Compter les filtres avancés actifs
+   const activeAdvancedFiltersCount = React.useMemo(() => {
+     let count = 0
+     if (filters.numero) count++
+     if (filters.client) count++
+     if (filters.statutId && filters.statutId !== "all") count++
+     if (filters.dateDebut) count++
+     if (filters.dateFin) count++
+     return count
+   }, [filters])
+
+   // Derived flag: panel is open if user toggled it OR if there are active filters
+   const isAdvancedFiltersOpen = showAdvancedFilters || activeAdvancedFiltersCount > 0
 
   // Réinitialiser les filtres
   const resetFilters = React.useCallback(() => {
@@ -196,8 +203,8 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
   const totals = React.useMemo(() => {
     return filteredFactures.reduce(
       (acc, f) => ({
-        ht: acc.ht + (f.montantHT || 0),
-        ttc: acc.ttc + (f.montantTTC || 0),
+        ht: acc.ht + (f.montantHt || 0),
+        ttc: acc.ttc + (f.montantTtc || 0),
       }),
       { ht: 0, ttc: 0 }
     )
@@ -227,8 +234,8 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
       f.numero,
       f.client ? `${f.client.prenom} ${f.client.nom}` : "",
       new Date(f.dateEmission).toLocaleDateString("fr-FR"),
-      f.montantHT?.toFixed(2) || "0.00",
-      f.montantTTC?.toFixed(2) || "0.00",
+      f.montantHt?.toFixed(2) || "0.00",
+      f.montantTtc?.toFixed(2) || "0.00",
       f.statut?.nom || "",
     ])
 
@@ -269,31 +276,31 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
             />
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={cn(
-              "gap-2",
-              showAdvancedFilters && "bg-accent"
-            )}
-          >
-            <SlidersHorizontal className="size-4" />
-            Filtres
-            {activeAdvancedFiltersCount > 0 && (
-              <Badge variant="secondary" className="ml-1 size-5 p-0 flex items-center justify-center text-xs">
-                {activeAdvancedFiltersCount}
-              </Badge>
-            )}
-            <ChevronDown className={cn("size-4 transition-transform", showAdvancedFilters && "rotate-180")} />
-          </Button>
+           <Button
+             variant="outline"
+             size="sm"
+             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+             className={cn(
+               "gap-2",
+               isAdvancedFiltersOpen && "bg-accent"
+             )}
+           >
+             <SlidersHorizontal className="size-4" />
+             Filtres
+             {activeAdvancedFiltersCount > 0 && (
+               <Badge variant="secondary" className="ml-1 size-5 p-0 flex items-center justify-center text-xs">
+                 {activeAdvancedFiltersCount}
+               </Badge>
+             )}
+             <ChevronDown className={cn("size-4 transition-transform", isAdvancedFiltersOpen && "rotate-180")} />
+           </Button>
 
-          {activeAdvancedFiltersCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-muted-foreground">
-              <X className="size-4" />
-              Réinitialiser
-            </Button>
-          )}
+           {activeAdvancedFiltersCount > 0 && (
+             <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-muted-foreground">
+               <X className="size-4" />
+               Réinitialiser les filtres
+             </Button>
+           )}
 
           <div className="flex-1" />
 
@@ -310,8 +317,8 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
           </Button>
         </div>
 
-        {/* Filtres avancés (collapsible) */}
-        <Collapsible open={showAdvancedFilters}>
+         {/* Filtres avancés (collapsible) */}
+         <Collapsible open={isAdvancedFiltersOpen}>
           <CollapsibleContent>
             <Card className="bg-blue-100 border border-blue-200">
               <CardContent className="pt-4 pb-4">

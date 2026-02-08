@@ -18,16 +18,16 @@ import { ImportClientDialog } from "@/components/clients/import-client-dialog"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { ClientRow } from "@/types/client"
+import type { ClientRow, ClientStatus } from "@/lib/ui/display-types/client"
 import type { ClientBase } from "@proto/clients/clients"
 import type { StatutClient } from "@/constants/statuts-client"
 import { formatCreatedAgo, formatFullName } from "@/lib/formatters"
 
 // Helper pour mapper le statut vers le type UI
-function mapStatutToStatus(statutCode: string): "Actif" | "Impayé" | "Suspendu" {
+function mapStatutToStatus(statutCode: string): ClientStatus {
   const code = statutCode.toLowerCase()
   if (code === 'actif' || code === 'active') return 'Actif'
-  if (code === 'impaye' || code === 'impayé') return 'Impayé'
+  if (code === 'impaye' || code === 'impayé') return 'Impaye'
   if (code === 'suspendu' || code === 'suspended') return 'Suspendu'
   return 'Actif'
 }
@@ -141,19 +141,22 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
     }
   }, [filters.clientType, activeSocieteId, fetchData])
 
-  // Compter les filtres avancés actifs
-  const activeAdvancedFiltersCount = React.useMemo(() => {
-    let count = 0
-    if (filters.name) count++
-    if (filters.firstName) count++
-    if (filters.email) count++
-    if (filters.phone) count++
-    if (filters.clientType) count++
-    if (filters.company) count++
-    if (filters.iban) count++
-    if (filters.source) count++
-    return count
-  }, [filters])
+   // Compter les filtres avancés actifs
+   const activeAdvancedFiltersCount = React.useMemo(() => {
+     let count = 0
+     if (filters.name) count++
+     if (filters.firstName) count++
+     if (filters.email) count++
+     if (filters.phone) count++
+     if (filters.clientType) count++
+     if (filters.company) count++
+     if (filters.iban) count++
+     if (filters.source) count++
+     return count
+   }, [filters])
+
+   // Derived flag: panel is open if user toggled it OR if there are active filters
+   const isAdvancedFiltersOpen = showAdvancedFilters || activeAdvancedFiltersCount > 0
 
   const columns = React.useMemo(() => createColumns(fetchData), [fetchData])
 
@@ -246,31 +249,31 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
             />
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleAdvancedFilters}
-            className={cn(
-              "gap-2",
-              showAdvancedFilters && "bg-accent"
-            )}
-          >
-            <SlidersHorizontal className="size-4" />
-            Filtres
-            {activeAdvancedFiltersCount > 0 && (
-              <Badge variant="secondary" className="ml-1 size-5 p-0 flex items-center justify-center text-xs">
-                {activeAdvancedFiltersCount}
-              </Badge>
-            )}
-            <ChevronDown className={cn("size-4 transition-transform", showAdvancedFilters && "rotate-180")} />
-          </Button>
+           <Button
+             variant="outline"
+             size="sm"
+             onClick={toggleAdvancedFilters}
+             className={cn(
+               "gap-2",
+               isAdvancedFiltersOpen && "bg-accent"
+             )}
+           >
+             <SlidersHorizontal className="size-4" />
+             Filtres
+             {activeAdvancedFiltersCount > 0 && (
+               <Badge variant="secondary" className="ml-1 size-5 p-0 flex items-center justify-center text-xs">
+                 {activeAdvancedFiltersCount}
+               </Badge>
+             )}
+             <ChevronDown className={cn("size-4 transition-transform", isAdvancedFiltersOpen && "rotate-180")} />
+           </Button>
 
-          {activeAdvancedFiltersCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-muted-foreground">
-              <X className="size-4" />
-              Réinitialiser
-            </Button>
-          )}
+           {activeAdvancedFiltersCount > 0 && (
+             <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-muted-foreground">
+               <X className="size-4" />
+               Réinitialiser les filtres
+             </Button>
+           )}
 
           <div className="flex-1" />
 
@@ -291,8 +294,8 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
           </Button>
         </div>
 
-        {/* Filtres avancés (collapsible) */}
-        <Collapsible open={showAdvancedFilters}>
+         {/* Filtres avancés (collapsible) */}
+         <Collapsible open={isAdvancedFiltersOpen}>
           <CollapsibleContent>
             <Card className="bg-card border">
               <CardContent className="pt-4 pb-4">

@@ -153,7 +153,11 @@ function getSummaryStatus(status?: number) {
   }
 }
 
-export function AgendaPageClient() {
+interface AgendaPageClientProps {
+  initialOrgId?: string | null
+}
+
+export function AgendaPageClient({ initialOrgId }: AgendaPageClientProps) {
   const { user } = useAuth()
   const { utilisateur, activeOrganisation } = useOrganisation()
 

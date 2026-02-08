@@ -39,16 +39,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import {
   getMailboxesByOrganisation,
   createMailbox,
   updateMailbox,
   deleteMailbox,
+  sendEmail,
 } from "@/actions/mailbox"
 import type { Mailbox } from "@proto/email/email"
-import { Plus, Pencil, Trash2, Loader2, Mail } from "lucide-react"
+import { Plus, Pencil, Trash2, Loader2, Mail, Search, Send, Inbox, Settings2, RefreshCw } from "lucide-react"
 
 const FOURNISSEUR_OPTIONS = [
   { value: 0, label: "SMTP" },
@@ -56,13 +59,32 @@ const FOURNISSEUR_OPTIONS = [
   { value: 2, label: "Outlook" },
 ] as const
 
-export function MessageriePageClient() {
-  const [mailboxes, setMailboxes] = React.useState<Mailbox[]>([])
+const EMPTY_COMPOSE_FORM = {
+  to: "",
+  cc: "",
+  subject: "",
+  body: "",
+}
+
+interface MessageriePageClientProps {
+  initialMailboxes?: Mailbox[] | null
+}
+
+export function MessageriePageClient({ initialMailboxes }: MessageriePageClientProps) {
+  const [activeTab, setActiveTab] = React.useState("inbox")
+  const [mailboxes, setMailboxes] = React.useState<Mailbox[]>(initialMailboxes || [])
   const [loading, setLoading] = React.useState(false)
+  const [search, setSearch] = React.useState("")
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [editItem, setEditItem] = React.useState<Mailbox | null>(null)
   const [deleteItem, setDeleteItem] = React.useState<Mailbox | null>(null)
+  const [selectedMailboxId, setSelectedMailboxId] = React.useState("")
+
+  // Compose state
+  const [composeOpen, setComposeOpen] = React.useState(false)
+  const [composeForm, setComposeForm] = React.useState(EMPTY_COMPOSE_FORM)
+  const [isSending, setIsSending] = React.useState(false)
 
   const [formData, setFormData] = React.useState({
     nom: "",
@@ -73,6 +95,25 @@ export function MessageriePageClient() {
     signature: "",
     isDefault: false,
   })
+
+  // Auto-select default mailbox
+  React.useEffect(() => {
+    if (!selectedMailboxId && mailboxes.length > 0) {
+      const defaultBox = mailboxes.find((m) => m.is_default) || mailboxes[0]
+      setSelectedMailboxId(defaultBox.id)
+    }
+  }, [mailboxes, selectedMailboxId])
+
+  // Filter mailboxes by search
+  const filteredMailboxes = React.useMemo(() => {
+    if (!search) return mailboxes
+    const q = search.toLowerCase()
+    return mailboxes.filter(
+      (m) =>
+        m.nom.toLowerCase().includes(q) ||
+        m.adresse_email.toLowerCase().includes(q)
+    )
+  }, [mailboxes, search])
 
   // Fetch mailboxes
   const fetchMailboxes = React.useCallback(async () => {
@@ -85,11 +126,6 @@ export function MessageriePageClient() {
     }
     setLoading(false)
   }, [])
-
-  // Load on mount
-  React.useEffect(() => {
-    fetchMailboxes()
-  }, [fetchMailboxes])
 
   // Handle create
   const handleCreate = () => {
@@ -195,107 +231,332 @@ export function MessageriePageClient() {
     setLoading(false)
   }
 
+  // Handle compose email
+  const handleOpenCompose = () => {
+    setComposeForm(EMPTY_COMPOSE_FORM)
+    setComposeOpen(true)
+  }
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!selectedMailboxId) {
+      toast.error("Sélectionnez une boîte mail d'abord")
+      return
+    }
+
+    if (!composeForm.to || !composeForm.subject || !composeForm.body) {
+      toast.error("Destinataire, sujet et contenu sont obligatoires")
+      return
+    }
+
+    setIsSending(true)
+
+    try {
+      const result = await sendEmail({
+        mailboxId: selectedMailboxId,
+        to: composeForm.to,
+        cc: composeForm.cc || undefined,
+        subject: composeForm.subject,
+        body: composeForm.body,
+      })
+
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success("Email envoyé avec succès")
+        setComposeOpen(false)
+        setComposeForm(EMPTY_COMPOSE_FORM)
+      }
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   const getFournisseurLabel = (fournisseur: number) => {
     return FOURNISSEUR_OPTIONS.find((opt) => opt.value === fournisseur)?.label || "Inconnu"
   }
 
+  const selectedMailbox = React.useMemo(() => {
+    return mailboxes.find((m) => m.id === selectedMailboxId)
+  }, [mailboxes, selectedMailboxId])
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
             <Mail className="size-6" />
             Messagerie
           </h1>
           <p className="text-muted-foreground">
-            Gérez vos boîtes mail et comptes de messagerie.
+            Gérez vos boîtes mail, composez des emails et consultez vos messages.
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => void fetchMailboxes()} disabled={loading}>
+            {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <RefreshCw className="mr-2 size-4" />}
+            Actualiser
+          </Button>
+          <Button onClick={handleOpenCompose} disabled={mailboxes.length === 0}>
+            <Send className="mr-2 size-4" />
+            Nouveau message
+          </Button>
         </div>
       </div>
 
-      {/* Mailboxes Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Boîtes mail</CardTitle>
-              <CardDescription>
-                {mailboxes.length} boîte{mailboxes.length > 1 ? "s" : ""}
-              </CardDescription>
-            </div>
-            <Button onClick={handleCreate}>
-              <Plus className="size-4 mr-2" />
-              Nouvelle boîte mail
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {mailboxes.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              Aucune boîte mail configurée
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Adresse email</TableHead>
-                  <TableHead>Fournisseur</TableHead>
-                  <TableHead>Actif</TableHead>
-                  <TableHead>Par défaut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mailboxes.map((mailbox) => (
-                  <TableRow key={mailbox.id}>
-                    <TableCell className="font-medium">{mailbox.nom}</TableCell>
-                    <TableCell>{mailbox.adresse_email}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {getFournisseurLabel(mailbox.fournisseur)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={mailbox.is_active ? "default" : "secondary"}>
-                        {mailbox.is_active ? "Actif" : "Inactif"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={mailbox.is_default ? "default" : "outline"}>
-                        {mailbox.is_default ? "Oui" : "Non"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(mailbox)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setDeleteItem(mailbox)
-                            setDeleteDialogOpen(true)
-                          }}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="inbox">
+            <Inbox className="mr-2 size-4" />
+            Boîtes mail
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            <Settings2 className="mr-2 size-4" />
+            Configuration
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Create/Edit Dialog */}
+        {/* Inbox / Mailbox list Tab */}
+        <TabsContent value="inbox" className="space-y-4">
+          {/* Mailbox selector when multiple */}
+          {mailboxes.length > 1 && (
+            <Card>
+              <CardContent className="py-3">
+                <div className="flex items-center gap-3">
+                  <Label className="shrink-0">Boîte active :</Label>
+                  <Select value={selectedMailboxId} onValueChange={setSelectedMailboxId}>
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue placeholder="Sélectionner une boîte" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mailboxes.map((mb) => (
+                        <SelectItem key={mb.id} value={mb.id}>
+                          {mb.nom} ({mb.adresse_email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle>
+                    {selectedMailbox ? `${selectedMailbox.nom}` : "Boîte de réception"}
+                  </CardTitle>
+                  <CardDescription>
+                    {selectedMailbox
+                      ? `${selectedMailbox.adresse_email} — ${getFournisseurLabel(selectedMailbox.fournisseur)}`
+                      : "Sélectionnez une boîte mail pour voir les messages"}
+                  </CardDescription>
+                </div>
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!selectedMailbox ? (
+                <div className="flex h-48 items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <Inbox className="mx-auto mb-3 size-10 opacity-40" />
+                    <p>Aucune boîte mail configurée.</p>
+                    <Button variant="link" onClick={() => setActiveTab("settings")} className="mt-1">
+                      Configurer une boîte mail
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex h-48 items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <Mail className="mx-auto mb-3 size-10 opacity-40" />
+                    <p>Aucun message dans la boîte de réception.</p>
+                    <p className="text-xs mt-1">Les emails apparaîtront ici une fois la synchronisation activée.</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Configuration Tab */}
+        <TabsContent value="settings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle>Configuration des boîtes mail</CardTitle>
+                  <CardDescription>
+                    {mailboxes.length} boîte{mailboxes.length > 1 ? "s" : ""} configurée{mailboxes.length > 1 ? "s" : ""}
+                  </CardDescription>
+                </div>
+                <Button onClick={handleCreate}>
+                  <Plus className="mr-2 size-4" />
+                  Nouvelle boîte mail
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {mailboxes.length === 0 ? (
+                <div className="flex h-32 items-center justify-center text-muted-foreground">
+                  Aucune boîte mail configurée
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nom</TableHead>
+                      <TableHead>Adresse email</TableHead>
+                      <TableHead>Fournisseur</TableHead>
+                      <TableHead>Actif</TableHead>
+                      <TableHead>Par défaut</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {mailboxes.map((mailbox) => (
+                      <TableRow key={mailbox.id}>
+                        <TableCell className="font-medium">{mailbox.nom}</TableCell>
+                        <TableCell>{mailbox.adresse_email}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {getFournisseurLabel(mailbox.fournisseur)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={mailbox.is_active ? "default" : "secondary"}>
+                            {mailbox.is_active ? "Actif" : "Inactif"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={mailbox.is_default ? "default" : "outline"}>
+                            {mailbox.is_default ? "Oui" : "Non"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(mailbox)}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setDeleteItem(mailbox)
+                                setDeleteDialogOpen(true)
+                              }}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Compose Email Dialog */}
+      <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Nouveau message</DialogTitle>
+            <DialogDescription>
+              Envoi depuis : {selectedMailbox?.adresse_email || "Aucune boîte sélectionnée"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSendEmail} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="compose-to">Destinataire *</Label>
+              <Input
+                id="compose-to"
+                type="email"
+                value={composeForm.to}
+                onChange={(e) => setComposeForm((p) => ({ ...p, to: e.target.value }))}
+                placeholder="destinataire@example.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="compose-cc">Cc</Label>
+              <Input
+                id="compose-cc"
+                value={composeForm.cc}
+                onChange={(e) => setComposeForm((p) => ({ ...p, cc: e.target.value }))}
+                placeholder="copie@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="compose-subject">Sujet *</Label>
+              <Input
+                id="compose-subject"
+                value={composeForm.subject}
+                onChange={(e) => setComposeForm((p) => ({ ...p, subject: e.target.value }))}
+                placeholder="Objet du message"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="compose-body">Message *</Label>
+              <Textarea
+                id="compose-body"
+                value={composeForm.body}
+                onChange={(e) => setComposeForm((p) => ({ ...p, body: e.target.value }))}
+                placeholder="Rédigez votre message..."
+                className="min-h-40"
+                required
+              />
+            </div>
+            {selectedMailboxId && (
+              <div className="space-y-2">
+                <Label>Boîte d&apos;envoi</Label>
+                <Select value={selectedMailboxId} onValueChange={setSelectedMailboxId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mailboxes.map((mb) => (
+                      <SelectItem key={mb.id} value={mb.id}>
+                        {mb.nom} ({mb.adresse_email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setComposeOpen(false)}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={isSending}>
+                {isSending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Send className="mr-2 size-4" />}
+                Envoyer
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create/Edit Mailbox Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -414,7 +675,7 @@ export function MessageriePageClient() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
+      {/* Delete Mailbox Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

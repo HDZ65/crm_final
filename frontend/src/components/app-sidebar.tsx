@@ -60,9 +60,24 @@ const NAV_ITEMS = [
     icon: Briefcase,
   },
   {
+    title: "Abonnements",
+    url: "/abonnements",
+    icon: CreditCard,
+  },
+  {
+    title: "Plans",
+    url: "/abonnements/plans",
+    icon: FileText,
+  },
+  {
     title: "Catalogue",
     url: "/catalogue",
     icon: Package,
+  },
+  {
+    title: "Formules",
+    url: "/catalogue/formules",
+    icon: FlaskConical,
   },
   {
     title: "Expéditions",
@@ -93,6 +108,11 @@ const NAV_ITEMS = [
     title: "Tâches",
     url: "/taches",
     icon: ListTodo,
+  },
+  {
+    title: "Agenda",
+    url: "/agenda",
+    icon: Calendar,
   },
   {
     title: "Calendrier",

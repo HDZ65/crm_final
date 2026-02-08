@@ -20,6 +20,7 @@ import {
   FileText,
   CreditCard,
   Bug,
+  Shield,
   ShieldCheck,
 } from "lucide-react";
 
@@ -110,6 +111,16 @@ const NAV_SECONDARY_ITEMS = [
     icon: Settings,
   },
   {
+    title: "Permissions",
+    url: "/parametres/permissions",
+    icon: Shield,
+  },
+  {
+    title: "Rôles & Permissions",
+    url: "/parametres/roles-permissions",
+    icon: ShieldCheck,
+  },
+  {
     title: "Onboarding",
     url: "/onboarding",
     icon: Rocket,
@@ -171,8 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (dialogOrgId && manageDialogOpen) {
       fetchRoles();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dialogOrgId, manageDialogOpen]);
+  }, [dialogOrgId, manageDialogOpen, fetchRoles]);
 
   // Initialiser l'organisation sélectionnée quand le dialog s'ouvre
   React.useEffect(() => {
@@ -189,8 +199,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       fetchInvitations(dialogOrgId);
       fetchMembers(dialogOrgId);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manageDialogOpen, dialogOrgId]);
+  }, [manageDialogOpen, dialogOrgId, fetchInvitations, fetchMembers]);
 
   // Données des équipes basées sur les organisations de l'utilisateur
   const teamsData = React.useMemo(() => {

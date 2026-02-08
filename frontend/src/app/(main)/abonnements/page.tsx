@@ -1,13 +1,22 @@
 import { AbonnementsPageClient } from "./abonnements-page-client"
 import { getActiveOrgId } from "@/lib/server/data"
-import { listSubscriptions } from "@/actions/subscriptions"
+import { listSubscriptionPlans, listSubscriptions } from "@/actions/subscriptions"
 
 export default async function AbonnementsPage() {
   const activeOrgId = await getActiveOrgId()
 
-  const result = activeOrgId
-    ? await listSubscriptions({ organisationId: activeOrgId })
-    : { data: null, error: null }
+  const [subscriptionsResult, plansResult] = await Promise.all([
+    activeOrgId
+      ? listSubscriptions({ organisationId: activeOrgId })
+      : Promise.resolve({ data: null, error: null }),
+    listSubscriptionPlans(),
+  ])
 
-  return <AbonnementsPageClient initialSubscriptions={result.data?.subscriptions} />
+  return (
+    <AbonnementsPageClient
+      activeOrgId={activeOrgId}
+      initialSubscriptions={subscriptionsResult.data?.subscriptions}
+      initialPlans={plansResult.data?.plans}
+    />
+  )
 }

@@ -14,6 +14,7 @@ import {
   ListTodo,
   Receipt,
   Calendar,
+  Mail,
   Settings,
   Rocket,
   FlaskConical,
@@ -97,6 +98,11 @@ const NAV_ITEMS = [
     title: "Calendrier",
     url: "/calendrier",
     icon: Calendar,
+  },
+  {
+    title: "Messagerie",
+    url: "/messagerie",
+    icon: Mail,
   },
   {
     title: "Statistiques",

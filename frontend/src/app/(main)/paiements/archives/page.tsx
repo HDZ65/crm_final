@@ -1,6 +1,18 @@
+import { listExportJobs } from "@/actions/exports"
+import { getActiveOrgId } from "@/lib/server/data"
 import { ArchivesPageClient } from "./archives-page-client"
 
 export default async function ArchivesPage() {
-  // Archives page is read-only — data will be fetched client-side with filters
-  return <ArchivesPageClient />
+  const societeId = await getActiveOrgId()
+
+  const archivesResult = societeId
+    ? await listExportJobs({ societeId, status: "COMPLETED", page: 1, pageSize: 100 } as any)
+    : { data: null, error: null }
+
+  return (
+    <ArchivesPageClient
+      initialArchives={archivesResult.data?.jobs}
+      initialSocieteId={societeId ?? ""}
+    />
+  )
 }

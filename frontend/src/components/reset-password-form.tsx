@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { PasswordStrengthIndicator } from "@/components/password-strength-indicator"
-import { checkPasswordStrength } from "@/lib/password-strength"
+import { checkPasswordStrength } from "@/lib/security/password-strength"
 import Image from "next/image"
 import logoCrm from "@/assets/logo-crm.png"
 
@@ -65,10 +65,12 @@ export function ResetPasswordForm({
     setError(null)
 
     try {
-      // TODO: Implement password reset API call
-      console.log("Password reset submitted:", { password: data.password, token })
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const { resetPasswordAction } = await import("@/actions/password-reset")
+      const result = await resetPasswordAction(token || "", data.password)
+      if (!result.success) {
+        setError(result.error || "Erreur lors de la réinitialisation")
+        return
+      }
       setIsSubmitted(true)
     } catch (err) {
       setError("Une erreur est survenue. Veuillez réessayer.")
@@ -174,6 +176,7 @@ export function ResetPasswordForm({
               src={logoCrm}
               alt="Logo CRM"
               fill
+              priority
               className="object-contain"
             />
           </div>

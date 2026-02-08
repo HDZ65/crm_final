@@ -118,6 +118,85 @@ export async function createKeycloakUser(
   }
 }
 
+export async function resetKeycloakUserPassword(
+  userId: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = await getAdminToken();
+    const baseUrl = getIssuerBase();
+    const url = `${baseUrl}/admin/realms/${KEYCLOAK_REALM}/users/${userId}/reset-password`;
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "password",
+        value: newPassword,
+        temporary: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      return { success: false, error: error.message || "Failed to reset password" };
+    }
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to reset password",
+    };
+  }
+}
+
+export async function sendPasswordResetEmail(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = await getAdminToken();
+    const baseUrl = getIssuerBase();
+    const searchUrl = `${baseUrl}/admin/realms/${KEYCLOAK_REALM}/users?email=${encodeURIComponent(email)}&exact=true`;
+
+    const searchResponse = await fetch(searchUrl, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!searchResponse.ok) {
+      return { success: false, error: "Erreur lors de la recherche utilisateur" };
+    }
+
+    const users = (await searchResponse.json()) as Array<{ id: string }>;
+    if (users.length === 0) {
+      return { success: true }; // Don't reveal user doesn't exist
+    }
+
+    const userId = users[0].id;
+    const resetUrl = `${baseUrl}/admin/realms/${KEYCLOAK_REALM}/users/${userId}/execute-actions-email`;
+
+    const response = await fetch(resetUrl, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(["UPDATE_PASSWORD"]),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      return { success: false, error: error.message || "Failed to send reset email" };
+    }
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send reset email",
+    };
+  }
+}
+
 export async function sendVerificationEmail(userId: string): Promise<boolean> {
   try {
     const token = await getAdminToken();

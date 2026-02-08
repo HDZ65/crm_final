@@ -2,12 +2,13 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { FloatingAiChat } from "@/components/floating-ai-chat";
+import { CommandMenu } from "@/components/command-menu";
 import { OrganizationGuard } from "@/components/organization-guard";
 import { OrganisationProvider } from "@/contexts/organisation-context";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { AiHealthProvider } from "@/contexts/ai-health-context";
-import { getServerUserProfile, getActiveOrgIdFromCookie } from "@/lib/auth.server";
-import { getServerNotifications } from "@/lib/server-data";
+import { getServerUserProfile, getActiveOrgIdFromCookie } from "@/lib/auth/auth.server";
+import { getServerNotifications } from "@/lib/server/data";
 
 export default async function MainLayout({
   children,
@@ -20,8 +21,8 @@ export default async function MainLayout({
     getActiveOrgIdFromCookie(),
   ]);
 
-  // Fetch notifications server-side if user is authenticated
-  const notificationData = userProfile?.utilisateur?.id
+  // Fetch notifications server-side only if user has an organisation
+  const notificationData = userProfile?.hasOrganisation && userProfile?.utilisateur?.id
     ? await getServerNotifications(userProfile.utilisateur.id)
     : null;
 
@@ -47,6 +48,7 @@ export default async function MainLayout({
             </SidebarInset>
             <FloatingAiChat />
           </SidebarProvider>
+          <CommandMenu />
         </AiHealthProvider>
         </OrganizationGuard>
       </NotificationProvider>

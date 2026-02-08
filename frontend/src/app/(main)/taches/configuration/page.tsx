@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
@@ -21,6 +22,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Form,
   FormControl,
@@ -63,7 +74,9 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
+  ChevronLeft,
 } from "lucide-react"
+import Link from "next/link"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
@@ -93,9 +106,10 @@ export default function ConfigurationRelancesPage() {
   const [loading, setLoading] = React.useState(false)
   const [mutationLoading, setMutationLoading] = React.useState(false)
 
-  const [dialogOpen, setDialogOpen] = React.useState(false)
-  const [editingRegle, setEditingRegle] = React.useState<RegleRelanceDto | null>(null)
-  const [showHistory, setShowHistory] = React.useState(false)
+   const [dialogOpen, setDialogOpen] = React.useState(false)
+   const [editingRegle, setEditingRegle] = React.useState<RegleRelanceDto | null>(null)
+   const [deleteRegleDialogOpen, setDeleteRegleDialogOpen] = React.useState(false)
+  const [regleToDelete, setRegleToDelete] = React.useState<RegleRelanceDto | null>(null)
 
   // Fetch regles
   const fetchRegles = React.useCallback(async () => {
@@ -211,16 +225,23 @@ export default function ConfigurationRelancesPage() {
     }
   }
 
-  const handleDelete = async (regle: RegleRelanceDto) => {
-    if (!confirm(`Supprimer la règle "${regle.nom}" ?`)) return
+  const handleDeleteClick = (regle: RegleRelanceDto) => {
+    setRegleToDelete(regle)
+    setDeleteRegleDialogOpen(true)
+  }
 
-    const result = await deleteRegleRelance(regle.id)
+  const handleDeleteRegleConfirm = async () => {
+    if (!regleToDelete) return
+
+    const result = await deleteRegleRelance(regleToDelete.id)
     if (result.data) {
       toast.success("Règle supprimée")
       refetch()
     } else {
       toast.error(result.error || "Erreur lors de la suppression")
     }
+    setDeleteRegleDialogOpen(false)
+    setRegleToDelete(null)
   }
 
   const handleExecuteManually = async () => {
@@ -240,6 +261,12 @@ export default function ConfigurationRelancesPage() {
 
   return (
     <main className="flex flex-1 flex-col gap-4 min-h-0">
+      <Button variant="ghost" size="sm" asChild>
+        <Link href="/taches">
+          <ChevronLeft className="mr-1 h-4 w-4" />
+          Retour aux tâches
+        </Link>
+      </Button>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Configuration des relances</h1>
@@ -247,12 +274,8 @@ export default function ConfigurationRelancesPage() {
             Gérez vos règles de relances automatiques
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowHistory(!showHistory)}>
-            <History className="mr-2 h-4 w-4" />
-            Historique
-          </Button>
-          <Button variant="outline" onClick={handleExecuteManually} disabled={mutationLoading}>
+         <div className="flex gap-2">
+           <Button variant="outline" onClick={handleExecuteManually} disabled={mutationLoading}>
             <Play className="mr-2 h-4 w-4" />
             Exécuter maintenant
           </Button>
@@ -263,122 +286,127 @@ export default function ConfigurationRelancesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Liste des règles */}
-        <Card className={showHistory ? "lg:col-span-2" : "lg:col-span-3"}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5" />
-              Règles de relance
-            </CardTitle>
-            <CardDescription>
-              Les règles actives s&apos;exécutent automatiquement toutes les heures
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <p className="text-muted-foreground">Chargement...</p>
-            ) : regles.length === 0 ? (
-              <div className="text-center py-8">
-                <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">Aucune règle configurée</p>
-                <Button className="mt-4" onClick={() => handleOpenDialog()}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Créer une règle
-                </Button>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Déclencheur</TableHead>
-                    <TableHead>Délai</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Actif</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {regles.map((regle) => (
-                    <TableRow key={regle.id}>
-                      <TableCell className="font-medium">{regle.nom}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {DECLENCHEUR_LABELS[regle.declencheur]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{regle.delaiJours} jours</TableCell>
-                      <TableCell>{ACTION_TYPE_LABELS[regle.actionType]}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={regle.actif}
-                          onCheckedChange={() => handleToggleActive(regle)}
-                        />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(regle)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(regle)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+       <Tabs defaultValue="regles" className="flex-1">
+         <TabsList>
+           <TabsTrigger value="regles">Règles</TabsTrigger>
+           <TabsTrigger value="historique">Historique</TabsTrigger>
+         </TabsList>
 
-        {/* Historique */}
-        {showHistory && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Historique récent
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {historique.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Aucun historique</p>
-              ) : (
-                <div className="space-y-3">
-                  {historique.map((h) => (
-                    <div key={h.id} className="flex items-start gap-2 text-sm">
-                      {h.resultat === 'SUCCES' ? (
-                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                      ) : h.resultat === 'ECHEC' ? (
-                        <XCircle className="h-4 w-4 text-destructive mt-0.5" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      )}
-                      <div className="flex-1">
-                        <p className="text-muted-foreground">
-                          {format(new Date(h.dateExecution), "dd MMM HH:mm", { locale: fr })}
-                        </p>
-                        {h.messageErreur && (
-                          <p className="text-destructive text-xs">{h.messageErreur}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
+         <TabsContent value="regles" className="mt-4">
+           <Card>
+             <CardHeader>
+               <CardTitle className="flex items-center gap-2">
+                 <Settings2 className="h-5 w-5" />
+                 Règles de relance
+               </CardTitle>
+               <CardDescription>
+                 Les règles actives s&apos;exécutent automatiquement toutes les heures
+               </CardDescription>
+             </CardHeader>
+             <CardContent>
+               {loading ? (
+                 <p className="text-muted-foreground">Chargement...</p>
+               ) : regles.length === 0 ? (
+                 <div className="text-center py-8">
+                   <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+                   <p className="mt-2 text-muted-foreground">Aucune règle configurée</p>
+                   <Button className="mt-4" onClick={() => handleOpenDialog()}>
+                     <Plus className="mr-2 h-4 w-4" />
+                     Créer une règle
+                   </Button>
+                 </div>
+               ) : (
+                 <Table>
+                   <TableHeader>
+                     <TableRow>
+                       <TableHead>Nom</TableHead>
+                       <TableHead>Déclencheur</TableHead>
+                       <TableHead>Délai</TableHead>
+                       <TableHead>Action</TableHead>
+                       <TableHead>Actif</TableHead>
+                       <TableHead className="text-right">Actions</TableHead>
+                     </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {regles.map((regle) => (
+                       <TableRow key={regle.id}>
+                         <TableCell className="font-medium">{regle.nom}</TableCell>
+                         <TableCell>
+                           <Badge variant="outline">
+                             {DECLENCHEUR_LABELS[regle.declencheur]}
+                           </Badge>
+                         </TableCell>
+                         <TableCell>{regle.delaiJours} jours</TableCell>
+                         <TableCell>{ACTION_TYPE_LABELS[regle.actionType]}</TableCell>
+                         <TableCell>
+                           <Switch
+                             checked={regle.actif}
+                             onCheckedChange={() => handleToggleActive(regle)}
+                           />
+                         </TableCell>
+                         <TableCell className="text-right">
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             onClick={() => handleOpenDialog(regle)}
+                           >
+                             <Edit2 className="h-4 w-4" />
+                           </Button>
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             onClick={() => handleDeleteClick(regle)}
+                           >
+                             <Trash2 className="h-4 w-4 text-destructive" />
+                           </Button>
+                         </TableCell>
+                       </TableRow>
+                     ))}
+                   </TableBody>
+                 </Table>
+               )}
+             </CardContent>
+           </Card>
+         </TabsContent>
+
+         <TabsContent value="historique" className="mt-4">
+           <Card>
+             <CardHeader>
+               <CardTitle className="flex items-center gap-2">
+                 <History className="h-5 w-5" />
+                 Historique récent
+               </CardTitle>
+             </CardHeader>
+             <CardContent>
+               {historique.length === 0 ? (
+                 <p className="text-muted-foreground text-sm">Aucun historique</p>
+               ) : (
+                 <div className="space-y-3">
+                   {historique.map((h) => (
+                     <div key={h.id} className="flex items-start gap-2 text-sm">
+                       {h.resultat === 'SUCCES' ? (
+                         <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                       ) : h.resultat === 'ECHEC' ? (
+                         <XCircle className="h-4 w-4 text-destructive mt-0.5" />
+                       ) : (
+                         <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
+                       )}
+                       <div className="flex-1">
+                         <p className="text-muted-foreground">
+                           {format(new Date(h.dateExecution), "dd MMM HH:mm", { locale: fr })}
+                         </p>
+                         {h.messageErreur && (
+                           <p className="text-destructive text-xs">{h.messageErreur}</p>
+                         )}
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               )}
+             </CardContent>
+           </Card>
+         </TabsContent>
+       </Tabs>
 
       {/* Dialog de création/édition */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -576,6 +604,28 @@ export default function ConfigurationRelancesPage() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteRegleDialogOpen} onOpenChange={setDeleteRegleDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la règle ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. La règle &quot;{regleToDelete?.nom}&quot; sera
+              définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteRegleConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   )
 }

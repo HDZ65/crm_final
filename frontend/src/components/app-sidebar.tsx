@@ -24,6 +24,10 @@ import {
   Shield,
   ShieldCheck,
   Palette,
+  GitBranch,
+  Archive,
+  Bell,
+  FileDown,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -128,6 +132,29 @@ const NAV_ITEMS = [
     title: "Statistiques",
     url: "/statistiques",
     icon: BarChart3,
+  },
+];
+
+const NAV_PAIEMENTS_ITEMS = [
+  {
+    title: "Routage",
+    url: "/paiements/routing",
+    icon: GitBranch,
+  },
+  {
+    title: "Archives",
+    url: "/paiements/archives",
+    icon: Archive,
+  },
+  {
+    title: "Alertes",
+    url: "/paiements/alertes",
+    icon: Bell,
+  },
+  {
+    title: "Exports",
+    url: "/paiements/exports",
+    icon: FileDown,
   },
 ];
 
@@ -393,6 +420,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarHeader>
       <SidebarContent>
         <NavMain items={NAV_ITEMS} />
+        <NavMain items={NAV_PAIEMENTS_ITEMS} label="Paiements" />
         <NavMain items={NAV_SECONDARY_ITEMS} label="Utilitaires & Dev" />
       </SidebarContent>
       <SidebarFooter>

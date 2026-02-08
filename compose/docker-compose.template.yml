@@ -4,6 +4,21 @@
 # This example shows how to use the shared Dockerfile.service template
 # to build multiple services with a single Dockerfile.
 #
+# ARCHITECTURE: 5 NestJS Microservices + 1 Python Scoring Service
+#
+# SERVICES:
+#   - service-engagement (Port 50051) - Activities, notifications, email, agenda
+#   - service-core (Port 50052) - Users, clients, documents, organisations
+#   - service-commercial (Port 50053) - Contracts, products, subscriptions, commissions
+#   - service-finance (Port 50059) - Invoices, payments, debit calendar
+#   - service-logistics (Port 50060) - Shipments, tracking, carrier accounts
+#   - service-scoring (Port 8001) - Python FastAPI payment risk scoring
+#
+# INFRASTRUCTURE:
+#   - PostgreSQL (Port 5432) - Shared database
+#   - NATS (Port 4222) - Event streaming
+#   - Redis (Port 6379) - Caching
+#
 # BENEFITS:
 #   - Single source of truth for all service builds
 #   - Easier maintenance and updates
@@ -19,21 +34,109 @@ version: '3.9'
 
 services:
   # ==========================================
-  # Service: Activites (Port 50051)
+  # INFRASTRUCTURE SERVICES
   # ==========================================
-  service-activites:
+
+  # PostgreSQL Database (Shared)
+  postgres:
+    image: postgres:16-alpine
+    container_name: crm-postgres
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: crm_main
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 512M
+
+  # NATS Event Streaming
+  nats:
+    image: nats:2.10-alpine
+    container_name: crm-nats
+    command: "-js -m 8222"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:8.4-alpine
+    container_name: crm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-network
+    restart: unless-stopped
+
+  # ==========================================
+  # MICROSERVICES (NestJS)
+  # ==========================================
+
+  # Service: Engagement (Port 50051)
+  # Handles: Activities, notifications, email, agenda
+  service-engagement:
     build:
       context: .
       dockerfile: compose/Dockerfile.service
       args:
-        SERVICE_NAME: service-activites
+        SERVICE_NAME: service-engagement
       target: production
-    container_name: crm-service-activites
+    container_name: crm-service-engagement
     ports:
       - "50051:50051"
+      - "3061:3061"
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
+      GRPC_PORT: 50051
+      HTTP_PORT: 3061
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: engagement_db
+      NATS_URL: nats://nats:4222
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(50051, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
       interval: 30s
@@ -44,22 +147,38 @@ services:
     networks:
       - crm-network
 
-  # ==========================================
-  # Service: Clients (Port 50052)
-  # ==========================================
-  service-clients:
+  # Service: Core (Port 50052)
+  # Handles: Users, clients, documents, organisations
+  service-core:
     build:
       context: .
       dockerfile: compose/Dockerfile.service
       args:
-        SERVICE_NAME: service-clients
+        SERVICE_NAME: service-core
       target: production
-    container_name: crm-service-clients
+    container_name: crm-service-core
     ports:
       - "50052:50052"
+      - "3052:3052"
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
+      GRPC_PORT: 50052
+      HTTP_PORT: 3052
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: core_db
+      NATS_URL: nats://nats:4222
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(50052, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
       interval: 30s
@@ -70,24 +189,151 @@ services:
     networks:
       - crm-network
 
-  # ==========================================
-  # Service: Commerciaux (Port 50053)
-  # ==========================================
-  service-commerciaux:
+  # Service: Commercial (Port 50053)
+  # Handles: Contracts, products, subscriptions, commissions
+  service-commercial:
     build:
       context: .
       dockerfile: compose/Dockerfile.service
       args:
-        SERVICE_NAME: service-commerciaux
+        SERVICE_NAME: service-commercial
       target: production
-    container_name: crm-service-commerciaux
+    container_name: crm-service-commercial
     ports:
       - "50053:50053"
+      - "3053:3053"
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
+      GRPC_PORT: 50053
+      HTTP_PORT: 3053
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: commercial_db
+      NATS_URL: nats://nats:4222
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(50053, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+  # Service: Finance (Port 50059)
+  # Handles: Invoices, payments, debit calendar
+  service-finance:
+    build:
+      context: .
+      dockerfile: compose/Dockerfile.service
+      args:
+        SERVICE_NAME: service-finance
+      target: production
+    container_name: crm-service-finance
+    ports:
+      - "50059:50059"
+      - "3059:3059"
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      GRPC_PORT: 50059
+      HTTP_PORT: 3059
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: finance_db
+      NATS_URL: nats://nats:4222
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50059, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+  # Service: Logistics (Port 50060)
+  # Handles: Shipments, tracking, carrier accounts
+  service-logistics:
+    build:
+      context: .
+      dockerfile: compose/Dockerfile.service
+      args:
+        SERVICE_NAME: service-logistics
+      target: production
+    container_name: crm-service-logistics
+    ports:
+      - "50060:50060"
+      - "3060:3060"
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      GRPC_PORT: 50060
+      HTTP_PORT: 3060
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: logistics_db
+      NATS_URL: nats://nats:4222
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(50060, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - crm-network
+
+  # ==========================================
+  # MICROSERVICES (Python)
+  # ==========================================
+
+  # Service: Scoring (Port 8001)
+  # Handles: Payment risk scoring (FastAPI)
+  service-scoring:
+    build:
+      context: services/service-scoring
+      dockerfile: Dockerfile
+      target: production
+    container_name: crm-service-scoring
+    ports:
+      - "8001:8001"
+    environment:
+      PYTHONUNBUFFERED: 1
+      LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -100,26 +346,44 @@ networks:
   crm-network:
     driver: bridge
 
+volumes:
+  postgres_data:
+  redis_data:
+
 # ==========================================
 # DEVELOPMENT EXAMPLE
 # ==========================================
 # To use development target with hot-reload:
 #
-#   service-activites-dev:
+#   service-engagement-dev:
 #     build:
 #       context: .
 #       dockerfile: compose/Dockerfile.service
 #       args:
-#         SERVICE_NAME: service-activites
+#         SERVICE_NAME: service-engagement
 #       target: development
-#     container_name: crm-service-activites-dev
+#     container_name: crm-service-engagement-dev
 #     ports:
 #       - "50051:50051"
+#       - "3061:3061"
 #     volumes:
-#       - ./services/service-activites:/app/services/service-activites
+#       - ./services/service-engagement:/app/services/service-engagement
 #       - ./packages:/app/packages
 #     environment:
 #       NODE_ENV: development
+#       GRPC_PORT: 50051
+#       HTTP_PORT: 3061
+#       DB_HOST: postgres
+#       DB_PORT: 5432
+#       DB_USERNAME: ${DB_USERNAME:-postgres}
+#       DB_PASSWORD: ${DB_PASSWORD:-postgres}
+#       DB_NAME: engagement_db
+#       NATS_URL: nats://nats:4222
+#       REDIS_URL: redis://redis:6379
+#     depends_on:
+#       - postgres
+#       - nats
+#       - redis
 #     networks:
 #       - crm-network
 #

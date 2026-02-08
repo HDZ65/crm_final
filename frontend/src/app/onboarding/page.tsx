@@ -8,6 +8,8 @@ import * as z from "zod"
 import { useRouter } from "next/navigation"
 
 import { useAuth } from "@/hooks/auth"
+import { createOrganisationWithOwner } from "@/actions/organisations"
+import { createSociete } from "@/actions/societes"
 import {
     Form,
     FormControl,
@@ -56,11 +58,42 @@ export default function OnboardingPage() {
         setStep("processing")
 
         try {
-            // TODO: Appel API pour créer l'organisation
-            console.log("Creating organization:", data)
+            // Create organisation with current user as owner
+            const orgResult = await createOrganisationWithOwner(data.name, {
+                sub: profile?.id || "",
+                email: profile?.email || "",
+                givenName: profile?.firstName || "",
+                familyName: profile?.lastName || "",
+                preferredUsername: profile?.username || "",
+                name: profile?.fullName || "",
+            })
 
-            // Simulation de l'API
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            if (orgResult.error) {
+                toast.error(orgResult.error)
+                setStep("input")
+                setIsLoading(false)
+                return
+            }
+
+            if (!orgResult.data?.compte?.id) {
+                toast.error("Erreur lors de la création de l'organisation")
+                setStep("input")
+                setIsLoading(false)
+                return
+            }
+
+            // Create default societe for the organisation
+            const societeResult = await createSociete({
+                organisationId: orgResult.data.compte.id,
+                raisonSociale: data.name,
+                siren: "",
+                numeroTva: "",
+            })
+
+            if (societeResult.error) {
+                console.warn("Societe creation warning:", societeResult.error)
+                // Don't fail the whole flow if societe creation fails
+            }
 
             const slug = data.name
                 .toLowerCase()
@@ -79,7 +112,7 @@ export default function OnboardingPage() {
             }, 2000)
         } catch (error) {
             console.error("Error creating organization:", error)
-            toast.error("Erreur lors de la création")
+            toast.error(error instanceof Error ? error.message : "Erreur lors de la création")
             setStep("input")
         } finally {
             setIsLoading(false)

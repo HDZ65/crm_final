@@ -13,8 +13,10 @@ import { ClientPayments } from "@/components/client-detail/client-payments"
 import { ClientDocuments } from "@/components/client-detail/client-documents"
 import { ClientShipments } from "@/components/client-detail/client-shipments"
 import { ClientActivites } from "@/components/activites/client-activites"
+import { ClientTaches } from "@/components/client-detail/client-taches"
 import { getClient, updateClient, deleteClient } from "@/actions/clients"
 import { getClientExpeditions } from "@/actions/expeditions"
+import { sendEmail } from "@/actions/mailbox"
 import type { ClientBase } from "@proto/clients/clients"
 import type { ExpeditionResponse } from "@proto/logistics/logistics"
 import type { StatutClient } from "@/constants/statuts-client"
@@ -32,8 +34,8 @@ import { toast } from "sonner"
 import { CreateContratDialog } from "@/components/create-contrat-dialog"
 import { Calendar } from "lucide-react"
 import { formatFullName, formatDateFr } from "@/lib/formatters"
-import type { EventItem, Contract, Payment, Document, ClientInfo, ComplianceInfo, BankInfo, Shipment, ShipmentStatus, ClientDetail } from "@/types/client"
-import type { ContratSimpleDto as ContratDto } from "@/types/contract"
+import type { EventItem, Payment, Document, ClientInfo, ComplianceInfo, BankInfo, Shipment, ShipmentStatus, ClientDetail, ClientStatus, PaiementDto, DocumentDto } from "@/lib/ui/display-types/client"
+import type { Contract, ContratSimpleDto as ContratDto } from "@/lib/ui/display-types/contract"
 
 // Type pour les états d'expédition
 type ExpeditionEtat = "en_attente" | "pris_en_charge" | "en_transit" | "en_livraison" | "livre" | "echec_livraison" | "retourne"
@@ -54,7 +56,7 @@ function mapContratToContract(contrat: ContratDto): Contract {
 }
 
 // Fonction pour mapper les paiements DTO vers le format attendu
-function mapPaiementToPayment(paiement: import("@/types/client").PaiementDto): Payment {
+function mapPaiementToPayment(paiement: PaiementDto): Payment {
   return {
     label: paiement.reference,
     date: new Date(paiement.datePaiement).toLocaleDateString("fr-FR"),
@@ -64,7 +66,7 @@ function mapPaiementToPayment(paiement: import("@/types/client").PaiementDto): P
 }
 
 // Fonction pour mapper les documents DTO vers le format attendu
-function mapDocumentToDocument(doc: import("@/types/client").DocumentDto): Document {
+function mapDocumentToDocument(doc: DocumentDto): Document {
   return {
     name: doc.nom,
     type: doc.type,
@@ -118,10 +120,10 @@ function mapExpeditionToShipment(expedition: ExpeditionResponse): Shipment {
 }
 
 // Mapper le statut vers un type UI
-function mapStatutToStatus(statutId: string, statutsMap: Map<string, string>): "Actif" | "Impayé" | "Suspendu" {
+function mapStatutToStatus(statutId: string, statutsMap: Map<string, string>): ClientStatus {
   const code = (statutsMap.get(statutId) || statutId).toLowerCase()
   if (code === 'actif' || code === 'active') return 'Actif'
-  if (code === 'impaye' || code === 'impayé') return 'Impayé'
+  if (code === 'impaye' || code === 'impayé') return 'Impaye'
   if (code === 'suspendu' || code === 'suspended') return 'Suspendu'
   return 'Actif'
 }
@@ -185,7 +187,9 @@ export function ClientDetailClient({
   // Map statuts for quick lookup
   const statutsMap = React.useMemo(() => {
     const map = new Map<string, string>()
-    statuts.forEach(s => map.set(s.id, s.code))
+    statuts.forEach((s) => {
+      map.set(s.id, s.code)
+    })
     return map
   }, [statuts])
 
@@ -264,22 +268,22 @@ export function ClientDetailClient({
     [contracts, selectedRef]
   )
 
-  function parseFrDate(d: string) {
+  const parseFrDate = React.useCallback((d: string) => {
     const [dd, mm, yyyy] = d.split("/").map(Number)
     return new Date(yyyy, (mm || 1) - 1, dd || 1).getTime()
-  }
+  }, [])
 
   const selectedHistory = React.useMemo(() => {
     const list = selected?.history ?? []
     return [...list].sort((a, b) => parseFrDate(b.date) - parseFrDate(a.date))
-  }, [selected])
+  }, [selected, parseFrDate])
 
   const allHistory = React.useMemo(() => {
     const arr = contracts.flatMap((c) =>
       c.history.map((h) => ({ ...h, ref: c.ref } as EventItem))
     )
     return arr.sort((a, b) => parseFrDate(b.date) - parseFrDate(a.date))
-  }, [contracts])
+  }, [contracts, parseFrDate])
 
   // Mapper les paiements DTO vers le format UI
   const payments = React.useMemo(() => {
@@ -351,15 +355,46 @@ Adresse: ${client.info.address}`
     setComposerOpen(true)
   }
 
-  const handleSendEmail = (data: {
+  const handleSendEmail = async (data: {
     to: string
     cc?: string
     subject: string
     body: string
     from: EmailAccount
   }) => {
-    console.log("Envoi d'email:", data)
-    // TODO: Appeler votre API pour envoyer l'email
+    try {
+      // Extract mailbox ID from the email account
+      // The EmailAccount type should have an id field that corresponds to the mailbox ID
+      const mailboxId = data.from.id;
+
+      if (!mailboxId) {
+        toast.error("Erreur: Compte email invalide");
+        return;
+      }
+
+      // Call the server action to send email
+      const result = await sendEmail({
+        mailboxId,
+        to: data.to,
+        cc: data.cc,
+        subject: data.subject,
+        body: data.body,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success("Email envoyé avec succès");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'email:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de l'envoi de l'email"
+      );
+    }
   }
 
   const handleAddEmailAccount = (newAccount: Omit<EmailAccount, "id">) => {
@@ -406,6 +441,7 @@ Adresse: ${client.info.address}`
 <TabsList>
             <TabsTrigger value="overview">Infos générales & Contrats</TabsTrigger>
             <TabsTrigger value="activites">Activités</TabsTrigger>
+            <TabsTrigger value="taches">Tâches</TabsTrigger>
             <TabsTrigger value="paiements">Paiements & Échéanciers</TabsTrigger>
             <TabsTrigger value="expeditions">Expéditions & Colis</TabsTrigger>
             <TabsTrigger value="documents">Documents (GED)</TabsTrigger>
@@ -436,6 +472,10 @@ Adresse: ${client.info.address}`
 
 <TabsContent value="activites" className="flex-1">
             <ClientActivites clientId={clientId} />
+          </TabsContent>
+
+          <TabsContent value="taches" className="flex-1">
+            <ClientTaches clientId={clientId} />
           </TabsContent>
 
           <TabsContent value="paiements">

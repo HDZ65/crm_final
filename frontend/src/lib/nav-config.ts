@@ -272,6 +272,11 @@ export const NAV_ADMINISTRATION_GROUP: NavGroup = {
       title: "Marque Blanche",
       url: "/parametres/marque-blanche",
       icon: Palette,
+      children: [
+        { title: "Partenaires", url: "/parametres/marque-blanche/partenaires", parentUrl: "/parametres/marque-blanche" },
+        { title: "Thèmes", url: "/parametres/marque-blanche/themes", parentUrl: "/parametres/marque-blanche" },
+        { title: "Statuts", url: "/parametres/marque-blanche/statuts", parentUrl: "/parametres/marque-blanche" },
+      ],
     },
     {
       title: "Intégrations",
@@ -354,6 +359,9 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   "parametres/permissions": "Permissions",
   "parametres/roles-permissions": "Rôles & Permissions",
   "parametres/marque-blanche": "Marque Blanche",
+  "parametres/marque-blanche/partenaires": "Partenaires",
+  "parametres/marque-blanche/themes": "Thèmes",
+  "parametres/marque-blanche/statuts": "Statuts",
   "integrations": "Intégrations",
   "integrations/woocommerce": "WooCommerce",
   "onboarding": "Onboarding",

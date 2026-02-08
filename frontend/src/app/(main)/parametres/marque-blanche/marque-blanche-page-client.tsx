@@ -60,18 +60,21 @@ import type {
   ThemeMarque,
   StatutPartenaire,
 } from "@proto/organisations/organisations"
-import { Plus, Pencil, Trash2, Loader2, Palette, Search } from "lucide-react"
+import { Plus, Pencil, Trash2, Loader2, Palette, Search, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 interface MarqueBlanchePageClientProps {
   initialPartenaires?: PartenaireMarqueBlanche[] | null
   initialThemes?: ThemeMarque[] | null
   initialStatuts?: StatutPartenaire[] | null
+  section?: "partenaires" | "themes" | "statuts"
 }
 
 export function MarqueBlanchePageClient({
   initialPartenaires,
   initialThemes,
   initialStatuts,
+  section,
 }: MarqueBlanchePageClientProps) {
   // Partenaires state
   const [partenaires, setPartenaires] = React.useState<PartenaireMarqueBlanche[]>(
@@ -377,22 +380,39 @@ export function MarqueBlanchePageClient({
     )
   }, [partenaires, search])
 
+  const sectionTitles = {
+    partenaires: "Partenaires Marque Blanche",
+    themes: "Thèmes",
+    statuts: "Statuts Partenaire",
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <div>
+          {section && (
+            <Link
+              href="/parametres/marque-blanche"
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2"
+            >
+              <ArrowLeft className="size-4" />
+              Retour
+            </Link>
+          )}
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Palette className="size-6" />
-            Marque Blanche
+            {section ? sectionTitles[section] : "Marque Blanche"}
           </h1>
-          <p className="text-muted-foreground">
-            Gérez les partenaires marque blanche, thèmes et statuts.
-          </p>
+          {!section && (
+            <p className="text-muted-foreground">
+              Gérez les partenaires marque blanche, thèmes et statuts.
+            </p>
+          )}
         </div>
       </div>
 
       {/* Partenaires Section */}
-      <Card>
+      {(!section || section === "partenaires") && <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -478,10 +498,10 @@ export function MarqueBlanchePageClient({
             </Table>
           )}
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Themes Section */}
-      <Card>
+      {(!section || section === "themes") && <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -564,10 +584,10 @@ export function MarqueBlanchePageClient({
             </Table>
           )}
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Statuts Section */}
-      <Card>
+      {(!section || section === "statuts") && <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -626,7 +646,7 @@ export function MarqueBlanchePageClient({
             </Table>
           )}
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Partenaire Dialog */}
       <Dialog open={partenaireDialogOpen} onOpenChange={setPartenaireDialogOpen}>

@@ -816,17 +816,15 @@ Adresse: ${client.info.address}`;
           defaultValue="overview"
           className="w-full gap-4 flex-1 flex flex-col h-full"
         >
-          <TabsList>
-            <TabsTrigger value="overview">
-              Infos générales & Contrats
-            </TabsTrigger>
-            <TabsTrigger value="parametres">Données client</TabsTrigger>
-            <TabsTrigger value="activites">Activités</TabsTrigger>
-            <TabsTrigger value="taches">Tâches</TabsTrigger>
-            <TabsTrigger value="paiements">Paiements & Échéanciers</TabsTrigger>
-            <TabsTrigger value="expeditions">Expéditions & Colis</TabsTrigger>
-            <TabsTrigger value="documents">Documents (GED)</TabsTrigger>
-          </TabsList>
+           <TabsList>
+             <TabsTrigger value="overview">
+               Infos générales & Contrats
+             </TabsTrigger>
+             <TabsTrigger value="parametres">Données client</TabsTrigger>
+             <TabsTrigger value="paiements-expeditions">Paiements & Expéditions</TabsTrigger>
+             <TabsTrigger value="activites-taches">Activités & Tâches</TabsTrigger>
+             <TabsTrigger value="documents">Documents (GED)</TabsTrigger>
+           </TabsList>
 
           <TabsContent
             value="overview"
@@ -878,30 +876,36 @@ Adresse: ${client.info.address}`;
             />
           </TabsContent>
 
-          <TabsContent value="activites" className="flex-1">
-            <ClientActivites clientId={clientId} />
-          </TabsContent>
+           <TabsContent value="activites-taches" className="flex-1 flex flex-col gap-6">
+             <div className="space-y-4">
+               <h3 className="text-lg font-semibold">Activités</h3>
+               <ClientActivites clientId={clientId} />
+             </div>
+             <div className="border-t pt-6 space-y-4">
+               <h3 className="text-lg font-semibold">Tâches</h3>
+               <ClientTaches clientId={clientId} />
+             </div>
+           </TabsContent>
 
-          <TabsContent value="taches" className="flex-1">
-            <ClientTaches clientId={clientId} />
-          </TabsContent>
-
-          <TabsContent value="paiements">
-            <ClientPayments
-              payments={payments}
-              balance={client.balance}
-              balanceStatus={client.balanceStatus}
-            />
-          </TabsContent>
-
-          <TabsContent value="expeditions" className="flex-1 flex flex-col">
-            <ClientShipments
-              shipments={shipments}
-              onCreateShipment={() =>
-                console.log("Créer une nouvelle expédition")
-              }
-            />
-          </TabsContent>
+           <TabsContent value="paiements-expeditions" className="flex-1 flex flex-col gap-6">
+             <div className="space-y-4">
+               <h3 className="text-lg font-semibold">Paiements & Échéanciers</h3>
+               <ClientPayments
+                 payments={payments}
+                 balance={client.balance}
+                 balanceStatus={client.balanceStatus}
+               />
+             </div>
+             <div className="border-t pt-6 space-y-4">
+               <h3 className="text-lg font-semibold">Expéditions & Colis</h3>
+               <ClientShipments
+                 shipments={shipments}
+                 onCreateShipment={() =>
+                   console.log("Créer une nouvelle expédition")
+                 }
+               />
+             </div>
+           </TabsContent>
 
           <TabsContent value="documents" className="flex-1 flex flex-col">
             <ClientDocuments

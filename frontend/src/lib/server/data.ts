@@ -4,47 +4,16 @@
  */
 
 import { cookies } from "next/headers";
-import { dashboard, commercialKpis, alertes, contrats } from "@/lib/grpc";
+import { dashboard, commercialKpis, alertes } from "@/lib/grpc";
 import type {
   KpisResponse,
   EvolutionCaResponse,
   StatsSocietesResponse,
+  AlertesResponse,
+  KpisCommerciauxResponse,
+  RepartitionProduitsResponse,
 } from "@proto/dashboard/dashboard";
-import { NotificationType as GrpcNotificationType } from "@proto/notifications/notifications";
-import {
-  NotificationType as AppNotificationType,
-  type Notification as AppNotification,
-} from "@/types/notification";
-
-function mapGrpcNotificationType(
-  type: GrpcNotificationType
-): AppNotificationType {
-  switch (type) {
-    case GrpcNotificationType.NOTIFICATION_TYPE_CONTRAT_EXPIRE:
-      return AppNotificationType.CONTRAT_EXPIRE;
-    case GrpcNotificationType.NOTIFICATION_TYPE_CONTRAT_BIENTOT_EXPIRE:
-      return AppNotificationType.CONTRAT_BIENTOT_EXPIRE;
-    case GrpcNotificationType.NOTIFICATION_TYPE_IMPAYE:
-      return AppNotificationType.IMPAYE;
-    case GrpcNotificationType.NOTIFICATION_TYPE_NOUVEAU_CLIENT:
-      return AppNotificationType.NOUVEAU_CLIENT;
-    case GrpcNotificationType.NOTIFICATION_TYPE_NOUVEAU_CONTRAT:
-      return AppNotificationType.NOUVEAU_CONTRAT;
-    case GrpcNotificationType.NOTIFICATION_TYPE_TACHE_ASSIGNEE:
-      return AppNotificationType.TACHE_ASSIGNEE;
-    case GrpcNotificationType.NOTIFICATION_TYPE_RAPPEL:
-      return AppNotificationType.RAPPEL;
-    case GrpcNotificationType.NOTIFICATION_TYPE_ALERTE:
-      return AppNotificationType.ALERTE;
-    case GrpcNotificationType.NOTIFICATION_TYPE_SYSTEME:
-      return AppNotificationType.SYSTEME;
-    case GrpcNotificationType.NOTIFICATION_TYPE_INFO:
-    case GrpcNotificationType.NOTIFICATION_TYPE_UNSPECIFIED:
-    case GrpcNotificationType.UNRECOGNIZED:
-    default:
-      return AppNotificationType.INFO;
-  }
-}
+import type { Notification } from "@proto/notifications/notifications";
 
 /**
  * Get active organisation ID from cookie (server-side)
@@ -115,19 +84,72 @@ export async function getServerStatsSocietes(
 }
 
 /**
+ * Fetch alerts server-side
+ */
+export async function getServerAlertes(
+  organisationId: string
+): Promise<AlertesResponse | null> {
+  try {
+    return await alertes.getAlertes({
+      filters: { organisationId },
+    });
+  } catch (error) {
+    console.error("[getServerAlertes] Error:", error);
+    return null;
+  }
+}
+
+/**
+ * Fetch commercial KPIs server-side
+ */
+export async function getServerKpisCommerciaux(
+  organisationId: string
+): Promise<KpisCommerciauxResponse | null> {
+  try {
+    return await commercialKpis.getKpisCommerciaux({
+      filters: { organisationId },
+    });
+  } catch (error) {
+    console.error("[getServerKpisCommerciaux] Error:", error);
+    return null;
+  }
+}
+
+/**
+ * Fetch product distribution server-side
+ */
+export async function getServerRepartitionProduits(
+  organisationId: string
+): Promise<RepartitionProduitsResponse | null> {
+  try {
+    return await dashboard.getRepartitionProduits({
+      filters: { organisationId },
+    });
+  } catch (error) {
+    console.error("[getServerRepartitionProduits] Error:", error);
+    return null;
+  }
+}
+
+/**
  * Fetch all dashboard data in parallel (optimized for Server Components)
  */
 export async function getServerDashboardData(organisationId: string) {
-  const [kpis, evolutionCa, statsSocietes] = await Promise.all([
-    getServerDashboardKpis(organisationId),
-    getServerEvolutionCa(organisationId),
-    getServerStatsSocietes(organisationId),
-  ]);
+  const [kpis, evolutionCa, statsSocietes, alertes, repartitionProduits] =
+    await Promise.all([
+      getServerDashboardKpis(organisationId),
+      getServerEvolutionCa(organisationId),
+      getServerStatsSocietes(organisationId),
+      getServerAlertes(organisationId),
+      getServerRepartitionProduits(organisationId),
+    ]);
 
   return {
     kpis,
     evolutionCa,
     statsSocietes,
+    alertes,
+    repartitionProduits,
   };
 }
 
@@ -148,6 +170,7 @@ export async function getServerClients(
       organisationId,
       statutId: options?.statutId,
       societeId: options?.societeId,
+      pagination: undefined,
     });
     return result.clients || [];
   } catch (error) {
@@ -162,7 +185,7 @@ export async function getServerClients(
 export async function getServerSocietes(organisationId: string) {
   try {
     const { societes } = await import("@/lib/grpc");
-    const result = await societes.listByOrganisation({ organisationId });
+    const result = await societes.listByOrganisation({ organisationId, pagination: undefined });
     return result.societes || [];
   } catch (error) {
     console.error("[getServerSocietes] Error:", error);
@@ -195,37 +218,23 @@ export async function getServerReferenceData(organisationId: string) {
  */
 export async function getServerNotifications(utilisateurId: string) {
   try {
-    const { notifications } = await import("@/lib/grpc");
+    const grpc = await import("@/lib/grpc");
     const [notifList, countResult] = await Promise.all([
-      notifications.getByUser({ utilisateurId, limit: 50 }),
-      notifications.getCount({ utilisateurId }),
+      grpc.notifications.getByUser({ utilisateurId, limit: 50 }),
+      grpc.notifications.getCount({ utilisateurId }),
     ]);
 
-    const mappedNotifications: AppNotification[] = (
-      notifList.notifications || []
-    ).map((notification) => ({
-      id: notification.id,
-      type: mapGrpcNotificationType(notification.type),
-      titre: notification.titre,
-      message: notification.message,
-      lu: notification.lu,
-      utilisateurId: notification.utilisateurId,
-      organisationId: notification.organisationId,
-      metadata: notification.metadata,
-      lienUrl: notification.lienUrl,
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-    }));
+    const notifs: Notification[] = notifList.notifications || [];
 
     return {
-      notifications: mappedNotifications,
+      notifications: notifs,
       unreadCount: countResult.unread || 0,
       totalCount: countResult.total || 0,
     };
   } catch (error) {
     console.error("[getServerNotifications] Error:", error);
     return {
-      notifications: [],
+      notifications: [] as Notification[],
       unreadCount: 0,
       totalCount: 0,
     };
@@ -246,6 +255,7 @@ export async function getServerTaches(
     const result = await taches.listByAssigne({
       assigneA: utilisateurId,
       periode: options?.periode || "semaine",
+      pagination: undefined,
     });
     return result.taches || [];
   } catch (error) {
@@ -270,6 +280,7 @@ export async function getServerProduits(
       organisationId,
       gammeId: options?.gammeId,
       actif: options?.actif,
+      pagination: undefined,
     });
     return result.produits || [];
   } catch (error) {

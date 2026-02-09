@@ -1,8 +1,12 @@
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DashboardKPIs } from "@/components/dashboard-kpis"
 import { ContratsCard } from "@/components/contrats-card"
-import { AiAssistantFab } from "@/components/ai-assistant-fab"
-import { getServerDashboardData, getActiveOrgId } from "@/lib/server-data"
+import {
+  GreetingBriefing,
+  AlertBanners,
+  ProductDistribution,
+  ActivityFeed,
+} from "@/components/dashboard"
+import { getServerDashboardData, getActiveOrgId } from "@/lib/server/data"
 
 export default async function Page() {
   // Fetch active organisation ID from cookie
@@ -11,30 +15,43 @@ export default async function Page() {
   // Fetch all dashboard data server-side in parallel
   const dashboardData = activeOrgId
     ? await getServerDashboardData(activeOrgId)
-    : { kpis: null, evolutionCa: null, statsSocietes: null }
+    : {
+        kpis: null,
+        evolutionCa: null,
+        statsSocietes: null,
+        alertes: null,
+        repartitionProduits: null,
+      }
 
   return (
-    <main className="flex flex-1 flex-col gap-4 min-h-0">
-      {/* Grid responsive 2 colonnes */}
-      <div className="grid gap-4 lg:grid-cols-2 flex-1 min-h-0">
-        {/* KPIs métier */}
-        <section className="flex flex-col min-h-[350px] lg:min-h-0">
-          <DashboardKPIs initialData={dashboardData.kpis} />
-        </section>
+    <main className="flex flex-1 flex-col gap-6 min-h-0 p-4 lg:p-6">
+      {/* Zone 1: Briefing - Greeting, AI Briefing, Alerts */}
+      <section data-testid="zone-briefing" className="space-y-4">
+        <GreetingBriefing
+          initialKpis={dashboardData.kpis}
+          initialAlertes={dashboardData.alertes || { alertes: [], total: 0, nombreCritiques: 0, nombreAvertissements: 0, nombreInfos: 0 }}
+        />
+        <AlertBanners initialAlertes={dashboardData.alertes || { alertes: [], total: 0, nombreCritiques: 0, nombreAvertissements: 0, nombreInfos: 0 }} />
+      </section>
 
-        {/* Contrats */}
-        <section className="flex flex-col min-h-[350px] lg:min-h-0">
-          <ContratsCard initialData={dashboardData.statsSocietes?.societes} />
-        </section>
-
-        {/* Graphique prend toute la largeur */}
-        <section className="lg:col-span-2 flex flex-col min-h-[400px] lg:min-h-0">
+       {/* Zone 2: Overview - KPIs and Charts */}
+       <section data-testid="zone-overview" className="grid gap-4 lg:grid-cols-2">
+         {/* Graphique CA evolution */}
+        <section className="lg:col-span-2">
           <ChartAreaInteractive initialData={dashboardData.evolutionCa?.donnees} />
         </section>
-      </div>
 
-      {/* AI Assistant FAB */}
-      <AiAssistantFab />
+        {/* Répartition par produit */}
+        <ProductDistribution initialData={dashboardData.repartitionProduits} />
+
+        {/* Contrats par société (conservé) */}
+        <ContratsCard initialData={dashboardData.statsSocietes?.societes} />
+      </section>
+
+      {/* Zone 3: Activity Feed */}
+      <section data-testid="zone-activity">
+        <ActivityFeed />
+      </section>
     </main>
   )
 }

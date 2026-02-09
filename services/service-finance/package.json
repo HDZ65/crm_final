@@ -1,13 +1,16 @@
 {
   "name": "@crm/service-finance",
   "version": "1.0.0",
-  "description": "Microservice gRPC consolidé pour la gestion des finances (factures, payments, calendar)",
+  "description": "Consolidated Finance gRPC microservice (invoices, payments, calendar)",
   "author": "CRM Team",
   "private": true,
   "license": "MIT",
   "main": "dist/main.js",
   "scripts": {
     "build": "nest build",
+    "proto:clean": "rimraf proto/generated",
+    "proto:generate": "mkdir -p proto/generated && cp ../../packages/proto/gen/ts/factures/factures.ts ./proto/generated/factures.ts && cp ../../packages/proto/gen/ts/payments/payment.ts ./proto/generated/payment.ts && cp ../../packages/proto/gen/ts/calendar/calendar.ts ./proto/generated/calendar.ts",
+    "prebuild": "npm run proto:clean && npm run proto:generate",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -27,10 +30,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@crm/grpc-utils": "file:../../packages/grpc-utils",
-    "@crm/nats-utils": "file:../../packages/nats-utils",
+    "@crm/shared-kernel": "file:../../packages/shared-kernel",
     "@crm/proto": "file:../../packages/proto",
-    "@crm/shared": "file:../../packages/shared",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "@nestjs/common": "^11.1.12",

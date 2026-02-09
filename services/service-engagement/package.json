@@ -1,12 +1,16 @@
 {
   "name": "@crm/service-engagement",
   "version": "1.0.0",
-  "description": "Microservice gRPC pour l'engagement: emails, notifications WebSocket et dashboard KPIs",
+  "description": "Consolidated Engagement gRPC microservice (notifications, activities, tasks, email)",
   "author": "CRM Team",
   "private": true,
   "license": "MIT",
   "scripts": {
     "build": "nest build",
+    "proto:clean": "rimraf proto/generated/activites.ts proto/generated/notifications.ts proto/generated/email.ts",
+    "proto:generate": "mkdir -p proto/generated && cp ../../packages/proto/gen/ts/activites/activites.ts ./proto/generated/ && cp ../../packages/proto/gen/ts/notifications/notifications.ts ./proto/generated/ && cp ../../packages/proto/gen/ts/email/email.ts ./proto/generated/ || true",
+    "proto:manual": "echo 'Manual proto types (wincash.ts, justi-plus.ts) are maintained in proto/generated/'",
+    "prebuild": "npm run proto:clean && npm run proto:generate",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -50,10 +54,8 @@
     "socket.io": "^4.8.3",
     "typeorm": "^0.3.28",
     "typeorm-naming-strategies": "^4.1.0",
-"@crm/grpc-utils": "file:../../packages/grpc-utils",
-    "@crm/nats-utils": "file:../../packages/nats-utils",
-    "@crm/proto": "file:../../packages/proto",
-    "@crm/shared": "file:../../packages/shared"
+"@crm/shared-kernel": "file:../../packages/shared-kernel",
+    "@crm/proto": "file:../../packages/proto"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
@@ -91,7 +93,8 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1"
+      "^(\\.{1,2}/.*)\\.js$": "$1",
+      "^@proto/(.*)$": "<rootDir>/../proto/generated/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

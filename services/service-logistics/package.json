@@ -1,12 +1,15 @@
 {
   "name": "@crm/service-logistics",
   "version": "1.0.0",
-  "description": "Microservice gRPC pour la logistique (Maileva, expéditions, colis)",
+  "description": "Consolidated Logistics gRPC microservice (shipments, tracking, carriers)",
   "author": "CRM Team",
   "private": true,
   "license": "MIT",
   "scripts": {
     "build": "nest build",
+    "proto:clean": "rimraf proto/generated",
+    "proto:generate": "node -e \"const fs = require('fs'); fs.mkdirSync('proto/generated', {recursive: true}); fs.copyFileSync('../../packages/proto/gen/ts/logistics/logistics.ts', 'proto/generated/logistics.ts');\"",
+    "prebuild": "npm run proto:clean && npm run proto:generate",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -23,11 +26,7 @@
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
     "db:create": "ts-node src/scripts/create-database.ts",
-    "clean": "rimraf dist",
-    "proto:generate": "node -e \"const fs=require('fs'),p=require('path');['common','logistics'].forEach(d=>{const s=p.join('../../packages/proto/gen/ts',d),t=p.join('proto/generated',d);fs.cpSync(s,t,{recursive:true})})\"",
-    "proto:clean": "rm -rf proto/generated/*",
-    "prebuild": "npm run proto:clean && npm run proto:generate",
-    "prestart:dev": "npm run proto:generate"
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
@@ -38,6 +37,7 @@
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/microservices": "^11.1.12",
     "@nestjs/platform-express": "^11.1.12",
+    "@nestjs/schedule": "^6.1.0",
     "@nestjs/typeorm": "^11.0.0",
     "axios": "^1.13.3",
     "class-transformer": "^0.5.1",
@@ -48,10 +48,8 @@
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.28",
     "typeorm-naming-strategies": "^4.1.0",
- "@crm/grpc-utils": "file:../../packages/grpc-utils",
-     "@crm/nats-utils": "file:../../packages/nats-utils",
-     "@crm/proto": "file:../../packages/proto",
-     "@crm/shared": "file:../../packages/shared"
+ "@crm/shared-kernel": "file:../../packages/shared-kernel",
+     "@crm/proto": "file:../../packages/proto"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
@@ -76,22 +74,6 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3"
   },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
-  },
+
   "main": "dist/main.js"
 }

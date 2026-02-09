@@ -55,7 +55,7 @@ import {
 import type {
   WooCommerceConfig,
   WooCommerceMapping,
-  WooCommerceWebhook,
+  WooCommerceWebhookEvent,
 } from "@proto/woocommerce/woocommerce"
 import { Plus, Pencil, Trash2, Loader2, ShoppingCart, Search, RefreshCw } from "lucide-react"
 
@@ -63,7 +63,7 @@ interface WooCommercePageClientProps {
   activeOrgId?: string | null
   initialConfigs?: WooCommerceConfig[] | null
   initialMappings?: WooCommerceMapping[] | null
-  initialWebhooks?: WooCommerceWebhook[] | null
+  initialWebhooks?: WooCommerceWebhookEvent[] | null
 }
 
 export function WooCommercePageClient({
@@ -77,11 +77,14 @@ export function WooCommercePageClient({
   const [configDialogOpen, setConfigDialogOpen] = React.useState(false)
   const [selectedConfig, setSelectedConfig] = React.useState<WooCommerceConfig | null>(null)
   const [configFormData, setConfigFormData] = React.useState({
-    nom: "",
-    urlBoutique: "",
+    storeUrl: "",
     consumerKey: "",
     consumerSecret: "",
-    actif: true,
+    webhookSecret: "",
+    syncProducts: true,
+    syncOrders: true,
+    syncCustomers: true,
+    active: true,
   })
   const [deleteConfigDialogOpen, setDeleteConfigDialogOpen] = React.useState(false)
 
@@ -89,16 +92,17 @@ export function WooCommercePageClient({
   const [mappings, setMappings] = React.useState<WooCommerceMapping[]>(initialMappings || [])
   const [mappingDialogOpen, setMappingDialogOpen] = React.useState(false)
   const [selectedMapping, setSelectedMapping] = React.useState<WooCommerceMapping | null>(null)
-  const [mappingFormData, setMappingFormData] = React.useState({
-    configId: "",
-    produitCrmId: "",
-    produitWooId: "",
-    syncActif: true,
-  })
+   const [mappingFormData, setMappingFormData] = React.useState({
+     entityType: "",
+     internalId: "",
+     externalId: "",
+     externalData: "",
+     syncStatus: "active",
+   })
   const [deleteMappingDialogOpen, setDeleteMappingDialogOpen] = React.useState(false)
 
   // Webhooks state
-  const [webhooks, setWebhooks] = React.useState<WooCommerceWebhook[]>(initialWebhooks || [])
+  const [webhooks, setWebhooks] = React.useState<WooCommerceWebhookEvent[]>(initialWebhooks || [])
 
   const [loading, setLoading] = React.useState(false)
   const [search, setSearch] = React.useState("")
@@ -133,7 +137,7 @@ export function WooCommercePageClient({
     setLoading(true)
     const result = await listWooCommerceWebhookEvents({ organisationId: activeOrgId })
     if (result.data) {
-      setWebhooks(result.data.webhooks || [])
+      setWebhooks(result.data.events || [])
     } else if (result.error) {
       toast.error(result.error)
     }
@@ -144,11 +148,14 @@ export function WooCommercePageClient({
   const handleCreateConfig = () => {
     setSelectedConfig(null)
     setConfigFormData({
-      nom: "",
-      urlBoutique: "",
+      storeUrl: "",
       consumerKey: "",
       consumerSecret: "",
-      actif: true,
+      webhookSecret: "",
+      syncProducts: true,
+      syncOrders: true,
+      syncCustomers: true,
+      active: true,
     })
     setConfigDialogOpen(true)
   }
@@ -156,19 +163,22 @@ export function WooCommercePageClient({
   const handleEditConfig = (config: WooCommerceConfig) => {
     setSelectedConfig(config)
     setConfigFormData({
-      nom: config.nom,
-      urlBoutique: config.urlBoutique,
+      storeUrl: config.storeUrl,
       consumerKey: config.consumerKey,
       consumerSecret: config.consumerSecret,
-      actif: config.actif,
+      webhookSecret: config.webhookSecret,
+      syncProducts: config.syncProducts,
+      syncOrders: config.syncOrders,
+      syncCustomers: config.syncCustomers,
+      active: config.active,
     })
     setConfigDialogOpen(true)
   }
 
   const handleSubmitConfig = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!configFormData.nom || !configFormData.urlBoutique) {
-      toast.error("Nom et URL boutique sont obligatoires")
+    if (!configFormData.storeUrl || !configFormData.consumerKey || !configFormData.consumerSecret) {
+      toast.error("URL boutique, Consumer Key et Consumer Secret sont obligatoires")
       return
     }
 
@@ -187,7 +197,15 @@ export function WooCommercePageClient({
         fetchConfigs()
       }
     } else {
-      const result = await createWooCommerceConfig(configFormData)
+      if (!activeOrgId) {
+        toast.error("Organisation non trouvée")
+        setLoading(false)
+        return
+      }
+      const result = await createWooCommerceConfig({
+        organisationId: activeOrgId,
+        ...configFormData,
+      })
       if (result.error) {
         toast.error(result.error)
       } else {
@@ -218,62 +236,77 @@ export function WooCommercePageClient({
   }
 
   // Mapping handlers
-  const handleCreateMapping = () => {
-    setSelectedMapping(null)
-    setMappingFormData({
-      configId: "",
-      produitCrmId: "",
-      produitWooId: "",
-      syncActif: true,
-    })
-    setMappingDialogOpen(true)
-  }
+   const handleCreateMapping = () => {
+     setSelectedMapping(null)
+     setMappingFormData({
+       entityType: "",
+       internalId: "",
+       externalId: "",
+       externalData: "",
+       syncStatus: "active",
+     })
+     setMappingDialogOpen(true)
+   }
 
-  const handleEditMapping = (mapping: WooCommerceMapping) => {
-    setSelectedMapping(mapping)
-    setMappingFormData({
-      configId: mapping.configId,
-      produitCrmId: mapping.produitCrmId,
-      produitWooId: mapping.produitWooId,
-      syncActif: mapping.syncActif,
-    })
-    setMappingDialogOpen(true)
-  }
+   const handleEditMapping = (mapping: WooCommerceMapping) => {
+     setSelectedMapping(mapping)
+     setMappingFormData({
+       entityType: mapping.entityType,
+       internalId: mapping.internalId,
+       externalId: mapping.externalId,
+       externalData: mapping.externalData,
+       syncStatus: mapping.syncStatus,
+     })
+     setMappingDialogOpen(true)
+   }
 
-  const handleSubmitMapping = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!mappingFormData.configId || !mappingFormData.produitCrmId || !mappingFormData.produitWooId) {
-      toast.error("Tous les champs sont obligatoires")
-      return
-    }
+   const handleSubmitMapping = async (e: React.FormEvent) => {
+     e.preventDefault()
+     if (!mappingFormData.entityType || !mappingFormData.internalId || !mappingFormData.externalId) {
+       toast.error("Tous les champs sont obligatoires")
+       return
+     }
 
-    setLoading(true)
+     setLoading(true)
 
-    if (selectedMapping) {
-      const result = await updateWooCommerceMapping({
-        id: selectedMapping.id,
-        ...mappingFormData,
-      })
-      if (result.error) {
-        toast.error(result.error)
-      } else {
-        toast.success("Mapping mis à jour")
-        setMappingDialogOpen(false)
-        fetchMappings()
-      }
-    } else {
-      const result = await createWooCommerceMapping(mappingFormData)
-      if (result.error) {
-        toast.error(result.error)
-      } else {
-        toast.success("Mapping créé")
-        setMappingDialogOpen(false)
-        fetchMappings()
-      }
-    }
+     if (selectedMapping) {
+       const result = await updateWooCommerceMapping({
+         id: selectedMapping.id,
+         internalId: mappingFormData.internalId,
+         externalData: mappingFormData.externalData,
+         syncStatus: mappingFormData.syncStatus,
+       })
+       if (result.error) {
+         toast.error(result.error)
+       } else {
+         toast.success("Mapping mis à jour")
+         setMappingDialogOpen(false)
+         fetchMappings()
+       }
+     } else {
+       if (!activeOrgId) {
+         toast.error("Organisation non trouvée")
+         setLoading(false)
+         return
+       }
+       const result = await createWooCommerceMapping({
+         organisationId: activeOrgId,
+         entityType: mappingFormData.entityType,
+         externalId: mappingFormData.externalId,
+         internalId: mappingFormData.internalId,
+         externalData: mappingFormData.externalData,
+       })
+       if (result.error) {
+         toast.error(result.error)
+       } else {
+         toast.success("Mapping créé")
+         setMappingDialogOpen(false)
+         fetchMappings()
+       }
+     }
 
-    setLoading(false)
-  }
+     setLoading(false)
+   }
 
   const handleDeleteMapping = async () => {
     if (!selectedMapping) return
@@ -292,13 +325,13 @@ export function WooCommercePageClient({
     setLoading(false)
   }
 
-  const filteredConfigs = React.useMemo(() => {
-    if (!search) return configs
-    const q = search.toLowerCase()
-    return configs.filter(
-      (c) => c.nom.toLowerCase().includes(q) || c.urlBoutique.toLowerCase().includes(q)
-    )
-  }, [configs, search])
+   const filteredConfigs = React.useMemo(() => {
+     if (!search) return configs
+     const q = search.toLowerCase()
+     return configs.filter(
+       (c) => c.id.toLowerCase().includes(q) || c.storeUrl.toLowerCase().includes(q)
+     )
+   }, [configs, search])
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
@@ -358,16 +391,16 @@ export function WooCommercePageClient({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredConfigs.map((config) => (
-                  <TableRow key={config.id}>
-                    <TableCell className="font-medium">{config.nom}</TableCell>
-                    <TableCell>{config.urlBoutique}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {config.consumerKey.substring(0, 20)}...
-                    </TableCell>
+                 {filteredConfigs.map((config) => (
+                   <TableRow key={config.id}>
+                     <TableCell className="font-medium">{config.id}</TableCell>
+                     <TableCell>{config.storeUrl}</TableCell>
+                     <TableCell className="font-mono text-xs">
+                       {config.consumerKey ? config.consumerKey.substring(0, 20) + "..." : "-"}
+                     </TableCell>
                     <TableCell>
-                      <Badge variant={config.actif ? "default" : "secondary"}>
-                        {config.actif ? "Actif" : "Inactif"}
+                      <Badge variant={config.active ? "default" : "secondary"}>
+                        {config.active ? "Actif" : "Inactif"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -429,19 +462,17 @@ export function WooCommercePageClient({
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {mappings.map((mapping) => (
-                  <TableRow key={mapping.id}>
-                    <TableCell>
-                      {configs.find((c) => c.id === mapping.configId)?.nom || "-"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{mapping.produitCrmId}</TableCell>
-                    <TableCell className="font-mono text-xs">{mapping.produitWooId}</TableCell>
-                    <TableCell>
-                      <Badge variant={mapping.syncActif ? "default" : "secondary"}>
-                        {mapping.syncActif ? "Actif" : "Inactif"}
-                      </Badge>
-                    </TableCell>
+               <TableBody>
+                 {mappings.map((mapping) => (
+                   <TableRow key={mapping.id}>
+                     <TableCell>{mapping.entityType}</TableCell>
+                     <TableCell className="font-mono text-xs">{mapping.internalId}</TableCell>
+                     <TableCell className="font-mono text-xs">{mapping.externalId}</TableCell>
+                     <TableCell>
+                       <Badge variant={mapping.syncStatus === "active" ? "default" : "secondary"}>
+                         {mapping.syncStatus === "active" ? "Actif" : "Inactif"}
+                       </Badge>
+                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -503,20 +534,20 @@ export function WooCommercePageClient({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {webhooks.map((webhook) => (
-                  <TableRow key={webhook.id}>
-                    <TableCell className="font-medium">{webhook.type}</TableCell>
-                    <TableCell className="font-mono text-xs max-w-xs truncate">
-                      {webhook.payload}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={webhook.traite ? "default" : "secondary"}>
-                        {webhook.traite ? "Traité" : "En attente"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{new Date(webhook.dateReception).toLocaleString("fr-FR")}</TableCell>
-                  </TableRow>
-                ))}
+                 {webhooks.map((webhook) => (
+                   <TableRow key={webhook.id}>
+                     <TableCell className="font-medium">{webhook.topic}</TableCell>
+                     <TableCell className="font-mono text-xs max-w-xs truncate">
+                       {webhook.payload}
+                     </TableCell>
+                     <TableCell>
+                       <Badge variant={webhook.status === "processed" ? "default" : "secondary"}>
+                         {webhook.status === "processed" ? "Traité" : "En attente"}
+                       </Badge>
+                     </TableCell>
+                     <TableCell>{new Date(webhook.createdAt).toLocaleString("fr-FR")}</TableCell>
+                   </TableRow>
+                 ))}
               </TableBody>
             </Table>
           )}
@@ -536,24 +567,26 @@ export function WooCommercePageClient({
           </DialogHeader>
           <form onSubmit={handleSubmitConfig} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nom">Nom *</Label>
+              <Label htmlFor="storeUrl">URL Boutique *</Label>
               <Input
-                id="nom"
-                value={configFormData.nom}
-                onChange={(e) => setConfigFormData({ ...configFormData, nom: e.target.value })}
+                id="storeUrl"
+                value={configFormData.storeUrl}
+                onChange={(e) =>
+                  setConfigFormData({ ...configFormData, storeUrl: e.target.value })
+                }
+                placeholder="https://example.com"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="urlBoutique">URL Boutique *</Label>
+              <Label htmlFor="webhookSecret">Webhook Secret</Label>
               <Input
-                id="urlBoutique"
-                value={configFormData.urlBoutique}
+                id="webhookSecret"
+                type="password"
+                value={configFormData.webhookSecret}
                 onChange={(e) =>
-                  setConfigFormData({ ...configFormData, urlBoutique: e.target.value })
+                  setConfigFormData({ ...configFormData, webhookSecret: e.target.value })
                 }
-                placeholder="https://example.com"
-                required
               />
             </div>
             <div className="space-y-2">
@@ -581,13 +614,43 @@ export function WooCommercePageClient({
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="actif"
-                checked={configFormData.actif}
+                id="active"
+                checked={configFormData.active}
                 onCheckedChange={(checked) =>
-                  setConfigFormData({ ...configFormData, actif: checked === true })
+                  setConfigFormData({ ...configFormData, active: checked === true })
                 }
               />
-              <Label htmlFor="actif">Actif</Label>
+              <Label htmlFor="active">Actif</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="syncProducts"
+                checked={configFormData.syncProducts}
+                onCheckedChange={(checked) =>
+                  setConfigFormData({ ...configFormData, syncProducts: checked === true })
+                }
+              />
+              <Label htmlFor="syncProducts">Synchroniser les produits</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="syncOrders"
+                checked={configFormData.syncOrders}
+                onCheckedChange={(checked) =>
+                  setConfigFormData({ ...configFormData, syncOrders: checked === true })
+                }
+              />
+              <Label htmlFor="syncOrders">Synchroniser les commandes</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="syncCustomers"
+                checked={configFormData.syncCustomers}
+                onCheckedChange={(checked) =>
+                  setConfigFormData({ ...configFormData, syncCustomers: checked === true })
+                }
+              />
+              <Label htmlFor="syncCustomers">Synchroniser les clients</Label>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setConfigDialogOpen(false)}>
@@ -611,59 +674,71 @@ export function WooCommercePageClient({
               Associez un produit CRM à un produit WooCommerce.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmitMapping} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="configId">Configuration *</Label>
-              <Select
-                value={mappingFormData.configId}
-                onValueChange={(value) =>
-                  setMappingFormData({ ...mappingFormData, configId: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une configuration" />
-                </SelectTrigger>
-                <SelectContent>
-                  {configs.map((config) => (
-                    <SelectItem key={config.id} value={config.id}>
-                      {config.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="produitCrmId">ID Produit CRM *</Label>
-              <Input
-                id="produitCrmId"
-                value={mappingFormData.produitCrmId}
-                onChange={(e) =>
-                  setMappingFormData({ ...mappingFormData, produitCrmId: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="produitWooId">ID Produit WooCommerce *</Label>
-              <Input
-                id="produitWooId"
-                value={mappingFormData.produitWooId}
-                onChange={(e) =>
-                  setMappingFormData({ ...mappingFormData, produitWooId: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="syncActif"
-                checked={mappingFormData.syncActif}
-                onCheckedChange={(checked) =>
-                  setMappingFormData({ ...mappingFormData, syncActif: checked === true })
-                }
-              />
-              <Label htmlFor="syncActif">Synchronisation active</Label>
-            </div>
+           <form onSubmit={handleSubmitMapping} className="space-y-4">
+             <div className="space-y-2">
+               <Label htmlFor="entityType">Type d'entité *</Label>
+               <Input
+                 id="entityType"
+                 value={mappingFormData.entityType}
+                 onChange={(e) =>
+                   setMappingFormData({ ...mappingFormData, entityType: e.target.value })
+                 }
+                 placeholder="ex: product, order"
+                 required
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="internalId">ID Interne (CRM) *</Label>
+               <Input
+                 id="internalId"
+                 value={mappingFormData.internalId}
+                 onChange={(e) =>
+                   setMappingFormData({ ...mappingFormData, internalId: e.target.value })
+                 }
+                 required
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="externalId">ID Externe (WooCommerce) *</Label>
+               <Input
+                 id="externalId"
+                 value={mappingFormData.externalId}
+                 onChange={(e) =>
+                   setMappingFormData({ ...mappingFormData, externalId: e.target.value })
+                 }
+                 required
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="externalData">Données Externes</Label>
+               <Input
+                 id="externalData"
+                 value={mappingFormData.externalData}
+                 onChange={(e) =>
+                   setMappingFormData({ ...mappingFormData, externalData: e.target.value })
+                 }
+                 placeholder="Données JSON ou texte"
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="syncStatus">Statut de synchronisation</Label>
+               <Select
+                 value={mappingFormData.syncStatus}
+                 onValueChange={(value) =>
+                   setMappingFormData({ ...mappingFormData, syncStatus: value })
+                 }
+               >
+                 <SelectTrigger>
+                   <SelectValue placeholder="Sélectionner un statut" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="active">Actif</SelectItem>
+                   <SelectItem value="inactive">Inactif</SelectItem>
+                   <SelectItem value="pending">En attente</SelectItem>
+                   <SelectItem value="error">Erreur</SelectItem>
+                 </SelectContent>
+               </Select>
+             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setMappingDialogOpen(false)}>
                 Annuler
@@ -680,13 +755,13 @@ export function WooCommercePageClient({
       {/* Delete Config Dialog */}
       <AlertDialog open={deleteConfigDialogOpen} onOpenChange={setDeleteConfigDialogOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer la configuration{" "}
-              <strong>{selectedConfig?.nom}</strong> ? Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+           <AlertDialogHeader>
+             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+             <AlertDialogDescription>
+               Êtes-vous sûr de vouloir supprimer la configuration{" "}
+               <strong>{selectedConfig?.id}</strong> ? Cette action est irréversible.
+             </AlertDialogDescription>
+           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfig} disabled={loading}>

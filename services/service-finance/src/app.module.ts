@@ -3,8 +3,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { AuthInterceptor } from '@crm/grpc-utils';
-import { NatsModule } from '@crm/nats-utils';
+import { AuthInterceptor } from '@crm/shared-kernel';
 
 // ============================================================================
 // DDD BOUNDED CONTEXT MODULES
@@ -35,7 +34,7 @@ import { CalendarModule } from './calendar.module';
         database: configService.get('DB_DATABASE', 'finance_db'),
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
-        synchronize: false,
+        synchronize: configService.get('NODE_ENV') !== 'production',
         migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get('NODE_ENV') === 'development',
@@ -50,8 +49,6 @@ import { CalendarModule } from './calendar.module';
         },
       }),
     }),
-
-    NatsModule.forRoot({ servers: process.env.NATS_URL || 'nats://localhost:4222' }),
 
     // ========================================================================
     // DDD BOUNDED CONTEXT MODULES

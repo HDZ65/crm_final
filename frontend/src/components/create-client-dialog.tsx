@@ -77,7 +77,7 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClie
 
           <FormError errors={state.errors?._form} />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <NativeFormField
               name="typeClient"
               label="Type de client"

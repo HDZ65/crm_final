@@ -50,12 +50,13 @@ function formatPhoneNumber(phone: string | null | undefined): string {
 export type ClientRow = {
   id: string
   name: string
-  status: "Actif" | "Impayé" | "Suspendu"
+  status: "Actif" | "Impaye" | "Suspendu"
   contracts: string[]
   createdAgo: string
   company?: string
   email?: string
   phone?: string
+  societeIds?: string[]
 }
 
 export const createColumns = (onDeleted?: () => void): ColumnDef<ClientRow>[] => [
@@ -115,7 +116,7 @@ export const createColumns = (onDeleted?: () => void): ColumnDef<ClientRow>[] =>
             Actif
           </Badge>
         )
-      if (value === "Impayé")
+      if (value === "Impaye")
         return (
           <Badge variant="destructive" className="bg-rose-100 text-rose-700 border-rose-200">
             <XCircle className="size-3 mr-1" />
@@ -154,24 +155,28 @@ export const createColumns = (onDeleted?: () => void): ColumnDef<ClientRow>[] =>
       </div>
     ),
   },
-  {
-    accessorKey: "contracts",
-    header: () => (
-      <div className="flex items-center gap-1.5">
-        <FileText className="size-4" />
-        Contrats actifs
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex flex-wrap gap-1">
-        {row.original.contracts.map((ct) => (
-          <Badge key={ct} variant="outline" className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums text-slate-700">
-            {ct}
-          </Badge>
-        ))}
-      </div>
-    ),
-  },
+   {
+     accessorKey: "contracts",
+     header: () => (
+       <div className="flex items-center gap-1.5">
+         <FileText className="size-4" />
+         Contrats actifs
+       </div>
+     ),
+     cell: ({ row }) => (
+       <div className="flex flex-wrap gap-1">
+         {row.original.contracts.length > 0 ? (
+           row.original.contracts.map((ct) => (
+             <Badge key={ct} variant="outline" className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums text-slate-700">
+               {ct}
+             </Badge>
+           ))
+         ) : (
+           <span className="text-sm text-muted-foreground">Aucun contrat</span>
+         )}
+       </div>
+     ),
+   },
   {
     accessorKey: "createdAgo",
     header: () => (

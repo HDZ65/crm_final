@@ -90,6 +90,9 @@ import {
   JustiCaseHandler,
 } from './infrastructure/messaging/nats/handlers';
 
+// NATS handlers (Depanssur)
+import { DepanssurEventsHandler } from './infrastructure/messaging/nats/handlers/depanssur-events.handler';
+
 
 @Module({
   imports: [
@@ -159,6 +162,7 @@ import {
     JustiCustomerHandler,
     JustiSubscriptionHandler,
     JustiCaseHandler,
+    DepanssurEventsHandler,
   ],
   exports: [
     NotificationService,

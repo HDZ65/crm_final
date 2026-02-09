@@ -3,19 +3,34 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import type { Apporteur } from "@proto/commerciaux/commerciaux"
+import type { Contrat } from "@proto/contrats/contrats"
+import type { Commission, Bordereau } from "@proto/commission/commission"
 import { getApporteur } from "@/actions/commerciaux"
 import { CommercialHeader } from "@/components/commercial-detail/commercial-header"
 import { CommercialInfoAccordion } from "@/components/commercial-detail/commercial-info-accordion"
+import { CommercialCommissions } from "@/components/commercial-detail/commercial-commissions"
+import { CommercialContrats } from "@/components/commercial-detail/commercial-contrats"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, FileText, Users, Calendar } from "lucide-react"
 
 interface CommercialDetailClientProps {
   commercialId: string
+  organisationId: string
   initialCommercial: Apporteur | null
+  initialCommissions?: Commission[]
+  initialBordereaux?: Bordereau[]
+  initialContrats?: Contrat[]
 }
 
-export function CommercialDetailClient({ commercialId, initialCommercial }: CommercialDetailClientProps) {
+export function CommercialDetailClient({ 
+  commercialId, 
+  organisationId,
+  initialCommercial,
+  initialCommissions,
+  initialBordereaux,
+  initialContrats,
+}: CommercialDetailClientProps) {
   const router = useRouter()
   const [commercial, setCommercial] = React.useState<Apporteur | null>(initialCommercial)
 
@@ -129,29 +144,20 @@ export function CommercialDetailClient({ commercialId, initialCommercial }: Comm
         </TabsContent>
 
         <TabsContent value="commissions" className="flex-1 flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Commissions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Les commissions, bordereaux et reprises apparaîtront ici.
-              </p>
-            </CardContent>
-          </Card>
+          <CommercialCommissions
+            commercialId={commercialId}
+            organisationId={organisationId}
+            initialCommissions={initialCommissions}
+            initialBordereaux={initialBordereaux}
+          />
         </TabsContent>
 
         <TabsContent value="contrats" className="flex-1 flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Contrats</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Les contrats associés à ce commercial apparaîtront ici.
-              </p>
-            </CardContent>
-          </Card>
+          <CommercialContrats
+            commercialId={commercialId}
+            organisationId={organisationId}
+            initialContrats={initialContrats}
+          />
         </TabsContent>
 
         <TabsContent value="activites-taches" className="flex-1 flex flex-col gap-6">

@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { AuthInterceptor } from '@crm/shared-kernel';
+import { AuthInterceptor, NatsModule, GrpcExceptionFilter } from '@crm/shared-kernel';
 import { AuditSubscriber } from './infrastructure/persistence/typeorm/audit-subscriber';
 
 // ============================================================================
@@ -20,6 +20,14 @@ import { DepanssurModule } from './depanssur.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    NatsModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        servers: configService.get('NATS_URL', 'nats://localhost:4222'),
+        name: 'service-core',
+      }),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -61,6 +69,10 @@ import { DepanssurModule } from './depanssur.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: AuthInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GrpcExceptionFilter,
     },
     AuditSubscriber,
   ],

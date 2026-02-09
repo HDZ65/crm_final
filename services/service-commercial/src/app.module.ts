@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { AuthInterceptor, NatsModule } from '@crm/shared-kernel';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { AuthInterceptor, NatsModule, GrpcExceptionFilter } from '@crm/shared-kernel';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
@@ -69,6 +69,10 @@ import { WooCommerceModule } from './woocommerce.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: AuthInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GrpcExceptionFilter,
     },
     AuditSubscriber,
   ],

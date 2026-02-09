@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { AuthInterceptor, NatsModule } from '@crm/shared-kernel';
+import { AuthInterceptor, NatsModule, GrpcExceptionFilter } from '@crm/shared-kernel';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // ============================================================================
 // DDD BOUNDED CONTEXT MODULES
@@ -84,6 +85,9 @@ import {
       }),
     }),
 
+    // Scheduling (for cron jobs)
+    ScheduleModule.forRoot(),
+
     // ========================================================================
     // DDD BOUNDED CONTEXT MODULES
     // ========================================================================
@@ -97,6 +101,10 @@ import {
     {
       provide: APP_INTERCEPTOR,
       useClass: AuthInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GrpcExceptionFilter,
     },
   ],
 })

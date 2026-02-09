@@ -11,6 +11,7 @@ import {
   CutoffConfig,
 } from '../../../domain/subscriptions/services/preference-cutoff.service';
 import { AppliedCycle } from '../../../domain/subscriptions/entities/subscription-preference-history.entity';
+import type { SubscriptionPreferenceEntity } from '../../../domain/subscriptions/entities/subscription-preference.entity';
 
 /** Default cut-off: Friday 17:00 Europe/Paris */
 const DEFAULT_CUTOFF_CONFIG: CutoffConfig = {
@@ -157,7 +158,7 @@ export class SubscriptionPreferenceController {
     }
 
     // 5. Save each preference + create history
-    const saved = [];
+    const saved: SubscriptionPreferenceEntity[] = [];
     for (const pref of data.preferences) {
       const schema = schemas.find((s) => s.code === pref.code);
       if (!schema) continue;

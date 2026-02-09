@@ -22,6 +22,7 @@ import type {
   SuspendSubscriptionRequest,
   ReactivateSubscriptionRequest,
 } from '@proto/subscriptions';
+import { SubscriptionStatus } from '../../../domain/subscriptions/entities/subscription.entity';
 
 @Controller()
 export class SubscriptionController {
@@ -37,7 +38,7 @@ export class SubscriptionController {
     return this.subscriptionService.create({
       organisationId: data.organisation_id,
       clientId: data.client_id,
-      status: 'PENDING',
+      status: SubscriptionStatus.PENDING,
       frequency: 'MONTHLY', // Default, will be derived from plan in domain service (Task 5)
       amount: 0, // Will be derived from plan in domain service (Task 5)
       startDate: data.start_date,
@@ -136,13 +137,13 @@ export class SubscriptionController {
     }
 
     const previousStatus = entity.status;
-    entity.status = 'ACTIVE';
+    entity.status = SubscriptionStatus.ACTIVE;
     const saved = await this.subscriptionService.save(entity);
 
     await this.statusHistoryService.create({
       subscriptionId: data.id,
       previousStatus,
-      newStatus: 'ACTIVE',
+      newStatus: SubscriptionStatus.ACTIVE,
       reason: 'Activated',
     });
 
@@ -157,14 +158,14 @@ export class SubscriptionController {
     }
 
     const previousStatus = entity.status;
-    entity.status = 'PAUSED';
+    entity.status = SubscriptionStatus.SUSPENDED;
     entity.pausedAt = new Date().toISOString();
     const saved = await this.subscriptionService.save(entity);
 
     await this.statusHistoryService.create({
       subscriptionId: data.id,
       previousStatus,
-      newStatus: 'PAUSED',
+      newStatus: SubscriptionStatus.SUSPENDED,
       reason: data.reason || 'Paused by user',
     });
 
@@ -179,14 +180,14 @@ export class SubscriptionController {
     }
 
     const previousStatus = entity.status;
-    entity.status = 'ACTIVE';
+    entity.status = SubscriptionStatus.ACTIVE;
     entity.resumedAt = new Date().toISOString();
     const saved = await this.subscriptionService.save(entity);
 
     await this.statusHistoryService.create({
       subscriptionId: data.id,
       previousStatus,
-      newStatus: 'ACTIVE',
+      newStatus: SubscriptionStatus.ACTIVE,
       reason: 'Resumed',
     });
 
@@ -201,14 +202,14 @@ export class SubscriptionController {
     }
 
     const previousStatus = entity.status;
-    entity.status = 'CANCELED';
+    entity.status = SubscriptionStatus.CANCELLED;
     entity.endDate = new Date().toISOString();
     const saved = await this.subscriptionService.save(entity);
 
     await this.statusHistoryService.create({
       subscriptionId: data.id,
       previousStatus,
-      newStatus: 'CANCELED',
+      newStatus: SubscriptionStatus.CANCELLED,
       reason: data.reason || 'Canceled by user',
     });
 
@@ -223,14 +224,14 @@ export class SubscriptionController {
     }
 
     const previousStatus = entity.status;
-    entity.status = 'EXPIRED';
+    entity.status = SubscriptionStatus.EXPIRED;
     entity.endDate = new Date().toISOString();
     const saved = await this.subscriptionService.save(entity);
 
     await this.statusHistoryService.create({
       subscriptionId: data.id,
       previousStatus,
-      newStatus: 'EXPIRED',
+      newStatus: SubscriptionStatus.EXPIRED,
       reason: 'Expired',
     });
 
@@ -245,7 +246,7 @@ export class SubscriptionController {
     }
 
     const previousStatus = entity.status;
-    entity.status = 'SUSPENDED';
+    entity.status = SubscriptionStatus.SUSPENDED;
     entity.suspendedAt = new Date();
     entity.suspensionReason = data.reason || 'Suspended';
     const saved = await this.subscriptionService.save(entity);
@@ -253,7 +254,7 @@ export class SubscriptionController {
     await this.statusHistoryService.create({
       subscriptionId: data.id,
       previousStatus,
-      newStatus: 'SUSPENDED',
+      newStatus: SubscriptionStatus.SUSPENDED,
       reason: data.reason || 'Suspended',
     });
 
@@ -268,7 +269,7 @@ export class SubscriptionController {
     }
 
     const previousStatus = entity.status;
-    entity.status = 'ACTIVE';
+    entity.status = SubscriptionStatus.ACTIVE;
     entity.suspendedAt = null;
     entity.suspensionReason = null;
     const saved = await this.subscriptionService.save(entity);
@@ -276,7 +277,7 @@ export class SubscriptionController {
     await this.statusHistoryService.create({
       subscriptionId: data.id,
       previousStatus,
-      newStatus: 'ACTIVE',
+      newStatus: SubscriptionStatus.ACTIVE,
       reason: 'Reactivated',
     });
 

@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, RpcException } from '@nestjs/microservices';
+import { status } from '@grpc/grpc-js';
 import { CalendarEventAgendaService } from '../../persistence/typeorm/repositories/engagement/calendar-event.service';
 import { CalendarEventEntity } from '../../../domain/engagement/entities';
 
@@ -9,6 +10,9 @@ export class CalendarEventController {
 
   @GrpcMethod('CalendarEventService', 'Create')
   async create(data: any): Promise<any> {
+    if (!data.user_id || !data.organisation_id) {
+      throw new RpcException({ code: status.INVALID_ARGUMENT, message: 'user_id and organisation_id are required' });
+    }
     const event = await this.calendarEventService.create({
       userId: data.user_id,
       organisationId: data.organisation_id,

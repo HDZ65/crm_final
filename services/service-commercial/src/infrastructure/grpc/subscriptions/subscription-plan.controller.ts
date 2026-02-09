@@ -19,14 +19,20 @@ export class SubscriptionPlanController {
 
   @GrpcMethod('SubscriptionPlanService', 'Create')
   async create(data: CreateSubscriptionPlanRequest) {
+    const billingInterval = String(data.billing_interval);
+    const amount =
+      billingInterval === 'ANNUAL' || billingInterval === '1'
+        ? data.price_annual
+        : data.price_monthly;
+
     return this.subscriptionPlanService.create({
       organisationId: data.organisation_id,
       name: data.name,
       description: data.description,
-      billingInterval: String(data.billing_interval),
-      amount: data.price,
+      billingInterval,
+      amount,
       currency: data.currency,
-      trialDays: data.trial_period_days ? parseInt(data.trial_period_days, 10) : undefined,
+      trialDays: data.trial_days || undefined,
     });
   }
 
@@ -37,9 +43,9 @@ export class SubscriptionPlanController {
       name: data.name,
       description: data.description,
       billingInterval: data.billing_interval !== undefined ? String(data.billing_interval) : undefined,
-      amount: data.price,
+      amount: data.price_monthly ?? data.price_annual,
       currency: data.currency,
-      trialDays: data.trial_period_days ? parseInt(data.trial_period_days, 10) : undefined,
+      trialDays: data.trial_days,
       isActive: data.is_active,
     });
   }

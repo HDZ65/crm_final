@@ -19,17 +19,26 @@ export class ApporteurController {
   @GrpcMethod('ApporteurService', 'Create')
   async create(data: CreateApporteurRequest) {
     return this.apporteurService.create({
-      ...data,
+      organisationId: data.organisation_id,
+      utilisateurId: data.utilisateur_id || null,
+      nom: data.nom,
+      prenom: data.prenom,
+      typeApporteur: data.type_apporteur,
+      email: data.email || null,
+      telephone: data.telephone || null,
       societeId: data.societe_id || null,
     });
   }
 
   @GrpcMethod('ApporteurService', 'Update')
   async update(data: UpdateApporteurRequest) {
-    const { id, ...updateData } = data;
-    return this.apporteurService.update(id, {
-      ...updateData,
-      societeId: updateData.societe_id === '' ? null : updateData.societe_id,
+    return this.apporteurService.update(data.id, {
+      nom: data.nom,
+      prenom: data.prenom,
+      typeApporteur: data.type_apporteur,
+      email: data.email || null,
+      telephone: data.telephone || null,
+      societeId: data.societe_id === '' ? null : data.societe_id,
     });
   }
 
@@ -46,7 +55,7 @@ export class ApporteurController {
   @GrpcMethod('ApporteurService', 'List')
   async list(data: ListApporteurRequest) {
     const result = await this.apporteurService.findAll(
-      { search: data.search, typeApporteur: data.type_apporteur, actif: data.actif },
+      { search: data.search, typeApporteur: data.type_apporteur, actif: data.actif === true ? true : undefined },
       data.pagination,
     );
     return {
@@ -62,9 +71,11 @@ export class ApporteurController {
 
   @GrpcMethod('ApporteurService', 'ListByOrganisation')
   async listByOrganisation(data: ListApporteurByOrganisationRequest) {
+    // actif=false is protobuf default → means "no filter", not "only inactive"
+    const actifFilter = data.actif === true ? true : undefined;
     const result = await this.apporteurService.findByOrganisation(
       data.organisation_id,
-      data.actif,
+      actifFilter,
       data.pagination,
     );
     return {

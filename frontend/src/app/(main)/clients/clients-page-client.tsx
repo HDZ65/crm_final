@@ -12,7 +12,7 @@ import { useClientSearchStore } from "@/stores/client-search-store"
 import { useSocieteStore } from "@/stores/societe-store"
 import { getClientsByOrganisation } from "@/actions/clients"
 import { useOrganisation } from "@/contexts/organisation-context"
-import { Search, User, Mail, Phone, Building2, CreditCard, Globe, Shield, UserPlus, RefreshCw, Upload, Download, SlidersHorizontal, ChevronDown, X } from "lucide-react"
+import { Search, User, Mail, Phone, Building2, CreditCard, Globe, Shield, UserPlus, RefreshCw, Upload, Download, SlidersHorizontal, ChevronDown, X, Trash2 } from "lucide-react"
 import { CreateClientDialog } from "@/components/create-client-dialog"
 import { ImportClientDialog } from "@/components/clients/import-client-dialog"
 import { toast } from "sonner"
@@ -22,6 +22,10 @@ import type { ClientRow, ClientStatus } from "@/lib/ui/display-types/client"
 import type { ClientBase } from "@proto/clients/clients"
 import type { StatutClient } from "@/constants/statuts-client"
 import { formatCreatedAgo, formatFullName } from "@/lib/formatters"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { deleteClient, updateClient } from "@/actions/clients"
+import { listSocietesByOrganisation } from "@/actions/societes"
 
 // Helper pour mapper le statut vers le type UI
 function mapStatutToStatus(statutCode: string): ClientStatus {
@@ -59,11 +63,19 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
   const [createClientOpen, setCreateClientOpen] = React.useState(false)
   const [importDialogOpen, setImportDialogOpen] = React.useState(false)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
+  const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({})
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [bulkSocietes, setBulkSocietes] = React.useState<Array<{ id: string; raisonSociale: string }>>([])
+  const [isBulkStatusChanging, setIsBulkStatusChanging] = React.useState(false)
+  const [isBulkSocieteChanging, setIsBulkSocieteChanging] = React.useState(false)
 
   // Map statuts for quick lookup
   const statutsMap = React.useMemo(() => {
     const map = new Map<string, string>()
-    statuts.forEach(s => map.set(s.id, s.code))
+    statuts.forEach((s) => {
+      map.set(s.id, s.code)
+    })
     return map
   }, [statuts])
 
@@ -98,6 +110,7 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
     if (!activeOrganisation) return
 
     setError(null)
+    setRowSelection({})
 
     const result = await getClientsByOrganisation({
       organisationId: activeOrganisation.organisationId,
@@ -198,6 +211,16 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
     })
   }, [filters.globalSearch, filters.name, filters.email, filters.phone, clients])
 
+  // Compute selected clients from row selection indices
+  const selectedClients = React.useMemo(() => {
+    return Object.keys(rowSelection)
+      .filter((k) => rowSelection[k])
+      .map((k) => filteredClients[parseInt(k)])
+      .filter(Boolean)
+  }, [rowSelection, filteredClients])
+
+  const selectedCount = selectedClients.length
+
   const handleRefresh = React.useCallback(async () => {
     setIsRefreshing(true)
     await fetchData()
@@ -234,6 +257,127 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
     toast.success("Export CSV téléchargé")
   }, [filteredClients])
 
+  // Bulk export CSV (selected only)
+  const handleBulkExport = React.useCallback(() => {
+    if (selectedClients.length === 0) {
+      toast.error("Aucun client sélectionné")
+      return
+    }
+
+    const headers = ["Nom", "Email", "Téléphone", "Statut", "Contrats"]
+    const rows = selectedClients.map((c) => [
+      c.name,
+      c.email || "",
+      c.phone || "",
+      c.status,
+      c.contracts.length > 0 ? c.contracts.length : "Aucun",
+    ])
+
+    const csvContent = [
+      headers.join(";"),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(";")),
+    ].join("\n")
+
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `clients_selection_${new Date().toISOString().split("T")[0]}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+    toast.success(`Export CSV téléchargé (${selectedClients.length} client(s))`)
+    setRowSelection({})
+  }, [selectedClients])
+
+  // Bulk delete
+  const handleBulkDelete = React.useCallback(async () => {
+    if (selectedClients.length === 0) return
+
+    setIsBulkDeleting(true)
+    const results = await Promise.allSettled(
+      selectedClients.map((c) => deleteClient(c.id))
+    )
+
+    const successes = results.filter((r) => r.status === "fulfilled").length
+    const failures = results.filter((r) => r.status === "rejected").length
+
+    if (successes > 0) {
+      toast.success(`${successes} client(s) supprimé(s)`)
+    }
+    if (failures > 0) {
+      toast.error(`${failures} client(s) non supprimé(s)`)
+    }
+
+    setIsBulkDeleting(false)
+    setDeleteDialogOpen(false)
+    setRowSelection({})
+    await fetchData()
+  }, [selectedClients, fetchData])
+
+  // Bulk status change
+  const handleBulkStatusChange = React.useCallback(
+    async (statutId: string) => {
+      if (selectedClients.length === 0) return
+
+      setIsBulkStatusChanging(true)
+      const results = await Promise.allSettled(
+        selectedClients.map((c) => updateClient({ id: c.id, statut: statutId }))
+      )
+
+      const successes = results.filter((r) => r.status === "fulfilled").length
+      const failures = results.filter((r) => r.status === "rejected").length
+
+      if (successes > 0) {
+        toast.success(`Statut mis à jour pour ${successes} client(s)`)
+      }
+      if (failures > 0) {
+        toast.error(`Erreur pour ${failures} client(s)`)
+      }
+
+      setIsBulkStatusChanging(false)
+      setRowSelection({})
+      await fetchData()
+    },
+    [selectedClients, fetchData]
+  )
+
+  // Bulk société assignment
+  const handleBulkSocieteChange = React.useCallback(
+    async (societeId: string) => {
+      if (selectedClients.length === 0) return
+
+      setIsBulkSocieteChanging(true)
+      const results = await Promise.allSettled(
+        selectedClients.map((c) => updateClient({ id: c.id, societeId }))
+      )
+
+      const successes = results.filter((r) => r.status === "fulfilled").length
+      const failures = results.filter((r) => r.status === "rejected").length
+
+      if (successes > 0) {
+        toast.success(`Société assignée pour ${successes} client(s)`)
+      }
+      if (failures > 0) {
+        toast.error(`Erreur pour ${failures} client(s)`)
+      }
+
+      setIsBulkSocieteChanging(false)
+      setRowSelection({})
+      await fetchData()
+    },
+    [selectedClients, fetchData]
+  )
+
+  // Load societes on mount
+  React.useEffect(() => {
+    if (!activeOrganisation) return
+    listSocietesByOrganisation(activeOrganisation.organisationId).then((result) => {
+      if (result.data) {
+        setBulkSocietes(result.data.map((s) => ({ id: s.id, raisonSociale: s.raisonSociale })))
+      }
+    })
+  }, [activeOrganisation])
+
   return (
     <main className="flex flex-1 flex-col gap-4 min-h-0">
       <div className="flex flex-col gap-4 min-h-full">
@@ -253,10 +397,10 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
              variant="outline"
              size="sm"
              onClick={toggleAdvancedFilters}
-             className={cn(
-               "gap-2",
-               isAdvancedFiltersOpen && "bg-accent"
-             )}
+              className={cn(
+                "gap-2",
+                isAdvancedFiltersOpen && "bg-accent text-accent-foreground"
+              )}
            >
              <SlidersHorizontal className="size-4" />
              Filtres
@@ -400,12 +544,114 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
                 <p className="text-destructive">Erreur lors du chargement des clients</p>
               </div>
             ) : (
-              <div className="flex-1 min-h-0">
-                <DataTable
-                  columns={columns}
-                  data={filteredClients}
-                  headerClassName="bg-sidebar hover:bg-sidebar"
-                />
+              <div className="flex-1 min-h-0 flex flex-col gap-4">
+                {/* Bulk actions bar */}
+                {selectedCount > 0 && (
+                  <div className="flex items-center gap-3 p-3 bg-accent/10 border border-accent rounded-md">
+                    <span className="text-sm font-medium">
+                      {selectedCount} client{selectedCount > 1 ? "s" : ""} sélectionné{selectedCount > 1 ? "s" : ""}
+                    </span>
+                    <div className="flex-1" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleBulkExport}
+                      className="gap-2"
+                    >
+                      <Download className="size-4" />
+                      Export CSV
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                          disabled={isBulkStatusChanging}
+                        >
+                          <Shield className="size-4" />
+                          Statut
+                          <ChevronDown className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {statuts.map((statut) => (
+                          <DropdownMenuItem
+                            key={statut.id}
+                            onClick={() => handleBulkStatusChange(statut.id)}
+                            disabled={isBulkStatusChanging}
+                          >
+                            {statut.nom}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                          disabled={isBulkSocieteChanging}
+                        >
+                          <Building2 className="size-4" />
+                          Société
+                          <ChevronDown className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {bulkSocietes.map((societe) => (
+                          <DropdownMenuItem
+                            key={societe.id}
+                            onClick={() => handleBulkSocieteChange(societe.id)}
+                            disabled={isBulkSocieteChanging}
+                          >
+                            {societe.raisonSociale}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setDeleteDialogOpen(true)}
+                        className="gap-2"
+                        disabled={isBulkDeleting}
+                      >
+                        <Trash2 className="size-4" />
+                        Supprimer
+                      </Button>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Supprimer {selectedCount} client{selectedCount > 1 ? "s" : ""} ?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Êtes-vous sûr de vouloir supprimer {selectedCount} client{selectedCount > 1 ? "s" : ""} ?
+                            Cette action est irréversible.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isBulkDeleting}>Annuler</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleBulkDelete}
+                            disabled={isBulkDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {isBulkDeleting ? "Suppression..." : "Supprimer"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                <div className="flex-1 min-h-0">
+                  <DataTable
+                    columns={columns}
+                    data={filteredClients}
+                    headerClassName="bg-sidebar hover:bg-sidebar"
+                    onRowSelectionChange={setRowSelection}
+                  />
+                </div>
               </div>
             )}
           </CardContent>

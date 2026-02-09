@@ -6,11 +6,7 @@ import type {
   Apporteur,
   ListApporteurResponse,
 } from "@proto/commerciaux/commerciaux";
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ActionResult } from "@/lib/types/common";
 
 /**
  * Fetch liste des apporteurs par organisation via gRPC
@@ -21,8 +17,8 @@ export async function getApporteursByOrganisation(
   try {
     const data = await apporteurs.listByOrganisation({
       organisationId,
-      actif: false, // return all, filter client-side
-      pagination: undefined,
+      actif: false, // protobuf default = no filter (handled by backend)
+      pagination: { page: 1, limit: 500, sortBy: "nom", sortOrder: "asc" },
     });
     return { data, error: null };
   } catch (err) {
@@ -170,6 +166,61 @@ export async function deleteApporteur(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors de la suppression du commercial",
+    };
+  }
+}
+
+/**
+ * List activities by partenaire (commercial/apporteur)
+ * This is a thin wrapper that filters activities client-side
+ */
+export async function listActivitesByPartenaire(
+  organisationId: string,
+  partenaireId: string
+): Promise<ActionResult<{ data: any[] }>> {
+  try {
+    // Import the activites actions
+    const { listActivites } = await import("@/actions/activites");
+    
+    // Fetch all activities for the organization
+    const result = await listActivites({ organisationId, page: 1, limit: 1000 });
+    
+    if (result.error || !result.data) {
+      return { data: null, error: result.error || "Erreur lors du chargement des activités" };
+    }
+    
+    // Filter by partenaireId (clientPartenaireId field)
+    const filtered = result.data.data.filter(
+      (a: any) => a.clientPartenaireId === partenaireId
+    );
+    
+    return { data: { data: filtered }, error: null };
+  } catch (err) {
+    console.error("[listActivitesByPartenaire] error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des activités",
+    };
+  }
+}
+
+/**
+ * List tasks by partenaire (commercial/apporteur)
+ * This is a thin wrapper - currently returns empty as tasks don't have partenaire relation
+ */
+export async function listTachesByPartenaire(
+  organisationId: string,
+  partenaireId: string
+): Promise<ActionResult<{ data: any[] }>> {
+  try {
+    // For V1, return empty array as tasks don't have direct partenaire relation
+    // Future: implement filtering via client relation
+    return { data: { data: [] }, error: null };
+  } catch (err) {
+    console.error("[listTachesByPartenaire] error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des tâches",
     };
   }
 }

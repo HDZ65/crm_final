@@ -141,14 +141,7 @@ export function ImportContratsDialog({
            <>
              <Separator />
              <div className="space-y-3">
-               <div className="flex items-center justify-between">
-                 <h4 className="text-sm font-semibold">Résultats de la synchronisation</h4>
-                 {result.lastSyncDate && (
-                   <p className="text-xs text-muted-foreground">
-                     Dernier sync: {new Date(result.lastSyncDate).toLocaleString('fr-FR')}
-                   </p>
-                 )}
-               </div>
+               <h4 className="text-sm font-semibold">Résultats de la synchronisation</h4>
 
                <div className="grid grid-cols-2 gap-2 text-sm">
                  <div className="rounded-md border p-2">
@@ -169,23 +162,7 @@ export function ImportContratsDialog({
                  </div>
                </div>
 
-               {result.byEntityType && Object.keys(result.byEntityType).length > 0 && (
-                 <div className="rounded-md border p-3 bg-muted/30">
-                   <p className="mb-2 text-sm font-medium">Détail par type d'entité</p>
-                   <div className="space-y-2">
-                     {Object.entries(result.byEntityType).map(([entityType, stats]) => (
-                       <div key={entityType} className="flex items-center justify-between text-sm">
-                         <span className="capitalize text-muted-foreground">{entityType}</span>
-                         <div className="flex gap-3">
-                           <span className="text-green-600">+{stats.created}</span>
-                           <span className="text-blue-600">~{stats.updated}</span>
-                           <span className="text-gray-600">-{stats.skipped}</span>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               )}
+
 
                <Alert variant={result.errors.length > 0 ? "destructive" : "default"}>
                  {result.errors.length > 0 ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
@@ -199,8 +176,8 @@ export function ImportContratsDialog({
                    <p className="mb-2 text-sm font-medium">Erreurs</p>
                    <ul className="space-y-1 text-sm text-muted-foreground max-h-40 overflow-y-auto">
                      {result.errors.map((error, index) => (
-                       <li key={`${error.entityType}-${index}`}>
-                         {error.entityType && <span className="font-medium">[{error.entityType}]</span>} {error.message}
+                       <li key={`error-${index}`}>
+                         {error.message}
                        </li>
                      ))}
                    </ul>

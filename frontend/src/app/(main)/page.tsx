@@ -6,6 +6,7 @@ import {
   ProductDistribution,
   ActivityFeed,
 } from "@/components/dashboard"
+import { DashboardContratsParCommercial } from "@/components/dashboard-contrats-par-commercial"
 import { getServerDashboardData, getActiveOrgId } from "@/lib/server/data"
 
 export default async function Page() {
@@ -46,6 +47,9 @@ export default async function Page() {
 
         {/* Contrats par société (conservé) */}
         <ContratsCard initialData={dashboardData.statsSocietes?.societes} />
+
+        {/* Contrats par commercial */}
+        <DashboardContratsParCommercial />
       </section>
 
       {/* Zone 3: Activity Feed */}

@@ -1,7 +1,8 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { SessionProvider } from "next-auth/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { GlobalErrorDisplay } from "@/components/error/global-error-display";
 import { ConnectionStatus } from "@/components/error/connection-status";
@@ -41,20 +42,34 @@ function AppInitializer({ children }: { children: ReactNode }) {
 }
 
 export function Providers({ children }: ProvidersProps) {
+  // Create QueryClient instance once per app (not per render)
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  }));
+
   return (
-    <SessionProvider>
-      <AppInitializer>
-        {children}
-        
-        {/* Affichage des erreurs globales */}
-        <GlobalErrorDisplay position="top" maxErrors={3} />
-        
-        {/* Status de connexion (affiche seulement si deconnecte) */}
-        <ConnectionStatus showWhenConnected={false} />
-        
-        {/* Toast notifications */}
-        <Toaster richColors position="bottom-right" />
-      </AppInitializer>
-    </SessionProvider>
+    <QueryClientProvider client={queryClient}>
+      <SessionProvider>
+        <AppInitializer>
+          {children}
+          
+          {/* Affichage des erreurs globales */}
+          <GlobalErrorDisplay position="top" maxErrors={3} />
+          
+          {/* Status de connexion (affiche seulement si deconnecte) */}
+          <ConnectionStatus showWhenConnected={false} />
+          
+          {/* Toast notifications */}
+          <Toaster richColors position="bottom-right" />
+        </AppInitializer>
+      </SessionProvider>
+    </QueryClientProvider>
   );
 }

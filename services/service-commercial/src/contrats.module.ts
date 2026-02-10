@@ -16,6 +16,9 @@ import { ContratService } from './infrastructure/persistence/typeorm/repositorie
 // Domain services
 import { ContratImportService } from './domain/contrats/services/contrat-import.service';
 
+// Infrastructure services
+import { ContratImportSchedulerService } from './infrastructure/scheduling/contrat-import-scheduler.service';
+
 // Interface controllers
 import { ContratController, ContratImportController } from './infrastructure/grpc/contrats';
 
@@ -42,6 +45,7 @@ import { ProductsModule } from './products.module';
   providers: [
     ContratService,
     ContratImportService,
+    ContratImportSchedulerService,
   ],
   exports: [
     ContratService,

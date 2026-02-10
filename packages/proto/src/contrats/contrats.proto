@@ -91,6 +91,8 @@ message Contrat {
   string notes = 19;
   string created_at = 20;
   string updated_at = 21;
+  optional int32 jour_prelevement = 22;           // Jour fixe de prélèvement (1-28)
+  optional string prochaine_date_prelevement = 23; // Prochaine date de prélèvement calculée (ISO string)
 }
 
 message ContratWithDetails {
@@ -118,6 +120,7 @@ message CreateContratRequest {
   string commercial_id = 16;
   string societe_id = 17;
   string notes = 18;
+  optional int32 jour_prelevement = 19; // Jour fixe de prélèvement (1-28)
 }
 
 message UpdateContratRequest {
@@ -139,6 +142,7 @@ message UpdateContratRequest {
   string commercial_id = 16;
   string societe_id = 17;
   string notes = 18;
+  optional int32 jour_prelevement = 19; // Jour fixe de prélèvement (1-28)
 }
 
 message GetContratRequest {

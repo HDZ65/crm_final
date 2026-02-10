@@ -3,6 +3,7 @@ import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { AuthInterceptor, NatsModule, GrpcExceptionFilter } from '@crm/shared-kernel';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { AuditSubscriber } from './infrastructure/persistence/typeorm/audit-subscriber';
 
@@ -22,6 +23,7 @@ import { WooCommerceModule } from './woocommerce.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

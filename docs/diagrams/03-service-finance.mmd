@@ -1,0 +1,486 @@
+    direction TB
+
+    %% ══ ENUMS ══
+    class PaymentProvider {
+        <<enumeration>>
+        STRIPE
+        PAYPAL
+        GOCARDLESS
+        SLIMPAY
+        MULTISAFEPAY
+        EMERCHANTPAY
+    }
+    class ScheduleStatus {
+        <<enumeration>>
+        ACTIVE
+        PAUSED
+        CANCELLED
+        COMPLETED
+        FAILED
+    }
+    class ScheduleFrequency {
+        <<enumeration>>
+        WEEKLY
+        MONTHLY
+        QUARTERLY
+        YEARLY
+    }
+    class PaymentIntentStatus {
+        <<enumeration>>
+        PENDING
+        PROCESSING
+        SUCCEEDED
+        FAILED
+        CANCELLED
+        REFUNDED
+        PARTIALLY_REFUNDED
+    }
+
+    %% ══ FACTURES ══
+    class FactureEntity {
+        +id : uuid
+        +organisationId : uuid
+        +numero : string
+        +dateEmission : Date
+        +montantHT : decimal
+        +montantTTC : decimal
+        +statutId : uuid
+        +emissionFactureId : uuid
+        +clientBaseId : uuid
+        +contratId : uuid
+        +clientPartenaireId : uuid
+        +typeDocument : string
+        +factureOrigineId : uuid
+        +motifAvoir : string
+        +estBrouillon() bool
+        +canBeValidated() ValidationResult
+        +calculateTotalsFromLines()$ Totals
+    }
+    class LigneFactureEntity {
+        +id : uuid
+        +factureId : uuid
+        +produitId : uuid
+        +quantite : int
+        +prixUnitaire : decimal
+        +description : string
+        +montantHT : decimal
+        +tauxTVA : decimal
+        +montantTVA : decimal
+        +montantTTC : decimal
+        +ordreAffichage : int
+        +calculateAmounts()$ Amounts
+    }
+    class StatutFactureEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class EmissionFactureEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class FactureSettingsEntity {
+        +id : uuid
+        +societeId : uuid
+        +prefixNumero : string
+        +prochainNumero : int
+    }
+    class RegleRelanceEntity {
+        +id : uuid
+        +organisationId : uuid
+        +nom : string
+        +delaiJours : int
+        +actif : bool
+    }
+    class HistoriqueRelanceEntity {
+        +id : uuid
+        +factureId : uuid
+        +regleId : uuid
+        +dateRelance : Date
+        +statut : string
+    }
+    class InvoiceEntity {
+        +id : uuid
+        +factureId : uuid
+        +formatFacturX : string
+        +xmlContent : text
+        +pdfUrl : string
+    }
+    class InvoiceItemEntity {
+        +id : uuid
+        +invoiceId : uuid
+        +description : string
+        +quantity : int
+        +unitPrice : decimal
+        +amount : decimal
+    }
+
+    %% ══ PAYMENTS ══
+    class ScheduleEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +societeId : uuid
+        +contratId : uuid
+        +factureId : uuid
+        +provider : PaymentProvider
+        +providerAccountId : string
+        +providerSubscriptionId : string
+        +providerCustomerId : string
+        +amount : decimal
+        +currency : string
+        +frequency : ScheduleFrequency
+        +status : ScheduleStatus
+        +plannedDebitDate : Date
+        +nextPaymentDate : Date
+        +lastPaymentDate : Date
+        +startDate : Date
+        +endDate : Date
+        +retryCount : int
+        +maxRetries : int
+        +isActive() bool
+        +canRetry() bool
+        +incrementRetry() void
+        +resetRetryCount() void
+    }
+    class PaymentIntentEntity {
+        +id : uuid
+        +scheduleId : uuid
+        +clientId : uuid
+        +societeId : uuid
+        +factureId : uuid
+        +provider : PaymentProvider
+        +providerPaymentId : string
+        +providerCustomerId : string
+        +amount : decimal
+        +currency : string
+        +status : PaymentIntentStatus
+        +failureReason : string
+        +refundedAmount : decimal
+        +metadata : jsonb
+        +idempotencyKey : string
+        +paidAt : Date
+        +isPaid() bool
+        +canRefund() bool
+        +getRemainingRefundableAmount() number
+    }
+    class PaymentEventEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +type : string
+        +payload : jsonb
+        +createdAt : Date
+    }
+    class PortalSessionEntity {
+        +id : uuid
+        +token : string
+        +clientId : uuid
+        +societeId : uuid
+        +expiresAt : Date
+        +status : string
+    }
+    class PortalSessionAuditEntity {
+        +id : uuid
+        +sessionId : uuid
+        +action : string
+        +ipAddress : string
+    }
+    class PspEventInboxEntity {
+        +id : uuid
+        +provider : string
+        +eventType : string
+        +externalId : string
+        +payload : jsonb
+        +processedAt : Date
+    }
+
+    %% ── PSP Accounts ──
+    class StripeAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +stripeAccountId : string
+        +publishableKey : string
+        +actif : bool
+    }
+    class PaypalAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +clientIdPaypal : string
+        +actif : bool
+    }
+    class GoCardlessAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +accessToken : string
+        +environment : string
+        +actif : bool
+    }
+    class GoCardlessMandateEntity {
+        +id : uuid
+        +accountId : uuid
+        +clientId : uuid
+        +mandateId : string
+        +status : string
+    }
+    class SlimpayAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +creditorReference : string
+        +actif : bool
+    }
+    class MultiSafepayAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +apiKey : string
+        +actif : bool
+    }
+    class EmerchantpayAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +terminalToken : string
+        +actif : bool
+    }
+
+    %% ── Retry & Reminder ──
+    class RetryPolicyEntity {
+        +id : uuid
+        +societeId : uuid
+        +maxAttempts : int
+        +delayMinutes : int
+        +backoffMultiplier : decimal
+    }
+    class RetryScheduleEntity {
+        +id : uuid
+        +policyId : uuid
+        +attemptNumber : int
+        +delayMinutes : int
+    }
+    class RetryJobEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +retryPolicyId : uuid
+        +status : string
+        +attemptCount : int
+    }
+    class RetryAttemptEntity {
+        +id : uuid
+        +retryJobId : uuid
+        +attemptNumber : int
+        +status : string
+        +errorMessage : string
+    }
+    class ReminderPolicyEntity {
+        +id : uuid
+        +societeId : uuid
+        +name : string
+        +delayDays : int
+        +actif : bool
+    }
+    class ReminderEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +policyId : uuid
+        +sentAt : Date
+        +channel : string
+    }
+
+    %% ── Audit ──
+    class PaymentAuditLogEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +action : string
+        +details : jsonb
+    }
+    class RetryAuditLogEntity {
+        +id : uuid
+        +retryJobId : uuid
+        +action : string
+        +details : jsonb
+    }
+
+    %% ── Risk & Routing ──
+    class RiskScoreEntity {
+        +id : uuid
+        +clientId : uuid
+        +score : decimal
+        +factors : jsonb
+    }
+    class ProviderRoutingRuleEntity {
+        +id : uuid
+        +societeId : uuid
+        +provider : PaymentProvider
+        +priority : int
+        +conditions : jsonb
+    }
+    class ProviderOverrideEntity {
+        +id : uuid
+        +clientId : uuid
+        +provider : PaymentProvider
+        +reason : string
+    }
+    class ProviderStatusMappingEntity {
+        +id : uuid
+        +provider : PaymentProvider
+        +externalStatus : string
+        +internalStatus : string
+    }
+    class ProviderReassignmentJobEntity {
+        +id : uuid
+        +societeId : uuid
+        +fromProvider : string
+        +toProvider : string
+        +status : string
+    }
+    class RejectionReasonEntity {
+        +id : uuid
+        +code : string
+        +label : string
+        +provider : string
+    }
+    class DunningConfigEntity {
+        +id : uuid
+        +societeId : uuid
+        +maxAttempts : int
+        +escalationDays : int
+    }
+    class AlertEntity {
+        +id : uuid
+        +organisationId : uuid
+        +type : string
+        +message : string
+        +severity : string
+    }
+    class CustomerInteractionEntity {
+        +id : uuid
+        +clientId : uuid
+        +type : string
+        +content : string
+    }
+    class PaymentArchiveEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +archivedAt : Date
+    }
+    class ReconciliationEntity {
+        +id : uuid
+        +societeId : uuid
+        +status : string
+        +period : string
+    }
+    class ExportJobEntity {
+        +id : uuid
+        +organisationId : uuid
+        +format : string
+        +status : string
+        +fileUrl : string
+    }
+    class PaymentStatusEntity {
+        +id : uuid
+        +code : string
+        +label : string
+    }
+
+    %% ══ CALENDAR ══
+    class SystemDebitConfigEntity {
+        +id : uuid
+        +defaultDebitDay : int
+        +cutoffHour : string
+        +timezone : string
+    }
+    class CutoffConfigurationEntity {
+        +id : uuid
+        +societeId : uuid
+        +cutoffTime : string
+        +timezone : string
+    }
+    class CompanyDebitConfigEntity {
+        +id : uuid
+        +societeId : uuid
+        +debitDay : int
+        +cutoffHour : string
+    }
+    class ClientDebitConfigEntity {
+        +id : uuid
+        +clientId : uuid
+        +societeId : uuid
+        +debitDay : int
+    }
+    class ContractDebitConfigEntity {
+        +id : uuid
+        +contratId : uuid
+        +debitDay : int
+    }
+    class HolidayZoneEntity {
+        +id : uuid
+        +name : string
+        +country : string
+    }
+    class HolidayEntity {
+        +id : uuid
+        +zoneId : uuid
+        +date : Date
+        +name : string
+    }
+    class PlannedDebitEntity {
+        +id : uuid
+        +scheduleId : uuid
+        +plannedDate : Date
+        +actualDate : Date
+        +status : string
+    }
+    class VolumeForecastEntity {
+        +id : uuid
+        +societeId : uuid
+        +period : string
+        +forecastAmount : decimal
+    }
+    class VolumeThresholdEntity {
+        +id : uuid
+        +societeId : uuid
+        +threshold : decimal
+        +action : string
+    }
+    class CalendarAuditLogEntity {
+        +id : uuid
+        +action : string
+        +entityType : string
+        +details : jsonb
+    }
+
+    %% === RELATIONS FACTURES ===
+    FactureEntity "N" --> "1" StatutFactureEntity : ManyToOne statutId
+    FactureEntity --> FactureEntity : self-ref factureOrigineId
+    FactureEntity "1" --> "*" LigneFactureEntity : OneToMany lignes
+    LigneFactureEntity "N" --> "1" FactureEntity : ManyToOne factureId
+    HistoriqueRelanceEntity --> FactureEntity : factureId
+    HistoriqueRelanceEntity --> RegleRelanceEntity : regleId
+    InvoiceEntity --> FactureEntity : factureId
+    InvoiceItemEntity "N" --> "1" InvoiceEntity : invoiceId
+
+    %% === RELATIONS PAYMENTS ===
+    PaymentIntentEntity "N" --> "1" ScheduleEntity : ManyToOne scheduleId
+    PaymentEventEntity "N" --> "1" PaymentIntentEntity : paymentIntentId
+    PortalSessionAuditEntity --> PortalSessionEntity : sessionId
+    GoCardlessMandateEntity "N" --> "1" GoCardlessAccountEntity : accountId
+    RetryScheduleEntity --> RetryPolicyEntity : policyId
+    RetryJobEntity --> PaymentIntentEntity : paymentIntentId
+    RetryJobEntity --> RetryPolicyEntity : retryPolicyId
+    RetryAttemptEntity "N" --> "1" RetryJobEntity : retryJobId
+    ReminderEntity --> PaymentIntentEntity : paymentIntentId
+    ReminderEntity --> ReminderPolicyEntity : policyId
+    PaymentAuditLogEntity --> PaymentIntentEntity : paymentIntentId
+    RetryAuditLogEntity --> RetryJobEntity : retryJobId
+    PaymentArchiveEntity --> PaymentIntentEntity : paymentIntentId
+    ProviderOverrideEntity --> PaymentProvider : provider
+
+    %% === RELATIONS CALENDAR ===
+    HolidayEntity "N" --> "1" HolidayZoneEntity : zoneId
+    PlannedDebitEntity "N" --> "1" ScheduleEntity : scheduleId
+
+    %% === ENUM USAGE ===
+    ScheduleEntity ..> PaymentProvider : uses
+    ScheduleEntity ..> ScheduleStatus : uses
+    ScheduleEntity ..> ScheduleFrequency : uses
+    PaymentIntentEntity ..> PaymentIntentStatus : uses
+    PaymentIntentEntity ..> PaymentProvider : uses

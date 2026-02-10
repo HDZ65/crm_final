@@ -1,0 +1,354 @@
+    direction TB
+
+    %% ══ ENUMS ══
+    class NotificationType {
+        <<enumeration>>
+        CONTRAT_EXPIRE
+        CONTRAT_BIENTOT_EXPIRE
+        IMPAYE
+        NOUVEAU_CLIENT
+        NOUVEAU_CONTRAT
+        TACHE_ASSIGNEE
+        RAPPEL
+        ALERTE
+        INFO
+        SYSTEME
+    }
+    class TacheStatut {
+        <<enumeration>>
+        A_FAIRE
+        EN_COURS
+        TERMINEE
+        ANNULEE
+    }
+    class TachePriorite {
+        <<enumeration>>
+        BASSE
+        NORMALE
+        HAUTE
+        URGENTE
+    }
+    class TacheType {
+        <<enumeration>>
+        RELANCE
+        RAPPEL
+        SUIVI
+        AUTRE
+    }
+    class FulfillmentBatchStatus {
+        <<enumeration>>
+        OPEN
+        LOCKED
+        DISPATCHED
+        COMPLETED
+    }
+    class FulfillmentBatchLineStatus {
+        <<enumeration>>
+        TO_PREPARE
+        PREPARED
+        SHIPPED
+    }
+
+    %% ══ ENGAGEMENT ══
+    class NotificationEntity {
+        +id : uuid
+        +organisationId : uuid
+        +utilisateurId : uuid
+        +type : NotificationType
+        +titre : string
+        +message : string
+        +lu : bool
+        +metadata : jsonb
+        +lienUrl : string
+        +createdAt : Date
+    }
+    class ActiviteEntity {
+        +id : uuid
+        +typeId : uuid
+        +dateActivite : Date
+        +sujet : string
+        +commentaire : string
+        +echeance : Date
+        +clientBaseId : uuid
+        +contratId : uuid
+        +clientPartenaireId : uuid
+    }
+    class TypeActiviteEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+        +icone : string
+    }
+    class TacheEntity {
+        +id : uuid
+        +organisationId : uuid
+        +titre : string
+        +description : string
+        +type : TacheType
+        +priorite : TachePriorite
+        +statut : TacheStatut
+        +dateEcheance : Date
+        +dateCompletion : Date
+        +assigneA : uuid
+        +creePar : uuid
+        +clientId : uuid
+        +contratId : uuid
+        +factureId : uuid
+        +regleRelanceId : uuid
+        +metadata : jsonb
+        +enRetard() bool
+    }
+    class EvenementSuiviEntity {
+        +id : uuid
+        +organisationId : uuid
+        +type : string
+        +description : string
+        +clientId : uuid
+        +contratId : uuid
+        +createdAt : Date
+    }
+    class MailboxEntity {
+        +id : uuid
+        +organisationId : uuid
+        +utilisateurId : uuid
+        +email : string
+        +provider : string
+        +encryptedCredentials : string
+        +actif : bool
+    }
+    class MeetingEntity {
+        +id : uuid
+        +organisationId : uuid
+        +titre : string
+        +dateDebut : Date
+        +dateFin : Date
+        +lieu : string
+        +participants : jsonb
+        +statut : string
+    }
+    class CalendarEventEntity {
+        +id : uuid
+        +organisationId : uuid
+        +titre : string
+        +type : string
+        +dateDebut : Date
+        +dateFin : Date
+    }
+    class OAuthConnectionEntity {
+        +id : uuid
+        +utilisateurId : uuid
+        +provider : string
+        +accessToken : string
+        +refreshToken : string
+        +expiresAt : Date
+    }
+    class CallSummaryEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +duration : int
+        +summary : string
+        +createdAt : Date
+    }
+
+    %% ── Services (Conciergerie) ──
+    class DemandeConciergerie {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +type : string
+        +statut : string
+        +description : string
+        +dateCreation : Date
+    }
+    class CasJuridique {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +reference : string
+        +statut : string
+        +description : string
+    }
+    class OperationCashback {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +montant : decimal
+        +statut : string
+        +dateOperation : Date
+    }
+    class CommentaireDemande {
+        +id : uuid
+        +demandeId : uuid
+        +auteurId : uuid
+        +contenu : string
+        +createdAt : Date
+    }
+
+    %% ══ LOGISTICS ══
+    class ExpeditionEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientBaseId : uuid
+        +contratId : uuid
+        +transporteurCompteId : uuid
+        +trackingNumber : string
+        +etat : string
+        +dateCreation : Date
+        +dateDernierStatut : Date
+        +labelUrl : string
+        +referenceCommande : string
+        +produitId : uuid
+        +nomProduit : string
+        +poids : decimal
+        +adresseDestination : string
+        +villeDestination : string
+        +codePostalDestination : string
+        +dateExpedition : Date
+        +dateLivraisonEstimee : Date
+        +dateLivraison : Date
+        +lieuActuel : string
+        +isDelivered() bool
+        +isInTransit() bool
+    }
+    class ColisEntity {
+        +id : uuid
+        +expeditionId : uuid
+        +poidsGr : number
+        +longCm : number
+        +largCm : number
+        +hautCm : number
+        +valeurDeclaree : decimal
+        +contenu : string
+        +getVolumeM3() number
+        +getPoidsKg() number
+    }
+    class TrackingEventEntity {
+        +id : uuid
+        +expeditionId : uuid
+        +code : string
+        +label : string
+        +dateEvenement : string
+        +lieu : string
+        +raw : string
+    }
+    class CarrierAccountEntity {
+        +id : uuid
+        +organisationId : uuid
+        +type : string
+        +contractNumber : string
+        +password : string
+        +labelFormat : string
+        +actif : bool
+        +isActive() bool
+        +isMaileva() bool
+    }
+
+    %% ══ FULFILLMENT ══
+    class FulfillmentBatchEntity {
+        +id : uuid
+        +organisationId : uuid
+        +societeId : uuid
+        +status : FulfillmentBatchStatus
+        +batchDate : Date
+        +lineCount : int
+        +lockedAt : Date
+        +dispatchedAt : Date
+        +completedAt : Date
+        +isOpen() bool
+        +isLocked() bool
+        +isDispatched() bool
+        +isCompleted() bool
+    }
+    class FulfillmentBatchLineEntity {
+        +id : uuid
+        +organisationId : uuid
+        +batchId : uuid
+        +subscriptionId : uuid
+        +clientId : uuid
+        +produitId : uuid
+        +quantite : int
+        +addressSnapshotId : uuid
+        +preferenceSnapshotId : uuid
+        +lineStatus : FulfillmentBatchLineStatus
+        +expeditionId : uuid
+        +errorMessage : string
+        +isPrepared() bool
+        +isShipped() bool
+        +hasError() bool
+    }
+    class AddressSnapshotEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +rue : string
+        +codePostal : string
+        +ville : string
+        +pays : string
+        +capturedAt : Date
+    }
+    class PreferenceSnapshotEntity {
+        +id : uuid
+        +organisationId : uuid
+        +subscriptionId : uuid
+        +preferenceData : jsonb
+        +capturedAt : Date
+    }
+    class FulfillmentCutoffConfigEntity {
+        +id : uuid
+        +organisationId : uuid
+        +societeId : uuid
+        +cutoffDayOfWeek : int
+        +cutoffTime : string
+        +timezone : string
+        +active : bool
+    }
+
+    %% ══ DOMAIN SERVICES ══
+    class FulfillmentBatchService {
+        <<service>>
+        -batchRepository : IFulfillmentBatchRepository
+        -batchLineRepository : IFulfillmentBatchLineRepository
+        -cutoffConfigRepository : ICutoffConfigRepository
+        -expeditionBridge : ExpeditionBridgePort
+        +createBatch(orgId, societeId) FulfillmentBatchEntity
+        +lockBatch(batchId) FulfillmentBatchEntity
+        +dispatchBatch(batchId) FulfillmentBatchEntity
+        +completeBatch(batchId) FulfillmentBatchEntity
+        +runCutoffJob(orgId, refDate) FulfillmentBatchEntity[]
+        +handleSubscriptionCharged(payload) void
+    }
+    class BatchSnapshotService {
+        <<service>>
+        -batchLineRepository : BatchLineRepoService
+        -addressSnapshotRepository : AddressSnapshotRepoService
+        +createSnapshotsForBatch(batchId) void
+    }
+
+    %% === RELATIONS ENGAGEMENT ===
+    ActiviteEntity "N" --> "1" TypeActiviteEntity : ManyToOne typeId
+    CommentaireDemande "N" --> "1" DemandeConciergerie : demandeId
+    NotificationEntity ..> NotificationType : uses
+    TacheEntity ..> TacheStatut : uses
+    TacheEntity ..> TachePriorite : uses
+    TacheEntity ..> TacheType : uses
+
+    %% === RELATIONS LOGISTICS ===
+    ColisEntity "N" --> "1" ExpeditionEntity : expeditionId
+    TrackingEventEntity "N" --> "1" ExpeditionEntity : expeditionId
+    ExpeditionEntity "N" --> "1" CarrierAccountEntity : transporteurCompteId
+
+    %% === RELATIONS FULFILLMENT ===
+    FulfillmentBatchLineEntity "N" --> "1" FulfillmentBatchEntity : batchId
+    FulfillmentBatchLineEntity --> AddressSnapshotEntity : addressSnapshotId
+    FulfillmentBatchLineEntity --> PreferenceSnapshotEntity : preferenceSnapshotId
+    FulfillmentBatchLineEntity --> ExpeditionEntity : expeditionId
+    FulfillmentBatchEntity ..> FulfillmentBatchStatus : uses
+    FulfillmentBatchLineEntity ..> FulfillmentBatchLineStatus : uses
+
+    %% === DOMAIN SERVICE RELATIONS ===
+    FulfillmentBatchService ..> FulfillmentBatchEntity : manages
+    FulfillmentBatchService ..> FulfillmentBatchLineEntity : manages
+    FulfillmentBatchService ..> FulfillmentCutoffConfigEntity : reads
+    BatchSnapshotService ..> AddressSnapshotEntity : creates
+    BatchSnapshotService ..> PreferenceSnapshotEntity : creates

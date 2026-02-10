@@ -1,0 +1,196 @@
+classDiagram
+    direction TB
+
+    %% ── Users ──
+    class UtilisateurEntity {
+        +id : uuid
+        +keycloakId : string
+        +nom : string
+        +prenom : string
+        +email : string
+        +telephone : string
+        +actif : bool
+        +createdAt : Date
+        +updatedAt : Date
+    }
+    class RoleEntity {
+        +id : uuid
+        +code : string
+        +nom : string
+        +description : string
+    }
+    class PermissionEntity {
+        +id : uuid
+        +code : string
+        +description : string
+    }
+    class RolePermissionEntity {
+        +id : uuid
+        +roleId : uuid
+        +permissionId : uuid
+    }
+    class CompteEntity {
+        +id : uuid
+        +nom : string
+        +etat : string
+        +dateCreation : Date
+        +createdByUserId : uuid
+    }
+    class MembreCompteEntity {
+        +id : uuid
+        +compteId : uuid
+        +utilisateurId : uuid
+        +roleId : uuid
+    }
+    class InvitationCompteEntity {
+        +id : uuid
+        +compteId : uuid
+        +email : string
+        +token : string
+        +statut : string
+    }
+
+    %% ── Organisations ──
+    class OrganisationEntity {
+        +id : uuid
+        +nom : string
+        +description : string
+        +siret : string
+        +adresse : string
+        +telephone : string
+        +email : string
+        +actif : bool
+        +etat : string
+        +createdBy : string
+        +modifiedBy : string
+    }
+    class SocieteEntity {
+        +id : uuid
+        +organisationId : uuid
+        +raisonSociale : string
+        +siren : string
+        +numeroTva : string
+        +logoUrl : string
+        +devise : string
+        +ics : string
+        +journalVente : string
+        +compteProduitDefaut : string
+        +planComptable : jsonb
+        +adresseSiege : string
+        +parametresFiscaux : jsonb
+    }
+    class PartenaireMarqueBlanche {
+        +id : uuid
+        +organisationId : uuid
+        +nom : string
+        +domaine : string
+    }
+    class ThemeMarqueEntity {
+        +id : uuid
+        +partenaireId : uuid
+        +primaryColor : string
+        +logoUrl : string
+    }
+    class MembrePartenaireEntity {
+        +id : uuid
+        +partenaireId : uuid
+        +utilisateurId : uuid
+        +rolePartenaireId : uuid
+    }
+    class StatutPartenaireEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class RolePartenaireEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+
+    %% ── Clients ──
+    class ClientPartenaireEntity {
+        +id : uuid
+        +organisationId : uuid
+        +nom : string
+        +prenom : string
+        +email : string
+        +telephone : string
+        +statutId : uuid
+    }
+    class StatutClientEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class TransporteurCompteEntity {
+        +id : uuid
+        +organisationId : uuid
+        +type : string
+        +contractNumber : string
+        +actif : bool
+    }
+    class ConditionPaiementEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+        +joursEcheance : number
+    }
+    class PeriodeFacturationEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class EmissionFactureCoreEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class FacturationParEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+
+    %% ── Documents ──
+    class PieceJointeEntity {
+        +id : uuid
+        +organisationId : uuid
+        +nom : string
+        +type : string
+        +url : string
+        +taille : number
+    }
+    class BoiteMailEntity {
+        +id : uuid
+        +organisationId : uuid
+        +email : string
+        +provider : string
+    }
+
+    %% ── Depanssur ──
+    class DossierDeclaratifEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +reference : string
+        +statut : string
+    }
+
+    %% === RELATIONS ===
+    RolePermissionEntity "N" --> "1" RoleEntity : roleId
+    RolePermissionEntity "N" --> "1" PermissionEntity : permissionId
+    MembreCompteEntity "N" --> "1" CompteEntity : compteId
+    MembreCompteEntity "N" --> "1" UtilisateurEntity : utilisateurId
+    MembreCompteEntity "N" --> "1" RoleEntity : roleId
+    InvitationCompteEntity "N" --> "1" CompteEntity : compteId
+    SocieteEntity "N" --> "1" OrganisationEntity : ManyToOne organisationId
+    PartenaireMarqueBlanche "N" --> "1" OrganisationEntity : organisationId
+    ThemeMarqueEntity "1" --> "1" PartenaireMarqueBlanche : partenaireId
+    MembrePartenaireEntity "N" --> "1" PartenaireMarqueBlanche : partenaireId
+    MembrePartenaireEntity "N" --> "1" UtilisateurEntity : utilisateurId
+    MembrePartenaireEntity "N" --> "1" RolePartenaireEntity : rolePartenaireId
+    ClientPartenaireEntity "N" --> "1" StatutClientEntity : statutId
+    ClientPartenaireEntity "N" --> "1" OrganisationEntity : organisationId
+    TransporteurCompteEntity "N" --> "1" OrganisationEntity : organisationId
+    DossierDeclaratifEntity --> ClientPartenaireEntity : clientId

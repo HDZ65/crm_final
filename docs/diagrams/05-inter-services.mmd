@@ -1,0 +1,94 @@
+    direction LR
+
+    class OrganisationEntity {
+        <<service-core>>
+        +id : uuid
+        +nom : string
+    }
+    class SocieteEntity {
+        <<service-core>>
+        +id : uuid
+        +organisationId : uuid
+        +raisonSociale : string
+    }
+    class UtilisateurEntity {
+        <<service-core>>
+        +id : uuid
+        +email : string
+    }
+    class ClientPartenaireEntity {
+        <<service-core>>
+        +id : uuid
+        +organisationId : uuid
+    }
+    class FactureEntity {
+        <<service-finance>>
+        +id : uuid
+        +organisationId : uuid
+        +clientBaseId : uuid
+    }
+    class ScheduleEntity {
+        <<service-finance>>
+        +id : uuid
+        +clientId : uuid
+        +societeId : uuid
+    }
+    class PaymentIntentEntity {
+        <<service-finance>>
+        +id : uuid
+        +scheduleId : uuid
+        +clientId : uuid
+    }
+    class NotificationEntity {
+        <<service-engagement>>
+        +id : uuid
+        +utilisateurId : uuid
+        +organisationId : uuid
+    }
+    class TacheEntity {
+        <<service-engagement>>
+        +id : uuid
+        +clientId : uuid
+        +factureId : uuid
+    }
+    class ActiviteEntity {
+        <<service-engagement>>
+        +id : uuid
+        +clientBaseId : uuid
+    }
+    class ExpeditionEntity {
+        <<service-logistics>>
+        +id : uuid
+        +organisationId : uuid
+        +clientBaseId : uuid
+    }
+    class FulfillmentBatchEntity {
+        <<service-logistics>>
+        +id : uuid
+        +organisationId : uuid
+        +societeId : uuid
+    }
+    class FulfillmentBatchLineEntity {
+        <<service-logistics>>
+        +id : uuid
+        +clientId : uuid
+        +expeditionId : uuid
+    }
+
+    SocieteEntity --> OrganisationEntity : belongs to
+    FactureEntity --> OrganisationEntity : scoped by
+    FactureEntity --> ClientPartenaireEntity : billed to
+    ScheduleEntity --> SocieteEntity : payment for
+    ScheduleEntity --> ClientPartenaireEntity : charges
+    PaymentIntentEntity --> ScheduleEntity : triggered by
+    NotificationEntity --> UtilisateurEntity : notifies
+    NotificationEntity --> OrganisationEntity : scoped by
+    TacheEntity --> ClientPartenaireEntity : related to
+    TacheEntity --> FactureEntity : linked to
+    ActiviteEntity --> ClientPartenaireEntity : about
+    ExpeditionEntity --> OrganisationEntity : scoped by
+    ExpeditionEntity --> ClientPartenaireEntity : ships to
+    FulfillmentBatchEntity --> SocieteEntity : batched for
+    FulfillmentBatchLineEntity --> FulfillmentBatchEntity : part of
+    FulfillmentBatchLineEntity --> ExpeditionEntity : creates
+    FulfillmentBatchLineEntity --> ClientPartenaireEntity : fulfills for

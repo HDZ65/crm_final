@@ -1,0 +1,128 @@
+classDiagram
+    direction TB
+
+    class ValueObject~T~ {
+        <<abstract>>
+        #props : T
+        #constructor(props T)
+        +equals(vo ValueObject~T~) bool
+    }
+    class StringValueObject {
+        <<abstract>>
+        +getValue() string
+        +toString() string
+    }
+    class UuidValueObject {
+        <<abstract>>
+        +getValue() string
+        +toString() string
+        +equals(other UuidValueObject) bool
+    }
+    class Phone {
+        +create(value string)$ Phone
+    }
+    class Email {
+        +create(value string)$ Email
+    }
+    class Montant {
+        -value : number
+        -currency : string
+        +create(v number, cur string)$ Montant
+        +zero(cur string)$ Montant
+        +fromString(raw string)$ Montant
+        +getValue() number
+        +getCurrency() string
+        +add(other Montant) Montant
+        +subtract(other Montant) Montant
+        +multiply(factor number) Montant
+        +isPositive() bool
+        +isNegative() bool
+        +isZero() bool
+    }
+    class TauxCommission {
+        -value : number
+        +create(v number)$ TauxCommission
+        +getValue() number
+        +toMultiplier() number
+    }
+    class TauxTva {
+        -value : number
+        +create(v number)$ TauxTva
+        +getValue() number
+        +toMultiplier() number
+    }
+    class Address {
+        -street : string
+        -city : string
+        -postalCode : string
+        -country : string
+        -complement : string
+        +create(props AddressProps)$ Address
+        +getStreet() string
+        +getCity() string
+        +getPostalCode() string
+        +getCountry() string
+        +toPrimitives() AddressProps
+    }
+
+    class UtilisateurId { +create(v)$ UtilisateurId }
+    class OrganisationId { +create(v)$ OrganisationId }
+    class ProduitId { +create(v)$ ProduitId }
+    class ClientId { +create(v)$ ClientId }
+    class FactureId { +create(v)$ FactureId }
+    class ContratId { +create(v)$ ContratId }
+    class CommercialId { +create(v)$ CommercialId }
+    class CommissionId { +create(v)$ CommissionId }
+    class ExpeditionId { +create(v)$ ExpeditionId }
+
+    class DomainEvent {
+        <<abstract>>
+        +eventId : string
+        +occurredOn : Date
+        +eventVersion : number
+        +aggregateId : string
+        +eventName()* string
+        +toPrimitives()* Record
+    }
+    class AggregateRoot~E~ {
+        -version : number
+        #incrementVersion() void
+        +getVersion() number
+        +markEventsAsCommitted() void
+    }
+
+    class DomainException {
+        +code : string
+        +metadata : Record
+        +toJSON() object
+    }
+    class NotFoundException
+    class AlreadyExistsException
+    class InvalidDataException
+    class BusinessRuleException
+    class VersionConflictException
+    class UnauthorizedException
+
+    ValueObject <|-- StringValueObject
+    ValueObject <|-- UuidValueObject
+    ValueObject <|-- Montant
+    ValueObject <|-- TauxCommission
+    ValueObject <|-- TauxTva
+    ValueObject <|-- Address
+    StringValueObject <|-- Phone
+    StringValueObject <|-- Email
+    UuidValueObject <|-- UtilisateurId
+    UuidValueObject <|-- OrganisationId
+    UuidValueObject <|-- ProduitId
+    UuidValueObject <|-- ClientId
+    UuidValueObject <|-- FactureId
+    UuidValueObject <|-- ContratId
+    UuidValueObject <|-- CommercialId
+    UuidValueObject <|-- CommissionId
+    UuidValueObject <|-- ExpeditionId
+    DomainException <|-- NotFoundException
+    DomainException <|-- AlreadyExistsException
+    DomainException <|-- InvalidDataException
+    DomainException <|-- BusinessRuleException
+    DomainException <|-- VersionConflictException
+    DomainException <|-- UnauthorizedException

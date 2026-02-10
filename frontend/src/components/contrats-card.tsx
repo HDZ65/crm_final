@@ -241,9 +241,9 @@ export function ContratsCard({ initialData }: ContratsCardProps) {
           <CardAction className="flex items-center gap-2">
             <AskAiCardButton prompt={aiPrompt} title="Demander une analyse IA de la carte contrats" />
             <Button variant="outline" size="sm" className="gap-2" onClick={() => setImportDialogOpen(true)}>
-              <Upload className="h-4 w-4" />
-              Importer des contrats
-            </Button>
+               <Upload className="h-4 w-4" />
+               Synchroniser
+             </Button>
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger size="sm" className="w-40">
                 <SelectValue placeholder="Période" />

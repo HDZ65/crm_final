@@ -1,18 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
-import { ContratImportService } from '../../domain/contrats/services/contrat-import.service';
+import { ImportOrchestratorService } from '../../domain/import/services/import-orchestrator.service';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Default cron expression — overridable via environment variable
 // ────────────────────────────────────────────────────────────────────────────
-const DEFAULT_CRON_DAILY_0200 = '0 2 * * *'; // Every day at 02:00
+const DEFAULT_CRON_HOURLY = '0 * * * *'; // Every hour at minute 0
 
 /**
- * ContratImportSchedulerService — Automated cron job for contract import.
+ * ContratImportSchedulerService — Automated cron job for multi-entity import.
  *
  * Scheduled job:
- *   Daily 02:00 — Import contracts from external API
+ *   Hourly — Import prospects with contracts, subscriptions, payments, and commercials
+ *   Supports incremental sync via updatedSince parameter
  */
 @Injectable()
 export class ContratImportSchedulerService {
@@ -26,11 +27,11 @@ export class ContratImportSchedulerService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly contratImportService: ContratImportService,
+    private readonly importOrchestratorService: ImportOrchestratorService,
   ) {
     this.cronSchedule = this.configService.get<string>(
       'IMPORT_CRON_SCHEDULE',
-      DEFAULT_CRON_DAILY_0200,
+      DEFAULT_CRON_HOURLY,
     );
 
     this.logger.log(
@@ -39,14 +40,15 @@ export class ContratImportSchedulerService {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // JOB — Daily 02:00: Import contracts from external API
+  // JOB — Hourly: Import multi-entity data from external API
   // ══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Daily at 02:00 — Import contracts from external API.
+   * Hourly import of prospects with nested contracts, subscriptions, payments, and commercials.
    * Configurable via IMPORT_CRON_SCHEDULE environment variable.
+   * Supports incremental sync via updatedSince parameter.
    */
-  @Cron(process.env.IMPORT_CRON_SCHEDULE || DEFAULT_CRON_DAILY_0200, {
+  @Cron(process.env.IMPORT_CRON_SCHEDULE || DEFAULT_CRON_HOURLY, {
     name: 'contrat-import',
     timeZone: 'Europe/Paris',
   })
@@ -66,9 +68,9 @@ export class ContratImportSchedulerService {
 
     try {
       // Read configuration from environment variables
-      const sourceUrl = this.configService.get<string>(
+      const apiUrl = this.configService.get<string>(
         'EXTERNAL_API_URL',
-        'http://localhost:3000/api/contracts',
+        'http://localhost:3000/api',
       );
       const apiKey = this.configService.get<string>('EXTERNAL_API_KEY', '');
       const organisationId = this.configService.get<string>(
@@ -84,14 +86,14 @@ export class ContratImportSchedulerService {
       }
 
       this.logger.log(
-        `[${jobName}] Starting contract import from ${sourceUrl}`,
+        `[${jobName}] Starting multi-entity import from ${apiUrl}`,
       );
 
-      // Call the import service
-      const result = await this.contratImportService.importFromExternal({
-        organisationId,
-        sourceUrl,
+      // Call the import orchestrator
+      const result = await this.importOrchestratorService.importAll({
+        apiUrl,
         apiKey,
+        organisationId,
         dryRun: false,
       });
 
@@ -100,9 +102,10 @@ export class ContratImportSchedulerService {
       // Log summary
       this.logger.log(
         `[${jobName}] Import complete in ${durationMs}ms — ` +
-          `created: ${result.createdCount}, ` +
-          `updated: ${result.updatedCount}, ` +
-          `skipped: ${result.skippedCount}, ` +
+          `total: ${result.total}, ` +
+          `created: ${result.created}, ` +
+          `updated: ${result.updated}, ` +
+          `skipped: ${result.skipped}, ` +
           `errors: ${result.errors.length}`,
       );
 
@@ -114,7 +117,7 @@ export class ContratImportSchedulerService {
         for (const error of result.errors.slice(0, 10)) {
           // Log first 10 errors
           this.logger.warn(
-            `  Row ${error.row} (${error.reference}): ${error.errorMessage}`,
+            `  Prospect ${error.prospectExternalId}: ${error.message}`,
           );
         }
         if (result.errors.length > 10) {

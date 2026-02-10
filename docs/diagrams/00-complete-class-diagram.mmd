@@ -1,0 +1,1282 @@
+%% ═══════════════════════════════════════════════════════════════
+%% SECTION 1: SHARED KERNEL - Value Objects, Base Classes & Exceptions
+%% ═══════════════════════════════════════════════════════════════
+
+classDiagram
+    direction TB
+
+    class ValueObject~T~ {
+        <<abstract>>
+        #props : T
+        #constructor(props T)
+        +equals(vo ValueObject~T~) bool
+    }
+    class StringValueObject {
+        <<abstract>>
+        +getValue() string
+        +toString() string
+    }
+    class UuidValueObject {
+        <<abstract>>
+        +getValue() string
+        +toString() string
+        +equals(other UuidValueObject) bool
+    }
+    class Phone {
+        +create(value string)$ Phone
+    }
+    class Email {
+        +create(value string)$ Email
+    }
+    class Montant {
+        -value : number
+        -currency : string
+        +create(v number, cur string)$ Montant
+        +zero(cur string)$ Montant
+        +fromString(raw string)$ Montant
+        +getValue() number
+        +getCurrency() string
+        +add(other Montant) Montant
+        +subtract(other Montant) Montant
+        +multiply(factor number) Montant
+        +isPositive() bool
+        +isNegative() bool
+        +isZero() bool
+    }
+    class TauxCommission {
+        -value : number
+        +create(v number)$ TauxCommission
+        +getValue() number
+        +toMultiplier() number
+    }
+    class TauxTva {
+        -value : number
+        +create(v number)$ TauxTva
+        +getValue() number
+        +toMultiplier() number
+    }
+    class Address {
+        -street : string
+        -city : string
+        -postalCode : string
+        -country : string
+        -complement : string
+        +create(props AddressProps)$ Address
+        +getStreet() string
+        +getCity() string
+        +getPostalCode() string
+        +getCountry() string
+        +toPrimitives() AddressProps
+    }
+
+    class UtilisateurId { +create(v)$ UtilisateurId }
+    class OrganisationId { +create(v)$ OrganisationId }
+    class ProduitId { +create(v)$ ProduitId }
+    class ClientId { +create(v)$ ClientId }
+    class FactureId { +create(v)$ FactureId }
+    class ContratId { +create(v)$ ContratId }
+    class CommercialId { +create(v)$ CommercialId }
+    class CommissionId { +create(v)$ CommissionId }
+    class ExpeditionId { +create(v)$ ExpeditionId }
+
+    class DomainEvent {
+        <<abstract>>
+        +eventId : string
+        +occurredOn : Date
+        +eventVersion : number
+        +aggregateId : string
+        +eventName()* string
+        +toPrimitives()* Record
+    }
+    class AggregateRoot~E~ {
+        -version : number
+        #incrementVersion() void
+        +getVersion() number
+        +markEventsAsCommitted() void
+    }
+
+    class DomainException {
+        +code : string
+        +metadata : Record
+        +toJSON() object
+    }
+    class NotFoundException
+    class AlreadyExistsException
+    class InvalidDataException
+    class BusinessRuleException
+    class VersionConflictException
+    class UnauthorizedException
+
+    ValueObject <|-- StringValueObject
+    ValueObject <|-- UuidValueObject
+    ValueObject <|-- Montant
+    ValueObject <|-- TauxCommission
+    ValueObject <|-- TauxTva
+    ValueObject <|-- Address
+    StringValueObject <|-- Phone
+    StringValueObject <|-- Email
+    UuidValueObject <|-- UtilisateurId
+    UuidValueObject <|-- OrganisationId
+    UuidValueObject <|-- ProduitId
+    UuidValueObject <|-- ClientId
+    UuidValueObject <|-- FactureId
+    UuidValueObject <|-- ContratId
+    UuidValueObject <|-- CommercialId
+    UuidValueObject <|-- CommissionId
+    UuidValueObject <|-- ExpeditionId
+    DomainException <|-- NotFoundException
+    DomainException <|-- AlreadyExistsException
+    DomainException <|-- InvalidDataException
+    DomainException <|-- BusinessRuleException
+    DomainException <|-- VersionConflictException
+    DomainException <|-- UnauthorizedException
+
+%% ═══════════════════════════════════════════════════════════════
+%% SECTION 2: SERVICE-CORE - Users, Organisations, Clients, Documents
+%% ═══════════════════════════════════════════════════════════════
+
+classDiagram
+    direction TB
+
+    %% ── Users ──
+    class UtilisateurEntity {
+        +id : uuid
+        +keycloakId : string
+        +nom : string
+        +prenom : string
+        +email : string
+        +telephone : string
+        +actif : bool
+        +createdAt : Date
+        +updatedAt : Date
+    }
+    class RoleEntity {
+        +id : uuid
+        +code : string
+        +nom : string
+        +description : string
+    }
+    class PermissionEntity {
+        +id : uuid
+        +code : string
+        +description : string
+    }
+    class RolePermissionEntity {
+        +id : uuid
+        +roleId : uuid
+        +permissionId : uuid
+    }
+    class CompteEntity {
+        +id : uuid
+        +nom : string
+        +etat : string
+        +dateCreation : Date
+        +createdByUserId : uuid
+    }
+    class MembreCompteEntity {
+        +id : uuid
+        +compteId : uuid
+        +utilisateurId : uuid
+        +roleId : uuid
+    }
+    class InvitationCompteEntity {
+        +id : uuid
+        +compteId : uuid
+        +email : string
+        +token : string
+        +statut : string
+    }
+
+    %% ── Organisations ──
+    class OrganisationEntity {
+        +id : uuid
+        +nom : string
+        +description : string
+        +siret : string
+        +adresse : string
+        +telephone : string
+        +email : string
+        +actif : bool
+        +etat : string
+        +createdBy : string
+        +modifiedBy : string
+    }
+    class SocieteEntity {
+        +id : uuid
+        +organisationId : uuid
+        +raisonSociale : string
+        +siren : string
+        +numeroTva : string
+        +logoUrl : string
+        +devise : string
+        +ics : string
+        +journalVente : string
+        +compteProduitDefaut : string
+        +planComptable : jsonb
+        +adresseSiege : string
+        +parametresFiscaux : jsonb
+    }
+    class PartenaireMarqueBlanche {
+        +id : uuid
+        +organisationId : uuid
+        +nom : string
+        +domaine : string
+    }
+    class ThemeMarqueEntity {
+        +id : uuid
+        +partenaireId : uuid
+        +primaryColor : string
+        +logoUrl : string
+    }
+    class MembrePartenaireEntity {
+        +id : uuid
+        +partenaireId : uuid
+        +utilisateurId : uuid
+        +rolePartenaireId : uuid
+    }
+    class StatutPartenaireEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class RolePartenaireEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+
+    %% ── Clients ──
+    class ClientPartenaireEntity {
+        +id : uuid
+        +organisationId : uuid
+        +nom : string
+        +prenom : string
+        +email : string
+        +telephone : string
+        +statutId : uuid
+    }
+    class StatutClientEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class TransporteurCompteEntity {
+        +id : uuid
+        +organisationId : uuid
+        +type : string
+        +contractNumber : string
+        +actif : bool
+    }
+    class ConditionPaiementEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+        +joursEcheance : number
+    }
+    class PeriodeFacturationEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class EmissionFactureCoreEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class FacturationParEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+
+    %% ── Documents ──
+    class PieceJointeEntity {
+        +id : uuid
+        +organisationId : uuid
+        +nom : string
+        +type : string
+        +url : string
+        +taille : number
+    }
+    class BoiteMailEntity {
+        +id : uuid
+        +organisationId : uuid
+        +email : string
+        +provider : string
+    }
+
+    %% ── Depanssur ──
+    class DossierDeclaratifEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +reference : string
+        +statut : string
+    }
+
+    %% === RELATIONS ===
+    RolePermissionEntity "N" --> "1" RoleEntity : roleId
+    RolePermissionEntity "N" --> "1" PermissionEntity : permissionId
+    MembreCompteEntity "N" --> "1" CompteEntity : compteId
+    MembreCompteEntity "N" --> "1" UtilisateurEntity : utilisateurId
+    MembreCompteEntity "N" --> "1" RoleEntity : roleId
+    InvitationCompteEntity "N" --> "1" CompteEntity : compteId
+    SocieteEntity "N" --> "1" OrganisationEntity : ManyToOne organisationId
+    PartenaireMarqueBlanche "N" --> "1" OrganisationEntity : organisationId
+    ThemeMarqueEntity "1" --> "1" PartenaireMarqueBlanche : partenaireId
+    MembrePartenaireEntity "N" --> "1" PartenaireMarqueBlanche : partenaireId
+    MembrePartenaireEntity "N" --> "1" UtilisateurEntity : utilisateurId
+    MembrePartenaireEntity "N" --> "1" RolePartenaireEntity : rolePartenaireId
+    ClientPartenaireEntity "N" --> "1" StatutClientEntity : statutId
+    ClientPartenaireEntity "N" --> "1" OrganisationEntity : organisationId
+    TransporteurCompteEntity "N" --> "1" OrganisationEntity : organisationId
+    DossierDeclaratifEntity --> ClientPartenaireEntity : clientId
+
+%% ═══════════════════════════════════════════════════════════════
+%% SECTION 3: SERVICE-FINANCE - Factures, Payments, Calendar
+%% ═══════════════════════════════════════════════════════════════
+
+    direction TB
+
+    %% ══ ENUMS ══
+    class PaymentProvider {
+        <<enumeration>>
+        STRIPE
+        PAYPAL
+        GOCARDLESS
+        SLIMPAY
+        MULTISAFEPAY
+        EMERCHANTPAY
+    }
+    class ScheduleStatus {
+        <<enumeration>>
+        ACTIVE
+        PAUSED
+        CANCELLED
+        COMPLETED
+        FAILED
+    }
+    class ScheduleFrequency {
+        <<enumeration>>
+        WEEKLY
+        MONTHLY
+        QUARTERLY
+        YEARLY
+    }
+    class PaymentIntentStatus {
+        <<enumeration>>
+        PENDING
+        PROCESSING
+        SUCCEEDED
+        FAILED
+        CANCELLED
+        REFUNDED
+        PARTIALLY_REFUNDED
+    }
+
+    %% ══ FACTURES ══
+    class FactureEntity {
+        +id : uuid
+        +organisationId : uuid
+        +numero : string
+        +dateEmission : Date
+        +montantHT : decimal
+        +montantTTC : decimal
+        +statutId : uuid
+        +emissionFactureId : uuid
+        +clientBaseId : uuid
+        +contratId : uuid
+        +clientPartenaireId : uuid
+        +typeDocument : string
+        +factureOrigineId : uuid
+        +motifAvoir : string
+        +estBrouillon() bool
+        +canBeValidated() ValidationResult
+        +calculateTotalsFromLines()$ Totals
+    }
+    class LigneFactureEntity {
+        +id : uuid
+        +factureId : uuid
+        +produitId : uuid
+        +quantite : int
+        +prixUnitaire : decimal
+        +description : string
+        +montantHT : decimal
+        +tauxTVA : decimal
+        +montantTVA : decimal
+        +montantTTC : decimal
+        +ordreAffichage : int
+        +calculateAmounts()$ Amounts
+    }
+    class StatutFactureEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class EmissionFactureEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+    }
+    class FactureSettingsEntity {
+        +id : uuid
+        +societeId : uuid
+        +prefixNumero : string
+        +prochainNumero : int
+    }
+    class RegleRelanceEntity {
+        +id : uuid
+        +organisationId : uuid
+        +nom : string
+        +delaiJours : int
+        +actif : bool
+    }
+    class HistoriqueRelanceEntity {
+        +id : uuid
+        +factureId : uuid
+        +regleId : uuid
+        +dateRelance : Date
+        +statut : string
+    }
+    class InvoiceEntity {
+        +id : uuid
+        +factureId : uuid
+        +formatFacturX : string
+        +xmlContent : text
+        +pdfUrl : string
+    }
+    class InvoiceItemEntity {
+        +id : uuid
+        +invoiceId : uuid
+        +description : string
+        +quantity : int
+        +unitPrice : decimal
+        +amount : decimal
+    }
+
+    %% ══ PAYMENTS ══
+    class ScheduleEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +societeId : uuid
+        +contratId : uuid
+        +factureId : uuid
+        +provider : PaymentProvider
+        +providerAccountId : string
+        +providerSubscriptionId : string
+        +providerCustomerId : string
+        +amount : decimal
+        +currency : string
+        +frequency : ScheduleFrequency
+        +status : ScheduleStatus
+        +plannedDebitDate : Date
+        +nextPaymentDate : Date
+        +lastPaymentDate : Date
+        +startDate : Date
+        +endDate : Date
+        +retryCount : int
+        +maxRetries : int
+        +isActive() bool
+        +canRetry() bool
+        +incrementRetry() void
+        +resetRetryCount() void
+    }
+    class PaymentIntentEntity {
+        +id : uuid
+        +scheduleId : uuid
+        +clientId : uuid
+        +societeId : uuid
+        +factureId : uuid
+        +provider : PaymentProvider
+        +providerPaymentId : string
+        +providerCustomerId : string
+        +amount : decimal
+        +currency : string
+        +status : PaymentIntentStatus
+        +failureReason : string
+        +refundedAmount : decimal
+        +metadata : jsonb
+        +idempotencyKey : string
+        +paidAt : Date
+        +isPaid() bool
+        +canRefund() bool
+        +getRemainingRefundableAmount() number
+    }
+    class PaymentEventEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +type : string
+        +payload : jsonb
+        +createdAt : Date
+    }
+    class PortalSessionEntity {
+        +id : uuid
+        +token : string
+        +clientId : uuid
+        +societeId : uuid
+        +expiresAt : Date
+        +status : string
+    }
+    class PortalSessionAuditEntity {
+        +id : uuid
+        +sessionId : uuid
+        +action : string
+        +ipAddress : string
+    }
+    class PspEventInboxEntity {
+        +id : uuid
+        +provider : string
+        +eventType : string
+        +externalId : string
+        +payload : jsonb
+        +processedAt : Date
+    }
+
+    %% ── PSP Accounts ──
+    class StripeAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +stripeAccountId : string
+        +publishableKey : string
+        +actif : bool
+    }
+    class PaypalAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +clientIdPaypal : string
+        +actif : bool
+    }
+    class GoCardlessAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +accessToken : string
+        +environment : string
+        +actif : bool
+    }
+    class GoCardlessMandateEntity {
+        +id : uuid
+        +accountId : uuid
+        +clientId : uuid
+        +mandateId : string
+        +status : string
+    }
+    class SlimpayAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +creditorReference : string
+        +actif : bool
+    }
+    class MultiSafepayAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +apiKey : string
+        +actif : bool
+    }
+    class EmerchantpayAccountEntity {
+        +id : uuid
+        +societeId : uuid
+        +terminalToken : string
+        +actif : bool
+    }
+
+    %% ── Retry & Reminder ──
+    class RetryPolicyEntity {
+        +id : uuid
+        +societeId : uuid
+        +maxAttempts : int
+        +delayMinutes : int
+        +backoffMultiplier : decimal
+    }
+    class RetryScheduleEntity {
+        +id : uuid
+        +policyId : uuid
+        +attemptNumber : int
+        +delayMinutes : int
+    }
+    class RetryJobEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +retryPolicyId : uuid
+        +status : string
+        +attemptCount : int
+    }
+    class RetryAttemptEntity {
+        +id : uuid
+        +retryJobId : uuid
+        +attemptNumber : int
+        +status : string
+        +errorMessage : string
+    }
+    class ReminderPolicyEntity {
+        +id : uuid
+        +societeId : uuid
+        +name : string
+        +delayDays : int
+        +actif : bool
+    }
+    class ReminderEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +policyId : uuid
+        +sentAt : Date
+        +channel : string
+    }
+
+    %% ── Audit ──
+    class PaymentAuditLogEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +action : string
+        +details : jsonb
+    }
+    class RetryAuditLogEntity {
+        +id : uuid
+        +retryJobId : uuid
+        +action : string
+        +details : jsonb
+    }
+
+    %% ── Risk & Routing ──
+    class RiskScoreEntity {
+        +id : uuid
+        +clientId : uuid
+        +score : decimal
+        +factors : jsonb
+    }
+    class ProviderRoutingRuleEntity {
+        +id : uuid
+        +societeId : uuid
+        +provider : PaymentProvider
+        +priority : int
+        +conditions : jsonb
+    }
+    class ProviderOverrideEntity {
+        +id : uuid
+        +clientId : uuid
+        +provider : PaymentProvider
+        +reason : string
+    }
+    class ProviderStatusMappingEntity {
+        +id : uuid
+        +provider : PaymentProvider
+        +externalStatus : string
+        +internalStatus : string
+    }
+    class ProviderReassignmentJobEntity {
+        +id : uuid
+        +societeId : uuid
+        +fromProvider : string
+        +toProvider : string
+        +status : string
+    }
+    class RejectionReasonEntity {
+        +id : uuid
+        +code : string
+        +label : string
+        +provider : string
+    }
+    class DunningConfigEntity {
+        +id : uuid
+        +societeId : uuid
+        +maxAttempts : int
+        +escalationDays : int
+    }
+    class AlertEntity {
+        +id : uuid
+        +organisationId : uuid
+        +type : string
+        +message : string
+        +severity : string
+    }
+    class CustomerInteractionEntity {
+        +id : uuid
+        +clientId : uuid
+        +type : string
+        +content : string
+    }
+    class PaymentArchiveEntity {
+        +id : uuid
+        +paymentIntentId : uuid
+        +archivedAt : Date
+    }
+    class ReconciliationEntity {
+        +id : uuid
+        +societeId : uuid
+        +status : string
+        +period : string
+    }
+    class ExportJobEntity {
+        +id : uuid
+        +organisationId : uuid
+        +format : string
+        +status : string
+        +fileUrl : string
+    }
+    class PaymentStatusEntity {
+        +id : uuid
+        +code : string
+        +label : string
+    }
+
+    %% ══ CALENDAR ══
+    class SystemDebitConfigEntity {
+        +id : uuid
+        +defaultDebitDay : int
+        +cutoffHour : string
+        +timezone : string
+    }
+    class CutoffConfigurationEntity {
+        +id : uuid
+        +societeId : uuid
+        +cutoffTime : string
+        +timezone : string
+    }
+    class CompanyDebitConfigEntity {
+        +id : uuid
+        +societeId : uuid
+        +debitDay : int
+        +cutoffHour : string
+    }
+    class ClientDebitConfigEntity {
+        +id : uuid
+        +clientId : uuid
+        +societeId : uuid
+        +debitDay : int
+    }
+    class ContractDebitConfigEntity {
+        +id : uuid
+        +contratId : uuid
+        +debitDay : int
+    }
+    class HolidayZoneEntity {
+        +id : uuid
+        +name : string
+        +country : string
+    }
+    class HolidayEntity {
+        +id : uuid
+        +zoneId : uuid
+        +date : Date
+        +name : string
+    }
+    class PlannedDebitEntity {
+        +id : uuid
+        +scheduleId : uuid
+        +plannedDate : Date
+        +actualDate : Date
+        +status : string
+    }
+    class VolumeForecastEntity {
+        +id : uuid
+        +societeId : uuid
+        +period : string
+        +forecastAmount : decimal
+    }
+    class VolumeThresholdEntity {
+        +id : uuid
+        +societeId : uuid
+        +threshold : decimal
+        +action : string
+    }
+    class CalendarAuditLogEntity {
+        +id : uuid
+        +action : string
+        +entityType : string
+        +details : jsonb
+    }
+
+    %% === RELATIONS FACTURES ===
+    FactureEntity "N" --> "1" StatutFactureEntity : ManyToOne statutId
+    FactureEntity --> FactureEntity : self-ref factureOrigineId
+    FactureEntity "1" --> "*" LigneFactureEntity : OneToMany lignes
+    LigneFactureEntity "N" --> "1" FactureEntity : ManyToOne factureId
+    HistoriqueRelanceEntity --> FactureEntity : factureId
+    HistoriqueRelanceEntity --> RegleRelanceEntity : regleId
+    InvoiceEntity --> FactureEntity : factureId
+    InvoiceItemEntity "N" --> "1" InvoiceEntity : invoiceId
+
+    %% === RELATIONS PAYMENTS ===
+    PaymentIntentEntity "N" --> "1" ScheduleEntity : ManyToOne scheduleId
+    PaymentEventEntity "N" --> "1" PaymentIntentEntity : paymentIntentId
+    PortalSessionAuditEntity --> PortalSessionEntity : sessionId
+    GoCardlessMandateEntity "N" --> "1" GoCardlessAccountEntity : accountId
+    RetryScheduleEntity --> RetryPolicyEntity : policyId
+    RetryJobEntity --> PaymentIntentEntity : paymentIntentId
+    RetryJobEntity --> RetryPolicyEntity : retryPolicyId
+    RetryAttemptEntity "N" --> "1" RetryJobEntity : retryJobId
+    ReminderEntity --> PaymentIntentEntity : paymentIntentId
+    ReminderEntity --> ReminderPolicyEntity : policyId
+    PaymentAuditLogEntity --> PaymentIntentEntity : paymentIntentId
+    RetryAuditLogEntity --> RetryJobEntity : retryJobId
+    PaymentArchiveEntity --> PaymentIntentEntity : paymentIntentId
+    ProviderOverrideEntity --> PaymentProvider : provider
+
+    %% === RELATIONS CALENDAR ===
+    HolidayEntity "N" --> "1" HolidayZoneEntity : zoneId
+    PlannedDebitEntity "N" --> "1" ScheduleEntity : scheduleId
+
+    %% === ENUM USAGE ===
+    ScheduleEntity ..> PaymentProvider : uses
+    ScheduleEntity ..> ScheduleStatus : uses
+    ScheduleEntity ..> ScheduleFrequency : uses
+    PaymentIntentEntity ..> PaymentIntentStatus : uses
+    PaymentIntentEntity ..> PaymentProvider : uses
+
+%% ═══════════════════════════════════════════════════════════════
+%% SECTION 4: ENGAGEMENT & LOGISTICS
+%% ═══════════════════════════════════════════════════════════════
+
+    direction TB
+
+    %% ══ ENUMS ══
+    class NotificationType {
+        <<enumeration>>
+        CONTRAT_EXPIRE
+        CONTRAT_BIENTOT_EXPIRE
+        IMPAYE
+        NOUVEAU_CLIENT
+        NOUVEAU_CONTRAT
+        TACHE_ASSIGNEE
+        RAPPEL
+        ALERTE
+        INFO
+        SYSTEME
+    }
+    class TacheStatut {
+        <<enumeration>>
+        A_FAIRE
+        EN_COURS
+        TERMINEE
+        ANNULEE
+    }
+    class TachePriorite {
+        <<enumeration>>
+        BASSE
+        NORMALE
+        HAUTE
+        URGENTE
+    }
+    class TacheType {
+        <<enumeration>>
+        RELANCE
+        RAPPEL
+        SUIVI
+        AUTRE
+    }
+    class FulfillmentBatchStatus {
+        <<enumeration>>
+        OPEN
+        LOCKED
+        DISPATCHED
+        COMPLETED
+    }
+    class FulfillmentBatchLineStatus {
+        <<enumeration>>
+        TO_PREPARE
+        PREPARED
+        SHIPPED
+    }
+
+    %% ══ ENGAGEMENT ══
+    class NotificationEntity {
+        +id : uuid
+        +organisationId : uuid
+        +utilisateurId : uuid
+        +type : NotificationType
+        +titre : string
+        +message : string
+        +lu : bool
+        +metadata : jsonb
+        +lienUrl : string
+        +createdAt : Date
+    }
+    class ActiviteEntity {
+        +id : uuid
+        +typeId : uuid
+        +dateActivite : Date
+        +sujet : string
+        +commentaire : string
+        +echeance : Date
+        +clientBaseId : uuid
+        +contratId : uuid
+        +clientPartenaireId : uuid
+    }
+    class TypeActiviteEntity {
+        +id : uuid
+        +code : string
+        +libelle : string
+        +icone : string
+    }
+    class TacheEntity {
+        +id : uuid
+        +organisationId : uuid
+        +titre : string
+        +description : string
+        +type : TacheType
+        +priorite : TachePriorite
+        +statut : TacheStatut
+        +dateEcheance : Date
+        +dateCompletion : Date
+        +assigneA : uuid
+        +creePar : uuid
+        +clientId : uuid
+        +contratId : uuid
+        +factureId : uuid
+        +regleRelanceId : uuid
+        +metadata : jsonb
+        +enRetard() bool
+    }
+    class EvenementSuiviEntity {
+        +id : uuid
+        +organisationId : uuid
+        +type : string
+        +description : string
+        +clientId : uuid
+        +contratId : uuid
+        +createdAt : Date
+    }
+    class MailboxEntity {
+        +id : uuid
+        +organisationId : uuid
+        +utilisateurId : uuid
+        +email : string
+        +provider : string
+        +encryptedCredentials : string
+        +actif : bool
+    }
+    class MeetingEntity {
+        +id : uuid
+        +organisationId : uuid
+        +titre : string
+        +dateDebut : Date
+        +dateFin : Date
+        +lieu : string
+        +participants : jsonb
+        +statut : string
+    }
+    class CalendarEventEntity {
+        +id : uuid
+        +organisationId : uuid
+        +titre : string
+        +type : string
+        +dateDebut : Date
+        +dateFin : Date
+    }
+    class OAuthConnectionEntity {
+        +id : uuid
+        +utilisateurId : uuid
+        +provider : string
+        +accessToken : string
+        +refreshToken : string
+        +expiresAt : Date
+    }
+    class CallSummaryEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +duration : int
+        +summary : string
+        +createdAt : Date
+    }
+
+    %% ── Services (Conciergerie) ──
+    class DemandeConciergerie {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +type : string
+        +statut : string
+        +description : string
+        +dateCreation : Date
+    }
+    class CasJuridique {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +reference : string
+        +statut : string
+        +description : string
+    }
+    class OperationCashback {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +montant : decimal
+        +statut : string
+        +dateOperation : Date
+    }
+    class CommentaireDemande {
+        +id : uuid
+        +demandeId : uuid
+        +auteurId : uuid
+        +contenu : string
+        +createdAt : Date
+    }
+
+    %% ══ LOGISTICS ══
+    class ExpeditionEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientBaseId : uuid
+        +contratId : uuid
+        +transporteurCompteId : uuid
+        +trackingNumber : string
+        +etat : string
+        +dateCreation : Date
+        +dateDernierStatut : Date
+        +labelUrl : string
+        +referenceCommande : string
+        +produitId : uuid
+        +nomProduit : string
+        +poids : decimal
+        +adresseDestination : string
+        +villeDestination : string
+        +codePostalDestination : string
+        +dateExpedition : Date
+        +dateLivraisonEstimee : Date
+        +dateLivraison : Date
+        +lieuActuel : string
+        +isDelivered() bool
+        +isInTransit() bool
+    }
+    class ColisEntity {
+        +id : uuid
+        +expeditionId : uuid
+        +poidsGr : number
+        +longCm : number
+        +largCm : number
+        +hautCm : number
+        +valeurDeclaree : decimal
+        +contenu : string
+        +getVolumeM3() number
+        +getPoidsKg() number
+    }
+    class TrackingEventEntity {
+        +id : uuid
+        +expeditionId : uuid
+        +code : string
+        +label : string
+        +dateEvenement : string
+        +lieu : string
+        +raw : string
+    }
+    class CarrierAccountEntity {
+        +id : uuid
+        +organisationId : uuid
+        +type : string
+        +contractNumber : string
+        +password : string
+        +labelFormat : string
+        +actif : bool
+        +isActive() bool
+        +isMaileva() bool
+    }
+
+    %% ══ FULFILLMENT ══
+    class FulfillmentBatchEntity {
+        +id : uuid
+        +organisationId : uuid
+        +societeId : uuid
+        +status : FulfillmentBatchStatus
+        +batchDate : Date
+        +lineCount : int
+        +lockedAt : Date
+        +dispatchedAt : Date
+        +completedAt : Date
+        +isOpen() bool
+        +isLocked() bool
+        +isDispatched() bool
+        +isCompleted() bool
+    }
+    class FulfillmentBatchLineEntity {
+        +id : uuid
+        +organisationId : uuid
+        +batchId : uuid
+        +subscriptionId : uuid
+        +clientId : uuid
+        +produitId : uuid
+        +quantite : int
+        +addressSnapshotId : uuid
+        +preferenceSnapshotId : uuid
+        +lineStatus : FulfillmentBatchLineStatus
+        +expeditionId : uuid
+        +errorMessage : string
+        +isPrepared() bool
+        +isShipped() bool
+        +hasError() bool
+    }
+    class AddressSnapshotEntity {
+        +id : uuid
+        +organisationId : uuid
+        +clientId : uuid
+        +rue : string
+        +codePostal : string
+        +ville : string
+        +pays : string
+        +capturedAt : Date
+    }
+    class PreferenceSnapshotEntity {
+        +id : uuid
+        +organisationId : uuid
+        +subscriptionId : uuid
+        +preferenceData : jsonb
+        +capturedAt : Date
+    }
+    class FulfillmentCutoffConfigEntity {
+        +id : uuid
+        +organisationId : uuid
+        +societeId : uuid
+        +cutoffDayOfWeek : int
+        +cutoffTime : string
+        +timezone : string
+        +active : bool
+    }
+
+    %% ══ DOMAIN SERVICES ══
+    class FulfillmentBatchService {
+        <<service>>
+        -batchRepository : IFulfillmentBatchRepository
+        -batchLineRepository : IFulfillmentBatchLineRepository
+        -cutoffConfigRepository : ICutoffConfigRepository
+        -expeditionBridge : ExpeditionBridgePort
+        +createBatch(orgId, societeId) FulfillmentBatchEntity
+        +lockBatch(batchId) FulfillmentBatchEntity
+        +dispatchBatch(batchId) FulfillmentBatchEntity
+        +completeBatch(batchId) FulfillmentBatchEntity
+        +runCutoffJob(orgId, refDate) FulfillmentBatchEntity[]
+        +handleSubscriptionCharged(payload) void
+    }
+    class BatchSnapshotService {
+        <<service>>
+        -batchLineRepository : BatchLineRepoService
+        -addressSnapshotRepository : AddressSnapshotRepoService
+        +createSnapshotsForBatch(batchId) void
+    }
+
+    %% === RELATIONS ENGAGEMENT ===
+    ActiviteEntity "N" --> "1" TypeActiviteEntity : ManyToOne typeId
+    CommentaireDemande "N" --> "1" DemandeConciergerie : demandeId
+    NotificationEntity ..> NotificationType : uses
+    TacheEntity ..> TacheStatut : uses
+    TacheEntity ..> TachePriorite : uses
+    TacheEntity ..> TacheType : uses
+
+    %% === RELATIONS LOGISTICS ===
+    ColisEntity "N" --> "1" ExpeditionEntity : expeditionId
+    TrackingEventEntity "N" --> "1" ExpeditionEntity : expeditionId
+    ExpeditionEntity "N" --> "1" CarrierAccountEntity : transporteurCompteId
+
+    %% === RELATIONS FULFILLMENT ===
+    FulfillmentBatchLineEntity "N" --> "1" FulfillmentBatchEntity : batchId
+    FulfillmentBatchLineEntity --> AddressSnapshotEntity : addressSnapshotId
+    FulfillmentBatchLineEntity --> PreferenceSnapshotEntity : preferenceSnapshotId
+    FulfillmentBatchLineEntity --> ExpeditionEntity : expeditionId
+    FulfillmentBatchEntity ..> FulfillmentBatchStatus : uses
+    FulfillmentBatchLineEntity ..> FulfillmentBatchLineStatus : uses
+
+    %% === DOMAIN SERVICE RELATIONS ===
+    FulfillmentBatchService ..> FulfillmentBatchEntity : manages
+    FulfillmentBatchService ..> FulfillmentBatchLineEntity : manages
+    FulfillmentBatchService ..> FulfillmentCutoffConfigEntity : reads
+    BatchSnapshotService ..> AddressSnapshotEntity : creates
+    BatchSnapshotService ..> PreferenceSnapshotEntity : creates
+
+%% ═══════════════════════════════════════════════════════════════
+%% SECTION 5: INTER-SERVICES MACRO VIEW
+%% ═══════════════════════════════════════════════════════════════
+
+    direction LR
+
+    class OrganisationEntity {
+        <<service-core>>
+        +id : uuid
+        +nom : string
+    }
+    class SocieteEntity {
+        <<service-core>>
+        +id : uuid
+        +organisationId : uuid
+        +raisonSociale : string
+    }
+    class UtilisateurEntity {
+        <<service-core>>
+        +id : uuid
+        +email : string
+    }
+    class ClientPartenaireEntity {
+        <<service-core>>
+        +id : uuid
+        +organisationId : uuid
+    }
+    class FactureEntity {
+        <<service-finance>>
+        +id : uuid
+        +organisationId : uuid
+        +clientBaseId : uuid
+    }
+    class ScheduleEntity {
+        <<service-finance>>
+        +id : uuid
+        +clientId : uuid
+        +societeId : uuid
+    }
+    class PaymentIntentEntity {
+        <<service-finance>>
+        +id : uuid
+        +scheduleId : uuid
+        +clientId : uuid
+    }
+    class NotificationEntity {
+        <<service-engagement>>
+        +id : uuid
+        +utilisateurId : uuid
+        +organisationId : uuid
+    }
+    class TacheEntity {
+        <<service-engagement>>
+        +id : uuid
+        +clientId : uuid
+        +factureId : uuid
+    }
+    class ActiviteEntity {
+        <<service-engagement>>
+        +id : uuid
+        +clientBaseId : uuid
+    }
+    class ExpeditionEntity {
+        <<service-logistics>>
+        +id : uuid
+        +organisationId : uuid
+        +clientBaseId : uuid
+    }
+    class FulfillmentBatchEntity {
+        <<service-logistics>>
+        +id : uuid
+        +organisationId : uuid
+        +societeId : uuid
+    }
+    class FulfillmentBatchLineEntity {
+        <<service-logistics>>
+        +id : uuid
+        +clientId : uuid
+        +expeditionId : uuid
+    }
+
+    SocieteEntity --> OrganisationEntity : belongs to
+    FactureEntity --> OrganisationEntity : scoped by
+    FactureEntity --> ClientPartenaireEntity : billed to
+    ScheduleEntity --> SocieteEntity : payment for
+    ScheduleEntity --> ClientPartenaireEntity : charges
+    PaymentIntentEntity --> ScheduleEntity : triggered by
+    NotificationEntity --> UtilisateurEntity : notifies
+    NotificationEntity --> OrganisationEntity : scoped by
+    TacheEntity --> ClientPartenaireEntity : related to
+    TacheEntity --> FactureEntity : linked to
+    ActiviteEntity --> ClientPartenaireEntity : about
+    ExpeditionEntity --> OrganisationEntity : scoped by
+    ExpeditionEntity --> ClientPartenaireEntity : ships to
+    FulfillmentBatchEntity --> SocieteEntity : batched for
+    FulfillmentBatchLineEntity --> FulfillmentBatchEntity : part of
+    FulfillmentBatchLineEntity --> ExpeditionEntity : creates
+    FulfillmentBatchLineEntity --> ClientPartenaireEntity : fulfills for

@@ -10,6 +10,8 @@ import { CommercialHeader } from "@/components/commercial-detail/commercial-head
 import { CommercialInfoAccordion } from "@/components/commercial-detail/commercial-info-accordion"
 import { CommercialCommissions } from "@/components/commercial-detail/commercial-commissions"
 import { CommercialContrats } from "@/components/commercial-detail/commercial-contrats"
+import { CommercialActivitesTaches } from "@/components/commercial-detail/commercial-activites-taches"
+import { CommercialDocuments } from "@/components/commercial-detail/commercial-documents"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, FileText, Users, Calendar } from "lucide-react"
@@ -161,29 +163,17 @@ export function CommercialDetailClient({
         </TabsContent>
 
         <TabsContent value="activites-taches" className="flex-1 flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Activités & Tâches</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Les activités et tâches liées à ce commercial apparaîtront ici.
-              </p>
-            </CardContent>
-          </Card>
+          <CommercialActivitesTaches
+            commercialId={commercialId}
+            organisationId={organisationId}
+          />
         </TabsContent>
 
         <TabsContent value="documents" className="flex-1 flex flex-col">
-          <Card>
-            <CardHeader>
-              <CardTitle>Documents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Les documents (bordereaux PDF/Excel) apparaîtront ici.
-              </p>
-            </CardContent>
-          </Card>
+          <CommercialDocuments
+            commercialId={commercialId}
+            organisationId={organisationId}
+          />
         </TabsContent>
       </Tabs>
     </main>

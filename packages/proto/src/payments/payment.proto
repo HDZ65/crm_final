@@ -130,6 +130,10 @@ service PaymentService {
   rpc ListRejectionReasons(ListRejectionReasonsRequest) returns (ListRejectionReasonsResponse);
   rpc CreateRejectionReason(CreateRejectionReasonRequest) returns (RejectionReasonResponse);
   rpc UpdateRejectionReason(UpdateRejectionReasonRequest) returns (RejectionReasonResponse);
+
+  // ==================== PAYMENT QUERIES ====================
+  rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse);
+  rpc GetPaymentStats(GetPaymentStatsRequest) returns (GetPaymentStatsResponse);
 }
 
 // ==================== ENUMS ====================
@@ -1663,4 +1667,94 @@ message UpdateRejectionReasonRequest {
   optional int32 max_retries = 6;
   optional int32 retry_delay_days = 7;
   optional bool is_active = 8;
+}
+
+// ==================== PAYMENT QUERIES MESSAGES ====================
+
+message ListPaymentsRequest {
+  string societe_id = 1;
+  optional string search = 2;  // Global search (client, contract, reference)
+  optional string status = 3;
+  optional string psp_provider = 4;  // SLIMPAY, MULTISAFEPAY, EMERCHANTPAY, GOCARDLESS
+  optional string payment_method = 5;  // SEPA, CB
+  optional string debit_lot = 6;  // L1, L2, L3, L4
+  optional string risk_tier = 7;  // LOW, MEDIUM, HIGH
+  optional string source_channel = 8;  // TERRAIN, TELEFILTRAGE, INTERNET, PARTENAIRE
+  optional string date_from = 9;  // ISO date
+  optional string date_to = 10;  // ISO date
+  optional int64 min_amount = 11;  // Amount in cents
+  optional int64 max_amount = 12;  // Amount in cents
+  optional int32 page = 13;
+  optional int32 limit = 14;
+}
+
+message ListPaymentsResponse {
+  repeated PaymentItem payments = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message PaymentItem {
+  string id = 1;
+  string payment_reference = 2;
+  
+  // Relations
+  string client_id = 3;
+  string client_name = 4;
+  string contract_id = 5;
+  string contract_reference = 6;
+  string company = 7;  // France Téléphone, Mondial TV, Action Prévoyance, Dépanssur
+  
+  // Financial information
+  int64 amount = 8;  // Amount in cents
+  string currency = 9;
+  string payment_method = 10;  // SEPA, CB
+  
+  // Status and type
+  string status = 11;  // PENDING, SUBMITTED, PAID, REJECTED, REFUNDED, CANCELLED, FAILED
+  string payment_type = 12;  // EMISSION, REEMISSION, REFUND, CANCELLATION
+  
+  // PSP and routing
+  string psp_provider = 13;  // Slimpay, MultiSafepay, Emerchantpay, GoCardless
+  optional string psp_transaction_id = 14;
+  
+  // Calendar and planning
+  string planned_debit_date = 15;  // ISO date
+  optional string actual_debit_date = 16;  // ISO date
+  optional string debit_lot = 17;  // L1, L2, L3, L4
+  
+  // Scoring and risk
+  optional int32 risk_score = 18;  // Score 0-100
+  optional string risk_tier = 19;  // LOW, MEDIUM, HIGH
+  
+  // Retry
+  optional int32 retry_count = 20;
+  
+  // SEPA mandate
+  optional string rum = 21;  // Référence Unique du Mandat
+  optional string iban_masked = 22;  // IBAN masked (FR76 **** **** 1234)
+  
+  // Metadata
+  string created_at = 23;
+  string updated_at = 24;
+}
+
+message GetPaymentStatsRequest {
+  string societe_id = 1;
+  optional string date_from = 2;  // ISO date
+  optional string date_to = 3;  // ISO date
+}
+
+message GetPaymentStatsResponse {
+  int32 total_payments = 1;
+  int64 total_amount = 2;  // Amount in cents
+  int32 paid_count = 3;
+  int64 paid_amount = 4;  // Amount in cents
+  int32 pending_count = 5;
+  int64 pending_amount = 6;  // Amount in cents
+  int32 rejected_count = 7;
+  int64 rejected_amount = 8;  // Amount in cents
+  double reject_rate = 9;  // Percentage (0-100)
+  double average_amount = 10;  // Average amount in cents
 }

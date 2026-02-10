@@ -2327,6 +2327,146 @@ export interface UpdateRejectionReasonRequest {
   isActive?: boolean | undefined;
 }
 
+export interface ListPaymentsRequest {
+  societeId: string;
+  /** Global search (client, contract, reference) */
+  search?: string | undefined;
+  status?:
+    | string
+    | undefined;
+  /** SLIMPAY, MULTISAFEPAY, EMERCHANTPAY, GOCARDLESS */
+  pspProvider?:
+    | string
+    | undefined;
+  /** SEPA, CB */
+  paymentMethod?:
+    | string
+    | undefined;
+  /** L1, L2, L3, L4 */
+  debitLot?:
+    | string
+    | undefined;
+  /** LOW, MEDIUM, HIGH */
+  riskTier?:
+    | string
+    | undefined;
+  /** TERRAIN, TELEFILTRAGE, INTERNET, PARTENAIRE */
+  sourceChannel?:
+    | string
+    | undefined;
+  /** ISO date */
+  dateFrom?:
+    | string
+    | undefined;
+  /** ISO date */
+  dateTo?:
+    | string
+    | undefined;
+  /** Amount in cents */
+  minAmount?:
+    | number
+    | undefined;
+  /** Amount in cents */
+  maxAmount?: number | undefined;
+  page?: number | undefined;
+  limit?: number | undefined;
+}
+
+export interface ListPaymentsResponse {
+  payments: PaymentItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface PaymentItem {
+  id: string;
+  paymentReference: string;
+  /** Relations */
+  clientId: string;
+  clientName: string;
+  contractId: string;
+  contractReference: string;
+  /** France Téléphone, Mondial TV, Action Prévoyance, Dépanssur */
+  company: string;
+  /** Financial information */
+  amount: number;
+  currency: string;
+  /** SEPA, CB */
+  paymentMethod: string;
+  /** Status and type */
+  status: string;
+  /** EMISSION, REEMISSION, REFUND, CANCELLATION */
+  paymentType: string;
+  /** PSP and routing */
+  pspProvider: string;
+  pspTransactionId?:
+    | string
+    | undefined;
+  /** Calendar and planning */
+  plannedDebitDate: string;
+  /** ISO date */
+  actualDebitDate?:
+    | string
+    | undefined;
+  /** L1, L2, L3, L4 */
+  debitLot?:
+    | string
+    | undefined;
+  /** Scoring and risk */
+  riskScore?:
+    | number
+    | undefined;
+  /** LOW, MEDIUM, HIGH */
+  riskTier?:
+    | string
+    | undefined;
+  /** Retry */
+  retryCount?:
+    | number
+    | undefined;
+  /** SEPA mandate */
+  rum?:
+    | string
+    | undefined;
+  /** IBAN masked (FR76 **** **** 1234) */
+  ibanMasked?:
+    | string
+    | undefined;
+  /** Metadata */
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetPaymentStatsRequest {
+  societeId: string;
+  /** ISO date */
+  dateFrom?:
+    | string
+    | undefined;
+  /** ISO date */
+  dateTo?: string | undefined;
+}
+
+export interface GetPaymentStatsResponse {
+  totalPayments: number;
+  /** Amount in cents */
+  totalAmount: number;
+  paidCount: number;
+  /** Amount in cents */
+  paidAmount: number;
+  pendingCount: number;
+  /** Amount in cents */
+  pendingAmount: number;
+  rejectedCount: number;
+  /** Amount in cents */
+  rejectedAmount: number;
+  /** Percentage (0-100) */
+  rejectRate: number;
+  /** Average amount in cents */
+  averageAmount: number;
+}
+
 function createBaseEmpty(): Empty {
   return {};
 }
@@ -28148,6 +28288,1323 @@ export const UpdateRejectionReasonRequest: MessageFns<UpdateRejectionReasonReque
   },
 };
 
+function createBaseListPaymentsRequest(): ListPaymentsRequest {
+  return {
+    societeId: "",
+    search: undefined,
+    status: undefined,
+    pspProvider: undefined,
+    paymentMethod: undefined,
+    debitLot: undefined,
+    riskTier: undefined,
+    sourceChannel: undefined,
+    dateFrom: undefined,
+    dateTo: undefined,
+    minAmount: undefined,
+    maxAmount: undefined,
+    page: undefined,
+    limit: undefined,
+  };
+}
+
+export const ListPaymentsRequest: MessageFns<ListPaymentsRequest> = {
+  encode(message: ListPaymentsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.search !== undefined) {
+      writer.uint32(18).string(message.search);
+    }
+    if (message.status !== undefined) {
+      writer.uint32(26).string(message.status);
+    }
+    if (message.pspProvider !== undefined) {
+      writer.uint32(34).string(message.pspProvider);
+    }
+    if (message.paymentMethod !== undefined) {
+      writer.uint32(42).string(message.paymentMethod);
+    }
+    if (message.debitLot !== undefined) {
+      writer.uint32(50).string(message.debitLot);
+    }
+    if (message.riskTier !== undefined) {
+      writer.uint32(58).string(message.riskTier);
+    }
+    if (message.sourceChannel !== undefined) {
+      writer.uint32(66).string(message.sourceChannel);
+    }
+    if (message.dateFrom !== undefined) {
+      writer.uint32(74).string(message.dateFrom);
+    }
+    if (message.dateTo !== undefined) {
+      writer.uint32(82).string(message.dateTo);
+    }
+    if (message.minAmount !== undefined) {
+      writer.uint32(88).int64(message.minAmount);
+    }
+    if (message.maxAmount !== undefined) {
+      writer.uint32(96).int64(message.maxAmount);
+    }
+    if (message.page !== undefined) {
+      writer.uint32(104).int32(message.page);
+    }
+    if (message.limit !== undefined) {
+      writer.uint32(112).int32(message.limit);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListPaymentsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListPaymentsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.search = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.pspProvider = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.paymentMethod = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.debitLot = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.riskTier = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.sourceChannel = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.dateFrom = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.dateTo = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.minAmount = longToNumber(reader.int64());
+          continue;
+        }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.maxAmount = longToNumber(reader.int64());
+          continue;
+        }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 14: {
+          if (tag !== 112) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListPaymentsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      search: isSet(object.search) ? globalThis.String(object.search) : undefined,
+      status: isSet(object.status) ? globalThis.String(object.status) : undefined,
+      pspProvider: isSet(object.pspProvider)
+        ? globalThis.String(object.pspProvider)
+        : isSet(object.psp_provider)
+        ? globalThis.String(object.psp_provider)
+        : undefined,
+      paymentMethod: isSet(object.paymentMethod)
+        ? globalThis.String(object.paymentMethod)
+        : isSet(object.payment_method)
+        ? globalThis.String(object.payment_method)
+        : undefined,
+      debitLot: isSet(object.debitLot)
+        ? globalThis.String(object.debitLot)
+        : isSet(object.debit_lot)
+        ? globalThis.String(object.debit_lot)
+        : undefined,
+      riskTier: isSet(object.riskTier)
+        ? globalThis.String(object.riskTier)
+        : isSet(object.risk_tier)
+        ? globalThis.String(object.risk_tier)
+        : undefined,
+      sourceChannel: isSet(object.sourceChannel)
+        ? globalThis.String(object.sourceChannel)
+        : isSet(object.source_channel)
+        ? globalThis.String(object.source_channel)
+        : undefined,
+      dateFrom: isSet(object.dateFrom)
+        ? globalThis.String(object.dateFrom)
+        : isSet(object.date_from)
+        ? globalThis.String(object.date_from)
+        : undefined,
+      dateTo: isSet(object.dateTo)
+        ? globalThis.String(object.dateTo)
+        : isSet(object.date_to)
+        ? globalThis.String(object.date_to)
+        : undefined,
+      minAmount: isSet(object.minAmount)
+        ? globalThis.Number(object.minAmount)
+        : isSet(object.min_amount)
+        ? globalThis.Number(object.min_amount)
+        : undefined,
+      maxAmount: isSet(object.maxAmount)
+        ? globalThis.Number(object.maxAmount)
+        : isSet(object.max_amount)
+        ? globalThis.Number(object.max_amount)
+        : undefined,
+      page: isSet(object.page) ? globalThis.Number(object.page) : undefined,
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : undefined,
+    };
+  },
+
+  toJSON(message: ListPaymentsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.search !== undefined) {
+      obj.search = message.search;
+    }
+    if (message.status !== undefined) {
+      obj.status = message.status;
+    }
+    if (message.pspProvider !== undefined) {
+      obj.pspProvider = message.pspProvider;
+    }
+    if (message.paymentMethod !== undefined) {
+      obj.paymentMethod = message.paymentMethod;
+    }
+    if (message.debitLot !== undefined) {
+      obj.debitLot = message.debitLot;
+    }
+    if (message.riskTier !== undefined) {
+      obj.riskTier = message.riskTier;
+    }
+    if (message.sourceChannel !== undefined) {
+      obj.sourceChannel = message.sourceChannel;
+    }
+    if (message.dateFrom !== undefined) {
+      obj.dateFrom = message.dateFrom;
+    }
+    if (message.dateTo !== undefined) {
+      obj.dateTo = message.dateTo;
+    }
+    if (message.minAmount !== undefined) {
+      obj.minAmount = Math.round(message.minAmount);
+    }
+    if (message.maxAmount !== undefined) {
+      obj.maxAmount = Math.round(message.maxAmount);
+    }
+    if (message.page !== undefined) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.limit !== undefined) {
+      obj.limit = Math.round(message.limit);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListPaymentsRequest>, I>>(base?: I): ListPaymentsRequest {
+    return ListPaymentsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListPaymentsRequest>, I>>(object: I): ListPaymentsRequest {
+    const message = createBaseListPaymentsRequest();
+    message.societeId = object.societeId ?? "";
+    message.search = object.search ?? undefined;
+    message.status = object.status ?? undefined;
+    message.pspProvider = object.pspProvider ?? undefined;
+    message.paymentMethod = object.paymentMethod ?? undefined;
+    message.debitLot = object.debitLot ?? undefined;
+    message.riskTier = object.riskTier ?? undefined;
+    message.sourceChannel = object.sourceChannel ?? undefined;
+    message.dateFrom = object.dateFrom ?? undefined;
+    message.dateTo = object.dateTo ?? undefined;
+    message.minAmount = object.minAmount ?? undefined;
+    message.maxAmount = object.maxAmount ?? undefined;
+    message.page = object.page ?? undefined;
+    message.limit = object.limit ?? undefined;
+    return message;
+  },
+};
+
+function createBaseListPaymentsResponse(): ListPaymentsResponse {
+  return { payments: [], total: 0, page: 0, limit: 0 };
+}
+
+export const ListPaymentsResponse: MessageFns<ListPaymentsResponse> = {
+  encode(message: ListPaymentsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.payments) {
+      PaymentItem.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.page !== 0) {
+      writer.uint32(24).int32(message.page);
+    }
+    if (message.limit !== 0) {
+      writer.uint32(32).int32(message.limit);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListPaymentsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListPaymentsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.payments.push(PaymentItem.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListPaymentsResponse {
+    return {
+      payments: globalThis.Array.isArray(object?.payments)
+        ? object.payments.map((e: any) => PaymentItem.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : 0,
+    };
+  },
+
+  toJSON(message: ListPaymentsResponse): unknown {
+    const obj: any = {};
+    if (message.payments?.length) {
+      obj.payments = message.payments.map((e) => PaymentItem.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.limit !== 0) {
+      obj.limit = Math.round(message.limit);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListPaymentsResponse>, I>>(base?: I): ListPaymentsResponse {
+    return ListPaymentsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListPaymentsResponse>, I>>(object: I): ListPaymentsResponse {
+    const message = createBaseListPaymentsResponse();
+    message.payments = object.payments?.map((e) => PaymentItem.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.page = object.page ?? 0;
+    message.limit = object.limit ?? 0;
+    return message;
+  },
+};
+
+function createBasePaymentItem(): PaymentItem {
+  return {
+    id: "",
+    paymentReference: "",
+    clientId: "",
+    clientName: "",
+    contractId: "",
+    contractReference: "",
+    company: "",
+    amount: 0,
+    currency: "",
+    paymentMethod: "",
+    status: "",
+    paymentType: "",
+    pspProvider: "",
+    pspTransactionId: undefined,
+    plannedDebitDate: "",
+    actualDebitDate: undefined,
+    debitLot: undefined,
+    riskScore: undefined,
+    riskTier: undefined,
+    retryCount: undefined,
+    rum: undefined,
+    ibanMasked: undefined,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const PaymentItem: MessageFns<PaymentItem> = {
+  encode(message: PaymentItem, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.paymentReference !== "") {
+      writer.uint32(18).string(message.paymentReference);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(26).string(message.clientId);
+    }
+    if (message.clientName !== "") {
+      writer.uint32(34).string(message.clientName);
+    }
+    if (message.contractId !== "") {
+      writer.uint32(42).string(message.contractId);
+    }
+    if (message.contractReference !== "") {
+      writer.uint32(50).string(message.contractReference);
+    }
+    if (message.company !== "") {
+      writer.uint32(58).string(message.company);
+    }
+    if (message.amount !== 0) {
+      writer.uint32(64).int64(message.amount);
+    }
+    if (message.currency !== "") {
+      writer.uint32(74).string(message.currency);
+    }
+    if (message.paymentMethod !== "") {
+      writer.uint32(82).string(message.paymentMethod);
+    }
+    if (message.status !== "") {
+      writer.uint32(90).string(message.status);
+    }
+    if (message.paymentType !== "") {
+      writer.uint32(98).string(message.paymentType);
+    }
+    if (message.pspProvider !== "") {
+      writer.uint32(106).string(message.pspProvider);
+    }
+    if (message.pspTransactionId !== undefined) {
+      writer.uint32(114).string(message.pspTransactionId);
+    }
+    if (message.plannedDebitDate !== "") {
+      writer.uint32(122).string(message.plannedDebitDate);
+    }
+    if (message.actualDebitDate !== undefined) {
+      writer.uint32(130).string(message.actualDebitDate);
+    }
+    if (message.debitLot !== undefined) {
+      writer.uint32(138).string(message.debitLot);
+    }
+    if (message.riskScore !== undefined) {
+      writer.uint32(144).int32(message.riskScore);
+    }
+    if (message.riskTier !== undefined) {
+      writer.uint32(154).string(message.riskTier);
+    }
+    if (message.retryCount !== undefined) {
+      writer.uint32(160).int32(message.retryCount);
+    }
+    if (message.rum !== undefined) {
+      writer.uint32(170).string(message.rum);
+    }
+    if (message.ibanMasked !== undefined) {
+      writer.uint32(178).string(message.ibanMasked);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(186).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(194).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PaymentItem {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePaymentItem();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.paymentReference = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.clientName = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.contractId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.contractReference = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.company = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.amount = longToNumber(reader.int64());
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.paymentMethod = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.paymentType = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.pspProvider = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.pspTransactionId = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.plannedDebitDate = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.actualDebitDate = reader.string();
+          continue;
+        }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.debitLot = reader.string();
+          continue;
+        }
+        case 18: {
+          if (tag !== 144) {
+            break;
+          }
+
+          message.riskScore = reader.int32();
+          continue;
+        }
+        case 19: {
+          if (tag !== 154) {
+            break;
+          }
+
+          message.riskTier = reader.string();
+          continue;
+        }
+        case 20: {
+          if (tag !== 160) {
+            break;
+          }
+
+          message.retryCount = reader.int32();
+          continue;
+        }
+        case 21: {
+          if (tag !== 170) {
+            break;
+          }
+
+          message.rum = reader.string();
+          continue;
+        }
+        case 22: {
+          if (tag !== 178) {
+            break;
+          }
+
+          message.ibanMasked = reader.string();
+          continue;
+        }
+        case 23: {
+          if (tag !== 186) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 24: {
+          if (tag !== 194) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PaymentItem {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      paymentReference: isSet(object.paymentReference)
+        ? globalThis.String(object.paymentReference)
+        : isSet(object.payment_reference)
+        ? globalThis.String(object.payment_reference)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      clientName: isSet(object.clientName)
+        ? globalThis.String(object.clientName)
+        : isSet(object.client_name)
+        ? globalThis.String(object.client_name)
+        : "",
+      contractId: isSet(object.contractId)
+        ? globalThis.String(object.contractId)
+        : isSet(object.contract_id)
+        ? globalThis.String(object.contract_id)
+        : "",
+      contractReference: isSet(object.contractReference)
+        ? globalThis.String(object.contractReference)
+        : isSet(object.contract_reference)
+        ? globalThis.String(object.contract_reference)
+        : "",
+      company: isSet(object.company) ? globalThis.String(object.company) : "",
+      amount: isSet(object.amount) ? globalThis.Number(object.amount) : 0,
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      paymentMethod: isSet(object.paymentMethod)
+        ? globalThis.String(object.paymentMethod)
+        : isSet(object.payment_method)
+        ? globalThis.String(object.payment_method)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      paymentType: isSet(object.paymentType)
+        ? globalThis.String(object.paymentType)
+        : isSet(object.payment_type)
+        ? globalThis.String(object.payment_type)
+        : "",
+      pspProvider: isSet(object.pspProvider)
+        ? globalThis.String(object.pspProvider)
+        : isSet(object.psp_provider)
+        ? globalThis.String(object.psp_provider)
+        : "",
+      pspTransactionId: isSet(object.pspTransactionId)
+        ? globalThis.String(object.pspTransactionId)
+        : isSet(object.psp_transaction_id)
+        ? globalThis.String(object.psp_transaction_id)
+        : undefined,
+      plannedDebitDate: isSet(object.plannedDebitDate)
+        ? globalThis.String(object.plannedDebitDate)
+        : isSet(object.planned_debit_date)
+        ? globalThis.String(object.planned_debit_date)
+        : "",
+      actualDebitDate: isSet(object.actualDebitDate)
+        ? globalThis.String(object.actualDebitDate)
+        : isSet(object.actual_debit_date)
+        ? globalThis.String(object.actual_debit_date)
+        : undefined,
+      debitLot: isSet(object.debitLot)
+        ? globalThis.String(object.debitLot)
+        : isSet(object.debit_lot)
+        ? globalThis.String(object.debit_lot)
+        : undefined,
+      riskScore: isSet(object.riskScore)
+        ? globalThis.Number(object.riskScore)
+        : isSet(object.risk_score)
+        ? globalThis.Number(object.risk_score)
+        : undefined,
+      riskTier: isSet(object.riskTier)
+        ? globalThis.String(object.riskTier)
+        : isSet(object.risk_tier)
+        ? globalThis.String(object.risk_tier)
+        : undefined,
+      retryCount: isSet(object.retryCount)
+        ? globalThis.Number(object.retryCount)
+        : isSet(object.retry_count)
+        ? globalThis.Number(object.retry_count)
+        : undefined,
+      rum: isSet(object.rum) ? globalThis.String(object.rum) : undefined,
+      ibanMasked: isSet(object.ibanMasked)
+        ? globalThis.String(object.ibanMasked)
+        : isSet(object.iban_masked)
+        ? globalThis.String(object.iban_masked)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: PaymentItem): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.paymentReference !== "") {
+      obj.paymentReference = message.paymentReference;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.clientName !== "") {
+      obj.clientName = message.clientName;
+    }
+    if (message.contractId !== "") {
+      obj.contractId = message.contractId;
+    }
+    if (message.contractReference !== "") {
+      obj.contractReference = message.contractReference;
+    }
+    if (message.company !== "") {
+      obj.company = message.company;
+    }
+    if (message.amount !== 0) {
+      obj.amount = Math.round(message.amount);
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.paymentMethod !== "") {
+      obj.paymentMethod = message.paymentMethod;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.paymentType !== "") {
+      obj.paymentType = message.paymentType;
+    }
+    if (message.pspProvider !== "") {
+      obj.pspProvider = message.pspProvider;
+    }
+    if (message.pspTransactionId !== undefined) {
+      obj.pspTransactionId = message.pspTransactionId;
+    }
+    if (message.plannedDebitDate !== "") {
+      obj.plannedDebitDate = message.plannedDebitDate;
+    }
+    if (message.actualDebitDate !== undefined) {
+      obj.actualDebitDate = message.actualDebitDate;
+    }
+    if (message.debitLot !== undefined) {
+      obj.debitLot = message.debitLot;
+    }
+    if (message.riskScore !== undefined) {
+      obj.riskScore = Math.round(message.riskScore);
+    }
+    if (message.riskTier !== undefined) {
+      obj.riskTier = message.riskTier;
+    }
+    if (message.retryCount !== undefined) {
+      obj.retryCount = Math.round(message.retryCount);
+    }
+    if (message.rum !== undefined) {
+      obj.rum = message.rum;
+    }
+    if (message.ibanMasked !== undefined) {
+      obj.ibanMasked = message.ibanMasked;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PaymentItem>, I>>(base?: I): PaymentItem {
+    return PaymentItem.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PaymentItem>, I>>(object: I): PaymentItem {
+    const message = createBasePaymentItem();
+    message.id = object.id ?? "";
+    message.paymentReference = object.paymentReference ?? "";
+    message.clientId = object.clientId ?? "";
+    message.clientName = object.clientName ?? "";
+    message.contractId = object.contractId ?? "";
+    message.contractReference = object.contractReference ?? "";
+    message.company = object.company ?? "";
+    message.amount = object.amount ?? 0;
+    message.currency = object.currency ?? "";
+    message.paymentMethod = object.paymentMethod ?? "";
+    message.status = object.status ?? "";
+    message.paymentType = object.paymentType ?? "";
+    message.pspProvider = object.pspProvider ?? "";
+    message.pspTransactionId = object.pspTransactionId ?? undefined;
+    message.plannedDebitDate = object.plannedDebitDate ?? "";
+    message.actualDebitDate = object.actualDebitDate ?? undefined;
+    message.debitLot = object.debitLot ?? undefined;
+    message.riskScore = object.riskScore ?? undefined;
+    message.riskTier = object.riskTier ?? undefined;
+    message.retryCount = object.retryCount ?? undefined;
+    message.rum = object.rum ?? undefined;
+    message.ibanMasked = object.ibanMasked ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseGetPaymentStatsRequest(): GetPaymentStatsRequest {
+  return { societeId: "", dateFrom: undefined, dateTo: undefined };
+}
+
+export const GetPaymentStatsRequest: MessageFns<GetPaymentStatsRequest> = {
+  encode(message: GetPaymentStatsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.societeId !== "") {
+      writer.uint32(10).string(message.societeId);
+    }
+    if (message.dateFrom !== undefined) {
+      writer.uint32(18).string(message.dateFrom);
+    }
+    if (message.dateTo !== undefined) {
+      writer.uint32(26).string(message.dateTo);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetPaymentStatsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetPaymentStatsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.dateFrom = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.dateTo = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetPaymentStatsRequest {
+    return {
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      dateFrom: isSet(object.dateFrom)
+        ? globalThis.String(object.dateFrom)
+        : isSet(object.date_from)
+        ? globalThis.String(object.date_from)
+        : undefined,
+      dateTo: isSet(object.dateTo)
+        ? globalThis.String(object.dateTo)
+        : isSet(object.date_to)
+        ? globalThis.String(object.date_to)
+        : undefined,
+    };
+  },
+
+  toJSON(message: GetPaymentStatsRequest): unknown {
+    const obj: any = {};
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.dateFrom !== undefined) {
+      obj.dateFrom = message.dateFrom;
+    }
+    if (message.dateTo !== undefined) {
+      obj.dateTo = message.dateTo;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetPaymentStatsRequest>, I>>(base?: I): GetPaymentStatsRequest {
+    return GetPaymentStatsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetPaymentStatsRequest>, I>>(object: I): GetPaymentStatsRequest {
+    const message = createBaseGetPaymentStatsRequest();
+    message.societeId = object.societeId ?? "";
+    message.dateFrom = object.dateFrom ?? undefined;
+    message.dateTo = object.dateTo ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetPaymentStatsResponse(): GetPaymentStatsResponse {
+  return {
+    totalPayments: 0,
+    totalAmount: 0,
+    paidCount: 0,
+    paidAmount: 0,
+    pendingCount: 0,
+    pendingAmount: 0,
+    rejectedCount: 0,
+    rejectedAmount: 0,
+    rejectRate: 0,
+    averageAmount: 0,
+  };
+}
+
+export const GetPaymentStatsResponse: MessageFns<GetPaymentStatsResponse> = {
+  encode(message: GetPaymentStatsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.totalPayments !== 0) {
+      writer.uint32(8).int32(message.totalPayments);
+    }
+    if (message.totalAmount !== 0) {
+      writer.uint32(16).int64(message.totalAmount);
+    }
+    if (message.paidCount !== 0) {
+      writer.uint32(24).int32(message.paidCount);
+    }
+    if (message.paidAmount !== 0) {
+      writer.uint32(32).int64(message.paidAmount);
+    }
+    if (message.pendingCount !== 0) {
+      writer.uint32(40).int32(message.pendingCount);
+    }
+    if (message.pendingAmount !== 0) {
+      writer.uint32(48).int64(message.pendingAmount);
+    }
+    if (message.rejectedCount !== 0) {
+      writer.uint32(56).int32(message.rejectedCount);
+    }
+    if (message.rejectedAmount !== 0) {
+      writer.uint32(64).int64(message.rejectedAmount);
+    }
+    if (message.rejectRate !== 0) {
+      writer.uint32(73).double(message.rejectRate);
+    }
+    if (message.averageAmount !== 0) {
+      writer.uint32(81).double(message.averageAmount);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetPaymentStatsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetPaymentStatsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.totalPayments = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.totalAmount = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.paidCount = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.paidAmount = longToNumber(reader.int64());
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.pendingCount = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.pendingAmount = longToNumber(reader.int64());
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.rejectedCount = reader.int32();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.rejectedAmount = longToNumber(reader.int64());
+          continue;
+        }
+        case 9: {
+          if (tag !== 73) {
+            break;
+          }
+
+          message.rejectRate = reader.double();
+          continue;
+        }
+        case 10: {
+          if (tag !== 81) {
+            break;
+          }
+
+          message.averageAmount = reader.double();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetPaymentStatsResponse {
+    return {
+      totalPayments: isSet(object.totalPayments)
+        ? globalThis.Number(object.totalPayments)
+        : isSet(object.total_payments)
+        ? globalThis.Number(object.total_payments)
+        : 0,
+      totalAmount: isSet(object.totalAmount)
+        ? globalThis.Number(object.totalAmount)
+        : isSet(object.total_amount)
+        ? globalThis.Number(object.total_amount)
+        : 0,
+      paidCount: isSet(object.paidCount)
+        ? globalThis.Number(object.paidCount)
+        : isSet(object.paid_count)
+        ? globalThis.Number(object.paid_count)
+        : 0,
+      paidAmount: isSet(object.paidAmount)
+        ? globalThis.Number(object.paidAmount)
+        : isSet(object.paid_amount)
+        ? globalThis.Number(object.paid_amount)
+        : 0,
+      pendingCount: isSet(object.pendingCount)
+        ? globalThis.Number(object.pendingCount)
+        : isSet(object.pending_count)
+        ? globalThis.Number(object.pending_count)
+        : 0,
+      pendingAmount: isSet(object.pendingAmount)
+        ? globalThis.Number(object.pendingAmount)
+        : isSet(object.pending_amount)
+        ? globalThis.Number(object.pending_amount)
+        : 0,
+      rejectedCount: isSet(object.rejectedCount)
+        ? globalThis.Number(object.rejectedCount)
+        : isSet(object.rejected_count)
+        ? globalThis.Number(object.rejected_count)
+        : 0,
+      rejectedAmount: isSet(object.rejectedAmount)
+        ? globalThis.Number(object.rejectedAmount)
+        : isSet(object.rejected_amount)
+        ? globalThis.Number(object.rejected_amount)
+        : 0,
+      rejectRate: isSet(object.rejectRate)
+        ? globalThis.Number(object.rejectRate)
+        : isSet(object.reject_rate)
+        ? globalThis.Number(object.reject_rate)
+        : 0,
+      averageAmount: isSet(object.averageAmount)
+        ? globalThis.Number(object.averageAmount)
+        : isSet(object.average_amount)
+        ? globalThis.Number(object.average_amount)
+        : 0,
+    };
+  },
+
+  toJSON(message: GetPaymentStatsResponse): unknown {
+    const obj: any = {};
+    if (message.totalPayments !== 0) {
+      obj.totalPayments = Math.round(message.totalPayments);
+    }
+    if (message.totalAmount !== 0) {
+      obj.totalAmount = Math.round(message.totalAmount);
+    }
+    if (message.paidCount !== 0) {
+      obj.paidCount = Math.round(message.paidCount);
+    }
+    if (message.paidAmount !== 0) {
+      obj.paidAmount = Math.round(message.paidAmount);
+    }
+    if (message.pendingCount !== 0) {
+      obj.pendingCount = Math.round(message.pendingCount);
+    }
+    if (message.pendingAmount !== 0) {
+      obj.pendingAmount = Math.round(message.pendingAmount);
+    }
+    if (message.rejectedCount !== 0) {
+      obj.rejectedCount = Math.round(message.rejectedCount);
+    }
+    if (message.rejectedAmount !== 0) {
+      obj.rejectedAmount = Math.round(message.rejectedAmount);
+    }
+    if (message.rejectRate !== 0) {
+      obj.rejectRate = message.rejectRate;
+    }
+    if (message.averageAmount !== 0) {
+      obj.averageAmount = message.averageAmount;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetPaymentStatsResponse>, I>>(base?: I): GetPaymentStatsResponse {
+    return GetPaymentStatsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetPaymentStatsResponse>, I>>(object: I): GetPaymentStatsResponse {
+    const message = createBaseGetPaymentStatsResponse();
+    message.totalPayments = object.totalPayments ?? 0;
+    message.totalAmount = object.totalAmount ?? 0;
+    message.paidCount = object.paidCount ?? 0;
+    message.paidAmount = object.paidAmount ?? 0;
+    message.pendingCount = object.pendingCount ?? 0;
+    message.pendingAmount = object.pendingAmount ?? 0;
+    message.rejectedCount = object.rejectedCount ?? 0;
+    message.rejectedAmount = object.rejectedAmount ?? 0;
+    message.rejectRate = object.rejectRate ?? 0;
+    message.averageAmount = object.averageAmount ?? 0;
+    return message;
+  },
+};
+
 export type PaymentServiceService = typeof PaymentServiceService;
 export const PaymentServiceService = {
   /**
@@ -29043,6 +30500,28 @@ export const PaymentServiceService = {
       Buffer.from(RejectionReasonResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): RejectionReasonResponse => RejectionReasonResponse.decode(value),
   },
+  /** ==================== PAYMENT QUERIES ==================== */
+  listPayments: {
+    path: "/payment.PaymentService/ListPayments",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListPaymentsRequest): Buffer => Buffer.from(ListPaymentsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListPaymentsRequest => ListPaymentsRequest.decode(value),
+    responseSerialize: (value: ListPaymentsResponse): Buffer =>
+      Buffer.from(ListPaymentsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListPaymentsResponse => ListPaymentsResponse.decode(value),
+  },
+  getPaymentStats: {
+    path: "/payment.PaymentService/GetPaymentStats",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetPaymentStatsRequest): Buffer =>
+      Buffer.from(GetPaymentStatsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetPaymentStatsRequest => GetPaymentStatsRequest.decode(value),
+    responseSerialize: (value: GetPaymentStatsResponse): Buffer =>
+      Buffer.from(GetPaymentStatsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetPaymentStatsResponse => GetPaymentStatsResponse.decode(value),
+  },
 } as const;
 
 export interface PaymentServiceServer extends UntypedServiceImplementation {
@@ -29151,6 +30630,9 @@ export interface PaymentServiceServer extends UntypedServiceImplementation {
   listRejectionReasons: handleUnaryCall<ListRejectionReasonsRequest, ListRejectionReasonsResponse>;
   createRejectionReason: handleUnaryCall<CreateRejectionReasonRequest, RejectionReasonResponse>;
   updateRejectionReason: handleUnaryCall<UpdateRejectionReasonRequest, RejectionReasonResponse>;
+  /** ==================== PAYMENT QUERIES ==================== */
+  listPayments: handleUnaryCall<ListPaymentsRequest, ListPaymentsResponse>;
+  getPaymentStats: handleUnaryCall<GetPaymentStatsRequest, GetPaymentStatsResponse>;
 }
 
 function bytesFromBase64(b64: string): Uint8Array {

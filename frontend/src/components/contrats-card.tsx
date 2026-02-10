@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Folder, Maximize2, Download, Filter, SortAsc, TrendingUp, FileText, AlertTriangle, RefreshCw } from "lucide-react"
+import { Folder, Maximize2, Download, Filter, SortAsc, TrendingUp, FileText, AlertTriangle, RefreshCw, Upload } from "lucide-react"
 import { getStatsSocietes } from "@/actions/dashboard"
 import { useOrganisation } from "@/contexts/organisation-context"
 import type { StatsSociete } from "@proto/dashboard/dashboard"
@@ -35,6 +35,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button"
+import { ImportContratsDialog } from "@/components/import-contrats-dialog"
 
 // Calculer les dates de début/fin en fonction de la période
 function getPeriodDates(period: string): { dateDebut: string; dateFin: string } {
@@ -74,6 +75,7 @@ export function ContratsCard({ initialData }: ContratsCardProps) {
   const [tableData, setTableData] = React.useState<StatsSociete[]>(initialData || [])
   const [loading, setLoading] = React.useState(!initialData)
   const [error, setError] = React.useState<string | null>(null)
+  const [importDialogOpen, setImportDialogOpen] = React.useState(false)
   const hasFetched = React.useRef(!!initialData)
 
   const periodDates = React.useMemo(() => getPeriodDates(period), [period])
@@ -238,6 +240,10 @@ export function ContratsCard({ initialData }: ContratsCardProps) {
           </div>
           <CardAction className="flex items-center gap-2">
             <AskAiCardButton prompt={aiPrompt} title="Demander une analyse IA de la carte contrats" />
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="h-4 w-4" />
+              Importer des contrats
+            </Button>
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger size="sm" className="w-40">
                 <SelectValue placeholder="Période" />
@@ -442,6 +448,12 @@ export function ContratsCard({ initialData }: ContratsCardProps) {
           </div>
         </div>
       </DialogContent>
+
+      <ImportContratsDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        organisationId={activeOrganisation.organisationId}
+      />
     </Dialog>
   )
 }

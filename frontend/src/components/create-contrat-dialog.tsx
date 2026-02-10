@@ -600,8 +600,14 @@ export function CreateContratDialog({
                                                     max={28}
                                                     placeholder="Ex: 15"
                                                     disabled={loading}
-                                                    value={field.value ?? ""}
-                                                    onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)}
+                                                    value={typeof field.value === "number" ? field.value : ""}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value === ""
+                                                                ? undefined
+                                                                : Number(e.target.value)
+                                                        )
+                                                    }
                                                 />
                                             </FormControl>
                                             <FormMessage />

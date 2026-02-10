@@ -78,6 +78,8 @@ export async function createContrat(input: {
   documentUrl?: string;
   fournisseur?: string;
   societeId?: string;
+  jourPrelevement?: number;
+  jour_prelevement?: number;
   notes?: string;
 }): Promise<ActionResult<Contrat>> {
   try {
@@ -99,6 +101,7 @@ export async function createContrat(input: {
       clientId: input.clientId,
       commercialId: input.commercialId,
       societeId: input.societeId || "",
+      jourPrelevement: input.jourPrelevement ?? input.jour_prelevement ?? 0,
       notes: input.notes || "",
     });
     revalidatePath("/contrats");

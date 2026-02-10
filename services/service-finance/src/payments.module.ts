@@ -39,6 +39,7 @@ import {
   ReconciliationEntity,
   PaymentArchiveEntity,
   DunningConfigEntity,
+  InformationPaiementBancaireEntity,
 } from './domain/payments/entities';
 
 // Infrastructure services
@@ -50,6 +51,7 @@ import {
   ScoringClientService,
   SelectiveDunningService,
 } from './infrastructure/persistence/typeorm/repositories/payments';
+import { InformationPaiementBancaireService } from './infrastructure/persistence/typeorm/repositories/payments/information-paiement-bancaire.service';
 import { ProviderStatusMappingService } from './infrastructure/persistence/typeorm/repositories/payments/provider-status-mapping.service';
 import {
   EncryptionService,
@@ -90,6 +92,7 @@ import { MockImsClientService } from './infrastructure/external/ims/mock-ims-cli
 import { CbUpdateSessionController } from './interfaces/http/controllers/payments/cb-update-session.controller';
 import { PaymentQueryService } from './application/queries/payment-query.service';
 import { PaymentQueryController } from './interfaces/grpc/controllers/payments/payment-query.controller';
+import { InformationPaiementBancaireController } from './infrastructure/grpc/payments/information-paiement-bancaire.controller';
 import { FacturesModule } from './factures.module';
 
 @Global()
@@ -132,6 +135,7 @@ import { FacturesModule } from './factures.module';
       ReconciliationEntity,
       PaymentArchiveEntity,
       DunningConfigEntity,
+      InformationPaiementBancaireEntity,
     ]),
   ],
   controllers: [
@@ -146,6 +150,7 @@ import { FacturesModule } from './factures.module';
     AlertController,
     CbUpdateSessionController,
     PaymentQueryController,
+    InformationPaiementBancaireController,
   ],
   providers: [
     SchedulesService,
@@ -174,6 +179,7 @@ import { FacturesModule } from './factures.module';
     DepanssurPaymentFailedHandler,
     DepanssurPaymentSucceededHandler,
     PaymentQueryService,
+    InformationPaiementBancaireService,
     {
       provide: SMS_SERVICE_TOKEN,
       useClass: MockSmsService,
@@ -214,6 +220,7 @@ import { FacturesModule } from './factures.module';
     DepanssurPaymentFailedHandler,
     DepanssurPaymentSucceededHandler,
     PaymentQueryService,
+    InformationPaiementBancaireService,
     SMS_SERVICE_TOKEN,
     IMS_CLIENT_TOKEN,
   ],

@@ -19,6 +19,9 @@ export * from './slimpay-account.entity';
 export * from './multisafepay-account.entity';
 export * from './emerchantpay-account.entity';
 
+// Bank payment information
+export * from './information-paiement-bancaire.entity';
+
 // Retry entities
 export * from './retry-policy.entity';
 export * from './retry-schedule.entity';

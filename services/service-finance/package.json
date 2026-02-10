@@ -9,7 +9,7 @@
   "scripts": {
     "build": "nest build",
     "proto:clean": "rimraf proto/generated",
-    "proto:generate": "mkdir -p proto/generated && cp ../../packages/proto/gen/ts/factures/factures.ts ./proto/generated/factures.ts && cp ../../packages/proto/gen/ts/payments/payment.ts ./proto/generated/payment.ts && cp ../../packages/proto/gen/ts/calendar/calendar.ts ./proto/generated/calendar.ts",
+    "proto:generate": "mkdir -p proto/generated && cp ../../packages/proto/gen/ts/factures/factures.ts ./proto/generated/factures.ts && cp ../../packages/proto/gen/ts/payments/payment.ts ./proto/generated/payment.ts && cp ../../packages/proto/gen/ts/payments/payment-info.ts ./proto/generated/payment-info.ts && cp ../../packages/proto/gen/ts/calendar/calendar.ts ./proto/generated/calendar.ts",
     "prebuild": "npm run proto:clean && npm run proto:generate",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",

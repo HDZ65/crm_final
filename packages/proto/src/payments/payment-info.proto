@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package payment_info;
+
+// ==================== INFORMATION PAIEMENT BANCAIRE SERVICE ====================
+// Service for managing bank payment information (IBAN/BIC) stored in clear text
+
+service InformationPaiementBancaireService {
+  rpc Create(CreateInformationPaiementBancaireRequest) returns (InformationPaiementBancaireResponse);
+  rpc GetById(GetInformationPaiementBancaireByIdRequest) returns (InformationPaiementBancaireResponse);
+  rpc GetByClientId(GetInformationPaiementBancaireByClientIdRequest) returns (InformationPaiementBancaireListResponse);
+  rpc GetByExternalId(GetInformationPaiementBancaireByExternalIdRequest) returns (InformationPaiementBancaireResponse);
+  rpc Update(UpdateInformationPaiementBancaireRequest) returns (InformationPaiementBancaireResponse);
+  rpc UpsertByExternalId(UpsertInformationPaiementBancaireRequest) returns (UpsertInformationPaiementBancaireResponse);
+  rpc Delete(DeleteInformationPaiementBancaireRequest) returns (DeleteResponse);
+}
+
+// ==================== MESSAGES ====================
+
+message CreateInformationPaiementBancaireRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string iban = 3;  // IBAN stored in clear text (max 34 chars)
+  string bic = 4;   // BIC stored in clear text (max 11 chars)
+  optional string titulaire_compte = 5;  // Account holder name (max 255 chars)
+  optional string mandat_sepa_reference = 6;  // SEPA mandate reference (max 255 chars)
+  optional string date_mandat = 7;  // ISO timestamp of mandate signature
+  optional string statut = 8;  // Status: ACTIF, INACTIF, EXPIRE, SUSPENDU (default: ACTIF)
+  optional string commentaire = 9;  // Free text comment
+  optional string external_id = 10;  // External ID from legacy system (max 255 chars)
+}
+
+message GetInformationPaiementBancaireByIdRequest {
+  string id = 1;
+}
+
+message GetInformationPaiementBancaireByClientIdRequest {
+  string client_id = 1;
+}
+
+message GetInformationPaiementBancaireByExternalIdRequest {
+  string organisation_id = 1;
+  string external_id = 2;
+}
+
+message UpdateInformationPaiementBancaireRequest {
+  string id = 1;
+  optional string iban = 2;
+  optional string bic = 3;
+  optional string titulaire_compte = 4;
+  optional string mandat_sepa_reference = 5;
+  optional string date_mandat = 6;  // ISO timestamp
+  optional string statut = 7;
+  optional string commentaire = 8;
+}
+
+message UpsertInformationPaiementBancaireRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string iban = 3;
+  string bic = 4;
+  optional string titulaire_compte = 5;
+  optional string mandat_sepa_reference = 6;
+  optional string date_mandat = 7;  // ISO timestamp
+  optional string statut = 8;
+  optional string commentaire = 9;
+  string external_id = 10;  // Required for upsert
+  optional string updated_at = 11;  // ISO timestamp for conflict resolution (most recent wins)
+}
+
+message DeleteInformationPaiementBancaireRequest {
+  string id = 1;
+}
+
+message InformationPaiementBancaireResponse {
+  string id = 1;
+  string organisation_id = 2;
+  string client_id = 3;
+  string iban = 4;  // IBAN in clear text
+  string bic = 5;   // BIC in clear text
+  string titulaire_compte = 6;
+  string mandat_sepa_reference = 7;
+  string date_mandat = 8;  // ISO timestamp
+  string statut = 9;
+  string commentaire = 10;
+  string external_id = 11;
+  string created_at = 12;  // ISO timestamp
+  string updated_at = 13;  // ISO timestamp
+}
+
+message InformationPaiementBancaireListResponse {
+  repeated InformationPaiementBancaireResponse items = 1;
+  int32 total = 2;
+}
+
+message UpsertInformationPaiementBancaireResponse {
+  InformationPaiementBancaireResponse entity = 1;
+  bool created = 2;  // true if created, false if updated
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}

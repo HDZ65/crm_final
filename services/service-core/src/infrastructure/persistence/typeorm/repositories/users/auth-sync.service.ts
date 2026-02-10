@@ -84,28 +84,26 @@ export class AuthSyncService {
 
     const { membres } = await this.membreCompteService.findByUtilisateur(utilisateur.id);
 
-    const organisations = await Promise.all(
-      membres.map(async (membre) => {
-        let organisationNom = 'Unknown';
-        try {
-          const compte = await this.compteService.findById(membre.organisationId);
-          organisationNom = compte.nom;
-        } catch {
-          this.logger.warn(`Could not find organisation ${membre.organisationId}`);
-        }
+    // Bulk fetch all comptes to eliminate N+1 queries
+    const orgIds = [...new Set(membres.map(m => m.organisationId).filter(Boolean))];
+    const comptesList = await this.compteService.findByIds(orgIds);
+    const comptesMap = new Map(comptesList.map(c => [c.id, c]));
 
-        return {
-          organisationId: membre.organisationId,
-          organisationNom,
-          role: {
-            id: membre.role?.id || membre.roleId,
-            code: membre.role?.code || 'unknown',
-            nom: membre.role?.nom || 'Unknown',
-          },
-          etat: membre.etat,
-        };
-      }),
-    );
+    // Synchronous map with Map lookup (no async/await needed)
+    const organisations = membres.map((membre) => {
+      const organisationNom = comptesMap.get(membre.organisationId)?.nom ?? 'Unknown';
+
+      return {
+        organisationId: membre.organisationId,
+        organisationNom,
+        role: {
+          id: membre.role?.id || membre.roleId,
+          code: membre.role?.code || 'unknown',
+          nom: membre.role?.nom || 'Unknown',
+        },
+        etat: membre.etat,
+      };
+    });
 
     return {
       utilisateur,

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, FindOptionsWhere } from 'typeorm';
+import { Repository, Like, FindOptionsWhere, In } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { CompteEntity } from '../../../../../domain/users/entities';
@@ -34,17 +34,22 @@ export class CompteService {
   }
 
   async findById(id: string): Promise<CompteEntity> {
-    if (!id) {
-      throw new RpcException({ code: status.INVALID_ARGUMENT, message: 'Compte id is required' });
-    }
-    const entity = await this.repository.findOne({ where: { id } });
-    if (!entity) {
-      throw new RpcException({ code: status.NOT_FOUND, message: `Compte ${id} not found` });
-    }
-    return entity;
-  }
+     if (!id) {
+       throw new RpcException({ code: status.INVALID_ARGUMENT, message: 'Compte id is required' });
+     }
+     const entity = await this.repository.findOne({ where: { id } });
+     if (!entity) {
+       throw new RpcException({ code: status.NOT_FOUND, message: `Compte ${id} not found` });
+     }
+     return entity;
+   }
 
-  async findAll(
+   async findByIds(ids: string[]): Promise<CompteEntity[]> {
+     if (ids.length === 0) return [];
+     return this.repository.find({ where: { id: In(ids) } });
+   }
+
+   async findAll(
     filters?: { search?: string; etat?: string },
     pagination?: { page?: number; limit?: number },
   ): Promise<{

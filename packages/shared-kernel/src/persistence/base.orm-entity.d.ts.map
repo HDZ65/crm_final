@@ -1,0 +1,1 @@
+{"version":3,"file":"base.orm-entity.d.ts","sourceRoot":"","sources":["base.orm-entity.ts"],"names":[],"mappings":"AAqBA,8BAAsB,aAAa;IAEjC,EAAE,EAAE,MAAM,CAAC;IAGX,SAAS,EAAE,IAAI,CAAC;IAGhB,SAAS,EAAE,IAAI,CAAC;IAGhB,SAAS,EAAE,IAAI,GAAG,IAAI,CAAC;CACxB;AAKD,8BAAsB,kBAAmB,SAAQ,aAAa;IAE5D,OAAO,EAAE,MAAM,CAAC;CACjB"}

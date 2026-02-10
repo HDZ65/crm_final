@@ -11,19 +11,19 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Trash2 } from "lucide-react"
-import type { PaymentIntent, PaymentIntentStatus } from "@/types/payment-intent"
+import type { PaymentIntentResponse } from "@proto/payments/payment"
 
 interface PaymentIntentTableProps {
-  paymentIntents: PaymentIntent[]
+  paymentIntents: PaymentIntentResponse[]
   onDelete?: (id: string) => void
 }
 
-const statusColors: Record<PaymentIntentStatus, string> = {
-  pending: "bg-yellow-500",
-  processing: "bg-blue-500",
-  succeeded: "bg-green-500",
-  failed: "bg-red-500",
-  cancelled: "bg-gray-500",
+const statusColors: Record<string, string> = {
+  PENDING: "bg-yellow-500",
+  PROCESSING: "bg-blue-500",
+  SUCCEEDED: "bg-green-500",
+  FAILED: "bg-red-500",
+  CANCELLED: "bg-gray-500",
 }
 
 export function PaymentIntentTable({

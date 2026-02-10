@@ -41,12 +41,13 @@ import { useOrganisation } from "@/contexts/organisation-context"
 import { useAuth } from "@/hooks/auth"
 import { listMembresWithUsers, type MembreWithUserDto } from "@/actions/membres"
 import { toast } from "sonner"
-import type { TacheDto, TacheType, TachePriorite, TacheStatut } from "@/types/tache"
+import type { Tache } from "@proto/activites/activites"
+import type { TacheType, TachePriorite, TacheStatut } from "@/lib/ui/labels/tache"
 import {
   TACHE_TYPE_LABELS,
   TACHE_PRIORITE_LABELS,
   TACHE_STATUT_LABELS,
-} from "@/types/tache"
+} from "@/lib/ui/labels/tache"
 import { updateTache } from "@/actions/taches"
 
 const formSchema = z.object({
@@ -64,7 +65,7 @@ type FormValues = z.infer<typeof formSchema>
 interface EditTacheDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  tache: TacheDto | null
+  tache: Tache | null
   onSuccess?: () => void
 }
 
@@ -129,13 +130,18 @@ export function EditTacheDialog({
 
     setLoading(true)
     const result = await updateTache(tache.id, {
+      id: tache.id,
       titre: values.titre,
-      description: values.description,
+      description: values.description || "",
       type: values.type as TacheType,
       priorite: values.priorite as TachePriorite,
       statut: values.statut as TacheStatut,
       dateEcheance: values.dateEcheance.toISOString(),
       assigneA: values.assigneA,
+      clientId: tache.clientId || "",
+      contratId: tache.contratId || "",
+      factureId: tache.factureId || "",
+      metadata: tache.metadata || "",
     })
     setLoading(false)
 

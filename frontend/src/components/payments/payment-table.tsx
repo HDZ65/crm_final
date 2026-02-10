@@ -15,7 +15,8 @@ import {
   ArrowRight,
   MoreVertical,
 } from "lucide-react"
-import type { Payment, PaymentStatus } from "@/types/payment"
+import type { Payment } from "@/lib/ui/display-types/payment"
+import type { PaymentStatus } from "@proto/payments/payment"
 import {
   Table,
   TableBody,
@@ -31,7 +32,7 @@ interface PaymentTableProps {
 }
 
 const statusConfig: Record<
-  PaymentStatus,
+  string,
   {
     label: string
     icon: React.ElementType

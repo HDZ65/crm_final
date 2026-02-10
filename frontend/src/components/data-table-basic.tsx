@@ -29,9 +29,10 @@ interface DataTableProps<TData, TValue> {
   filterPlaceholder?: string
   headerClassName?: string
   onRowSelectionChange?: (selection: Record<string, boolean>) => void
+  onRowClick?: (row: TData) => void
 }
 
-export function DataTable<TData, TValue>({ columns, data, headerClassName, onRowSelectionChange }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, headerClassName, onRowSelectionChange, onRowClick }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [rowSelection, setRowSelection] = React.useState({})
 
@@ -77,7 +78,18 @@ export function DataTable<TData, TValue>({ columns, data, headerClassName, onRow
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={onRowClick ? "cursor-pointer" : undefined}
+                    onClick={(e) => {
+                      if (!onRowClick) return
+                      // Don't trigger row click when clicking on interactive elements
+                      const target = e.target as HTMLElement
+                      if (target.closest("button, a, input, [role='checkbox'], [data-slot='dropdown-menu']")) return
+                      onRowClick(row.original)
+                    }}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}

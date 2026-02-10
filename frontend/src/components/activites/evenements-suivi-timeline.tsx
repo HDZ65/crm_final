@@ -13,7 +13,7 @@ import {
   RotateCcw,
   Circle,
 } from "lucide-react"
-import type { EvenementSuiviDto } from "@/types/activite"
+import type { EvenementSuiviDto } from "@/actions/evenements-suivi"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
 

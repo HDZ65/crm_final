@@ -74,7 +74,15 @@ export async function updatePartenaireMarqueBlancheAction(input: {
   statutId?: string;
 }): Promise<ActionResult<PartenaireMarqueBlanche>> {
   try {
-    const data = await partenairesMarqueBlanche.update(input);
+    const data = await partenairesMarqueBlanche.update({
+      id: input.id,
+      denomination: input.denomination || "",
+      siren: input.siren || "",
+      numeroTva: input.numeroTva || "",
+      contactSupportEmail: input.contactSupportEmail || "",
+      telephone: input.telephone || "",
+      statutId: input.statutId || "",
+    });
     revalidatePath("/marque-blanche");
     revalidatePath("/settings");
     return { data, error: null };
@@ -147,7 +155,13 @@ export async function updateThemeMarqueAction(input: {
   faviconUrl?: string;
 }): Promise<ActionResult<ThemeMarque>> {
   try {
-    const data = await themesMarque.update(input);
+    const data = await themesMarque.update({
+      id: input.id,
+      logoUrl: input.logoUrl || "",
+      couleurPrimaire: input.couleurPrimaire || "",
+      couleurSecondaire: input.couleurSecondaire || "",
+      faviconUrl: input.faviconUrl || "",
+    });
     revalidatePath("/marque-blanche");
     revalidatePath("/settings");
     return { data, error: null };
@@ -226,7 +240,12 @@ export async function updateStatutPartenaireAction(input: {
   description?: string;
 }): Promise<ActionResult<StatutPartenaire>> {
   try {
-    const data = await statutsPartenaire.update(input);
+    const data = await statutsPartenaire.update({
+      id: input.id,
+      code: input.code || "",
+      nom: input.nom || "",
+      description: input.description || "",
+    });
     revalidatePath("/marque-blanche");
     revalidatePath("/settings");
     return { data, error: null };

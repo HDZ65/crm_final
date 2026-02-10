@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -78,6 +79,8 @@ import {
   Clock,
   RefreshCw,
   TrendingDown as TrendingDownIcon,
+  ShieldCheck,
+  BarChart3,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -1089,9 +1092,33 @@ export function CommissionsPageClient({
           />
         </div>
 
+        {/* Actions rapides */}
+        <div className="flex items-center justify-end gap-2 shrink-0">
+          <Button variant="secondary" size="sm" className="gap-2" asChild>
+            <a href="/commissions/validation">
+              <ShieldCheck className="size-4" />
+              Validation ADV
+            </a>
+          </Button>
+          <Button variant="secondary" size="sm" className="gap-2" asChild>
+            <a href="/commissions/reporting">
+              <BarChart3 className="size-4" />
+              Reporting
+            </a>
+          </Button>
+          <CommissionConfigDialog
+            trigger={
+              <Button variant="outline" size="sm" className="gap-2">
+                <Settings className="size-4" />
+                Configuration
+              </Button>
+            }
+          />
+        </div>
+
         {/* Onglets */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="shrink-0">
             <TabsList className="w-fit">
               <TabsTrigger value="commissions" className="gap-2">
                 <Receipt className="size-4" />
@@ -1131,14 +1158,6 @@ export function CommissionsPageClient({
                 <Badge variant="secondary" className="ml-1">{reportsNegatifsCount}</Badge>
               </TabsTrigger>
             </TabsList>
-            <CommissionConfigDialog
-              trigger={
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Settings className="size-4" />
-                  Configuration
-                </Button>
-              }
-            />
           </div>
 
           {/* Onglet Commissions */}

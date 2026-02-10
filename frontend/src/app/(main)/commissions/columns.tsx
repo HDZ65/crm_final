@@ -22,14 +22,8 @@ import {
   RotateCcw,
 } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
-import type { CommissionWithDetailsResponseDto, TypeApporteur } from "@/types/commission"
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount)
-}
+import type { CommissionWithDetails, TypeApporteur } from "@/lib/ui/display-types/commission"
+import { formatMontant, parseMontant } from "@/lib/ui/helpers/format"
 
 // Mapping des types d'apporteur pour l'affichage
 const typeApporteurLabels: Record<TypeApporteur, string> = {
@@ -69,8 +63,8 @@ const statutVariants: Record<string, { icon: React.ReactNode; className: string;
 }
 
 export const createColumns = (
-  onViewDetails: (commission: CommissionWithDetailsResponseDto) => void
-): ColumnDef<CommissionWithDetailsResponseDto>[] => [
+  onViewDetails: (commission: CommissionWithDetails) => void
+): ColumnDef<CommissionWithDetails>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -208,7 +202,7 @@ export const createColumns = (
     header: "Brut",
     cell: ({ row }) => (
       <div className="font-semibold text-foreground">
-        {formatCurrency(row.original.montantBrut)}
+        {formatMontant(row.original.montantBrut)}
       </div>
     ),
     size: 100,
@@ -218,11 +212,11 @@ export const createColumns = (
     header: "Reprises",
     cell: ({ row }) => {
       const reprises = row.original.montantReprises
-      if (reprises === 0) return <div className="text-muted-foreground">—</div>
+      if (parseMontant(reprises) === 0) return <div className="text-muted-foreground">--</div>
       return (
         <div className="font-medium text-destructive flex items-center gap-1">
           <RotateCcw className="size-3" />
-          {formatCurrency(-reprises)}
+          {formatMontant(String(-parseMontant(reprises)))}
         </div>
       )
     },
@@ -233,10 +227,10 @@ export const createColumns = (
     header: "Acomptes",
     cell: ({ row }) => {
       const acomptes = row.original.montantAcomptes
-      if (acomptes === 0) return <div className="text-muted-foreground">—</div>
+      if (parseMontant(acomptes) === 0) return <div className="text-muted-foreground">--</div>
       return (
         <div className="font-medium text-muted-foreground">
-          {formatCurrency(-acomptes)}
+          {formatMontant(String(-parseMontant(acomptes)))}
         </div>
       )
     },
@@ -246,11 +240,11 @@ export const createColumns = (
     accessorKey: "montantNetAPayer",
     header: "Net à payer",
     cell: ({ row }) => {
-      const net = row.original.montantNetAPayer
-      const color = net > 0 ? "text-success" : net < 0 ? "text-destructive" : "text-muted-foreground"
+      const netNum = parseMontant(row.original.montantNetAPayer)
+      const color = netNum > 0 ? "text-success" : netNum < 0 ? "text-destructive" : "text-muted-foreground"
       return (
         <div className={`font-bold text-base ${color}`}>
-          {formatCurrency(net)}
+          {formatMontant(row.original.montantNetAPayer)}
         </div>
       )
     },

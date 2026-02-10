@@ -1,6 +1,9 @@
 {
-  "active_plan": "C:\\Users\\Dev\\Desktop\\crm_final\\.sisyphus\\plans\\microservice-coherence-refactor.md",
-  "started_at": "2026-02-05T13:23:34.303Z",
-  "session_ids": ["ses_3d2191671ffez79V7s07c2X1eL"],
-  "plan_name": "microservice-coherence-refactor"
+  "active_plan": "C:\\Users\\Dev\\Desktop\\crm_final\\.sisyphus\\plans\\create-facture-dialog.md",
+  "started_at": "2026-02-10T10:14:02.921Z",
+  "session_ids": [
+    "ses_3be74a122ffe8g2V1TKD504YkH"
+  ],
+  "plan_name": "create-facture-dialog",
+  "agent": "atlas"
 }

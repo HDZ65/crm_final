@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
-import { TvodEstPurchaseEntity } from '../../../../domain/mondial-tv/entities/tvod-est-purchase.entity';
+import { TvodEstPurchaseEntity } from '../../../../../domain/mondial-tv/entities/tvod-est-purchase.entity';
 import {
   ITvodEstPurchaseRepository,
   AggregateMetrics,
-} from '../../../../domain/mondial-tv/repositories/ITvodEstPurchaseRepository';
+} from '../../../../../domain/mondial-tv/repositories/ITvodEstPurchaseRepository';
+import { PurchaseStatus } from '../../../../../domain/mondial-tv/entities/tvod-est-purchase.entity';
 
 @Injectable()
 export class TvodEstPurchaseService implements ITvodEstPurchaseRepository {
@@ -76,7 +77,7 @@ export class TvodEstPurchaseService implements ITvodEstPurchaseRepository {
   ): Promise<TvodEstPurchaseEntity[]> {
     try {
       return await this.repository.find({
-        where: { organisationId, status },
+        where: { organisationId, status: status as PurchaseStatus },
         order: { createdAt: 'DESC' },
         take: limit,
         skip: offset,

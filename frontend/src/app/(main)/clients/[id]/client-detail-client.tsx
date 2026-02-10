@@ -36,7 +36,6 @@ import { ClientPayments } from "@/components/client-detail/client-payments";
 import { ClientShipments } from "@/components/client-detail/client-shipments";
 import {
   type AdresseItem,
-  ClientSubEntities,
   type EntrepriseInfo,
   type FacturationConfig,
   type OptionItem,
@@ -820,7 +819,7 @@ Adresse: ${client.info.address}`;
              <TabsTrigger value="overview">
                Infos générales & Contrats
              </TabsTrigger>
-             <TabsTrigger value="parametres">Données client</TabsTrigger>
+
              <TabsTrigger value="paiements-expeditions">Paiements & Expéditions</TabsTrigger>
              <TabsTrigger value="activites-taches">Activités & Tâches</TabsTrigger>
              <TabsTrigger value="documents">Documents (GED)</TabsTrigger>
@@ -852,29 +851,7 @@ Adresse: ${client.info.address}`;
             )}
           </TabsContent>
 
-          <TabsContent value="parametres" className="flex-1 flex flex-col">
-            <ClientSubEntities
-              addresses={addresses}
-              entreprise={entreprise}
-              conditionsPaiement={conditionsPaiement}
-              emissionsFacture={emissionsFacture}
-              facturationsPar={facturationsPar}
-              periodesFacturation={periodesFacturation}
-              transporteurs={transporteurs}
-              selectedConditionPaiementId={selectedConditionPaiementId}
-              selectedTransporteurCompteId={selectedTransporteurCompteId}
-              facturationConfig={facturationConfig}
-              piecesJointes={piecesJointes}
-              saving={subEntitySaving}
-              onCreateAddress={handleCreateAddress}
-              onUpdateAddress={handleUpdateAddress}
-              onDeleteAddress={handleDeleteAddress}
-              onSaveEntreprise={handleSaveEntreprise}
-              onSaveConditionPaiement={handleSaveConditionPaiement}
-              onSaveFacturationConfig={handleSaveFacturationConfig}
-              onSaveTransporteur={handleSaveTransporteur}
-            />
-          </TabsContent>
+
 
            <TabsContent value="activites-taches" className="flex-1 flex flex-col gap-6">
              <div className="space-y-4">

@@ -10,18 +10,14 @@ import type {
   AlertesResponse,
   DashboardFilters,
 } from "@proto/dashboard/dashboard";
-
-export interface DashboardActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ActionResult } from "@/lib/types/common";
 
 /**
  * Fetch KPIs du dashboard via gRPC
  */
 export async function getDashboardKpis(
   filters: DashboardFilters
-): Promise<DashboardActionResult<KpisResponse>> {
+): Promise<ActionResult<KpisResponse>> {
   try {
     const data = await dashboard.getKpis({ filters });
     return { data, error: null };
@@ -39,7 +35,7 @@ export async function getDashboardKpis(
  */
 export async function getEvolutionCa(
   filters: DashboardFilters
-): Promise<DashboardActionResult<EvolutionCaResponse>> {
+): Promise<ActionResult<EvolutionCaResponse>> {
   try {
     const data = await dashboard.getEvolutionCa({ filters });
     return { data, error: null };
@@ -57,7 +53,7 @@ export async function getEvolutionCa(
  */
 export async function getRepartitionProduits(
   filters: DashboardFilters
-): Promise<DashboardActionResult<RepartitionProduitsResponse>> {
+): Promise<ActionResult<RepartitionProduitsResponse>> {
   try {
     const data = await dashboard.getRepartitionProduits({ filters });
     return { data, error: null };
@@ -75,7 +71,7 @@ export async function getRepartitionProduits(
  */
 export async function getStatsSocietes(
   filters: DashboardFilters
-): Promise<DashboardActionResult<StatsSocietesResponse>> {
+): Promise<ActionResult<StatsSocietesResponse>> {
   try {
     const data = await dashboard.getStatsSocietes({ filters });
     return { data, error: null };
@@ -92,10 +88,10 @@ export async function getStatsSocietes(
  * Fetch toutes les données du dashboard en parallèle
  */
 export async function getDashboardData(filters: DashboardFilters): Promise<{
-  kpis: DashboardActionResult<KpisResponse>;
-  evolutionCa: DashboardActionResult<EvolutionCaResponse>;
-  repartitionProduits: DashboardActionResult<RepartitionProduitsResponse>;
-  statsSocietes: DashboardActionResult<StatsSocietesResponse>;
+  kpis: ActionResult<KpisResponse>;
+  evolutionCa: ActionResult<EvolutionCaResponse>;
+  repartitionProduits: ActionResult<RepartitionProduitsResponse>;
+  statsSocietes: ActionResult<StatsSocietesResponse>;
 }> {
   const [kpis, evolutionCa, repartitionProduits, statsSocietes] = await Promise.all([
     getDashboardKpis(filters),
@@ -112,7 +108,7 @@ export async function getDashboardData(filters: DashboardFilters): Promise<{
  */
 export async function getKpisCommerciaux(
   filters: DashboardFilters
-): Promise<DashboardActionResult<KpisCommerciauxResponse>> {
+): Promise<ActionResult<KpisCommerciauxResponse>> {
   try {
     const data = await commercialKpis.getKpisCommerciaux({ filters });
     return { data, error: null };
@@ -130,7 +126,7 @@ export async function getKpisCommerciaux(
  */
 export async function getAlertes(
   filters: DashboardFilters
-): Promise<DashboardActionResult<AlertesResponse>> {
+): Promise<ActionResult<AlertesResponse>> {
   try {
     const data = await alertes.getAlertes({ filters });
     return { data, error: null };

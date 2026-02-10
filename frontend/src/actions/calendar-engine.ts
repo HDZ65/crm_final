@@ -2,11 +2,11 @@
 
 import { calendarEngine } from "@/lib/grpc";
 import type {
-  PlannedDateResultDto,
-  DateEligibilityDto,
-  ResolvedDebitConfigDto,
-  ActionResult,
-} from "@/types/calendar";
+  CalculatePlannedDateResponse,
+  CheckDateEligibilityResponse,
+  ResolvedDebitConfiguration,
+} from "@proto/calendar/calendar";
+import type { ActionResult } from "@/lib/types/common";
 
 function mapResolvedConfig(config: {
   appliedLevel: number;
@@ -17,7 +17,7 @@ function mapResolvedConfig(config: {
   shiftStrategy: number;
   holidayZoneId: string;
   cutoffConfigId: string;
-}): ResolvedDebitConfigDto {
+}): ResolvedDebitConfiguration {
   return {
     appliedLevel: config.appliedLevel,
     appliedConfigId: config.appliedConfigId,
@@ -39,7 +39,7 @@ export async function calculatePlannedDate(input: {
   targetMonth: number;
   targetYear: number;
   includeResolutionTrace?: boolean;
-}): Promise<ActionResult<PlannedDateResultDto>> {
+}): Promise<ActionResult<CalculatePlannedDateResponse>> {
   try {
     const response = await calendarEngine.calculatePlannedDate({
       organisationId: input.organisationId,
@@ -57,7 +57,7 @@ export async function calculatePlannedDate(input: {
         plannedDebitDate: response.plannedDebitDate,
         originalTargetDate: response.originalTargetDate,
         wasShifted: response.wasShifted,
-        shiftReason: response.shiftReason || undefined,
+        shiftReason: response.shiftReason,
         resolvedConfig: response.resolvedConfig
           ? mapResolvedConfig(response.resolvedConfig)
           : {
@@ -70,6 +70,7 @@ export async function calculatePlannedDate(input: {
               holidayZoneId: "",
               cutoffConfigId: "",
             },
+        resolutionTrace: response.resolutionTrace || [],
       },
       error: null,
     };
@@ -99,7 +100,7 @@ export interface BatchCalculationResult {
   plannedDebitDate?: string;
   errorCode?: string;
   errorMessage?: string;
-  resolvedConfig?: ResolvedDebitConfigDto;
+  resolvedConfig?: ResolvedDebitConfiguration;
 }
 
 export async function calculatePlannedDatesBatch(input: {
@@ -134,9 +135,9 @@ export async function calculatePlannedDatesBatch(input: {
         results: response.results.map((r) => ({
           contratId: r.contratId,
           success: r.success,
-          plannedDebitDate: r.plannedDebitDate || undefined,
-          errorCode: r.errorCode || undefined,
-          errorMessage: r.errorMessage || undefined,
+          plannedDebitDate: r.plannedDebitDate,
+          errorCode: r.errorCode,
+          errorMessage: r.errorMessage,
           resolvedConfig: r.resolvedConfig
             ? mapResolvedConfig(r.resolvedConfig)
             : undefined,
@@ -163,7 +164,7 @@ export async function checkDateEligibility(input: {
   organisationId: string;
   date: string;
   holidayZoneId: string;
-}): Promise<ActionResult<DateEligibilityDto>> {
+}): Promise<ActionResult<CheckDateEligibilityResponse>> {
   try {
     const response = await calendarEngine.checkDateEligibility({
       organisationId: input.organisationId,
@@ -176,7 +177,7 @@ export async function checkDateEligibility(input: {
         isEligible: response.isEligible,
         isWeekend: response.isWeekend,
         isHoliday: response.isHoliday,
-        holidayName: response.holidayName || undefined,
+        holidayName: response.holidayName,
         nextEligibleDate: response.nextEligibleDate,
         previousEligibleDate: response.previousEligibleDate,
       },

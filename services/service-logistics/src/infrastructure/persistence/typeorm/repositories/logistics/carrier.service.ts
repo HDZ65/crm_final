@@ -2,10 +2,9 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CarrierAccountEntity } from '../../../../../domain/logistics/entities';
-import type { ICarrierService } from '../../../../../application/logistics/ports';
 
 @Injectable()
-export class CarrierService implements ICarrierService {
+export class CarrierService {
   private readonly logger = new Logger(CarrierService.name);
 
   constructor(

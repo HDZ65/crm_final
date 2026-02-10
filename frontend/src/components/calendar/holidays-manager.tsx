@@ -31,8 +31,9 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
-import type { HolidayZoneDto, HolidayDto } from "@/types/calendar";
-import { HolidayType, HolidayTypeLabels } from "@/types/calendar";
+import type { HolidayZone, Holiday } from "@proto/calendar/calendar";
+import { HolidayType } from "@proto/calendar/calendar";
+import { HolidayTypeLabels } from "@/lib/ui/labels/calendar";
 import {
   listHolidayZones,
   createHolidayZone,
@@ -46,7 +47,7 @@ import {
 } from "@/actions/calendar-holidays";
 
 interface HolidaysManagerProps {
-  initialZones: HolidayZoneDto[];
+  initialZones: HolidayZone[];
   organisationId: string;
 }
 
@@ -54,18 +55,18 @@ export function HolidaysManager({
   initialZones,
   organisationId,
 }: HolidaysManagerProps) {
-  const [zones, setZones] = useState<HolidayZoneDto[]>(initialZones);
-  const [selectedZone, setSelectedZone] = useState<HolidayZoneDto | null>(
+  const [zones, setZones] = useState<HolidayZone[]>(initialZones);
+  const [selectedZone, setSelectedZone] = useState<HolidayZone | null>(
     initialZones[0] || null
   );
-  const [holidays, setHolidays] = useState<HolidayDto[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [loadingHolidays, setLoadingHolidays] = useState(false);
   const [year, setYear] = useState(new Date().getFullYear());
 
   const [zoneDialogOpen, setZoneDialogOpen] = useState(false);
-  const [editingZone, setEditingZone] = useState<HolidayZoneDto | null>(null);
+  const [editingZone, setEditingZone] = useState<HolidayZone | null>(null);
   const [holidayDialogOpen, setHolidayDialogOpen] = useState(false);
-  const [editingHoliday, setEditingHoliday] = useState<HolidayDto | null>(null);
+  const [editingHoliday, setEditingHoliday] = useState<Holiday | null>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const loadHolidays = useCallback(async () => {
@@ -123,7 +124,7 @@ export function HolidaysManager({
     }
   };
 
-  const handleDeleteZone = async (zone: HolidayZoneDto) => {
+  const handleDeleteZone = async (zone: HolidayZone) => {
     if (!confirm(`Supprimer la zone "${zone.name}" ?`)) return;
 
     const result = await deleteHolidayZone(zone.id);
@@ -177,7 +178,7 @@ export function HolidaysManager({
     }
   };
 
-  const handleDeleteHoliday = async (holiday: HolidayDto) => {
+  const handleDeleteHoliday = async (holiday: Holiday) => {
     if (!confirm(`Supprimer "${holiday.name}" ?`)) return;
 
     const result = await deleteHoliday(holiday.id);

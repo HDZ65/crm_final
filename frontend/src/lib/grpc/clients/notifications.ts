@@ -1,7 +1,7 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
 import {
-  NotificationServiceClient,
+  NotificationServiceService,
   type NotificationResponse,
   type NotificationListResponse,
   type GetNotificationsByUserRequest,
@@ -14,11 +14,13 @@ import {
   type GetUnreadCountRequest,
 } from "@proto/notifications/notifications";
 
-let notificationInstance: NotificationServiceClient | null = null;
+let notificationInstance: GrpcClient | null = null;
 
-function getNotificationClient(): NotificationServiceClient {
+function getNotificationClient(): GrpcClient {
   if (!notificationInstance) {
-    notificationInstance = new NotificationServiceClient(
+    notificationInstance = makeClient(
+      NotificationServiceService,
+      "NotificationService",
       SERVICES.notifications,
       createAuthChannelCredentials(credentials.createInsecure())
     );

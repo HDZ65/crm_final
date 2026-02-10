@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ClientNotesSheet } from "@/components/client-notes-sheet"
 import { ArrowLeft, Plus, Mail, MapPin, Calendar, MoreHorizontal, Pencil, Trash2, Copy } from "lucide-react"
-import type { EventItem } from "@/types/client"
+import type { EventItem } from "@/lib/ui/display-types/client"
 
 interface ClientHeaderProps {
   clientName: string

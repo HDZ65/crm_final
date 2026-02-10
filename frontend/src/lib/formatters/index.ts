@@ -2,7 +2,7 @@
  * Fonctions utilitaires de formatage et transformation
  */
 
-import type { ClientStatus } from "@/types/client"
+import type { ClientStatus } from "@/lib/ui/display-types/client"
 
 export function formatCreatedAgo(dateString?: string): string {
   if (!dateString) return ""

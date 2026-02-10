@@ -39,7 +39,7 @@ export class AdresseEntity {
    @Column({ length: 50 })
    type: string;
 
-   @Column({ name: 'type_adresse', length: 50, default: 'FACTURATION', nullable: true })
+   @Column({ name: 'type_adresse', type: 'varchar', length: 50, default: 'FACTURATION', nullable: true })
    typeAdresse: string | null;
 
    @CreateDateColumn({ name: 'created_at' })

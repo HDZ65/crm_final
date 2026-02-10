@@ -17,7 +17,7 @@ import type {
   ListPreferenceSchemaResponse,
   Preference,
   ListPreferenceResponse,
-  SubscriptionDeleteResponse,
+  DeleteResponse,
 } from "@proto/subscriptions/subscriptions";
 
 // ============================================================================
@@ -101,7 +101,7 @@ export async function updateSubscriptionPlan(input: {
   }
 }
 
-export async function deleteSubscriptionPlan(id: string): Promise<ActionResult<SubscriptionDeleteResponse>> {
+export async function deleteSubscriptionPlan(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await subscriptionPlans.delete({ id });
     revalidatePath("/subscriptions");
@@ -215,7 +215,7 @@ export async function updateSubscription(input: {
   }
 }
 
-export async function deleteSubscription(id: string): Promise<ActionResult<SubscriptionDeleteResponse>> {
+export async function deleteSubscription(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await subscriptions.delete({ id });
     revalidatePath("/subscriptions");
@@ -380,7 +380,7 @@ export async function updatePreferenceSchema(input: {
   }
 }
 
-export async function deletePreferenceSchema(id: string): Promise<ActionResult<SubscriptionDeleteResponse>> {
+export async function deletePreferenceSchema(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await subscriptionPreferenceSchemas.delete({ id });
     revalidatePath("/subscriptions");
@@ -454,7 +454,7 @@ export async function updatePreference(input: {
   }
 }
 
-export async function deletePreference(id: string): Promise<ActionResult<SubscriptionDeleteResponse>> {
+export async function deletePreference(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await subscriptionPreferences.delete({ id });
     revalidatePath("/subscriptions");

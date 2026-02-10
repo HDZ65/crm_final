@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package justiplus;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// JUSTI-PLUS SERVICE
+// ============================================================================
+// Synchronisation et gestion des cas juridiques depuis le partenaire Justi+
+// Protection juridique et assistance juridique pour les clients
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum StatutCas {
+  STATUT_CAS_UNSPECIFIED = 0;
+  STATUT_CAS_OUVERT = 1;
+  STATUT_CAS_EN_COURS = 2;
+  STATUT_CAS_EN_ATTENTE = 3;
+  STATUT_CAS_RESOLU = 4;
+  STATUT_CAS_CLOS = 5;
+  STATUT_CAS_REFUSE = 6;
+}
+
+enum TypeCas {
+  TYPE_CAS_UNSPECIFIED = 0;
+  TYPE_CAS_CONSULTATION = 1;
+  TYPE_CAS_LITIGE = 2;
+  TYPE_CAS_MEDIATION = 3;
+  TYPE_CAS_CONTENTIEUX = 4;
+  TYPE_CAS_CONSEIL = 5;
+}
+
+// ========== MESSAGES ==========
+
+message CasJuridique {
+  string id = 1;
+  string organisation_id = 2;
+  string client_id = 3;
+  string contrat_id = 4;                              // Linked contract
+  string reference_externe = 5;                       // External reference from Justi+
+  string titre = 6;
+  string description = 7;
+  TypeCas type = 8;
+  StatutCas statut = 9;
+  string domaine_juridique = 10;                      // e.g., "droit du travail", "immobilier"
+  string avocat_assigne = 11;                         // Assigned lawyer name
+  string date_ouverture = 12;
+  string date_cloture = 13;
+  double montant_couvert = 14;                        // Covered amount
+  double montant_franchise = 15;                      // Deductible amount
+  string notes = 16;
+  string metadata = 17;                               // JSON metadata from partner
+  string synced_at = 18;                              // Last sync timestamp
+  string created_at = 19;
+  string updated_at = 20;
+}
+
+// ========== SYNC ==========
+
+message SyncCasRequest {
+  string organisation_id = 1;
+  optional string client_id = 2;                      // Sync specific client, or all if empty
+  optional string since = 3;                          // ISO date, incremental sync
+  bool force_full_sync = 4;
+}
+
+message SyncCasResponse {
+  int32 cas_crees = 1;
+  int32 cas_mis_a_jour = 2;
+  int32 cas_ignores = 3;
+  int32 erreurs = 4;
+  repeated SyncError errors = 5;
+  string sync_id = 6;
+  google.protobuf.Timestamp synced_at = 7;
+}
+
+message SyncError {
+  string reference_externe = 1;
+  string message = 2;
+  string code = 3;
+}
+
+// ========== REQUESTS/RESPONSES ==========
+
+message GetCasRequest {
+  string id = 1;
+}
+
+message GetCasResponse {
+  CasJuridique cas = 1;
+}
+
+message ListCasRequest {
+  string organisation_id = 1;
+  optional string client_id = 2;
+  optional string contrat_id = 3;
+  optional StatutCas statut = 4;
+  optional TypeCas type = 5;
+  optional string search = 6;
+  PaginationRequest pagination = 7;
+}
+
+message ListCasResponse {
+  repeated CasJuridique cas = 1;
+  PaginationResponse pagination = 2;
+}
+
+// ========== PAGINATION ==========
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+// ========== SERVICE ==========
+
+service JustiPlusSvc {
+  rpc SyncCas(SyncCasRequest) returns (SyncCasResponse);
+  rpc GetCas(GetCasRequest) returns (GetCasResponse);
+  rpc ListCas(ListCasRequest) returns (ListCasResponse);
+}

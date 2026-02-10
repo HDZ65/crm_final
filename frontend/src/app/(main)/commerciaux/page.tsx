@@ -1,5 +1,5 @@
 import { CommerciauxPageClient } from "./commerciaux-page-client"
-import { getActiveOrgId } from "@/lib/server-data"
+import { getActiveOrgId } from "@/lib/server/data"
 import { getApporteursByOrganisation } from "@/actions/commerciaux"
 
 export default async function CommerciauxPage() {

@@ -8,6 +8,7 @@ import {
   ExpeditionEntity,
   TrackingEventEntity,
 } from './domain/logistics/entities';
+// Note: FulfillmentCutoffConfigEntity is now managed by FulfillmentModule
 
 // Infrastructure services
 import {
@@ -16,6 +17,7 @@ import {
   ExpeditionService,
   TrackingService,
 } from './infrastructure/persistence/typeorm/repositories/logistics';
+// Note: FulfillmentCutoffConfigService is now managed by FulfillmentModule
 
 // Infrastructure external
 import { MailevaService } from './infrastructure/external/maileva';
@@ -27,7 +29,7 @@ import {
   ExpeditionController,
   TrackingController,
   MailevaController,
-} from './interfaces/grpc/controllers/logistics';
+} from './infrastructure/grpc';
 
 @Module({
   imports: [

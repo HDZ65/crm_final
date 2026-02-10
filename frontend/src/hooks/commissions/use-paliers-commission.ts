@@ -4,18 +4,18 @@ import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
 import type {
-  PalierCommissionResponseDto,
-  PalierFiltersDto,
-  PalierApplicableFiltersDto,
-} from "@/types/commission"
+  PalierDisplay,
+  PalierFilters,
+  PalierApplicableFilters,
+} from "@/lib/ui/display-types/commission"
 
 /**
  * Hook pour récupérer la liste des paliers de commission
  * GET /paliers-commission
  */
-export function usePaliersCommission(filters?: PalierFiltersDto) {
-  const [paliers, setPaliers] = useState<PalierCommissionResponseDto[]>([])
-  const { loading, error, execute } = useApi<PalierCommissionResponseDto[]>()
+export function usePaliersCommission(filters?: PalierFilters) {
+  const [paliers, setPaliers] = useState<PalierDisplay[]>([])
+  const { loading, error, execute } = useApi<PalierDisplay[]>()
 
   const fetchPaliers = useCallback(async () => {
     try {
@@ -58,9 +58,9 @@ export function usePaliersCommission(filters?: PalierFiltersDto) {
  * Hook pour récupérer le palier applicable
  * GET /paliers-commission/applicable
  */
-export function usePalierApplicable(filters: PalierApplicableFiltersDto | null) {
-  const [palier, setPalier] = useState<PalierCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<PalierCommissionResponseDto | null>()
+export function usePalierApplicable(filters: PalierApplicableFilters | null) {
+  const [palier, setPalier] = useState<PalierDisplay | null>(null)
+  const { loading, error, execute } = useApi<PalierDisplay | null>()
 
   const fetchPalier = useCallback(async () => {
     if (!filters?.baremeId || !filters?.typePalier || filters?.valeur === undefined) return
@@ -97,8 +97,8 @@ export function usePalierApplicable(filters: PalierApplicableFiltersDto | null) 
  * GET /paliers-commission/:id
  */
 export function usePalierCommission(palierId: string | null) {
-  const [palier, setPalier] = useState<PalierCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<PalierCommissionResponseDto>()
+  const [palier, setPalier] = useState<PalierDisplay | null>(null)
+  const { loading, error, execute } = useApi<PalierDisplay>()
 
   const fetchPalier = useCallback(async () => {
     if (!palierId) return

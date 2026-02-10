@@ -17,17 +17,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import type { CalendarDayDto, PlannedDebitSummaryDto } from "@/types/calendar";
+import type { CalendarDay, PlannedDebitSummary } from "@proto/calendar/calendar";
+import { DebitBatch } from "@proto/calendar/calendar";
 import {
   DebitBatchShortLabels,
   PlannedDateStatusLabels,
-  DebitBatch,
-} from "@/types/calendar";
+} from "@/lib/ui/labels/calendar";
 import { getCalendarView, getDateDetails } from "@/actions/calendar-admin";
 import { cn } from "@/lib/utils";
 
 interface CalendarGridProps {
-  initialDays: CalendarDayDto[];
+  initialDays: CalendarDay[];
   organisationId: string;
 }
 
@@ -61,10 +61,10 @@ function getEventColor(index: number): string {
 
 export function CalendarGrid({ initialDays, organisationId }: CalendarGridProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [days, setDays] = useState<CalendarDayDto[]>(initialDays);
+  const [days, setDays] = useState<CalendarDay[]>(initialDays);
   const [loading, setLoading] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<CalendarDayDto | null>(null);
-  const [dayDetails, setDayDetails] = useState<PlannedDebitSummaryDto[]>([]);
+  const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
+  const [dayDetails, setDayDetails] = useState<PlannedDebitSummary[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [viewMode, setViewMode] = useState<string>("month");
 
@@ -111,7 +111,7 @@ export function CalendarGrid({ initialDays, organisationId }: CalendarGridProps)
     loadMonth(todayDate);
   };
 
-  const openDayDetails = async (day: CalendarDayDto) => {
+  const openDayDetails = async (day: CalendarDay) => {
     setSelectedDay(day);
     setLoadingDetails(true);
 
@@ -138,7 +138,7 @@ export function CalendarGrid({ initialDays, organisationId }: CalendarGridProps)
     dayNumber: number;
     isCurrentMonth: boolean;
     isToday: boolean;
-    data: CalendarDayDto | null;
+    data: CalendarDay | null;
   }
 
   const calendarCells: CalendarCell[] = [];

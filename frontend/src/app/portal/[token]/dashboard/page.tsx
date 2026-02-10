@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, XCircle, ArrowRight, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { getClient } from "@/actions/clients"
-import { calculatePrice } from "@/actions/bundle"
 
 interface ServiceStatus {
   name: string
@@ -55,26 +54,14 @@ async function getClientServices(token: string): Promise<ServiceStatus[]> {
   if (client.hasJustiPlus) activeServiceCodes.push("JUSTI_PLUS");
   if (client.hasWincash) activeServiceCodes.push("WINCASH");
 
-  if (activeServiceCodes.length > 0) {
-    const { data: priceData } = await calculatePrice({
-      clientId: token,
-      organisationId: client.organisationId || "",
-      services: activeServiceCodes,
-    });
-
-    if (priceData) {
-      // Update prices from bundle calculation
-      services.forEach(service => {
-        if (service.name === "Conciergerie Privée" && priceData.prixConciergerie) {
-          service.price = parseFloat(priceData.prixConciergerie);
-        } else if (service.name === "Justi+" && priceData.prixJustiPlus) {
-          service.price = parseFloat(priceData.prixJustiPlus);
-        } else if (service.name === "Wincash" && priceData.prixWincash) {
-          service.price = parseFloat(priceData.prixWincash);
-        }
-      });
-    }
-  }
+  // TODO: Implement bundle price calculation once bundle service is fully integrated
+  // For now, use hardcoded prices from service definitions above
+  // if (activeServiceCodes.length > 0) {
+  //   const { data: priceData } = await calculatePrice({
+  //     bundleId: "", // Need to determine bundle ID based on active services
+  //     clientId: token,
+  //   });
+  // }
 
   return services;
 }

@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,13 +29,15 @@ import {
   ArrowUp,
   ArrowDown,
   Minus,
+  ExternalLink,
 } from "lucide-react"
-import type { TacheDto, TachePriorite } from "@/types/tache"
+import type { Tache } from "@proto/activites/activites"
+import type { TacheType, TachePriorite, TacheStatut } from "@/lib/ui/labels/tache"
 import {
   TACHE_TYPE_LABELS,
   TACHE_PRIORITE_LABELS,
   TACHE_STATUT_LABELS,
-} from "@/types/tache"
+} from "@/lib/ui/labels/tache"
 import { format, isPast, isToday } from "date-fns"
 import { fr } from "date-fns/locale"
 
@@ -56,15 +59,15 @@ interface Membre {
 }
 
 interface ColumnsProps {
-  onView?: (tache: TacheDto) => void
-  onStart?: (tache: TacheDto) => void
-  onComplete?: (tache: TacheDto) => void
-  onCancel?: (tache: TacheDto) => void
-  onDelete?: (tache: TacheDto) => void
+  onView?: (tache: Tache) => void
+  onStart?: (tache: Tache) => void
+  onComplete?: (tache: Tache) => void
+  onCancel?: (tache: Tache) => void
+  onDelete?: (tache: Tache) => void
   membres?: Membre[]
 }
 
-export function getColumns(props: ColumnsProps = {}): ColumnDef<TacheDto>[] {
+export function getColumns(props: ColumnsProps = {}): ColumnDef<Tache>[] {
   const { onView, onStart, onComplete, onCancel, onDelete, membres = [] } = props
 
   const getMembreName = (userId: string) => {
@@ -131,14 +134,14 @@ export function getColumns(props: ColumnsProps = {}): ColumnDef<TacheDto>[] {
     {
       accessorKey: "type",
       header: "Type",
-      cell: ({ row }) => TACHE_TYPE_LABELS[row.original.type] || row.original.type,
+      cell: ({ row }) => TACHE_TYPE_LABELS[row.original.type as TacheType] || row.original.type,
     },
     {
       accessorKey: "priorite",
       header: "Priorité",
       cell: ({ row }) => {
         const priorite = row.original.priorite
-        const config = PRIORITE_CONFIG[priorite]
+        const config = PRIORITE_CONFIG[priorite as TachePriorite]
         const Icon = config.icon
 
         return (
@@ -172,29 +175,47 @@ export function getColumns(props: ColumnsProps = {}): ColumnDef<TacheDto>[] {
 
         return (
           <Badge variant="outline" className={statusStyles[statut]}>
-            {TACHE_STATUT_LABELS[statut]}
+            {TACHE_STATUT_LABELS[statut as TacheStatut]}
           </Badge>
         )
       },
     },
-    {
-      accessorKey: "assigneA",
-      header: "Assigné à",
-      cell: ({ row }) => {
-        const name = getMembreName(row.original.assigneA)
-        return (
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-              {name.charAt(0).toUpperCase()}
-            </div>
-            <span className="truncate max-w-[120px]">{name}</span>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "dateEcheance",
-      header: "Échéance",
+     {
+       accessorKey: "assigneA",
+       header: "Assigné à",
+       cell: ({ row }) => {
+         const name = getMembreName(row.original.assigneA)
+         return (
+           <div className="flex items-center gap-2">
+             <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+               {name.charAt(0).toUpperCase()}
+             </div>
+             <span className="truncate max-w-[120px]">{name}</span>
+           </div>
+         )
+       },
+     },
+     {
+       accessorKey: "clientId",
+       header: "Client",
+       cell: ({ row }) => {
+         const clientId = row.original.clientId
+         if (!clientId) {
+           return <span className="text-muted-foreground">—</span>
+         }
+         return (
+           <Link href={`/clients/${clientId}`}>
+             <Badge variant="outline" className="cursor-pointer hover:bg-muted">
+               {clientId.slice(0, 8)}...
+               <ExternalLink className="ml-1 h-3 w-3" />
+             </Badge>
+           </Link>
+         )
+       },
+     },
+     {
+       accessorKey: "dateEcheance",
+       header: "Échéance",
       cell: ({ row }) => {
         const date = new Date(row.original.dateEcheance)
         const statut = row.original.statut

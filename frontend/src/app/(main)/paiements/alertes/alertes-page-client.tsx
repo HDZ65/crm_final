@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table"
 import { acknowledgeAlert, getAlertStats, listAlerts } from "@/actions/finance-alerts"
 import { toast } from "sonner"
-import { AlertTriangle, RefreshCw, Search } from "lucide-react"
+import { RefreshCw, Search } from "lucide-react"
 
 interface AlertesPageClientProps {
   initialAlerts?: any[] | null
@@ -73,7 +73,7 @@ export function AlertesPageClient({
       statusFilter === "active" ? false : statusFilter === "inactive" ? true : undefined
 
     const [alertsResult, statsResult] = await Promise.all([
-      listAlerts({ societeId, acknowledged, page: 1, pageSize: 100 } as any),
+      listAlerts({ societeId, acknowledged, page: 1, limit: 100 } as any),
       getAlertStats({ societeId, fromDate, toDate } as any),
     ])
 
@@ -142,17 +142,11 @@ export function AlertesPageClient({
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <AlertTriangle className="size-6" />
-            Alertes paiements
-          </h1>
-          <p className="text-muted-foreground">
-            Suivez les alertes et basculez leur etat actif/inactif.
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Suivez les alertes et basculez leur etat actif/inactif.
+        </p>
         <Button variant="outline" onClick={fetchAlerts} disabled={loading || !societeId}>
           <RefreshCw className="mr-2 size-4" />
           Actualiser
@@ -292,6 +286,6 @@ export function AlertesPageClient({
           </Table>
         </CardContent>
       </Card>
-    </main>
+    </div>
   )
 }

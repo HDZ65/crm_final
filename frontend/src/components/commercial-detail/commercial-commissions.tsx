@@ -39,22 +39,32 @@ import {
 interface CommercialCommissionsProps {
   commercialId: string
   organisationId: string
+  initialCommissions?: any[]
+  initialBordereaux?: any[]
 }
 
 export function CommercialCommissions({
   commercialId,
   organisationId,
+  initialCommissions,
+  initialBordereaux,
 }: CommercialCommissionsProps) {
   const [activeTab, setActiveTab] = React.useState("commissions")
-  const [commissions, setCommissions] = React.useState<CommissionWithDetails[]>([])
-  const [bordereaux, setBordereaux] = React.useState<BordereauWithDetails[]>([])
+  const [commissions, setCommissions] = React.useState<CommissionWithDetails[]>(
+    (initialCommissions as any as CommissionWithDetails[]) || []
+  )
+  const [bordereaux, setBordereaux] = React.useState<BordereauWithDetails[]>(
+    (initialBordereaux as any as BordereauWithDetails[]) || []
+  )
   const [reprises, setReprises] = React.useState<RepriseWithDetails[]>([])
-  const [loadingCommissions, setLoadingCommissions] = React.useState(true)
-  const [loadingBordereaux, setLoadingBordereaux] = React.useState(true)
+  const [loadingCommissions, setLoadingCommissions] = React.useState(!initialCommissions)
+  const [loadingBordereaux, setLoadingBordereaux] = React.useState(!initialBordereaux)
   const [loadingReprises, setLoadingReprises] = React.useState(true)
 
-  // Fetch commissions
+  // Fetch commissions only if not provided via SSR
   React.useEffect(() => {
+    if (initialCommissions) return
+    
     const fetchCommissions = async () => {
       setLoadingCommissions(true)
       const result = await getCommissionsByOrganisation({
@@ -67,10 +77,12 @@ export function CommercialCommissions({
       setLoadingCommissions(false)
     }
     fetchCommissions()
-  }, [organisationId, commercialId])
+  }, [organisationId, commercialId, initialCommissions])
 
-  // Fetch bordereaux
+  // Fetch bordereaux only if not provided via SSR
   React.useEffect(() => {
+    if (initialBordereaux) return
+    
     const fetchBordereaux = async () => {
       setLoadingBordereaux(true)
       const result = await getBordereauxByOrganisation({
@@ -83,9 +95,9 @@ export function CommercialCommissions({
       setLoadingBordereaux(false)
     }
     fetchBordereaux()
-  }, [organisationId, commercialId])
+  }, [organisationId, commercialId, initialBordereaux])
 
-  // Fetch reprises
+  // Fetch reprises (always client-side, not critical for initial render)
   React.useEffect(() => {
     const fetchReprises = async () => {
       setLoadingReprises(true)

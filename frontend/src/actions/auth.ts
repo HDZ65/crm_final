@@ -15,6 +15,7 @@ import type {
   Utilisateur,
 } from "@proto/organisations/users";
 import { COOKIE_NAMES, TOKEN_CONFIG } from "@/lib/auth/auth.config";
+import type { ActionResult } from "@/lib/types/common";
 
 // =============================================================================
 // Types
@@ -24,11 +25,6 @@ export interface AuthMeResponse {
   utilisateur: Utilisateur;
   organisations: UserOrganisation[];
   hasOrganisation: boolean;
-}
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
 }
 
 // =============================================================================
@@ -155,31 +151,29 @@ export async function signupAction(
   }
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || ""}/api/auth/register`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(result.data),
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        errors: { _form: [error.message || "Erreur lors de l'inscription"] },
-      };
-    }
+    // Create user via gRPC (replaces REST /api/auth/register)
+    await users.create({
+      keycloakId: "", // Will be set by backend after Keycloak sync
+      email: result.data.email,
+      nom: result.data.nom,
+      prenom: result.data.prenom,
+      telephone: "",
+      actif: true,
+    });
 
     return {
       success: true,
       data: { success: true },
     };
-  } catch {
+  } catch (err) {
+    const error = err as { details?: string; message?: string };
     return {
       success: false,
-      errors: { _form: ["Une erreur est survenue. Veuillez reessayer."] },
+      errors: {
+        _form: [
+          error.details || error.message || "Erreur lors de l'inscription",
+        ],
+      },
     };
   }
 }
@@ -259,13 +253,20 @@ async function fetchUserOrganisations(
 ): Promise<UserOrganisation[]> {
   const membresResponse = await membresCompte.listByUtilisateur({
     utilisateurId: userId,
+    pagination: undefined,
   });
 
   return Promise.all(
     (membresResponse.membres || []).map(async (membre) => {
+      // Handle both camelCase and snake_case field names from gRPC (keepCase: true)
+      const membreOrgId = membre.organisationId || ((membre as unknown as Record<string, unknown>).organisation_id as string) || "";
+      const membreRoleId = membre.roleId || ((membre as unknown as Record<string, unknown>).role_id as string) || "";
+
+      console.log("[fetchUserOrganisations] membre orgId:", membreOrgId, "roleId:", membreRoleId);
+
       const [compteResult, roleResult] = await Promise.allSettled([
-        comptes.get({ id: membre.organisationId }),
-        roles.get({ id: membre.roleId }),
+        comptes.get({ id: membreOrgId }),
+        roles.get({ id: membreRoleId }),
       ]);
 
       const organisationNom =
@@ -281,7 +282,7 @@ async function fetchUserOrganisations(
           : { id: "", code: "", nom: "" };
 
       return {
-        organisationId: membre.organisationId,
+        organisationId: membreOrgId,
         organisationNom,
         role,
         etat: membre.etat || "actif",

@@ -1,0 +1,357 @@
+syntax = "proto3";
+
+package agenda;
+
+// ========== ENUMS ==========
+
+enum OAuthProvider {
+  OAUTH_PROVIDER_UNSPECIFIED = 0;
+  OAUTH_PROVIDER_ZOOM = 1;
+  OAUTH_PROVIDER_GOOGLE = 2;
+  OAUTH_PROVIDER_MICROSOFT = 3;
+}
+
+enum MeetingSummaryStatus {
+  MEETING_SUMMARY_STATUS_UNSPECIFIED = 0;
+  MEETING_SUMMARY_STATUS_PENDING = 1;
+  MEETING_SUMMARY_STATUS_PROCESSING = 2;
+  MEETING_SUMMARY_STATUS_COMPLETED = 3;
+  MEETING_SUMMARY_STATUS_FAILED = 4;
+  MEETING_SUMMARY_STATUS_NO_TRANSCRIPT = 5;
+}
+
+enum ParticipantMatchType {
+  PARTICIPANT_MATCH_TYPE_UNSPECIFIED = 0;
+  PARTICIPANT_MATCH_TYPE_EMAIL_EXACT = 1;
+  PARTICIPANT_MATCH_TYPE_MANUAL = 2;
+  PARTICIPANT_MATCH_TYPE_UNMATCHED = 3;
+}
+
+enum CalendarEventSource {
+  CALENDAR_EVENT_SOURCE_UNSPECIFIED = 0;
+  CALENDAR_EVENT_SOURCE_CRM = 1;
+  CALENDAR_EVENT_SOURCE_GOOGLE_CALENDAR = 2;
+  CALENDAR_EVENT_SOURCE_OUTLOOK = 3;
+  CALENDAR_EVENT_SOURCE_ZOOM = 4;
+  CALENDAR_EVENT_SOURCE_GOOGLE_MEET = 5;
+}
+
+enum OAuthConnectionStatus {
+  OAUTH_CONNECTION_STATUS_UNSPECIFIED = 0;
+  OAUTH_CONNECTION_STATUS_ACTIVE = 1;
+  OAUTH_CONNECTION_STATUS_EXPIRED = 2;
+  OAUTH_CONNECTION_STATUS_REVOKED = 3;
+  OAUTH_CONNECTION_STATUS_ERROR = 4;
+}
+
+// ========== OAUTH CONNECTION SERVICE ==========
+service OAuthConnectionService {
+  rpc ConnectProvider(ConnectProviderRequest) returns (OAuthConnection);
+  rpc DisconnectProvider(DisconnectProviderRequest) returns (DeleteResponse);
+  rpc GetAuthUrl(GetAuthUrlRequest) returns (GetAuthUrlResponse);
+  rpc HandleCallback(HandleCallbackRequest) returns (OAuthConnection);
+  rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (OAuthConnection);
+}
+
+message OAuthConnection {
+  string id = 1;
+  string user_id = 2;
+  string organisation_id = 3;
+  OAuthProvider provider = 4;
+  string scopes = 5;
+  OAuthConnectionStatus status = 6;
+  string connected_at = 7;
+  string token_expires_at = 8;
+  string sync_token = 9;
+  string channel_id = 10;
+  string channel_expiration = 11;
+  string created_at = 12;
+  string updated_at = 13;
+}
+
+message ConnectProviderRequest {
+  string user_id = 1;
+  string organisation_id = 2;
+  OAuthProvider provider = 3;
+  string access_token = 4;
+  string refresh_token = 5;
+  string scopes = 6;
+  string token_expires_at = 7;
+}
+
+message DisconnectProviderRequest {
+  string id = 1;
+}
+
+message GetAuthUrlRequest {
+  string user_id = 1;
+  string organisation_id = 2;
+  OAuthProvider provider = 3;
+  string redirect_uri = 4;
+  repeated string scopes = 5;
+}
+
+message GetAuthUrlResponse {
+  string auth_url = 1;
+  string state = 2;
+}
+
+message HandleCallbackRequest {
+  string code = 1;
+  string state = 2;
+  OAuthProvider provider = 3;
+  string redirect_uri = 4;
+}
+
+message ListConnectionsRequest {
+  string user_id = 1;
+  string organisation_id = 2;
+  Pagination pagination = 3;
+}
+
+message ListConnectionsResponse {
+  repeated OAuthConnection connections = 1;
+  PaginationResult pagination = 2;
+}
+
+message RefreshTokenRequest {
+  string id = 1;
+}
+
+// ========== CALENDAR EVENT SERVICE ==========
+service CalendarEventService {
+  rpc Create(CreateCalendarEventRequest) returns (CalendarEvent);
+  rpc Get(GetCalendarEventRequest) returns (CalendarEvent);
+  rpc Update(UpdateCalendarEventRequest) returns (CalendarEvent);
+  rpc Delete(DeleteCalendarEventRequest) returns (DeleteResponse);
+  rpc ListByDateRange(ListCalendarEventsByDateRangeRequest) returns (ListCalendarEventsResponse);
+  rpc ListByClient(ListCalendarEventsByClientRequest) returns (ListCalendarEventsResponse);
+  rpc SyncFromProvider(SyncFromProviderRequest) returns (SyncFromProviderResponse);
+}
+
+message CalendarEvent {
+  string id = 1;
+  string user_id = 2;
+  string organisation_id = 3;
+  OAuthProvider provider = 4;
+  string external_id = 5;
+  string title = 6;
+  string description = 7;
+  string start_time = 8;
+  string end_time = 9;
+  string location = 10;
+  string attendees = 11;
+  bool is_all_day = 12;
+  CalendarEventSource source = 13;
+  string source_url = 14;
+  string meeting_id = 15;
+  string created_at = 16;
+  string updated_at = 17;
+}
+
+message CreateCalendarEventRequest {
+  string user_id = 1;
+  string organisation_id = 2;
+  OAuthProvider provider = 3;
+  string external_id = 4;
+  string title = 5;
+  string description = 6;
+  string start_time = 7;
+  string end_time = 8;
+  string location = 9;
+  string attendees = 10;
+  bool is_all_day = 11;
+  CalendarEventSource source = 12;
+  string source_url = 13;
+  string meeting_id = 14;
+}
+
+message GetCalendarEventRequest {
+  string id = 1;
+}
+
+message UpdateCalendarEventRequest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string start_time = 4;
+  string end_time = 5;
+  string location = 6;
+  string attendees = 7;
+  bool is_all_day = 8;
+  string source_url = 9;
+  string meeting_id = 10;
+}
+
+message DeleteCalendarEventRequest {
+  string id = 1;
+}
+
+message ListCalendarEventsByDateRangeRequest {
+  string user_id = 1;
+  string organisation_id = 2;
+  string start_date = 3;
+  string end_date = 4;
+  Pagination pagination = 5;
+}
+
+message ListCalendarEventsByClientRequest {
+  string client_id = 1;
+  string organisation_id = 2;
+  Pagination pagination = 3;
+}
+
+message ListCalendarEventsResponse {
+  repeated CalendarEvent events = 1;
+  PaginationResult pagination = 2;
+}
+
+message SyncFromProviderRequest {
+  string oauth_connection_id = 1;
+  string sync_from_date = 2;
+}
+
+message SyncFromProviderResponse {
+  int32 synced_count = 1;
+  int32 created_count = 2;
+  int32 updated_count = 3;
+  int32 deleted_count = 4;
+}
+
+// ========== MEETING SERVICE ==========
+service MeetingService {
+  rpc Create(CreateMeetingRequest) returns (Meeting);
+  rpc Get(GetMeetingRequest) returns (Meeting);
+  rpc ListByDateRange(ListMeetingsByDateRangeRequest) returns (ListMeetingsResponse);
+  rpc MatchParticipants(MatchParticipantsRequest) returns (MatchParticipantsResponse);
+  rpc UpdateClientMatch(UpdateClientMatchRequest) returns (Meeting);
+}
+
+message Meeting {
+  string id = 1;
+  string user_id = 2;
+  string organisation_id = 3;
+  OAuthProvider provider = 4;
+  string external_meeting_id = 5;
+  string title = 6;
+  string start_time = 7;
+  string end_time = 8;
+  int32 duration_minutes = 9;
+  string participants = 10;
+  string recording_url = 11;
+  string transcript_url = 12;
+  MeetingSummaryStatus summary_status = 13;
+  string calendar_event_id = 14;
+  string created_at = 15;
+  string updated_at = 16;
+}
+
+message CreateMeetingRequest {
+  string user_id = 1;
+  string organisation_id = 2;
+  OAuthProvider provider = 3;
+  string external_meeting_id = 4;
+  string title = 5;
+  string start_time = 6;
+  string end_time = 7;
+  int32 duration_minutes = 8;
+  string participants = 9;
+  string recording_url = 10;
+  string transcript_url = 11;
+  string calendar_event_id = 12;
+}
+
+message GetMeetingRequest {
+  string id = 1;
+}
+
+message ListMeetingsByDateRangeRequest {
+  string user_id = 1;
+  string organisation_id = 2;
+  string start_date = 3;
+  string end_date = 4;
+  Pagination pagination = 5;
+}
+
+message ListMeetingsResponse {
+  repeated Meeting meetings = 1;
+  PaginationResult pagination = 2;
+}
+
+message MeetingParticipant {
+  string email = 1;
+  string display_name = 2;
+  ParticipantMatchType match_type = 3;
+  string matched_client_id = 4;
+}
+
+message MatchParticipantsRequest {
+  string meeting_id = 1;
+}
+
+message MatchParticipantsResponse {
+  repeated MeetingParticipant participants = 1;
+  int32 matched_count = 2;
+  int32 unmatched_count = 3;
+}
+
+message UpdateClientMatchRequest {
+  string meeting_id = 1;
+  string participant_email = 2;
+  string client_id = 3;
+  ParticipantMatchType match_type = 4;
+}
+
+// ========== CALL SUMMARY SERVICE ==========
+service CallSummaryService {
+  rpc Get(GetCallSummaryRequest) returns (CallSummary);
+  rpc GetByMeeting(GetCallSummaryByMeetingRequest) returns (CallSummary);
+  rpc Regenerate(RegenerateCallSummaryRequest) returns (CallSummary);
+}
+
+message CallSummary {
+  string id = 1;
+  string meeting_id = 2;
+  string executive_summary = 3;
+  string key_points = 4;
+  string decisions = 5;
+  string action_items = 6;
+  string generated_at = 7;
+  string ai_model = 8;
+  string raw_ai_response = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+message GetCallSummaryRequest {
+  string id = 1;
+}
+
+message GetCallSummaryByMeetingRequest {
+  string meeting_id = 1;
+}
+
+message RegenerateCallSummaryRequest {
+  string meeting_id = 1;
+  string ai_model = 2;
+}
+
+// ========== COMMON MESSAGES ==========
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}

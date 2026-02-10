@@ -16,50 +16,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Trash2, Edit, RefreshCw, CreditCard, Banknote } from "lucide-react"
-import type { Schedule, ScheduleStatus, PSPName } from "@/types/schedule"
+import { Trash2, Edit } from "lucide-react"
+import type { ScheduleResponse } from "@proto/payments/payment"
 
 interface ScheduleTableProps {
-  schedules: Schedule[]
-  onEdit?: (schedule: Schedule) => void
+  schedules: ScheduleResponse[]
+  onEdit?: (schedule: ScheduleResponse) => void
   onDelete?: (scheduleId: string) => void
 }
 
-const statusColors: Record<ScheduleStatus, string> = {
-  planned: "bg-blue-500",
-  processing: "bg-yellow-500",
-  pending: "bg-orange-500",
-  paid: "bg-green-500",
-  failed: "bg-red-500",
-  unpaid: "bg-red-700",
-  cancelled: "bg-gray-500",
-}
-
-const pspIcons: Record<PSPName, React.ReactNode> = {
-  STRIPE: <CreditCard className="h-4 w-4" />,
-  GOCARDLESS: <Banknote className="h-4 w-4" />,
-  SLIMPAY: <Banknote className="h-4 w-4" />,
-  MULTISAFEPAY: <CreditCard className="h-4 w-4" />,
-  EMERCHANTPAY: <CreditCard className="h-4 w-4" />,
-}
-
-const pspLabels: Record<PSPName, string> = {
-  STRIPE: "Stripe",
-  GOCARDLESS: "GoCardless",
-  SLIMPAY: "SlimPay",
-  MULTISAFEPAY: "MultiSafePay",
-  EMERCHANTPAY: "eMerchantPay",
-}
-
-function formatInterval(unit?: string | null, count?: number | null): string {
-  if (!unit || !count) return "-"
-  const labels: Record<string, string> = {
-    day: count === 1 ? "jour" : "jours",
-    week: count === 1 ? "semaine" : "semaines",
-    month: "mois",
-    year: count === 1 ? "an" : "ans",
-  }
-  return `${count} ${labels[unit] || unit}`
+const statusColors: Record<string, string> = {
+  PLANNED: "bg-blue-500",
+  PROCESSING: "bg-yellow-500",
+  PENDING: "bg-orange-500",
+  PAID: "bg-green-500",
+  FAILED: "bg-red-500",
+  UNPAID: "bg-red-700",
+  CANCELLED: "bg-gray-500",
+  EXPIRED: "bg-gray-400",
 }
 
 export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProps) {
@@ -69,10 +43,8 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
-            <TableHead>PSP</TableHead>
             <TableHead>Montant</TableHead>
             <TableHead>Échéance</TableHead>
-            <TableHead>Récurrent</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Tentatives</TableHead>
             <TableHead>Dernière erreur</TableHead>
@@ -82,7 +54,7 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
         <TableBody>
           {schedules.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                 Aucun schedule trouvé
               </TableCell>
             </TableRow>
@@ -99,61 +71,31 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
                     </Tooltip>
                   </TooltipProvider>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {pspIcons[schedule.pspName]}
-                    <span className="text-sm">{pspLabels[schedule.pspName]}</span>
-                  </div>
-                </TableCell>
                 <TableCell className="font-medium">
                   {schedule.amount.toFixed(2)} {schedule.currency}
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-1">
-                    <div>{new Date(schedule.dueDate).toLocaleDateString("fr-FR")}</div>
-                    {schedule.nextDueDate && (
-                      <div className="text-xs text-muted-foreground">
-                        Prochain: {new Date(schedule.nextDueDate).toLocaleDateString("fr-FR")}
-                      </div>
-                    )}
-                  </div>
+                  <div>{new Date(schedule.dueDate).toLocaleDateString("fr-FR")}</div>
                 </TableCell>
                 <TableCell>
-                  {schedule.isRecurring ? (
-                    <div className="flex items-center gap-1">
-                      <RefreshCw className="h-3 w-3 text-blue-500" />
-                      <span className="text-sm">
-                        {formatInterval(schedule.intervalUnit, schedule.intervalCount)}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">Ponctuel</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge className={statusColors[schedule.status]}>
+                  <Badge className={statusColors[schedule.status] || "bg-gray-500"}>
                     {schedule.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <span className={schedule.retryCount > 0 ? "text-orange-500 font-medium" : ""}>
-                    {schedule.retryCount}/{schedule.maxRetries}
+                    {schedule.retryCount}
                   </span>
                 </TableCell>
                 <TableCell className="max-w-[200px]">
-                  {schedule.lastFailureReason ? (
+                  {schedule.errorMessage ? (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger className="text-xs text-red-500 truncate block">
-                          {schedule.lastFailureReason.slice(0, 30)}...
+                          {schedule.errorMessage.slice(0, 30)}...
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
-                          <p>{schedule.lastFailureReason}</p>
-                          {schedule.lastFailureAt && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {new Date(schedule.lastFailureAt).toLocaleString("fr-FR")}
-                            </p>
-                          )}
+                          <p>{schedule.errorMessage}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>

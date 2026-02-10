@@ -1,11 +1,7 @@
 "use server";
 
 import { notifications } from "@/lib/grpc";
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ActionResult } from "@/lib/types/common";
 
 export interface NotificationData {
   id: string;

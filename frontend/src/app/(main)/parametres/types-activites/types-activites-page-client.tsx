@@ -40,7 +40,7 @@ import {
   updateTypeActivite,
   deleteTypeActivite,
 } from "@/actions/type-activites"
-import type { TypeActiviteDto } from "@/types/activite"
+import type { TypeActiviteDto } from "@/actions/type-activites"
 import { Plus, Pencil, Trash2, Loader2, Tags, Search } from "lucide-react"
 
 interface TypesActivitesPageClientProps {

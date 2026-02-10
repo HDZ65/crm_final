@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { NatsService } from '@crm/shared-kernel';
 import {
   DunningDepanssurService,
   type DepanssurPaymentFailedEvent,
@@ -15,6 +16,7 @@ export class DepanssurPaymentFailedHandler implements OnModuleInit {
   private readonly logger = new Logger(DepanssurPaymentFailedHandler.name);
 
   constructor(
+    private readonly natsService: NatsService,
     private readonly dunningDepanssurService: DunningDepanssurService,
   ) {}
 
@@ -22,8 +24,10 @@ export class DepanssurPaymentFailedHandler implements OnModuleInit {
     this.logger.log(
       'DepanssurPaymentFailedHandler initialized — ready for payment.depanssur.failed',
     );
-    // TODO: Wire NATS subscription when nats-utils transport is available.
-    // await this.natsService.subscribeProto('payment.depanssur.failed', this.handle.bind(this));
+    await this.natsService.subscribe<DepanssurPaymentFailedEvent>(
+      'payment.depanssur.failed',
+      this.handle.bind(this),
+    );
   }
 
   async handle(event: DepanssurPaymentFailedEvent): Promise<void> {

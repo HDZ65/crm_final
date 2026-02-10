@@ -126,6 +126,16 @@ message Societe {
   string numero_tva = 5;
   string created_at = 6;
   string updated_at = 7;
+  string logo_url = 8;
+  string devise = 9;
+  string ics = 10;
+  string journal_vente = 11;
+  string compte_produit_defaut = 12;
+  string plan_comptable = 13;
+  string adresse_siege = 14;
+  string telephone = 15;
+  string email_contact = 16;
+  string parametres_fiscaux = 17;
 }
 
 message CreateSocieteRequest {
@@ -133,6 +143,16 @@ message CreateSocieteRequest {
   string raison_sociale = 2;
   string siren = 3;
   string numero_tva = 4;
+  string logo_url = 5;
+  string devise = 6;
+  string ics = 7;
+  string journal_vente = 8;
+  string compte_produit_defaut = 9;
+  string plan_comptable = 10;
+  string adresse_siege = 11;
+  string telephone = 12;
+  string email_contact = 13;
+  string parametres_fiscaux = 14;
 }
 
 message UpdateSocieteRequest {
@@ -140,6 +160,16 @@ message UpdateSocieteRequest {
   string raison_sociale = 2;
   string siren = 3;
   string numero_tva = 4;
+  string logo_url = 5;
+  string devise = 6;
+  string ics = 7;
+  string journal_vente = 8;
+  string compte_produit_defaut = 9;
+  string plan_comptable = 10;
+  string adresse_siege = 11;
+  string telephone = 12;
+  string email_contact = 13;
+  string parametres_fiscaux = 14;
 }
 
 message GetSocieteRequest {

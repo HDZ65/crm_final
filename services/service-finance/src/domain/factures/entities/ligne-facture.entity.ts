@@ -8,7 +8,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { FactureEntity } from './facture.entity';
+import type { FactureEntity } from './facture.entity';
 
 @Entity('ligne_facture')
 @Index(['factureId'])
@@ -30,6 +30,9 @@ export class LigneFactureEntity {
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  metadata: Record<string, unknown> | null;
 
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   montantHT: number;
@@ -53,7 +56,7 @@ export class LigneFactureEntity {
   updatedAt: Date;
 
   // Relations
-  @ManyToOne(() => FactureEntity, (facture) => facture.lignes, { onDelete: 'CASCADE' })
+  @ManyToOne('FactureEntity', (facture: FactureEntity) => facture.lignes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'facture_id' })
   facture: FactureEntity;
 

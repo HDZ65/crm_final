@@ -3,16 +3,18 @@
 import { useCallback, useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import type {
-  TacheDto,
-  TacheStatsDto,
+  Tache,
+  TacheStats,
+  CreateTacheRequest,
+  UpdateTacheRequest,
+} from "@proto/activites/activites"
+import type {
   TacheFilters,
-  CreateTacheDto,
-  UpdateTacheDto,
   PaginatedTachesDto,
-} from "@/types/tache"
+} from "@/lib/ui/labels/tache"
 
 export function useTaches(filters?: TacheFilters) {
-  const [taches, setTaches] = useState<TacheDto[]>([])
+  const [taches, setTaches] = useState<Tache[]>([])
   const [error, setError] = useState<Error | null>(null)
 
   // Extraire les valeurs primitives pour éviter la boucle infinie
@@ -42,7 +44,7 @@ export function useTaches(filters?: TacheFilters) {
       const queryString = params.toString()
       const endpoint = queryString ? `/taches?${queryString}` : "/taches"
 
-      const data = await api.get<TacheDto[]>(endpoint)
+      const data = await api.get<Tache[]>(endpoint)
       setTaches(data || [])
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors du chargement des tâches"))
@@ -118,7 +120,7 @@ export function useTachesPaginated(filters?: TacheFilters) {
 }
 
 export function useTacheStats(organisationId: string | undefined) {
-  const [stats, setStats] = useState<TacheStatsDto | null>(null)
+  const [stats, setStats] = useState<TacheStats | null>(null)
   const [error, setError] = useState<Error | null>(null)
 
   const fetchStats = useCallback(async () => {
@@ -127,7 +129,7 @@ export function useTacheStats(organisationId: string | undefined) {
     setError(null)
 
     try {
-      const data = await api.get<TacheStatsDto>(`/taches/stats?organisationId=${organisationId}`)
+      const data = await api.get<TacheStats>(`/taches/stats?organisationId=${organisationId}`)
       setStats(data)
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors du chargement des stats"))
@@ -146,7 +148,7 @@ export function useTacheStats(organisationId: string | undefined) {
 }
 
 export function useMyTaches(periode?: 'jour' | 'semaine', userId?: string) {
-  const [taches, setTaches] = useState<TacheDto[]>([])
+  const [taches, setTaches] = useState<Tache[]>([])
   const [error, setError] = useState<Error | null>(null)
 
   const fetchTaches = useCallback(async () => {
@@ -168,7 +170,7 @@ export function useMyTaches(periode?: 'jour' | 'semaine', userId?: string) {
 
       const endpoint = `/taches?${params.toString()}`
       console.log('[useMyTaches] Fetching:', endpoint)
-      const data = await api.get<TacheDto[]>(endpoint)
+      const data = await api.get<Tache[]>(endpoint)
       console.log('[useMyTaches] Response:', data)
 
       // Filtrer uniquement les tâches actives (non terminées/annulées)
@@ -196,11 +198,11 @@ export function useMyTaches(periode?: 'jour' | 'semaine', userId?: string) {
 export function useTacheMutations() {
   const [error, setError] = useState<Error | null>(null)
 
-  const createTache = useCallback(async (data: CreateTacheDto): Promise<TacheDto | null> => {
+  const createTache = useCallback(async (data: CreateTacheRequest): Promise<Tache | null> => {
     setError(null)
 
     try {
-      const result = await api.post<TacheDto>("/taches", data)
+      const result = await api.post<Tache>("/taches", data)
       return result
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors de la création"))
@@ -208,11 +210,11 @@ export function useTacheMutations() {
     }
   }, [])
 
-  const updateTache = useCallback(async (id: string, data: UpdateTacheDto): Promise<TacheDto | null> => {
+  const updateTache = useCallback(async (id: string, data: UpdateTacheRequest): Promise<Tache | null> => {
     setError(null)
 
     try {
-      const result = await api.put<TacheDto>(`/taches/${id}`, data)
+      const result = await api.put<Tache>(`/taches/${id}`, data)
       return result
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors de la mise à jour"))
@@ -232,11 +234,11 @@ export function useTacheMutations() {
     }
   }, [])
 
-  const marquerEnCours = useCallback(async (id: string): Promise<TacheDto | null> => {
+  const marquerEnCours = useCallback(async (id: string): Promise<Tache | null> => {
     setError(null)
 
     try {
-      const result = await api.put<TacheDto>(`/taches/${id}/en-cours`)
+      const result = await api.put<Tache>(`/taches/${id}/en-cours`)
       return result
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors du changement de statut"))
@@ -244,11 +246,11 @@ export function useTacheMutations() {
     }
   }, [])
 
-  const marquerTerminee = useCallback(async (id: string): Promise<TacheDto | null> => {
+  const marquerTerminee = useCallback(async (id: string): Promise<Tache | null> => {
     setError(null)
 
     try {
-      const result = await api.put<TacheDto>(`/taches/${id}/terminee`)
+      const result = await api.put<Tache>(`/taches/${id}/terminee`)
       return result
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors du changement de statut"))
@@ -256,11 +258,11 @@ export function useTacheMutations() {
     }
   }, [])
 
-  const marquerAnnulee = useCallback(async (id: string): Promise<TacheDto | null> => {
+  const marquerAnnulee = useCallback(async (id: string): Promise<Tache | null> => {
     setError(null)
 
     try {
-      const result = await api.put<TacheDto>(`/taches/${id}/annulee`)
+      const result = await api.put<Tache>(`/taches/${id}/annulee`)
       return result
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors du changement de statut"))

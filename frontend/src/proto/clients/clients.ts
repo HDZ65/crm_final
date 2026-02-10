@@ -145,6 +145,20 @@ export interface ClientBase {
   updatedAt: string;
   adresses: Adresse[];
   societeId?: string | undefined;
+  profession?: string | undefined;
+  iban?: string | undefined;
+  mandatSepa?: boolean | undefined;
+  kycStatus?: string | undefined;
+  gdprConsent?: boolean | undefined;
+  gdprConsentDate?: string | undefined;
+  langue?: string | undefined;
+  hasConciergerie?: boolean | undefined;
+  hasJustiPlus?: boolean | undefined;
+  hasWincash?: boolean | undefined;
+  uuidWincash?: string | undefined;
+  uuidJustiPlus?: string | undefined;
+  datePremiereSouscription?: string | undefined;
+  canalAcquisition?: string | undefined;
 }
 
 export interface CreateClientBaseRequest {
@@ -159,6 +173,13 @@ export interface CreateClientBaseRequest {
   email: string;
   statut: string;
   societeId?: string | undefined;
+  hasConciergerie?: boolean | undefined;
+  hasJustiPlus?: boolean | undefined;
+  hasWincash?: boolean | undefined;
+  uuidWincash?: string | undefined;
+  uuidJustiPlus?: string | undefined;
+  datePremiereSouscription?: string | undefined;
+  canalAcquisition?: string | undefined;
 }
 
 export interface UpdateClientBaseRequest {
@@ -173,6 +194,13 @@ export interface UpdateClientBaseRequest {
   email?: string | undefined;
   statut?: string | undefined;
   societeId?: string | undefined;
+  hasConciergerie?: boolean | undefined;
+  hasJustiPlus?: boolean | undefined;
+  hasWincash?: boolean | undefined;
+  uuidWincash?: string | undefined;
+  uuidJustiPlus?: string | undefined;
+  datePremiereSouscription?: string | undefined;
+  canalAcquisition?: string | undefined;
 }
 
 export interface GetClientBaseRequest {
@@ -2200,6 +2228,20 @@ function createBaseClientBase(): ClientBase {
     updatedAt: "",
     adresses: [],
     societeId: undefined,
+    profession: undefined,
+    iban: undefined,
+    mandatSepa: undefined,
+    kycStatus: undefined,
+    gdprConsent: undefined,
+    gdprConsentDate: undefined,
+    langue: undefined,
+    hasConciergerie: undefined,
+    hasJustiPlus: undefined,
+    hasWincash: undefined,
+    uuidWincash: undefined,
+    uuidJustiPlus: undefined,
+    datePremiereSouscription: undefined,
+    canalAcquisition: undefined,
   };
 }
 
@@ -2252,6 +2294,48 @@ export const ClientBase: MessageFns<ClientBase> = {
     }
     if (message.societeId !== undefined) {
       writer.uint32(130).string(message.societeId);
+    }
+    if (message.profession !== undefined) {
+      writer.uint32(138).string(message.profession);
+    }
+    if (message.iban !== undefined) {
+      writer.uint32(146).string(message.iban);
+    }
+    if (message.mandatSepa !== undefined) {
+      writer.uint32(152).bool(message.mandatSepa);
+    }
+    if (message.kycStatus !== undefined) {
+      writer.uint32(162).string(message.kycStatus);
+    }
+    if (message.gdprConsent !== undefined) {
+      writer.uint32(168).bool(message.gdprConsent);
+    }
+    if (message.gdprConsentDate !== undefined) {
+      writer.uint32(178).string(message.gdprConsentDate);
+    }
+    if (message.langue !== undefined) {
+      writer.uint32(186).string(message.langue);
+    }
+    if (message.hasConciergerie !== undefined) {
+      writer.uint32(192).bool(message.hasConciergerie);
+    }
+    if (message.hasJustiPlus !== undefined) {
+      writer.uint32(200).bool(message.hasJustiPlus);
+    }
+    if (message.hasWincash !== undefined) {
+      writer.uint32(208).bool(message.hasWincash);
+    }
+    if (message.uuidWincash !== undefined) {
+      writer.uint32(218).string(message.uuidWincash);
+    }
+    if (message.uuidJustiPlus !== undefined) {
+      writer.uint32(226).string(message.uuidJustiPlus);
+    }
+    if (message.datePremiereSouscription !== undefined) {
+      writer.uint32(234).string(message.datePremiereSouscription);
+    }
+    if (message.canalAcquisition !== undefined) {
+      writer.uint32(242).string(message.canalAcquisition);
     }
     return writer;
   },
@@ -2391,6 +2475,118 @@ export const ClientBase: MessageFns<ClientBase> = {
           message.societeId = reader.string();
           continue;
         }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.profession = reader.string();
+          continue;
+        }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.iban = reader.string();
+          continue;
+        }
+        case 19: {
+          if (tag !== 152) {
+            break;
+          }
+
+          message.mandatSepa = reader.bool();
+          continue;
+        }
+        case 20: {
+          if (tag !== 162) {
+            break;
+          }
+
+          message.kycStatus = reader.string();
+          continue;
+        }
+        case 21: {
+          if (tag !== 168) {
+            break;
+          }
+
+          message.gdprConsent = reader.bool();
+          continue;
+        }
+        case 22: {
+          if (tag !== 178) {
+            break;
+          }
+
+          message.gdprConsentDate = reader.string();
+          continue;
+        }
+        case 23: {
+          if (tag !== 186) {
+            break;
+          }
+
+          message.langue = reader.string();
+          continue;
+        }
+        case 24: {
+          if (tag !== 192) {
+            break;
+          }
+
+          message.hasConciergerie = reader.bool();
+          continue;
+        }
+        case 25: {
+          if (tag !== 200) {
+            break;
+          }
+
+          message.hasJustiPlus = reader.bool();
+          continue;
+        }
+        case 26: {
+          if (tag !== 208) {
+            break;
+          }
+
+          message.hasWincash = reader.bool();
+          continue;
+        }
+        case 27: {
+          if (tag !== 218) {
+            break;
+          }
+
+          message.uuidWincash = reader.string();
+          continue;
+        }
+        case 28: {
+          if (tag !== 226) {
+            break;
+          }
+
+          message.uuidJustiPlus = reader.string();
+          continue;
+        }
+        case 29: {
+          if (tag !== 234) {
+            break;
+          }
+
+          message.datePremiereSouscription = reader.string();
+          continue;
+        }
+        case 30: {
+          if (tag !== 242) {
+            break;
+          }
+
+          message.canalAcquisition = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2456,6 +2652,64 @@ export const ClientBase: MessageFns<ClientBase> = {
         : isSet(object.societe_id)
         ? globalThis.String(object.societe_id)
         : undefined,
+      profession: isSet(object.profession) ? globalThis.String(object.profession) : undefined,
+      iban: isSet(object.iban) ? globalThis.String(object.iban) : undefined,
+      mandatSepa: isSet(object.mandatSepa)
+        ? globalThis.Boolean(object.mandatSepa)
+        : isSet(object.mandat_sepa)
+        ? globalThis.Boolean(object.mandat_sepa)
+        : undefined,
+      kycStatus: isSet(object.kycStatus)
+        ? globalThis.String(object.kycStatus)
+        : isSet(object.kyc_status)
+        ? globalThis.String(object.kyc_status)
+        : undefined,
+      gdprConsent: isSet(object.gdprConsent)
+        ? globalThis.Boolean(object.gdprConsent)
+        : isSet(object.gdpr_consent)
+        ? globalThis.Boolean(object.gdpr_consent)
+        : undefined,
+      gdprConsentDate: isSet(object.gdprConsentDate)
+        ? globalThis.String(object.gdprConsentDate)
+        : isSet(object.gdpr_consent_date)
+        ? globalThis.String(object.gdpr_consent_date)
+        : undefined,
+      langue: isSet(object.langue) ? globalThis.String(object.langue) : undefined,
+      hasConciergerie: isSet(object.hasConciergerie)
+        ? globalThis.Boolean(object.hasConciergerie)
+        : isSet(object.has_conciergerie)
+        ? globalThis.Boolean(object.has_conciergerie)
+        : undefined,
+      hasJustiPlus: isSet(object.hasJustiPlus)
+        ? globalThis.Boolean(object.hasJustiPlus)
+        : isSet(object.has_justi_plus)
+        ? globalThis.Boolean(object.has_justi_plus)
+        : undefined,
+      hasWincash: isSet(object.hasWincash)
+        ? globalThis.Boolean(object.hasWincash)
+        : isSet(object.has_wincash)
+        ? globalThis.Boolean(object.has_wincash)
+        : undefined,
+      uuidWincash: isSet(object.uuidWincash)
+        ? globalThis.String(object.uuidWincash)
+        : isSet(object.uuid_wincash)
+        ? globalThis.String(object.uuid_wincash)
+        : undefined,
+      uuidJustiPlus: isSet(object.uuidJustiPlus)
+        ? globalThis.String(object.uuidJustiPlus)
+        : isSet(object.uuid_justi_plus)
+        ? globalThis.String(object.uuid_justi_plus)
+        : undefined,
+      datePremiereSouscription: isSet(object.datePremiereSouscription)
+        ? globalThis.String(object.datePremiereSouscription)
+        : isSet(object.date_premiere_souscription)
+        ? globalThis.String(object.date_premiere_souscription)
+        : undefined,
+      canalAcquisition: isSet(object.canalAcquisition)
+        ? globalThis.String(object.canalAcquisition)
+        : isSet(object.canal_acquisition)
+        ? globalThis.String(object.canal_acquisition)
+        : undefined,
     };
   },
 
@@ -2509,6 +2763,48 @@ export const ClientBase: MessageFns<ClientBase> = {
     if (message.societeId !== undefined) {
       obj.societeId = message.societeId;
     }
+    if (message.profession !== undefined) {
+      obj.profession = message.profession;
+    }
+    if (message.iban !== undefined) {
+      obj.iban = message.iban;
+    }
+    if (message.mandatSepa !== undefined) {
+      obj.mandatSepa = message.mandatSepa;
+    }
+    if (message.kycStatus !== undefined) {
+      obj.kycStatus = message.kycStatus;
+    }
+    if (message.gdprConsent !== undefined) {
+      obj.gdprConsent = message.gdprConsent;
+    }
+    if (message.gdprConsentDate !== undefined) {
+      obj.gdprConsentDate = message.gdprConsentDate;
+    }
+    if (message.langue !== undefined) {
+      obj.langue = message.langue;
+    }
+    if (message.hasConciergerie !== undefined) {
+      obj.hasConciergerie = message.hasConciergerie;
+    }
+    if (message.hasJustiPlus !== undefined) {
+      obj.hasJustiPlus = message.hasJustiPlus;
+    }
+    if (message.hasWincash !== undefined) {
+      obj.hasWincash = message.hasWincash;
+    }
+    if (message.uuidWincash !== undefined) {
+      obj.uuidWincash = message.uuidWincash;
+    }
+    if (message.uuidJustiPlus !== undefined) {
+      obj.uuidJustiPlus = message.uuidJustiPlus;
+    }
+    if (message.datePremiereSouscription !== undefined) {
+      obj.datePremiereSouscription = message.datePremiereSouscription;
+    }
+    if (message.canalAcquisition !== undefined) {
+      obj.canalAcquisition = message.canalAcquisition;
+    }
     return obj;
   },
 
@@ -2533,6 +2829,20 @@ export const ClientBase: MessageFns<ClientBase> = {
     message.updatedAt = object.updatedAt ?? "";
     message.adresses = object.adresses?.map((e) => Adresse.fromPartial(e)) || [];
     message.societeId = object.societeId ?? undefined;
+    message.profession = object.profession ?? undefined;
+    message.iban = object.iban ?? undefined;
+    message.mandatSepa = object.mandatSepa ?? undefined;
+    message.kycStatus = object.kycStatus ?? undefined;
+    message.gdprConsent = object.gdprConsent ?? undefined;
+    message.gdprConsentDate = object.gdprConsentDate ?? undefined;
+    message.langue = object.langue ?? undefined;
+    message.hasConciergerie = object.hasConciergerie ?? undefined;
+    message.hasJustiPlus = object.hasJustiPlus ?? undefined;
+    message.hasWincash = object.hasWincash ?? undefined;
+    message.uuidWincash = object.uuidWincash ?? undefined;
+    message.uuidJustiPlus = object.uuidJustiPlus ?? undefined;
+    message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
+    message.canalAcquisition = object.canalAcquisition ?? undefined;
     return message;
   },
 };
@@ -2550,6 +2860,13 @@ function createBaseCreateClientBaseRequest(): CreateClientBaseRequest {
     email: "",
     statut: "",
     societeId: undefined,
+    hasConciergerie: undefined,
+    hasJustiPlus: undefined,
+    hasWincash: undefined,
+    uuidWincash: undefined,
+    uuidJustiPlus: undefined,
+    datePremiereSouscription: undefined,
+    canalAcquisition: undefined,
   };
 }
 
@@ -2587,6 +2904,27 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     }
     if (message.societeId !== undefined) {
       writer.uint32(90).string(message.societeId);
+    }
+    if (message.hasConciergerie !== undefined) {
+      writer.uint32(96).bool(message.hasConciergerie);
+    }
+    if (message.hasJustiPlus !== undefined) {
+      writer.uint32(104).bool(message.hasJustiPlus);
+    }
+    if (message.hasWincash !== undefined) {
+      writer.uint32(112).bool(message.hasWincash);
+    }
+    if (message.uuidWincash !== undefined) {
+      writer.uint32(122).string(message.uuidWincash);
+    }
+    if (message.uuidJustiPlus !== undefined) {
+      writer.uint32(130).string(message.uuidJustiPlus);
+    }
+    if (message.datePremiereSouscription !== undefined) {
+      writer.uint32(138).string(message.datePremiereSouscription);
+    }
+    if (message.canalAcquisition !== undefined) {
+      writer.uint32(146).string(message.canalAcquisition);
     }
     return writer;
   },
@@ -2686,6 +3024,62 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
           message.societeId = reader.string();
           continue;
         }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.hasConciergerie = reader.bool();
+          continue;
+        }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.hasJustiPlus = reader.bool();
+          continue;
+        }
+        case 14: {
+          if (tag !== 112) {
+            break;
+          }
+
+          message.hasWincash = reader.bool();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.uuidWincash = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.uuidJustiPlus = reader.string();
+          continue;
+        }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.datePremiereSouscription = reader.string();
+          continue;
+        }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.canalAcquisition = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2732,6 +3126,41 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
         : isSet(object.societe_id)
         ? globalThis.String(object.societe_id)
         : undefined,
+      hasConciergerie: isSet(object.hasConciergerie)
+        ? globalThis.Boolean(object.hasConciergerie)
+        : isSet(object.has_conciergerie)
+        ? globalThis.Boolean(object.has_conciergerie)
+        : undefined,
+      hasJustiPlus: isSet(object.hasJustiPlus)
+        ? globalThis.Boolean(object.hasJustiPlus)
+        : isSet(object.has_justi_plus)
+        ? globalThis.Boolean(object.has_justi_plus)
+        : undefined,
+      hasWincash: isSet(object.hasWincash)
+        ? globalThis.Boolean(object.hasWincash)
+        : isSet(object.has_wincash)
+        ? globalThis.Boolean(object.has_wincash)
+        : undefined,
+      uuidWincash: isSet(object.uuidWincash)
+        ? globalThis.String(object.uuidWincash)
+        : isSet(object.uuid_wincash)
+        ? globalThis.String(object.uuid_wincash)
+        : undefined,
+      uuidJustiPlus: isSet(object.uuidJustiPlus)
+        ? globalThis.String(object.uuidJustiPlus)
+        : isSet(object.uuid_justi_plus)
+        ? globalThis.String(object.uuid_justi_plus)
+        : undefined,
+      datePremiereSouscription: isSet(object.datePremiereSouscription)
+        ? globalThis.String(object.datePremiereSouscription)
+        : isSet(object.date_premiere_souscription)
+        ? globalThis.String(object.date_premiere_souscription)
+        : undefined,
+      canalAcquisition: isSet(object.canalAcquisition)
+        ? globalThis.String(object.canalAcquisition)
+        : isSet(object.canal_acquisition)
+        ? globalThis.String(object.canal_acquisition)
+        : undefined,
     };
   },
 
@@ -2770,6 +3199,27 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     if (message.societeId !== undefined) {
       obj.societeId = message.societeId;
     }
+    if (message.hasConciergerie !== undefined) {
+      obj.hasConciergerie = message.hasConciergerie;
+    }
+    if (message.hasJustiPlus !== undefined) {
+      obj.hasJustiPlus = message.hasJustiPlus;
+    }
+    if (message.hasWincash !== undefined) {
+      obj.hasWincash = message.hasWincash;
+    }
+    if (message.uuidWincash !== undefined) {
+      obj.uuidWincash = message.uuidWincash;
+    }
+    if (message.uuidJustiPlus !== undefined) {
+      obj.uuidJustiPlus = message.uuidJustiPlus;
+    }
+    if (message.datePremiereSouscription !== undefined) {
+      obj.datePremiereSouscription = message.datePremiereSouscription;
+    }
+    if (message.canalAcquisition !== undefined) {
+      obj.canalAcquisition = message.canalAcquisition;
+    }
     return obj;
   },
 
@@ -2789,6 +3239,13 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     message.email = object.email ?? "";
     message.statut = object.statut ?? "";
     message.societeId = object.societeId ?? undefined;
+    message.hasConciergerie = object.hasConciergerie ?? undefined;
+    message.hasJustiPlus = object.hasJustiPlus ?? undefined;
+    message.hasWincash = object.hasWincash ?? undefined;
+    message.uuidWincash = object.uuidWincash ?? undefined;
+    message.uuidJustiPlus = object.uuidJustiPlus ?? undefined;
+    message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
+    message.canalAcquisition = object.canalAcquisition ?? undefined;
     return message;
   },
 };
@@ -2806,6 +3263,13 @@ function createBaseUpdateClientBaseRequest(): UpdateClientBaseRequest {
     email: undefined,
     statut: undefined,
     societeId: undefined,
+    hasConciergerie: undefined,
+    hasJustiPlus: undefined,
+    hasWincash: undefined,
+    uuidWincash: undefined,
+    uuidJustiPlus: undefined,
+    datePremiereSouscription: undefined,
+    canalAcquisition: undefined,
   };
 }
 
@@ -2843,6 +3307,27 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     }
     if (message.societeId !== undefined) {
       writer.uint32(90).string(message.societeId);
+    }
+    if (message.hasConciergerie !== undefined) {
+      writer.uint32(96).bool(message.hasConciergerie);
+    }
+    if (message.hasJustiPlus !== undefined) {
+      writer.uint32(104).bool(message.hasJustiPlus);
+    }
+    if (message.hasWincash !== undefined) {
+      writer.uint32(112).bool(message.hasWincash);
+    }
+    if (message.uuidWincash !== undefined) {
+      writer.uint32(122).string(message.uuidWincash);
+    }
+    if (message.uuidJustiPlus !== undefined) {
+      writer.uint32(130).string(message.uuidJustiPlus);
+    }
+    if (message.datePremiereSouscription !== undefined) {
+      writer.uint32(138).string(message.datePremiereSouscription);
+    }
+    if (message.canalAcquisition !== undefined) {
+      writer.uint32(146).string(message.canalAcquisition);
     }
     return writer;
   },
@@ -2942,6 +3427,62 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
           message.societeId = reader.string();
           continue;
         }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.hasConciergerie = reader.bool();
+          continue;
+        }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.hasJustiPlus = reader.bool();
+          continue;
+        }
+        case 14: {
+          if (tag !== 112) {
+            break;
+          }
+
+          message.hasWincash = reader.bool();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.uuidWincash = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.uuidJustiPlus = reader.string();
+          continue;
+        }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.datePremiereSouscription = reader.string();
+          continue;
+        }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.canalAcquisition = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2984,6 +3525,41 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
         : isSet(object.societe_id)
         ? globalThis.String(object.societe_id)
         : undefined,
+      hasConciergerie: isSet(object.hasConciergerie)
+        ? globalThis.Boolean(object.hasConciergerie)
+        : isSet(object.has_conciergerie)
+        ? globalThis.Boolean(object.has_conciergerie)
+        : undefined,
+      hasJustiPlus: isSet(object.hasJustiPlus)
+        ? globalThis.Boolean(object.hasJustiPlus)
+        : isSet(object.has_justi_plus)
+        ? globalThis.Boolean(object.has_justi_plus)
+        : undefined,
+      hasWincash: isSet(object.hasWincash)
+        ? globalThis.Boolean(object.hasWincash)
+        : isSet(object.has_wincash)
+        ? globalThis.Boolean(object.has_wincash)
+        : undefined,
+      uuidWincash: isSet(object.uuidWincash)
+        ? globalThis.String(object.uuidWincash)
+        : isSet(object.uuid_wincash)
+        ? globalThis.String(object.uuid_wincash)
+        : undefined,
+      uuidJustiPlus: isSet(object.uuidJustiPlus)
+        ? globalThis.String(object.uuidJustiPlus)
+        : isSet(object.uuid_justi_plus)
+        ? globalThis.String(object.uuid_justi_plus)
+        : undefined,
+      datePremiereSouscription: isSet(object.datePremiereSouscription)
+        ? globalThis.String(object.datePremiereSouscription)
+        : isSet(object.date_premiere_souscription)
+        ? globalThis.String(object.date_premiere_souscription)
+        : undefined,
+      canalAcquisition: isSet(object.canalAcquisition)
+        ? globalThis.String(object.canalAcquisition)
+        : isSet(object.canal_acquisition)
+        ? globalThis.String(object.canal_acquisition)
+        : undefined,
     };
   },
 
@@ -3022,6 +3598,27 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     if (message.societeId !== undefined) {
       obj.societeId = message.societeId;
     }
+    if (message.hasConciergerie !== undefined) {
+      obj.hasConciergerie = message.hasConciergerie;
+    }
+    if (message.hasJustiPlus !== undefined) {
+      obj.hasJustiPlus = message.hasJustiPlus;
+    }
+    if (message.hasWincash !== undefined) {
+      obj.hasWincash = message.hasWincash;
+    }
+    if (message.uuidWincash !== undefined) {
+      obj.uuidWincash = message.uuidWincash;
+    }
+    if (message.uuidJustiPlus !== undefined) {
+      obj.uuidJustiPlus = message.uuidJustiPlus;
+    }
+    if (message.datePremiereSouscription !== undefined) {
+      obj.datePremiereSouscription = message.datePremiereSouscription;
+    }
+    if (message.canalAcquisition !== undefined) {
+      obj.canalAcquisition = message.canalAcquisition;
+    }
     return obj;
   },
 
@@ -3041,6 +3638,13 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     message.email = object.email ?? undefined;
     message.statut = object.statut ?? undefined;
     message.societeId = object.societeId ?? undefined;
+    message.hasConciergerie = object.hasConciergerie ?? undefined;
+    message.hasJustiPlus = object.hasJustiPlus ?? undefined;
+    message.hasWincash = object.hasWincash ?? undefined;
+    message.uuidWincash = object.uuidWincash ?? undefined;
+    message.uuidJustiPlus = object.uuidJustiPlus ?? undefined;
+    message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
+    message.canalAcquisition = object.canalAcquisition ?? undefined;
     return message;
   },
 };

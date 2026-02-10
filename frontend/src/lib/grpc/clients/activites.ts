@@ -1,10 +1,10 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
 import {
-  TacheServiceClient,
-  TypeActiviteServiceClient,
-  ActiviteServiceClient,
-  EvenementSuiviServiceClient,
+  TacheServiceService,
+  TypeActiviteServiceService,
+  ActiviteServiceService,
+  EvenementSuiviServiceService,
   type Tache,
   type TacheStats,
   type TacheAlertes,
@@ -53,14 +53,16 @@ import {
   type DeleteResponse as EvenementSuiviDeleteResponse,
 } from "@proto/activites/activites";
 
-let tacheInstance: TacheServiceClient | null = null;
-let typeActiviteInstance: TypeActiviteServiceClient | null = null;
-let activiteInstance: ActiviteServiceClient | null = null;
-let evenementSuiviInstance: EvenementSuiviServiceClient | null = null;
+let tacheInstance: GrpcClient | null = null;
+let typeActiviteInstance: GrpcClient | null = null;
+let activiteInstance: GrpcClient | null = null;
+let evenementSuiviInstance: GrpcClient | null = null;
 
-function getTacheClient(): TacheServiceClient {
+function getTacheClient(): GrpcClient {
   if (!tacheInstance) {
-    tacheInstance = new TacheServiceClient(
+    tacheInstance = makeClient(
+      TacheServiceService,
+      "TacheService",
       SERVICES.activites,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -68,9 +70,11 @@ function getTacheClient(): TacheServiceClient {
   return tacheInstance;
 }
 
-function getTypeActiviteClient(): TypeActiviteServiceClient {
+function getTypeActiviteClient(): GrpcClient {
   if (!typeActiviteInstance) {
-    typeActiviteInstance = new TypeActiviteServiceClient(
+    typeActiviteInstance = makeClient(
+      TypeActiviteServiceService,
+      "TypeActiviteService",
       SERVICES.activites,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -78,9 +82,11 @@ function getTypeActiviteClient(): TypeActiviteServiceClient {
   return typeActiviteInstance;
 }
 
-function getActiviteClient(): ActiviteServiceClient {
+function getActiviteClient(): GrpcClient {
   if (!activiteInstance) {
-    activiteInstance = new ActiviteServiceClient(
+    activiteInstance = makeClient(
+      ActiviteServiceService,
+      "ActiviteService",
       SERVICES.activites,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -88,9 +94,11 @@ function getActiviteClient(): ActiviteServiceClient {
   return activiteInstance;
 }
 
-function getEvenementSuiviClient(): EvenementSuiviServiceClient {
+function getEvenementSuiviClient(): GrpcClient {
   if (!evenementSuiviInstance) {
-    evenementSuiviInstance = new EvenementSuiviServiceClient(
+    evenementSuiviInstance = makeClient(
+      EvenementSuiviServiceService,
+      "EvenementSuiviService",
       SERVICES.activites,
       createAuthChannelCredentials(credentials.createInsecure())
     );

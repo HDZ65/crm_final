@@ -25,8 +25,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { MoreHorizontal, CheckCircle2, XCircle, Mail, Phone, Copy, Edit, Trash2, User } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 import { toast } from "sonner"
-import type { Commercial, TypeCommercial } from "@/types/commercial"
-import { getCommercialFullName, getTypeCommercialLabel } from "@/types/commercial"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
+import type { TypeCommercial } from "@/lib/ui/labels/commercial"
+import { getCommercialFullName, getTypeCommercialLabel } from "@/lib/ui/labels/commercial"
 
 // Formater un numéro de téléphone français (06 74 40 64 93)
 function formatPhoneNumber(phone: string | null | undefined): string {
@@ -57,7 +58,7 @@ const TYPE_COLORS: Record<TypeCommercial, { bg: string; text: string }> = {
 }
 
 // Composant pour les actions avec gestion de l'état des dialogs
-function ActionsCell({ commercial, onRefresh }: { commercial: Commercial; onRefresh: () => void }) {
+function ActionsCell({ commercial, onRefresh }: { commercial: Apporteur; onRefresh: () => void }) {
   const [editDialogOpen, setEditDialogOpen] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [deleteLoading, setDeleteLoading] = React.useState(false)
@@ -88,7 +89,7 @@ function ActionsCell({ commercial, onRefresh }: { commercial: Commercial; onRefr
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => {
             const info = `${getCommercialFullName(commercial)}
-Type: ${getTypeCommercialLabel(commercial.typeApporteur)}
+Type: ${getTypeCommercialLabel(commercial.typeApporteur as TypeCommercial)}
 Email: ${commercial.email || "-"}
 Téléphone: ${commercial.telephone || "-"}
 Statut: ${commercial.actif ? "Actif" : "Inactif"}`
@@ -142,7 +143,7 @@ Statut: ${commercial.actif ? "Actif" : "Inactif"}`
   )
 }
 
-export function createColumns(onRefresh: () => void): ColumnDef<Commercial>[] {
+export function createColumns(onRefresh: () => void): ColumnDef<Apporteur>[] {
   return [
   {
     id: "select",
@@ -189,7 +190,7 @@ export function createColumns(onRefresh: () => void): ColumnDef<Commercial>[] {
     accessorKey: "typeApporteur",
     header: "Type",
     cell: ({ row }) => {
-      const type = row.original.typeApporteur
+      const type = row.original.typeApporteur as TypeCommercial
       const colors = TYPE_COLORS[type] || { bg: "bg-gray-100", text: "text-gray-700" }
       return (
         <Badge variant="secondary" className={`${colors.bg} ${colors.text}`}>

@@ -1,15 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { SubscriptionEntity } from '../entities/subscription.entity';
+import {
+  SubscriptionStatus,
+  type SubscriptionEntity,
+} from '../entities/subscription.entity';
 import type { SubscriptionStatusHistoryEntity } from '../entities/subscription-status-history.entity';
-
-export enum SubscriptionStatus {
-  PENDING = 'PENDING',
-  ACTIVE = 'ACTIVE',
-  PAUSED = 'PAUSED',
-  PAST_DUE = 'PAST_DUE',
-  CANCELED = 'CANCELED',
-  EXPIRED = 'EXPIRED',
-}
 
 type CancelFields = {
   canceledAt?: string | null;
@@ -19,30 +13,35 @@ type CancelFields = {
 @Injectable()
 export class SubscriptionStateMachineService {
   private readonly validTransitions: Record<SubscriptionStatus, SubscriptionStatus[]> = {
-    [SubscriptionStatus.PENDING]: [SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCELED],
-    [SubscriptionStatus.ACTIVE]: [
-      SubscriptionStatus.PAUSED,
-      SubscriptionStatus.PAST_DUE,
-      SubscriptionStatus.CANCELED,
+    [SubscriptionStatus.PENDING]: [SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCELLED],
+    [SubscriptionStatus.TRIAL]: [
+      SubscriptionStatus.ACTIVE,
+      SubscriptionStatus.CANCELLED,
       SubscriptionStatus.EXPIRED,
     ],
-    [SubscriptionStatus.PAUSED]: [SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCELED],
+    [SubscriptionStatus.ACTIVE]: [
+      SubscriptionStatus.SUSPENDED,
+      SubscriptionStatus.PAST_DUE,
+      SubscriptionStatus.CANCELLED,
+      SubscriptionStatus.EXPIRED,
+    ],
+    [SubscriptionStatus.SUSPENDED]: [SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCELLED],
     [SubscriptionStatus.PAST_DUE]: [
       SubscriptionStatus.ACTIVE,
-      SubscriptionStatus.CANCELED,
+      SubscriptionStatus.CANCELLED,
       SubscriptionStatus.EXPIRED,
     ],
-    [SubscriptionStatus.CANCELED]: [],
+    [SubscriptionStatus.CANCELLED]: [],
     [SubscriptionStatus.EXPIRED]: [],
   };
 
-  canTransition(from: string, to: string): boolean {
-    return this.validTransitions[from as SubscriptionStatus]?.includes(to as SubscriptionStatus) ?? false;
+  canTransition(from: SubscriptionStatus, to: SubscriptionStatus): boolean {
+    return this.validTransitions[from]?.includes(to) ?? false;
   }
 
   transition(
     subscription: SubscriptionEntity,
-    newStatus: string,
+    newStatus: SubscriptionStatus,
     reason?: string,
     changedBy?: string,
   ): { subscription: SubscriptionEntity; historyEntry: SubscriptionStatusHistoryEntity } {
@@ -55,15 +54,18 @@ export class SubscriptionStateMachineService {
 
     const nowIso = new Date().toISOString();
 
-    if (newStatus === SubscriptionStatus.PAUSED) {
+    if (newStatus === SubscriptionStatus.SUSPENDED) {
       subscription.pausedAt = nowIso;
-    } else if (newStatus === SubscriptionStatus.CANCELED) {
+    } else if (newStatus === SubscriptionStatus.CANCELLED) {
       subscription.endDate = nowIso;
 
       const cancelData = subscription as SubscriptionEntity & CancelFields;
       cancelData.canceledAt = nowIso;
       cancelData.cancelReason = reason ?? null;
-    } else if (newStatus === SubscriptionStatus.ACTIVE && previousStatus === SubscriptionStatus.PAUSED) {
+    } else if (
+      newStatus === SubscriptionStatus.ACTIVE &&
+      previousStatus === SubscriptionStatus.SUSPENDED
+    ) {
       subscription.pausedAt = null;
     }
 
@@ -78,7 +80,7 @@ export class SubscriptionStateMachineService {
     return { subscription, historyEntry };
   }
 
-  getAvailableTransitions(currentStatus: string): string[] {
-    return [...(this.validTransitions[currentStatus as SubscriptionStatus] ?? [])];
+  getAvailableTransitions(currentStatus: SubscriptionStatus): string[] {
+    return [...(this.validTransitions[currentStatus] ?? [])];
   }
 }

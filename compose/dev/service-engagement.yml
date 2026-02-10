@@ -6,22 +6,21 @@ services:
       target: development
     container_name: dev-crm-service-engagement
     ports:
-      - "50061:50051"
+      - "50051:50051"
+      - "3061:3061"
     env_file:
       - ../../services/service-engagement/.env.development
+    environment:
+      - NODE_PATH=/app/services/service-engagement/node_modules
     depends_on:
       postgres-main:
         condition: service_healthy
-      engagement_db:
-        condition: service_healthy
-      nats:
-        condition: service_started
     volumes:
       - ../../services/service-engagement/src:/app/services/service-engagement/src
     networks:
       - crm-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('net').connect(50051, 'localhost').on('connect', () => process.exit(0))"]
+      test: ["CMD", "node", "-e", "require('net').connect(3061, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
       timeout: 10s
       retries: 3

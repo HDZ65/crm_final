@@ -4,7 +4,7 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CreditCard, Calendar, CheckCircle2, Wallet, TrendingUp } from "lucide-react"
-import type { Payment } from "@/types/client"
+import type { Payment } from "@/lib/ui/display-types/client"
 
 interface ClientPaymentsProps {
   payments: Payment[]

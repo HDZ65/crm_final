@@ -714,7 +714,7 @@ Wave 6 (Tests & Finalisation — After Wave 5):
 
 ---
 
-- [ ] 8. Moteur de tarification avancé (multi-modèle)
+- [x] 8. Moteur de tarification avancé (multi-modèle)
 
   **What to do**:
   - Créer un `TarificationService` dans `services/service-commercial/src/domain/products/services/` qui implémente le calcul de prix pour chaque modèle:
@@ -817,7 +817,7 @@ Wave 6 (Tests & Finalisation — After Wave 5):
 
 ---
 
-- [ ] 9. Proto + gRPC PartenaireCommercial
+- [x] 9. Proto + gRPC PartenaireCommercial
 
   **What to do**:
   - Créer `packages/proto/src/partenaires/partenaires.proto` avec:
@@ -864,7 +864,7 @@ Wave 6 (Tests & Finalisation — After Wave 5):
 
 ---
 
-- [ ] 10. Proto + gRPC FormuleProduit
+- [x] 10. Proto + gRPC FormuleProduit
 
   **What to do**:
   - Ajouter au proto `products.proto` (ou créer `formules.proto`):
@@ -907,7 +907,7 @@ Wave 6 (Tests & Finalisation — After Wave 5):
 
 ---
 
-- [ ] 11. Canaux de vente — Entity, Enum, Proto
+- [x] 11. Canaux de vente — Entity, Enum, Proto
 
   **What to do**:
   - Créer l'enum `CanalVente` : TERRAIN, TELEPHONE, WEB, MARQUE_BLANCHE, MARKETPLACE

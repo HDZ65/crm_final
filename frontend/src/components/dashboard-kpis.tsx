@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { getDashboardKpis } from "@/actions/dashboard"
+import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button"
 import type { KpisResponse } from "@proto/dashboard/dashboard"
 
 interface KPICard {
@@ -161,6 +162,10 @@ export function DashboardKPIs({ initialData }: DashboardKPIsProps) {
     neutral: "text-foreground",
   }
 
+  const aiPrompt = `Analyse les indicateurs cles du dashboard CRM et propose 3 actions prioritaires. Donnees actuelles: ${kpiCards
+    .map((kpi) => `${kpi.label}: ${formatValue(kpi.value, kpi.format || "number")}`)
+    .join(" | ")}.`
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
@@ -171,9 +176,12 @@ export function DashboardKPIs({ initialData }: DashboardKPIsProps) {
             </div>
             <CardTitle className="text-base md:text-lg">Indicateurs clés</CardTitle>
           </div>
-          <Button variant="ghost" size="icon" onClick={fetchKpis} className="size-8">
-            <RefreshCw className="size-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <AskAiCardButton prompt={aiPrompt} title="Demander une analyse IA des indicateurs cles" />
+            <Button variant="ghost" size="icon" onClick={fetchKpis} className="size-8">
+              <RefreshCw className="size-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-3">

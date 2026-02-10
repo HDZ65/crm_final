@@ -182,8 +182,8 @@ export async function listActivitesByPartenaire(
     // Import the activites actions
     const { listActivites } = await import("@/actions/activites");
     
-    // Fetch all activities for the organization
-    const result = await listActivites({ organisationId, page: 1, limit: 1000 });
+    // Fetch all activities (no organisationId filter available in listActivites)
+    const result = await listActivites({ page: 1, limit: 1000 });
     
     if (result.error || !result.data) {
       return { data: null, error: result.error || "Erreur lors du chargement des activités" };

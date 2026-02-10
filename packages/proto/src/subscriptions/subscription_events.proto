@@ -1,0 +1,225 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// SUBSCRIPTION EVENTS
+// ============================================================================
+// Events related to subscription lifecycle management (OTT + generic)
+// ============================================================================
+
+// Subscription created event
+message SubscriptionCreatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  string frequency = 7;                             // Subscription frequency
+  double total_amount = 8;                          // Total amount
+  google.protobuf.Timestamp start_date = 9;         // Subscription start date
+  string plan_type = 10;                            // FREE_AVOD, PREMIUM_SVOD, VIP
+  string store_source = 11;                         // NONE, WEB_DIRECT, APPLE_STORE, etc.
+  string ims_subscription_id = 12;                  // IMS reference (if from IMS)
+}
+
+// Subscription trial started event
+message SubscriptionTrialStartedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  string plan_type = 7;                             // Plan type
+  google.protobuf.Timestamp trial_start = 8;        // Trial start date
+  google.protobuf.Timestamp trial_end = 9;          // Trial end date
+}
+
+// Subscription activated event
+message SubscriptionActivatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  google.protobuf.Timestamp activated_at = 7;       // Activation date
+  string triggered_by = 8;                          // USER, SYSTEM, IMS, STORE, DUNNING
+}
+
+// Subscription paused event
+message SubscriptionPausedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  string reason = 7;                                // Pause reason
+  google.protobuf.Timestamp paused_at = 8;          // Pause date
+}
+
+// Subscription resumed event
+message SubscriptionResumedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  google.protobuf.Timestamp resumed_at = 7;         // Resume date
+  string triggered_by = 8;                          // USER, SYSTEM, IMS, STORE, DUNNING
+}
+
+// Subscription suspended event (dunning J+10 or admin action)
+message SubscriptionSuspendedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  string reason = 7;                                // Suspension reason
+  google.protobuf.Timestamp suspended_at = 8;       // Suspension date
+  string triggered_by = 9;                          // USER, SYSTEM, IMS, STORE, DUNNING
+}
+
+// Subscription reactivated event (after suspension + payment)
+message SubscriptionReactivatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  google.protobuf.Timestamp reactivated_at = 7;     // Reactivation date
+  string triggered_by = 8;                          // USER, SYSTEM, IMS, STORE, DUNNING
+}
+
+// Subscription canceled event
+message SubscriptionCanceledEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  string reason = 7;                                // Cancellation reason
+  google.protobuf.Timestamp canceled_at = 8;        // Cancellation date
+  string triggered_by = 9;                          // USER, SYSTEM, IMS, STORE, DUNNING
+}
+
+// Subscription expired event (natural end after cancellation)
+message SubscriptionExpiredEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  google.protobuf.Timestamp expired_at = 7;         // Expiration date
+}
+
+// Subscription charged event
+message SubscriptionChargedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  double amount = 7;                                // Charged amount
+  string currency = 8;                              // Currency code
+  string invoice_id = 9;                            // Generated invoice ID
+  google.protobuf.Timestamp charged_at = 10;        // Charge date
+  google.protobuf.Timestamp next_charge_date = 11;  // Next charge date
+  string store_source = 12;                         // WEB_DIRECT, APPLE_STORE, etc.
+}
+
+// Subscription charge failed event
+message SubscriptionChargeFailedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  double amount = 7;                                // Attempted amount
+  string currency = 8;                              // Currency code
+  string failure_reason = 9;                        // Failure reason
+  int32 retry_count = 10;                           // Number of retries attempted
+  google.protobuf.Timestamp failed_at = 11;         // Failure date
+}
+
+// Subscription upgraded event
+message SubscriptionUpgradedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  string old_plan_type = 7;                         // Previous plan type
+  string new_plan_type = 8;                         // New plan type
+  double old_amount = 9;                            // Previous amount
+  double new_amount = 10;                           // New amount
+  google.protobuf.Timestamp upgraded_at = 11;       // Upgrade date
+}
+
+// Subscription downgraded event
+message SubscriptionDowngradedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string subscription_id = 4;                       // Subscription ID
+  string organisation_id = 5;                       // Organisation ID
+  string client_id = 6;                             // Client ID
+  string old_plan_type = 7;                         // Previous plan type
+  string new_plan_type = 8;                         // New plan type
+  double old_amount = 9;                            // Previous amount
+  double new_amount = 10;                           // New amount
+  google.protobuf.Timestamp downgraded_at = 11;     // Downgrade date
+}

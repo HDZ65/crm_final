@@ -406,6 +406,90 @@ export function statutRepriseToJSON(object: StatutReprise): string {
   }
 }
 
+export enum StatutContestation {
+  STATUT_CONTESTATION_UNSPECIFIED = 0,
+  STATUT_CONTESTATION_EN_COURS = 1,
+  STATUT_CONTESTATION_ACCEPTEE = 2,
+  STATUT_CONTESTATION_REJETEE = 3,
+  UNRECOGNIZED = -1,
+}
+
+export function statutContestationFromJSON(object: any): StatutContestation {
+  switch (object) {
+    case 0:
+    case "STATUT_CONTESTATION_UNSPECIFIED":
+      return StatutContestation.STATUT_CONTESTATION_UNSPECIFIED;
+    case 1:
+    case "STATUT_CONTESTATION_EN_COURS":
+      return StatutContestation.STATUT_CONTESTATION_EN_COURS;
+    case 2:
+    case "STATUT_CONTESTATION_ACCEPTEE":
+      return StatutContestation.STATUT_CONTESTATION_ACCEPTEE;
+    case 3:
+    case "STATUT_CONTESTATION_REJETEE":
+      return StatutContestation.STATUT_CONTESTATION_REJETEE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return StatutContestation.UNRECOGNIZED;
+  }
+}
+
+export function statutContestationToJSON(object: StatutContestation): string {
+  switch (object) {
+    case StatutContestation.STATUT_CONTESTATION_UNSPECIFIED:
+      return "STATUT_CONTESTATION_UNSPECIFIED";
+    case StatutContestation.STATUT_CONTESTATION_EN_COURS:
+      return "STATUT_CONTESTATION_EN_COURS";
+    case StatutContestation.STATUT_CONTESTATION_ACCEPTEE:
+      return "STATUT_CONTESTATION_ACCEPTEE";
+    case StatutContestation.STATUT_CONTESTATION_REJETEE:
+      return "STATUT_CONTESTATION_REJETEE";
+    case StatutContestation.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+export enum ExportFormatAnalytique {
+  EXPORT_FORMAT_ANALYTIQUE_UNSPECIFIED = 0,
+  EXPORT_FORMAT_ANALYTIQUE_CSV = 1,
+  EXPORT_FORMAT_ANALYTIQUE_EXCEL = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function exportFormatAnalytiqueFromJSON(object: any): ExportFormatAnalytique {
+  switch (object) {
+    case 0:
+    case "EXPORT_FORMAT_ANALYTIQUE_UNSPECIFIED":
+      return ExportFormatAnalytique.EXPORT_FORMAT_ANALYTIQUE_UNSPECIFIED;
+    case 1:
+    case "EXPORT_FORMAT_ANALYTIQUE_CSV":
+      return ExportFormatAnalytique.EXPORT_FORMAT_ANALYTIQUE_CSV;
+    case 2:
+    case "EXPORT_FORMAT_ANALYTIQUE_EXCEL":
+      return ExportFormatAnalytique.EXPORT_FORMAT_ANALYTIQUE_EXCEL;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ExportFormatAnalytique.UNRECOGNIZED;
+  }
+}
+
+export function exportFormatAnalytiqueToJSON(object: ExportFormatAnalytique): string {
+  switch (object) {
+    case ExportFormatAnalytique.EXPORT_FORMAT_ANALYTIQUE_UNSPECIFIED:
+      return "EXPORT_FORMAT_ANALYTIQUE_UNSPECIFIED";
+    case ExportFormatAnalytique.EXPORT_FORMAT_ANALYTIQUE_CSV:
+      return "EXPORT_FORMAT_ANALYTIQUE_CSV";
+    case ExportFormatAnalytique.EXPORT_FORMAT_ANALYTIQUE_EXCEL:
+      return "EXPORT_FORMAT_ANALYTIQUE_EXCEL";
+    case ExportFormatAnalytique.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export enum StatutRecurrence {
   STATUT_RECURRENCE_UNSPECIFIED = 0,
   STATUT_RECURRENCE_ACTIVE = 1,
@@ -1112,10 +1196,16 @@ export interface ValidateBordereauRequest {
   validateurId: string;
 }
 
+export interface ExportBordereauRequest {
+  bordereauId: string;
+  organisationId: string;
+}
+
 export interface ExportBordereauResponse {
   success: boolean;
   pdfUrl: string;
   excelUrl: string;
+  hashSha256: string;
 }
 
 export interface BordereauResponse {
@@ -1260,6 +1350,59 @@ export interface RepriseResponse {
 
 export interface RepriseListResponse {
   reprises: Reprise[];
+  total: number;
+}
+
+export interface Contestation {
+  id: string;
+  organisationId: string;
+  commissionId: string;
+  bordereauId: string;
+  apporteurId: string;
+  motif: string;
+  dateContestation: string;
+  dateLimite: string;
+  statut: StatutContestation;
+  commentaireResolution?: string | undefined;
+  resoluPar?: string | undefined;
+  dateResolution?: string | undefined;
+  ligneRegularisationId?: string | undefined;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreerContestationRequest {
+  organisationId: string;
+  commissionId: string;
+  bordereauId: string;
+  apporteurId: string;
+  motif: string;
+  dateContestation?: string | undefined;
+}
+
+export interface GetContestationsRequest {
+  organisationId: string;
+  commissionId?: string | undefined;
+  bordereauId?: string | undefined;
+  apporteurId?: string | undefined;
+  statut?: StatutContestation | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
+}
+
+export interface ResoudreContestationRequest {
+  id: string;
+  acceptee: boolean;
+  commentaire: string;
+  resoluPar: string;
+}
+
+export interface ContestationResponse {
+  contestation: Contestation | undefined;
+}
+
+export interface GetContestationsResponse {
+  contestations: Contestation[];
   total: number;
 }
 
@@ -1473,6 +1616,139 @@ export interface GetAuditLogsByRefRequest {
 export interface AuditLogListResponse {
   logs: AuditLog[];
   total: number;
+}
+
+export interface PreselectionRequest {
+  bordereauId: string;
+  organisationId: string;
+}
+
+export interface PreselectionResponse {
+  nombreLignesSelectionnees: number;
+  nombreLignesTotal: number;
+  ligneIdsSelectionnees: string[];
+}
+
+export interface RecalculerTotauxRequest {
+  bordereauId: string;
+  ligneIdsSelectionnees: string[];
+}
+
+export interface TotauxResponse {
+  totalBrut: string;
+  totalReprises: string;
+  totalAcomptes: string;
+  totalNet: string;
+  nombreLignesSelectionnees: number;
+}
+
+export interface ValiderBordereauFinalRequest {
+  bordereauId: string;
+  validateurId: string;
+  ligneIdsValidees: string[];
+}
+
+export interface ValiderBordereauFinalResponse {
+  success: boolean;
+  bordereau: Bordereau | undefined;
+  dateValidation: string;
+}
+
+export interface GetLignesForValidationRequest {
+  bordereauId: string;
+  organisationId: string;
+  limit?: number | undefined;
+  offset?: number | undefined;
+}
+
+export interface GetLignesForValidationResponse {
+  lignes: LigneBordereau[];
+  total: number;
+  totaux: TotauxResponse | undefined;
+}
+
+export interface DashboardKpiFilters {
+  organisationId: string;
+  periode?: string | undefined;
+  apporteurId?: string | undefined;
+  produitId?: string | undefined;
+  dateDebut?: string | undefined;
+  dateFin?: string | undefined;
+}
+
+export interface KpiProduit {
+  produitId: string;
+  totalBrut: string;
+  totalNet: string;
+  totalReprises: string;
+  volume: number;
+}
+
+export interface DashboardKpi {
+  periode: string;
+  generatedAt: string;
+  source: string;
+  totalBrut: string;
+  totalNet: string;
+  totalReprises: string;
+  totalRecurrence: string;
+  tauxReprise: string;
+  volume: number;
+  delaiValidationMoyenJours: string;
+  parProduit: KpiProduit[];
+}
+
+export interface GetDashboardKpiRequest {
+  filters: DashboardKpiFilters | undefined;
+}
+
+export interface GetDashboardKpiResponse {
+  kpi: DashboardKpi | undefined;
+}
+
+export interface GenererSnapshotKpiRequest {
+  filters: DashboardKpiFilters | undefined;
+  generatedBy?: string | undefined;
+}
+
+export interface GenererSnapshotKpiResponse {
+  success: boolean;
+  kpi: DashboardKpi | undefined;
+}
+
+export interface ComparatifKpi {
+  periode: string;
+  totalBrut: string;
+  totalNet: string;
+  totalReprises: string;
+  totalRecurrence: string;
+  tauxReprise: string;
+  volume: number;
+  delaiValidationMoyenJours: string;
+  variationBrutPct: string;
+}
+
+export interface GetComparatifsRequest {
+  filters: DashboardKpiFilters | undefined;
+}
+
+export interface GetComparatifsResponse {
+  courant: ComparatifKpi | undefined;
+  m1: ComparatifKpi | undefined;
+  m3: ComparatifKpi | undefined;
+  m12: ComparatifKpi | undefined;
+}
+
+export interface ExportAnalytiqueRequest {
+  filters: DashboardKpiFilters | undefined;
+  format: ExportFormatAnalytique;
+  includeComparatifs?: boolean | undefined;
+}
+
+export interface ExportAnalytiqueResponse {
+  fileName: string;
+  mimeType: string;
+  content: string;
 }
 
 function createBaseGetByIdRequest(): GetByIdRequest {
@@ -7310,8 +7586,92 @@ export const ValidateBordereauRequest: MessageFns<ValidateBordereauRequest> = {
   },
 };
 
+function createBaseExportBordereauRequest(): ExportBordereauRequest {
+  return { bordereauId: "", organisationId: "" };
+}
+
+export const ExportBordereauRequest: MessageFns<ExportBordereauRequest> = {
+  encode(message: ExportBordereauRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.bordereauId !== "") {
+      writer.uint32(10).string(message.bordereauId);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ExportBordereauRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExportBordereauRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.bordereauId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExportBordereauRequest {
+    return {
+      bordereauId: isSet(object.bordereauId)
+        ? globalThis.String(object.bordereauId)
+        : isSet(object.bordereau_id)
+        ? globalThis.String(object.bordereau_id)
+        : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: ExportBordereauRequest): unknown {
+    const obj: any = {};
+    if (message.bordereauId !== "") {
+      obj.bordereauId = message.bordereauId;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ExportBordereauRequest>, I>>(base?: I): ExportBordereauRequest {
+    return ExportBordereauRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ExportBordereauRequest>, I>>(object: I): ExportBordereauRequest {
+    const message = createBaseExportBordereauRequest();
+    message.bordereauId = object.bordereauId ?? "";
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
 function createBaseExportBordereauResponse(): ExportBordereauResponse {
-  return { success: false, pdfUrl: "", excelUrl: "" };
+  return { success: false, pdfUrl: "", excelUrl: "", hashSha256: "" };
 }
 
 export const ExportBordereauResponse: MessageFns<ExportBordereauResponse> = {
@@ -7324,6 +7684,9 @@ export const ExportBordereauResponse: MessageFns<ExportBordereauResponse> = {
     }
     if (message.excelUrl !== "") {
       writer.uint32(26).string(message.excelUrl);
+    }
+    if (message.hashSha256 !== "") {
+      writer.uint32(34).string(message.hashSha256);
     }
     return writer;
   },
@@ -7359,6 +7722,14 @@ export const ExportBordereauResponse: MessageFns<ExportBordereauResponse> = {
           message.excelUrl = reader.string();
           continue;
         }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.hashSha256 = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -7381,6 +7752,11 @@ export const ExportBordereauResponse: MessageFns<ExportBordereauResponse> = {
         : isSet(object.excel_url)
         ? globalThis.String(object.excel_url)
         : "",
+      hashSha256: isSet(object.hashSha256)
+        ? globalThis.String(object.hashSha256)
+        : isSet(object.hash_sha256)
+        ? globalThis.String(object.hash_sha256)
+        : "",
     };
   },
 
@@ -7395,6 +7771,9 @@ export const ExportBordereauResponse: MessageFns<ExportBordereauResponse> = {
     if (message.excelUrl !== "") {
       obj.excelUrl = message.excelUrl;
     }
+    if (message.hashSha256 !== "") {
+      obj.hashSha256 = message.hashSha256;
+    }
     return obj;
   },
 
@@ -7406,6 +7785,7 @@ export const ExportBordereauResponse: MessageFns<ExportBordereauResponse> = {
     message.success = object.success ?? false;
     message.pdfUrl = object.pdfUrl ?? "";
     message.excelUrl = object.excelUrl ?? "";
+    message.hashSha256 = object.hashSha256 ?? "";
     return message;
   },
 };
@@ -10051,6 +10431,951 @@ export const RepriseListResponse: MessageFns<RepriseListResponse> = {
   fromPartial<I extends Exact<DeepPartial<RepriseListResponse>, I>>(object: I): RepriseListResponse {
     const message = createBaseRepriseListResponse();
     message.reprises = object.reprises?.map((e) => Reprise.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    return message;
+  },
+};
+
+function createBaseContestation(): Contestation {
+  return {
+    id: "",
+    organisationId: "",
+    commissionId: "",
+    bordereauId: "",
+    apporteurId: "",
+    motif: "",
+    dateContestation: "",
+    dateLimite: "",
+    statut: 0,
+    commentaireResolution: undefined,
+    resoluPar: undefined,
+    dateResolution: undefined,
+    ligneRegularisationId: undefined,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const Contestation: MessageFns<Contestation> = {
+  encode(message: Contestation, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    if (message.commissionId !== "") {
+      writer.uint32(26).string(message.commissionId);
+    }
+    if (message.bordereauId !== "") {
+      writer.uint32(34).string(message.bordereauId);
+    }
+    if (message.apporteurId !== "") {
+      writer.uint32(42).string(message.apporteurId);
+    }
+    if (message.motif !== "") {
+      writer.uint32(50).string(message.motif);
+    }
+    if (message.dateContestation !== "") {
+      writer.uint32(58).string(message.dateContestation);
+    }
+    if (message.dateLimite !== "") {
+      writer.uint32(66).string(message.dateLimite);
+    }
+    if (message.statut !== 0) {
+      writer.uint32(72).int32(message.statut);
+    }
+    if (message.commentaireResolution !== undefined) {
+      writer.uint32(82).string(message.commentaireResolution);
+    }
+    if (message.resoluPar !== undefined) {
+      writer.uint32(90).string(message.resoluPar);
+    }
+    if (message.dateResolution !== undefined) {
+      writer.uint32(98).string(message.dateResolution);
+    }
+    if (message.ligneRegularisationId !== undefined) {
+      writer.uint32(106).string(message.ligneRegularisationId);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(114).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(122).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Contestation {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseContestation();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.commissionId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.bordereauId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.apporteurId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.motif = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.dateContestation = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.dateLimite = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.statut = reader.int32() as any;
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.commentaireResolution = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.resoluPar = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.dateResolution = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.ligneRegularisationId = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Contestation {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      commissionId: isSet(object.commissionId)
+        ? globalThis.String(object.commissionId)
+        : isSet(object.commission_id)
+        ? globalThis.String(object.commission_id)
+        : "",
+      bordereauId: isSet(object.bordereauId)
+        ? globalThis.String(object.bordereauId)
+        : isSet(object.bordereau_id)
+        ? globalThis.String(object.bordereau_id)
+        : "",
+      apporteurId: isSet(object.apporteurId)
+        ? globalThis.String(object.apporteurId)
+        : isSet(object.apporteur_id)
+        ? globalThis.String(object.apporteur_id)
+        : "",
+      motif: isSet(object.motif) ? globalThis.String(object.motif) : "",
+      dateContestation: isSet(object.dateContestation)
+        ? globalThis.String(object.dateContestation)
+        : isSet(object.date_contestation)
+        ? globalThis.String(object.date_contestation)
+        : "",
+      dateLimite: isSet(object.dateLimite)
+        ? globalThis.String(object.dateLimite)
+        : isSet(object.date_limite)
+        ? globalThis.String(object.date_limite)
+        : "",
+      statut: isSet(object.statut) ? statutContestationFromJSON(object.statut) : 0,
+      commentaireResolution: isSet(object.commentaireResolution)
+        ? globalThis.String(object.commentaireResolution)
+        : isSet(object.commentaire_resolution)
+        ? globalThis.String(object.commentaire_resolution)
+        : undefined,
+      resoluPar: isSet(object.resoluPar)
+        ? globalThis.String(object.resoluPar)
+        : isSet(object.resolu_par)
+        ? globalThis.String(object.resolu_par)
+        : undefined,
+      dateResolution: isSet(object.dateResolution)
+        ? globalThis.String(object.dateResolution)
+        : isSet(object.date_resolution)
+        ? globalThis.String(object.date_resolution)
+        : undefined,
+      ligneRegularisationId: isSet(object.ligneRegularisationId)
+        ? globalThis.String(object.ligneRegularisationId)
+        : isSet(object.ligne_regularisation_id)
+        ? globalThis.String(object.ligne_regularisation_id)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: Contestation): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.commissionId !== "") {
+      obj.commissionId = message.commissionId;
+    }
+    if (message.bordereauId !== "") {
+      obj.bordereauId = message.bordereauId;
+    }
+    if (message.apporteurId !== "") {
+      obj.apporteurId = message.apporteurId;
+    }
+    if (message.motif !== "") {
+      obj.motif = message.motif;
+    }
+    if (message.dateContestation !== "") {
+      obj.dateContestation = message.dateContestation;
+    }
+    if (message.dateLimite !== "") {
+      obj.dateLimite = message.dateLimite;
+    }
+    if (message.statut !== 0) {
+      obj.statut = statutContestationToJSON(message.statut);
+    }
+    if (message.commentaireResolution !== undefined) {
+      obj.commentaireResolution = message.commentaireResolution;
+    }
+    if (message.resoluPar !== undefined) {
+      obj.resoluPar = message.resoluPar;
+    }
+    if (message.dateResolution !== undefined) {
+      obj.dateResolution = message.dateResolution;
+    }
+    if (message.ligneRegularisationId !== undefined) {
+      obj.ligneRegularisationId = message.ligneRegularisationId;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Contestation>, I>>(base?: I): Contestation {
+    return Contestation.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Contestation>, I>>(object: I): Contestation {
+    const message = createBaseContestation();
+    message.id = object.id ?? "";
+    message.organisationId = object.organisationId ?? "";
+    message.commissionId = object.commissionId ?? "";
+    message.bordereauId = object.bordereauId ?? "";
+    message.apporteurId = object.apporteurId ?? "";
+    message.motif = object.motif ?? "";
+    message.dateContestation = object.dateContestation ?? "";
+    message.dateLimite = object.dateLimite ?? "";
+    message.statut = object.statut ?? 0;
+    message.commentaireResolution = object.commentaireResolution ?? undefined;
+    message.resoluPar = object.resoluPar ?? undefined;
+    message.dateResolution = object.dateResolution ?? undefined;
+    message.ligneRegularisationId = object.ligneRegularisationId ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseCreerContestationRequest(): CreerContestationRequest {
+  return {
+    organisationId: "",
+    commissionId: "",
+    bordereauId: "",
+    apporteurId: "",
+    motif: "",
+    dateContestation: undefined,
+  };
+}
+
+export const CreerContestationRequest: MessageFns<CreerContestationRequest> = {
+  encode(message: CreerContestationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.commissionId !== "") {
+      writer.uint32(18).string(message.commissionId);
+    }
+    if (message.bordereauId !== "") {
+      writer.uint32(26).string(message.bordereauId);
+    }
+    if (message.apporteurId !== "") {
+      writer.uint32(34).string(message.apporteurId);
+    }
+    if (message.motif !== "") {
+      writer.uint32(42).string(message.motif);
+    }
+    if (message.dateContestation !== undefined) {
+      writer.uint32(50).string(message.dateContestation);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreerContestationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreerContestationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.commissionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.bordereauId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.apporteurId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.motif = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.dateContestation = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreerContestationRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      commissionId: isSet(object.commissionId)
+        ? globalThis.String(object.commissionId)
+        : isSet(object.commission_id)
+        ? globalThis.String(object.commission_id)
+        : "",
+      bordereauId: isSet(object.bordereauId)
+        ? globalThis.String(object.bordereauId)
+        : isSet(object.bordereau_id)
+        ? globalThis.String(object.bordereau_id)
+        : "",
+      apporteurId: isSet(object.apporteurId)
+        ? globalThis.String(object.apporteurId)
+        : isSet(object.apporteur_id)
+        ? globalThis.String(object.apporteur_id)
+        : "",
+      motif: isSet(object.motif) ? globalThis.String(object.motif) : "",
+      dateContestation: isSet(object.dateContestation)
+        ? globalThis.String(object.dateContestation)
+        : isSet(object.date_contestation)
+        ? globalThis.String(object.date_contestation)
+        : undefined,
+    };
+  },
+
+  toJSON(message: CreerContestationRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.commissionId !== "") {
+      obj.commissionId = message.commissionId;
+    }
+    if (message.bordereauId !== "") {
+      obj.bordereauId = message.bordereauId;
+    }
+    if (message.apporteurId !== "") {
+      obj.apporteurId = message.apporteurId;
+    }
+    if (message.motif !== "") {
+      obj.motif = message.motif;
+    }
+    if (message.dateContestation !== undefined) {
+      obj.dateContestation = message.dateContestation;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreerContestationRequest>, I>>(base?: I): CreerContestationRequest {
+    return CreerContestationRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreerContestationRequest>, I>>(object: I): CreerContestationRequest {
+    const message = createBaseCreerContestationRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.commissionId = object.commissionId ?? "";
+    message.bordereauId = object.bordereauId ?? "";
+    message.apporteurId = object.apporteurId ?? "";
+    message.motif = object.motif ?? "";
+    message.dateContestation = object.dateContestation ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetContestationsRequest(): GetContestationsRequest {
+  return {
+    organisationId: "",
+    commissionId: undefined,
+    bordereauId: undefined,
+    apporteurId: undefined,
+    statut: undefined,
+    limit: undefined,
+    offset: undefined,
+  };
+}
+
+export const GetContestationsRequest: MessageFns<GetContestationsRequest> = {
+  encode(message: GetContestationsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.commissionId !== undefined) {
+      writer.uint32(18).string(message.commissionId);
+    }
+    if (message.bordereauId !== undefined) {
+      writer.uint32(26).string(message.bordereauId);
+    }
+    if (message.apporteurId !== undefined) {
+      writer.uint32(34).string(message.apporteurId);
+    }
+    if (message.statut !== undefined) {
+      writer.uint32(40).int32(message.statut);
+    }
+    if (message.limit !== undefined) {
+      writer.uint32(48).int32(message.limit);
+    }
+    if (message.offset !== undefined) {
+      writer.uint32(56).int32(message.offset);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetContestationsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetContestationsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.commissionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.bordereauId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.apporteurId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.statut = reader.int32() as any;
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.offset = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetContestationsRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      commissionId: isSet(object.commissionId)
+        ? globalThis.String(object.commissionId)
+        : isSet(object.commission_id)
+        ? globalThis.String(object.commission_id)
+        : undefined,
+      bordereauId: isSet(object.bordereauId)
+        ? globalThis.String(object.bordereauId)
+        : isSet(object.bordereau_id)
+        ? globalThis.String(object.bordereau_id)
+        : undefined,
+      apporteurId: isSet(object.apporteurId)
+        ? globalThis.String(object.apporteurId)
+        : isSet(object.apporteur_id)
+        ? globalThis.String(object.apporteur_id)
+        : undefined,
+      statut: isSet(object.statut) ? statutContestationFromJSON(object.statut) : undefined,
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : undefined,
+      offset: isSet(object.offset) ? globalThis.Number(object.offset) : undefined,
+    };
+  },
+
+  toJSON(message: GetContestationsRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.commissionId !== undefined) {
+      obj.commissionId = message.commissionId;
+    }
+    if (message.bordereauId !== undefined) {
+      obj.bordereauId = message.bordereauId;
+    }
+    if (message.apporteurId !== undefined) {
+      obj.apporteurId = message.apporteurId;
+    }
+    if (message.statut !== undefined) {
+      obj.statut = statutContestationToJSON(message.statut);
+    }
+    if (message.limit !== undefined) {
+      obj.limit = Math.round(message.limit);
+    }
+    if (message.offset !== undefined) {
+      obj.offset = Math.round(message.offset);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetContestationsRequest>, I>>(base?: I): GetContestationsRequest {
+    return GetContestationsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetContestationsRequest>, I>>(object: I): GetContestationsRequest {
+    const message = createBaseGetContestationsRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.commissionId = object.commissionId ?? undefined;
+    message.bordereauId = object.bordereauId ?? undefined;
+    message.apporteurId = object.apporteurId ?? undefined;
+    message.statut = object.statut ?? undefined;
+    message.limit = object.limit ?? undefined;
+    message.offset = object.offset ?? undefined;
+    return message;
+  },
+};
+
+function createBaseResoudreContestationRequest(): ResoudreContestationRequest {
+  return { id: "", acceptee: false, commentaire: "", resoluPar: "" };
+}
+
+export const ResoudreContestationRequest: MessageFns<ResoudreContestationRequest> = {
+  encode(message: ResoudreContestationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.acceptee !== false) {
+      writer.uint32(16).bool(message.acceptee);
+    }
+    if (message.commentaire !== "") {
+      writer.uint32(26).string(message.commentaire);
+    }
+    if (message.resoluPar !== "") {
+      writer.uint32(34).string(message.resoluPar);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ResoudreContestationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResoudreContestationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.acceptee = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.commentaire = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.resoluPar = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ResoudreContestationRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      acceptee: isSet(object.acceptee) ? globalThis.Boolean(object.acceptee) : false,
+      commentaire: isSet(object.commentaire) ? globalThis.String(object.commentaire) : "",
+      resoluPar: isSet(object.resoluPar)
+        ? globalThis.String(object.resoluPar)
+        : isSet(object.resolu_par)
+        ? globalThis.String(object.resolu_par)
+        : "",
+    };
+  },
+
+  toJSON(message: ResoudreContestationRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.acceptee !== false) {
+      obj.acceptee = message.acceptee;
+    }
+    if (message.commentaire !== "") {
+      obj.commentaire = message.commentaire;
+    }
+    if (message.resoluPar !== "") {
+      obj.resoluPar = message.resoluPar;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ResoudreContestationRequest>, I>>(base?: I): ResoudreContestationRequest {
+    return ResoudreContestationRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ResoudreContestationRequest>, I>>(object: I): ResoudreContestationRequest {
+    const message = createBaseResoudreContestationRequest();
+    message.id = object.id ?? "";
+    message.acceptee = object.acceptee ?? false;
+    message.commentaire = object.commentaire ?? "";
+    message.resoluPar = object.resoluPar ?? "";
+    return message;
+  },
+};
+
+function createBaseContestationResponse(): ContestationResponse {
+  return { contestation: undefined };
+}
+
+export const ContestationResponse: MessageFns<ContestationResponse> = {
+  encode(message: ContestationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.contestation !== undefined) {
+      Contestation.encode(message.contestation, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ContestationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseContestationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.contestation = Contestation.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ContestationResponse {
+    return { contestation: isSet(object.contestation) ? Contestation.fromJSON(object.contestation) : undefined };
+  },
+
+  toJSON(message: ContestationResponse): unknown {
+    const obj: any = {};
+    if (message.contestation !== undefined) {
+      obj.contestation = Contestation.toJSON(message.contestation);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ContestationResponse>, I>>(base?: I): ContestationResponse {
+    return ContestationResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ContestationResponse>, I>>(object: I): ContestationResponse {
+    const message = createBaseContestationResponse();
+    message.contestation = (object.contestation !== undefined && object.contestation !== null)
+      ? Contestation.fromPartial(object.contestation)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetContestationsResponse(): GetContestationsResponse {
+  return { contestations: [], total: 0 };
+}
+
+export const GetContestationsResponse: MessageFns<GetContestationsResponse> = {
+  encode(message: GetContestationsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.contestations) {
+      Contestation.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetContestationsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetContestationsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.contestations.push(Contestation.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetContestationsResponse {
+    return {
+      contestations: globalThis.Array.isArray(object?.contestations)
+        ? object.contestations.map((e: any) => Contestation.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+    };
+  },
+
+  toJSON(message: GetContestationsResponse): unknown {
+    const obj: any = {};
+    if (message.contestations?.length) {
+      obj.contestations = message.contestations.map((e) => Contestation.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetContestationsResponse>, I>>(base?: I): GetContestationsResponse {
+    return GetContestationsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetContestationsResponse>, I>>(object: I): GetContestationsResponse {
+    const message = createBaseGetContestationsResponse();
+    message.contestations = object.contestations?.map((e) => Contestation.fromPartial(e)) || [];
     message.total = object.total ?? 0;
     return message;
   },
@@ -13780,6 +15105,2281 @@ export const AuditLogListResponse: MessageFns<AuditLogListResponse> = {
   },
 };
 
+function createBasePreselectionRequest(): PreselectionRequest {
+  return { bordereauId: "", organisationId: "" };
+}
+
+export const PreselectionRequest: MessageFns<PreselectionRequest> = {
+  encode(message: PreselectionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.bordereauId !== "") {
+      writer.uint32(10).string(message.bordereauId);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PreselectionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePreselectionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.bordereauId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PreselectionRequest {
+    return {
+      bordereauId: isSet(object.bordereauId)
+        ? globalThis.String(object.bordereauId)
+        : isSet(object.bordereau_id)
+        ? globalThis.String(object.bordereau_id)
+        : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: PreselectionRequest): unknown {
+    const obj: any = {};
+    if (message.bordereauId !== "") {
+      obj.bordereauId = message.bordereauId;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PreselectionRequest>, I>>(base?: I): PreselectionRequest {
+    return PreselectionRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PreselectionRequest>, I>>(object: I): PreselectionRequest {
+    const message = createBasePreselectionRequest();
+    message.bordereauId = object.bordereauId ?? "";
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBasePreselectionResponse(): PreselectionResponse {
+  return { nombreLignesSelectionnees: 0, nombreLignesTotal: 0, ligneIdsSelectionnees: [] };
+}
+
+export const PreselectionResponse: MessageFns<PreselectionResponse> = {
+  encode(message: PreselectionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.nombreLignesSelectionnees !== 0) {
+      writer.uint32(8).int32(message.nombreLignesSelectionnees);
+    }
+    if (message.nombreLignesTotal !== 0) {
+      writer.uint32(16).int32(message.nombreLignesTotal);
+    }
+    for (const v of message.ligneIdsSelectionnees) {
+      writer.uint32(26).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PreselectionResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePreselectionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.nombreLignesSelectionnees = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.nombreLignesTotal = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.ligneIdsSelectionnees.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PreselectionResponse {
+    return {
+      nombreLignesSelectionnees: isSet(object.nombreLignesSelectionnees)
+        ? globalThis.Number(object.nombreLignesSelectionnees)
+        : isSet(object.nombre_lignes_selectionnees)
+        ? globalThis.Number(object.nombre_lignes_selectionnees)
+        : 0,
+      nombreLignesTotal: isSet(object.nombreLignesTotal)
+        ? globalThis.Number(object.nombreLignesTotal)
+        : isSet(object.nombre_lignes_total)
+        ? globalThis.Number(object.nombre_lignes_total)
+        : 0,
+      ligneIdsSelectionnees: globalThis.Array.isArray(object?.ligneIdsSelectionnees)
+        ? object.ligneIdsSelectionnees.map((e: any) => globalThis.String(e))
+        : globalThis.Array.isArray(object?.ligne_ids_selectionnees)
+        ? object.ligne_ids_selectionnees.map((e: any) => globalThis.String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: PreselectionResponse): unknown {
+    const obj: any = {};
+    if (message.nombreLignesSelectionnees !== 0) {
+      obj.nombreLignesSelectionnees = Math.round(message.nombreLignesSelectionnees);
+    }
+    if (message.nombreLignesTotal !== 0) {
+      obj.nombreLignesTotal = Math.round(message.nombreLignesTotal);
+    }
+    if (message.ligneIdsSelectionnees?.length) {
+      obj.ligneIdsSelectionnees = message.ligneIdsSelectionnees;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PreselectionResponse>, I>>(base?: I): PreselectionResponse {
+    return PreselectionResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PreselectionResponse>, I>>(object: I): PreselectionResponse {
+    const message = createBasePreselectionResponse();
+    message.nombreLignesSelectionnees = object.nombreLignesSelectionnees ?? 0;
+    message.nombreLignesTotal = object.nombreLignesTotal ?? 0;
+    message.ligneIdsSelectionnees = object.ligneIdsSelectionnees?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseRecalculerTotauxRequest(): RecalculerTotauxRequest {
+  return { bordereauId: "", ligneIdsSelectionnees: [] };
+}
+
+export const RecalculerTotauxRequest: MessageFns<RecalculerTotauxRequest> = {
+  encode(message: RecalculerTotauxRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.bordereauId !== "") {
+      writer.uint32(10).string(message.bordereauId);
+    }
+    for (const v of message.ligneIdsSelectionnees) {
+      writer.uint32(18).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RecalculerTotauxRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRecalculerTotauxRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.bordereauId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.ligneIdsSelectionnees.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RecalculerTotauxRequest {
+    return {
+      bordereauId: isSet(object.bordereauId)
+        ? globalThis.String(object.bordereauId)
+        : isSet(object.bordereau_id)
+        ? globalThis.String(object.bordereau_id)
+        : "",
+      ligneIdsSelectionnees: globalThis.Array.isArray(object?.ligneIdsSelectionnees)
+        ? object.ligneIdsSelectionnees.map((e: any) => globalThis.String(e))
+        : globalThis.Array.isArray(object?.ligne_ids_selectionnees)
+        ? object.ligne_ids_selectionnees.map((e: any) => globalThis.String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: RecalculerTotauxRequest): unknown {
+    const obj: any = {};
+    if (message.bordereauId !== "") {
+      obj.bordereauId = message.bordereauId;
+    }
+    if (message.ligneIdsSelectionnees?.length) {
+      obj.ligneIdsSelectionnees = message.ligneIdsSelectionnees;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RecalculerTotauxRequest>, I>>(base?: I): RecalculerTotauxRequest {
+    return RecalculerTotauxRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RecalculerTotauxRequest>, I>>(object: I): RecalculerTotauxRequest {
+    const message = createBaseRecalculerTotauxRequest();
+    message.bordereauId = object.bordereauId ?? "";
+    message.ligneIdsSelectionnees = object.ligneIdsSelectionnees?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseTotauxResponse(): TotauxResponse {
+  return { totalBrut: "", totalReprises: "", totalAcomptes: "", totalNet: "", nombreLignesSelectionnees: 0 };
+}
+
+export const TotauxResponse: MessageFns<TotauxResponse> = {
+  encode(message: TotauxResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.totalBrut !== "") {
+      writer.uint32(10).string(message.totalBrut);
+    }
+    if (message.totalReprises !== "") {
+      writer.uint32(18).string(message.totalReprises);
+    }
+    if (message.totalAcomptes !== "") {
+      writer.uint32(26).string(message.totalAcomptes);
+    }
+    if (message.totalNet !== "") {
+      writer.uint32(34).string(message.totalNet);
+    }
+    if (message.nombreLignesSelectionnees !== 0) {
+      writer.uint32(40).int32(message.nombreLignesSelectionnees);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TotauxResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTotauxResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.totalBrut = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.totalReprises = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.totalAcomptes = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.totalNet = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.nombreLignesSelectionnees = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TotauxResponse {
+    return {
+      totalBrut: isSet(object.totalBrut)
+        ? globalThis.String(object.totalBrut)
+        : isSet(object.total_brut)
+        ? globalThis.String(object.total_brut)
+        : "",
+      totalReprises: isSet(object.totalReprises)
+        ? globalThis.String(object.totalReprises)
+        : isSet(object.total_reprises)
+        ? globalThis.String(object.total_reprises)
+        : "",
+      totalAcomptes: isSet(object.totalAcomptes)
+        ? globalThis.String(object.totalAcomptes)
+        : isSet(object.total_acomptes)
+        ? globalThis.String(object.total_acomptes)
+        : "",
+      totalNet: isSet(object.totalNet)
+        ? globalThis.String(object.totalNet)
+        : isSet(object.total_net)
+        ? globalThis.String(object.total_net)
+        : "",
+      nombreLignesSelectionnees: isSet(object.nombreLignesSelectionnees)
+        ? globalThis.Number(object.nombreLignesSelectionnees)
+        : isSet(object.nombre_lignes_selectionnees)
+        ? globalThis.Number(object.nombre_lignes_selectionnees)
+        : 0,
+    };
+  },
+
+  toJSON(message: TotauxResponse): unknown {
+    const obj: any = {};
+    if (message.totalBrut !== "") {
+      obj.totalBrut = message.totalBrut;
+    }
+    if (message.totalReprises !== "") {
+      obj.totalReprises = message.totalReprises;
+    }
+    if (message.totalAcomptes !== "") {
+      obj.totalAcomptes = message.totalAcomptes;
+    }
+    if (message.totalNet !== "") {
+      obj.totalNet = message.totalNet;
+    }
+    if (message.nombreLignesSelectionnees !== 0) {
+      obj.nombreLignesSelectionnees = Math.round(message.nombreLignesSelectionnees);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TotauxResponse>, I>>(base?: I): TotauxResponse {
+    return TotauxResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TotauxResponse>, I>>(object: I): TotauxResponse {
+    const message = createBaseTotauxResponse();
+    message.totalBrut = object.totalBrut ?? "";
+    message.totalReprises = object.totalReprises ?? "";
+    message.totalAcomptes = object.totalAcomptes ?? "";
+    message.totalNet = object.totalNet ?? "";
+    message.nombreLignesSelectionnees = object.nombreLignesSelectionnees ?? 0;
+    return message;
+  },
+};
+
+function createBaseValiderBordereauFinalRequest(): ValiderBordereauFinalRequest {
+  return { bordereauId: "", validateurId: "", ligneIdsValidees: [] };
+}
+
+export const ValiderBordereauFinalRequest: MessageFns<ValiderBordereauFinalRequest> = {
+  encode(message: ValiderBordereauFinalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.bordereauId !== "") {
+      writer.uint32(10).string(message.bordereauId);
+    }
+    if (message.validateurId !== "") {
+      writer.uint32(18).string(message.validateurId);
+    }
+    for (const v of message.ligneIdsValidees) {
+      writer.uint32(26).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ValiderBordereauFinalRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseValiderBordereauFinalRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.bordereauId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.validateurId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.ligneIdsValidees.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ValiderBordereauFinalRequest {
+    return {
+      bordereauId: isSet(object.bordereauId)
+        ? globalThis.String(object.bordereauId)
+        : isSet(object.bordereau_id)
+        ? globalThis.String(object.bordereau_id)
+        : "",
+      validateurId: isSet(object.validateurId)
+        ? globalThis.String(object.validateurId)
+        : isSet(object.validateur_id)
+        ? globalThis.String(object.validateur_id)
+        : "",
+      ligneIdsValidees: globalThis.Array.isArray(object?.ligneIdsValidees)
+        ? object.ligneIdsValidees.map((e: any) => globalThis.String(e))
+        : globalThis.Array.isArray(object?.ligne_ids_validees)
+        ? object.ligne_ids_validees.map((e: any) => globalThis.String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ValiderBordereauFinalRequest): unknown {
+    const obj: any = {};
+    if (message.bordereauId !== "") {
+      obj.bordereauId = message.bordereauId;
+    }
+    if (message.validateurId !== "") {
+      obj.validateurId = message.validateurId;
+    }
+    if (message.ligneIdsValidees?.length) {
+      obj.ligneIdsValidees = message.ligneIdsValidees;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ValiderBordereauFinalRequest>, I>>(base?: I): ValiderBordereauFinalRequest {
+    return ValiderBordereauFinalRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ValiderBordereauFinalRequest>, I>>(object: I): ValiderBordereauFinalRequest {
+    const message = createBaseValiderBordereauFinalRequest();
+    message.bordereauId = object.bordereauId ?? "";
+    message.validateurId = object.validateurId ?? "";
+    message.ligneIdsValidees = object.ligneIdsValidees?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseValiderBordereauFinalResponse(): ValiderBordereauFinalResponse {
+  return { success: false, bordereau: undefined, dateValidation: "" };
+}
+
+export const ValiderBordereauFinalResponse: MessageFns<ValiderBordereauFinalResponse> = {
+  encode(message: ValiderBordereauFinalResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.bordereau !== undefined) {
+      Bordereau.encode(message.bordereau, writer.uint32(18).fork()).join();
+    }
+    if (message.dateValidation !== "") {
+      writer.uint32(26).string(message.dateValidation);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ValiderBordereauFinalResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseValiderBordereauFinalResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.bordereau = Bordereau.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.dateValidation = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ValiderBordereauFinalResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      bordereau: isSet(object.bordereau) ? Bordereau.fromJSON(object.bordereau) : undefined,
+      dateValidation: isSet(object.dateValidation)
+        ? globalThis.String(object.dateValidation)
+        : isSet(object.date_validation)
+        ? globalThis.String(object.date_validation)
+        : "",
+    };
+  },
+
+  toJSON(message: ValiderBordereauFinalResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.bordereau !== undefined) {
+      obj.bordereau = Bordereau.toJSON(message.bordereau);
+    }
+    if (message.dateValidation !== "") {
+      obj.dateValidation = message.dateValidation;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ValiderBordereauFinalResponse>, I>>(base?: I): ValiderBordereauFinalResponse {
+    return ValiderBordereauFinalResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ValiderBordereauFinalResponse>, I>>(
+    object: I,
+  ): ValiderBordereauFinalResponse {
+    const message = createBaseValiderBordereauFinalResponse();
+    message.success = object.success ?? false;
+    message.bordereau = (object.bordereau !== undefined && object.bordereau !== null)
+      ? Bordereau.fromPartial(object.bordereau)
+      : undefined;
+    message.dateValidation = object.dateValidation ?? "";
+    return message;
+  },
+};
+
+function createBaseGetLignesForValidationRequest(): GetLignesForValidationRequest {
+  return { bordereauId: "", organisationId: "", limit: undefined, offset: undefined };
+}
+
+export const GetLignesForValidationRequest: MessageFns<GetLignesForValidationRequest> = {
+  encode(message: GetLignesForValidationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.bordereauId !== "") {
+      writer.uint32(10).string(message.bordereauId);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    if (message.limit !== undefined) {
+      writer.uint32(24).int32(message.limit);
+    }
+    if (message.offset !== undefined) {
+      writer.uint32(32).int32(message.offset);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetLignesForValidationRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetLignesForValidationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.bordereauId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.offset = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetLignesForValidationRequest {
+    return {
+      bordereauId: isSet(object.bordereauId)
+        ? globalThis.String(object.bordereauId)
+        : isSet(object.bordereau_id)
+        ? globalThis.String(object.bordereau_id)
+        : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : undefined,
+      offset: isSet(object.offset) ? globalThis.Number(object.offset) : undefined,
+    };
+  },
+
+  toJSON(message: GetLignesForValidationRequest): unknown {
+    const obj: any = {};
+    if (message.bordereauId !== "") {
+      obj.bordereauId = message.bordereauId;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.limit !== undefined) {
+      obj.limit = Math.round(message.limit);
+    }
+    if (message.offset !== undefined) {
+      obj.offset = Math.round(message.offset);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetLignesForValidationRequest>, I>>(base?: I): GetLignesForValidationRequest {
+    return GetLignesForValidationRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetLignesForValidationRequest>, I>>(
+    object: I,
+  ): GetLignesForValidationRequest {
+    const message = createBaseGetLignesForValidationRequest();
+    message.bordereauId = object.bordereauId ?? "";
+    message.organisationId = object.organisationId ?? "";
+    message.limit = object.limit ?? undefined;
+    message.offset = object.offset ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetLignesForValidationResponse(): GetLignesForValidationResponse {
+  return { lignes: [], total: 0, totaux: undefined };
+}
+
+export const GetLignesForValidationResponse: MessageFns<GetLignesForValidationResponse> = {
+  encode(message: GetLignesForValidationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.lignes) {
+      LigneBordereau.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.totaux !== undefined) {
+      TotauxResponse.encode(message.totaux, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetLignesForValidationResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetLignesForValidationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.lignes.push(LigneBordereau.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.totaux = TotauxResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetLignesForValidationResponse {
+    return {
+      lignes: globalThis.Array.isArray(object?.lignes) ? object.lignes.map((e: any) => LigneBordereau.fromJSON(e)) : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      totaux: isSet(object.totaux) ? TotauxResponse.fromJSON(object.totaux) : undefined,
+    };
+  },
+
+  toJSON(message: GetLignesForValidationResponse): unknown {
+    const obj: any = {};
+    if (message.lignes?.length) {
+      obj.lignes = message.lignes.map((e) => LigneBordereau.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.totaux !== undefined) {
+      obj.totaux = TotauxResponse.toJSON(message.totaux);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetLignesForValidationResponse>, I>>(base?: I): GetLignesForValidationResponse {
+    return GetLignesForValidationResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetLignesForValidationResponse>, I>>(
+    object: I,
+  ): GetLignesForValidationResponse {
+    const message = createBaseGetLignesForValidationResponse();
+    message.lignes = object.lignes?.map((e) => LigneBordereau.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.totaux = (object.totaux !== undefined && object.totaux !== null)
+      ? TotauxResponse.fromPartial(object.totaux)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseDashboardKpiFilters(): DashboardKpiFilters {
+  return {
+    organisationId: "",
+    periode: undefined,
+    apporteurId: undefined,
+    produitId: undefined,
+    dateDebut: undefined,
+    dateFin: undefined,
+  };
+}
+
+export const DashboardKpiFilters: MessageFns<DashboardKpiFilters> = {
+  encode(message: DashboardKpiFilters, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.periode !== undefined) {
+      writer.uint32(18).string(message.periode);
+    }
+    if (message.apporteurId !== undefined) {
+      writer.uint32(26).string(message.apporteurId);
+    }
+    if (message.produitId !== undefined) {
+      writer.uint32(34).string(message.produitId);
+    }
+    if (message.dateDebut !== undefined) {
+      writer.uint32(42).string(message.dateDebut);
+    }
+    if (message.dateFin !== undefined) {
+      writer.uint32(50).string(message.dateFin);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DashboardKpiFilters {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDashboardKpiFilters();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.periode = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.apporteurId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.produitId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.dateDebut = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.dateFin = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DashboardKpiFilters {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      periode: isSet(object.periode) ? globalThis.String(object.periode) : undefined,
+      apporteurId: isSet(object.apporteurId)
+        ? globalThis.String(object.apporteurId)
+        : isSet(object.apporteur_id)
+        ? globalThis.String(object.apporteur_id)
+        : undefined,
+      produitId: isSet(object.produitId)
+        ? globalThis.String(object.produitId)
+        : isSet(object.produit_id)
+        ? globalThis.String(object.produit_id)
+        : undefined,
+      dateDebut: isSet(object.dateDebut)
+        ? globalThis.String(object.dateDebut)
+        : isSet(object.date_debut)
+        ? globalThis.String(object.date_debut)
+        : undefined,
+      dateFin: isSet(object.dateFin)
+        ? globalThis.String(object.dateFin)
+        : isSet(object.date_fin)
+        ? globalThis.String(object.date_fin)
+        : undefined,
+    };
+  },
+
+  toJSON(message: DashboardKpiFilters): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.periode !== undefined) {
+      obj.periode = message.periode;
+    }
+    if (message.apporteurId !== undefined) {
+      obj.apporteurId = message.apporteurId;
+    }
+    if (message.produitId !== undefined) {
+      obj.produitId = message.produitId;
+    }
+    if (message.dateDebut !== undefined) {
+      obj.dateDebut = message.dateDebut;
+    }
+    if (message.dateFin !== undefined) {
+      obj.dateFin = message.dateFin;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DashboardKpiFilters>, I>>(base?: I): DashboardKpiFilters {
+    return DashboardKpiFilters.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DashboardKpiFilters>, I>>(object: I): DashboardKpiFilters {
+    const message = createBaseDashboardKpiFilters();
+    message.organisationId = object.organisationId ?? "";
+    message.periode = object.periode ?? undefined;
+    message.apporteurId = object.apporteurId ?? undefined;
+    message.produitId = object.produitId ?? undefined;
+    message.dateDebut = object.dateDebut ?? undefined;
+    message.dateFin = object.dateFin ?? undefined;
+    return message;
+  },
+};
+
+function createBaseKpiProduit(): KpiProduit {
+  return { produitId: "", totalBrut: "", totalNet: "", totalReprises: "", volume: 0 };
+}
+
+export const KpiProduit: MessageFns<KpiProduit> = {
+  encode(message: KpiProduit, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.produitId !== "") {
+      writer.uint32(10).string(message.produitId);
+    }
+    if (message.totalBrut !== "") {
+      writer.uint32(18).string(message.totalBrut);
+    }
+    if (message.totalNet !== "") {
+      writer.uint32(26).string(message.totalNet);
+    }
+    if (message.totalReprises !== "") {
+      writer.uint32(34).string(message.totalReprises);
+    }
+    if (message.volume !== 0) {
+      writer.uint32(40).int32(message.volume);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): KpiProduit {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseKpiProduit();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.produitId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.totalBrut = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.totalNet = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.totalReprises = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.volume = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): KpiProduit {
+    return {
+      produitId: isSet(object.produitId)
+        ? globalThis.String(object.produitId)
+        : isSet(object.produit_id)
+        ? globalThis.String(object.produit_id)
+        : "",
+      totalBrut: isSet(object.totalBrut)
+        ? globalThis.String(object.totalBrut)
+        : isSet(object.total_brut)
+        ? globalThis.String(object.total_brut)
+        : "",
+      totalNet: isSet(object.totalNet)
+        ? globalThis.String(object.totalNet)
+        : isSet(object.total_net)
+        ? globalThis.String(object.total_net)
+        : "",
+      totalReprises: isSet(object.totalReprises)
+        ? globalThis.String(object.totalReprises)
+        : isSet(object.total_reprises)
+        ? globalThis.String(object.total_reprises)
+        : "",
+      volume: isSet(object.volume) ? globalThis.Number(object.volume) : 0,
+    };
+  },
+
+  toJSON(message: KpiProduit): unknown {
+    const obj: any = {};
+    if (message.produitId !== "") {
+      obj.produitId = message.produitId;
+    }
+    if (message.totalBrut !== "") {
+      obj.totalBrut = message.totalBrut;
+    }
+    if (message.totalNet !== "") {
+      obj.totalNet = message.totalNet;
+    }
+    if (message.totalReprises !== "") {
+      obj.totalReprises = message.totalReprises;
+    }
+    if (message.volume !== 0) {
+      obj.volume = Math.round(message.volume);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<KpiProduit>, I>>(base?: I): KpiProduit {
+    return KpiProduit.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<KpiProduit>, I>>(object: I): KpiProduit {
+    const message = createBaseKpiProduit();
+    message.produitId = object.produitId ?? "";
+    message.totalBrut = object.totalBrut ?? "";
+    message.totalNet = object.totalNet ?? "";
+    message.totalReprises = object.totalReprises ?? "";
+    message.volume = object.volume ?? 0;
+    return message;
+  },
+};
+
+function createBaseDashboardKpi(): DashboardKpi {
+  return {
+    periode: "",
+    generatedAt: "",
+    source: "",
+    totalBrut: "",
+    totalNet: "",
+    totalReprises: "",
+    totalRecurrence: "",
+    tauxReprise: "",
+    volume: 0,
+    delaiValidationMoyenJours: "",
+    parProduit: [],
+  };
+}
+
+export const DashboardKpi: MessageFns<DashboardKpi> = {
+  encode(message: DashboardKpi, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.periode !== "") {
+      writer.uint32(10).string(message.periode);
+    }
+    if (message.generatedAt !== "") {
+      writer.uint32(18).string(message.generatedAt);
+    }
+    if (message.source !== "") {
+      writer.uint32(26).string(message.source);
+    }
+    if (message.totalBrut !== "") {
+      writer.uint32(34).string(message.totalBrut);
+    }
+    if (message.totalNet !== "") {
+      writer.uint32(42).string(message.totalNet);
+    }
+    if (message.totalReprises !== "") {
+      writer.uint32(50).string(message.totalReprises);
+    }
+    if (message.totalRecurrence !== "") {
+      writer.uint32(58).string(message.totalRecurrence);
+    }
+    if (message.tauxReprise !== "") {
+      writer.uint32(66).string(message.tauxReprise);
+    }
+    if (message.volume !== 0) {
+      writer.uint32(72).int32(message.volume);
+    }
+    if (message.delaiValidationMoyenJours !== "") {
+      writer.uint32(82).string(message.delaiValidationMoyenJours);
+    }
+    for (const v of message.parProduit) {
+      KpiProduit.encode(v!, writer.uint32(90).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DashboardKpi {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDashboardKpi();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.periode = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.generatedAt = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.source = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.totalBrut = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.totalNet = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.totalReprises = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.totalRecurrence = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.tauxReprise = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.volume = reader.int32();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.delaiValidationMoyenJours = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.parProduit.push(KpiProduit.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DashboardKpi {
+    return {
+      periode: isSet(object.periode) ? globalThis.String(object.periode) : "",
+      generatedAt: isSet(object.generatedAt)
+        ? globalThis.String(object.generatedAt)
+        : isSet(object.generated_at)
+        ? globalThis.String(object.generated_at)
+        : "",
+      source: isSet(object.source) ? globalThis.String(object.source) : "",
+      totalBrut: isSet(object.totalBrut)
+        ? globalThis.String(object.totalBrut)
+        : isSet(object.total_brut)
+        ? globalThis.String(object.total_brut)
+        : "",
+      totalNet: isSet(object.totalNet)
+        ? globalThis.String(object.totalNet)
+        : isSet(object.total_net)
+        ? globalThis.String(object.total_net)
+        : "",
+      totalReprises: isSet(object.totalReprises)
+        ? globalThis.String(object.totalReprises)
+        : isSet(object.total_reprises)
+        ? globalThis.String(object.total_reprises)
+        : "",
+      totalRecurrence: isSet(object.totalRecurrence)
+        ? globalThis.String(object.totalRecurrence)
+        : isSet(object.total_recurrence)
+        ? globalThis.String(object.total_recurrence)
+        : "",
+      tauxReprise: isSet(object.tauxReprise)
+        ? globalThis.String(object.tauxReprise)
+        : isSet(object.taux_reprise)
+        ? globalThis.String(object.taux_reprise)
+        : "",
+      volume: isSet(object.volume) ? globalThis.Number(object.volume) : 0,
+      delaiValidationMoyenJours: isSet(object.delaiValidationMoyenJours)
+        ? globalThis.String(object.delaiValidationMoyenJours)
+        : isSet(object.delai_validation_moyen_jours)
+        ? globalThis.String(object.delai_validation_moyen_jours)
+        : "",
+      parProduit: globalThis.Array.isArray(object?.parProduit)
+        ? object.parProduit.map((e: any) => KpiProduit.fromJSON(e))
+        : globalThis.Array.isArray(object?.par_produit)
+        ? object.par_produit.map((e: any) => KpiProduit.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: DashboardKpi): unknown {
+    const obj: any = {};
+    if (message.periode !== "") {
+      obj.periode = message.periode;
+    }
+    if (message.generatedAt !== "") {
+      obj.generatedAt = message.generatedAt;
+    }
+    if (message.source !== "") {
+      obj.source = message.source;
+    }
+    if (message.totalBrut !== "") {
+      obj.totalBrut = message.totalBrut;
+    }
+    if (message.totalNet !== "") {
+      obj.totalNet = message.totalNet;
+    }
+    if (message.totalReprises !== "") {
+      obj.totalReprises = message.totalReprises;
+    }
+    if (message.totalRecurrence !== "") {
+      obj.totalRecurrence = message.totalRecurrence;
+    }
+    if (message.tauxReprise !== "") {
+      obj.tauxReprise = message.tauxReprise;
+    }
+    if (message.volume !== 0) {
+      obj.volume = Math.round(message.volume);
+    }
+    if (message.delaiValidationMoyenJours !== "") {
+      obj.delaiValidationMoyenJours = message.delaiValidationMoyenJours;
+    }
+    if (message.parProduit?.length) {
+      obj.parProduit = message.parProduit.map((e) => KpiProduit.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DashboardKpi>, I>>(base?: I): DashboardKpi {
+    return DashboardKpi.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DashboardKpi>, I>>(object: I): DashboardKpi {
+    const message = createBaseDashboardKpi();
+    message.periode = object.periode ?? "";
+    message.generatedAt = object.generatedAt ?? "";
+    message.source = object.source ?? "";
+    message.totalBrut = object.totalBrut ?? "";
+    message.totalNet = object.totalNet ?? "";
+    message.totalReprises = object.totalReprises ?? "";
+    message.totalRecurrence = object.totalRecurrence ?? "";
+    message.tauxReprise = object.tauxReprise ?? "";
+    message.volume = object.volume ?? 0;
+    message.delaiValidationMoyenJours = object.delaiValidationMoyenJours ?? "";
+    message.parProduit = object.parProduit?.map((e) => KpiProduit.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseGetDashboardKpiRequest(): GetDashboardKpiRequest {
+  return { filters: undefined };
+}
+
+export const GetDashboardKpiRequest: MessageFns<GetDashboardKpiRequest> = {
+  encode(message: GetDashboardKpiRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.filters !== undefined) {
+      DashboardKpiFilters.encode(message.filters, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetDashboardKpiRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetDashboardKpiRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.filters = DashboardKpiFilters.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetDashboardKpiRequest {
+    return { filters: isSet(object.filters) ? DashboardKpiFilters.fromJSON(object.filters) : undefined };
+  },
+
+  toJSON(message: GetDashboardKpiRequest): unknown {
+    const obj: any = {};
+    if (message.filters !== undefined) {
+      obj.filters = DashboardKpiFilters.toJSON(message.filters);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetDashboardKpiRequest>, I>>(base?: I): GetDashboardKpiRequest {
+    return GetDashboardKpiRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetDashboardKpiRequest>, I>>(object: I): GetDashboardKpiRequest {
+    const message = createBaseGetDashboardKpiRequest();
+    message.filters = (object.filters !== undefined && object.filters !== null)
+      ? DashboardKpiFilters.fromPartial(object.filters)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetDashboardKpiResponse(): GetDashboardKpiResponse {
+  return { kpi: undefined };
+}
+
+export const GetDashboardKpiResponse: MessageFns<GetDashboardKpiResponse> = {
+  encode(message: GetDashboardKpiResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.kpi !== undefined) {
+      DashboardKpi.encode(message.kpi, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetDashboardKpiResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetDashboardKpiResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.kpi = DashboardKpi.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetDashboardKpiResponse {
+    return { kpi: isSet(object.kpi) ? DashboardKpi.fromJSON(object.kpi) : undefined };
+  },
+
+  toJSON(message: GetDashboardKpiResponse): unknown {
+    const obj: any = {};
+    if (message.kpi !== undefined) {
+      obj.kpi = DashboardKpi.toJSON(message.kpi);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetDashboardKpiResponse>, I>>(base?: I): GetDashboardKpiResponse {
+    return GetDashboardKpiResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetDashboardKpiResponse>, I>>(object: I): GetDashboardKpiResponse {
+    const message = createBaseGetDashboardKpiResponse();
+    message.kpi = (object.kpi !== undefined && object.kpi !== null) ? DashboardKpi.fromPartial(object.kpi) : undefined;
+    return message;
+  },
+};
+
+function createBaseGenererSnapshotKpiRequest(): GenererSnapshotKpiRequest {
+  return { filters: undefined, generatedBy: undefined };
+}
+
+export const GenererSnapshotKpiRequest: MessageFns<GenererSnapshotKpiRequest> = {
+  encode(message: GenererSnapshotKpiRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.filters !== undefined) {
+      DashboardKpiFilters.encode(message.filters, writer.uint32(10).fork()).join();
+    }
+    if (message.generatedBy !== undefined) {
+      writer.uint32(18).string(message.generatedBy);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GenererSnapshotKpiRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGenererSnapshotKpiRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.filters = DashboardKpiFilters.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.generatedBy = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GenererSnapshotKpiRequest {
+    return {
+      filters: isSet(object.filters) ? DashboardKpiFilters.fromJSON(object.filters) : undefined,
+      generatedBy: isSet(object.generatedBy)
+        ? globalThis.String(object.generatedBy)
+        : isSet(object.generated_by)
+        ? globalThis.String(object.generated_by)
+        : undefined,
+    };
+  },
+
+  toJSON(message: GenererSnapshotKpiRequest): unknown {
+    const obj: any = {};
+    if (message.filters !== undefined) {
+      obj.filters = DashboardKpiFilters.toJSON(message.filters);
+    }
+    if (message.generatedBy !== undefined) {
+      obj.generatedBy = message.generatedBy;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GenererSnapshotKpiRequest>, I>>(base?: I): GenererSnapshotKpiRequest {
+    return GenererSnapshotKpiRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GenererSnapshotKpiRequest>, I>>(object: I): GenererSnapshotKpiRequest {
+    const message = createBaseGenererSnapshotKpiRequest();
+    message.filters = (object.filters !== undefined && object.filters !== null)
+      ? DashboardKpiFilters.fromPartial(object.filters)
+      : undefined;
+    message.generatedBy = object.generatedBy ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGenererSnapshotKpiResponse(): GenererSnapshotKpiResponse {
+  return { success: false, kpi: undefined };
+}
+
+export const GenererSnapshotKpiResponse: MessageFns<GenererSnapshotKpiResponse> = {
+  encode(message: GenererSnapshotKpiResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.kpi !== undefined) {
+      DashboardKpi.encode(message.kpi, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GenererSnapshotKpiResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGenererSnapshotKpiResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.kpi = DashboardKpi.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GenererSnapshotKpiResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      kpi: isSet(object.kpi) ? DashboardKpi.fromJSON(object.kpi) : undefined,
+    };
+  },
+
+  toJSON(message: GenererSnapshotKpiResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.kpi !== undefined) {
+      obj.kpi = DashboardKpi.toJSON(message.kpi);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GenererSnapshotKpiResponse>, I>>(base?: I): GenererSnapshotKpiResponse {
+    return GenererSnapshotKpiResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GenererSnapshotKpiResponse>, I>>(object: I): GenererSnapshotKpiResponse {
+    const message = createBaseGenererSnapshotKpiResponse();
+    message.success = object.success ?? false;
+    message.kpi = (object.kpi !== undefined && object.kpi !== null) ? DashboardKpi.fromPartial(object.kpi) : undefined;
+    return message;
+  },
+};
+
+function createBaseComparatifKpi(): ComparatifKpi {
+  return {
+    periode: "",
+    totalBrut: "",
+    totalNet: "",
+    totalReprises: "",
+    totalRecurrence: "",
+    tauxReprise: "",
+    volume: 0,
+    delaiValidationMoyenJours: "",
+    variationBrutPct: "",
+  };
+}
+
+export const ComparatifKpi: MessageFns<ComparatifKpi> = {
+  encode(message: ComparatifKpi, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.periode !== "") {
+      writer.uint32(10).string(message.periode);
+    }
+    if (message.totalBrut !== "") {
+      writer.uint32(18).string(message.totalBrut);
+    }
+    if (message.totalNet !== "") {
+      writer.uint32(26).string(message.totalNet);
+    }
+    if (message.totalReprises !== "") {
+      writer.uint32(34).string(message.totalReprises);
+    }
+    if (message.totalRecurrence !== "") {
+      writer.uint32(42).string(message.totalRecurrence);
+    }
+    if (message.tauxReprise !== "") {
+      writer.uint32(50).string(message.tauxReprise);
+    }
+    if (message.volume !== 0) {
+      writer.uint32(56).int32(message.volume);
+    }
+    if (message.delaiValidationMoyenJours !== "") {
+      writer.uint32(66).string(message.delaiValidationMoyenJours);
+    }
+    if (message.variationBrutPct !== "") {
+      writer.uint32(74).string(message.variationBrutPct);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ComparatifKpi {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseComparatifKpi();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.periode = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.totalBrut = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.totalNet = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.totalReprises = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.totalRecurrence = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.tauxReprise = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.volume = reader.int32();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.delaiValidationMoyenJours = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.variationBrutPct = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ComparatifKpi {
+    return {
+      periode: isSet(object.periode) ? globalThis.String(object.periode) : "",
+      totalBrut: isSet(object.totalBrut)
+        ? globalThis.String(object.totalBrut)
+        : isSet(object.total_brut)
+        ? globalThis.String(object.total_brut)
+        : "",
+      totalNet: isSet(object.totalNet)
+        ? globalThis.String(object.totalNet)
+        : isSet(object.total_net)
+        ? globalThis.String(object.total_net)
+        : "",
+      totalReprises: isSet(object.totalReprises)
+        ? globalThis.String(object.totalReprises)
+        : isSet(object.total_reprises)
+        ? globalThis.String(object.total_reprises)
+        : "",
+      totalRecurrence: isSet(object.totalRecurrence)
+        ? globalThis.String(object.totalRecurrence)
+        : isSet(object.total_recurrence)
+        ? globalThis.String(object.total_recurrence)
+        : "",
+      tauxReprise: isSet(object.tauxReprise)
+        ? globalThis.String(object.tauxReprise)
+        : isSet(object.taux_reprise)
+        ? globalThis.String(object.taux_reprise)
+        : "",
+      volume: isSet(object.volume) ? globalThis.Number(object.volume) : 0,
+      delaiValidationMoyenJours: isSet(object.delaiValidationMoyenJours)
+        ? globalThis.String(object.delaiValidationMoyenJours)
+        : isSet(object.delai_validation_moyen_jours)
+        ? globalThis.String(object.delai_validation_moyen_jours)
+        : "",
+      variationBrutPct: isSet(object.variationBrutPct)
+        ? globalThis.String(object.variationBrutPct)
+        : isSet(object.variation_brut_pct)
+        ? globalThis.String(object.variation_brut_pct)
+        : "",
+    };
+  },
+
+  toJSON(message: ComparatifKpi): unknown {
+    const obj: any = {};
+    if (message.periode !== "") {
+      obj.periode = message.periode;
+    }
+    if (message.totalBrut !== "") {
+      obj.totalBrut = message.totalBrut;
+    }
+    if (message.totalNet !== "") {
+      obj.totalNet = message.totalNet;
+    }
+    if (message.totalReprises !== "") {
+      obj.totalReprises = message.totalReprises;
+    }
+    if (message.totalRecurrence !== "") {
+      obj.totalRecurrence = message.totalRecurrence;
+    }
+    if (message.tauxReprise !== "") {
+      obj.tauxReprise = message.tauxReprise;
+    }
+    if (message.volume !== 0) {
+      obj.volume = Math.round(message.volume);
+    }
+    if (message.delaiValidationMoyenJours !== "") {
+      obj.delaiValidationMoyenJours = message.delaiValidationMoyenJours;
+    }
+    if (message.variationBrutPct !== "") {
+      obj.variationBrutPct = message.variationBrutPct;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ComparatifKpi>, I>>(base?: I): ComparatifKpi {
+    return ComparatifKpi.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ComparatifKpi>, I>>(object: I): ComparatifKpi {
+    const message = createBaseComparatifKpi();
+    message.periode = object.periode ?? "";
+    message.totalBrut = object.totalBrut ?? "";
+    message.totalNet = object.totalNet ?? "";
+    message.totalReprises = object.totalReprises ?? "";
+    message.totalRecurrence = object.totalRecurrence ?? "";
+    message.tauxReprise = object.tauxReprise ?? "";
+    message.volume = object.volume ?? 0;
+    message.delaiValidationMoyenJours = object.delaiValidationMoyenJours ?? "";
+    message.variationBrutPct = object.variationBrutPct ?? "";
+    return message;
+  },
+};
+
+function createBaseGetComparatifsRequest(): GetComparatifsRequest {
+  return { filters: undefined };
+}
+
+export const GetComparatifsRequest: MessageFns<GetComparatifsRequest> = {
+  encode(message: GetComparatifsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.filters !== undefined) {
+      DashboardKpiFilters.encode(message.filters, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetComparatifsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetComparatifsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.filters = DashboardKpiFilters.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetComparatifsRequest {
+    return { filters: isSet(object.filters) ? DashboardKpiFilters.fromJSON(object.filters) : undefined };
+  },
+
+  toJSON(message: GetComparatifsRequest): unknown {
+    const obj: any = {};
+    if (message.filters !== undefined) {
+      obj.filters = DashboardKpiFilters.toJSON(message.filters);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetComparatifsRequest>, I>>(base?: I): GetComparatifsRequest {
+    return GetComparatifsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetComparatifsRequest>, I>>(object: I): GetComparatifsRequest {
+    const message = createBaseGetComparatifsRequest();
+    message.filters = (object.filters !== undefined && object.filters !== null)
+      ? DashboardKpiFilters.fromPartial(object.filters)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetComparatifsResponse(): GetComparatifsResponse {
+  return { courant: undefined, m1: undefined, m3: undefined, m12: undefined };
+}
+
+export const GetComparatifsResponse: MessageFns<GetComparatifsResponse> = {
+  encode(message: GetComparatifsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.courant !== undefined) {
+      ComparatifKpi.encode(message.courant, writer.uint32(10).fork()).join();
+    }
+    if (message.m1 !== undefined) {
+      ComparatifKpi.encode(message.m1, writer.uint32(18).fork()).join();
+    }
+    if (message.m3 !== undefined) {
+      ComparatifKpi.encode(message.m3, writer.uint32(26).fork()).join();
+    }
+    if (message.m12 !== undefined) {
+      ComparatifKpi.encode(message.m12, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetComparatifsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetComparatifsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.courant = ComparatifKpi.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.m1 = ComparatifKpi.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.m3 = ComparatifKpi.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.m12 = ComparatifKpi.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetComparatifsResponse {
+    return {
+      courant: isSet(object.courant) ? ComparatifKpi.fromJSON(object.courant) : undefined,
+      m1: isSet(object.m1) ? ComparatifKpi.fromJSON(object.m1) : undefined,
+      m3: isSet(object.m3) ? ComparatifKpi.fromJSON(object.m3) : undefined,
+      m12: isSet(object.m12) ? ComparatifKpi.fromJSON(object.m12) : undefined,
+    };
+  },
+
+  toJSON(message: GetComparatifsResponse): unknown {
+    const obj: any = {};
+    if (message.courant !== undefined) {
+      obj.courant = ComparatifKpi.toJSON(message.courant);
+    }
+    if (message.m1 !== undefined) {
+      obj.m1 = ComparatifKpi.toJSON(message.m1);
+    }
+    if (message.m3 !== undefined) {
+      obj.m3 = ComparatifKpi.toJSON(message.m3);
+    }
+    if (message.m12 !== undefined) {
+      obj.m12 = ComparatifKpi.toJSON(message.m12);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetComparatifsResponse>, I>>(base?: I): GetComparatifsResponse {
+    return GetComparatifsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetComparatifsResponse>, I>>(object: I): GetComparatifsResponse {
+    const message = createBaseGetComparatifsResponse();
+    message.courant = (object.courant !== undefined && object.courant !== null)
+      ? ComparatifKpi.fromPartial(object.courant)
+      : undefined;
+    message.m1 = (object.m1 !== undefined && object.m1 !== null) ? ComparatifKpi.fromPartial(object.m1) : undefined;
+    message.m3 = (object.m3 !== undefined && object.m3 !== null) ? ComparatifKpi.fromPartial(object.m3) : undefined;
+    message.m12 = (object.m12 !== undefined && object.m12 !== null) ? ComparatifKpi.fromPartial(object.m12) : undefined;
+    return message;
+  },
+};
+
+function createBaseExportAnalytiqueRequest(): ExportAnalytiqueRequest {
+  return { filters: undefined, format: 0, includeComparatifs: undefined };
+}
+
+export const ExportAnalytiqueRequest: MessageFns<ExportAnalytiqueRequest> = {
+  encode(message: ExportAnalytiqueRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.filters !== undefined) {
+      DashboardKpiFilters.encode(message.filters, writer.uint32(10).fork()).join();
+    }
+    if (message.format !== 0) {
+      writer.uint32(16).int32(message.format);
+    }
+    if (message.includeComparatifs !== undefined) {
+      writer.uint32(24).bool(message.includeComparatifs);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ExportAnalytiqueRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExportAnalytiqueRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.filters = DashboardKpiFilters.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.format = reader.int32() as any;
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.includeComparatifs = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExportAnalytiqueRequest {
+    return {
+      filters: isSet(object.filters) ? DashboardKpiFilters.fromJSON(object.filters) : undefined,
+      format: isSet(object.format) ? exportFormatAnalytiqueFromJSON(object.format) : 0,
+      includeComparatifs: isSet(object.includeComparatifs)
+        ? globalThis.Boolean(object.includeComparatifs)
+        : isSet(object.include_comparatifs)
+        ? globalThis.Boolean(object.include_comparatifs)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ExportAnalytiqueRequest): unknown {
+    const obj: any = {};
+    if (message.filters !== undefined) {
+      obj.filters = DashboardKpiFilters.toJSON(message.filters);
+    }
+    if (message.format !== 0) {
+      obj.format = exportFormatAnalytiqueToJSON(message.format);
+    }
+    if (message.includeComparatifs !== undefined) {
+      obj.includeComparatifs = message.includeComparatifs;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ExportAnalytiqueRequest>, I>>(base?: I): ExportAnalytiqueRequest {
+    return ExportAnalytiqueRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ExportAnalytiqueRequest>, I>>(object: I): ExportAnalytiqueRequest {
+    const message = createBaseExportAnalytiqueRequest();
+    message.filters = (object.filters !== undefined && object.filters !== null)
+      ? DashboardKpiFilters.fromPartial(object.filters)
+      : undefined;
+    message.format = object.format ?? 0;
+    message.includeComparatifs = object.includeComparatifs ?? undefined;
+    return message;
+  },
+};
+
+function createBaseExportAnalytiqueResponse(): ExportAnalytiqueResponse {
+  return { fileName: "", mimeType: "", content: "" };
+}
+
+export const ExportAnalytiqueResponse: MessageFns<ExportAnalytiqueResponse> = {
+  encode(message: ExportAnalytiqueResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.fileName !== "") {
+      writer.uint32(10).string(message.fileName);
+    }
+    if (message.mimeType !== "") {
+      writer.uint32(18).string(message.mimeType);
+    }
+    if (message.content !== "") {
+      writer.uint32(26).string(message.content);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ExportAnalytiqueResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExportAnalytiqueResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fileName = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.mimeType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.content = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExportAnalytiqueResponse {
+    return {
+      fileName: isSet(object.fileName)
+        ? globalThis.String(object.fileName)
+        : isSet(object.file_name)
+        ? globalThis.String(object.file_name)
+        : "",
+      mimeType: isSet(object.mimeType)
+        ? globalThis.String(object.mimeType)
+        : isSet(object.mime_type)
+        ? globalThis.String(object.mime_type)
+        : "",
+      content: isSet(object.content) ? globalThis.String(object.content) : "",
+    };
+  },
+
+  toJSON(message: ExportAnalytiqueResponse): unknown {
+    const obj: any = {};
+    if (message.fileName !== "") {
+      obj.fileName = message.fileName;
+    }
+    if (message.mimeType !== "") {
+      obj.mimeType = message.mimeType;
+    }
+    if (message.content !== "") {
+      obj.content = message.content;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ExportAnalytiqueResponse>, I>>(base?: I): ExportAnalytiqueResponse {
+    return ExportAnalytiqueResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ExportAnalytiqueResponse>, I>>(object: I): ExportAnalytiqueResponse {
+    const message = createBaseExportAnalytiqueResponse();
+    message.fileName = object.fileName ?? "";
+    message.mimeType = object.mimeType ?? "";
+    message.content = object.content ?? "";
+    return message;
+  },
+};
+
 export type CommissionServiceService = typeof CommissionServiceService;
 export const CommissionServiceService = {
   /** ===== Commission CRUD ===== */
@@ -14026,6 +17626,17 @@ export const CommissionServiceService = {
       Buffer.from(ExportBordereauResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): ExportBordereauResponse => ExportBordereauResponse.decode(value),
   },
+  exportBordereauFiles: {
+    path: "/commission.CommissionService/ExportBordereauFiles",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ExportBordereauRequest): Buffer =>
+      Buffer.from(ExportBordereauRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ExportBordereauRequest => ExportBordereauRequest.decode(value),
+    responseSerialize: (value: ExportBordereauResponse): Buffer =>
+      Buffer.from(ExportBordereauResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ExportBordereauResponse => ExportBordereauResponse.decode(value),
+  },
   deleteBordereau: {
     path: "/commission.CommissionService/DeleteBordereau",
     requestStream: false,
@@ -14162,6 +17773,40 @@ export const CommissionServiceService = {
     requestDeserialize: (value: Buffer): GetByIdRequest => GetByIdRequest.decode(value),
     responseSerialize: (value: DeleteResponse): Buffer => Buffer.from(DeleteResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): DeleteResponse => DeleteResponse.decode(value),
+  },
+  /** ===== Contestations ===== */
+  creerContestation: {
+    path: "/commission.CommissionService/CreerContestation",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreerContestationRequest): Buffer =>
+      Buffer.from(CreerContestationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreerContestationRequest => CreerContestationRequest.decode(value),
+    responseSerialize: (value: ContestationResponse): Buffer =>
+      Buffer.from(ContestationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ContestationResponse => ContestationResponse.decode(value),
+  },
+  getContestations: {
+    path: "/commission.CommissionService/GetContestations",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetContestationsRequest): Buffer =>
+      Buffer.from(GetContestationsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetContestationsRequest => GetContestationsRequest.decode(value),
+    responseSerialize: (value: GetContestationsResponse): Buffer =>
+      Buffer.from(GetContestationsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetContestationsResponse => GetContestationsResponse.decode(value),
+  },
+  resoudreContestation: {
+    path: "/commission.CommissionService/ResoudreContestation",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ResoudreContestationRequest): Buffer =>
+      Buffer.from(ResoudreContestationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ResoudreContestationRequest => ResoudreContestationRequest.decode(value),
+    responseSerialize: (value: ContestationResponse): Buffer =>
+      Buffer.from(ContestationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ContestationResponse => ContestationResponse.decode(value),
   },
   /** ===== StatutCommission CRUD ===== */
   createStatut: {
@@ -14320,6 +17965,95 @@ export const CommissionServiceService = {
       Buffer.from(ReportNegatifListResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): ReportNegatifListResponse => ReportNegatifListResponse.decode(value),
   },
+  /** ===== ADV Validation ===== */
+  preselectionnerLignes: {
+    path: "/commission.CommissionService/PreselectionnerLignes",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: PreselectionRequest): Buffer => Buffer.from(PreselectionRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): PreselectionRequest => PreselectionRequest.decode(value),
+    responseSerialize: (value: PreselectionResponse): Buffer =>
+      Buffer.from(PreselectionResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): PreselectionResponse => PreselectionResponse.decode(value),
+  },
+  recalculerTotauxBordereau: {
+    path: "/commission.CommissionService/RecalculerTotauxBordereau",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: RecalculerTotauxRequest): Buffer =>
+      Buffer.from(RecalculerTotauxRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): RecalculerTotauxRequest => RecalculerTotauxRequest.decode(value),
+    responseSerialize: (value: TotauxResponse): Buffer => Buffer.from(TotauxResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TotauxResponse => TotauxResponse.decode(value),
+  },
+  validerBordereauFinal: {
+    path: "/commission.CommissionService/ValiderBordereauFinal",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ValiderBordereauFinalRequest): Buffer =>
+      Buffer.from(ValiderBordereauFinalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ValiderBordereauFinalRequest => ValiderBordereauFinalRequest.decode(value),
+    responseSerialize: (value: ValiderBordereauFinalResponse): Buffer =>
+      Buffer.from(ValiderBordereauFinalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ValiderBordereauFinalResponse => ValiderBordereauFinalResponse.decode(value),
+  },
+  getLignesForValidation: {
+    path: "/commission.CommissionService/GetLignesForValidation",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetLignesForValidationRequest): Buffer =>
+      Buffer.from(GetLignesForValidationRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetLignesForValidationRequest => GetLignesForValidationRequest.decode(value),
+    responseSerialize: (value: GetLignesForValidationResponse): Buffer =>
+      Buffer.from(GetLignesForValidationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetLignesForValidationResponse =>
+      GetLignesForValidationResponse.decode(value),
+  },
+  /** ===== Dashboard KPI ===== */
+  getDashboardKpi: {
+    path: "/commission.CommissionService/GetDashboardKpi",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetDashboardKpiRequest): Buffer =>
+      Buffer.from(GetDashboardKpiRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetDashboardKpiRequest => GetDashboardKpiRequest.decode(value),
+    responseSerialize: (value: GetDashboardKpiResponse): Buffer =>
+      Buffer.from(GetDashboardKpiResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetDashboardKpiResponse => GetDashboardKpiResponse.decode(value),
+  },
+  genererSnapshotKpi: {
+    path: "/commission.CommissionService/GenererSnapshotKpi",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GenererSnapshotKpiRequest): Buffer =>
+      Buffer.from(GenererSnapshotKpiRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GenererSnapshotKpiRequest => GenererSnapshotKpiRequest.decode(value),
+    responseSerialize: (value: GenererSnapshotKpiResponse): Buffer =>
+      Buffer.from(GenererSnapshotKpiResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GenererSnapshotKpiResponse => GenererSnapshotKpiResponse.decode(value),
+  },
+  getComparatifs: {
+    path: "/commission.CommissionService/GetComparatifs",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetComparatifsRequest): Buffer =>
+      Buffer.from(GetComparatifsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetComparatifsRequest => GetComparatifsRequest.decode(value),
+    responseSerialize: (value: GetComparatifsResponse): Buffer =>
+      Buffer.from(GetComparatifsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetComparatifsResponse => GetComparatifsResponse.decode(value),
+  },
+  exportAnalytique: {
+    path: "/commission.CommissionService/ExportAnalytique",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ExportAnalytiqueRequest): Buffer =>
+      Buffer.from(ExportAnalytiqueRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ExportAnalytiqueRequest => ExportAnalytiqueRequest.decode(value),
+    responseSerialize: (value: ExportAnalytiqueResponse): Buffer =>
+      Buffer.from(ExportAnalytiqueResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ExportAnalytiqueResponse => ExportAnalytiqueResponse.decode(value),
+  },
 } as const;
 
 export interface CommissionServiceServer extends UntypedServiceImplementation {
@@ -14352,6 +18086,7 @@ export interface CommissionServiceServer extends UntypedServiceImplementation {
   updateBordereau: handleUnaryCall<UpdateBordereauRequest, BordereauResponse>;
   validateBordereau: handleUnaryCall<ValidateBordereauRequest, BordereauResponse>;
   exportBordereau: handleUnaryCall<GetByIdRequest, ExportBordereauResponse>;
+  exportBordereauFiles: handleUnaryCall<ExportBordereauRequest, ExportBordereauResponse>;
   deleteBordereau: handleUnaryCall<GetByIdRequest, DeleteResponse>;
   /** ===== LigneBordereau CRUD ===== */
   createLigneBordereau: handleUnaryCall<CreateLigneBordereauRequest, LigneBordereauResponse>;
@@ -14368,6 +18103,10 @@ export interface CommissionServiceServer extends UntypedServiceImplementation {
   applyReprise: handleUnaryCall<ApplyRepriseRequest, RepriseResponse>;
   cancelReprise: handleUnaryCall<GetByIdRequest, RepriseResponse>;
   deleteReprise: handleUnaryCall<GetByIdRequest, DeleteResponse>;
+  /** ===== Contestations ===== */
+  creerContestation: handleUnaryCall<CreerContestationRequest, ContestationResponse>;
+  getContestations: handleUnaryCall<GetContestationsRequest, GetContestationsResponse>;
+  resoudreContestation: handleUnaryCall<ResoudreContestationRequest, ContestationResponse>;
   /** ===== StatutCommission CRUD ===== */
   createStatut: handleUnaryCall<CreateStatutRequest, StatutResponse>;
   getStatut: handleUnaryCall<GetByIdRequest, StatutResponse>;
@@ -14388,6 +18127,16 @@ export interface CommissionServiceServer extends UntypedServiceImplementation {
   getRecurrencesByContrat: handleUnaryCall<GetRecurrencesByContratRequest, RecurrenceListResponse>;
   /** ===== Reports Negatifs ===== */
   getReportsNegatifs: handleUnaryCall<GetReportsNegatifsRequest, ReportNegatifListResponse>;
+  /** ===== ADV Validation ===== */
+  preselectionnerLignes: handleUnaryCall<PreselectionRequest, PreselectionResponse>;
+  recalculerTotauxBordereau: handleUnaryCall<RecalculerTotauxRequest, TotauxResponse>;
+  validerBordereauFinal: handleUnaryCall<ValiderBordereauFinalRequest, ValiderBordereauFinalResponse>;
+  getLignesForValidation: handleUnaryCall<GetLignesForValidationRequest, GetLignesForValidationResponse>;
+  /** ===== Dashboard KPI ===== */
+  getDashboardKpi: handleUnaryCall<GetDashboardKpiRequest, GetDashboardKpiResponse>;
+  genererSnapshotKpi: handleUnaryCall<GenererSnapshotKpiRequest, GenererSnapshotKpiResponse>;
+  getComparatifs: handleUnaryCall<GetComparatifsRequest, GetComparatifsResponse>;
+  exportAnalytique: handleUnaryCall<ExportAnalytiqueRequest, ExportAnalytiqueResponse>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

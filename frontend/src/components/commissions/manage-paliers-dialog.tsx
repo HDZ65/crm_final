@@ -79,7 +79,8 @@ import {
 } from "@/actions/commissions"
 import { useOrganisation } from "@/contexts/organisation-context"
 import type { TypeOption } from "@/hooks/commissions/use-commission-config"
-import type { BaremeCommissionResponseDto, PalierCommissionResponseDto } from "@/types/commission"
+import type { BaremeWithPaliers, PalierDisplay } from "@/lib/ui/display-types/commission"
+import { formatMontant, parseMontant } from "@/lib/ui/helpers/format"
 
 const palierSchema = z.object({
   code: z.string().min(1, "Le code est requis").max(50, "50 caractères maximum"),
@@ -110,7 +111,7 @@ interface PalierFormValues {
 interface ManagePaliersDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  bareme: BaremeCommissionResponseDto
+  bareme: BaremeWithPaliers
   typesPalier: TypeOption[]
   loadingConfig?: boolean
   onSuccess?: () => void
@@ -127,7 +128,7 @@ export function ManagePaliersDialog({
   const { activeOrganisation } = useOrganisation()
 
   // Local state for paliers list
-  const [paliers, setPaliers] = React.useState<PalierCommissionResponseDto[]>([])
+  const [paliers, setPaliers] = React.useState<PalierDisplay[]>([])
   const [loadingPaliers, setLoadingPaliers] = React.useState(false)
 
   // Local state for loading and error
@@ -137,8 +138,8 @@ export function ManagePaliersDialog({
   const [error, setError] = React.useState<Error | null>(null)
 
   const [showForm, setShowForm] = React.useState(false)
-  const [editingPalier, setEditingPalier] = React.useState<PalierCommissionResponseDto | null>(null)
-  const [deletingPalier, setDeletingPalier] = React.useState<PalierCommissionResponseDto | null>(null)
+  const [editingPalier, setEditingPalier] = React.useState<PalierDisplay | null>(null)
+  const [deletingPalier, setDeletingPalier] = React.useState<PalierDisplay | null>(null)
 
   // Fetch paliers when dialog opens
   const fetchPaliers = React.useCallback(async () => {
@@ -146,7 +147,7 @@ export function ManagePaliersDialog({
     const result = await getPaliersByBareme(bareme.id)
     setLoadingPaliers(false)
     if (result.data) {
-      setPaliers((result.data.paliers || []) as PalierCommissionResponseDto[])
+      setPaliers((result.data.paliers || []) as PalierDisplay[])
     }
   }, [bareme.id])
 
@@ -200,16 +201,16 @@ export function ManagePaliersDialog({
     setShowForm(true)
   }
 
-  const handleEditPalier = (palier: PalierCommissionResponseDto) => {
+  const handleEditPalier = (palier: PalierDisplay) => {
     setEditingPalier(palier)
     form.reset({
       code: palier.code,
       nom: palier.nom,
       typePalier: palier.typePalier,
-      seuilMin: palier.seuilMin,
-      seuilMax: palier.seuilMax ?? undefined,
-      montantPrime: palier.montantPrime,
-      tauxBonus: palier.tauxBonus ?? undefined,
+      seuilMin: parseMontant(palier.seuilMin),
+      seuilMax: palier.seuilMax != null ? parseMontant(palier.seuilMax) : undefined,
+      montantPrime: parseMontant(palier.montantPrime),
+      tauxBonus: palier.tauxBonus != null ? parseMontant(palier.tauxBonus) : undefined,
       cumulable: palier.cumulable,
       parPeriode: palier.parPeriode,
       ordre: palier.ordre,
@@ -295,11 +296,8 @@ export function ManagePaliersDialog({
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount)
+  const formatCurrencyStr = (amount: string) => {
+    return formatMontant(amount)
   }
 
   const getTypePalierLabel = (value: string) => {
@@ -569,7 +567,7 @@ export function ManagePaliersDialog({
                             {palier.seuilMin} — {palier.seuilMax ?? "∞"}
                           </TableCell>
                           <TableCell className="text-right font-medium text-green-600 tabular-nums">
-                            {formatCurrency(palier.montantPrime)}
+                            {formatCurrencyStr(palier.montantPrime)}
                           </TableCell>
                           <TableCell className="text-center">
                             {palier.actif ? (

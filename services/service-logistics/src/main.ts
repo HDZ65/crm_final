@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { getGrpcOptions } from '@crm/shared-kernel';
+import { getMultiGrpcOptions } from '@crm/shared-kernel';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -10,7 +10,7 @@ async function bootstrap() {
   });
 
   const grpcPort = process.env.GRPC_PORT || 50060;
-  const grpcOptions = getGrpcOptions('logistics', {
+  const grpcOptions = getMultiGrpcOptions(['logistics'], {
     url: `0.0.0.0:${grpcPort}`,
   });
   app.connectMicroservice<MicroserviceOptions>({

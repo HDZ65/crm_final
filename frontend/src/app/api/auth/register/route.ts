@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createKeycloakUser } from "@/lib/keycloak-admin";
+import { createKeycloakUser } from "@/lib/auth/keycloak-admin";
 
 export async function POST(request: NextRequest) {
   try {

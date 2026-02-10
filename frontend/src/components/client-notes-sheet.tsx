@@ -14,7 +14,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Plus, Send } from "lucide-react"
-import type { EventItem } from "@/types/client"
+import type { EventItem } from "@/lib/ui/display-types/client"
 
 // Re-export pour compatibilité
 export type ClientHistoryItem = EventItem

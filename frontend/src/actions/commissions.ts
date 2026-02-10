@@ -12,11 +12,17 @@ import type {
   ExportBordereauResponse,
   GenererBordereauResponse,
   CalculerCommissionResponse,
+  ContestationResponse,
+  GetContestationsResponse,
 } from "@/lib/grpc";
 import type {
   AuditLogListResponse,
   RecurrenceListResponse,
   ReportNegatifListResponse,
+  PreselectionResponse,
+  TotauxResponse,
+  ValiderBordereauFinalResponse,
+  GetLignesForValidationResponse,
 } from "@proto/commission/commission";
 import {
   StatutBordereau,
@@ -25,12 +31,9 @@ import {
   typeRepriseFromJSON,
   statutBordereauFromJSON,
   statutRepriseFromJSON,
+  statutContestationFromJSON,
 } from "@proto/commission/commission";
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ActionResult } from "@/lib/types/common";
 
 // ============================================
 // COMMISSIONS
@@ -196,6 +199,86 @@ export async function validerBordereau(
   }
 }
 
+export async function preselectionnerLignes(
+  bordereauId: string,
+  organisationId: string
+): Promise<ActionResult<PreselectionResponse>> {
+  try {
+    const data = await commissions.preselectionnerLignes({
+      bordereauId,
+      organisationId,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[preselectionnerLignes] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la présélection des lignes",
+    };
+  }
+}
+
+export async function recalculerTotaux(
+  bordereauId: string,
+  ligneIds: string[]
+): Promise<ActionResult<TotauxResponse>> {
+  try {
+    const data = await commissions.recalculerTotauxBordereau({
+      bordereauId,
+      ligneIdsSelectionnees: ligneIds,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[recalculerTotaux] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du recalcul des totaux",
+    };
+  }
+}
+
+export async function validerBordereauFinal(
+  bordereauId: string,
+  validateurId: string,
+  ligneIds: string[]
+): Promise<ActionResult<ValiderBordereauFinalResponse>> {
+  try {
+    const data = await commissions.validerBordereauFinal({
+      bordereauId,
+      validateurId,
+      ligneIdsValidees: ligneIds,
+    });
+    revalidatePath("/commissions");
+    revalidatePath("/commissions/validation");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[validerBordereauFinal] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la validation finale du bordereau",
+    };
+  }
+}
+
+export async function getLignesForValidation(
+  bordereauId: string,
+  organisationId: string
+): Promise<ActionResult<GetLignesForValidationResponse>> {
+  try {
+    const data = await commissions.getLignesForValidation({
+      bordereauId,
+      organisationId,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getLignesForValidation] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des lignes à valider",
+    };
+  }
+}
+
 /**
  * Exporter un bordereau (PDF ou Excel)
  */
@@ -280,6 +363,85 @@ export async function declencherReprise(params: {
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors du déclenchement de la reprise",
+    };
+  }
+}
+
+// ============================================
+// CONTESTATIONS
+// ============================================
+
+export async function getContestationsByOrganisation(params: {
+  organisationId: string;
+  commissionId?: string;
+  bordereauId?: string;
+  apporteurId?: string;
+  statut?: string;
+}): Promise<ActionResult<GetContestationsResponse>> {
+  try {
+    const data = await commissions.getContestations({
+      organisationId: params.organisationId,
+      commissionId: params.commissionId,
+      bordereauId: params.bordereauId,
+      apporteurId: params.apporteurId,
+      statut: params.statut ? statutContestationFromJSON(params.statut) : undefined,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getContestationsByOrganisation] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des contestations",
+    };
+  }
+}
+
+export async function creerContestation(params: {
+  organisationId: string;
+  commissionId: string;
+  bordereauId: string;
+  apporteurId: string;
+  motif: string;
+}): Promise<ActionResult<ContestationResponse>> {
+  try {
+    const data = await commissions.creerContestation({
+      organisationId: params.organisationId,
+      commissionId: params.commissionId,
+      bordereauId: params.bordereauId,
+      apporteurId: params.apporteurId,
+      motif: params.motif,
+    });
+    revalidatePath("/commissions");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[creerContestation] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la creation de la contestation",
+    };
+  }
+}
+
+export async function resoudreContestation(params: {
+  id: string;
+  acceptee: boolean;
+  commentaire: string;
+  resoluPar: string;
+}): Promise<ActionResult<ContestationResponse>> {
+  try {
+    const data = await commissions.resoudreContestation({
+      id: params.id,
+      acceptee: params.acceptee,
+      commentaire: params.commentaire,
+      resoluPar: params.resoluPar,
+    });
+    revalidatePath("/commissions");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[resoudreContestation] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la resolution de la contestation",
     };
   }
 }

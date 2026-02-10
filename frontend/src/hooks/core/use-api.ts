@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * REST API Hook — DEFERRED MIGRATION
+ *
+ * This hook is still used by 25+ hooks (commissions, stats, contracts, factures,
+ * logistics, taches, auth). It will be removed when all consumers are migrated
+ * to gRPC in Waves 4-5. See @/lib/api/index.ts for full inventory.
+ *
+ * Wave 3 Task 8: Documented as deferred, NOT deleted.
+ */
 import { useState, useCallback, useRef } from 'react';
 import { api, ApiError } from '@/lib/api';
 

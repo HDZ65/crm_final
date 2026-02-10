@@ -47,7 +47,16 @@
 
     /* Completeness */
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true
+    "skipDefaultLibCheck": true,
+
+    /* Path Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@crm/shared-kernel": ["packages/shared-kernel/src"],
+      "@crm/shared-kernel/*": ["packages/shared-kernel/src/*"],
+      "@crm/proto": ["packages/proto/gen/ts"],
+      "@crm/proto/*": ["packages/proto/gen/ts/*"]
+    }
   },
   "exclude": [
     "node_modules",

@@ -1,0 +1,98 @@
+TASK 0: PROTO COMPLETENESS VERIFICATION REPORT
+==============================================
+
+EXECUTION DATE: 2025-02-07
+TASK: Décision Architecturale ApiClient + Vérification Config gRPC
+
+1. GRPC CONFIG VERIFICATION
+===========================
+✓ PASS: All 5 service ports present in frontend/src/lib/grpc/clients/config.ts
+  - engagement: 50051 ✓
+  - core: 50052 ✓
+  - commercial: 50053 ✓
+  - finance: 50059 ✓
+  - logistics: 50060 ✓
+
+✓ PASS: No port drift detected
+  - service-engagement/src/main.ts: GRPC_PORT || 50051 ✓
+  - service-core/src/main.ts: GRPC_PORT || 50052 ✓
+  - service-commercial/src/main.ts: GRPC_PORT || 50053 ✓
+  - service-finance/src/main.ts: GRPC_PORT || 50059 ✓
+  - service-logistics/src/main.ts: GRPC_PORT || 50060 ✓
+
+2. REST CONSUMER INVENTORY
+==========================
+✓ PASS: 35 imports of @/lib/api found across frontend/src
+  - Locations: hooks/, components/, app/
+  - Primary consumers: 
+    * hooks/auth/useAuth.ts
+    * hooks/commissions/* (13 files)
+    * hooks/contracts/* (2 files)
+    * hooks/core/* (2 files)
+    * hooks/email/* (2 files)
+    * hooks/factures/index.ts
+    * hooks/logistics/use-expeditions.ts
+    * hooks/payment/* (3 files)
+    * hooks/stats/* (6 files)
+    * components/payment/schedule-form.tsx
+    * app/(main)/test-payment/page.tsx
+
+✓ PASS: 18 direct BACKEND_API_URL references found
+  - Locations: app/(main)/test-*.tsx, app/api/ai/health/route.ts, components/, contexts/, hooks/, lib/, stores/
+  - Pattern: process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000'
+
+3. PROTO COMPLETENESS VERIFICATION
+===================================
+All 35 controllers have corresponding proto files with RPC methods:
+
+DEDICATED PAGE (15 controllers):
+✓ 1. permission.controller (core) → organisations/users.proto (45 RPCs)
+✓ 2. role-permission.controller (core) → organisations/users.proto (45 RPCs)
+✓ 3. partenaire-marque-blanche.controller (core) → organisations/organisations.proto (50 RPCs)
+✓ 4. subscription.controller (commercial) → subscriptions/subscriptions.proto (41 RPCs)
+✓ 5. subscription-plan.controller (commercial) → subscriptions/subscriptions.proto (41 RPCs)
+✓ 6. formule-produit.controller (commercial) → products/products.proto (50 RPCs)
+✓ 7. woocommerce.controller (commercial) → woocommerce/woocommerce.proto (16 RPCs)
+✓ 8. mailbox.controller (engagement) → email/email.proto (21 RPCs)
+✓ 9. meeting.controller (engagement) → agenda/agenda.proto (21 RPCs)
+✓ 10. call-summary.controller (engagement) → agenda/agenda.proto (21 RPCs)
+✓ 11. routing.controller (finance) → payments/payment.proto (80 RPCs)
+✓ 12. archive.controller (finance) → payments/payment.proto (80 RPCs)
+✓ 13. alert.controller (finance) → payments/payment.proto (80 RPCs)
+✓ 14. export.controller (finance) → payments/payment.proto (80 RPCs)
+✓ 15. fulfillment-batch.controller (logistics) → fulfillment/fulfillment.proto (15 RPCs)
+
+EMBEDDED SECTION (20 controllers):
+✓ 1. adresse.controller (core) → clients/clients.proto (27 RPCs)
+✓ 2. client-entreprise.controller (core) → clients/clients.proto (27 RPCs)
+✓ 3. client-partenaire.controller (core) → clients/clients.proto (27 RPCs)
+✓ 4. statut-client.controller (core) → clients/clients.proto (27 RPCs)
+✓ 5. condition-paiement.controller (core) → clients/clients.proto (27 RPCs)
+✓ 6. emission-facture.controller (core) → clients/clients.proto (27 RPCs)
+✓ 7. facturation-par.controller (core) → clients/clients.proto (27 RPCs)
+✓ 8. periode-facturation.controller (core) → clients/clients.proto (27 RPCs)
+✓ 9. transporteur-compte.controller (core) → clients/clients.proto (27 RPCs)
+✓ 10. boite-mail.controller (core) → email/email.proto (21 RPCs)
+✓ 11. piece-jointe.controller (core) → documents/documents.proto (19 RPCs)
+✓ 12. theme-marque.controller (core) → organisations/organisations.proto (50 RPCs)
+✓ 13. statut-partenaire.controller (core) → organisations/organisations.proto (50 RPCs)
+✓ 14. calendar-event.controller (engagement) → agenda/agenda.proto (21 RPCs)
+✓ 15. preference.controller (commercial) → subscriptions/subscriptions.proto (41 RPCs)
+✓ 16. multisafepay.controller (finance) → payments/payment.proto (80 RPCs)
+✓ 17. slimpay.controller (finance) → payments/payment.proto (80 RPCs)
+✓ 18. status-mapping.controller (finance) → payments/payment.proto (80 RPCs)
+✓ 19. fulfillment-cutoff.controller (logistics) → fulfillment/fulfillment.proto (15 RPCs)
+✓ 20. carrier.controller (logistics) → logistics/logistics.proto (23 RPCs)
+
+4. SUMMARY
+==========
+✓ PASS: All 5 service ports verified and no drift detected
+✓ PASS: 35 REST consumers inventoried (35 @/lib/api imports + 18 direct BACKEND_API_URL refs)
+✓ PASS: All 35 controllers have corresponding proto files
+✓ PASS: All proto files contain RPC method definitions (15-80 RPCs per file)
+✓ PASS: No missing proto files blocking Wave 4 tasks
+
+BLOCKING ISSUES: NONE
+WARNINGS: NONE
+
+READY FOR WAVE 4 REST→gRPC MIGRATION TASKS

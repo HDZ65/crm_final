@@ -38,17 +38,18 @@ async function getServices(token: string): Promise<Service[]> {
   let prixWincash = 9.90;
 
   if (activeServiceCodes.length > 0) {
-    const { data: priceData } = await calculatePrice({
-      clientId: token,
-      organisationId: client.organisationId || "",
-      services: activeServiceCodes,
-    });
+    // TODO: Implement bundle price calculation when organisationId is available from client token
+    // const { data: priceData } = await calculatePrice({
+    //   clientId: token,
+    //   services: activeServiceCodes,
+    // });
+    const priceData = null; // Temporary: use hardcoded prices below
 
-    if (priceData) {
-      if (priceData.prixConciergerie) prixConciergerie = parseFloat(priceData.prixConciergerie);
-      if (priceData.prixJustiPlus) prixJustiPlus = parseFloat(priceData.prixJustiPlus);
-      if (priceData.prixWincash) prixWincash = parseFloat(priceData.prixWincash);
-    }
+    // if (priceData) {
+    //   if (priceData.prixConciergerie) prixConciergerie = parseFloat(priceData.prixConciergerie);
+    //   if (priceData.prixJustiPlus) prixJustiPlus = parseFloat(priceData.prixJustiPlus);
+    //   if (priceData.prixWincash) prixWincash = parseFloat(priceData.prixWincash);
+    // }
   }
 
   return [

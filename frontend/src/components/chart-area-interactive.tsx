@@ -35,6 +35,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group"
+import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button"
 
 export const description = "Graphique d'évolution du CA"
 
@@ -122,6 +123,10 @@ export function ChartAreaInteractive({ initialData }: ChartAreaInteractiveProps)
     return filteredData.reduce((sum, item) => sum + item.ca, 0)
   }, [filteredData])
 
+  const aiPrompt = `Analyse l'evolution du chiffre d'affaires par rapport aux objectifs et propose 3 actions. Periode: ${timeRange}. Donnees: ${filteredData
+    .map((item) => `${item.mois}: CA ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(item.ca)} / Objectif ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(item.objectif)}`)
+    .join(" | ")}.`
+
   // No organisation selected - show empty state instead of spinner
   if (!activeOrganisation) {
     return (
@@ -198,6 +203,7 @@ export function ChartAreaInteractive({ initialData }: ChartAreaInteractiveProps)
             <span className="@[540px]/card:hidden">CA vs objectif</span>
           </CardDescription>
           <CardAction className="flex items-center gap-2">
+            <AskAiCardButton prompt={aiPrompt} title="Demander une analyse IA du graphique CA" />
             <ToggleGroup
               type="single"
               value={timeRange}

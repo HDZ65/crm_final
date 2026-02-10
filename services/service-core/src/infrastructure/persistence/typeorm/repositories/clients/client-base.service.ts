@@ -8,7 +8,7 @@ import type {
   CreateClientBaseRequest,
   UpdateClientBaseRequest,
   ListClientsBaseRequest,
-} from '@crm/proto/clients';
+} from '@proto/clients';
 
 @Injectable()
 export class ClientBaseService {
@@ -29,18 +29,18 @@ export class ClientBaseService {
     }
 
     const entity = this.repository.create({
-      organisationId: input.organisationId,
-      typeClient: input.typeClient,
+      organisationId: input.organisation_id,
+      typeClient: input.type_client,
       nom: ClientBaseEntity.capitalizeName(input.nom),
       prenom: ClientBaseEntity.capitalizeName(input.prenom),
-      dateNaissance: input.dateNaissance ? new Date(input.dateNaissance) : null,
-      compteCode: input.compteCode,
-      partenaireId: input.partenaireId,
+      dateNaissance: input.date_naissance ? new Date(input.date_naissance) : null,
+      compteCode: input.compte_code,
+      partenaireId: input.partenaire_id,
       dateCreation: new Date(),
       telephone: input.telephone,
       email: input.email || null,
       statut: input.statut || 'ACTIF',
-      societeId: input.societeId || null,
+      societeId: input.societe_id || null,
     });
 
     return this.repository.save(entity);
@@ -49,16 +49,16 @@ export class ClientBaseService {
   async update(input: UpdateClientBaseRequest): Promise<ClientBaseEntity> {
     const entity = await this.findById(input.id);
 
-    if (input.typeClient !== undefined) entity.typeClient = input.typeClient;
+    if (input.type_client !== undefined) entity.typeClient = input.type_client;
     if (input.nom !== undefined) entity.nom = ClientBaseEntity.capitalizeName(input.nom);
     if (input.prenom !== undefined) entity.prenom = ClientBaseEntity.capitalizeName(input.prenom);
-    if (input.dateNaissance !== undefined) entity.dateNaissance = input.dateNaissance ? new Date(input.dateNaissance) : null;
-    if (input.compteCode !== undefined) entity.compteCode = input.compteCode;
-    if (input.partenaireId !== undefined) entity.partenaireId = input.partenaireId;
+    if (input.date_naissance !== undefined) entity.dateNaissance = input.date_naissance ? new Date(input.date_naissance) : null;
+    if (input.compte_code !== undefined) entity.compteCode = input.compte_code;
+    if (input.partenaire_id !== undefined) entity.partenaireId = input.partenaire_id;
     if (input.telephone !== undefined) entity.telephone = input.telephone;
     if (input.email !== undefined) entity.email = input.email || null;
     if (input.statut !== undefined) entity.statut = input.statut;
-    if (input.societeId !== undefined) entity.societeId = input.societeId || null;
+    if (input.societe_id !== undefined) entity.societeId = input.societe_id || null;
 
     return this.repository.save(entity);
   }
@@ -88,20 +88,20 @@ export class ClientBaseService {
   }> {
     const page = request.pagination?.page ?? 1;
     const limit = request.pagination?.limit ?? 20;
-    const sortBy = request.pagination?.sortBy || 'createdAt';
-    const sortOrder = (request.pagination?.sortOrder?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
+    const sortBy = request.pagination?.sort_by || 'createdAt';
+    const sortOrder = (request.pagination?.sort_order?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
 
     const qb = this.repository
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.adresses', 'adresses')
-      .where('c.organisationId = :orgId', { orgId: request.organisationId });
+      .where('c.organisationId = :orgId', { orgId: request.organisation_id });
 
-    if (request.statutId) {
-      qb.andWhere('c.statut = :statut', { statut: request.statutId });
+    if (request.statut_id) {
+      qb.andWhere('c.statut = :statut', { statut: request.statut_id });
     }
 
-    if (request.societeId) {
-      qb.andWhere('c.societeId = :societeId', { societeId: request.societeId });
+    if (request.societe_id) {
+      qb.andWhere('c.societeId = :societeId', { societeId: request.societe_id });
     }
 
     if (request.search) {
@@ -125,10 +125,10 @@ export class ClientBaseService {
     return (result.affected ?? 0) > 0;
   }
 
-  async search(organisationId: string, telephone: string, nom: string): Promise<{ found: boolean; client: ClientBaseEntity | null }> {
+  async search(organisation_id: string, telephone: string, nom: string): Promise<{ found: boolean; client: ClientBaseEntity | null }> {
     const client = await this.repository.findOne({
       where: {
-        organisationId,
+        organisationId: organisation_id,
         telephone,
         nom: ClientBaseEntity.capitalizeName(nom),
       },

@@ -33,6 +33,12 @@ export function AiAssistantFab() {
     setToken(token || null)
   }, [token, setToken])
 
+  React.useEffect(() => {
+    const openAssistant = () => setOpen(true)
+    window.addEventListener("ai-assistant:open", openAssistant)
+    return () => window.removeEventListener("ai-assistant:open", openAssistant)
+  }, [])
+
   const [input, setInput] = React.useState("")
   const [showDebug, setShowDebug] = React.useState(false)
   const [sessionStartTime, setSessionStartTime] = React.useState(new Date())
@@ -102,7 +108,7 @@ export function AiAssistantFab() {
       </SheetTrigger>
 
       {/* Sheet Content */}
-      <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
+      <SheetContent className="w-full p-0 flex flex-col h-[80vh] max-h-[860px] sm:max-w-lg overflow-hidden">
         <SheetHeader className="border-b shrink-0 bg-gradient-to-br from-blue-500/8 via-cyan-500/8 to-teal-500/8 p-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">

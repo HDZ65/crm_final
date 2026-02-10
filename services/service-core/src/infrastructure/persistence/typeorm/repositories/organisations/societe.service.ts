@@ -19,12 +19,32 @@ export class SocieteService {
     raisonSociale: string;
     siren: string;
     numeroTva: string;
+    logoUrl?: string;
+    devise?: string;
+    ics?: string;
+    journalVente?: string;
+    compteProduitDefaut?: string;
+    planComptable?: Record<string, any> | null;
+    adresseSiege?: string;
+    telephone?: string;
+    emailContact?: string;
+    parametresFiscaux?: Record<string, any> | null;
   }): Promise<SocieteEntity> {
     const entity = this.repository.create({
       organisationId: input.organisationId,
       raisonSociale: input.raisonSociale,
       siren: input.siren,
       numeroTva: input.numeroTva,
+      logoUrl: input.logoUrl ?? null,
+      devise: input.devise ?? 'EUR',
+      ics: input.ics ?? null,
+      journalVente: input.journalVente ?? null,
+      compteProduitDefaut: input.compteProduitDefaut ?? null,
+      planComptable: input.planComptable ?? null,
+      adresseSiege: input.adresseSiege ?? null,
+      telephone: input.telephone ?? null,
+      emailContact: input.emailContact ?? null,
+      parametresFiscaux: input.parametresFiscaux ?? null,
     });
     return this.repository.save(entity);
   }
@@ -34,17 +54,40 @@ export class SocieteService {
     raisonSociale?: string;
     siren?: string;
     numeroTva?: string;
+    logoUrl?: string;
+    devise?: string;
+    ics?: string;
+    journalVente?: string;
+    compteProduitDefaut?: string;
+    planComptable?: Record<string, any> | null;
+    adresseSiege?: string;
+    telephone?: string;
+    emailContact?: string;
+    parametresFiscaux?: Record<string, any> | null;
   }): Promise<SocieteEntity> {
     const entity = await this.findById(input.id);
 
     if (input.raisonSociale !== undefined) entity.raisonSociale = input.raisonSociale;
     if (input.siren !== undefined) entity.siren = input.siren;
     if (input.numeroTva !== undefined) entity.numeroTva = input.numeroTva;
+    if (input.logoUrl !== undefined) entity.logoUrl = input.logoUrl ?? null;
+    if (input.devise !== undefined) entity.devise = input.devise;
+    if (input.ics !== undefined) entity.ics = input.ics ?? null;
+    if (input.journalVente !== undefined) entity.journalVente = input.journalVente ?? null;
+    if (input.compteProduitDefaut !== undefined) entity.compteProduitDefaut = input.compteProduitDefaut ?? null;
+    if (input.planComptable !== undefined) entity.planComptable = input.planComptable ?? null;
+    if (input.adresseSiege !== undefined) entity.adresseSiege = input.adresseSiege ?? null;
+    if (input.telephone !== undefined) entity.telephone = input.telephone ?? null;
+    if (input.emailContact !== undefined) entity.emailContact = input.emailContact ?? null;
+    if (input.parametresFiscaux !== undefined) entity.parametresFiscaux = input.parametresFiscaux ?? null;
 
     return this.repository.save(entity);
   }
 
   async findById(id: string): Promise<SocieteEntity> {
+    if (!id) {
+      throw new RpcException({ code: status.INVALID_ARGUMENT, message: 'Societe id is required' });
+    }
     const entity = await this.repository.findOne({ where: { id } });
     if (!entity) {
       throw new RpcException({ code: status.NOT_FOUND, message: `Societe ${id} not found` });
@@ -61,6 +104,10 @@ export class SocieteService {
   }> {
     const page = pagination?.page ?? 1;
     const limit = pagination?.limit ?? 50;
+
+    if (!organisationId) {
+      return { societes: [], pagination: { total: 0, page, limit, totalPages: 0 } };
+    }
 
     const [societes, total] = await this.repository.findAndCount({
       where: { organisationId },

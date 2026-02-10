@@ -42,6 +42,9 @@ export class RoleService {
   }
 
   async findById(id: string): Promise<RoleEntity> {
+    if (!id) {
+      throw new RpcException({ code: status.INVALID_ARGUMENT, message: 'Role id is required' });
+    }
     const entity = await this.repository.findOne({ where: { id } });
     if (!entity) {
       throw new RpcException({ code: status.NOT_FOUND, message: `Role ${id} not found` });

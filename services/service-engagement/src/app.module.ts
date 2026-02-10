@@ -10,26 +10,7 @@ import { AuthInterceptor, NatsModule, GrpcExceptionFilter } from '@crm/shared-ke
 // ============================================================================
 import { EngagementModule } from './engagement.module';
 
-// Domain entities for TypeORM configuration
-import {
-  NotificationEntity,
-  MailboxEntity,
-  ActiviteEntity,
-  TacheEntity,
-  TypeActiviteEntity,
-  EvenementSuiviEntity,
-  OAuthConnectionEntity,
-  CalendarEventEntity,
-  MeetingEntity,
-  CallSummaryEntity,
-} from './domain/engagement/entities';
 
-import {
-  DemandeConciergerie,
-  CommentaireDemande,
-  CasJuridique,
-  OperationCashback,
-} from './domain/services/entities';
 
 @Module({
   imports: [
@@ -61,23 +42,7 @@ import {
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_DATABASE', 'engagement_db'),
         namingStrategy: new SnakeNamingStrategy(),
-        entities: [
-          NotificationEntity,
-          MailboxEntity,
-          ActiviteEntity,
-          TacheEntity,
-          TypeActiviteEntity,
-          EvenementSuiviEntity,
-          OAuthConnectionEntity,
-          CalendarEventEntity,
-          MeetingEntity,
-          CallSummaryEntity,
-          // Services entities
-          DemandeConciergerie,
-          CommentaireDemande,
-          CasJuridique,
-          OperationCashback,
-        ],
+        autoLoadEntities: true,
         synchronize: configService.get('NODE_ENV') !== 'production',
         migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],

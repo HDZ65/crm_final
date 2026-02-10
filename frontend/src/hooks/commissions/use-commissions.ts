@@ -3,20 +3,21 @@
 import { useCallback, useEffect, useState, useMemo } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
+import type { Commission } from "@proto/commission/commission"
 import type {
-  CommissionResponseDto,
-  CommissionWithDetailsResponseDto,
-  CommissionFiltersDto,
-  CommissionSummaryDto,
-} from "@/types/commission"
+  CommissionWithDetails,
+  CommissionFilters,
+  CommissionSummary,
+} from "@/lib/ui/display-types/commission"
+import { parseMontant } from "@/lib/ui/helpers/format"
 
 /**
  * Hook pour récupérer la liste des commissions
  * GET /commissions
  */
-export function useCommissions(filters?: CommissionFiltersDto) {
-  const [commissions, setCommissions] = useState<CommissionResponseDto[]>([])
-  const { loading, error, execute } = useApi<CommissionResponseDto[]>()
+export function useCommissions(filters?: CommissionFilters) {
+  const [commissions, setCommissions] = useState<Commission[]>([])
+  const { loading, error, execute } = useApi<Commission[]>()
 
   const fetchCommissions = useCallback(async () => {
     try {
@@ -60,8 +61,8 @@ export function useCommissions(filters?: CommissionFiltersDto) {
  * GET /commissions/with-details
  */
 export function useCommissionsWithDetails(organisationId?: string) {
-  const [commissions, setCommissions] = useState<CommissionWithDetailsResponseDto[]>([])
-  const { loading, error, execute } = useApi<CommissionWithDetailsResponseDto[]>()
+  const [commissions, setCommissions] = useState<CommissionWithDetails[]>([])
+  const { loading, error, execute } = useApi<CommissionWithDetails[]>()
 
   const fetchCommissions = useCallback(async () => {
     try {
@@ -89,13 +90,13 @@ export function useCommissionsWithDetails(organisationId?: string) {
   }, [fetchCommissions])
 
   // Calcul du résumé global
-  const summary: CommissionSummaryDto = useMemo(() => {
+  const summary: CommissionSummary = useMemo(() => {
     return commissions.reduce(
       (acc, commission) => ({
-        totalBrut: acc.totalBrut + commission.montantBrut,
-        totalReprises: acc.totalReprises + commission.montantReprises,
-        totalAcomptes: acc.totalAcomptes + commission.montantAcomptes,
-        totalNet: acc.totalNet + commission.montantNetAPayer,
+        totalBrut: acc.totalBrut + parseMontant(commission.montantBrut),
+        totalReprises: acc.totalReprises + parseMontant(commission.montantReprises),
+        totalAcomptes: acc.totalAcomptes + parseMontant(commission.montantAcomptes),
+        totalNet: acc.totalNet + parseMontant(commission.montantNetAPayer),
         nombreLignes: acc.nombreLignes + 1,
         nombreSelectionnes: 0,
       }),
@@ -124,8 +125,8 @@ export function useCommissionsWithDetails(organisationId?: string) {
  * GET /commissions/:id
  */
 export function useCommission(commissionId: string | null) {
-  const [commission, setCommission] = useState<CommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<CommissionResponseDto>()
+  const [commission, setCommission] = useState<Commission | null>(null)
+  const { loading, error, execute } = useApi<Commission>()
 
   const fetchCommission = useCallback(async () => {
     if (!commissionId) return
@@ -159,8 +160,8 @@ export function useCommission(commissionId: string | null) {
  * GET /commissions/:id/with-details
  */
 export function useCommissionWithDetails(commissionId: string | null) {
-  const [commission, setCommission] = useState<CommissionWithDetailsResponseDto | null>(null)
-  const { loading, error, execute } = useApi<CommissionWithDetailsResponseDto>()
+  const [commission, setCommission] = useState<CommissionWithDetails | null>(null)
+  const { loading, error, execute } = useApi<CommissionWithDetails>()
 
   const fetchCommission = useCallback(async () => {
     if (!commissionId) return
@@ -193,16 +194,16 @@ export function useCommissionWithDetails(commissionId: string | null) {
  * Hook utilitaire pour calculer le résumé d'une sélection de commissions
  */
 export function useCommissionsSummary(
-  commissions: CommissionWithDetailsResponseDto[],
+  commissions: CommissionWithDetails[],
   selectedIds: Record<string, boolean>
 ) {
-  const globalSummary: CommissionSummaryDto = useMemo(() => {
+  const globalSummary: CommissionSummary = useMemo(() => {
     return commissions.reduce(
       (acc, commission) => ({
-        totalBrut: acc.totalBrut + commission.montantBrut,
-        totalReprises: acc.totalReprises + commission.montantReprises,
-        totalAcomptes: acc.totalAcomptes + commission.montantAcomptes,
-        totalNet: acc.totalNet + commission.montantNetAPayer,
+        totalBrut: acc.totalBrut + parseMontant(commission.montantBrut),
+        totalReprises: acc.totalReprises + parseMontant(commission.montantReprises),
+        totalAcomptes: acc.totalAcomptes + parseMontant(commission.montantAcomptes),
+        totalNet: acc.totalNet + parseMontant(commission.montantNetAPayer),
         nombreLignes: acc.nombreLignes + 1,
         nombreSelectionnes: 0,
       }),
@@ -217,14 +218,14 @@ export function useCommissionsSummary(
     )
   }, [commissions])
 
-  const selectedSummary: CommissionSummaryDto = useMemo(() => {
+  const selectedSummary: CommissionSummary = useMemo(() => {
     const selectedCommissions = commissions.filter((c) => selectedIds[c.id])
     return selectedCommissions.reduce(
       (acc, commission) => ({
-        totalBrut: acc.totalBrut + commission.montantBrut,
-        totalReprises: acc.totalReprises + commission.montantReprises,
-        totalAcomptes: acc.totalAcomptes + commission.montantAcomptes,
-        totalNet: acc.totalNet + commission.montantNetAPayer,
+        totalBrut: acc.totalBrut + parseMontant(commission.montantBrut),
+        totalReprises: acc.totalReprises + parseMontant(commission.montantReprises),
+        totalAcomptes: acc.totalAcomptes + parseMontant(commission.montantAcomptes),
+        totalNet: acc.totalNet + parseMontant(commission.montantNetAPayer),
         nombreLignes: acc.nombreLignes + 1,
         nombreSelectionnes: acc.nombreSelectionnes + 1,
       }),

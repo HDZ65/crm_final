@@ -27,7 +27,7 @@ import {
   FileText,
 } from "lucide-react"
 import { EditableField } from "./editable-field"
-import type { ClientInfo, ComplianceInfo, BankInfo } from "@/types/client"
+import type { ClientInfo, ComplianceInfo, BankInfo } from "@/lib/ui/display-types/client"
 
 interface ClientInfoAccordionProps {
   clientInfo: ClientInfo

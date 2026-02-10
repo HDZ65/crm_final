@@ -3,16 +3,15 @@
 import { calendarAdmin } from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
 import type {
-  CalendarDayDto,
-  PlannedDebitSummaryDto,
-  HeatmapCellDto,
-  VolumeThresholdDto,
-  CalendarAuditLogDto,
-  CsvImportPreviewDto,
-  CsvValidationErrorDto,
-  ActionResult,
-  PaginatedResult,
-} from "@/types/calendar";
+  CalendarDay,
+  PlannedDebitSummary,
+  HeatmapCell,
+  VolumeThreshold,
+  CalendarAuditLog,
+  CsvImportPreview,
+  CsvValidationError,
+} from "@proto/calendar/calendar";
+import type { ActionResult, PaginatedResult } from "@/lib/types/common";
 
 function mapPlannedDebitSummary(summary: {
   id: string;
@@ -22,7 +21,7 @@ function mapPlannedDebitSummary(summary: {
   currency: string;
   status: number;
   batch: number;
-}): PlannedDebitSummaryDto {
+}): PlannedDebitSummary {
   return {
     id: summary.id,
     contratId: summary.contratId,
@@ -49,12 +48,12 @@ function mapCalendarDay(day: {
     status: number;
     batch: number;
   }>;
-}): CalendarDayDto {
+}): CalendarDay {
   return {
     date: day.date,
     isWeekend: day.isWeekend,
     isHoliday: day.isHoliday,
-    holidayName: day.holidayName || undefined,
+    holidayName: day.holidayName,
     isEligible: day.isEligible,
     debits: day.debits.map(mapPlannedDebitSummary),
   };
@@ -69,7 +68,7 @@ function mapHeatmapCell(cell: {
   currency: string;
   intensityLevel: string;
   exceedsThreshold: boolean;
-}): HeatmapCellDto {
+}): HeatmapCell {
   return {
     date: cell.date,
     dayOfWeek: cell.dayOfWeek,
@@ -79,6 +78,7 @@ function mapHeatmapCell(cell: {
     currency: cell.currency,
     intensityLevel: cell.intensityLevel as "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
     exceedsThreshold: cell.exceedsThreshold,
+    forecast: undefined,
   };
 }
 
@@ -94,16 +94,16 @@ function mapVolumeThreshold(threshold: {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}): VolumeThresholdDto {
+}): VolumeThreshold {
   return {
     id: threshold.id,
     organisationId: threshold.organisationId,
-    societeId: threshold.societeId || undefined,
+    societeId: threshold.societeId,
     maxTransactionCount: threshold.maxTransactionCount,
     maxAmountCents: Number(threshold.maxAmountCents),
     currency: threshold.currency,
     alertOnExceed: threshold.alertOnExceed,
-    alertEmail: threshold.alertEmail || undefined,
+    alertEmail: threshold.alertEmail,
     isActive: threshold.isActive,
     createdAt: threshold.createdAt,
     updatedAt: threshold.updatedAt,
@@ -124,7 +124,7 @@ function mapAuditLog(log: {
   ipAddress: string;
   userAgent: string;
   createdAt: string;
-}): CalendarAuditLogDto {
+}): CalendarAuditLog {
   return {
     id: log.id,
     organisationId: log.organisationId,
@@ -133,11 +133,11 @@ function mapAuditLog(log: {
     action: log.action,
     actorUserId: log.actorUserId,
     source: log.source as number,
-    beforeState: log.beforeState || undefined,
-    afterState: log.afterState || undefined,
+    beforeState: log.beforeState,
+    afterState: log.afterState,
     changeSummary: log.changeSummary,
-    ipAddress: log.ipAddress || undefined,
-    userAgent: log.userAgent || undefined,
+    ipAddress: log.ipAddress,
+    userAgent: log.userAgent,
     createdAt: log.createdAt,
   };
 }
@@ -150,7 +150,7 @@ export async function getCalendarView(input: {
   batches?: number[];
   statuses?: number[];
   includeVolumes?: boolean;
-}): Promise<ActionResult<{ days: CalendarDayDto[] }>> {
+}): Promise<ActionResult<{ days: CalendarDay[] }>> {
   try {
     const response = await calendarAdmin.getCalendarView({
       organisationId: input.organisationId,
@@ -188,7 +188,7 @@ export async function getDateDetails(input: {
   limit?: number;
 }): Promise<
   ActionResult<{
-    debits: PlannedDebitSummaryDto[];
+    debits: PlannedDebitSummary[];
     total: number;
     transactionCount: number;
     totalAmountCents: number;
@@ -243,7 +243,7 @@ export async function getVolumeHeatmap(input: {
   societeIds?: string[];
   batches?: number[];
   includeForecast?: boolean;
-}): Promise<ActionResult<{ cells: HeatmapCellDto[]; exceededThresholds: VolumeThresholdDto[] }>> {
+}): Promise<ActionResult<{ cells: HeatmapCell[]; exceededThresholds: VolumeThreshold[] }>> {
   try {
     const response = await calendarAdmin.getVolumeHeatmap({
       organisationId: input.organisationId,
@@ -286,8 +286,8 @@ export async function importCsv(input: {
     totalRows: number;
     validRows: number;
     errorRows: number;
-    errors: CsvValidationErrorDto[];
-    preview: CsvImportPreviewDto[];
+    errors: CsvValidationError[];
+    preview: CsvImportPreview[];
   }>
 > {
   try {
@@ -317,7 +317,7 @@ export async function importCsv(input: {
           rowNumber: p.rowNumber,
           action: p.action as "CREATE" | "UPDATE" | "SKIP",
           entityType: p.entityType,
-          entityId: p.entityId || undefined,
+          entityId: p.entityId,
           data: Object.fromEntries(Object.entries(p.data || {})),
           changeSummary: p.changeSummary,
         })),
@@ -420,7 +420,7 @@ export async function listVolumeThresholds(input: {
   societeId?: string;
   page?: number;
   limit?: number;
-}): Promise<ActionResult<PaginatedResult<VolumeThresholdDto>>> {
+}): Promise<ActionResult<PaginatedResult<VolumeThreshold>>> {
   try {
     const response = await calendarAdmin.listVolumeThresholds({
       organisationId: input.organisationId,
@@ -456,7 +456,7 @@ export async function listVolumeThresholds(input: {
 
 export async function getVolumeThreshold(
   id: string
-): Promise<ActionResult<VolumeThresholdDto>> {
+): Promise<ActionResult<VolumeThreshold>> {
   try {
     const response = await calendarAdmin.getVolumeThreshold({ id });
     return { data: mapVolumeThreshold(response), error: null };
@@ -480,7 +480,7 @@ export async function createVolumeThreshold(input: {
   currency: string;
   alertOnExceed: boolean;
   alertEmail?: string;
-}): Promise<ActionResult<VolumeThresholdDto>> {
+}): Promise<ActionResult<VolumeThreshold>> {
   try {
     const response = await calendarAdmin.createVolumeThreshold({
       organisationId: input.organisationId,
@@ -513,7 +513,7 @@ export async function updateVolumeThreshold(input: {
   alertOnExceed: boolean;
   alertEmail?: string;
   isActive: boolean;
-}): Promise<ActionResult<VolumeThresholdDto>> {
+}): Promise<ActionResult<VolumeThreshold>> {
   try {
     const response = await calendarAdmin.updateVolumeThreshold({
       id: input.id,
@@ -567,7 +567,7 @@ export async function getAuditLogs(input: {
   endDate?: string;
   page?: number;
   limit?: number;
-}): Promise<ActionResult<PaginatedResult<CalendarAuditLogDto>>> {
+}): Promise<ActionResult<PaginatedResult<CalendarAuditLog>>> {
   try {
     const response = await calendarAdmin.getAuditLogs({
       organisationId: input.organisationId,

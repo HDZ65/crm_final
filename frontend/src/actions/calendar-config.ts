@@ -3,14 +3,13 @@
 import { debitConfig } from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
 import type {
-  SystemDebitConfigDto,
-  CompanyDebitConfigDto,
-  ClientDebitConfigDto,
-  ContractDebitConfigDto,
-  ResolvedDebitConfigDto,
-  ActionResult,
-  PaginatedResult,
-} from "@/types/calendar";
+  SystemDebitConfiguration,
+  CompanyDebitConfiguration,
+  ClientDebitConfiguration,
+  ContractDebitConfiguration,
+  ResolvedDebitConfiguration,
+} from "@proto/calendar/calendar";
+import type { ActionResult, PaginatedResult } from "@/lib/types/common";
 
 function mapSystemConfig(config: {
   id: string;
@@ -24,7 +23,7 @@ function mapSystemConfig(config: {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}): SystemDebitConfigDto {
+}): SystemDebitConfiguration {
   return {
     id: config.id,
     organisationId: config.organisationId,
@@ -53,7 +52,7 @@ function mapCompanyConfig(config: {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}): CompanyDebitConfigDto {
+}): CompanyDebitConfiguration {
   return {
     id: config.id,
     organisationId: config.organisationId,
@@ -82,7 +81,7 @@ function mapClientConfig(config: {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}): ClientDebitConfigDto {
+}): ClientDebitConfiguration {
   return {
     id: config.id,
     organisationId: config.organisationId,
@@ -110,7 +109,7 @@ function mapContractConfig(config: {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}): ContractDebitConfigDto {
+}): ContractDebitConfiguration {
   return {
     id: config.id,
     organisationId: config.organisationId,
@@ -128,7 +127,7 @@ function mapContractConfig(config: {
 
 export async function getSystemConfig(
   organisationId: string
-): Promise<ActionResult<SystemDebitConfigDto>> {
+): Promise<ActionResult<SystemDebitConfiguration>> {
   try {
     const response = await debitConfig.getSystemConfig({ organisationId });
     return { data: mapSystemConfig(response), error: null };
@@ -152,7 +151,7 @@ export async function updateSystemConfig(input: {
   shiftStrategy: number;
   holidayZoneId: string;
   cutoffConfigId: string;
-}): Promise<ActionResult<SystemDebitConfigDto>> {
+}): Promise<ActionResult<SystemDebitConfiguration>> {
   try {
     const response = await debitConfig.updateSystemConfig({
       organisationId: input.organisationId,
@@ -182,7 +181,7 @@ export async function listCompanyConfigs(input: {
   societeId?: string;
   page?: number;
   limit?: number;
-}): Promise<ActionResult<PaginatedResult<CompanyDebitConfigDto>>> {
+}): Promise<ActionResult<PaginatedResult<CompanyDebitConfiguration>>> {
   try {
     const response = await debitConfig.listCompanyConfigs({
       organisationId: input.organisationId,
@@ -218,7 +217,7 @@ export async function listCompanyConfigs(input: {
 
 export async function getCompanyConfig(
   id: string
-): Promise<ActionResult<CompanyDebitConfigDto>> {
+): Promise<ActionResult<CompanyDebitConfiguration>> {
   try {
     const response = await debitConfig.getCompanyConfig({ id });
     return { data: mapCompanyConfig(response), error: null };
@@ -243,7 +242,7 @@ export async function createCompanyConfig(input: {
   shiftStrategy: number;
   holidayZoneId: string;
   cutoffConfigId: string;
-}): Promise<ActionResult<CompanyDebitConfigDto>> {
+}): Promise<ActionResult<CompanyDebitConfiguration>> {
   try {
     const response = await debitConfig.createCompanyConfig({
       organisationId: input.organisationId,
@@ -278,7 +277,7 @@ export async function updateCompanyConfig(input: {
   holidayZoneId: string;
   cutoffConfigId: string;
   isActive: boolean;
-}): Promise<ActionResult<CompanyDebitConfigDto>> {
+}): Promise<ActionResult<CompanyDebitConfiguration>> {
   try {
     const response = await debitConfig.updateCompanyConfig({
       id: input.id,
@@ -328,7 +327,7 @@ export async function listClientConfigs(input: {
   clientId?: string;
   page?: number;
   limit?: number;
-}): Promise<ActionResult<PaginatedResult<ClientDebitConfigDto>>> {
+}): Promise<ActionResult<PaginatedResult<ClientDebitConfiguration>>> {
   try {
     const response = await debitConfig.listClientConfigs({
       organisationId: input.organisationId,
@@ -364,7 +363,7 @@ export async function listClientConfigs(input: {
 
 export async function getClientConfig(
   id: string
-): Promise<ActionResult<ClientDebitConfigDto>> {
+): Promise<ActionResult<ClientDebitConfiguration>> {
   try {
     const response = await debitConfig.getClientConfig({ id });
     return { data: mapClientConfig(response), error: null };
@@ -388,7 +387,7 @@ export async function createClientConfig(input: {
   fixedDay: number;
   shiftStrategy: number;
   holidayZoneId: string;
-}): Promise<ActionResult<ClientDebitConfigDto>> {
+}): Promise<ActionResult<ClientDebitConfiguration>> {
   try {
     const response = await debitConfig.createClientConfig({
       organisationId: input.organisationId,
@@ -421,7 +420,7 @@ export async function updateClientConfig(input: {
   shiftStrategy: number;
   holidayZoneId: string;
   isActive: boolean;
-}): Promise<ActionResult<ClientDebitConfigDto>> {
+}): Promise<ActionResult<ClientDebitConfiguration>> {
   try {
     const response = await debitConfig.updateClientConfig({
       id: input.id,
@@ -470,7 +469,7 @@ export async function listContractConfigs(input: {
   contratId?: string;
   page?: number;
   limit?: number;
-}): Promise<ActionResult<PaginatedResult<ContractDebitConfigDto>>> {
+}): Promise<ActionResult<PaginatedResult<ContractDebitConfiguration>>> {
   try {
     const response = await debitConfig.listContractConfigs({
       organisationId: input.organisationId,
@@ -506,7 +505,7 @@ export async function listContractConfigs(input: {
 
 export async function getContractConfig(
   id: string
-): Promise<ActionResult<ContractDebitConfigDto>> {
+): Promise<ActionResult<ContractDebitConfiguration>> {
   try {
     const response = await debitConfig.getContractConfig({ id });
     return { data: mapContractConfig(response), error: null };
@@ -530,7 +529,7 @@ export async function createContractConfig(input: {
   fixedDay: number;
   shiftStrategy: number;
   holidayZoneId: string;
-}): Promise<ActionResult<ContractDebitConfigDto>> {
+}): Promise<ActionResult<ContractDebitConfiguration>> {
   try {
     const response = await debitConfig.createContractConfig({
       organisationId: input.organisationId,
@@ -563,7 +562,7 @@ export async function updateContractConfig(input: {
   shiftStrategy: number;
   holidayZoneId: string;
   isActive: boolean;
-}): Promise<ActionResult<ContractDebitConfigDto>> {
+}): Promise<ActionResult<ContractDebitConfiguration>> {
   try {
     const response = await debitConfig.updateContractConfig({
       id: input.id,
@@ -612,7 +611,7 @@ export async function resolveConfiguration(input: {
   contratId?: string;
   clientId?: string;
   societeId?: string;
-}): Promise<ActionResult<ResolvedDebitConfigDto>> {
+}): Promise<ActionResult<ResolvedDebitConfiguration>> {
   try {
     const response = await debitConfig.resolveConfiguration({
       organisationId: input.organisationId,

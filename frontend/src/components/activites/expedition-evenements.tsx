@@ -3,7 +3,7 @@
 import * as React from "react"
 import { EvenementsSuiviTimeline } from "./evenements-suivi-timeline"
 import { listEvenementsSuiviByExpedition } from "@/actions/evenements-suivi"
-import type { EvenementSuiviDto } from "@/types/activite"
+import type { EvenementSuiviDto } from "@/actions/evenements-suivi"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 

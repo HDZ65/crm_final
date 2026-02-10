@@ -10,10 +10,18 @@ import type { ActionResult } from "@/lib/types/common";
 import type {
   CarrierAccountResponse,
   CarrierAccountListResponse,
+  GenerateLabelRequest,
+  LabelResponse,
+  TrackingResponse,
+  SimulatePricingRequest,
+  PricingResponse,
+  AddressValidationResponse,
+} from "@proto/logistics/logistics";
+import type {
   FulfillmentBatch,
   ListFulfillmentBatchResponse,
   FulfillmentCutoffConfig,
-} from "@/lib/grpc/clients/logistics";
+} from "@proto/fulfillment/fulfillment";
 
 // ==================== CARRIER ACCOUNTS ====================
 
@@ -30,11 +38,11 @@ export async function createCarrierAccount(params: {
 }): Promise<ActionResult<CarrierAccountResponse>> {
   try {
     const data = await logistics.createCarrierAccount({
-      organisation_id: params.organisationId,
+      organisationId: params.organisationId,
       type: params.type,
-      contract_number: params.contractNumber,
+      contractNumber: params.contractNumber,
       password: params.password,
-      label_format: params.labelFormat,
+      labelFormat: params.labelFormat,
       actif: params.actif,
     });
     revalidatePath("/expeditions");
@@ -74,7 +82,7 @@ export async function getCarrierAccountsByOrganisation(
 ): Promise<ActionResult<CarrierAccountListResponse>> {
   try {
     const data = await logistics.getCarrierAccountsByOrganisation({
-      organisation_id: organisationId,
+      organisationId: organisationId,
     });
     return { data, error: null };
   } catch (err) {
@@ -99,9 +107,9 @@ export async function updateCarrierAccount(params: {
   try {
     const data = await logistics.updateCarrierAccount({
       id: params.id,
-      contract_number: params.contractNumber,
+      contractNumber: params.contractNumber,
       password: params.password,
-      label_format: params.labelFormat,
+      labelFormat: params.labelFormat,
       actif: params.actif,
     });
     revalidatePath("/expeditions");
@@ -144,9 +152,9 @@ export async function createFulfillmentBatch(params: {
 }): Promise<ActionResult<FulfillmentBatch>> {
   try {
     const data = await fulfillmentBatch.create({
-      organisation_id: params.organisationId,
-      label: params.label,
-      cutoff_date: params.cutoffDate,
+      organisationId: params.organisationId,
+      label: params.label || "",
+      cutoffDate: params.cutoffDate || "",
     });
     revalidatePath("/expeditions/lots");
     return { data, error: null };
@@ -189,12 +197,14 @@ export async function listFulfillmentBatches(params: {
 }): Promise<ActionResult<ListFulfillmentBatchResponse>> {
   try {
     const data = await fulfillmentBatch.list({
-      organisation_id: params.organisationId,
+      organisationId: params.organisationId,
       status: params.status,
       search: params.search,
       pagination: {
         page: params.page || 1,
         limit: params.limit || 20,
+        sortBy: "",
+        sortOrder: "",
       },
     });
     return { data, error: null };
@@ -219,7 +229,7 @@ export async function updateFulfillmentBatch(params: {
     const data = await fulfillmentBatch.update({
       id: params.id,
       label: params.label,
-      cutoff_date: params.cutoffDate,
+      cutoffDate: params.cutoffDate,
     });
     revalidatePath("/expeditions/lots");
     return { data, error: null };
@@ -276,7 +286,7 @@ export async function dispatchFulfillmentBatch(params: {
   try {
     const data = await fulfillmentBatch.dispatch({
       id: params.id,
-      dispatch_date: params.dispatchDate,
+      dispatchDate: params.dispatchDate || "",
     });
     revalidatePath("/expeditions/lots");
     return { data, error: null };
@@ -327,13 +337,27 @@ export async function addFulfillmentBatchLine(params: {
 }): Promise<ActionResult<{ id: string }>> {
   try {
     const data = await fulfillmentBatch.addLine({
-      batch_id: params.batchId,
-      subscription_id: params.subscriptionId,
-      client_id: params.clientId,
-      product_id: params.productId,
-      product_name: params.productName,
-      quantity: params.quantity,
-      snapshot: params.snapshot,
+      batchId: params.batchId,
+      subscriptionId: params.subscriptionId,
+      clientId: params.clientId,
+      productId: params.productId,
+      productName: params.productName || "",
+      quantity: params.quantity || 0,
+      snapshot: params.snapshot ? {
+        line1: params.snapshot.line1 || "",
+        line2: params.snapshot.line2 || "",
+        postalCode: params.snapshot.postalCode || "",
+        city: params.snapshot.city || "",
+        country: params.snapshot.country || "",
+        preferences: params.snapshot.preferences || {},
+      } : {
+        line1: "",
+        line2: "",
+        postalCode: "",
+        city: "",
+        country: "",
+        preferences: {},
+      },
     });
     revalidatePath("/expeditions/lots");
     return { data: { id: data.id }, error: null };
@@ -378,12 +402,12 @@ export async function createFulfillmentCutoffConfig(params: {
 }): Promise<ActionResult<FulfillmentCutoffConfig>> {
   try {
     const data = await fulfillmentCutoff.create({
-      organisation_id: params.organisationId,
-      cutoff_day_of_month: params.cutoffDayOfMonth,
-      cutoff_time: params.cutoffTime,
-      processing_days: params.processingDays,
-      auto_lock: params.autoLock,
-      auto_dispatch: params.autoDispatch,
+      organisationId: params.organisationId,
+      cutoffDayOfMonth: params.cutoffDayOfMonth,
+      cutoffTime: params.cutoffTime,
+      processingDays: params.processingDays,
+      autoLock: params.autoLock,
+      autoDispatch: params.autoDispatch,
     });
     revalidatePath("/expeditions/lots");
     return { data, error: null };
@@ -422,7 +446,7 @@ export async function getFulfillmentCutoffConfigByOrganisation(
 ): Promise<ActionResult<FulfillmentCutoffConfig>> {
   try {
     const data = await fulfillmentCutoff.getByOrganisation({
-      organisation_id: organisationId,
+      organisationId: organisationId,
     });
     return { data, error: null };
   } catch (err) {
@@ -448,11 +472,11 @@ export async function updateFulfillmentCutoffConfig(params: {
   try {
     const data = await fulfillmentCutoff.update({
       id: params.id,
-      cutoff_day_of_month: params.cutoffDayOfMonth,
-      cutoff_time: params.cutoffTime,
-      processing_days: params.processingDays,
-      auto_lock: params.autoLock,
-      auto_dispatch: params.autoDispatch,
+      cutoffDayOfMonth: params.cutoffDayOfMonth,
+      cutoffTime: params.cutoffTime,
+      processingDays: params.processingDays,
+      autoLock: params.autoLock,
+      autoDispatch: params.autoDispatch,
     });
     revalidatePath("/expeditions/lots");
     return { data, error: null };
@@ -478,6 +502,78 @@ export async function deleteFulfillmentCutoffConfig(id: string): Promise<ActionR
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors de la suppression de la configuration cutoff",
+    };
+  }
+}
+
+// ==================== MAILEVA / LABEL & TRACKING ====================
+
+export async function generateLabel(request: {
+  organisationId: string;
+  senderAddress: { line1: string; line2?: string; postalCode: string; city: string; country: string };
+  recipientAddress: { line1: string; line2?: string; postalCode: string; city: string; country: string };
+  weight: number;
+  carrierType: string;
+  labelFormat?: string;
+}): Promise<ActionResult<LabelResponse>> {
+  try {
+    const data = await logistics.generateLabel(request as unknown as GenerateLabelRequest);
+    return { data, error: null };
+  } catch (err) {
+    console.error("[generateLabel] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la génération de l'étiquette",
+    };
+  }
+}
+
+export async function trackShipment(trackingNumber: string): Promise<ActionResult<TrackingResponse>> {
+  try {
+    const data = await logistics.trackShipment({ trackingNumber });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[trackShipment] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du suivi de l'envoi",
+    };
+  }
+}
+
+export async function simulatePricing(request: {
+  senderPostalCode: string;
+  recipientPostalCode: string;
+  weight: number;
+  carrierType: string;
+}): Promise<ActionResult<PricingResponse>> {
+  try {
+    const data = await logistics.simulatePricing(request as unknown as SimulatePricingRequest);
+    return { data, error: null };
+  } catch (err) {
+    console.error("[simulatePricing] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la simulation du tarif",
+    };
+  }
+}
+
+export async function validateAddress(address: {
+  line1: string;
+  line2?: string;
+  postalCode: string;
+  city: string;
+  country: string;
+}): Promise<ActionResult<AddressValidationResponse>> {
+  try {
+    const data = await logistics.validateAddress({ address });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[validateAddress] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la validation de l'adresse",
     };
   }
 }

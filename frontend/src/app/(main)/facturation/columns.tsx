@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Eye, Download, Send, Ban } from "lucide-react"
-import type { Facture } from "@/types/facture"
+import type { Facture } from "@proto/factures/factures"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 

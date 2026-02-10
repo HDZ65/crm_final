@@ -14,18 +14,16 @@ import {
 } from "@/lib/formatters"
 import type {
   ClientFilters,
-  ClientBaseDto,
-  ClientDetailDto,
   ClientRow,
   ClientDetail,
   ClientStatus,
   PaiementDto,
   DocumentDto,
   EvenementDto,
-  ClientBase,
-  Adresse,
-} from "@/types/client"
-import type { ContratSimpleDto, Contrat } from "@/types/contract"
+} from "@/lib/ui/display-types/client"
+import type { ClientBase, Adresse } from "@proto/clients/clients"
+import type { ContratSimpleDto } from "@/lib/ui/display-types/contract"
+import type { Contrat } from "@proto/contrats/contrats"
 
 // DEPRECATED: Ces constantes sont conservées pour compatibilité temporaire
 // Utilisez useStatutClients().getByCode('actif') à la place
@@ -37,23 +35,20 @@ export const STATUT_LABELS: Record<string, ClientStatus> = {}
 // Re-export des types pour compatibilité avec les imports existants
 export type {
   ClientFilters,
-  ClientBaseDto,
-  ClientDetailDto,
   ClientRow,
   ClientDetail,
   ClientStatus,
   PaiementDto,
   DocumentDto,
   EvenementDto,
-  AdresseDto,
-} from "@/types/client"
+} from "@/lib/ui/display-types/client"
 
-export type { ContratSimpleDto as ContratDto } from "@/types/contract"
+export type { ContratSimpleDto as ContratDto } from "@/lib/ui/display-types/contract"
 
 // Map statut string to ClientStatus
 function mapStatutToStatus(statut: string): ClientStatus {
   const lower = statut.toLowerCase()
-  if (lower === "impaye" || lower === "impayé") return "Impayé"
+  if (lower === "impaye" || lower === "impayé") return "Impaye"
   if (lower === "suspendu") return "Suspendu"
   return "Actif"
 }

@@ -1,5 +1,5 @@
 import { CataloguePageClient } from "./catalogue-page-client"
-import { getActiveOrgId } from "@/lib/server-data"
+import { getActiveOrgId } from "@/lib/server/data"
 import {
   getGammesByOrganisation,
   getProduitsByOrganisation,

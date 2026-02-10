@@ -1,0 +1,1645 @@
+﻿1. Contexte & Objectifs
+1.1 Contexte général du groupe Winvest Capital
+Le groupe Winvest Capital regroupe plusieurs sociétés actives dans les domaines des télécommunications, des assurances, des médias et des services digitaux. Ses principales filiales commerciales — France Téléphone, Dépanssur, Action Prévoyance et Mondial TV — emploient un réseau de commerciaux terrain, de télévendeurs et de partenaires distributeurs.
+Jusqu’à présent, les commissions ont été gérées de manière partiellement manuelle via Assur3D, Excel ou des exports ponctuels du CRM. Cette multiplicité d’outils crée des écarts de données, des délais de traitement et un manque de traçabilité.
+Le nouveau module de commissionnement vise à centraliser et automatiser la gestion de toutes les rémunérations commerciales du groupe au sein du CRM de gestion Winvest Capital.
+1.2 Objectifs du module
+Centraliser la gestion de toutes les commissions sur une base unique, reliée au CRM du groupe.
+Automatiser le calcul et la génération des bordereaux de commissions à partir des contrats validés.
+Fiabiliser le suivi grâce à une traçabilité complète des calculs, reprises et validations.
+Simplifier la diffusion des bordereaux de commissions vers les commerciaux et managers.
+Uniformiser les règles de calcul, tout en conservant la flexibilité nécessaire selon les produits et filiales.
+Préparer à l’évolution future vers un extranet commercial intégré (consultation en ligne des commissions et performances).
+1.3 Enjeux métiers
+Performance
+Réduction des délais de traitement et des erreurs humaines.
+Calcul instantané et génération automatique des bordereaux mensuels.
+Production de rapports consolidés pour la direction commerciale.
+Traçabilité
+Historisation des barèmes, des contrats validés et des reprises.
+Conservation des bordereaux PDF/Excel validés.
+Journalisation complète des actions (validation ADV, recalculs, reprises automatiques).
+Automatisation
+Calcul automatique des commissions selon les statuts des contrats.
+Gestion des reprises et régularisations (résiliations, impayés).
+Détection automatique des paliers et primes produits.
+Ces trois piliers (performance, traçabilité, automatisation) garantissent une cohérence totale dans la gestion des commissions du groupe.
+1.4 Périmètre fonctionnel et sociétés concernées
+Le module couvre toutes les entités commerciales du groupe Winvest Capital :
+France Téléphone — offres fixes, mobiles, box internet.
+Dépanssur — contrats d’assistance et conciergerie.
+Action Prévoyance — produits assurance santé et prévoyance.
+Mondial TV — abonnements et services audiovisuels.
+Partenaires externes — apporteurs et distributeurs indépendants.
+Les entités non commerciales (holding, structures financières, support) sont exclues du périmètre.
+Chaque société conserve ses grilles et barèmes spécifiques (montants, taux, durée de récurrence, reprises, primes), mais repose sur le même moteur de calcul et les mêmes processus.
+1.5 Interactions avec les autres systèmes
+Le module de commission s’intègre au sein du CRM de gestion Winvest Capital, tout en restant autonome pour ses exports.
+Système
+Rôle
+Mode d’intégration
+CRM de gestion Winvest Capital
+Base principale (contrats, produits, apporteurs, statuts CQ, calculs de commissions)
+Module interne intégré
+CRM de vente (futur extranet)
+Consultation en ligne des commissions et suivi d’activité commerciale
+À venir (phase 2)
+Outils bureautiques (Excel, PDF)
+Export des bordereaux et reporting
+Génération directe depuis le module
+Les exports sont disponibles nativement en Excel et PDF, et constituent les formats prioritaires pour la diffusion interne des bordereaux. D’autres intégrations (API, automatisation, extranet partenaires) pourront être ajoutées ultérieurement selon les besoins du groupe.
+Conclusion de la partie 1Ce module constitue un maillon essentiel du système d’information commercial du groupe Winvest Capital. Il garantit la fiabilité, la transparence et la rapidité du versement des commissions, tout en préparant la transition vers un environnement CRM unifié et évolutif.
+2. Architecture fonctionnelle globale
+2.1 Schéma général du flux de commissions
+[CRM Vente / Contrats] --(saisies, statuts CQ)--> [Contrôle Qualité]
+| |
+| contrats validés (CQ=OK) v
++----------------------------------------> [Commission Engine]
+| calcul (fixe, %, paliers, récurrence) + reprises
+v
+[Validation ADV]
+| sélection (cases), verrous, audit
+v
+[Génération Bordereau]
+(PDF / Excel, historisation)
+|
++--> [Exports internes]
+| - diffusion aux commerciaux/équipes
+|
++--> [Archives]
+(Phase 2) [Extranet partenaires & commerciaux] <-- consultation bordereaux, historique, KPI
+Remarque : Paiement/Paie n’est pas dans le périmètre immédiat. Le module se concentre sur le calcul, la validation et la diffusion des bordereaux (PDF/Excel). L’intégration paie pourra être ajoutée ultérieurement si nécessaire.
+2.2 Modules concernés
+CRM Vente / Contrats : référentiel des clients, produits, contrats, échéances, statuts de vie ; émet les événements de validation et d’encaissement.
+Contrôle Qualité (CQ) : valide la conformité commerciale et documentaire (prérequis au calcul). Les statuts CQ gouvernent l’éligibilité au commissionnement.
+Commission Engine : moteur de règles et de calculs (unitaires, %, paliers, récurrence, reprises, acomptes, reports). Historise la version des barèmes appliqués.
+Validation ADV : interface de contrôle avec cases à cocher, filtres, recalcul temps réel des totaux, motifs obligatoires sur désélection d’une ligne éligible, verrous antidoublons.
+Bordereaux & Exports : génération PDF/Excel (miroir), archivage immuable par période, diffusion interne (commerciaux, managers, direction).
+(Phase 2) Extranet partenaires & commerciaux : portail de consultation des bordereaux, historiques et KPI (lecture seule, filtres, téléchargements).
+2.3 Workflow complet
+Contrat validé (CQ = OK)
+Le CRM transmet les contrats éligibles (statut validé, paramètres produit, apporteur, dates d’effet, échéances, encaissements).
+Calcul commission (Commission Engine)
+Application du schéma : fixe / % / paliers / récurrence.
+Intégration des reprises (résiliation, impayé/défaut) selon fenêtres (3/6/12 mois) et des acomptes.
+Journalisation (version de barème, base de calcul, références contrat/échéance).
+Validation ADV
+Présélection automatique des lignes éligibles (contrat validé + échéance encaissée + statut commission “à payer”).
+(Dé)cochage manuel possible avec motif, recalcul instantané des totaux Brut / Reprises / Net / Reports.
+Verrous antidoublons (impossible de sélectionner une ligne déjà validée/payae) et alertes en cas de défaut/reprise en attente.
+Bordereau
+Génération PDF et Excel synchrones (sections : Total, Linéaire, Reprises).
+Attribution d’un ID bordereau unique, horodatage et gel des lignes sélectionnées.
+Archivage et mise à disposition pour diffusion interne (commerciaux/équipes/direction).
+Diffusion interne / Export
+Téléchargement direct depuis le module (PDF/Excel).
+Envoi sécurisé par email interne (optionnel) ou dépôt SFTP interne.
+(Phase 2) Publication sur Extranet pour consultation selfservice.
+Fin de la partie 2 — Le module est centré sur le calcul, la validation ADV et la diffusion des bordereaux. Les intégrations paie ou autres automations pourront être ajoutées dans une phase ultérieure sans remise en cause de l’architecture.
+3. Profils et règles de rémunération
+3.1 Profils de rémunération
+Commerciaux (VRP)
+Commission fixe par contrat, variable selon le produit.
+Pourcentage sur cotisation HT (Assurance Santé, Prévoyance) avec récurrence mensuelle.
+Bonus volume : ex. 30 lignes validées = 200 €.
+Primes produits cumulables (gérables dans l’espace commission) :
+30 Télécom = 200 €
+30 Dépanssur = 200 €
+30 Assistance = 300 €
+30 Mondial TV = 300 €→ Jusqu’à 1000 € cumulés possibles.
+Reprises automatiques en cas de résiliation ou impayé :
+3 mois standard (France Téléphone, Dépanssur).
+12 mois Assurance (Action Prévoyance).
+6 mois pour partenaires.
+Validation CQ obligatoire avant tout calcul.
+Managers
+Fixe mensuel : 2 000 € (paramétrable).
+Primes d’équipe (tous produits confondus, selon le nombre de contrats validés/mois) :
+100 = 200 € ; 200 = 500 € ; 400 = 1 000 € ; 600 = 1 500 € ; 800 = 2 000 € ; 1 000 = 2 500 €.
+Commission personnelle : identique aux règles des VRP.
+Rétrocessions : % optionnel sur la production de l’équipe.
+Eligibilité : rattaché à une équipe active sur la période.
+Directeurs d’agence
+Fixe mensuel : 3 000 €.
+Pourcentage sur les commissions conseillers (8 %, 10 %, 12 % selon palier de performance).
+Primes d’équipe : jusqu’à 5 000 €.
+Commission récurrente Santé/Prévoyance : 1 % au 13ᵉ mois.
+Bonus CA HT Santé/Prévoyance : +200 € / +500 € selon palier atteint.
+Rétrocessions multi-niveaux possibles (manager → directeur → direction commerciale).
+Partenaires / Apporteurs externes
+Commission fixe ou %, selon le type de contrat.
+Reprises modulables : 3, 6 ou 12 mois selon l’accord.
+Paiement uniquement sur contrats encaissés.
+Paliers de volume personnalisables selon le contrat de partenariat.
+Eligibilité : apporteur actif avec contrat encaissé et validé CQ.
+3.2 Règles de calcul générales
+Base de calcul : Commission, Prime HT ou % du CA.
+Produits concernés : Santé, Prévoyance, Énergie, Télécom, Conciergerie, Mondial TV.
+Frais de dossier : reversement partiel configurable selon produit.
+Récurrence : paramétrage du % et de la durée (illimitée ou limitée à N années).
+Primes paliers : configurables dans l’espace commission (par produit et par période).
+Reprises : auto-déduites sur les bordereaux suivants.
+Avances : plafonnées à 50 % du net à payer et régularisées automatiquement.
+Validation ADV obligatoire avant tout paiement ou export.
+3.3 Fonctionnalités clés associées
+Tableau des commissions : filtres par période, produit, compagnie, apporteur, statut.
+Validation manuelle ADV : cases à cocher/décocher, recalcul instantané des totaux (Brut / Reprises / Net).
+Historisation automatique : archivage des bordereaux validés et horodatés.
+Exports : génération directe Excel et PDF (prioritaires).
+Alertes automatiques : contrats rejetés, reprises appliquées, seuil de prime atteint.
+Espace Commission (back-office) : création et mise à jour des barèmes, paliers, produits, règles de reprise.
+Historisation des barèmes : versionning complet avec date d’effet, auteur et motif de modification.
+Consultation interne : les bordereaux validés peuvent être transmis automatiquement aux commerciaux (email ou téléchargement interne).
+Extranet (phase 2) : affichage des bordereaux et statistiques par commercial, équipe ou produit.
+Fin de la partie 3 — Cette version normalise les profils, règles et calculs pour toutes les filiales du groupe Winvest Capital et servira de référence unique pour le développement du module de commissionnement.
+4. Moteur de calcul (Commission Engine)
+4.1 Base de calcul
+Le moteur de commission utilise trois modes de base de calcul selon le type de produit et le profil rémunéré :
+Cotisation HT : calcul d’un pourcentage ou d’un montant fixe sur la cotisation hors taxes du contrat.
+Pourcentage du chiffre d’affaires (% CA) : utilisé pour les produits Télécom, Énergie ou services récurrents.
+Forfait fixe : montant fixe par contrat validé (produits standardisés ou campagnes promotionnelles).
+Le moteur peut combiner ces bases dans un même schéma (ex. forfait + % CA) et applique la règle de priorité configurée dans le barème.
+4.2 Déclencheurs de calcul
+Le calcul des commissions s’exécute automatiquement à partir d’événements métier transmis par le CRM :
+Validation CQ : le contrat devient éligible au commissionnement.
+Encaissement : déclenche la génération de lignes récurrentes (échéances payées).
+Avenant / mise à jour contrat : recalcul partiel des commissions si la base (cotisation ou % CA) est modifiée.
+Résiliation / impayé : déclenche les reprises automatiques.
+Changement de barème : le moteur applique la nouvelle version uniquement aux contrats actifs à partir de la date d’effet.
+Tous les déclencheurs sont historisés avec identifiant de contrat, date, utilisateur et version du schéma appliqué.
+4.3 Prise en compte des récurrences et durées
+Les commissions récurrentes sont générées à chaque encaissement confirmé tant que le contrat est actif.
+Paramètres gérés par schéma : recurrence=true|false, taux_recurrence, duree_recurrence (illimite ou N années).
+Si le contrat passe en résilié, défaut ou impayé, le moteur stoppe automatiquement la récurrence.
+Lors d’un changement de barème, seule la version en vigueur à la date d’encaissement est appliquée (non rétroactive).
+Les récurrences sont traçables : chaque ligne contient l’ID du contrat, l’échéance concernée et la version du schéma.
+4.4 Gestion des reprises automatiques
+Déclencheurs : résiliation infra-annuelle, résiliation à échéance, impayé ou défaut de paiement.
+Fenêtres de reprise : configurables (3, 6, 12 mois selon produit ou partenaire).
+Calcul : reprise_montant = min(Σ commissions versées sur la fenêtre ; commission due période courante).
+Report négatif : si (brut – reprises – acomptes) < 0, le solde négatif est reporté sur la période suivante jusqu’à apurement.
+Régularisation : si un impayé est soldé, le moteur recrée automatiquement une ligne positive de régularisation.
+Toutes les reprises sont inscrites dans la section “REPRISE” du bordereau, avec motif, période d’origine et date de radiation.
+4.5 Gestion des acomptes et reports négatifs
+Acomptes : avances sur commissions plafonnées à 50 % du net estimé de la période (paramétrable).
+Régularisation automatique sur les périodes suivantes jusqu’à apurement complet.
+Report négatif : si un apporteur présente un solde négatif après reprise, celui-ci est conservé et imputé sur la prochaine période.
+Traçabilité : chaque acompte et report est identifié par un ID unique, lié au contrat et à la période concernée.
+4.6 Journalisation du calcul et version des barèmes appliqués
+Chaque calcul de commission est enregistré dans un journal interne contenant :
+ID commission et contrat associé.
+Type de calcul (fixe, %, palier, récurrence, reprise, avance).
+Valeurs utilisées (base, taux, montant brut/net).
+Version du barème appliqué (avec date d’effet et auteur).
+Date et heure du calcul.
+Utilisateur / service déclencheur (automatique ou manuel).
+Le journal permet :
+De recalculer à l’identique une période antérieure.
+De justifier chaque commission versée (traçabilité légale et comptable).
+D’identifier les écarts de version en cas de mise à jour de barème.
+Fin de la partie 4 — Le moteur de calcul constitue le cœur du module de commissionnement. Il assure l’automatisation, la cohérence et la reproductibilité de tous les calculs du groupe Winvest Capital.
+5. Gestion des statuts et événements
+5.1 Statuts des contrats
+Chaque contrat suit un cycle de vie défini, dont les statuts conditionnent directement le calcul des commissions :
+Statut
+Description
+Impact sur commission
+Brouillon
+Contrat en cours de saisie, non validé CQ
+Aucun calcul possible
+En validation
+Contrat transmis au contrôle qualité
+En attente de validation
+Validé (CQ OK)
+Contrat conforme, éligible au calcul de commission
+Déclenche le calcul initial
+Rejeté
+Contrat non conforme ou annulé
+Aucune commission due
+Résilié
+Contrat clôturé par le client
+Déclenche la reprise automatique selon la fenêtre paramétrée
+Impayé / Défaut
+Échéance non réglée
+Suspension des récurrences et déclenchement des reprises
+5.2 Statuts des commissions
+Statut
+Description
+Rôle dans le workflow
+En attente
+Commission calculée mais non encore validée ADV
+Peut être modifiée ou rejetée
+Validée
+Ligne approuvée par ADV (case cochée)
+Intégrée au bordereau PDF/Excel
+Reprise
+Montant déduit suite à résiliation ou impayé
+Apparaît en section REPRISE du bordereau
+Payée
+Commission versée au commercial
+Historisée et verrouillée
+Contestée
+Ligne en litige ou vérification
+Suspendue du paiement jusqu’à résolution
+5.3 Statuts des paiements (PSP / SEPA)
+Bien que le paiement électronique ne soit pas encore dans le périmètre immédiat, le module prévoit les statuts nécessaires pour les intégrations futures :
+Statut
+Description
+Préparé
+Bordereau généré, prêt à transmission bancaire
+Transmis
+Fichier SEPA ou ordre envoyé
+En cours
+Paiement en traitement par la banque ou PSP
+Réglé
+Virement confirmé
+Échec
+Paiement rejeté ou erreur PSP
+5.4 Statuts des échéances (encaissées, impayées, défauts)
+Statut
+Description
+Impact sur commissions
+À venir
+Échéance future non encore exigible
+Aucune commission
+Échue
+Échéance arrivée à terme, en attente d’encaissement
+Aucune commission tant que non réglée
+Réglée (encaissée)
+Paiement confirmé
+Déclenche la commission (y compris récurrente)
+Défaut / Impayé
+Paiement non reçu à J+X (paramétrable)
+Déclenche une reprise automatique
+⚙️ Règle importante : Les commissions récurrentes ne sont versées que sur les cotisations effectivement encaissées. Une échéance marquée Échue ou Défaut ne déclenche aucun calcul récurrent.
+5.5 Suivi des modifications et contestations
+Journalisation complète de toute modification de contrat, commission ou bordereau (avant/après, utilisateur, date, motif).
+Système de contestation : chaque commercial dispose d’un délai de 2 mois après publication du bordereau pour signaler une anomalie.
+Workflow de contestation :
+Création d’une ligne en statut Contestée.
+Notification ADV / Direction commerciale.
+Validation ou rejet avec commentaire obligatoire.
+Si validée → génération automatique d’une ligne de régularisation.
+Archivage : toutes les contestations et réponses sont conservées pour audit interne (traçabilité RH et conformité).
+Fin de la partie 5 — Les statuts assurent une cohérence complète entre la vie du contrat, les événements financiers et le calcul des commissions. Les récurrences ne s’appliquent que sur les cotisations encaissées, garantissant la fiabilité du modèle de commissionnement.
+6. Processus métier
+1️⃣ Contrat validé (CQ = OK)Le contrôle qualité valide la conformité du contrat. Dès ce statut, le contrat devient éligible au calcul de commission.
+2️⃣ Application du schéma de commissionLe moteur sélectionne automatiquement le schéma applicable en fonction du produit, du profil (VRP, manager, directeur, partenaire) et de la période.Chaque schéma contient les paramètres : base de calcul, taux fixe ou %, règles de récurrence, fenêtres de reprise, paliers et primes.
+3️⃣ Calcul des commissionsLe moteur exécute le calcul selon le type défini dans le barème :
+Commission fixe, pourcentage, ou mixte (fixe + %)
+Primes de volume/paliers
+Commissions récurrentes (uniquement sur cotisations encaissées)Les valeurs brutes, récurrentes et reprises sont générées dans commissions_calculees.
+4️⃣ Vérification des reprises (résiliation, impayé)Le moteur contrôle les statuts de contrats et échéances :
+Résiliation → création d’une ligne de reprise (selon la fenêtre définie : 3, 6 ou 12 mois).
+Impayé / Défaut → suspension des récurrences et génération d’une reprise partielle.
+Si l’impayé est régularisé, une régularisation positive est automatiquement générée.
+5️⃣ Validation ADV et génération du bordereauL’ADV ouvre la période de validation :
+Lignes éligibles pré-cochées automatiquement.
+Possibilité de (dé)cocher manuellement avec motif obligatoire.
+Recalcul instantané des totaux (Brut / Reprises / Net / Reports).Une fois validé, le bordereau est gelé et un ID unique lui est attribué.
+6️⃣ Export interne (Excel / PDF)Le bordereau validé est exportable immédiatement au format Excel et PDF.Optionnellement, un fichier SEPA ou un export comptable peut être généré si une intégration bancaire est mise en place ultérieurement.
+7️⃣ Historisation et archivageChaque bordereau validé est conservé en archive avec :
+Période, utilisateur, date, version des barèmes appliqués, signature numérique (hash SHA-256).
+Statut final (Validé, Transmis, Payé).Les bordereaux archivés sont consultables en lecture seule pour contrôle ou audit interne.
+8️⃣ Notification et diffusionUne notification automatique est envoyée au commercial ou au partenaire associé :
+Email interne ou message via portail CRM avec lien de téléchargement du bordereau.
+(Phase 2) Publication dans l’extranet de suivi d’activité commerciale pour consultation directe.
+Fin de la partie 6 — Ce processus métier garantit un flux cohérent et automatisé du calcul de commissions, depuis la validation CQ jusqu’à la diffusion des bordereaux et leur archivage sécurisé.
+7. Validation et bordereaux
+7.1 Interface de validation ADV (cases à cocher, filtres, recherche)
+L’interface de validation permet de visualiser l’ensemble des commissions en attente, filtrables par période, produit, société, apporteur ou statut.Chaque ligne de commission est accompagnée d’une case à cocher permettant de sélectionner les contrats à inclure dans le bordereau.Un moteur de recherche interne facilite la localisation rapide des contrats ou apporteurs.
+7.2 Présélection automatique par statut (Validé + Encaissé)
+Le module présélectionne automatiquement toutes les lignes dont :
+Le contrat est en statut Validé (CQ OK),
+L’échéance correspondante est encaissée,
+Et la commission est en statut À payer.Les autres lignes (en validation, rejetées, défaut, impayé, résiliées) apparaissent décochées par défaut.
+7.3 Sélection manuelle (cochage/décochage + motif obligatoire)
+L’utilisateur ADV peut intervenir manuellement pour :
+Décocher une ligne présélectionnée (ex. dossier litigieux ou contrat en vérification),
+Cocher une ligne non sélectionnée (ex. encaissement confirmé manuellement),
+Fournir un motif obligatoire pour toute désélection manuelle.Chaque action est enregistrée dans le journal d’audit avec date, utilisateur et justification.
+7.4 Calcul dynamique des totaux (Brut / Reprises / Net / Reports)
+Le tableau de validation affiche en temps réel :
+Total brut des commissions sélectionnées,
+Total des reprises appliquées sur la période,
+Total net à payer,
+Reports négatifs éventuels.Les valeurs se mettent à jour instantanément à chaque (dé)cochage.
+7.5 Validation finale (verrouillage + horodatage)
+Une fois la sélection terminée, l’ADV valide le bordereau :
+Attribution d’un ID bordereau unique et horodatage automatique.
+Verrouillage complet des lignes validées (lecture seule).
+Calcul final figé pour génération PDF/Excel.
+Statut global du bordereau : Validé.
+7.6 Historisation et génération PDF / Excel
+À la validation :
+Génération simultanée du bordereau PDF (pour diffusion) et Excel (pour exploitation interne).
+Enregistrement dans la table bordereaux avec : période, totaux, utilisateur, date, statut, hash de sécurité.
+Archivage automatique et possibilité de téléchargement à tout moment depuis le module.
+Les documents exportés sont conformes au format standard du groupe : sections Total / Linéaire / Reprises.
+Fin de la partie 7 — Ce processus de validation garantit la transparence, la traçabilité et la fiabilité de chaque bordereau, tout en offrant à l’ADV un contrôle précis avant diffusion interne.
+8. Exports et intégrations
+8.1 Format des bordereaux (PDF, Excel)
+Les bordereaux de commissions sont générés automatiquement à la validation ADV dans deux formats standards :
+PDF : destiné à la diffusion interne (direction, commerciaux, partenaires).
+Excel (.xlsx) : destiné à l’analyse et à l’exploitation des données.
+Les deux versions sont synchrones et contiennent les mêmes sections :
+Total des commissions (Brut / Reprises / Net / Reports).
+Linéaire (une ligne par contrat ou échéance).
+Reprises (montants négatifs, motifs, périodes d’origine).
+Chaque export est identifié par un ID bordereau unique, une période, un hash de sécurité SHA256 et la date de génération.
+8.2 Transmission vers RWIN RH (API / SFTP)
+Le module prévoit la possibilité de transmettre les bordereaux vers le système RH du groupe ou tout autre outil interne via :
+API JSON sécurisée (HMAC) : transmission automatique après validation du bordereau.
+SFTP interne : dépôt automatique du fichier Excel + PDF dans le répertoire désigné (/commissions/export/).
+Exemple de payload JSON :
+{
+"bordereau_id": "BDR-2025-03",
+"periode": "2025-03",
+"societe": "France Téléphone",
+"totaux": {"brut": 12400.50, "reprises": 400.00, "net": 12000.50},
+"lignes": [
+{
+"contrat_id": "C-123456",
+"apporteur": "Dupont Marc",
+"produit": "Télécom",
+"commission_brute": 50.00,
+"reprise": 0.00,
+"net": 50.00
+}
+]
+}
+8.3 Mapping des champs et structures JSON
+Chaque ligne de bordereau exportée contient les champs suivants :
+Champ
+Type
+Description
+bordereau_id
+string
+Identifiant unique du bordereau
+periode
+string
+Mois de référence (format YYYYMM)
+contrat_id
+string
+Identifiant du contrat dans le CRM
+produit
+string
+Type de produit ou service
+apporteur_id
+string
+Identifiant interne du commercial ou partenaire
+apporteur_nom
+string
+Nom de l’apporteur
+montant_brut
+float
+Commission brute calculée
+montant_reprise
+float
+Montant repris (si applicable)
+montant_net
+float
+Net à payer après reprises/acomptes
+statut_commission
+string
+Statut final (Validée, Payée, Reprise, Contestée)
+version_bareme
+string
+Version du barème utilisé pour le calcul
+Le mapping est conçu pour être compatible avec tout système interne (RH, comptabilité, direction commerciale) souhaitant importer les données de commissions.
+8.4 Synchronisation avec CRM et base contrats
+Synchronisation bidirectionnelle entre le module commissions et la base contrats du CRM de gestion.
+Les mises à jour des contrats (statut CQ, encaissement, résiliation, avenant) déclenchent automatiquement la mise à jour du calcul.
+Les identifiants contrat_id et apporteur_id servent de clés de liaison entre les deux modules.
+Les historiques de commissions sont accessibles depuis la fiche contrat du CRM.
+8.5 Intégration future avec module comptabilité (facultatif)
+Une extension facultative permettra ultérieurement :
+L’export des totaux de bordereaux vers un logiciel comptable (SAGE, Quadratus, etc.).
+Le rapprochement entre commissions payées et écritures comptables.
+Le suivi analytique par produit, agence ou équipe commerciale.
+Cette intégration sera réalisée dans une phase ultérieure, sans dépendance technique avec le module de commissions actuel.
+Fin de la partie 8 — Les exports et intégrations garantissent la diffusion fiable et sécurisée des bordereaux de commissions, tout en permettant une interopérabilité complète avec les autres outils internes du groupe Winvest Capital.
+9. Reporting & indicateurs de performance
+9.1 Tableaux de bord dynamiques
+Le module de reporting permet un suivi en temps réel de la performance commerciale du groupe. Les données sont issues directement du moteur de commissions et mises à jour après chaque validation ADV.
+Les tableaux de bord incluent :
+Filtres multi-critères (période, produit, apporteur, équipe, société).
+Graphiques interactifs (courbes, barres, heatmaps).
+Totaux instantanés et ratios clés (Brut / Net / Reprises / Récurrentes).
+Vue consolidée groupe + décomposition par société ou équipe.
+L’interface est responsive et intégrée directement au CRM de gestion du groupe Winvest Capital.
+9.2 KPI : brut, net, récurrence, taux de reprise, production par équipe
+Les principaux indicateurs suivis sont :
+Indicateur
+Description
+Source
+Brut
+Total des commissions calculées avant reprises et acomptes
+Moteur de calcul
+Reprises
+Montant total des commissions annulées suite à résiliation ou impayé
+Journal de reprises
+Net à payer
+Montant après déduction des reprises et acomptes
+Bordereaux validés
+Récurrence
+Part des commissions générées sur portefeuille actif
+Schémas récurrents
+Taux de reprise (%)
+Reprises / Brut
+Calcul automatisé
+Production par équipe
+Nombre de contrats validés, montant global de commissions
+CRM + module commission
+Prime moyenne par commercial
+Total des primes / nombre de commerciaux actifs
+Module commission
+Délai moyen de validation ADV
+Temps entre validation CQ et validation ADV
+Logs de workflow
+9.3 Comparatifs (période, produit, apporteur, direction)
+Les comparatifs permettent à la direction commerciale d’évaluer les performances sur plusieurs axes :
+Comparatif temporel : M-1, M-3, M-6, M-12, année N/N-1.
+Comparatif produits : Santé, Prévoyance, Télécom, Énergie, Conciergerie, Mondial TV.
+Comparatif apporteurs : classement des commerciaux selon le net encaissé, la récurrence, le taux de reprise.
+Comparatif direction / agence : consolidation multi-niveaux (équipe, manager, direction régionale).
+Des graphiques synthétiques affichent les évolutions de production et de primes dans le temps.
+9.4 Historisation mensuelle et snapshots
+À chaque validation de bordereau, un snapshot mensuel est créé et conservé.
+Le snapshot contient : totaux par société, par équipe et par commercial, avec horodatage et version des barèmes utilisés.
+Les snapshots permettent de générer des comparatifs fiables même après modification des barèmes.
+Historisation glissante sur 36 mois minimum.
+Les snapshots sont figés et consultables via le module de reporting du CRM.
+9.5 Export analytique pour direction et RH
+Export consolidé des données de commissions au format Excel / CSV.
+Colonnes : période, société, équipe, apporteur, produit, brut, reprises, net, taux de reprise, récurrence.
+Possibilité d’agrégation par société, direction commerciale ou manager.
+Export automatique programmable (mensuel / trimestriel) envoyé à la direction ou aux services RH.
+Conformité RGPD : seuls les utilisateurs autorisés peuvent accéder aux données nominatives.
+Fin de la partie 9 — Le reporting offre une vision complète et dynamique de la performance commerciale du groupe Winvest Capital, assurant transparence et pilotage stratégique à tous les niveaux hiérarchiques.
+10. Sécurité, conformité & gouvernance
+10.1 Gestion des rôles et droits (ADV, Compta, Direction, Partenaire)
+Le module de commission repose sur une gestion fine des accès et des responsabilités :
+Rôle
+Accès
+Actions autorisées
+ADV
+Écriture / Validation
+Sélection, validation, (dé)cochage, génération bordereaux, exports
+Comptabilité
+Lecture / Export
+Consultation bordereaux validés, exports Excel/PDF, rapprochements
+Direction commerciale
+Lecture globale
+Suivi KPI, reporting, validation finale, lecture des historiques
+Partenaires / Commerciaux
+Lecture restreinte
+Accès à leurs propres bordereaux et historiques (PDF/Excel)
+Chaque action (création, validation, modification, export) est contrôlée et enregistrée dans le journal d’audit. Les droits sont gérés au niveau du CRM de gestion et hérités par le module commissions.
+10.2 Journalisation complète (audit trail)
+Le système conserve une trace de toutes les actions significatives :
+Validation ADV, modification de sélection, recalcul, génération de bordereau, export, archivage.
+Données stockées : utilisateur, date/heure, type d’action, ID des lignes concernées, ancien/nouveau statut, motif (si applicable).
+Journal immuable, accessible uniquement par les administrateurs du système et la direction.
+Ce mécanisme garantit la traçabilité complète des opérations et facilite les contrôles internes ou externes.
+10.3 RGPD et confidentialité des données personnelles
+Le module respecte les principes du RGPD :
+Minimisation des données : seules les informations nécessaires au calcul et à la diffusion des commissions sont stockées.
+Pseudonymisation possible des identifiants commerciaux lors des exports analytiques.
+Droit d’accès et de rectification pour chaque utilisateur concerné.
+Durée de conservation des données personnelles : 5 ans maximum (archivage sécurisé).
+Traçabilité des accès : tous les accès individuels sont enregistrés.
+10.4 Sécurisation des échanges (API HMAC / SFTP / HTTPS)
+Les échanges entre le module commissions et les autres systèmes internes utilisent :
+API REST sécurisées (HTTPS) avec authentification HMAC (clé privée/jeton).
+Transferts SFTP pour les fichiers Excel/PDF (export RWIN ou direction).
+Chiffrement des données sensibles au repos (AES-256) et en transit (TLS 1.3).
+Hash SHA-256 appliqué sur chaque bordereau archivé pour garantir l’intégrité des fichiers.
+10.5 Reprise sur incident et sauvegarde des bordereaux
+Sauvegardes automatiques quotidiennes de la base de données et des fichiers générés (PDF/Excel).
+Versioning : chaque bordereau validé est archivé en copie horodatée.
+Plan de reprise d’activité (PRA) : restauration possible sous 4 heures en cas de défaillance serveur.
+Les fichiers PDF/Excel validés sont conservés sur un stockage redondant (cloud + local).
+10.6 Validation légale : VRP, délais de contestation, CGV
+Conformité au Code du travail (articles L.7311-1 et suivants, régime VRP).
+Délai de 2 mois pour contester un bordereau à compter de sa date de diffusion. Passé ce délai, la validation devient définitive.
+Clause de reprise : les commissions peuvent être annulées en cas de résiliation ou d’impayé dans le délai prévu par le barème.
+Mention à inclure dans les CGV : « Les commissions sont dues uniquement sur les contrats validés CQ et effectivement encaissés. »
+Respect des obligations RGPD et Code de la consommation pour la gestion des données clients et apporteurs.
+Fin de la partie 10 — Ce cadre de sécurité et de conformité garantit la fiabilité juridique, la confidentialité et l’intégrité des données du module de commissionnement du groupe Winvest Capital.
+11. Architecture technique & base de données
+Remarque : numérotation mise à jour (la sécurité est en partie 10). Cette section couvre la conception technique du module.
+11.1 Tables principales
+apporteurs (id, type [vrp|manager|directeur|partenaire], nom, statut, equipe_id, date_entree, date_sortie).
+equipes (id, nom, manager_id, direction_id).
+rattachements (id, apporteur_id, equipe_id, date_debut, date_fin) — historique des rattachements.
+contrats (id, client_id, produit, formule, societe, date_effet, statut_cq, apporteur_id, date_resiliation, motif_resiliation).
+echeances (id, contrat_id, periode YYYY-MM, cotisation_ht, etat [a_venir|echue|reglee|defaut], date_reglement).
+schemas_commission (id, nom, societe, produit, profil, base_calcul [prime_ht|commission|pct_ca|forfait], taux, forfait, recurrence, taux_recurrence, duree_recurrence, fenetre_reprise [3|6|12], created_by).
+baremes_versions (id, schema_id, version, date_effet, date_fin, payload_json, auteur, motif).
+primes_palier (id, schema_id, produit_scope, periode_type [mensuel|trimestriel], palier_n, quantite_min, montant).
+retrocessions (id, niveau [manager|directeur], taux, palier_min, palier_max, societe).
+commissions_calculees (id, contrat_id, echeance_id nullable, apporteur_id, type [unitaire|recurrence|palier|reprise|avance|regularisation], version_bareme, montant_brut, montant_reprise, montant_net, statut [a_payer|validee|payee|reprise|conteste], bordereau_id nullable, is_selected, selected_by, selected_at).
+bordereaux (id, periode, societe, total_brut, total_reprises, total_net, status [valide|transmis|paye], hash_sha256, created_by, created_at).
+bordereaux_lignes (id, bordereau_id, commission_id, ordre, section [total|lineaire|reprise]).
+acomptes (id, apporteur_id, periode, montant, reste_a_imputer, created_at).
+reprises (id, contrat_id, periode_origine, periode_appliquee, motif, montant, solde_report).
+snapshots_kpi (id, periode, societe, equipe_id, apporteur_id, kpi_json, created_at).
+audit_log (id, scope [commission|bordereau|barème|selection], ref_id, action, before_json, after_json, user_id, created_at).
+users / roles / permissions (hérités du CRM, référencés par user_id).
+11.2 Relations & clés étrangères
+contrats.apporteur_id → apporteurs.id
+echeances.contrat_id → contrats.id
+commissions_calculees.(contrat_id, echeance_id) → contrats.id, echeances.id
+commissions_calculees.apporteur_id → apporteurs.id
+commissions_calculees.bordereau_id → bordereaux.id
+bordereaux_lignes.(bordereau_id, commission_id) → bordereaux.id, commissions_calculees.id
+baremes_versions.schema_id → schemas_commission.id
+primes_palier.schema_id → schemas_commission.id
+rattachements.(apporteur_id, equipe_id) → apporteurs.id, equipes.id
+Intégrité : contraintes NOT NULL sur identifiants, périodes et montants ; règles ON UPDATE/DELETE RESTRICT (sauf archivage dédié).
+11.3 Indexation & performances
+Commissions : index composites (periode, societe), (apporteur_id, periode), (contrat_id, echeance_id), (statut, is_selected).
+Bordereaux : index (periode, societe), (status).
+Echéances : index (contrat_id, periode), (etat).
+Partitionnement (recommandé) : tables commissions_calculees, bordereaux, echeances par mois (range YYYY-MM) pour simplifier purge & accélérer les scans.
+Matérialisation KPI : snapshots_kpi alimentés à la validation, évite des agrégations lourdes en lecture.
+Types numériques : DECIMAL(12,2) pour montants ; NUMERIC(5,2) pour taux.
+11.4 Historisation & versioning des barèmes
+Les paramètres complets du barème sont stockés en JSON dans baremes_versions.payload_json (immuable).
+Chaque ligne de commission conserve version_bareme appliquée, garantissant un recalcul déterministe.
+Interdiction de modifier une version « en cours » ; toute évolution crée une nouvelle version avec date_effet.
+11.5 Moteur de calcul — déploiement
+Option A — Module intégré CRM (recommandé phase 1)
+Avantages : latence faible, simplicité d’orchestration, logs unifiés.
+Implémentation : service applicatif interne (ex. commission_service) + jobs planifiés.
+Option B — Micro-service dédié
+REST interne (/api/commissions/calcule) + queue d’événements (validation CQ, encaissement).
+Idempotence via idempotency_key (contrat+échéance+version).
+Mise à l’échelle horizontale (workers).
+Transactions & cohérence
+Calcul des lignes en transaction ; génération de bordereau en transaction séparée avec verrouillage optimiste.
+Hash SHA-256 créé après écriture PDF/Excel puis stocké sur bordereaux.hash_sha256.
+Fin de la partie 11 — La conception proposée garantit performance, traçabilité et évolutivité, avec une base de données normalisée et des chemins clairs pour passer d’un module intégré à un micro-service si la volumétrie l’exige.
+12. UX & ergonomie
+12.1 Fiche commission (vue détaillée)
+La fiche commission présente toutes les informations relatives à une ligne de commission :
+Informations principales : produit, contrat, client, apporteur, période, statut CQ.
+Montants : brut, reprise, net à payer, taux appliqué, version du barème.
+Historique : versions précédentes, régularisations, reprises associées.
+Actions disponibles : consulter, contester (si autorisé), télécharger justificatif, voir contrat lié.
+Mise en page : disposition en deux colonnes avec encadré de synthèse à droite (totaux et statuts colorés).
+12.2 Bordereau (liste + totaux)
+L’écran bordereau permet à l’ADV et à la direction de visualiser l’ensemble des lignes de commissions validées ou en attente.
+Éléments clés :
+Tableau dynamique avec filtres par période, produit, société, apporteur, statut.
+Totaux en pied de page : Brut / Reprises / Net / Reports.
+Boutons d’action : Valider, Exporter PDF, Exporter Excel.
+Recherche rapide par nom, contrat, ID bordereau.
+Système de cases à cocher pour sélection/dé-sélection manuelle avant validation finale.
+Statuts visibles en couleur : vert (validé), rouge (rejeté), orange (en attente).
+12.3 Historique / archivage
+Page d’historique accessible par période, produit ou société.
+Liste des bordereaux archivés avec filtres (période, société, statut).
+Chaque bordereau affiche : période, total brut/net, date de validation, utilisateur, lien de téléchargement PDF/Excel.
+Section d’audit : liste des actions ADV (validation, dé-sélection, recalculs).
+Possibilité de restaurer un bordereau à des fins de contrôle (lecture seule).
+12.4 Espace de gestion des barèmes (back-office)
+Interface dédiée aux administrateurs et à la direction commerciale pour :
+Créer, modifier ou cloner un schéma de commission.
+Gérer les paramètres : base de calcul, taux fixe/%, récurrence, fenêtres de reprise, primes, paliers, rétrocessions.
+Consulter les versions historiques de chaque barème.
+Activer/désactiver une version avec date d’effet.
+Exporter le barème au format JSON ou Excel pour validation direction.
+Filtrage par société, produit, période et profil (VRP, manager, directeur, partenaire).
+12.5 Codes couleurs et icônes d’état
+Le module utilise une palette de couleurs et d’icônes cohérente pour signaler rapidement l’état de chaque ligne ou bordereau :
+Couleur / Icône
+Signification
+🟢 Vert
+Validé / payé / conforme
+🟠 Orange
+En attente de validation ou d’encaissement
+🔴 Rouge
+Rejeté / résilié / impayé
+🔵 Bleu
+En cours de calcul / en brouillon
+⚪ Gris
+Archivé / consultatif uniquement
+Icônes complémentaires :
+📄 Télécharger PDF / Excel.
+🧾 Historique / détails.
+🔍 Rechercher contrat.
+⚙️ Modifier barème (rôle administrateur uniquement).
+Fin de la partie 12 — L’ergonomie du module vise la clarté, la rapidité de traitement et la cohérence graphique avec le CRM du groupe Winvest Capital. Les codes visuels garantissent une lecture intuitive et un contrôle efficace des opérations ADV.
+13. Scénarios de tests et validation
+13.1 Cas normaux (validation standard, encaissement OK)
+Objectif : vérifier le bon fonctionnement du processus standard de commissionnement.
+Étapes :
+Création d’un contrat valide (CQ = OK).
+Encaissement confirmé → déclenchement automatique du calcul de commission.
+Validation ADV : lignes pré-cochées selon statut.
+Génération du bordereau PDF/Excel.
+Vérification : montants brut, reprise, net conformes au barème.
+Archivage automatique et notification au commercial.
+Résultat attendu : commission calculée correctement, bordereau généré, totaux cohérents.
+13.2 Cas exceptionnels (résiliation, impayé, reprise, régularisation)
+Objectif : s’assurer que le moteur applique correctement les reprises et régularisations.
+Tests à réaliser :
+Contrat résilié avant 3 mois → reprise de 100 % des commissions versées.
+Contrat impayé (défaut J+30) → suspension des récurrences + création d’une ligne reprise.
+Contrat régularisé → recréation automatique d’une ligne positive.
+Résiliation à échéance → reprise partielle selon la fenêtre configurée.
+Résultat attendu : reprises calculées, reports gérés, journal d’audit complet.
+13.3 Tests d’import/export RWIN
+Objectif : vérifier la bonne transmission des données de bordereaux aux systèmes internes.
+Scénarios :
+Validation d’un bordereau → génération JSON / Excel.
+Envoi via API HMAC (POST /commissions/import) ou dépôt SFTP.
+Vérification du rejet en cas de doublon (bordereau_id déjà importé).
+Vérification des données : totaux, statuts, format JSON conforme.
+Résultat attendu : transmission réussie, logs et réponse d’accusé réception.
+13.4 Tests d’historisation et versionning
+Objectif : s’assurer que les versions de barèmes sont bien historisées et utilisées correctement.
+Tests :
+Création d’un contrat avec barème v1.
+Changement de barème en cours de mois (création v2).
+Vérification : les contrats antérieurs conservent v1, les nouveaux appliquent v2.
+Lecture des versions dans la table baremes_versions et commissions_calculees.version_bareme.
+Résultat attendu : non-rétroactivité garantie, traçabilité complète.
+13.5 Tests de performance et de sécurité
+Objectif : garantir la stabilité et la protection du module en charge réelle.
+Tests de performance :
+Simulation de 100 000 contrats (multi-produits) → calcul < 60 s.
+Export bordereau > 10 000 lignes → génération < 10 s.
+Import JSON > 1 Mo → temps de traitement < 5 s.
+Tests de sécurité :
+Vérification HMAC API : rejeter toute requête sans signature ou horodatage valide.
+Test de lecture restreinte : seuls les rôles autorisés (ADV, Direction) accèdent aux bordereaux.
+Vérification du chiffrement (TLS 1.3) et du hash SHA-256 sur fichiers PDF/Excel.
+Résultat attendu : module stable, sécurisé et conforme aux standards internes.
+Fin de la partie 13 — Ces scénarios garantissent la robustesse, la cohérence et la sécurité du module de commissionnement à chaque étape du cycle de vie des données.
+Annexe A — Schéma de données
+Cette annexe décrit le schéma logique de la base de données du module de commissionnement du groupe Winvest Capital. Elle sert de référence technique pour le développement et la maintenance du moteur de calcul et du back-office.
+A.1 Tables principales
+Table
+Description
+apporteurs
+Informations sur les commerciaux, managers, directeurs et partenaires (type, statut, rattachement, société).
+contrats
+Détails des contrats clients (produit, société, cotisation HT, statut CQ, apporteur, dates d’effet et de résiliation).
+echeances
+Liste mensuelle des échéances des contrats avec leur état (à venir, échue, réglée, défaut).
+schemas_commission
+Schémas de calcul (base, taux, durée de récurrence, fenêtre de reprise, primes paliers).
+baremes_versions
+Historisation complète des versions de barèmes (payload JSON, date d’effet, auteur, motif).
+commissions_calculees
+Lignes de commission générées : brut, reprise, net, statut, bordereau, version barème appliquée.
+bordereaux
+Bordereaux validés avec totaux, période, société, statut et hash de sécurité.
+bordereaux_lignes
+Détails des lignes incluses dans un bordereau (ordre, section : Total / Linéaire / Reprises).
+primes_palier
+Configuration des primes de volume (produit, seuil, montant, période).
+retrocessions
+Rétrocessions managers / directeurs : taux, paliers, limites de production.
+acomptes
+Avances sur commission et solde restant à imputer.
+reprises
+Historique des reprises automatiques ou manuelles (motif, période, montant).
+snapshots_kpi
+Sauvegarde mensuelle des indicateurs (brut, net, taux de reprise, récurrence, équipe, société).
+audit_log
+Journal complet des actions (création, validation, modification, export).
+A.2 Relations principales
+apporteurs 1—n contrats
+contrats 1—n echeances
+contrats 1—n commissions_calculees
+commissions_calculees n—1 bordereaux
+schemas_commission 1—n baremes_versions
+schemas_commission 1—n primes_palier
+apporteurs 1—n commissions_calculees
+bordereaux 1—n bordereaux_lignes
+Chaque relation est gérée par des clés étrangères avec intégrité référentielle stricte (ON UPDATE/DELETE RESTRICT).
+A.3 Types de données et conventions
+Clés primaires : id (UUID ou INT auto-increment selon choix d’implémentation).
+Montants : DECIMAL(12,2) ; Taux : NUMERIC(5,2).
+Dates : DATE ou DATETIME(6) selon besoin de précision.
+Statuts : ENUM contrôlés par listes référentielles (contrats, commissions, bordereaux).
+Historisation : champs created_at, updated_at, created_by, version.
+A.4 Index et optimisation
+Index composites (apporteur_id, periode) sur commissions_calculees.
+Index (periode, societe) sur bordereaux.
+Partitionnement mensuel des tables volumineuses (commissions_calculees, echeances).
+Matérialisation des KPI dans snapshots_kpi pour éviter les agrégations répétées.
+A.5 Modèle de données simplifié (extrait)
+Apporteurs (1)───< Contrats (1)───< Echéances (1)───< Commissions_Calculees >───(n) Bordereaux
+│ │
+│ └──> Reprises
+│
+└──> Schemas_Commission (1)───< Baremes_Versions
+│
+└──> Primes_Palier
+Fin de l’Annexe A — Ce schéma de données constitue la base du moteur de calcul, de la validation et du reporting, garantissant la cohérence et la traçabilité des informations sur l’ensemble du module de commissionnement.
+Annexe B — Règles légales et clauses VRP
+Cette annexe recense les dispositions légales et contractuelles applicables à la gestion des commissions au sein du groupe Winvest Capital, notamment pour les VRP, les partenaires et les collaborateurs commerciaux.
+B.1 Référentiels légaux applicables
+Code du travail — Articles L.7311-1 et suivants : encadrent le statut du VRP (Voyageur, Représentant, Placier).
+Accord national interprofessionnel du 3 octobre 1975 : définit les conditions de rémunération, de calcul des commissions et de contestation.
+Code civil — Article 1134 et suivants : obligations contractuelles et preuve du consentement.
+Code de la consommation : protection du consommateur en cas de vente à distance (droit de rétractation 14 jours).
+Règlement général sur la protection des données (RGPD — UE 2016/679) : encadrement du traitement des données personnelles relatives aux commerciaux et clients.
+B.2 Clauses contractuelles standard
+Les contrats de travail ou de partenariat intègrent les clauses suivantes :
+a) Clause de commissionnement
+« Les commissions sont dues uniquement sur les contrats validés par le service Contrôle Qualité et effectivement encaissés. Toute résiliation ou impayé survenant dans le délai de reprise prévu entraîne une reprise automatique des commissions concernées. »
+b) Clause de contestation
+« Le collaborateur dispose d’un délai de deux (2) mois à compter de la publication du bordereau pour contester le montant ou le calcul d’une commission. Passé ce délai, le bordereau est réputé validé et définitif. »
+c) Clause de reprise
+« Les reprises de commissions interviennent en cas de résiliation anticipée, d’impayé ou d’annulation de contrat. Les fenêtres de reprise sont définies selon les produits : 3 mois pour les services Télécom et Assistance, 6 mois pour les partenaires, 12 mois pour les assurances. »
+d) Clause de force majeure
+« En cas d’impossibilité d’exécution du contrat pour cause de force majeure (article 1218 du Code civil), les parties sont libérées de leurs obligations respectives sans indemnité. »
+e) Clause de non-cumul
+« Les commissions ne se cumulent pas pour un même contrat entre plusieurs apporteurs. Le premier apporteur validé reste seul bénéficiaire des commissions dues. »
+B.3 Obligations RGPD et confidentialité
+Les données personnelles (identité, coordonnées, performances commerciales) sont traitées exclusivement dans le cadre du calcul et du suivi des commissions.
+Accès restreint aux seules personnes habilitées (ADV, direction, comptabilité).
+Conservation des données : 5 ans à compter du dernier versement de commission.
+Droit d’accès, de rectification et d’effacement pour chaque utilisateur via le DPO du groupe.
+B.4 Documents types à intégrer
+Lettre d’information commissions : notification mensuelle des montants dus, disponible en PDF.
+Formulaire de contestation : modèle de demande à transmettre par écrit au service ADV ou direction.
+Charte commerciale interne : obligations des commerciaux, règles de bonne conduite, interdiction de pratiques abusives (vente forcée, fausse déclaration, manipulation client).
+Charte de confidentialité : engagement de discrétion sur les données clients et barèmes internes.
+B.5 Validité et contrôles
+Tous les documents contractuels et modèles de bordereaux sont archivés et horodatés.
+En cas de litige, le bordereau validé et signé électroniquement fait foi.
+La direction commerciale conserve la possibilité de vérifier, auditer et corriger toute anomalie de calcul dans un délai maximal de 12 mois.
+Fin de l’Annexe B — Ces règles garantissent la conformité juridique et la sécurité contractuelle du module de commissionnement, en assurant le respect du droit du travail, du RGPD et des accords VRP en vigueur.
+Annexe C — Matrice RACI (responsabilités)
+Cette annexe définit les rôles et responsabilités des différents acteurs intervenant dans le processus de commissionnement, selon la méthode RACI (Responsible, Accountable, Consulted, Informed).
+C.1 Légende RACI
+Code
+Signification
+R
+Responsable — exécute l’action ou la tâche
+A
+Accountable — valide la décision finale, assume la responsabilité globale
+C
+Consulté — apporte expertise ou avis pendant le processus
+I
+Informé — reçoit les informations ou résultats
+C.2 Grille des responsabilités
+Activité
+ADV
+Comptabilité
+Direction commerciale
+Direction générale
+IT / Développement
+Partenaires
+Définition des barèmes et schémas de commission
+C
+I
+R / A
+A
+C
+I
+Paramétrage des schémas dans l’outil
+I
+I
+A
+A
+R
+I
+Saisie et validation des contrats (CQ)
+R
+I
+A
+C
+I
+I
+Calcul automatique des commissions
+C
+I
+I
+I
+R
+I
+Contrôle et validation des bordereaux
+R
+C
+A
+I
+I
+I
+Export et diffusion des bordereaux
+I
+R
+A
+I
+C
+I
+Gestion des contestations
+R
+C
+A
+I
+I
+I
+Historisation et archivage des données
+C
+I
+A
+I
+R
+I
+Maintenance du module / mises à jour
+I
+I
+A
+A
+R
+I
+Suivi de performance et reporting
+C
+R
+A
+C
+C
+I
+C.3 Commentaires d’application
+L’ADV est responsable de l’exécution quotidienne du processus de validation et de génération des bordereaux.
+La Direction commerciale détient la responsabilité finale du contrôle, de la validation des barèmes et de la cohérence des commissions.
+La Comptabilité intervient sur les aspects d’export, de rapprochement et de reporting analytique.
+L’équipe IT est responsable du bon fonctionnement du moteur de calcul, de la sécurité et des intégrations.
+Les partenaires et commerciaux sont informés via les bordereaux validés et ne peuvent pas intervenir directement dans le calcul.
+La Direction générale agit comme garant de la conformité globale et peut valider ou annuler un barème exceptionnel.
+Fin de l’Annexe C — Cette matrice clarifie les rôles et la chaîne de responsabilité de chaque intervenant, garantissant un pilotage clair et une gouvernance maîtrisée du module de commissionnement.
+Annexe D — Mapping des exports internes (API & champs)
+Cette annexe décrit la structure standard utilisée pour les exports internes du module de commissionnement (PDF, Excel et JSON), permettant la transmission sécurisée des bordereaux validés vers les autres outils internes du groupe Winvest Capital.
+D.1 Formats d’export disponibles
+PDF : format de diffusion interne et de validation officielle (lecture seule).
+Excel (.xlsx) : format de travail pour exploitation comptable et analytique.
+JSON (API interne) : format machine pour échanges automatisés entre modules internes (ex. CRM, reporting, direction commerciale).
+Tous les exports sont générés à partir d’un même jeu de données synchronisé et signé numériquement (hash SHA-256).
+D.2 Structure JSON standard
+Exemple de structure utilisée pour les exports internes et les intégrations API :
+{
+"bordereau_id": "BDR-2025-03-001",
+"periode": "2025-03",
+"societe": "France Téléphone",
+"totaux": {
+"brut": 15230.45,
+"reprises": 430.00,
+"net": 14790.45
+},
+"commissions": [
+{
+"contrat_id": "C-84273",
+"apporteur_id": "A-102",
+"apporteur_nom": "Dupont Marc",
+"produit": "Télécom",
+"formule": "Illimité 5G",
+"date_effet": "2025-02-10",
+"mois_cotisation": "2025-03",
+"cotisation_ht": 49.90,
+"commission_brute": 8.00,
+"montant_reprise": 0.00,
+"net_a_payer": 8.00,
+"type": "unitaire",
+"statut_commission": "validée",
+"version_bareme": "FT-2025-V1"
+}
+],
+"hash_sha256": "e3a1f4d9c8bba7d..."
+}
+D.3 Mapping des champs Excel / PDF
+Colonne
+Description
+Exemple
+Société
+Entité commerciale concernée
+France Téléphone
+Apporteur
+Nom du commercial ou partenaire
+Dupont Marc
+ID contrat
+Identifiant unique du contrat
+C-84273
+Produit
+Type de produit ou service vendu
+Télécom
+Formule
+Offre ou gamme spécifique
+Illimité 5G
+Date d’effet
+Date d’entrée en vigueur du contrat
+2025-02-10
+Mois de cotisation
+Mois de référence de l’échéance
+2025-03
+Cotisation HT (€)
+Montant hors taxes encaissé
+49.90
+Base de calcul
+Type de calcul appliqué (prime, % CA, forfait)
+% CA
+Commission brute (€)
+Montant avant reprise et acomptes
+8.00
+Reprise (€)
+Montant repris ou annulé
+0.00
+Acompte (€)
+Montant d’avance imputé
+0.00
+Net à payer (€)
+Montant final versé
+8.00
+Type de commission
+unitaire / récurrente / reprise / prime
+unitaire
+Version barème
+Référence du barème appliqué
+FT-2025-V1
+Statut commission
+État final de la ligne (validée, payée, reprise)
+validée
+Bordereau ID
+Référence unique du bordereau
+BDR-2025-03-001
+Date de génération
+Date de création du fichier
+2025-03-31
+D.4 Schéma d’intégration interne
+[CRM Gestion] → [Module Commissions] → [Exports internes]
+│
+├── PDF (direction / commerciaux)
+├── Excel (comptabilité / reporting)
+└── JSON (API interne → tableau de bord groupe)
+Transmission interne automatisée via API REST interne (POST /exports/bordereaux).
+Authentification : clé API interne signée HMAC.
+Stockage : répertoire partagé sécurisé (/exports/commissions/).
+Notification : email automatique à la direction et à l’ADV après génération réussie.
+D.5 Contrôles de cohérence à l’export
+Vérification du total Brut = Σ(lignes) et Net = Brut – Reprises – Acomptes.
+Validation du hash SHA-256 du fichier exporté.
+Contrôle du format JSON (structure, champs requis, types).
+Vérification des permissions d’accès selon le rôle utilisateur.
+Fin de l’Annexe D — Ce mapping garantit la cohérence entre les formats Excel, PDF et JSON, facilitant l’interopérabilité et la traçabilité des exports internes du module de commissionnement.
+Annexe E — Spécifications UX des écrans
+Cette annexe décrit les principes d’interface utilisateur (UX/UI) appliqués au module de commissionnement du groupe Winvest Capital. L’objectif est d’assurer une expérience fluide, cohérente et alignée sur la charte graphique du CRM du groupe.
+E.1 Fiche Commission
+Objectif : fournir une vue détaillée d’une ligne de commission pour consultation ou vérification.
+Contenu :
+En-tête : ID commission, contrat, produit, société, apporteur, statut.
+Corps : détails financiers (base, taux, brut, reprises, net), version du barème, date d’effet, statut CQ.
+Pied : historique des reprises/régularisations, commentaires ADV, actions disponibles.
+Actions disponibles :
+🧾 Consulter le contrat client.
+📥 Télécharger justificatif (PDF).
+🗂️ Consulter l’historique complet de la ligne.
+⚠️ Contester (si utilisateur commercial).
+Mise en page :
+Deux colonnes principales (informations à gauche, totaux et statuts à droite).
+Codes couleur standard : vert = validé, rouge = rejeté, orange = attente.
+E.2 Bordereau de commissions
+Objectif : offrir une vision d’ensemble des commissions sur une période donnée et permettre leur validation.
+Composants principaux :
+Filtres : période, produit, société, apporteur, statut.
+Tableau : une ligne par contrat/échéance avec colonnes Brut, Reprises, Net, Statut.
+Cases à cocher pour validation manuelle ou exclusion de ligne.
+Totaux dynamiques affichés en bas du tableau.
+Fonctionnalités :
+✅ Sélection/dé-sélection (avec motif obligatoire).
+🔄 Recalcul en temps réel des totaux.
+🧾 Export PDF / Excel.
+🔍 Recherche rapide (contrat, client, apporteur).
+UX complémentaire :
+Surlignage des lignes litigieuses ou en reprise.
+Statut visible via icône et couleur.
+Bouton Valider le bordereau actif uniquement si au moins une ligne sélectionnée.
+E.3 Historique / Archivage
+Objectif : permettre la consultation rapide des bordereaux passés et des actions de validation.
+Composants :
+Liste chronologique des bordereaux archivés.
+Filtres : période, société, statut, utilisateur.
+Colonnes : ID, période, total brut/net, utilisateur, date de validation.
+Actions : 📥 Télécharger PDF/Excel, 🔍 Voir détails.
+Affichage supplémentaire :
+Bloc de résumé (totaux annuels, taux de reprise, moyenne par commercial).
+Option d’export global multi-mois pour reporting annuel.
+E.4 Espace Commission (back-office)
+Objectif : permettre la gestion centralisée des schémas, barèmes, paliers et rétrocessions.
+Fonctionnalités clés :
+📊 Liste des schémas actifs avec filtres (produit, société, version, période).
+⚙️ Bouton Créer / Cloner / Modifier un barème.
+🧮 Formulaire complet de configuration : base, taux, récurrence, reprises, primes, paliers, rétrocessions.
+🕓 Historique des versions (date d’effet, auteur, motif).
+📤 Export barème en JSON / Excel pour validation direction.
+UX & ergonomie :
+Interface tabulaire simple et claire.
+Couleur d’avertissement si un barème arrive à expiration.
+Icône de verrouillage 🔒 pour versions historiques non modifiables.
+E.5 Principes d’ergonomie générale
+Interface responsive (bureau, tablette).
+Palette de couleurs harmonisée avec le CRM : bleu Winvest, gris clair, vert validation, rouge alerte.
+Typographie uniforme et contrastée.
+Messages d’erreur et de confirmation clairs et contextualisés.
+Navigation latérale persistante avec onglets : Fiche commission, Bordereaux, Historique, Espace gestion.
+E.6 Accessibilité et performances
+Temps de chargement inférieur à 3 secondes sur les pages principales.
+Pagination automatique pour les listes > 100 lignes.
+Compatibilité avec lecteurs d’écran (labels ARIA).
+Navigation clavier optimisée (tabulation logique, raccourcis ADV).
+Fin de l’Annexe E — Ces spécifications garantissent une expérience utilisateur claire, rapide et homogène, favorisant la productivité des équipes ADV et la transparence pour la direction et les commerciaux.
+Annexe F — Logique de commission récurrente (calcul, durée, versionning)
+Cette annexe formalise la génération des commissions récurrentes liées au portefeuille actif. Elle précise les événements déclencheurs, les paramètres de barème, les règles de durée, le versionning et les cas limites.
+F.1 Principes généraux
+La commission récurrente est un % appliqué sur les échéances effectivement encaissées d’un contrat actif.
+Aucune commission récurrente n’est due sur une échéance non encaissée (Échue) ou en Défaut/Impayé.
+La récurrence s’arrête dès que le contrat passe en Résilié (à date d’effet) ou Défaut (jusqu’à régularisation).
+F.2 Paramétrage de barème
+Champ
+Type
+Exemple
+Description
+recurrence
+bool
+true
+Active/désactive la récurrence
+taux_recurrence
+DECIMAL(5,2)
+3.00
+Pourcentage appliqué à la base
+base_calcul
+ENUM
+prime_ht / %_ca
+Base de calcul (hérite du schéma)
+duree_recurrence
+illimite / INT
+illimite ou 36
+Durée max en mois (ou illimitée)
+condition_base
+ENUM
+encaisse_seulement
+encaisse_seulement / facture / mixte (recommandé : encaisse_seulement)
+date_effet_version
+DATE
+2025-01-01
+Date d’entrée en vigueur de la version du barème
+Recommandation groupe : condition_base = encaisse_seulement.
+F.3 Événements déclencheurs
+Encaissement échéance (echeances.etat = reglee)→ création d’une ligne récurrente (type=recurence) dans commissions_calculees.
+Résiliation contrat (date_effective)→ stop des lignes futures ; aucune génération récurrente postrésiliation.
+Défaut/Impayé→ stop temporaire ; si régularisation, reprise de la génération le mois de l’encaissement + ligne de régularisation positive si reprise antérieure.
+F.4 Règles de durée
+La durée s’exprime en mois depuis la date d’effet du contrat.
+Si duree_recurrence = illimite → pas de borne ; sinon, n mois maximum.
+Le mois n+1 ne génère plus de récurrence.
+Pseudo-SQL (éligibilité durée)
+eligible = (recurrence = true)
+AND (mois_depuis(date_effet, periode_echeance) <= COALESCE(duree_recurrence, 9999));
+F.5 Calcul et formule
+Formule génériquecommission_recurrente = round( base × (taux_recurrence / 100), 2 )
+Définition de base
+Si base_calcul = prime_ht → base = echeances.cotisation_ht (si etat = reglee).
+Si base_calcul = %_ca → base = chiffre_affaires_contrat_sur_periode.
+Arrondis
+Arrondi au centime (règle bancaire).
+Agrégation au contrat × période, une ligne par échéance encaissée.
+F.6 Versionning des barèmes
+Toute modification du barème crée une nouvelle version (baremes_versions).
+La version appliquée est celle en vigueur à la date d’encaissement de l’échéance.
+Non-rétroactivité : on n’édite pas les lignes passées.
+Chaque ligne récurrente stocke version_bareme pour rejouer le calcul.
+Pseudo-SQL (sélection version)
+SELECT v.*
+FROM baremes_versions v
+WHERE v.schema_id = :schema
+AND v.date_effet <= :date_encaissement
+AND (v.date_fin IS NULL OR v.date_fin >= :date_encaissement)
+ORDER BY v.date_effet DESC
+LIMIT 1;
+F.7 Cas particuliers & arbitrages
+Changement de formule (upgrade/downgrade produit) : redéfinir la base et appliquer la version active au nouvel encaissement (pas de rétro).
+Avenant tarifaire : la base suit la cotisation HT réellement encaissée à partir de la date d’effet de l’avenant.
+Multiapporteurs (transfert de portefeuilles) : la récurrence est due à l’apporteur actif rattaché au contrat à la période considérée (rattachement daté dans rattachements).
+Régularisation d’un impayé : création d’une ligne positive le mois du recouvrement, sans rouvrir les périodes passées.
+Plafond de récurrence (optionnel) : possibilité de fixer un plafond mensuel par apporteur (champ plafond_recurrence_mensuel).
+F.8 Données enregistrées (commissions_calculees)
+Champs minimaux pour chaque ligne récurrente :
+type = 'recurrence'
+contrat_id, echeance_id, apporteur_id
+periode (YYYYMM), date_encaissement
+base (DECIMAL), taux_recurrence (NUMERIC), montant_brut
+version_bareme, statut (a_payer|validee|payee|reprise|conteste)
+bordereau_id (nullable tant que non validé)
+F.9 Tests d’acceptation (extraits)
+Échéance réglée → création d’une ligne récurrente conforme au barème actif.
+Échéance échue non réglée → aucune ligne générée.
+Contrat résilié au 15/05 → aucune ligne récurrente à partir de 06/2025.
+Avenant à effet 01/07 → les encaissements de 07/2025 utilisent la nouvelle version.
+Impayé 03/2025 repris puis régularisé en 05/2025 → génération d’une ligne positive en 05/2025.
+Fin de l’Annexe F — Cette logique garantit que les commissions récurrentes sont strictement corrélées aux encaissements réels, traçables par version de barème et robustes face aux changements de statut des contrats.
+Annexe G — Logique de reprises et reports négatifs
+Cette annexe définit les règles de calcul, d’application et de suivi des reprises de commissions en cas de résiliation, d’impayé ou d’anomalie, ainsi que la gestion des reports négatifs entre périodes.
+G.1 Principes généraux
+Une reprise correspond à la déduction d’une commission déjà versée lorsqu’un contrat est résilié ou non encaissé dans la période de garantie.
+Les reprises sont automatiques, paramétrées par produit et type de profil (VRP, manager, partenaire).
+Le montant repris est imputé sur le bordereau suivant ou sur plusieurs périodes jusqu’à apurement complet.
+Les reprises apparaissent toujours en négatif dans la section dédiée du bordereau PDF/Excel.
+G.2 Déclencheurs
+Résiliation infra-annuelle : contrat interrompu avant la première année.
+Résiliation à échéance : non-renouvellement signalé à la date anniversaire.
+Impayé / Défaut : échéance non réglée à J+X (configurable).
+Annulation de contrat : erreur administrative ou fraude détectée par CQ.
+G.3 Fenêtres de reprise standard (paramétrables)
+Type de produit
+Durée de reprise
+Description
+Télécom / Dépanssur
+3 mois
+Fenêtre courte standard du secteur services
+Assurances (Santé / Prévoyance)
+12 mois
+Application étendue pour risque long terme
+Partenaires / Apporteurs externes
+6 mois
+Fenêtre médiane configurable
+Les fenêtres peuvent être ajustées par société ou schéma via le champ fenetre_reprise dans schemas_commission.
+G.4 Formule de calcul
+Reprise unitaire :reprise_montant = min(Σ commissions_versées_dans_fenetre ; commission_due_sur_période_courante)
+Logique d’application :
+Le moteur identifie les commissions liées au contrat et à la période de reprise.
+Le montant repris est déduit du brut de la période en cours.
+Si le résultat est négatif, le solde est reporté (voir G.5).
+Si un impayé est régularisé, une ligne de régularisation positive est générée au moment du recouvrement.
+G.5 Gestion des reports négatifs
+Si (brut – reprises – acomptes) < 0, le solde négatif est reporté sur les périodes suivantes jusqu’à apurement complet.
+Chaque report est tracé avec un ID de reprise unique et une période d’origine.
+Le report est affiché dans le bordereau suivant, dans une ligne spécifique identifiée comme Report N1.
+Aucun report n’est supprimé automatiquement : il est compensé uniquement par les futures commissions positives.
+G.6 Données enregistrées
+Chaque ligne de reprise comprend :
+contrat_id, periode_origine, periode_appliquee, motif, montant_reprise, solde_report, statut.
+Les reprises sont liées à leur contrat d’origine et à la ligne initiale de commission par clé étrangère.
+Les reports sont cumulés dans la colonne montant_reprise (valeur négative).
+Tous les mouvements sont enregistrés dans audit_log pour traçabilité complète.
+G.7 Affichage et export
+Les reprises apparaissent dans la section REPRISE du bordereau, séparées du linéaire classique.
+Colonnes affichées : contrat, période d’origine, motif, montant, solde restant, date de radiation ou défaut.
+Les totaux incluent : Brut, Reprises, Net à payer, Reports restants.
+Export identique sur PDF et Excel pour assurer la cohérence des contrôles internes.
+G.8 Journalisation et audit
+Chaque reprise ou report déclenche une entrée dans audit_log (action = reprise_auto, reprise_regul, report_negatif).
+Informations stockées : utilisateur (si manuel), motif, date, contrat concerné, période et bordereau.
+Journal immuable pour conformité légale et contrôle direction.
+G.9 Tests d’acceptation (extraits)
+Résiliation infra-annuelle → création automatique d’une ligne reprise négative.
+Impayé détecté J+30 → suspension récurrence + ligne reprise.
+Recouvrement impayé → ligne régularisation positive générée.
+Brut – reprises – acomptes = -120 € → report négatif = 120 € transféré au mois suivant.
+Vérification PDF/Excel : les montants repris et reportés apparaissent en section REPRISE avec totaux cohérents.
+Fin de l’Annexe G — Ce mécanisme garantit la cohérence comptable et la transparence des déductions, tout en assurant une traçabilité complète des reprises et reports sur chaque contrat.
+Annexe G — Logique de reprises et reports négatifs
+Cette annexe définit les règles de calcul, d’application et de suivi des reprises de commissions en cas de résiliation, d’impayé ou d’anomalie, ainsi que la gestion des reports négatifs entre périodes.
+G.1 Principes généraux
+Une reprise correspond à la déduction d’une commission déjà versée lorsqu’un contrat est résilié ou non encaissé dans la période de garantie.
+Les reprises sont automatiques, paramétrées par produit et type de profil (VRP, manager, partenaire).
+Le montant repris est imputé sur le bordereau suivant ou sur plusieurs périodes jusqu’à apurement complet.
+Les reprises apparaissent toujours en négatif dans la section dédiée du bordereau PDF/Excel.
+G.2 Déclencheurs
+Résiliation infra-annuelle : contrat interrompu avant la première année.
+Résiliation à échéance : non-renouvellement signalé à la date anniversaire.
+Impayé / Défaut : échéance non réglée à J+X (configurable).
+Annulation de contrat : erreur administrative ou fraude détectée par CQ.
+G.3 Fenêtres de reprise standard (paramétrables)
+Type de produit
+Durée de reprise
+Description
+Télécom / Dépanssur
+3 mois
+Fenêtre courte standard du secteur services
+Assurances (Santé / Prévoyance)
+12 mois
+Application étendue pour risque long terme
+Partenaires / Apporteurs externes
+6 mois
+Fenêtre médiane configurable
+Les fenêtres peuvent être ajustées par société ou schéma via le champ fenetre_reprise dans schemas_commission.
+G.4 Formule de calcul
+Reprise unitaire :reprise_montant = min(Σ commissions_versées_dans_fenetre ; commission_due_sur_période_courante)
+Logique d’application :
+Le moteur identifie les commissions liées au contrat et à la période de reprise.
+Le montant repris est déduit du brut de la période en cours.
+Si le résultat est négatif, le solde est reporté (voir G.5).
+Si un impayé est régularisé, une ligne de régularisation positive est générée au moment du recouvrement.
+G.5 Gestion des reports négatifs
+Si (brut – reprises – acomptes) < 0, le solde négatif est reporté sur les périodes suivantes jusqu’à apurement complet.
+Chaque report est tracé avec un ID de reprise unique et une période d’origine.
+Le report est affiché dans le bordereau suivant, dans une ligne spécifique identifiée comme Report N1.
+Aucun report n’est supprimé automatiquement : il est compensé uniquement par les futures commissions positives.
+G.6 Données enregistrées
+Chaque ligne de reprise comprend :
+contrat_id, periode_origine, periode_appliquee, motif, montant_reprise, solde_report, statut.
+Les reprises sont liées à leur contrat d’origine et à la ligne initiale de commission par clé étrangère.
+Les reports sont cumulés dans la colonne montant_reprise (valeur négative).
+Tous les mouvements sont enregistrés dans audit_log pour traçabilité complète.
+G.7 Affichage et export
+Les reprises apparaissent dans la section REPRISE du bordereau, séparées du linéaire classique.
+Colonnes affichées : contrat, période d’origine, motif, montant, solde restant, date de radiation ou défaut.
+Les totaux incluent : Brut, Reprises, Net à payer, Reports restants.
+Export identique sur PDF et Excel pour assurer la cohérence des contrôles internes.
+G.8 Journalisation et audit
+Chaque reprise ou report déclenche une entrée dans audit_log (action = reprise_auto, reprise_regul, report_negatif).
+Informations stockées : utilisateur (si manuel), motif, date, contrat concerné, période et bordereau.
+Journal immuable pour conformité légale et contrôle direction.
+G.9 Tests d’acceptation (extraits)
+Résiliation infra-annuelle → création automatique d’une ligne reprise négative.
+Impayé détecté J+30 → suspension récurrence + ligne reprise.
+Recouvrement impayé → ligne régularisation positive générée.
+Brut – reprises – acomptes = -120 € → report négatif = 120 € transféré au mois suivant.
+Vérification PDF/Excel : les montants repris et reportés apparaissent en section REPRISE avec totaux cohérents.
+Fin de l’Annexe G — Ce mécanisme garantit la cohérence comptable et la transparence des déductions, tout en assurant une traçabilité complète des reprises et reports sur chaque contrat.
+Annexe H — Format bordereau PDF / Excel
+Cette annexe décrit la structure normalisée des bordereaux de commissions produits par le module, leurs sections, colonnes, règles de nommage et formats d’export.
+H.1 Objectif du bordereau
+Le bordereau est le document officiel de synthèse des commissions validées pour une période donnée.Il constitue à la fois un document interne de validation ADV et un relevé transmis aux commerciaux et partenaires.
+Chaque bordereau doit être :
+Identifiable (ID unique, société, période) ;
+Fiable (valeurs figées à la validation) ;
+Lisible (présentation harmonisée entre PDF et Excel) ;
+Traçable (horodatage, signature numérique SHA-256).
+H.2 Structure du bordereau
+Les bordereaux sont organisés en trois sections principales :
+1️⃣ Section 1 — Total des commissions
+Résumé global de la période :
+Champ
+Description
+Société
+Nom de l’entité concernée (France Téléphone, Dépanssur, etc.)
+Période
+Mois et année de référence
+Total brut
+Somme des commissions avant reprises et acomptes
+Total reprises
+Somme des montants repris ou annulés
+Total net
+Montant final à payer
+Reports négatifs
+Solde négatif reporté de la période précédente (le cas échéant)
+Date de validation
+Date de validation ADV
+Utilisateur
+Identité de l’utilisateur ayant validé
+Hash de sécurité
+Empreinte numérique SHA-256 du fichier
+2️⃣ Section 2 — Linéaire (commissions unitaires et récurrentes)
+Liste détaillée de toutes les lignes de commissions validées.
+Colonnes principales :
+Colonne
+Description
+Contrat ID
+Identifiant unique du contrat
+Client
+Nom / Prénom du client
+Produit
+Nom du produit ou service
+Formule
+Variante commerciale ou tarif
+Date d’effet
+Date de mise en service du contrat
+Mois de cotisation
+Mois de référence
+Cotisation HT (€)
+Montant hors taxes encaissé
+Base de calcul
+Prime HT / % CA / Forfait
+Taux appliqué (%)
+Pourcentage utilisé pour le calcul
+Commission brute (€)
+Montant calculé avant reprises
+Reprise (€)
+Montant repris (si applicable)
+Acompte (€)
+Montant d’avance déduit
+Net à payer (€)
+Montant final versé
+Statut
+À payer / Validée / Payée / Reprise / Contestée
+Version barème
+Référence du barème utilisé
+3️⃣ Section 3 — Reprises
+Lignes négatives ou régularisations associées aux contrats résiliés ou impayés.
+Colonnes principales :
+Colonne
+Description
+Contrat ID
+Identifiant du contrat concerné
+Produit
+Type de contrat (Santé, Prévoyance, Télécom…)
+Période d’origine
+Mois de la commission initiale
+Motif
+Résiliation / Impayé / Défaut / Annulation
+Montant (€)
+Montant repris (valeur négative)
+Date de radiation
+Date de résiliation ou défaut
+Solde report
+Montant restant à imputer
+H.3 Format PDF
+Présentation : page de garde (totaux), suivie des sections Linéaire et Reprises.
+Style graphique : cohérence avec la charte Winvest Capital (logo, palette, typographie).
+Pagination automatique avec en-tête : société / période / ID bordereau.
+Totaux en bas de chaque section.
+Horodatage + signature numérique en pied de page.
+H.4 Format Excel (.xlsx)
+Onglets : Total, Lineaire, Reprises.
+Les en-têtes sont identiques à ceux du PDF.
+Les valeurs sont figées (aucune formule).
+Format des nombres : 2 décimales, séparateur ,, alignement à droite.
+Feuille Total : graphique automatique (Brut / Reprises / Net).
+Feuille Linéaire : filtrable et triable.
+Feuille Reprises : en rouge pour visualiser les montants négatifs.
+H.5 Règles de nommage des fichiers
+Type
+Format
+Exemple
+PDF
+Bordereau_Commissions_{Societe}_{YYYY-MM}.pdf
+Bordereau_Commissions_FT_2025-03.pdf
+Excel
+Bordereau_Commissions_{Societe}_{YYYY-MM}.xlsx
+Bordereau_Commissions_MT_2025-03.xlsx
+H.6 Contrôles avant export
+Avant génération :
+Vérification du statut Validé de toutes les lignes incluses.
+Recalcul automatique des totaux (Brut / Reprises / Net).
+Validation du format numérique et des champs requis.
+Application du hash SHA-256 au fichier exporté.
+H.7 Sécurité et traçabilité
+Chaque export (PDF ou Excel) est signé avec le hash SHA-256 stocké en base (bordereaux.hash_sha256).
+L’export PDF/Excel ne peut être modifié après validation (lecture seule).
+Archivage automatique dans /archives/bordereaux/{societe}/{annee}/.
+Fin de l’Annexe H — Ce format unifié garantit la cohérence visuelle et la fiabilité des données entre les versions PDF, Excel et les exports automatisés du module de commissionnement.
+Annexe I — Reporting & KPI détaillés
+Cette annexe décrit les indicateurs clés de performance (KPI), les rapports disponibles et la structure des données utilisées pour le reporting commercial et financier du module de commissionnement.
+I.1 Objectifs du reporting
+Fournir une vue globale et consolidée des performances commerciales du groupe Winvest Capital.
+Permettre un pilotage précis de la production, des récurrences et des taux de reprise.
+Faciliter le suivi des objectifs par équipe, agence, direction ou produit.
+Servir de base d’analyse pour les décisions stratégiques et budgétaires.
+I.2 Indicateurs clés (KPI)
+Catégorie
+KPI
+Description
+Production brute
+Total Brut (€)
+Somme des commissions calculées avant reprises
+Nombre de contrats validés
+Volume de production par période
+Récurrence
+Montant récurrent (€)
+Total des commissions liées au portefeuille actif
+Taux de récurrence (%)
+Récurrent / Brut total
+Reprises
+Montant repris (€)
+Total des déductions appliquées (résiliations, impayés)
+Taux de reprise (%)
+Reprises / Brut
+Performance nette
+Net à payer (€)
+Brut – Reprises – Acomptes
+Croissance nette (%)
+Variation N/N1 du net à payer
+Efficacité ADV
+Délai de validation moyen (jours)
+Temps moyen entre validation CQ et validation ADV
+Comparatifs
+Meilleurs commerciaux
+Classement par montant net encaissé
+Meilleurs produits
+Classement par production totale
+Taux de régularisation
+Part des reprises corrigées (recouvrement)
+I.3 Tableaux de bord dynamiques
+Vue groupe : consolidation de toutes les sociétés avec filtres par entité, produit, période et équipe.
+Vue équipe : suivi de la production et des primes collectives.
+Vue individuelle : évolution des performances par commercial (contrats validés, brut, récurrence, taux de reprise).
+Vue direction : synthèse multi-sociétés avec graphiques comparatifs et suivi des objectifs trimestriels.
+Visualisations proposées :
+Courbe Brut / Net / Reprises sur 12 mois glissants.
+Histogramme de production par produit.
+Heatmap des taux de reprise par équipe.
+Camembert de répartition du chiffre de commissions par société.
+I.4 Structure de données (table snapshots_kpi)
+Champ
+Type
+Description
+id
+UUID
+Identifiant unique du snapshot
+periode
+YYYY-MM
+Mois de référence
+societe
+TEXT
+Nom de la société (FT, DP, AP, MTV, etc.)
+equipe_id
+INT
+Référence d’équipe
+apporteur_id
+INT
+Référence du commercial
+kpi_json
+JSON
+Contient les valeurs : brut, net, reprises, récurrence, taux_reprise, taux_recurrence, volume, délai_validation
+created_at
+DATETIME
+Date de génération du snapshot
+Les données sont générées automatiquement à chaque validation de bordereau et stockées pour un minimum de 36 mois.
+I.5 Comparatifs et historiques
+Comparatif temporel : M-1, M-3, M-6, M-12, N/N1.
+Comparatif produit : performance par gamme (Télécom, Santé, Énergie, Prévoyance…).
+Comparatif hiérarchique : agence, manager, direction.
+Comparatif récurrence : suivi du rendement portefeuille actif (montant récurrent, taux de récurrence).
+Les rapports peuvent être filtrés ou exportés en Excel / PDF.
+I.6 Exports analytiques
+Exports consolidés Excel / CSV disponibles depuis le tableau de bord reporting.
+Colonnes standard : période, société, équipe, apporteur, produit, brut, reprises, net, taux de reprise, taux de récurrence.
+Exports programmables (mensuel, trimestriel, annuel).
+Option d’envoi automatique à la direction commerciale et à la direction générale.
+I.7 Sécurité et droits d’accès
+Rôle
+Accès Reporting
+ADV
+Vue globale sans édition
+Comptabilité
+Vue complète + export CSV/Excel
+Direction commerciale
+Accès complet (tous filtres + comparaison multi-entités)
+Direction générale
+Lecture consolidée Groupe
+Partenaires / Commerciaux
+Lecture individuelle restreinte (leurs propres données)
+Tous les exports sont horodatés et tracés dans audit_log (action = export_kpi, user_id, période).
+Fin de l’Annexe I — Ce module de reporting fournit à la direction un outil d’analyse complet, fiable et sécurisé pour piloter la performance commerciale et le rendement global du portefeuille du groupe Winvest Capital.
+Annexe J — Plan de tests et jeux de données
+Cette annexe définit les scénarios de test, les jeux de données simulés et les critères de validation permettant de garantir la conformité fonctionnelle, technique et réglementaire du module de commissionnement.
+J.1 Objectifs des tests
+Vérifier la cohérence du calcul des commissions sur l’ensemble des profils et produits.
+Garantir la stabilité du moteur et la fiabilité des exports (PDF, Excel, JSON).
+Contrôler la traçabilité et l’auditabilité de toutes les opérations.
+Valider la performance sous charge réelle.
+J.2 Catégories de tests
+Type
+Objectif
+Exemple
+Unitaires
+Vérifier le bon fonctionnement des fonctions de calcul isolées
+Calcul d’une commission fixe, % CA, reprise
+Fonctionnels
+Tester les workflows complets utilisateur
+Validation bordereau, export, reprise, régularisation
+Intégration
+Contrôler les échanges avec le CRM et les exports internes
+API encaissements, génération JSON
+Performance
+Valider la réactivité et la montée en charge
+100k contrats / 10k lignes bordereaux
+Sécurité
+Vérifier les accès et les restrictions par rôle
+Lecture seule pour partenaires
+Conformité
+Assurer la conformité RGPD et VRP
+Respect des délais, confidentialité, journalisation
+J.3 Jeux de données de référence
+Jeu
+Description
+Données clés
+J1 – Base VRP
+50 contrats France Téléphone, validation CQ, encaissement mensuel
+5 produits, 3 barèmes, 2 reprises
+J2 – Managers
+10 équipes, production cumulée, primes d’équipe, rétrocessions
+200 lignes commissions
+J3 – Directeurs d’agence
+3 agences, multi-niveaux, % sur commissions conseillers
+500 lignes cumulées
+J4 – Partenaires externes
+15 apporteurs indépendants, paiements sur encaissé uniquement
+300 lignes
+J5 – Résiliations / impayés
+20 contrats avec résiliation infra-annuelle, impayés et recouvrements
+Tests de reprises et reports
+J6 – Stress test
+100 000 contrats simulés, 1 000 000 lignes commissions
+Évaluation des performances
+J.4 Cas de test critiques
+Validation CQ → Calcul correct selon le barème actif.
+Encaissement partiel → Commission calculée uniquement sur la partie encaissée.
+Résiliation anticipée → Reprise automatique appliquée sur les 3 derniers mois.
+Changement de barème → Application de la nouvelle version sans rétroactivité.
+Reprise régularisée → Ligne positive générée après recouvrement.
+Report négatif → Solde transféré correctement sur le mois suivant.
+Validation ADV → Lignes pré-cochées / décochées avec motif enregistré.
+Export Excel/PDF → Totaux identiques et hash SHA-256 validé.
+Journalisation → Action enregistrée dans audit_log avec utilisateur et horodatage.
+Recalcul global → Même résultat entre exécution initiale et recalcul a posteriori.
+J.5 Données d’attente et résultats
+Tolérance sur montants : ±0,01 € (arrondis centime bancaire).
+Tolérance sur temps de traitement : < 60 secondes pour 100 000 lignes.
+Validation des exports : 100 % des bordereaux doivent contenir le même total Brut / Reprises / Net sur tous les formats.
+Concordance des versions de barème : 100 % des lignes calculées doivent référencer une version valide.
+J.6 Outils de test
+Outil interne de simulation de contrats et encaissements (module test CRM).
+Scripts SQL et JSON pour injection de jeux de données (PostgreSQL / MySQL).
+Tests automatisés via Postman / Newman pour API exports.
+Benchmarks de performance réalisés sur environnement de préproduction (serveur dédié).
+J.7 Validation finale
+Critères de validation avant mise en production :
+100 % des tests unitaires et fonctionnels réussis.
+100 % des écarts financiers < 0,01 €.
+Performance validée pour la volumétrie cible.
+Validation direction commerciale et comptabilité.
+Signature du procès-verbal de recette interne.
+Fin de l’Annexe J — Ce plan de tests garantit la fiabilité, la cohérence et la conformité du module de commissionnement avant déploiement opérationnel dans le groupe Winvest Capital.
+Annexe K — Sécurité, RGPD & audit trail
+Cette annexe détaille les dispositifs de sécurité, de protection des données personnelles (RGPD) et de traçabilité intégrés au module de commissionnement du groupe Winvest Capital.
+K.1 Objectifs de sécurité
+Garantir la confidentialité des données commerciales et personnelles.
+Prévenir tout risque de perte, altération ou accès non autorisé.
+Assurer une traçabilité totale des opérations (audit trail).
+Respecter les obligations légales européennes (RGPD) et internes du groupe Winvest Capital.
+K.2 Gouvernance et responsabilités
+Rôle
+Responsabilité principale
+DPO (Délégué à la protection des données)
+Supervision du respect RGPD, validation des durées de conservation et traitements de données.
+Direction informatique (IT)
+Sécurité technique, chiffrement, sauvegardes et plan de reprise.
+Direction commerciale
+Gestion des habilitations utilisateurs et du périmètre d’accès aux données commerciales.
+Administrateurs CRM
+Gestion des droits, audit des connexions, application des politiques internes.
+Utilisateurs (ADV, managers, partenaires)
+Obligation de confidentialité et usage conforme du module.
+K.3 Sécurité technique
+Authentification forte : connexion via le compte CRM avec double facteur (MFA).
+Autorisation basée sur les rôles (RBAC) : accès limité selon le profil (ADV, comptabilité, direction, partenaire).
+Chiffrement des données :
+En transit : HTTPS / TLS 1.3.
+Au repos : AES256 sur la base de données et les exports archivés.
+Hash des fichiers : chaque export PDF/Excel est signé numériquement (SHA256).
+Sauvegardes quotidiennes avec rétention 30 jours + copie hebdomadaire sur site secondaire.
+Surveillance des connexions : journalisation automatique des connexions et tentatives échouées.
+K.4 Conformité RGPD
+Base légale : exécution du contrat de travail ou de partenariat (article 61 du RGPD).
+Données collectées : identité des commerciaux, contrats gérés, performances, historiques de bordereaux.
+Minimisation : seules les données nécessaires au calcul et au suivi sont stockées.
+Conservation : durée maximale de 5 ans après la dernière activité contractuelle.
+Droit des personnes : accès, rectification, effacement sur demande auprès du DPO.
+Registre de traitement : documenté et mis à jour chaque année.
+Transferts de données : aucune donnée personnelle transmise hors UE sans autorisation du DPO.
+K.5 Audit trail (journalisation)
+Chaque action sensible est enregistrée dans la table audit_log.
+Champs principaux :
+Champ
+Description
+id
+Identifiant unique de l’action
+scope
+Commission / Bordereau / Barème / Sélection
+ref_id
+Identifiant de l’élément concerné
+action
+Type d’action (création, modification, validation, suppression, export, connexion)
+before_json
+Valeur précédente (si applicable)
+after_json
+Nouvelle valeur appliquée
+user_id
+Identifiant de l’utilisateur responsable
+ip_adresse
+Adresse IP de connexion
+created_at
+Date et heure de l’action
+Caractéristiques :
+Journal immuable (aucune suppression possible depuis l’interface).
+Traçabilité complète des opérations de calcul, validation, export et paramétrage.
+Consultation réservée à la direction et à l’équipe IT autorisée.
+K.6 Plan de reprise et continuité (PRA / PCA)
+Sauvegardes quotidiennes automatiques de la base et des fichiers exportés.
+Restauration possible sous 4 h après incident majeur.
+Redondance : infrastructure hébergée sur serveurs cloud redondants (France / UE).
+Plan de continuité (PCA) : en cas d’indisponibilité CRM, consultation possible des bordereaux archivés via l’espace sécurisé.
+K.7 Contrôles et conformité
+Audits internes semestriels sur la sécurité et la conformité RGPD.
+Revue annuelle des accès utilisateurs.
+Validation par la direction générale et le DPO.
+Journalisation centralisée pour vérification par les autorités compétentes si nécessaire.
+Fin de l’Annexe K — Le module de commissionnement répond aux standards les plus élevés de sécurité et de conformité, assurant la confidentialité, l’intégrité et la traçabilité des données au sein du groupe Winvest Capital.

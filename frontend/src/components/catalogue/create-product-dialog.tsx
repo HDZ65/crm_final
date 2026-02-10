@@ -32,9 +32,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { TypeProduit, type CreateProduitDto } from "@/types/product"
-import type { SocieteDto } from "@/hooks/clients"
-import type { Gamme } from "@/types/gamme"
+import {
+  TypeProduit,
+  CategorieProduit,
+  type CreateProduitRequest,
+  type Gamme,
+} from "@proto/products/products"
+import {
+  TYPE_PRODUIT_LABELS,
+  CATEGORIE_PRODUIT_LABELS,
+} from "@/lib/ui/labels/product"
+import type { Societe } from "@proto/organisations/organisations"
+
+// Selectable category values (excluding unspecified and unrecognized)
+const SELECTABLE_CATEGORIES = [
+  CategorieProduit.ASSURANCE,
+  CategorieProduit.PREVOYANCE,
+  CategorieProduit.EPARGNE,
+  CategorieProduit.SERVICE,
+  CategorieProduit.ACCESSOIRE,
+] as const
+
+// Selectable type values
+const SELECTABLE_TYPES = [
+  TypeProduit.INTERNE,
+  TypeProduit.PARTENAIRE,
+] as const
 
 const formSchema = z.object({
   societeId: z.string().min(1, "Veuillez sélectionner une société"),
@@ -42,11 +65,11 @@ const formSchema = z.object({
   sku: z.string().min(1, "La référence est requise"),
   nom: z.string().min(1, "Le nom est requis"),
   description: z.string().min(1, "La description est requise"),
-  type: z.enum(["Interne", "Partenaire"]),
+  type: z.coerce.number(),
+  categorie: z.coerce.number(),
   prix: z.coerce.number().min(0, "Le prix doit être positif"),
   tauxTVA: z.coerce.number().min(0, "Le taux doit être positif").max(100, "Le taux ne peut pas dépasser 100%"),
   devise: z.string().default("EUR"),
-  fournisseur: z.string().optional(),
   actif: z.boolean().default(true),
   // Champs promotion
   promotionActive: z.boolean().default(false),
@@ -60,8 +83,8 @@ type FormValues = z.infer<typeof formSchema>
 interface CreateProductDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: CreateProduitDto) => Promise<void>
-  societes: SocieteDto[]
+  onSubmit: (data: CreateProduitRequest) => Promise<void>
+  societes: Societe[]
   gammes: Gamme[]
   loading?: boolean
   defaultSocieteId?: string
@@ -87,11 +110,11 @@ export function CreateProductDialog({
       sku: "",
       nom: "",
       description: "",
-      type: "Interne",
+      type: TypeProduit.INTERNE,
+      categorie: CategorieProduit.ASSURANCE,
       prix: 0,
       tauxTVA: 20,
       devise: "EUR",
-      fournisseur: "",
       actif: true,
       promotionActive: false,
       promotionPourcentage: undefined,
@@ -109,11 +132,11 @@ export function CreateProductDialog({
         sku: "",
         nom: "",
         description: "",
-        type: "Interne",
+        type: TypeProduit.INTERNE,
+        categorie: CategorieProduit.ASSURANCE,
         prix: 0,
         tauxTVA: 20,
         devise: "EUR",
-        fournisseur: "",
         actif: true,
         promotionActive: false,
         promotionPourcentage: undefined,
@@ -124,21 +147,22 @@ export function CreateProductDialog({
   }, [open, defaultSocieteId, defaultGammeId, form])
 
   const handleSubmit = async (values: FormValues) => {
-    // Convert string type to TypeProduit enum
-    const typeEnum = values.type === "Interne" ? TypeProduit.INTERNE : TypeProduit.PARTENAIRE
-    // Note: Form uses societeId but CreateProduitDto expects organisationId
-    // Using type assertion to bypass - this mapping should be handled by the caller
     await onSubmit({
       organisationId: values.societeId,
       gammeId: values.gammeId,
       sku: values.sku,
       nom: values.nom,
       description: values.description,
-      type: typeEnum,
+      type: values.type as TypeProduit,
+      categorie: values.categorie as CategorieProduit,
       prix: values.prix,
       tauxTva: values.tauxTVA,
       devise: values.devise,
-    } as CreateProduitDto)
+      imageUrl: "",
+      codeExterne: "",
+      metadata: "",
+      statutCycle: 0,
+    })
   }
 
   const productType = form.watch("type")
@@ -226,15 +250,18 @@ export function CreateProductDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value)}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionnez un type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Interne">Interne</SelectItem>
-                        <SelectItem value="Partenaire">Partenaire</SelectItem>
+                        {SELECTABLE_TYPES.map((t) => (
+                          <SelectItem key={t} value={String(t)}>
+                            {TYPE_PRODUIT_LABELS[t]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -277,6 +304,31 @@ export function CreateProductDialog({
 
             <FormField
               control={form.control}
+              name="categorie"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Catégorie *</FormLabel>
+                  <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value)}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez une catégorie" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SELECTABLE_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={String(cat)}>
+                          {CATEGORIE_PRODUIT_LABELS[cat]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="gammeId"
               render={({ field }) => (
                 <FormItem>
@@ -290,7 +342,7 @@ export function CreateProductDialog({
                     <SelectContent>
                       {gammes.map((gamme) => (
                         <SelectItem key={gamme.id} value={gamme.id}>
-                          {gamme.name}
+                          {gamme.nom}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -377,23 +429,14 @@ export function CreateProductDialog({
               />
             </div>
 
-            {productType === "Partenaire" && (
-              <FormField
-                control={form.control}
-                name="fournisseur"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fournisseur / Partenaire</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nom du partenaire" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Indiquez le nom du partenaire qui fournit ce produit.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {productType === TypeProduit.PARTENAIRE && (
+              <FormItem>
+                <FormLabel>Fournisseur / Partenaire</FormLabel>
+                <Input placeholder="Nom du partenaire" disabled />
+                <FormDescription>
+                  Indiquez le nom du partenaire qui fournit ce produit.
+                </FormDescription>
+              </FormItem>
             )}
 
             <FormField

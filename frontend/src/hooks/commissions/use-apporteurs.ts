@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
-import type { ApporteurResponseDto, ApporteurFilters } from "@/types/commission"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
+import type { ApporteurFilters } from "@/lib/ui/display-types/commission"
 
 /**
  * Hook pour récupérer la liste des apporteurs
  * GET /apporteurs
  */
 export function useApporteurs(filters?: ApporteurFilters) {
-  const [apporteurs, setApporteurs] = useState<ApporteurResponseDto[]>([])
-  const { loading, error, execute } = useApi<ApporteurResponseDto[]>()
+  const [apporteurs, setApporteurs] = useState<Apporteur[]>([])
+  const { loading, error, execute } = useApi<Apporteur[]>()
 
   const fetchApporteurs = useCallback(async () => {
     try {
@@ -49,8 +50,8 @@ export function useApporteurs(filters?: ApporteurFilters) {
  * GET /apporteurs/:id
  */
 export function useApporteur(apporteurId: string | null) {
-  const [apporteur, setApporteur] = useState<ApporteurResponseDto | null>(null)
-  const { loading, error, execute } = useApi<ApporteurResponseDto>()
+  const [apporteur, setApporteur] = useState<Apporteur | null>(null)
+  const { loading, error, execute } = useApi<Apporteur>()
 
   const fetchApporteur = useCallback(async () => {
     if (!apporteurId) return

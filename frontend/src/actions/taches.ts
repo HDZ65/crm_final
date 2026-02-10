@@ -4,45 +4,39 @@ import { taches } from "@/lib/grpc";
 import type {
   Tache,
   TacheStats,
+  CreateTacheRequest,
+  UpdateTacheRequest,
   ListTacheResponse,
 } from "@proto/activites/activites";
 import type {
-  TacheDto,
-  TacheStatsDto,
-  CreateTacheDto,
-  UpdateTacheDto,
-  TacheFilters,
-  PaginatedTachesDto,
   TacheType,
   TachePriorite,
   TacheStatut,
-} from "@/types/tache";
-
-export interface TacheActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+  TacheFilters,
+  PaginatedTachesDto,
+} from "@/lib/ui/labels/tache";
+import type { ActionResult } from "@/lib/types/common";
 
 /**
- * Map gRPC Tache to frontend TacheDto
+ * Map gRPC Tache to frontend Tache
  */
-function mapTacheToDto(tache: Tache): TacheDto {
+function mapTacheToDto(tache: Tache): Tache {
   return {
     id: tache.id,
     organisationId: tache.organisationId,
     titre: tache.titre,
-    description: tache.description || undefined,
+    description: tache.description,
     type: tache.type as TacheType,
     priorite: tache.priorite as TachePriorite,
     statut: tache.statut as TacheStatut,
     dateEcheance: tache.dateEcheance,
-    dateCompletion: tache.dateCompletion || undefined,
+    dateCompletion: tache.dateCompletion,
     assigneA: tache.assigneA,
     creePar: tache.creePar,
-    clientId: tache.clientId || undefined,
-    contratId: tache.contratId || undefined,
-    factureId: tache.factureId || undefined,
-    regleRelanceId: tache.regleRelanceId || undefined,
+    clientId: tache.clientId,
+    contratId: tache.contratId,
+    factureId: tache.factureId,
+    regleRelanceId: tache.regleRelanceId,
     metadata: tache.metadata ? JSON.parse(tache.metadata) : undefined,
     enRetard: tache.enRetard,
     createdAt: tache.createdAt,
@@ -55,7 +49,7 @@ function mapTacheToDto(tache: Tache): TacheDto {
  */
 export async function listTaches(
   filters: TacheFilters
-): Promise<TacheActionResult<PaginatedTachesDto>> {
+): Promise<ActionResult<PaginatedTachesDto>> {
   try {
     const data = await taches.list({
       organisationId: filters.organisationId || "",
@@ -97,7 +91,7 @@ export async function listTaches(
 export async function listTachesByAssigne(
   assigneA: string,
   filters?: Omit<TacheFilters, "assigneA">
-): Promise<TacheActionResult<PaginatedTachesDto>> {
+): Promise<ActionResult<PaginatedTachesDto>> {
   try {
     const data = await taches.listByAssigne({
       assigneA,
@@ -135,7 +129,7 @@ export async function listTachesByAssigne(
 export async function listTachesEnRetard(
   organisationId: string,
   filters?: Pick<TacheFilters, "page" | "limit">
-): Promise<TacheActionResult<PaginatedTachesDto>> {
+): Promise<ActionResult<PaginatedTachesDto>> {
   try {
     const data = await taches.listEnRetard({
       organisationId,
@@ -169,7 +163,7 @@ export async function listTachesEnRetard(
 export async function listTachesByClient(
   clientId: string,
   filters?: Pick<TacheFilters, "page" | "limit">
-): Promise<TacheActionResult<PaginatedTachesDto>> {
+): Promise<ActionResult<PaginatedTachesDto>> {
   try {
     const data = await taches.listByClient({
       clientId,
@@ -202,7 +196,7 @@ export async function listTachesByClient(
 export async function listTachesByContrat(
   contratId: string,
   filters?: Pick<TacheFilters, "page" | "limit">
-): Promise<TacheActionResult<PaginatedTachesDto>> {
+): Promise<ActionResult<PaginatedTachesDto>> {
   try {
     const data = await taches.listByContrat({
       contratId,
@@ -235,7 +229,7 @@ export async function listTachesByContrat(
 export async function listTachesByFacture(
   factureId: string,
   filters?: Pick<TacheFilters, "page" | "limit">
-): Promise<TacheActionResult<PaginatedTachesDto>> {
+): Promise<ActionResult<PaginatedTachesDto>> {
   try {
     const data = await taches.listByFacture({
       factureId,
@@ -265,7 +259,7 @@ export async function listTachesByFacture(
   }
 }
 
-export async function getTache(id: string): Promise<TacheActionResult<TacheDto>> {
+export async function getTache(id: string): Promise<ActionResult<Tache>> {
   try {
     const data = await taches.get({ id });
     return { data: mapTacheToDto(data), error: null };
@@ -283,7 +277,7 @@ export async function getTache(id: string): Promise<TacheActionResult<TacheDto>>
  */
 export async function getTacheStats(
   organisationId: string
-): Promise<TacheActionResult<TacheStatsDto>> {
+): Promise<ActionResult<TacheStats>> {
   try {
     const data = await taches.getStats({ organisationId });
     return {
@@ -311,7 +305,7 @@ export async function getTacheStats(
  */
 export async function getTacheAlertes(
   organisationId: string
-): Promise<TacheActionResult<TacheDto[]>> {
+): Promise<ActionResult<Tache[]>> {
   try {
     const data = await taches.getAlertes({ organisationId });
     return {
@@ -331,8 +325,8 @@ export async function getTacheAlertes(
  * Create a new tache
  */
 export async function createTache(
-  dto: CreateTacheDto
-): Promise<TacheActionResult<TacheDto>> {
+  dto: CreateTacheRequest
+): Promise<ActionResult<Tache>> {
   try {
     const data = await taches.create({
       organisationId: dto.organisationId,
@@ -364,8 +358,8 @@ export async function createTache(
  */
 export async function updateTache(
   id: string,
-  dto: UpdateTacheDto
-): Promise<TacheActionResult<TacheDto>> {
+  dto: UpdateTacheRequest
+): Promise<ActionResult<Tache>> {
   try {
     const data = await taches.update({
       id,
@@ -396,7 +390,7 @@ export async function updateTache(
  */
 export async function marquerTacheEnCours(
   id: string
-): Promise<TacheActionResult<TacheDto>> {
+): Promise<ActionResult<Tache>> {
   try {
     const data = await taches.marquerEnCours({ id });
     return { data: mapTacheToDto(data), error: null };
@@ -414,7 +408,7 @@ export async function marquerTacheEnCours(
  */
 export async function marquerTacheTerminee(
   id: string
-): Promise<TacheActionResult<TacheDto>> {
+): Promise<ActionResult<Tache>> {
   try {
     const data = await taches.marquerTerminee({ id });
     return { data: mapTacheToDto(data), error: null };
@@ -432,7 +426,7 @@ export async function marquerTacheTerminee(
  */
 export async function marquerTacheAnnulee(
   id: string
-): Promise<TacheActionResult<TacheDto>> {
+): Promise<ActionResult<Tache>> {
   try {
     const data = await taches.marquerAnnulee({ id });
     return { data: mapTacheToDto(data), error: null };
@@ -450,7 +444,7 @@ export async function marquerTacheAnnulee(
  */
 export async function deleteTache(
   id: string
-): Promise<TacheActionResult<{ success: boolean }>> {
+): Promise<ActionResult<{ success: boolean }>> {
   try {
     await taches.delete({ id });
     return { data: { success: true }, error: null };
@@ -470,7 +464,7 @@ export async function deleteTache(
 export async function listMyTaches(
   assigneA: string,
   periode?: "jour" | "semaine"
-): Promise<TacheActionResult<TacheDto[]>> {
+): Promise<ActionResult<Tache[]>> {
   try {
     const data = await taches.listByAssigne({
       assigneA,

@@ -2,6 +2,7 @@
 
 import { societes } from "@/lib/grpc";
 import type { Societe } from "@proto/organisations/organisations";
+import type { ActionResult } from "@/lib/types/common";
 
 export interface SocieteDto {
   id: string;
@@ -13,10 +14,6 @@ export interface SocieteDto {
   updatedAt: string;
 }
 
-export interface SocieteActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
 
 /**
  * Map gRPC Societe to frontend SocieteDto
@@ -26,8 +23,8 @@ function mapSocieteToDto(societe: Societe): SocieteDto {
     id: societe.id,
     organisationId: societe.organisationId,
     raisonSociale: societe.raisonSociale,
-    siren: societe.siren || undefined,
-    numeroTva: societe.numeroTva || undefined,
+    siren: societe.siren,
+    numeroTva: societe.numeroTva,
     createdAt: societe.createdAt,
     updatedAt: societe.updatedAt,
   };
@@ -38,9 +35,9 @@ function mapSocieteToDto(societe: Societe): SocieteDto {
  */
 export async function listSocietesByOrganisation(
   organisationId: string
-): Promise<SocieteActionResult<SocieteDto[]>> {
+): Promise<ActionResult<SocieteDto[]>> {
   try {
-    const data = await societes.listByOrganisation({ organisationId });
+    const data = await societes.listByOrganisation({ organisationId, pagination: undefined });
     return {
       data: data.societes.map(mapSocieteToDto),
       error: null,
@@ -57,7 +54,7 @@ export async function listSocietesByOrganisation(
 /**
  * Get societe by ID
  */
-export async function getSociete(id: string): Promise<SocieteActionResult<SocieteDto>> {
+export async function getSociete(id: string): Promise<ActionResult<SocieteDto>> {
   try {
     const data = await societes.get({ id });
     return { data: mapSocieteToDto(data), error: null };
@@ -82,7 +79,7 @@ export interface CreateSocieteInput {
 
 export async function createSociete(
   input: CreateSocieteInput
-): Promise<SocieteActionResult<SocieteDto>> {
+): Promise<ActionResult<SocieteDto>> {
   console.log("[createSociete] Input received:", JSON.stringify(input));
 
   try {
@@ -91,6 +88,16 @@ export async function createSociete(
       raisonSociale: input.raisonSociale,
       siren: input.siren,
       numeroTva: input.numeroTva,
+      logoUrl: "",
+      devise: "",
+      ics: "",
+      journalVente: "",
+      compteProduitDefaut: "",
+      planComptable: "",
+      adresseSiege: "",
+      telephone: "",
+      emailContact: "",
+      parametresFiscaux: "",
     });
     return { data: mapSocieteToDto(data), error: null };
   } catch (err) {
@@ -114,13 +121,23 @@ export interface UpdateSocieteInput {
 
 export async function updateSociete(
   input: UpdateSocieteInput
-): Promise<SocieteActionResult<SocieteDto>> {
+): Promise<ActionResult<SocieteDto>> {
   try {
     const data = await societes.update({
       id: input.id,
       raisonSociale: input.raisonSociale,
       siren: input.siren,
       numeroTva: input.numeroTva,
+      logoUrl: "",
+      devise: "",
+      ics: "",
+      journalVente: "",
+      compteProduitDefaut: "",
+      planComptable: "",
+      adresseSiege: "",
+      telephone: "",
+      emailContact: "",
+      parametresFiscaux: "",
     });
     return { data: mapSocieteToDto(data), error: null };
   } catch (err) {
@@ -135,7 +152,7 @@ export async function updateSociete(
 /**
  * Delete a societe
  */
-export async function deleteSociete(id: string): Promise<SocieteActionResult<boolean>> {
+export async function deleteSociete(id: string): Promise<ActionResult<boolean>> {
   try {
     await societes.delete({ id });
     return { data: true, error: null };

@@ -15,7 +15,7 @@ import type {
   ListWooCommerceMappingResponse,
   WooCommerceConfig,
   TestWooCommerceConnectionResponse,
-  WooCommerceDeleteResponse,
+  DeleteResponse,
 } from "@proto/woocommerce/woocommerce";
 
 // ============================================================================
@@ -163,7 +163,7 @@ export async function updateWooCommerceMapping(input: {
   }
 }
 
-export async function deleteWooCommerceMapping(id: string): Promise<ActionResult<WooCommerceDeleteResponse>> {
+export async function deleteWooCommerceMapping(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await woocommerceMappings.delete({ id });
     revalidatePath("/woocommerce");
@@ -239,7 +239,7 @@ export async function updateWooCommerceConfig(input: {
   }
 }
 
-export async function deleteWooCommerceConfig(id: string): Promise<ActionResult<WooCommerceDeleteResponse>> {
+export async function deleteWooCommerceConfig(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await woocommerceConfig.delete({ id });
     revalidatePath("/woocommerce");

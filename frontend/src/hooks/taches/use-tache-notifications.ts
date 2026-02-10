@@ -3,15 +3,15 @@
 import { useCallback, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
-import type { TacheDto } from "@/types/tache"
+import type { Tache } from "@proto/activites/activites"
 
 interface TacheNotificationsOptions {
   enabled?: boolean
 }
 
 interface TachesAlerteResponse {
-  enRetard: TacheDto[]
-  echeanceDemain: TacheDto[]
+  enRetard: Tache[]
+  echeanceDemain: Tache[]
 }
 
 /**

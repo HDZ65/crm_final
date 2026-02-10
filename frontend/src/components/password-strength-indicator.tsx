@@ -1,4 +1,4 @@
-import { checkPasswordStrength, type PasswordStrength } from "@/lib/password-strength";
+import { checkPasswordStrength, type PasswordStrength } from "@/lib/security/password-strength";
 import { Check, X } from "lucide-react";
 
 interface PasswordStrengthIndicatorProps {

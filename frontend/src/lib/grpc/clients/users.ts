@@ -1,10 +1,10 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
 import {
-  UtilisateurServiceClient,
-  MembreCompteServiceClient,
-  CompteServiceClient,
-  RoleServiceClient,
+  UtilisateurServiceService,
+  MembreCompteServiceService,
+  CompteServiceService,
+  RoleServiceService,
   type Utilisateur,
   type CreateUtilisateurRequest,
   type UpdateUtilisateurRequest,
@@ -36,14 +36,16 @@ import {
   type ListRoleResponse,
 } from "@proto/organisations/users";
 
-let utilisateurInstance: UtilisateurServiceClient | null = null;
-let membreCompteInstance: MembreCompteServiceClient | null = null;
-let compteInstance: CompteServiceClient | null = null;
-let roleInstance: RoleServiceClient | null = null;
+let utilisateurInstance: GrpcClient | null = null;
+let membreCompteInstance: GrpcClient | null = null;
+let compteInstance: GrpcClient | null = null;
+let roleInstance: GrpcClient | null = null;
 
-function getUtilisateurClient(): UtilisateurServiceClient {
+function getUtilisateurClient(): GrpcClient {
   if (!utilisateurInstance) {
-    utilisateurInstance = new UtilisateurServiceClient(
+    utilisateurInstance = makeClient(
+      UtilisateurServiceService,
+      "UtilisateurService",
       SERVICES.users,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -51,9 +53,11 @@ function getUtilisateurClient(): UtilisateurServiceClient {
   return utilisateurInstance;
 }
 
-function getMembreCompteClient(): MembreCompteServiceClient {
+function getMembreCompteClient(): GrpcClient {
   if (!membreCompteInstance) {
-    membreCompteInstance = new MembreCompteServiceClient(
+    membreCompteInstance = makeClient(
+      MembreCompteServiceService,
+      "MembreCompteService",
       SERVICES.users,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -61,9 +65,11 @@ function getMembreCompteClient(): MembreCompteServiceClient {
   return membreCompteInstance;
 }
 
-function getCompteClient(): CompteServiceClient {
+function getCompteClient(): GrpcClient {
   if (!compteInstance) {
-    compteInstance = new CompteServiceClient(
+    compteInstance = makeClient(
+      CompteServiceService,
+      "CompteService",
       SERVICES.users,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -71,9 +77,11 @@ function getCompteClient(): CompteServiceClient {
   return compteInstance;
 }
 
-function getRoleClient(): RoleServiceClient {
+function getRoleClient(): GrpcClient {
   if (!roleInstance) {
-    roleInstance = new RoleServiceClient(
+    roleInstance = makeClient(
+      RoleServiceService,
+      "RoleService",
       SERVICES.users,
       createAuthChannelCredentials(credentials.createInsecure())
     );

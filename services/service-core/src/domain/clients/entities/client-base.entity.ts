@@ -70,7 +70,7 @@ export class ClientBaseEntity {
    @Column({ name: 'canal_acquisition', type: 'varchar', length: 100, nullable: true })
    canalAcquisition: string | null;
 
-   @Column({ length: 50, nullable: true })
+   @Column({ type: 'varchar', length: 50, nullable: true })
    civilite: string | null;
 
     @OneToMany('AdresseEntity', 'client')

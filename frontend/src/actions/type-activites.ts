@@ -5,6 +5,7 @@ import type {
   TypeActivite,
   ListTypeActiviteResponse,
 } from "@proto/activites/activites";
+import type { ActionResult } from "@/lib/types/common";
 
 export interface TypeActiviteDto {
   id: string;
@@ -15,24 +16,19 @@ export interface TypeActiviteDto {
   updatedAt: string;
 }
 
-export interface TypeActiviteActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
-
 function mapTypeActiviteToDto(type: TypeActivite): TypeActiviteDto {
   return {
     id: type.id,
     code: type.code,
     nom: type.nom,
-    description: type.description || undefined,
+    description: type.description,
     createdAt: type.createdAt,
     updatedAt: type.updatedAt,
   };
 }
 
 export async function listTypesActivite(): Promise<
-  TypeActiviteActionResult<TypeActiviteDto[]>
+  ActionResult<TypeActiviteDto[]>
 > {
   try {
     const data = await typesActivite.list({
@@ -56,7 +52,7 @@ export async function listTypesActivite(): Promise<
 
 export async function getTypeActivite(
   id: string
-): Promise<TypeActiviteActionResult<TypeActiviteDto>> {
+): Promise<ActionResult<TypeActiviteDto>> {
   try {
     const data = await typesActivite.get({ id });
     return { data: mapTypeActiviteToDto(data), error: null };
@@ -74,7 +70,7 @@ export async function getTypeActivite(
 
 export async function getTypeActiviteByCode(
   code: string
-): Promise<TypeActiviteActionResult<TypeActiviteDto>> {
+): Promise<ActionResult<TypeActiviteDto>> {
   try {
     const data = await typesActivite.getByCode({ code });
     return { data: mapTypeActiviteToDto(data), error: null };
@@ -94,7 +90,7 @@ export async function createTypeActivite(input: {
   code: string;
   nom: string;
   description?: string;
-}): Promise<TypeActiviteActionResult<TypeActiviteDto>> {
+}): Promise<ActionResult<TypeActiviteDto>> {
   try {
     const data = await typesActivite.create({
       code: input.code,
@@ -119,7 +115,7 @@ export async function updateTypeActivite(input: {
   code?: string;
   nom?: string;
   description?: string;
-}): Promise<TypeActiviteActionResult<TypeActiviteDto>> {
+}): Promise<ActionResult<TypeActiviteDto>> {
   try {
     const data = await typesActivite.update({
       id: input.id,
@@ -142,7 +138,7 @@ export async function updateTypeActivite(input: {
 
 export async function deleteTypeActivite(
   id: string
-): Promise<TypeActiviteActionResult<{ success: boolean }>> {
+): Promise<ActionResult<{ success: boolean }>> {
   try {
     await typesActivite.delete({ id });
     return { data: { success: true }, error: null };

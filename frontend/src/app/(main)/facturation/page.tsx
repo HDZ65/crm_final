@@ -1,4 +1,4 @@
-import { getActiveOrgId } from "@/lib/server-data"
+import { getActiveOrgId } from "@/lib/server/data"
 import { getStatutFactures, getFacturesByOrganisation } from "@/actions/factures"
 import { FacturationPageClient } from "./facturation-page-client"
 

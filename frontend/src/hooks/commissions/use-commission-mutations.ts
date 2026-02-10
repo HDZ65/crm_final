@@ -4,33 +4,16 @@ import { useCallback, useState } from "react"
 // Note: Loading states removed from useExportBordereauPDF and useExportBordereauExcel - use useApi for loading state management
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
+import type { Apporteur, CreateApporteurRequest, UpdateApporteurRequest } from "@proto/commerciaux/commerciaux"
+import type { CreateBaremeRequest, UpdateBaremeRequest, CreatePalierRequest, UpdatePalierRequest } from "@proto/commission/commission"
 import type {
-  ApporteurResponseDto,
-  RepriseCommissionResponseDto,
-  BordereauCommissionResponseDto,
-  BaremeCommissionResponseDto,
-  PalierCommissionResponseDto,
-  CreateApporteurDto,
-  UpdateApporteurDto,
+  RepriseWithDetails,
+  BordereauWithDetails,
+  BaremeWithPaliers,
+  PalierDisplay,
   AnnulerRepriseDto,
   ValiderBordereauDto,
-  CreateBaremeDto,
-  UpdateBaremeDto,
-  CreatePalierDto,
-  UpdatePalierDto,
-} from "@/types/commission"
-
-// Re-export des types pour compatibilité avec les imports existants
-export type {
-  CreateApporteurDto,
-  UpdateApporteurDto,
-  AnnulerRepriseDto,
-  ValiderBordereauDto,
-  CreateBaremeDto,
-  UpdateBaremeDto,
-  CreatePalierDto,
-  UpdatePalierDto,
-} from "@/types/commission"
+} from "@/lib/ui/display-types/commission"
 
 // ============================================================================
 // Hooks pour les Apporteurs
@@ -41,11 +24,11 @@ export type {
  * POST /apporteurs
  */
 export function useCreateApporteur() {
-  const [apporteur, setApporteur] = useState<ApporteurResponseDto | null>(null)
-  const { loading, error, execute } = useApi<ApporteurResponseDto>()
+  const [apporteur, setApporteur] = useState<Apporteur | null>(null)
+  const { loading, error, execute } = useApi<Apporteur>()
 
   const create = useCallback(
-    async (data: CreateApporteurDto) => {
+    async (data: CreateApporteurRequest) => {
       try {
         const response = await execute(() => api.post("/apporteurs", data))
         if (response) {
@@ -77,11 +60,11 @@ export function useCreateApporteur() {
  * PATCH /apporteurs/:id
  */
 export function useUpdateApporteur() {
-  const [apporteur, setApporteur] = useState<ApporteurResponseDto | null>(null)
-  const { loading, error, execute } = useApi<ApporteurResponseDto>()
+  const [apporteur, setApporteur] = useState<Apporteur | null>(null)
+  const { loading, error, execute } = useApi<Apporteur>()
 
   const update = useCallback(
-    async (apporteurId: string, data: UpdateApporteurDto) => {
+    async (apporteurId: string, data: UpdateApporteurRequest) => {
       try {
         const response = await execute(() => api.put(`/apporteurs/${apporteurId}`, data))
         if (response) {
@@ -139,7 +122,7 @@ export function useDeleteApporteur() {
  * PATCH /apporteurs/:id/toggle-actif
  */
 export function useToggleApporteurActif() {
-  const { loading, error, execute } = useApi<ApporteurResponseDto>()
+  const { loading, error, execute } = useApi<Apporteur>()
 
   const toggle = useCallback(
     async (apporteurId: string, actif: boolean) => {
@@ -171,8 +154,8 @@ export function useToggleApporteurActif() {
  * POST /reprises-commission/:id/annuler
  */
 export function useAnnulerReprise() {
-  const [reprise, setReprise] = useState<RepriseCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<RepriseCommissionResponseDto>()
+  const [reprise, setReprise] = useState<RepriseWithDetails | null>(null)
+  const { loading, error, execute } = useApi<RepriseWithDetails>()
 
   const annuler = useCallback(
     async (repriseId: string, data: AnnulerRepriseDto) => {
@@ -213,8 +196,8 @@ export function useAnnulerReprise() {
  * POST /bordereaux-commission/:id/valider
  */
 export function useValiderBordereau() {
-  const [bordereau, setBordereau] = useState<BordereauCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<BordereauCommissionResponseDto>()
+  const [bordereau, setBordereau] = useState<BordereauWithDetails | null>(null)
+  const { loading, error, execute } = useApi<BordereauWithDetails>()
 
   const valider = useCallback(
     async (bordereauId: string, data?: ValiderBordereauDto) => {
@@ -386,11 +369,11 @@ export function useCommissionMutations() {
  * POST /baremes-commission
  */
 export function useCreateBareme() {
-  const [bareme, setBareme] = useState<BaremeCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<BaremeCommissionResponseDto>()
+  const [bareme, setBareme] = useState<BaremeWithPaliers | null>(null)
+  const { loading, error, execute } = useApi<BaremeWithPaliers>()
 
   const create = useCallback(
-    async (data: CreateBaremeDto) => {
+    async (data: CreateBaremeRequest) => {
       try {
         const response = await execute(() => api.post("/baremes-commission", data))
         if (response) {
@@ -422,11 +405,11 @@ export function useCreateBareme() {
  * PATCH /baremes-commission/:id
  */
 export function useUpdateBareme() {
-  const [bareme, setBareme] = useState<BaremeCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<BaremeCommissionResponseDto>()
+  const [bareme, setBareme] = useState<BaremeWithPaliers | null>(null)
+  const { loading, error, execute } = useApi<BaremeWithPaliers>()
 
   const update = useCallback(
-    async (baremeId: string, data: UpdateBaremeDto) => {
+    async (baremeId: string, data: UpdateBaremeRequest) => {
       try {
         const response = await execute(() => api.patch(`/baremes-commission/${baremeId}`, data))
         if (response) {
@@ -458,7 +441,7 @@ export function useUpdateBareme() {
  * PATCH /baremes-commission/:id/toggle-actif
  */
 export function useToggleBaremeActif() {
-  const { loading, error, execute } = useApi<BaremeCommissionResponseDto>()
+  const { loading, error, execute } = useApi<BaremeWithPaliers>()
 
   const toggle = useCallback(
     async (baremeId: string, actif: boolean) => {
@@ -516,11 +499,11 @@ export function useDeleteBareme() {
  * POST /paliers-commission
  */
 export function useCreatePalier() {
-  const [palier, setPalier] = useState<PalierCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<PalierCommissionResponseDto>()
+  const [palier, setPalier] = useState<PalierDisplay | null>(null)
+  const { loading, error, execute } = useApi<PalierDisplay>()
 
   const create = useCallback(
-    async (data: CreatePalierDto) => {
+    async (data: CreatePalierRequest) => {
       try {
         const response = await execute(() => api.post("/paliers-commission", data))
         if (response) {
@@ -552,11 +535,11 @@ export function useCreatePalier() {
  * PATCH /paliers-commission/:id
  */
 export function useUpdatePalier() {
-  const [palier, setPalier] = useState<PalierCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<PalierCommissionResponseDto>()
+  const [palier, setPalier] = useState<PalierDisplay | null>(null)
+  const { loading, error, execute } = useApi<PalierDisplay>()
 
   const update = useCallback(
-    async (palierId: string, data: UpdatePalierDto) => {
+    async (palierId: string, data: UpdatePalierRequest) => {
       try {
         const response = await execute(() => api.patch(`/paliers-commission/${palierId}`, data))
         if (response) {

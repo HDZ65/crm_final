@@ -8,7 +8,7 @@
   "scripts": {
     "build": "nest build",
     "proto:clean": "rimraf proto/generated",
-    "proto:generate": "node -e \"const fs=require('fs');const path=require('path');const srcBase=path.resolve('..','..','packages','proto','gen','ts');const dstBase=path.resolve('proto','generated');const files=['commerciaux/commerciaux.ts','commission/commission.ts','contrats/contrats.ts','products/products.ts','dashboard/dashboard.ts','subscriptions/subscriptions.ts','services/bundle.ts'];fs.mkdirSync(dstBase,{recursive:true});for(const rel of files){fs.copyFileSync(path.join(srcBase,rel),path.join(dstBase,path.basename(rel)));}\"",
+    "proto:generate": "node -e \"const fs=require('fs');const path=require('path');const srcBase=path.resolve('..','..','packages','proto','gen','ts');const dstBase=path.resolve('proto','generated');const files=['commerciaux/commerciaux.ts','commission/commission.ts','contrats/contrats.ts','products/products.ts','dashboard/dashboard.ts','subscriptions/subscriptions.ts','services/bundle.ts','partenaires/partenaires.ts'];fs.mkdirSync(dstBase,{recursive:true});for(const rel of files){fs.copyFileSync(path.join(srcBase,rel),path.join(dstBase,path.basename(rel)));}\"",
     "prebuild": "bun run proto:clean && bun run proto:generate",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
@@ -74,6 +74,23 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   },
   "main": "dist/main.js"
 }

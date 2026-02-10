@@ -1,5 +1,5 @@
 import { ExpeditionsPageClient } from "./expeditions-page-client"
-import { getActiveOrgId } from "@/lib/server-data"
+import { getActiveOrgId } from "@/lib/server/data"
 import { getExpeditionsByOrganisation } from "@/actions/expeditions"
 
 export default async function ExpeditionsPage() {

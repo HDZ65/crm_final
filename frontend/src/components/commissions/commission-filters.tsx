@@ -13,12 +13,12 @@ import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Button } from "@/components/ui/button"
 import { DateRange } from "react-day-picker"
 import { Search, RotateCcw } from "lucide-react"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
 import type {
-  ApporteurResponseDto,
-  StatutCommissionResponseDto,
+  StatutCommissionDisplay,
   TypeProduit,
   TypeApporteur,
-} from "@/types/commission"
+} from "@/lib/ui/display-types/commission"
 
 export interface CommissionFiltersState {
   periode?: string
@@ -34,8 +34,8 @@ export interface CommissionFiltersState {
 interface CommissionFiltersProps {
   filters: CommissionFiltersState
   onFiltersChange: (filters: CommissionFiltersState) => void
-  apporteurs?: ApporteurResponseDto[]
-  statuts?: StatutCommissionResponseDto[]
+  apporteurs?: Apporteur[]
+  statuts?: StatutCommissionDisplay[]
   loadingApporteurs?: boolean
   loadingStatuts?: boolean
 }

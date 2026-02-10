@@ -34,6 +34,7 @@ import { Pie, PieChart, Cell } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button"
 
 // Calculer les dates de début/fin en fonction de la période
 function getPeriodDates(period: string): { dateDebut: string; dateFin: string } {
@@ -164,6 +165,11 @@ export function ContratsCard({ initialData }: ContratsCardProps) {
     [filtered]
   )
 
+  const aiPrompt = `Analyse la repartition des contrats par societe et propose des actions commerciales. Periode: ${period}. Total contrats: ${totalContracts}. Top societes: ${filtered
+    .slice(0, 5)
+    .map((item) => `${item.company} (${item.contracts})`)
+    .join(" | ")}.`
+
   // No organisation selected - show empty state
   if (!activeOrganisation) {
     return (
@@ -231,6 +237,7 @@ export function ContratsCard({ initialData }: ContratsCardProps) {
             </div>
           </div>
           <CardAction className="flex items-center gap-2">
+            <AskAiCardButton prompt={aiPrompt} title="Demander une analyse IA de la carte contrats" />
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger size="sm" className="w-40">
                 <SelectValue placeholder="Période" />

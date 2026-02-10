@@ -10,11 +10,7 @@ import type {
   StatutFacture,
   ListStatutsFactureResponse,
 } from "@proto/factures/factures";
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ActionResult } from "@/lib/types/common";
 
 /**
  * Fetch liste des factures par organisation via gRPC

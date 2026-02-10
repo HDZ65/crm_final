@@ -34,7 +34,7 @@ import {
   MembreCompteController,
   InvitationCompteController,
   AuthSyncController,
-} from './interfaces/grpc/controllers/users';
+} from './infrastructure/grpc/users';
 
 // Cross-context dependencies
 import { OrganisationsModule } from './organisations.module';

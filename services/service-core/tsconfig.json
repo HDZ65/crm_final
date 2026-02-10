@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "node16",
     "target": "ES2022",
@@ -12,8 +13,18 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "baseUrl": "./src",
+    "baseUrl": "../../",
+    "paths": {
+      "@crm/shared-kernel": [
+        "packages/shared-kernel/dist"
+      ],
+      "@crm/shared-kernel/*": [
+        "packages/shared-kernel/dist/*"
+      ],
+      "@proto/*": [
+        "services/service-core/proto/generated/*"
+      ]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strict": false,
@@ -27,7 +38,8 @@
     "moduleResolution": "node16"
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "proto/generated/**/*"
   ],
   "exclude": [
     "node_modules",

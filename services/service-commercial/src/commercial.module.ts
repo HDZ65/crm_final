@@ -38,7 +38,7 @@ import {
 } from './infrastructure/persistence/typeorm/repositories/commercial';
 
 // Interface controllers
-import { ApporteurController, CommissionController } from './infrastructure/grpc/commercial';
+import { ApporteurController, CommissionController, PartenaireCommercialController } from './infrastructure/grpc/commercial';
 
 // Cross-context dependencies
 import { ContratsModule } from './contrats.module';
@@ -50,6 +50,9 @@ import { BordereauExportService } from './domain/commercial/services/bordereau-e
 import { BordereauFileStorageService } from './domain/commercial/services/bordereau-file-storage.service';
 import { SnapshotKpiService } from './domain/commercial/services/snapshot-kpi.service';
 import { GenererBordereauWorkflowService } from './domain/commercial/services/generer-bordereau-workflow.service';
+
+// NATS handlers
+import { DepanssurEventsHandler } from './infrastructure/messaging/nats/handlers/depanssur-events.handler';
 
 @Module({
   imports: [
@@ -74,6 +77,7 @@ import { GenererBordereauWorkflowService } from './domain/commercial/services/ge
   controllers: [
     ApporteurController,
     CommissionController,
+    PartenaireCommercialController,
   ],
   providers: [
     ApporteurService,
@@ -209,6 +213,7 @@ import { GenererBordereauWorkflowService } from './domain/commercial/services/ge
     ContestationWorkflowService,
     BordereauExportService,
     BordereauFileStorageService,
+    DepanssurEventsHandler,
     {
       provide: SnapshotKpiService,
       useFactory: (

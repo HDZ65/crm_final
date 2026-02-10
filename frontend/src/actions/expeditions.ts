@@ -5,11 +5,7 @@ import type {
   ExpeditionResponse,
   ExpeditionListResponse,
 } from "@proto/logistics/logistics";
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ActionResult } from "@/lib/types/common";
 
 /**
  * Fetch les expéditions d'un client via gRPC

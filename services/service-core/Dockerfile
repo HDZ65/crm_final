@@ -9,8 +9,7 @@ WORKDIR /app
 
 # Copy shared packages (needed for file: references)
 COPY packages/proto/ ./packages/proto/
-COPY packages/grpc-utils/ ./packages/grpc-utils/
-COPY packages/shared/ ./packages/shared/
+COPY packages/shared-kernel/ ./packages/shared-kernel/
 
 # Copy service
 COPY services/service-core/ ./services/service-core/
@@ -33,8 +32,7 @@ CMD ["bun", "run", "start:dev"]
 # ==========================================
 FROM deps AS builder
 
-RUN bun run --cwd /app/packages/grpc-utils build && \
-    bun run --cwd /app/packages/shared build && \
+RUN bun run --cwd /app/packages/shared-kernel build && \
     bun run build
 
 # ==========================================
@@ -57,10 +55,10 @@ USER nestjs
 
 ENV NODE_ENV=production
 
-EXPOSE 50052
+EXPOSE 50052 50056 50057 3052
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD bun -e "require('net').connect(50052, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
+  CMD bun -e "require('net').connect(3052, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
 
 ENTRYPOINT ["dumb-init", "--"]
 

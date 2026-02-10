@@ -7,25 +7,7 @@ import {
   updateGamme as updateGammeAction,
   deleteGamme as deleteGammeAction,
 } from "@/actions/catalogue"
-import type { GammeDto, Gamme, CreateGammeDto, UpdateGammeDto } from "@/types/gamme"
-
-/**
- * Mapper un GammeDto vers un Gamme pour l'affichage
- */
-function mapGammeToDisplay(gamme: GammeDto): Gamme {
-  return {
-    id: gamme.id,
-    organisationId: gamme.organisationId,
-    name: gamme.nom,
-    description: gamme.description,
-    code: gamme.code,
-    icon: gamme.icone,
-    ordre: gamme.ordre,
-    active: gamme.actif,
-    createdAt: gamme.createdAt,
-    updatedAt: gamme.updatedAt,
-  }
-}
+import type { Gamme, CreateGammeRequest, UpdateGammeRequest } from "@proto/products/products"
 
 export interface UseGammeFilters {
   organisationId?: string
@@ -60,7 +42,7 @@ export function useGammes(filters?: UseGammeFilters) {
       }
 
       const gammesData = result.data?.gammes || []
-      setGammes(gammesData.map(mapGammeToDisplay))
+      setGammes(gammesData as Gamme[])
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors du chargement des gammes")
     }
@@ -83,7 +65,7 @@ export function useGammes(filters?: UseGammeFilters) {
 export function useCreateGamme() {
   const [error, setError] = useState<string | null>(null)
 
-  const createGamme = useCallback(async (data: CreateGammeDto): Promise<Gamme | null> => {
+  const createGamme = useCallback(async (data: CreateGammeRequest): Promise<Gamme | null> => {
     setError(null)
 
     try {
@@ -101,7 +83,7 @@ export function useCreateGamme() {
         return null
       }
 
-      return result.data ? mapGammeToDisplay(result.data) : null
+      return (result.data as Gamme) ?? null
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Erreur lors de la création de la gamme"
       setError(errorMsg)
@@ -121,7 +103,7 @@ export function useCreateGamme() {
 export function useUpdateGamme() {
   const [error, setError] = useState<string | null>(null)
 
-  const updateGamme = useCallback(async (id: string, data: Omit<UpdateGammeDto, "id">): Promise<Gamme | null> => {
+  const updateGamme = useCallback(async (id: string, data: Omit<UpdateGammeRequest, "id">): Promise<Gamme | null> => {
     setError(null)
 
     try {
@@ -140,7 +122,7 @@ export function useUpdateGamme() {
         return null
       }
 
-      return result.data ? mapGammeToDisplay(result.data) : null
+      return (result.data as Gamme) ?? null
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Erreur lors de la mise à jour de la gamme"
       setError(errorMsg)

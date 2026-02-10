@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   SubscriptionPlanEntity,
   SubscriptionEntity,
+  SubscriptionLineEntity,
   SubscriptionHistoryEntity,
   SubscriptionCycleEntity,
   SubscriptionStatusHistoryEntity,
@@ -41,6 +42,7 @@ import {
     TypeOrmModule.forFeature([
       SubscriptionPlanEntity,
       SubscriptionEntity,
+      SubscriptionLineEntity,
       SubscriptionHistoryEntity,
       SubscriptionCycleEntity,
       SubscriptionStatusHistoryEntity,

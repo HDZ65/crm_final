@@ -10,7 +10,7 @@ async function bootstrap() {
   });
 
   const grpcPort = process.env.GRPC_PORT || 50053;
-  const grpcOptions = getMultiGrpcOptions(['commerciaux', 'contrats', 'products', 'commission', 'dashboard', 'bundle', 'subscriptions', 'subscription-plans', 'subscription-preferences', 'subscription-preference-schemas', 'woocommerce'], {
+  const grpcOptions = getMultiGrpcOptions(['commerciaux', 'contrats', 'products', 'commission', 'dashboard', 'bundle', 'subscriptions', 'subscription-plans', 'subscription-preferences', 'subscription-preference-schemas', 'woocommerce', 'partenaires'], {
     url: `0.0.0.0:${grpcPort}`,
   });
   app.connectMicroservice<MicroserviceOptions>({

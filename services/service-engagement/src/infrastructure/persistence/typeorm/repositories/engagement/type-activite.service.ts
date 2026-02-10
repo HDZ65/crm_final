@@ -2,10 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TypeActiviteEntity } from '../../../../../domain/engagement/entities';
-import type {
-  TypeActivite as TypeActiviteProto,
-  ListTypeActiviteResponse,
-} from '@crm/proto/activites';
 
 @Injectable()
 export class TypeActiviteService {
@@ -14,25 +10,25 @@ export class TypeActiviteService {
     private readonly typeActiviteRepository: Repository<TypeActiviteEntity>,
   ) {}
 
-  async create(data: Partial<TypeActiviteEntity>): Promise<TypeActiviteProto> {
+  async create(data: Partial<TypeActiviteEntity>): Promise<any> {
     const typeActivite = this.typeActiviteRepository.create(data);
     const saved = await this.typeActiviteRepository.save(typeActivite);
     return this.toProto(saved);
   }
 
-  async update(id: string, data: Partial<TypeActiviteEntity>): Promise<TypeActiviteProto> {
+  async update(id: string, data: Partial<TypeActiviteEntity>): Promise<any> {
     const typeActivite = await this.findEntityById(id);
     Object.assign(typeActivite, data);
     const saved = await this.typeActiviteRepository.save(typeActivite);
     return this.toProto(saved);
   }
 
-  async findById(id: string): Promise<TypeActiviteProto> {
+  async findById(id: string): Promise<any> {
     const typeActivite = await this.findEntityById(id);
     return this.toProto(typeActivite);
   }
 
-  async findByCode(code: string): Promise<TypeActiviteProto> {
+  async findByCode(code: string): Promise<any> {
     const typeActivite = await this.typeActiviteRepository.findOne({ where: { code } });
     if (!typeActivite) {
       throw new NotFoundException(`TypeActivite avec code ${code} non trouvé`);
@@ -40,7 +36,7 @@ export class TypeActiviteService {
     return this.toProto(typeActivite);
   }
 
-  async findAll(pagination?: { page: number; limit: number }): Promise<ListTypeActiviteResponse> {
+  async findAll(pagination?: { page: number; limit: number }): Promise<any> {
     const page = pagination?.page || 1;
     const limit = pagination?.limit || 10;
     const skip = (page - 1) * limit;
@@ -75,7 +71,7 @@ export class TypeActiviteService {
     return typeActivite;
   }
 
-  private toProto(entity: TypeActiviteEntity): TypeActiviteProto {
+  private toProto(entity: TypeActiviteEntity): any {
     return {
       id: entity.id,
       code: entity.code,

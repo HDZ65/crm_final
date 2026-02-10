@@ -35,20 +35,20 @@ export async function createCalendarEvent(input: {
 }): Promise<ActionResult<CalendarEvent>> {
   try {
     const data = await calendarEvent.create({
-      user_id: input.userId,
-      organisation_id: input.organisationId,
+      userId: input.userId,
+      organisationId: input.organisationId,
       provider: input.provider ?? 0,
-      external_id: input.externalId ?? "",
+      externalId: input.externalId ?? "",
       title: input.title,
       description: input.description ?? "",
-      start_time: input.startTime,
-      end_time: input.endTime,
+      startTime: input.startTime,
+      endTime: input.endTime,
       location: input.location ?? "",
       attendees: input.attendees ?? "",
-      is_all_day: input.isAllDay ?? false,
+      isAllDay: input.isAllDay ?? false,
       source: input.source ?? 0,
-      source_url: input.sourceUrl ?? "",
-      meeting_id: input.meetingId ?? "",
+      sourceUrl: input.sourceUrl ?? "",
+      meetingId: input.meetingId ?? "",
     });
     revalidatePath("/agenda");
     revalidatePath("/calendar");
@@ -100,13 +100,13 @@ export async function updateCalendarEvent(input: {
       id: input.id,
       title: input.title ?? "",
       description: input.description ?? "",
-      start_time: input.startTime ?? "",
-      end_time: input.endTime ?? "",
+      startTime: input.startTime ?? "",
+      endTime: input.endTime ?? "",
       location: input.location ?? "",
       attendees: input.attendees ?? "",
-      is_all_day: input.isAllDay ?? false,
-      source_url: input.sourceUrl ?? "",
-      meeting_id: input.meetingId ?? "",
+      isAllDay: input.isAllDay ?? false,
+      sourceUrl: input.sourceUrl ?? "",
+      meetingId: input.meetingId ?? "",
     });
     revalidatePath("/agenda");
     revalidatePath("/calendar");
@@ -153,15 +153,15 @@ export async function listCalendarEventsByDateRange(input: {
 }): Promise<ActionResult<ListCalendarEventsResponse>> {
   try {
     const data = await calendarEvent.listByDateRange({
-      user_id: input.userId,
-      organisation_id: input.organisationId,
-      start_date: input.startDate,
-      end_date: input.endDate,
+      userId: input.userId,
+      organisationId: input.organisationId,
+      startDate: input.startDate,
+      endDate: input.endDate,
       pagination: {
         page: input.page ?? 1,
         limit: input.limit ?? 50,
-        sort_by: "start_time",
-        sort_order: "asc",
+        sortBy: "startTime",
+        sortOrder: "asc",
       },
     });
     return { data, error: null };
@@ -185,13 +185,13 @@ export async function listCalendarEventsByClient(input: {
 }): Promise<ActionResult<ListCalendarEventsResponse>> {
   try {
     const data = await calendarEvent.listByClient({
-      client_id: input.clientId,
-      organisation_id: input.organisationId,
+      clientId: input.clientId,
+      organisationId: input.organisationId,
       pagination: {
         page: input.page ?? 1,
         limit: input.limit ?? 20,
-        sort_by: "start_time",
-        sort_order: "desc",
+        sortBy: "startTime",
+        sortOrder: "desc",
       },
     });
     return { data, error: null };
@@ -213,8 +213,8 @@ export async function syncCalendarFromProvider(
 ): Promise<ActionResult<SyncFromProviderResponse>> {
   try {
     const data = await calendarEvent.syncFromProvider({
-      oauth_connection_id: oauthConnectionId,
-      sync_from_date: syncFromDate ?? "",
+      oauthConnectionId: oauthConnectionId,
+      syncFromDate: syncFromDate ?? "",
     });
     revalidatePath("/agenda");
     revalidatePath("/calendar");
@@ -251,18 +251,18 @@ export async function createMeeting(input: {
 }): Promise<ActionResult<Meeting>> {
   try {
     const data = await meeting.create({
-      user_id: input.userId,
-      organisation_id: input.organisationId,
+      userId: input.userId,
+      organisationId: input.organisationId,
       provider: input.provider ?? 0,
-      external_meeting_id: input.externalMeetingId ?? "",
+      externalMeetingId: input.externalMeetingId ?? "",
       title: input.title,
-      start_time: input.startTime,
-      end_time: input.endTime,
-      duration_minutes: input.durationMinutes ?? 0,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      durationMinutes: input.durationMinutes ?? 0,
       participants: input.participants ?? "",
-      recording_url: input.recordingUrl ?? "",
-      transcript_url: input.transcriptUrl ?? "",
-      calendar_event_id: input.calendarEventId ?? "",
+      recordingUrl: input.recordingUrl ?? "",
+      transcriptUrl: input.transcriptUrl ?? "",
+      calendarEventId: input.calendarEventId ?? "",
     });
     revalidatePath("/agenda");
     revalidatePath("/meetings");
@@ -307,15 +307,15 @@ export async function listMeetingsByDateRange(input: {
 }): Promise<ActionResult<ListMeetingsResponse>> {
   try {
     const data = await meeting.listByDateRange({
-      user_id: input.userId,
-      organisation_id: input.organisationId,
-      start_date: input.startDate,
-      end_date: input.endDate,
+      userId: input.userId,
+      organisationId: input.organisationId,
+      startDate: input.startDate,
+      endDate: input.endDate,
       pagination: {
         page: input.page ?? 1,
         limit: input.limit ?? 20,
-        sort_by: "start_time",
-        sort_order: "desc",
+        sortBy: "startTime",
+        sortOrder: "desc",
       },
     });
     return { data, error: null };
@@ -336,7 +336,7 @@ export async function matchMeetingParticipants(
 ): Promise<ActionResult<MatchParticipantsResponse>> {
   try {
     const data = await meeting.matchParticipants({
-      meeting_id: meetingId,
+      meetingId: meetingId,
     });
     return { data, error: null };
   } catch (err) {
@@ -359,10 +359,10 @@ export async function updateMeetingClientMatch(input: {
 }): Promise<ActionResult<Meeting>> {
   try {
     const data = await meeting.updateClientMatch({
-      meeting_id: input.meetingId,
-      participant_email: input.participantEmail,
-      client_id: input.clientId,
-      match_type: input.matchType ?? 0,
+      meetingId: input.meetingId,
+      participantEmail: input.participantEmail,
+      clientId: input.clientId,
+      matchType: input.matchType ?? 0,
     });
     revalidatePath("/meetings");
     revalidatePath("/agenda");
@@ -406,7 +406,7 @@ export async function getCallSummaryByMeeting(
 ): Promise<ActionResult<CallSummary>> {
   try {
     const data = await callSummary.getByMeeting({
-      meeting_id: meetingId,
+      meetingId: meetingId,
     });
     return { data, error: null };
   } catch (err) {
@@ -427,8 +427,8 @@ export async function regenerateCallSummary(
 ): Promise<ActionResult<CallSummary>> {
   try {
     const data = await callSummary.regenerate({
-      meeting_id: meetingId,
-      ai_model: aiModel ?? "",
+      meetingId: meetingId,
+      aiModel: aiModel ?? "",
     });
     revalidatePath("/meetings");
     revalidatePath("/agenda");

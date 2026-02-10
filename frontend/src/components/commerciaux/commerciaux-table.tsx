@@ -3,10 +3,10 @@
 import * as React from "react"
 import { DataTable } from "@/components/data-table-basic"
 import { createColumns } from "@/app/(main)/commerciaux/columns"
-import type { Commercial } from "@/types/commercial"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
 
 interface CommercialsTableProps {
-  commerciaux: Commercial[]
+  commerciaux: Apporteur[]
   isLoading?: boolean
   onRefresh?: () => void
 }

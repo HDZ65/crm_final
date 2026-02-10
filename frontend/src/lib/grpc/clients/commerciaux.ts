@@ -1,7 +1,7 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, GrpcClient } from "./config";
 import {
-  ApporteurServiceClient,
+  ApporteurServiceService,
   type Apporteur,
   type CreateApporteurRequest,
   type UpdateApporteurRequest,
@@ -13,11 +13,13 @@ import {
   type DeleteResponse as ApporteurDeleteResponse,
 } from "@proto/commerciaux/commerciaux";
 
-let apporteurInstance: ApporteurServiceClient | null = null;
+let apporteurInstance: GrpcClient | null = null;
 
-function getApporteurClient(): ApporteurServiceClient {
+function getApporteurClient(): GrpcClient {
   if (!apporteurInstance) {
-    apporteurInstance = new ApporteurServiceClient(
+    apporteurInstance = makeClient(
+      ApporteurServiceService,
+      "ApporteurService",
       SERVICES.commerciaux,
       createAuthChannelCredentials(credentials.createInsecure())
     );

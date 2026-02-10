@@ -195,7 +195,7 @@ export function WelcomeForm() {
                         </CardFooter>
                     </Card>
 
-                    <p className="text-center mt-6 text-sm text-sidebar-foreground drop-shadow-md">
+                    <p className="text-center mt-6 text-sm text-muted-foreground">
                         Vous avez reçu une invitation par email ? <br />
                         Vérifiez vos spams ou contactez votre administrateur.
                     </p>

@@ -144,25 +144,10 @@ export class EnrichModeleDistribution1739050000000 implements MigrationInterface
       }),
     );
 
-    await queryRunner.createForeignKey(
-      'modeledistributions',
-      new TableForeignKey({
-        name: 'fk_modele_distribution_societe',
-        columnNames: ['societe_id'],
-        referencedTableName: 'societes',
-        referencedColumnNames: ['id'],
-        onDelete: 'SET NULL',
-      }),
-    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop FK constraints
-    await queryRunner.dropForeignKey(
-      'modeledistributions',
-      'fk_modele_distribution_societe',
-    );
-
     await queryRunner.dropForeignKey(
       'modeledistributions',
       'fk_modele_distribution_partenaire_commercial',

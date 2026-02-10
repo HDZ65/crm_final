@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,7 @@ import {
 } from "@/components/ui/table"
 import { createExportJob, listExportJobs } from "@/actions/exports"
 import { toast } from "sonner"
-import { Download, FileOutput, Loader2, Plus, RefreshCw, Search } from "lucide-react"
+import { Download, Loader2, Plus, RefreshCw, Search } from "lucide-react"
 
 interface ExportsPageClientProps {
   initialJobs?: any[] | null
@@ -89,7 +90,7 @@ export function ExportsPageClient({ initialJobs, initialSocieteId }: ExportsPage
     }
 
     setLoading(true)
-    const result = await listExportJobs({ societeId, page: 1, pageSize: 100 } as any)
+    const result = await listExportJobs({ societeId, page: 1, limit: 100 } as any)
     if (result.error) {
       toast.error(result.error)
     } else {
@@ -151,17 +152,11 @@ export function ExportsPageClient({ initialJobs, initialSocieteId }: ExportsPage
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <FileOutput className="size-6" />
-            Exports paiements
-          </h1>
-          <p className="text-muted-foreground">
-            Consultez l'historique et declenchez de nouveaux exports comptables.
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Consultez l'historique et declenchez de nouveaux exports comptables.
+        </p>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={fetchJobs} disabled={loading || !societeId}>
             <RefreshCw className="mr-2 size-4" />
@@ -320,24 +315,24 @@ export function ExportsPageClient({ initialJobs, initialSocieteId }: ExportsPage
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="from-date">Du</Label>
-                <Input
+                <DatePicker
                   id="from-date"
-                  type="date"
                   value={formData.fromDate}
-                  onChange={(event) =>
-                    setFormData((previous) => ({ ...previous, fromDate: event.target.value }))
+                  onChange={(value) =>
+                    setFormData((previous) => ({ ...previous, fromDate: value }))
                   }
+                  placeholder="Sélectionnez une date"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="to-date">Au</Label>
-                <Input
+                <DatePicker
                   id="to-date"
-                  type="date"
                   value={formData.toDate}
-                  onChange={(event) =>
-                    setFormData((previous) => ({ ...previous, toDate: event.target.value }))
+                  onChange={(value) =>
+                    setFormData((previous) => ({ ...previous, toDate: value }))
                   }
+                  placeholder="Sélectionnez une date"
                 />
               </div>
             </div>
@@ -359,6 +354,6 @@ export function ExportsPageClient({ initialJobs, initialSocieteId }: ExportsPage
           </form>
         </DialogContent>
       </Dialog>
-    </main>
+    </div>
   )
 }

@@ -17,7 +17,8 @@ import {
   Clock,
   MessageSquare,
 } from "lucide-react"
-import type { ActiviteDto, TypeActiviteDto } from "@/types/activite"
+import type { ActiviteDto } from "@/actions/activites"
+import type { TypeActiviteDto } from "@/actions/type-activites"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
 

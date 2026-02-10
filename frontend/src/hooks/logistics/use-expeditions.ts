@@ -2,26 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { api } from "@/lib/api"
+import type { ExpeditionResponse } from "@proto/logistics/logistics"
 import type {
-  ExpeditionDto,
   ExpeditionEtat,
   ExpeditionsFilters,
-} from "@/types/expedition"
+} from "@/lib/ui/labels/expedition"
 
-// Re-export des types pour compatibilité avec les imports existants
-export type {
-  ExpeditionEtat,
-  ExpeditionClient,
-  ExpeditionContrat,
-  ExpeditionTransporteur,
-  ExpeditionDto,
-  ExpeditionsFilters,
-} from "@/types/expedition"
-
+export type { ExpeditionEtat, ExpeditionsFilters } from "@/lib/ui/labels/expedition"
 export {
   EXPEDITION_ETAT_LABELS,
   EXPEDITION_ETAT_VARIANTS,
-} from "@/types/expedition"
+} from "@/lib/ui/labels/expedition"
+
+type ExpeditionDto = ExpeditionResponse
 
 /**
  * Hook pour récupérer la liste des expéditions avec détails

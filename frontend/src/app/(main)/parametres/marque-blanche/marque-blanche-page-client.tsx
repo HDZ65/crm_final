@@ -85,11 +85,12 @@ export function MarqueBlanchePageClient({
     null
   )
   const [partenaireFormData, setPartenaireFormData] = React.useState({
-    nom: "",
-    domaine: "",
-    themeId: "",
+    denomination: "",
+    contactSupportEmail: "",
+    telephone: "",
+    siren: "",
+    numeroTva: "",
     statutId: "",
-    actif: true,
   })
   const [deletePartenaireDialogOpen, setDeletePartenaireDialogOpen] = React.useState(false)
 
@@ -98,10 +99,10 @@ export function MarqueBlanchePageClient({
   const [themeDialogOpen, setThemeDialogOpen] = React.useState(false)
   const [selectedTheme, setSelectedTheme] = React.useState<ThemeMarque | null>(null)
   const [themeFormData, setThemeFormData] = React.useState({
-    nom: "",
+    logoUrl: "",
     couleurPrimaire: "#000000",
     couleurSecondaire: "#ffffff",
-    logoUrl: "",
+    faviconUrl: "",
   })
   const [deleteThemeDialogOpen, setDeleteThemeDialogOpen] = React.useState(false)
 
@@ -111,7 +112,8 @@ export function MarqueBlanchePageClient({
   const [selectedStatut, setSelectedStatut] = React.useState<StatutPartenaire | null>(null)
   const [statutFormData, setStatutFormData] = React.useState({
     code: "",
-    libelle: "",
+    nom: "",
+    description: "",
   })
   const [deleteStatutDialogOpen, setDeleteStatutDialogOpen] = React.useState(false)
 
@@ -156,11 +158,12 @@ export function MarqueBlanchePageClient({
   const handleCreatePartenaire = () => {
     setSelectedPartenaire(null)
     setPartenaireFormData({
-      nom: "",
-      domaine: "",
-      themeId: "",
+      denomination: "",
+      contactSupportEmail: "",
+      telephone: "",
+      siren: "",
+      numeroTva: "",
       statutId: "",
-      actif: true,
     })
     setPartenaireDialogOpen(true)
   }
@@ -168,19 +171,20 @@ export function MarqueBlanchePageClient({
   const handleEditPartenaire = (partenaire: PartenaireMarqueBlanche) => {
     setSelectedPartenaire(partenaire)
     setPartenaireFormData({
-      nom: partenaire.nom,
-      domaine: partenaire.domaine,
-      themeId: partenaire.themeId,
+      denomination: partenaire.denomination,
+      contactSupportEmail: partenaire.contactSupportEmail,
+      telephone: partenaire.telephone,
+      siren: partenaire.siren,
+      numeroTva: partenaire.numeroTva,
       statutId: partenaire.statutId,
-      actif: partenaire.actif,
     })
     setPartenaireDialogOpen(true)
   }
 
   const handleSubmitPartenaire = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!partenaireFormData.nom || !partenaireFormData.domaine) {
-      toast.error("Nom et domaine sont obligatoires")
+    if (!partenaireFormData.denomination || !partenaireFormData.contactSupportEmail) {
+      toast.error("Dénomination et email de support sont obligatoires")
       return
     }
 
@@ -233,10 +237,10 @@ export function MarqueBlanchePageClient({
   const handleCreateTheme = () => {
     setSelectedTheme(null)
     setThemeFormData({
-      nom: "",
+      logoUrl: "",
       couleurPrimaire: "#000000",
       couleurSecondaire: "#ffffff",
-      logoUrl: "",
+      faviconUrl: "",
     })
     setThemeDialogOpen(true)
   }
@@ -244,18 +248,18 @@ export function MarqueBlanchePageClient({
   const handleEditTheme = (theme: ThemeMarque) => {
     setSelectedTheme(theme)
     setThemeFormData({
-      nom: theme.nom,
+      logoUrl: theme.logoUrl || "",
       couleurPrimaire: theme.couleurPrimaire,
       couleurSecondaire: theme.couleurSecondaire,
-      logoUrl: theme.logoUrl || "",
+      faviconUrl: theme.faviconUrl || "",
     })
     setThemeDialogOpen(true)
   }
 
   const handleSubmitTheme = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!themeFormData.nom) {
-      toast.error("Nom est obligatoire")
+    if (!themeFormData.logoUrl) {
+      toast.error("Logo URL est obligatoire")
       return
     }
 
@@ -307,7 +311,7 @@ export function MarqueBlanchePageClient({
   // Statut handlers
   const handleCreateStatut = () => {
     setSelectedStatut(null)
-    setStatutFormData({ code: "", libelle: "" })
+    setStatutFormData({ code: "", nom: "", description: "" })
     setStatutDialogOpen(true)
   }
 
@@ -315,15 +319,16 @@ export function MarqueBlanchePageClient({
     setSelectedStatut(statut)
     setStatutFormData({
       code: statut.code,
-      libelle: statut.libelle,
+      nom: statut.nom,
+      description: statut.description,
     })
     setStatutDialogOpen(true)
   }
 
   const handleSubmitStatut = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!statutFormData.code || !statutFormData.libelle) {
-      toast.error("Code et libellé sont obligatoires")
+    if (!statutFormData.code || !statutFormData.nom) {
+      toast.error("Code et nom sont obligatoires")
       return
     }
 
@@ -376,7 +381,7 @@ export function MarqueBlanchePageClient({
     if (!search) return partenaires
     const q = search.toLowerCase()
     return partenaires.filter(
-      (p) => p.nom.toLowerCase().includes(q) || p.domaine.toLowerCase().includes(q)
+      (p) => p.denomination.toLowerCase().includes(q) || p.contactSupportEmail.toLowerCase().includes(q)
     )
   }, [partenaires, search])
 
@@ -446,31 +451,25 @@ export function MarqueBlanchePageClient({
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Domaine</TableHead>
-                  <TableHead>Thème</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Actif</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
+               <TableRow>
+                   <TableHead>Dénomination</TableHead>
+                   <TableHead>Email Support</TableHead>
+                   <TableHead>SIREN</TableHead>
+                   <TableHead>Téléphone</TableHead>
+                   <TableHead>Statut</TableHead>
+                   <TableHead className="text-right">Actions</TableHead>
+                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPartenaires.map((partenaire) => (
-                  <TableRow key={partenaire.id}>
-                    <TableCell className="font-medium">{partenaire.nom}</TableCell>
-                    <TableCell>{partenaire.domaine}</TableCell>
-                    <TableCell>
-                      {themes.find((t) => t.id === partenaire.themeId)?.nom || "-"}
-                    </TableCell>
-                    <TableCell>
-                      {statuts.find((s) => s.id === partenaire.statutId)?.libelle || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={partenaire.actif ? "default" : "secondary"}>
-                        {partenaire.actif ? "Actif" : "Inactif"}
-                      </Badge>
-                    </TableCell>
+                 {filteredPartenaires.map((partenaire) => (
+                   <TableRow key={partenaire.id}>
+                     <TableCell className="font-medium">{partenaire.denomination}</TableCell>
+                     <TableCell>{partenaire.contactSupportEmail}</TableCell>
+                     <TableCell>{partenaire.siren}</TableCell>
+                     <TableCell>{partenaire.telephone}</TableCell>
+                     <TableCell>
+                       {statuts.find((s) => s.id === partenaire.statutId)?.nom || "-"}
+                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -522,41 +521,41 @@ export function MarqueBlanchePageClient({
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Couleur Primaire</TableHead>
-                  <TableHead>Couleur Secondaire</TableHead>
-                  <TableHead>Logo</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
+               <TableRow>
+                   <TableHead>Logo</TableHead>
+                   <TableHead>Couleur Primaire</TableHead>
+                   <TableHead>Couleur Secondaire</TableHead>
+                   <TableHead>Favicon</TableHead>
+                   <TableHead className="text-right">Actions</TableHead>
+                 </TableRow>
               </TableHeader>
               <TableBody>
-                {themes.map((theme) => (
-                  <TableRow key={theme.id}>
-                    <TableCell className="font-medium">{theme.nom}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border"
-                          style={{ backgroundColor: theme.couleurPrimaire }}
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {theme.couleurPrimaire}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border"
-                          style={{ backgroundColor: theme.couleurSecondaire }}
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {theme.couleurSecondaire}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{theme.logoUrl ? "Oui" : "Non"}</TableCell>
+                 {themes.map((theme) => (
+                   <TableRow key={theme.id}>
+                     <TableCell className="font-medium">{theme.logoUrl ? "✓" : "-"}</TableCell>
+                     <TableCell>
+                       <div className="flex items-center gap-2">
+                         <div
+                           className="w-6 h-6 rounded border"
+                           style={{ backgroundColor: theme.couleurPrimaire }}
+                         />
+                         <span className="text-sm text-muted-foreground">
+                           {theme.couleurPrimaire}
+                         </span>
+                       </div>
+                     </TableCell>
+                     <TableCell>
+                       <div className="flex items-center gap-2">
+                         <div
+                           className="w-6 h-6 rounded border"
+                           style={{ backgroundColor: theme.couleurSecondaire }}
+                         />
+                         <span className="text-sm text-muted-foreground">
+                           {theme.couleurSecondaire}
+                         </span>
+                       </div>
+                     </TableCell>
+                     <TableCell>{theme.faviconUrl ? "✓" : "-"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -608,17 +607,19 @@ export function MarqueBlanchePageClient({
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Libellé</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
+               <TableRow>
+                   <TableHead>Code</TableHead>
+                   <TableHead>Nom</TableHead>
+                   <TableHead>Description</TableHead>
+                   <TableHead className="text-right">Actions</TableHead>
+                 </TableRow>
               </TableHeader>
               <TableBody>
-                {statuts.map((statut) => (
-                  <TableRow key={statut.id}>
-                    <TableCell className="font-medium">{statut.code}</TableCell>
-                    <TableCell>{statut.libelle}</TableCell>
+                 {statuts.map((statut) => (
+                   <TableRow key={statut.id}>
+                     <TableCell className="font-medium">{statut.code}</TableCell>
+                     <TableCell>{statut.nom}</TableCell>
+                     <TableCell>{statut.description}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -659,83 +660,80 @@ export function MarqueBlanchePageClient({
               Renseignez les informations du partenaire marque blanche.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmitPartenaire} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="nom">Nom *</Label>
-              <Input
-                id="nom"
-                value={partenaireFormData.nom}
-                onChange={(e) =>
-                  setPartenaireFormData({ ...partenaireFormData, nom: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="domaine">Domaine *</Label>
-              <Input
-                id="domaine"
-                value={partenaireFormData.domaine}
-                onChange={(e) =>
-                  setPartenaireFormData({ ...partenaireFormData, domaine: e.target.value })
-                }
-                placeholder="example.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="themeId">Thème</Label>
-              <Select
-                value={partenaireFormData.themeId}
-                onValueChange={(value) =>
-                  setPartenaireFormData({ ...partenaireFormData, themeId: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un thème" />
-                </SelectTrigger>
-                <SelectContent>
-                  {themes.map((theme) => (
-                    <SelectItem key={theme.id} value={theme.id}>
-                      {theme.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="statutId">Statut</Label>
-              <Select
-                value={partenaireFormData.statutId}
-                onValueChange={(value) =>
-                  setPartenaireFormData({ ...partenaireFormData, statutId: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuts.map((statut) => (
-                    <SelectItem key={statut.id} value={statut.id}>
-                      {statut.libelle}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="actif"
-                checked={partenaireFormData.actif}
-                onCheckedChange={(checked) =>
-                  setPartenaireFormData({
-                    ...partenaireFormData,
-                    actif: checked === true,
-                  })
-                }
-              />
-              <Label htmlFor="actif">Actif</Label>
-            </div>
+           <form onSubmit={handleSubmitPartenaire} className="space-y-4">
+             <div className="space-y-2">
+               <Label htmlFor="denomination">Dénomination *</Label>
+               <Input
+                 id="denomination"
+                 value={partenaireFormData.denomination}
+                 onChange={(e) =>
+                   setPartenaireFormData({ ...partenaireFormData, denomination: e.target.value })
+                 }
+                 required
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="contactSupportEmail">Email de support *</Label>
+               <Input
+                 id="contactSupportEmail"
+                 type="email"
+                 value={partenaireFormData.contactSupportEmail}
+                 onChange={(e) =>
+                   setPartenaireFormData({ ...partenaireFormData, contactSupportEmail: e.target.value })
+                 }
+                 required
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="siren">SIREN</Label>
+               <Input
+                 id="siren"
+                 value={partenaireFormData.siren}
+                 onChange={(e) =>
+                   setPartenaireFormData({ ...partenaireFormData, siren: e.target.value })
+                 }
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="numeroTva">Numéro TVA</Label>
+               <Input
+                 id="numeroTva"
+                 value={partenaireFormData.numeroTva}
+                 onChange={(e) =>
+                   setPartenaireFormData({ ...partenaireFormData, numeroTva: e.target.value })
+                 }
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="telephone">Téléphone</Label>
+               <Input
+                 id="telephone"
+                 value={partenaireFormData.telephone}
+                 onChange={(e) =>
+                   setPartenaireFormData({ ...partenaireFormData, telephone: e.target.value })
+                 }
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="statutId">Statut</Label>
+               <Select
+                 value={partenaireFormData.statutId}
+                 onValueChange={(value) =>
+                   setPartenaireFormData({ ...partenaireFormData, statutId: value })
+                 }
+               >
+                 <SelectTrigger>
+                   <SelectValue placeholder="Sélectionner un statut" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {statuts.map((statut) => (
+                     <SelectItem key={statut.id} value={statut.id}>
+                       {statut.nom}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             </div>
             <DialogFooter>
               <Button
                 type="button"
@@ -762,18 +760,19 @@ export function MarqueBlanchePageClient({
               Configurez les couleurs et le logo du thème.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmitTheme} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="theme-nom">Nom *</Label>
-              <Input
-                id="theme-nom"
-                value={themeFormData.nom}
-                onChange={(e) =>
-                  setThemeFormData({ ...themeFormData, nom: e.target.value })
-                }
-                required
-              />
-            </div>
+           <form onSubmit={handleSubmitTheme} className="space-y-4">
+             <div className="space-y-2">
+               <Label htmlFor="logoUrl">URL du Logo *</Label>
+               <Input
+                 id="logoUrl"
+                 value={themeFormData.logoUrl}
+                 onChange={(e) =>
+                   setThemeFormData({ ...themeFormData, logoUrl: e.target.value })
+                 }
+                 placeholder="https://example.com/logo.png"
+                 required
+               />
+             </div>
             <div className="space-y-2">
               <Label htmlFor="couleurPrimaire">Couleur Primaire</Label>
               <div className="flex items-center gap-2">
@@ -822,17 +821,17 @@ export function MarqueBlanchePageClient({
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="logoUrl">URL du Logo</Label>
-              <Input
-                id="logoUrl"
-                value={themeFormData.logoUrl}
-                onChange={(e) =>
-                  setThemeFormData({ ...themeFormData, logoUrl: e.target.value })
-                }
-                placeholder="https://example.com/logo.png"
-              />
-            </div>
+             <div className="space-y-2">
+               <Label htmlFor="faviconUrl">URL du Favicon</Label>
+               <Input
+                 id="faviconUrl"
+                 value={themeFormData.faviconUrl}
+                 onChange={(e) =>
+                   setThemeFormData({ ...themeFormData, faviconUrl: e.target.value })
+                 }
+                 placeholder="https://example.com/favicon.ico"
+               />
+             </div>
             <DialogFooter>
               <Button
                 type="button"
@@ -859,29 +858,39 @@ export function MarqueBlanchePageClient({
               Définissez le code et le libellé du statut partenaire.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmitStatut} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="statut-code">Code *</Label>
-              <Input
-                id="statut-code"
-                value={statutFormData.code}
-                onChange={(e) =>
-                  setStatutFormData({ ...statutFormData, code: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="statut-libelle">Libellé *</Label>
-              <Input
-                id="statut-libelle"
-                value={statutFormData.libelle}
-                onChange={(e) =>
-                  setStatutFormData({ ...statutFormData, libelle: e.target.value })
-                }
-                required
-              />
-            </div>
+           <form onSubmit={handleSubmitStatut} className="space-y-4">
+             <div className="space-y-2">
+               <Label htmlFor="statut-code">Code *</Label>
+               <Input
+                 id="statut-code"
+                 value={statutFormData.code}
+                 onChange={(e) =>
+                   setStatutFormData({ ...statutFormData, code: e.target.value })
+                 }
+                 required
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="statut-nom">Nom *</Label>
+               <Input
+                 id="statut-nom"
+                 value={statutFormData.nom}
+                 onChange={(e) =>
+                   setStatutFormData({ ...statutFormData, nom: e.target.value })
+                 }
+                 required
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="statut-description">Description</Label>
+               <Input
+                 id="statut-description"
+                 value={statutFormData.description}
+                 onChange={(e) =>
+                   setStatutFormData({ ...statutFormData, description: e.target.value })
+                 }
+               />
+             </div>
             <DialogFooter>
               <Button
                 type="button"
@@ -907,10 +916,10 @@ export function MarqueBlanchePageClient({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le partenaire{" "}
-              <strong>{selectedPartenaire?.nom}</strong> ? Cette action est irréversible.
-            </AlertDialogDescription>
+             <AlertDialogDescription>
+               Êtes-vous sûr de vouloir supprimer le partenaire{" "}
+               <strong>{selectedPartenaire?.denomination}</strong> ? Cette action est irréversible.
+             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -927,10 +936,9 @@ export function MarqueBlanchePageClient({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le thème{" "}
-              <strong>{selectedTheme?.nom}</strong> ? Cette action est irréversible.
-            </AlertDialogDescription>
+             <AlertDialogDescription>
+               Êtes-vous sûr de vouloir supprimer ce thème ? Cette action est irréversible.
+             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -947,10 +955,10 @@ export function MarqueBlanchePageClient({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le statut{" "}
-              <strong>{selectedStatut?.libelle}</strong> ? Cette action est irréversible.
-            </AlertDialogDescription>
+             <AlertDialogDescription>
+               Êtes-vous sûr de vouloir supprimer le statut{" "}
+               <strong>{selectedStatut?.nom}</strong> ? Cette action est irréversible.
+             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>

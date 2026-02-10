@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "node16",
     "target": "ES2022",
@@ -12,8 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "baseUrl": "./src",
+    "baseUrl": "../../",
     "incremental": true,
     "skipLibCheck": true,
     "strict": false,
@@ -24,10 +24,22 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node16"
+    "moduleResolution": "node16",
+    "paths": {
+      "@crm/shared-kernel": [
+        "packages/shared-kernel/dist"
+      ],
+      "@crm/shared-kernel/*": [
+        "packages/shared-kernel/dist/*"
+      ],
+      "@proto/*": [
+        "services/service-finance/proto/generated/*"
+      ]
+    }
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "proto/generated/**/*"
   ],
   "exclude": [
     "node_modules",

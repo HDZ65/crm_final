@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Plus, Download, FileText, Calendar, FolderOpen } from "lucide-react"
-import type { Document } from "@/types/client"
+import type { Document } from "@/lib/ui/display-types/client"
 
 interface ClientDocumentsProps {
   documents: Document[]

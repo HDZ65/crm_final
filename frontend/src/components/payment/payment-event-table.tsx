@@ -10,19 +10,25 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, XCircle } from "lucide-react"
-import type { PaymentEvent, PaymentEventType } from "@/types/payment-event"
+import type { PaymentEventResponse } from "@proto/payments/payment"
 
 interface PaymentEventTableProps {
-  paymentEvents: PaymentEvent[]
+  paymentEvents: PaymentEventResponse[]
 }
 
-const eventTypeColors: Record<PaymentEventType, string> = {
+const eventTypeColors: Record<string, string> = {
   payment_initiated: "bg-blue-500",
   payment_confirmed: "bg-green-500",
   payment_failed: "bg-red-500",
   payment_pending: "bg-yellow-500",
   mandate_cancelled: "bg-gray-500",
   payment_refunded: "bg-purple-500",
+  PAYMENT_INITIATED: "bg-blue-500",
+  PAYMENT_CONFIRMED: "bg-green-500",
+  PAYMENT_FAILED: "bg-red-500",
+  PAYMENT_PENDING: "bg-yellow-500",
+  MANDATE_CANCELLED: "bg-gray-500",
+  PAYMENT_REFUNDED: "bg-purple-500",
 }
 
 export function PaymentEventTable({ paymentEvents }: PaymentEventTableProps) {

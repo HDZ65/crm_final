@@ -5,5 +5,3 @@ export * as organisationsRepositories from './persistence/typeorm/repositories/o
 export * as clientsRepositories from './persistence/typeorm/repositories/clients';
 export * as documentsRepositories from './persistence/typeorm/repositories/documents';
 
-// Messaging - NATS handlers
-export * as natsHandlers from './messaging/nats/handlers';

@@ -1,0 +1,32 @@
+=== REGRESSION TEST RESULTS ===
+Date: 2026-02-07 19:18:52
+
+service-commercial:
+- Tests: 284 pass, 1 fail, 1 error
+- Exit code: 1 (FAILED)
+- Test files: 26 files
+- Total expect() calls: 661
+
+FAILURE DETAILS:
+- 1 fail: ReferenceError in tarification.engine.spec.ts
+  Error: Cannot access 'ProduitEntity' before initialization
+  Location: src/domain/products/entities/prix-produit.entity.ts:59:3
+  Issue: Circular dependency or initialization order problem in entity relations
+
+- 1 error: Unhandled error between tests
+  Related to entity loading and @ManyToOne relation initialization
+
+service-logistics:
+- Tests: 10 pass, 0 fail
+- Exit code: 0 (PASSED)
+- Test files: 1 file
+- Total expect() calls: 33
+
+=== CONCLUSION ===
+PARTIAL PASS - service-logistics fully passes, service-commercial has entity initialization issue
+
+The regression test failure in service-commercial is NOT related to subscription/fulfillment flow.
+It's a pre-existing issue in the tarification (pricing) domain with entity circular dependencies.
+The subscription, WooCommerce, and fulfillment tests all pass successfully.
+
+RECOMMENDATION: Fix entity initialization order in ProduitEntity/PrixProduitEntity before production.

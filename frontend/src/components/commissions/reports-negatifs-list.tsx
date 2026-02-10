@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table-basic"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { ReportNegatif } from "@proto/commission/commission"
-import { StatutReport } from "@/lib/proto/enums"
+import { StatutReport } from "@proto/commission/commission"
 
 interface ReportsNegatifsListProps {
   reports: ReportNegatif[]

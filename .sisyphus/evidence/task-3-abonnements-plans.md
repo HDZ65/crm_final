@@ -1,0 +1,121 @@
+- generic:
+  - generic [ref=e109]:
+    - generic [ref=e110]:
+      - button "Ce n'est pas vous ? Se déconnecter" [ref=e111] [cursor=pointer]:
+        - img
+      - generic [ref=e112]:
+        - generic [ref=e113]: Bienvenue, Alexandre 👋
+        - generic [ref=e114]: Vous n'êtes membre d'aucune organisation pour le moment. Créez votre propre espace de travail pour commencer.
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e118]: Nom de votre entreprise
+          - generic [ref=e119]:
+            - generic:
+              - img
+            - textbox "Nom de votre entreprise" [active] [ref=e120]:
+              - /placeholder: "Ex: Acme Corp, Ma Startup..."
+          - paragraph [ref=e121]: Cela créera un nouvel espace où vous serez Administrateur.
+        - button "Créer mon espace" [disabled]:
+          - text: Créer mon espace
+          - img
+      - generic [ref=e122]:
+        - generic [ref=e123]:
+          - img [ref=e124]
+          - generic [ref=e127]: Données sécurisées
+        - generic [ref=e128]:
+          - img [ref=e129]
+          - generic [ref=e134]: Invitez votre équipe
+    - paragraph [ref=e135]:
+      - text: Vous avez reçu une invitation par email ?
+      - text: Vérifiez vos spams ou contactez votre administrateur.
+  - status [ref=e1]:
+    - img [ref=e2]
+    - generic [ref=e8]: Serveur inaccessibleLe serveur ne repond pas
+  - region "Notifications alt+T"
+  - generic:
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - navigation [ref=e14]:
+            - button "previous" [disabled] [ref=e15]:
+              - img "previous" [ref=e16]
+            - generic [ref=e18]:
+              - generic [ref=e19]: 1/
+              - text: "1"
+            - button "next" [disabled] [ref=e20]:
+              - img "next" [ref=e21]
+          - img
+        - generic [ref=e23]:
+          - link "Next.js 16.1.4 (stale) Turbopack" [ref=e24] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e25]
+            - generic "There is a newer version (16.1.6) available, upgrade recommended!" [ref=e27]: Next.js 16.1.4 (stale)
+            - generic [ref=e28]: Turbopack
+          - img
+      - dialog "Build Error" [ref=e30]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e37]: Build Error
+              - generic [ref=e38]:
+                - button "Copy Error Info" [ref=e39] [cursor=pointer]:
+                  - img [ref=e40]
+                - link "Go to related documentation" [ref=e42] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/rendering/server-components
+                  - img [ref=e43]
+                - button "Attach Node.js inspector" [ref=e45] [cursor=pointer]:
+                  - img [ref=e46]
+            - generic [ref=e55]: Ecmascript file had an error
+          - generic [ref=e57]:
+            - generic [ref=e59]:
+              - img [ref=e61]
+              - generic [ref=e65]: ./src/lib/auth/auth.server.ts (1:1)
+              - button "Open in editor" [ref=e66] [cursor=pointer]:
+                - img [ref=e68]
+            - generic [ref=e71]:
+              - generic [ref=e72]: Ecmascript file had an error
+              - text: ">"
+              - generic [ref=e73]: 1 |
+              - text: import
+              - generic [ref=e74]: "{ cookies }"
+              - text: from "next/headers";
+              - generic [ref=e75]: "|"
+              - text: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              - generic [ref=e76]: 2 |
+              - text: import
+              - generic [ref=e77]: "{ users"
+              - text: ","
+              - generic [ref=e78]: membresCompte
+              - text: ","
+              - generic [ref=e79]: comptes
+              - text: ","
+              - generic [ref=e80]: "roles }"
+              - text: from "@/lib/grpc";
+              - generic [ref=e81]: 3 |
+              - text: import
+              - generic [ref=e82]: "type {"
+              - text: UserOrganisation, UserRole
+              - generic [ref=e83]: "}"
+              - text: from "@proto/organisations/users";
+              - generic [ref=e84]: 4 |
+              - text: import
+              - generic [ref=e85]: "type {"
+              - text: AuthMeResponse
+              - generic [ref=e86]: "}"
+              - text: from "@/actions/auth";
+              - generic [ref=e87]:
+                - text: "You're importing a component that needs \"next/headers\". That only works in a Server Component which is not supported in the pages/ directory. Read more:"
+                - link "https://nextjs.org/docs/app/building-your-application/rendering/server-components" [ref=e88] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/rendering/server-components
+                - text: "Import traces: #1 [Server Component]: ./src/lib/auth/auth.server.ts ./src/app/(main)/commissions/page.tsx #2 [Server Component]: ./src/lib/auth/auth.server.ts ./src/app/(main)/layout.tsx #3 [Client Component Browser]: ./src/lib/auth/auth.server.ts [Client Component Browser] ./src/lib/grpc/auth.ts [Client Component Browser] ./src/lib/grpc/clients/logistics.ts [Client Component Browser] ./src/hooks/email/use-maileva.ts [Client Component Browser] ./src/hooks/email/use-maileva-auth.ts [Client Component Browser] ./src/hooks/email/index.ts [Client Component Browser] ./src/hooks/index.ts [Client Component Browser] ./src/components/commissions/bordereaux-list.tsx [Client Component Browser] ./src/app/(main)/commissions/commissions-page-client.tsx [Client Component Browser] ./src/app/(main)/commissions/commissions-page-client.tsx [Server Component] ./src/app/(main)/commissions/page.tsx [Server Component] #4 [Client Component SSR]: ./src/lib/auth/auth.server.ts [Client Component SSR] ./src/lib/grpc/auth.ts [Client Component SSR] ./src/lib/grpc/clients/logistics.ts [Client Component SSR] ./src/hooks/email/use-maileva.ts [Client Component SSR] ./src/hooks/email/use-maileva-auth.ts [Client Component SSR] ./src/hooks/email/index.ts [Client Component SSR] ./src/hooks/index.ts [Client Component SSR] ./src/components/commissions/bordereaux-list.tsx [Client Component SSR] ./src/app/(main)/commissions/commissions-page-client.tsx [Client Component SSR] ./src/app/(main)/commissions/commissions-page-client.tsx [Server Component] ./src/app/(main)/commissions/page.tsx [Server Component]"
+        - generic [ref=e89]: "1"
+        - generic [ref=e90]: "2"
+    - generic [ref=e95] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e96]:
+        - img [ref=e97]
+      - button "Open issues overlay" [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]: "0"
+          - generic [ref=e104]: "1"
+        - generic [ref=e105]: Issue
+  - alert [ref=e106]

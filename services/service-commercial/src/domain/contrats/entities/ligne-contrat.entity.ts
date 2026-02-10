@@ -27,10 +27,13 @@ export class LigneContratEntity {
   quantite: number;
 
    @Column({ name: 'prix_unitaire', type: 'decimal', precision: 15, scale: 2 })
-   prixUnitaire: number;
+    prixUnitaire: number;
 
-   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
-   createdBy: string | null;
+    @Column({ name: 'canal_vente', type: 'varchar', length: 50, nullable: true })
+    canalVente: string | null;
+
+    @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+    createdBy: string | null;
 
    @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
    modifiedBy: string | null;

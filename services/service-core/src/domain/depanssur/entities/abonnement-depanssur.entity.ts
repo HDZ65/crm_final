@@ -52,7 +52,7 @@ export class AbonnementDepanssurEntity {
   @Column({ length: 50, default: 'ACTIF' })
   statut: string; // ACTIF, PAUSE, SUSPENDU_IMPAYE, RESILIE
 
-  @Column({ name: 'motif_resiliation', length: 50, nullable: true })
+  @Column({ name: 'motif_resiliation', type: 'varchar', length: 50, nullable: true })
   motifResiliation: string | null;
 
   @Column({ name: 'date_souscription', type: 'timestamptz' })
@@ -76,7 +76,7 @@ export class AbonnementDepanssurEntity {
   @Column({ name: 'montant_ht', type: 'decimal', precision: 12, scale: 2 })
   montantHt: string;
 
-  @Column({ name: 'code_remise', length: 100, nullable: true })
+  @Column({ name: 'code_remise', type: 'varchar', length: 100, nullable: true })
   codeRemise: string | null;
 
   @Column({ name: 'montant_remise', type: 'decimal', precision: 12, scale: 2, nullable: true })

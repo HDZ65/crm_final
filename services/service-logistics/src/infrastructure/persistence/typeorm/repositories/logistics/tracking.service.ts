@@ -2,10 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TrackingEventEntity } from '../../../../../domain/logistics/entities';
-import type { ITrackingService } from '../../../../../application/logistics/ports';
 
 @Injectable()
-export class TrackingService implements ITrackingService {
+export class TrackingService {
   private readonly logger = new Logger(TrackingService.name);
 
   constructor(

@@ -1,0 +1,40 @@
+=== gRPC SERVICE VERIFICATION ===
+Date: 2026-02-07 19:18:52
+
+SERVICE STATUS:
+- service-commercial (localhost:50053): NOT RUNNING
+- service-logistics (localhost:50060): NOT RUNNING
+
+VERIFICATION METHOD:
+- Checked netstat for port 50053 and 50060: No services listening
+- grpcurl tool: Not installed in environment
+
+MANUAL VERIFICATION REQUIRED:
+To verify gRPC services when services are running, execute:
+
+  # service-commercial
+  grpcurl -plaintext localhost:50053 list
+
+  # service-logistics
+  grpcurl -plaintext localhost:50060 list
+
+EXPECTED SERVICES (from code analysis):
+
+service-commercial should register:
+- commerciaux.Commerciaux
+- contrats.Contrats
+- products.Products
+- subscriptions.Subscriptions
+- subscription_plans.SubscriptionPlans
+- subscription_preferences.SubscriptionPreferences
+- subscription_preference_schemas.SubscriptionPreferenceSchemas
+- woocommerce.WooCommerce
+- (and others)
+
+service-logistics should register:
+- logistics.Logistics
+- fulfillment_batches.FulfillmentBatches
+- fulfillment_cutoff.FulfillmentCutoff
+
+=== CONCLUSION ===
+DEFERRED - Services not running. Manual verification needed when services are deployed.

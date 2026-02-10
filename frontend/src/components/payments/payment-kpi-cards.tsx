@@ -11,7 +11,7 @@ import {
   XCircle,
   BarChart3,
 } from "lucide-react"
-import type { PaymentStats } from "@/types/payment"
+import type { PaymentStats } from "@/lib/ui/display-types/payment"
 import { cn } from "@/lib/utils"
 
 interface PaymentKPICardsProps {

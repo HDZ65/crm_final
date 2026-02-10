@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useState, useMemo } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
-import type { LigneBordereauResponseDto, LigneBordereauFiltersDto } from "@/types/commission"
+import type { LigneBordereauDisplay, LigneBordereauFilters } from "@/lib/ui/display-types/commission"
+import { parseMontant } from "@/lib/ui/helpers/format"
 
 /**
  * Hook pour récupérer les lignes d'un bordereau
  * GET /lignes-bordereau
  */
-export function useLignesBordereau(filters: LigneBordereauFiltersDto | null) {
-  const [lignes, setLignes] = useState<LigneBordereauResponseDto[]>([])
-  const { loading, error, execute } = useApi<LigneBordereauResponseDto[]>()
+export function useLignesBordereau(filters: LigneBordereauFilters | null) {
+  const [lignes, setLignes] = useState<LigneBordereauDisplay[]>([])
+  const { loading, error, execute } = useApi<LigneBordereauDisplay[]>()
 
   const fetchLignes = useCallback(async () => {
     if (!filters?.bordereauId) return
@@ -42,9 +43,9 @@ export function useLignesBordereau(filters: LigneBordereauFiltersDto | null) {
   const totals = useMemo(() => {
     return lignes.reduce(
       (acc, ligne) => ({
-        totalBrut: acc.totalBrut + ligne.montantBrut,
-        totalReprise: acc.totalReprise + ligne.montantReprise,
-        totalNet: acc.totalNet + ligne.montantNet,
+        totalBrut: acc.totalBrut + parseMontant(ligne.montantBrut),
+        totalReprise: acc.totalReprise + parseMontant(ligne.montantReprise),
+        totalNet: acc.totalNet + parseMontant(ligne.montantNet),
         nombreLignes: acc.nombreLignes + 1,
         nombreSelectionnees: acc.nombreSelectionnees + (ligne.selectionne ? 1 : 0),
       }),
@@ -72,8 +73,8 @@ export function useLignesBordereau(filters: LigneBordereauFiltersDto | null) {
  * GET /lignes-bordereau/:id
  */
 export function useLigneBordereau(ligneId: string | null) {
-  const [ligne, setLigne] = useState<LigneBordereauResponseDto | null>(null)
-  const { loading, error, execute } = useApi<LigneBordereauResponseDto>()
+  const [ligne, setLigne] = useState<LigneBordereauDisplay | null>(null)
+  const { loading, error, execute } = useApi<LigneBordereauDisplay>()
 
   const fetchLigne = useCallback(async () => {
     if (!ligneId) return
@@ -114,4 +115,104 @@ export function useLignesSelectionnees(bordereauId: string | null) {
         }
       : null
   )
+}
+
+// ============================================================================
+// MUTATION hooks
+// ============================================================================
+
+interface PreselectionResult {
+  nombreLignesSelectionnees: number
+  nombreLignesTotal: number
+  ligneIdsSelectionnees: string[]
+}
+
+/**
+ * Hook pour présélectionner les lignes d'un bordereau
+ * POST /lignes-bordereau/preselectionner
+ */
+export function usePreselectionnerLignes() {
+  const [result, setResult] = useState<PreselectionResult | null>(null)
+  const { loading, error, execute } = useApi<PreselectionResult>()
+
+  const preselectionner = useCallback(
+    async (bordereauId: string, organisationId: string) => {
+      try {
+        const response = await execute(() =>
+          api.post("/lignes-bordereau/preselectionner", {
+            bordereauId,
+            organisationId,
+          })
+        )
+        if (response) {
+          setResult(response)
+        }
+        return response
+      } catch {
+        return null
+      }
+    },
+    [execute]
+  )
+
+  const reset = useCallback(() => {
+    setResult(null)
+  }, [])
+
+  return {
+    result,
+    loading,
+    error,
+    preselectionner,
+    reset,
+  }
+}
+
+interface TotauxResult {
+  totalBrut: string
+  totalReprises: string
+  totalAcomptes: string
+  totalNet: string
+  nombreLignesSelectionnees: number
+}
+
+/**
+ * Hook pour recalculer les totaux d'un bordereau
+ * POST /lignes-bordereau/recalculer-totaux
+ */
+export function useRecalculerTotaux() {
+  const [totaux, setTotaux] = useState<TotauxResult | null>(null)
+  const { loading, error, execute } = useApi<TotauxResult>()
+
+  const recalculer = useCallback(
+    async (bordereauId: string, ligneIds: string[]) => {
+      try {
+        const response = await execute(() =>
+          api.post("/lignes-bordereau/recalculer-totaux", {
+            bordereauId,
+            ligneIdsSelectionnees: ligneIds,
+          })
+        )
+        if (response) {
+          setTotaux(response)
+        }
+        return response
+      } catch {
+        return null
+      }
+    },
+    [execute]
+  )
+
+  const reset = useCallback(() => {
+    setTotaux(null)
+  }, [])
+
+  return {
+    totaux,
+    loading,
+    error,
+    recalculer,
+    reset,
+  }
 }

@@ -1,5 +1,5 @@
 import { TachesPageClient } from "./taches-page-client"
-import { getActiveOrgId } from "@/lib/server-data"
+import { getActiveOrgId } from "@/lib/server/data"
 import { listTaches, getTacheStats } from "@/actions/taches"
 import { listMembresWithUsers } from "@/actions/membres"
 

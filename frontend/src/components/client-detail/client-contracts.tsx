@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { FileText, CheckCircle2, Calendar, CreditCard, User, Briefcase } from "lucide-react"
-import type { Contract } from "@/types/client"
+import type { Contract } from "@/lib/ui/display-types/contract"
 
 interface ClientContractsProps {
   contracts: Contract[]

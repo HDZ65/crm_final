@@ -37,7 +37,7 @@ export function useAuth(): {
   const { data: session, status } = useSession();
 
   return {
-    user: session?.user ?? undefined,
+    user: (session?.user as User) ?? undefined,
     accessToken: session?.accessToken,
     isLoading: status === "loading",
     isAuthenticated: status === "authenticated",
@@ -47,7 +47,7 @@ export function useAuth(): {
 
 export function useUser(): User | undefined {
   const { data: session } = useSession();
-  return session?.user ?? undefined;
+  return (session?.user as User) ?? undefined;
 }
 
 export function useHasRole(role: string): boolean {

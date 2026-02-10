@@ -28,6 +28,7 @@ import type { Contrat } from "@proto/contrats/contrats"
 interface CommercialContratsProps {
   commercialId: string
   organisationId: string
+  initialContrats?: Contrat[]
 }
 
 const formatDate = (date: Date | string | null | undefined) => {
@@ -52,12 +53,16 @@ const formatMontant = (montant: string | number | null | undefined) => {
 export function CommercialContrats({
   commercialId,
   organisationId,
+  initialContrats,
 }: CommercialContratsProps) {
   const router = useRouter()
-  const [contrats, setContrats] = React.useState<Contrat[]>([])
-  const [loading, setLoading] = React.useState(true)
+  const [contrats, setContrats] = React.useState<Contrat[]>(initialContrats || [])
+  const [loading, setLoading] = React.useState(!initialContrats)
 
+  // Fetch contrats only if not provided via SSR
   React.useEffect(() => {
+    if (initialContrats) return
+    
     const fetchContrats = async () => {
       setLoading(true)
       const result = await getContratsByOrganisation({
@@ -70,7 +75,7 @@ export function CommercialContrats({
       setLoading(false)
     }
     fetchContrats()
-  }, [organisationId, commercialId])
+  }, [organisationId, commercialId, initialContrats])
 
   const handleRowClick = (contratId: string) => {
     router.push(`/contrats/${contratId}`)

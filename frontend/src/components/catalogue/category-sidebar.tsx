@@ -20,7 +20,7 @@ import {
   Plus,
   MoreVertical,
 } from "lucide-react"
-import type { ProductCategory } from "@/types/product"
+import type { ProductCategory } from "@/lib/ui/labels/product"
 
 interface CategorySidebarProps {
   selectedCategory: ProductCategory | "all"

@@ -33,6 +33,34 @@ export class SubscriptionPlanService implements ISubscriptionPlanRepository {
     });
   }
 
+  async findAll(pagination?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    plans: SubscriptionPlanEntity[];
+    pagination: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [plans, total] = await this.repository.findAndCount({
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      plans,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async findByOrganisation(organisationId: string, pagination?: {
     page?: number;
     limit?: number;

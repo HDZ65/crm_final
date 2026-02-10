@@ -133,14 +133,27 @@ async function fetchUserOrganisations(
 ): Promise<UserOrganisation[]> {
   const membresResponse = await membresCompte.listByUtilisateur({
     utilisateurId: userId,
+    pagination: undefined,
   });
+
+  console.log("[fetchUserOrganisations] membres count:", membresResponse.membres?.length);
+  console.log("[fetchUserOrganisations] raw membres:", JSON.stringify(membresResponse.membres?.map(m => ({
+    id: m.id, orgId: m.organisationId, organisation_id: (m as unknown as Record<string, unknown>).organisation_id, roleId: m.roleId, role_id: (m as unknown as Record<string, unknown>).role_id,
+  }))));
 
   const organisations = await Promise.all(
     (membresResponse.membres || []).map(async (membre) => {
+      // Handle both camelCase and snake_case field names from gRPC
+      const membreOrgId = membre.organisationId || (membre as unknown as Record<string, unknown>).organisation_id as string || "";
+      const membreRoleId = membre.roleId || (membre as unknown as Record<string, unknown>).role_id as string || "";
+
       const [compteResult, roleResult] = await Promise.allSettled([
-        comptes.get({ id: membre.organisationId }),
-        roles.get({ id: membre.roleId }),
+        comptes.get({ id: membreOrgId }),
+        roles.get({ id: membreRoleId }),
       ]);
+
+      console.log("[fetchUserOrganisations] compte result:", compteResult.status, compteResult.status === "fulfilled" ? compteResult.value.nom : (compteResult as PromiseRejectedResult).reason?.message);
+      console.log("[fetchUserOrganisations] role result:", roleResult.status, roleResult.status === "fulfilled" ? roleResult.value.code : (roleResult as PromiseRejectedResult).reason?.message);
 
       const organisationNom =
         compteResult.status === "fulfilled" ? compteResult.value.nom : "";
@@ -155,7 +168,7 @@ async function fetchUserOrganisations(
           : { id: "", code: "", nom: "" };
 
       return {
-        organisationId: membre.organisationId,
+        organisationId: membreOrgId,
         organisationNom,
         role,
         etat: membre.etat || "actif",
@@ -163,5 +176,6 @@ async function fetchUserOrganisations(
     })
   );
 
+  console.log("[fetchUserOrganisations] final organisations:", JSON.stringify(organisations));
   return organisations;
 }

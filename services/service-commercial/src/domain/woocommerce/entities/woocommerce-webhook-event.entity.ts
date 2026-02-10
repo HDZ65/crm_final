@@ -29,7 +29,7 @@ export class WooCommerceWebhookEventEntity {
   @Index()
   organisationId: string;
 
-  @Column({ name: 'source', type: 'varchar', length: 50, default: "'woocommerce'" })
+  @Column({ name: 'source', type: 'varchar', length: 50, default: 'woocommerce' })
   source: string;
 
   @Column({ name: 'external_event_id', type: 'varchar', length: 255 })

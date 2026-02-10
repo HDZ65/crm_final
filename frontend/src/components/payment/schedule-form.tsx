@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -21,11 +20,10 @@ import { useFactures } from "@/hooks/factures"
 import { useContrats } from "@/hooks/contracts"
 import { useClients } from "@/hooks/clients"
 import { useProduits } from "@/hooks/catalogue/use-produits"
-import { ApiError } from "@/lib/api"
-import { ScheduleStatus, PSPName, type CreateScheduleDto, type IntervalUnit } from "@/types/schedule"
+import { type CreateScheduleRequest } from "@proto/payments/payment"
 
 interface ScheduleFormProps {
-  onSubmit: (data: CreateScheduleDto) => Promise<void>
+  onSubmit: (data: CreateScheduleRequest) => Promise<void>
   loading?: boolean
 }
 
@@ -39,29 +37,12 @@ function FieldError({ error }: { error?: string[] }) {
   )
 }
 
-const statusOptions: ScheduleStatus[] = [
-  ScheduleStatus.PLANNED,
-  ScheduleStatus.PROCESSING,
-  ScheduleStatus.PENDING,
-  ScheduleStatus.PAID,
-  ScheduleStatus.FAILED,
-  ScheduleStatus.UNPAID,
-  ScheduleStatus.CANCELLED,
-]
-
 const pspOptions = [
-  { value: PSPName.STRIPE, label: "Stripe (Carte bancaire)" },
-  { value: PSPName.GOCARDLESS, label: "GoCardless (SEPA)" },
-  { value: PSPName.SLIMPAY, label: "SlimPay (SEPA)" },
-  { value: PSPName.MULTISAFEPAY, label: "MultiSafePay" },
-  { value: PSPName.EMERCHANTPAY, label: "eMerchantPay" },
-]
-
-const intervalOptions: { value: IntervalUnit; label: string }[] = [
-  { value: "day", label: "Jour(s)" },
-  { value: "week", label: "Semaine(s)" },
-  { value: "month", label: "Mois" },
-  { value: "year", label: "Année(s)" },
+  { value: "stripe", label: "Stripe (Carte bancaire)" },
+  { value: "gocardless", label: "GoCardless (SEPA)" },
+  { value: "slimpay", label: "SlimPay (SEPA)" },
+  { value: "multisafepay", label: "MultiSafePay" },
+  { value: "emerchantpay", label: "eMerchantPay" },
 ]
 
 export function ScheduleForm({ onSubmit, loading }: ScheduleFormProps) {
@@ -82,24 +63,17 @@ export function ScheduleForm({ onSubmit, loading }: ScheduleFormProps) {
     activeOrganisation?.organisationId ? { organisationId: activeOrganisation.organisationId } : undefined
   )
 
-  const [formData, setFormData] = useState<CreateScheduleDto>({
+  const [formData, setFormData] = useState({
     organisationId: "",
     factureId: "",
     contratId: "",
     societeId: "",
     clientId: "",
-    produitId: "",
-    pspName: PSPName.GOCARDLESS,
     amount: 0,
     currency: "EUR",
     dueDate: new Date().toISOString().split("T")[0],
-    isRecurring: false,
-    intervalUnit: "month",
-    intervalCount: 1,
-    status: ScheduleStatus.PLANNED,
-    maxRetries: 3,
-    pspMandateId: "",
-    pspCustomerId: "",
+    description: "",
+    autoProcess: false,
   })
 
   // État pour les erreurs de validation
@@ -117,21 +91,11 @@ export function ScheduleForm({ onSubmit, loading }: ScheduleFormProps) {
   useEffect(() => {
     if (formData.factureId) {
       const facture = factures.find(f => f.id === formData.factureId)
-      if (facture?.montantTTC) {
-        setFormData(prev => ({ ...prev, amount: facture.montantTTC }))
+      if (facture?.montantTtc) {
+        setFormData(prev => ({ ...prev, amount: facture.montantTtc }))
       }
     }
   }, [formData.factureId, factures])
-
-  // Mettre à jour le montant quand un produit est sélectionné
-  useEffect(() => {
-    if (formData.produitId) {
-      const produit = produits.find(p => p.id === formData.produitId)
-      if (produit?.priceTTC) {
-        setFormData(prev => ({ ...prev, amount: produit.priceTTC }))
-      }
-    }
-  }, [formData.produitId, produits])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -139,33 +103,28 @@ export function ScheduleForm({ onSubmit, loading }: ScheduleFormProps) {
     setFieldErrors({})
     setGeneralError(null)
 
-    // Clean up empty optional fields
-    const cleanedData = { ...formData }
-    if (!cleanedData.factureId) delete cleanedData.factureId
-    if (!cleanedData.contratId) delete cleanedData.contratId
-    if (!cleanedData.societeId) delete cleanedData.societeId
-    if (!cleanedData.clientId) delete cleanedData.clientId
-    if (!cleanedData.produitId) delete cleanedData.produitId
-    if (!cleanedData.pspMandateId) delete cleanedData.pspMandateId
-    if (!cleanedData.pspCustomerId) delete cleanedData.pspCustomerId
-    if (!cleanedData.isRecurring) {
-      delete cleanedData.intervalUnit
-      delete cleanedData.intervalCount
+    const request: CreateScheduleRequest = {
+      organisationId: formData.organisationId,
+      societeId: formData.societeId || "",
+      contratId: formData.contratId || undefined,
+      factureId: formData.factureId || undefined,
+      clientId: formData.clientId || undefined,
+      amount: formData.amount,
+      currency: formData.currency,
+      dueDate: formData.dueDate,
+      description: formData.description || undefined,
+      autoProcess: formData.autoProcess,
+      metadata: {},
     }
 
     try {
-      await onSubmit(cleanedData)
-    } catch (error) {
-      if (error instanceof ApiError) {
-        // Extraire les erreurs de validation par champ
-        if (error.validationErrors) {
-          setFieldErrors(error.validationErrors)
-        }
-        // Message d'erreur général
-        setGeneralError(error.getUserMessage())
-      } else {
-        setGeneralError("Une erreur est survenue")
+      await onSubmit(request)
+    } catch (error: unknown) {
+      const err = error as { details?: string; message?: string; validationErrors?: Record<string, string[]> };
+      if (err.validationErrors) {
+        setFieldErrors(err.validationErrors)
       }
+      setGeneralError(err.details || err.message || "Une erreur est survenue")
     }
   }
 
@@ -186,89 +145,6 @@ export function ScheduleForm({ onSubmit, loading }: ScheduleFormProps) {
               <AlertDescription>{generalError}</AlertDescription>
             </Alert>
           )}
-
-          {/* PSP Selection */}
-          <div className="p-4 bg-muted rounded-lg space-y-4">
-            <h4 className="font-semibold">Prestataire de paiement</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="pspName">PSP *</Label>
-                <Select
-                  value={formData.pspName}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, pspName: value as PSPName })
-                  }
-                >
-                  <SelectTrigger className={fieldErrors.pspName ? "border-destructive" : ""}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pspOptions.map((psp) => (
-                      <SelectItem key={psp.value} value={psp.value}>
-                        {psp.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FieldError error={fieldErrors.pspName} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="currency">Devise</Label>
-                <Select
-                  value={formData.currency}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, currency: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="GBP">GBP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* PSP References */}
-            <div className="grid grid-cols-2 gap-4">
-              {formData.pspName === PSPName.GOCARDLESS && (
-                <div className="space-y-2">
-                  <Label htmlFor="pspMandateId">Mandate ID (GoCardless)</Label>
-                  <Input
-                    id="pspMandateId"
-                    value={formData.pspMandateId || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, pspMandateId: e.target.value })
-                    }
-                    placeholder="MD000xxx"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    ID du mandat SEPA du client
-                  </p>
-                </div>
-              )}
-              {formData.pspName === PSPName.STRIPE && (
-                <div className="space-y-2">
-                  <Label htmlFor="pspCustomerId">Customer ID (Stripe)</Label>
-                  <Input
-                    id="pspCustomerId"
-                    value={formData.pspCustomerId || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, pspCustomerId: e.target.value })
-                    }
-                    placeholder="cus_xxx"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    ID du client Stripe
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Links */}
           <div className="grid grid-cols-2 gap-4">
@@ -330,29 +206,6 @@ export function ScheduleForm({ onSubmit, loading }: ScheduleFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="produitId">Produit</Label>
-              <Select
-                value={formData.produitId || ""}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, produitId: value })
-                }
-                disabled={produits.length === 0}
-              >
-                <SelectTrigger className={fieldErrors.produitId ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Sélectionner un produit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {produits.map((produit) => (
-                    <SelectItem key={produit.id} value={produit.id}>
-                      {produit.name} - {produit.priceTTC?.toFixed(2)}€
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError error={fieldErrors.produitId} />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="factureId">Facture (optionnel)</Label>
               <Select
                 value={formData.factureId || ""}
@@ -367,7 +220,7 @@ export function ScheduleForm({ onSubmit, loading }: ScheduleFormProps) {
                 <SelectContent>
                   {factures.map((facture) => (
                     <SelectItem key={facture.id} value={facture.id}>
-                      {facture.numero || facture.id.slice(0, 8)} - {facture.montantTTC?.toFixed(2) || 0}€
+                      {facture.numero || facture.id.slice(0, 8)} - {facture.montantTtc?.toFixed(2) || 0}€
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -435,96 +288,35 @@ export function ScheduleForm({ onSubmit, loading }: ScheduleFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Statut</Label>
+              <Label htmlFor="currency">Devise</Label>
               <Select
-                value={formData.status}
+                value={formData.currency}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, status: value as ScheduleStatus })
+                  setFormData({ ...formData, currency: value })
                 }
               >
-                <SelectTrigger className={fieldErrors.status ? "border-destructive" : ""}>
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
                 </SelectContent>
               </Select>
-              <FieldError error={fieldErrors.status} />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="maxRetries">Nombre max de tentatives</Label>
+              <Label htmlFor="description">Description (optionnel)</Label>
               <Input
-                id="maxRetries"
-                type="number"
-                min="0"
-                max="10"
-                value={formData.maxRetries}
+                id="description"
+                value={formData.description}
                 onChange={(e) =>
-                  setFormData({ ...formData, maxRetries: parseInt(e.target.value) || 3 })
+                  setFormData({ ...formData, description: e.target.value })
                 }
+                placeholder="Description du paiement"
               />
             </div>
-          </div>
-
-          {/* Recurring Options */}
-          <div className="p-4 border rounded-lg space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="isRecurring">Paiement récurrent</Label>
-                <p className="text-xs text-muted-foreground">
-                  Prélèvement automatique périodique
-                </p>
-              </div>
-              <Switch
-                id="isRecurring"
-                checked={formData.isRecurring}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isRecurring: checked })
-                }
-              />
-            </div>
-
-            {formData.isRecurring && (
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-2">
-                  <Label htmlFor="intervalCount">Intervalle</Label>
-                  <Input
-                    id="intervalCount"
-                    type="number"
-                    min="1"
-                    value={formData.intervalCount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, intervalCount: parseInt(e.target.value) || 1 })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="intervalUnit">Période</Label>
-                  <Select
-                    value={formData.intervalUnit}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, intervalUnit: value as IntervalUnit })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {intervalOptions.map((interval) => (
-                        <SelectItem key={interval.value} value={interval.value}>
-                          {interval.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">

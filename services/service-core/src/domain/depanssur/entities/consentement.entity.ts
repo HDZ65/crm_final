@@ -33,7 +33,7 @@ export class ConsentementEntity {
   @Column({ name: 'date_retrait', type: 'timestamptz', nullable: true })
   dateRetrait: Date | null;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   source: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

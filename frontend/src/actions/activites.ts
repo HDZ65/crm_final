@@ -6,6 +6,7 @@ import type {
   Activite,
   ListActiviteResponse,
 } from "@proto/activites/activites";
+import type { ActionResult } from "@/lib/types/common";
 
 export interface ActiviteDto {
   id: string;
@@ -36,10 +37,6 @@ export interface PaginatedActivitesDto {
   totalPages: number;
 }
 
-export interface ActiviteActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
 
 function mapActiviteToDto(activite: Activite): ActiviteDto {
   return {
@@ -47,11 +44,11 @@ function mapActiviteToDto(activite: Activite): ActiviteDto {
     typeId: activite.typeId,
     dateActivite: activite.dateActivite,
     sujet: activite.sujet,
-    commentaire: activite.commentaire || undefined,
-    echeance: activite.echeance || undefined,
-    clientBaseId: activite.clientBaseId || undefined,
-    contratId: activite.contratId || undefined,
-    clientPartenaireId: activite.clientPartenaireId || undefined,
+    commentaire: activite.commentaire,
+    echeance: activite.echeance,
+    clientBaseId: activite.clientBaseId,
+    contratId: activite.contratId,
+    clientPartenaireId: activite.clientPartenaireId,
     createdAt: activite.createdAt,
     updatedAt: activite.updatedAt,
   };
@@ -59,7 +56,7 @@ function mapActiviteToDto(activite: Activite): ActiviteDto {
 
 export async function listActivites(
   filters: ActiviteFilters
-): Promise<ActiviteActionResult<PaginatedActivitesDto>> {
+): Promise<ActionResult<PaginatedActivitesDto>> {
   try {
     const data = await activites.list({
       search: filters.search || "",
@@ -96,7 +93,7 @@ export async function listActivites(
 export async function listActivitesByClient(
   clientBaseId: string,
   filters?: Pick<ActiviteFilters, "page" | "limit">
-): Promise<ActiviteActionResult<PaginatedActivitesDto>> {
+): Promise<ActionResult<PaginatedActivitesDto>> {
   try {
     const data = await activites.listByClient({
       clientBaseId,
@@ -132,7 +129,7 @@ export async function listActivitesByClient(
 export async function listActivitesByContrat(
   contratId: string,
   filters?: Pick<ActiviteFilters, "page" | "limit">
-): Promise<ActiviteActionResult<PaginatedActivitesDto>> {
+): Promise<ActionResult<PaginatedActivitesDto>> {
   try {
     const data = await activites.listByContrat({
       contratId,
@@ -167,7 +164,7 @@ export async function listActivitesByContrat(
 
 export async function getActivite(
   id: string
-): Promise<ActiviteActionResult<ActiviteDto>> {
+): Promise<ActionResult<ActiviteDto>> {
   try {
     const data = await activites.get({ id });
     return { data: mapActiviteToDto(data), error: null };
@@ -192,7 +189,7 @@ export async function createActivite(input: {
   clientBaseId?: string;
   contratId?: string;
   clientPartenaireId?: string;
-}): Promise<ActiviteActionResult<ActiviteDto>> {
+}): Promise<ActionResult<ActiviteDto>> {
   try {
     const data = await activites.create({
       typeId: input.typeId,
@@ -230,7 +227,7 @@ export async function updateActivite(input: {
   sujet?: string;
   commentaire?: string;
   echeance?: string;
-}): Promise<ActiviteActionResult<ActiviteDto>> {
+}): Promise<ActionResult<ActiviteDto>> {
   try {
     const data = await activites.update({
       id: input.id,
@@ -255,7 +252,7 @@ export async function updateActivite(input: {
 
 export async function deleteActivite(
   id: string
-): Promise<ActiviteActionResult<{ success: boolean }>> {
+): Promise<ActionResult<{ success: boolean }>> {
   try {
     await activites.delete({ id });
     return { data: { success: true }, error: null };

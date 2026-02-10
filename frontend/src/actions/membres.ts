@@ -2,6 +2,7 @@
 
 import { membresCompte, users } from "@/lib/grpc";
 import type { MembreCompte, Utilisateur } from "@proto/organisations/users";
+import type { ActionResult } from "@/lib/types/common";
 
 export interface MembreWithUserDto {
   id: string;
@@ -21,10 +22,6 @@ export interface MembreWithUserDto {
   };
 }
 
-export interface MembresActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
 
 /**
  * Map gRPC MembreCompte + Utilisateur to frontend MembreWithUserDto
@@ -60,11 +57,12 @@ function mapMembreToDto(
  */
 export async function listMembresWithUsers(
   organisationId: string
-): Promise<MembresActionResult<MembreWithUserDto[]>> {
+): Promise<ActionResult<MembreWithUserDto[]>> {
   try {
     // Fetch membres
     const membresData = await membresCompte.listByOrganisation({
       organisationId,
+      pagination: undefined,
     });
 
     // Filter only active members
@@ -104,7 +102,7 @@ export async function listMembresWithUsers(
  */
 export async function getMembre(
   id: string
-): Promise<MembresActionResult<MembreWithUserDto>> {
+): Promise<ActionResult<MembreWithUserDto>> {
   try {
     const membre = await membresCompte.get({ id });
     let utilisateur: Utilisateur | undefined;

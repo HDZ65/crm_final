@@ -7,21 +7,20 @@ services:
     container_name: dev-crm-service-core
     ports:
       - "50052:50052"
-      - "50056:50056"
-      - "50057:50057"
+      - "3052:3052"
     env_file:
       - ../../services/service-core/.env.development
+    environment:
+      - NODE_PATH=/app/services/service-core/node_modules
     depends_on:
-      identity_db:
+      postgres-main:
         condition: service_healthy
-      nats:
-        condition: service_started
     volumes:
       - ../../services/service-core/src:/app/services/service-core/src
     networks:
       - crm-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('net').connect(50052, 'localhost').on('connect', () => process.exit(0))"]
+      test: ["CMD", "node", "-e", "require('net').connect(3052, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
       timeout: 10s
       retries: 3

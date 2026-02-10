@@ -41,7 +41,7 @@ import {
   FacturationParController,
   PeriodeFacturationController,
   TransporteurCompteController,
-} from './interfaces/grpc/controllers/clients';
+} from './infrastructure/grpc/clients';
 
 @Module({
   imports: [

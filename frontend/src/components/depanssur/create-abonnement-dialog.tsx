@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { depanssurClient } from '@/lib/grpc/clients/depanssur';
+import { createAbonnementAction } from '@/actions/depanssur';
 import { toast } from 'sonner';
 import { Loader2, Check } from 'lucide-react';
 
@@ -96,23 +96,25 @@ export function CreateAbonnementDialog({ open, onOpenChange, clientId, organisat
         prochaineEcheance.setFullYear(prochaineEcheance.getFullYear() + 1);
       }
 
-      await depanssurClient.createAbonnement({
+      const result = await createAbonnementAction({
         organisationId,
         clientId,
         planType: selectedPlan.type,
         periodicite,
         periodeAttente,
-        prixTtc: calculateTotal().toString(),
-        prixHt: (calculateTotal() / 1.2).toString(),
-        tauxTva: '20',
-        franchise: selectedPlan.franchise.toString(),
-        plafondParIntervention: selectedPlan.plafondParIntervention.toString(),
-        plafondAnnuel: selectedPlan.plafondAnnuel.toString(),
+        prixTtc: calculateTotal(),
+        montantHt: calculateTotal() / 1.2,
+        tauxTva: 20,
+        franchise: selectedPlan.franchise,
+        plafondParIntervention: selectedPlan.plafondParIntervention,
+        plafondAnnuel: selectedPlan.plafondAnnuel,
         nbInterventionsMax: selectedPlan.nbInterventionsMax,
+        dateSouscription: new Date().toISOString(),
         dateEffet: dateEffet.toISOString(),
         prochaineEcheance: prochaineEcheance.toISOString(),
-        statut: 'ACTIF',
       });
+
+      if (result.error) throw new Error(result.error);
 
       toast.success('Abonnement créé avec succès!');
       onSuccess?.();

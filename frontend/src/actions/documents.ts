@@ -85,7 +85,11 @@ export async function updatePieceJointeAction(input: {
   url?: string;
 }): Promise<ActionResult<PieceJointe>> {
   try {
-    const data = await piecesJointes.update(input);
+    const data = await piecesJointes.update({
+      id: input.id,
+      nomFichier: input.nomFichier || "",
+      url: input.url || "",
+    });
     revalidatePath("/documents");
     revalidatePath("/clients");
     return { data, error: null };
@@ -202,7 +206,26 @@ export async function createBoiteMailAction(input: {
   utilisateurId: string;
 }): Promise<ActionResult<BoiteMail>> {
   try {
-    const data = await boitesMail.create(input);
+    const data = await boitesMail.create({
+      nom: input.nom,
+      adresseEmail: input.adresseEmail,
+      fournisseur: input.fournisseur,
+      typeConnexion: input.typeConnexion,
+      serveurSmtp: input.serveurSmtp || "",
+      portSmtp: input.portSmtp || 0,
+      serveurImap: input.serveurImap || "",
+      portImap: input.portImap || 0,
+      utiliseSsl: input.utiliseSsl || false,
+      utiliseTls: input.utiliseTls || false,
+      username: input.username || "",
+      motDePasse: input.motDePasse || "",
+      clientId: input.clientId || "",
+      clientSecret: input.clientSecret || "",
+      signatureHtml: input.signatureHtml || "",
+      signatureTexte: input.signatureTexte || "",
+      estParDefaut: input.estParDefaut || false,
+      utilisateurId: input.utilisateurId,
+    });
     revalidatePath("/settings");
     revalidatePath("/email");
     return { data, error: null };
@@ -227,7 +250,20 @@ export async function updateBoiteMailAction(input: {
   signatureTexte?: string;
 }): Promise<ActionResult<BoiteMail>> {
   try {
-    const data = await boitesMail.update(input);
+    const data = await boitesMail.update({
+      id: input.id,
+      nom: input.nom || "",
+      serveurSmtp: input.serveurSmtp || "",
+      portSmtp: input.portSmtp || 0,
+      serveurImap: input.serveurImap || "",
+      portImap: input.portImap || 0,
+      utiliseSsl: input.utiliseSsl || false,
+      utiliseTls: input.utiliseTls || false,
+      username: input.username || "",
+      motDePasse: input.motDePasse || "",
+      signatureHtml: input.signatureHtml || "",
+      signatureTexte: input.signatureTexte || "",
+    });
     revalidatePath("/settings");
     revalidatePath("/email");
     return { data, error: null };

@@ -1,0 +1,48 @@
+# Dependencies
+**/node_modules
+**/.pnpm-store
+
+# Build outputs (rebuilt in Docker)
+services/**/dist
+frontend/.next
+**/build
+
+# Development files
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.development
+!**/.env.staging
+!frontend/.env.production
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+**/*.swp
+**/*.swo
+
+# Logs
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Test & Coverage
+**/coverage
+**/.nyc_output
+
+# Docker files (prevent recursive COPY)
+**/Dockerfile*
+**/.dockerignore
+**/docker-compose*.yml
+
+# Misc
+**/.DS_Store
+**/Thumbs.db
+
+# Clone directory (not needed in Docker)
+clone/

@@ -1,7 +1,7 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
 import {
-  CommissionServiceClient,
+  CommissionServiceService,
   type GetByIdRequest as CommissionGetByIdRequest,
   type GetCommissionsRequest,
   type CreateCommissionRequest,
@@ -48,13 +48,28 @@ import {
   type RecurrenceListResponse as CommissionRecurrenceListResponse,
   type GetReportsNegatifsRequest as CommissionGetReportsNegatifsRequest,
   type ReportNegatifListResponse as CommissionReportNegatifListResponse,
+  type CreerContestationRequest,
+  type GetContestationsRequest,
+  type GetContestationsResponse,
+  type ResoudreContestationRequest,
+  type ContestationResponse,
+  type PreselectionRequest,
+  type PreselectionResponse,
+  type RecalculerTotauxRequest,
+  type TotauxResponse,
+  type ValiderBordereauFinalRequest,
+  type ValiderBordereauFinalResponse,
+  type GetLignesForValidationRequest,
+  type GetLignesForValidationResponse,
 } from "@proto/commission/commission";
 
-let commissionInstance: CommissionServiceClient | null = null;
+let commissionInstance: GrpcClient | null = null;
 
-function getCommissionClient(): CommissionServiceClient {
+function getCommissionClient(): GrpcClient {
   if (!commissionInstance) {
-    commissionInstance = new CommissionServiceClient(
+    commissionInstance = makeClient(
+      CommissionServiceService,
+      "CommissionService",
       SERVICES.commission,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -151,6 +166,48 @@ export const commissions = {
     promisify<CommissionGetReportsNegatifsRequest, CommissionReportNegatifListResponse>(
       getCommissionClient(),
       "getReportsNegatifs"
+    )(request),
+
+  creerContestation: (request: CreerContestationRequest): Promise<ContestationResponse> =>
+    promisify<CreerContestationRequest, ContestationResponse>(
+      getCommissionClient(),
+      "creerContestation"
+    )(request),
+
+  getContestations: (request: GetContestationsRequest): Promise<GetContestationsResponse> =>
+    promisify<GetContestationsRequest, GetContestationsResponse>(
+      getCommissionClient(),
+      "getContestations"
+    )(request),
+
+  resoudreContestation: (request: ResoudreContestationRequest): Promise<ContestationResponse> =>
+    promisify<ResoudreContestationRequest, ContestationResponse>(
+      getCommissionClient(),
+      "resoudreContestation"
+    )(request),
+
+  preselectionnerLignes: (request: PreselectionRequest): Promise<PreselectionResponse> =>
+    promisify<PreselectionRequest, PreselectionResponse>(
+      getCommissionClient(),
+      "preselectionnerLignes"
+    )(request),
+
+  recalculerTotauxBordereau: (request: RecalculerTotauxRequest): Promise<TotauxResponse> =>
+    promisify<RecalculerTotauxRequest, TotauxResponse>(
+      getCommissionClient(),
+      "recalculerTotauxBordereau"
+    )(request),
+
+  validerBordereauFinal: (request: ValiderBordereauFinalRequest): Promise<ValiderBordereauFinalResponse> =>
+    promisify<ValiderBordereauFinalRequest, ValiderBordereauFinalResponse>(
+      getCommissionClient(),
+      "validerBordereauFinal"
+    )(request),
+
+  getLignesForValidation: (request: GetLignesForValidationRequest): Promise<GetLignesForValidationResponse> =>
+    promisify<GetLignesForValidationRequest, GetLignesForValidationResponse>(
+      getCommissionClient(),
+      "getLignesForValidation"
     )(request),
 };
 
@@ -322,4 +379,10 @@ export type {
   GenererBordereauResponse,
   CalculerCommissionRequest,
   CalculerCommissionResponse,
+  ContestationResponse,
+  GetContestationsResponse,
+  TotauxResponse,
+  PreselectionResponse,
+  ValiderBordereauFinalResponse,
+  GetLignesForValidationResponse,
 };

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { UserPlus, RefreshCw, Upload, Download, Search, User, Mail, Phone, Briefcase, Power, SlidersHorizontal, ChevronDown, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,8 +16,7 @@ import { CreateCommercialDialog } from "@/components/commerciaux/create-commerci
 import { ImportCommercialDialog } from "@/components/commerciaux/import-commercial-dialog"
 import { getApporteursByOrganisation } from "@/actions/commerciaux"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { Commercial } from "@/types/commercial"
-import { getCommercialFullName, TYPE_COMMERCIAL_LABELS } from "@/types/commercial"
+import { getCommercialFullName, TYPE_COMMERCIAL_LABELS } from "@/lib/ui/labels/commercial"
 import type { Apporteur } from "@proto/commerciaux/commerciaux"
 import { cn } from "@/lib/utils"
 
@@ -25,17 +25,15 @@ interface CommerciauxPageClientProps {
 }
 
 export function CommerciauxPageClient({ initialCommerciaux }: CommerciauxPageClientProps) {
+  const router = useRouter()
   const { activeOrganisation } = useOrganisation()
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
   const [importDialogOpen, setImportDialogOpen] = React.useState(false)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false)
 
-  // Ref to track initial fetch
-  const hasFetched = React.useRef(!!initialCommerciaux)
-
   // State pour les données - initialize with SSR data if available
-  const [commerciaux, setCommerciaux] = React.useState<Commercial[]>((initialCommerciaux as unknown as Commercial[]) || [])
+  const [commerciaux, setCommerciaux] = React.useState<Apporteur[]>((initialCommerciaux as unknown as Apporteur[]) || [])
   const [error, setError] = React.useState<string | null>(null)
 
   // Filtres locaux
@@ -59,14 +57,12 @@ export function CommerciauxPageClient({ initialCommerciaux }: CommerciauxPageCli
     if (result.error) {
       setError(result.error)
     } else if (result.data) {
-      setCommerciaux(result.data.apporteurs as unknown as Commercial[])
+      setCommerciaux(result.data.apporteurs as unknown as Apporteur[])
     }
   }, [activeOrganisation])
 
-  // Skip initial fetch if SSR data provided
+  // Always fetch client-side to ensure correct org context
   React.useEffect(() => {
-    if (hasFetched.current) return
-    hasFetched.current = true
     fetchData()
   }, [fetchData])
 
@@ -98,7 +94,7 @@ export function CommerciauxPageClient({ initialCommerciaux }: CommerciauxPageCli
 
   // Filtrage côté client
   const filteredCommerciaux = React.useMemo(() => {
-    return commerciaux.filter((commercial: Commercial) => {
+    return commerciaux.filter((commercial: Apporteur) => {
       // Recherche globale
       if (filters.globalSearch) {
         const search = filters.globalSearch.toLowerCase()
@@ -346,6 +342,7 @@ export function CommerciauxPageClient({ initialCommerciaux }: CommerciauxPageCli
                 columns={columns}
                 data={filteredCommerciaux}
                 headerClassName="bg-sidebar hover:bg-sidebar"
+                onRowClick={(row) => router.push(`/commerciaux/${row.id}`)}
               />
             </div>
           </CardContent>

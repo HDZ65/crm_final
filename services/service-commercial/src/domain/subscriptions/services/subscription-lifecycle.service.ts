@@ -239,7 +239,7 @@ export class SubscriptionLifecycleService {
     return this.transition({
       subscriptionId,
       targetStatus: SubscriptionStatus.PAST_DUE,
-      allowedFrom: [SubscriptionStatus.ACTIVE],
+      allowedFrom: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL],
       reason: input?.reason,
       subject: 'subscription.past_due',
       triggeredBy: input?.triggeredBy ?? SubscriptionTriggeredBy.SYSTEM,

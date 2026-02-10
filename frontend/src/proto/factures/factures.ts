@@ -199,6 +199,9 @@ export interface Facture {
   adresseFacturationId: string;
   createdAt: string;
   updatedAt: string;
+  typeDocument: string;
+  factureOrigineId: string;
+  motifAvoir: string;
   /** Relations */
   statut: StatutFacture | undefined;
   client: ClientInfo | undefined;
@@ -263,6 +266,29 @@ export interface DeleteFactureRequest {
 
 export interface DeleteFactureResponse {
   success: boolean;
+}
+
+/** Avoir (Credit Note) */
+export interface CreateAvoirRequest {
+  organisationId: string;
+  factureOrigineId: string;
+  statutId: string;
+  emissionFactureId: string;
+  clientBaseId: string;
+  clientPartenaireId: string;
+  adresseFacturationId: string;
+  motifAvoir: string;
+  lignes: CreateLigneFactureItem[];
+}
+
+export interface ListAvoirsByFactureRequest {
+  factureOrigineId: string;
+  pagination: PaginationRequest | undefined;
+}
+
+export interface ListAvoirsResponse {
+  avoirs: Facture[];
+  pagination: PaginationResponse | undefined;
 }
 
 /** Validation/Finalization */
@@ -3225,6 +3251,9 @@ function createBaseFacture(): Facture {
     adresseFacturationId: "",
     createdAt: "",
     updatedAt: "",
+    typeDocument: "",
+    factureOrigineId: "",
+    motifAvoir: "",
     statut: undefined,
     client: undefined,
     lignes: [],
@@ -3275,14 +3304,23 @@ export const Facture: MessageFns<Facture> = {
     if (message.updatedAt !== "") {
       writer.uint32(114).string(message.updatedAt);
     }
+    if (message.typeDocument !== "") {
+      writer.uint32(122).string(message.typeDocument);
+    }
+    if (message.factureOrigineId !== "") {
+      writer.uint32(130).string(message.factureOrigineId);
+    }
+    if (message.motifAvoir !== "") {
+      writer.uint32(138).string(message.motifAvoir);
+    }
     if (message.statut !== undefined) {
-      StatutFacture.encode(message.statut, writer.uint32(122).fork()).join();
+      StatutFacture.encode(message.statut, writer.uint32(146).fork()).join();
     }
     if (message.client !== undefined) {
-      ClientInfo.encode(message.client, writer.uint32(130).fork()).join();
+      ClientInfo.encode(message.client, writer.uint32(154).fork()).join();
     }
     for (const v of message.lignes) {
-      LigneFacture.encode(v!, writer.uint32(138).fork()).join();
+      LigneFacture.encode(v!, writer.uint32(162).fork()).join();
     }
     return writer;
   },
@@ -3411,7 +3449,7 @@ export const Facture: MessageFns<Facture> = {
             break;
           }
 
-          message.statut = StatutFacture.decode(reader, reader.uint32());
+          message.typeDocument = reader.string();
           continue;
         }
         case 16: {
@@ -3419,11 +3457,35 @@ export const Facture: MessageFns<Facture> = {
             break;
           }
 
-          message.client = ClientInfo.decode(reader, reader.uint32());
+          message.factureOrigineId = reader.string();
           continue;
         }
         case 17: {
           if (tag !== 138) {
+            break;
+          }
+
+          message.motifAvoir = reader.string();
+          continue;
+        }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.statut = StatutFacture.decode(reader, reader.uint32());
+          continue;
+        }
+        case 19: {
+          if (tag !== 154) {
+            break;
+          }
+
+          message.client = ClientInfo.decode(reader, reader.uint32());
+          continue;
+        }
+        case 20: {
+          if (tag !== 162) {
             break;
           }
 
@@ -3503,6 +3565,21 @@ export const Facture: MessageFns<Facture> = {
         : isSet(object.updated_at)
         ? globalThis.String(object.updated_at)
         : "",
+      typeDocument: isSet(object.typeDocument)
+        ? globalThis.String(object.typeDocument)
+        : isSet(object.type_document)
+        ? globalThis.String(object.type_document)
+        : "",
+      factureOrigineId: isSet(object.factureOrigineId)
+        ? globalThis.String(object.factureOrigineId)
+        : isSet(object.facture_origine_id)
+        ? globalThis.String(object.facture_origine_id)
+        : "",
+      motifAvoir: isSet(object.motifAvoir)
+        ? globalThis.String(object.motifAvoir)
+        : isSet(object.motif_avoir)
+        ? globalThis.String(object.motif_avoir)
+        : "",
       statut: isSet(object.statut) ? StatutFacture.fromJSON(object.statut) : undefined,
       client: isSet(object.client) ? ClientInfo.fromJSON(object.client) : undefined,
       lignes: globalThis.Array.isArray(object?.lignes)
@@ -3555,6 +3632,15 @@ export const Facture: MessageFns<Facture> = {
     if (message.updatedAt !== "") {
       obj.updatedAt = message.updatedAt;
     }
+    if (message.typeDocument !== "") {
+      obj.typeDocument = message.typeDocument;
+    }
+    if (message.factureOrigineId !== "") {
+      obj.factureOrigineId = message.factureOrigineId;
+    }
+    if (message.motifAvoir !== "") {
+      obj.motifAvoir = message.motifAvoir;
+    }
     if (message.statut !== undefined) {
       obj.statut = StatutFacture.toJSON(message.statut);
     }
@@ -3586,6 +3672,9 @@ export const Facture: MessageFns<Facture> = {
     message.adresseFacturationId = object.adresseFacturationId ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
+    message.typeDocument = object.typeDocument ?? "";
+    message.factureOrigineId = object.factureOrigineId ?? "";
+    message.motifAvoir = object.motifAvoir ?? "";
     message.statut = (object.statut !== undefined && object.statut !== null)
       ? StatutFacture.fromPartial(object.statut)
       : undefined;
@@ -4629,6 +4718,398 @@ export const DeleteFactureResponse: MessageFns<DeleteFactureResponse> = {
   fromPartial<I extends Exact<DeepPartial<DeleteFactureResponse>, I>>(object: I): DeleteFactureResponse {
     const message = createBaseDeleteFactureResponse();
     message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseCreateAvoirRequest(): CreateAvoirRequest {
+  return {
+    organisationId: "",
+    factureOrigineId: "",
+    statutId: "",
+    emissionFactureId: "",
+    clientBaseId: "",
+    clientPartenaireId: "",
+    adresseFacturationId: "",
+    motifAvoir: "",
+    lignes: [],
+  };
+}
+
+export const CreateAvoirRequest: MessageFns<CreateAvoirRequest> = {
+  encode(message: CreateAvoirRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.factureOrigineId !== "") {
+      writer.uint32(18).string(message.factureOrigineId);
+    }
+    if (message.statutId !== "") {
+      writer.uint32(26).string(message.statutId);
+    }
+    if (message.emissionFactureId !== "") {
+      writer.uint32(34).string(message.emissionFactureId);
+    }
+    if (message.clientBaseId !== "") {
+      writer.uint32(42).string(message.clientBaseId);
+    }
+    if (message.clientPartenaireId !== "") {
+      writer.uint32(50).string(message.clientPartenaireId);
+    }
+    if (message.adresseFacturationId !== "") {
+      writer.uint32(58).string(message.adresseFacturationId);
+    }
+    if (message.motifAvoir !== "") {
+      writer.uint32(66).string(message.motifAvoir);
+    }
+    for (const v of message.lignes) {
+      CreateLigneFactureItem.encode(v!, writer.uint32(74).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateAvoirRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateAvoirRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.factureOrigineId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.statutId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.emissionFactureId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.clientBaseId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.clientPartenaireId = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.adresseFacturationId = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.motifAvoir = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.lignes.push(CreateLigneFactureItem.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateAvoirRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      factureOrigineId: isSet(object.factureOrigineId)
+        ? globalThis.String(object.factureOrigineId)
+        : isSet(object.facture_origine_id)
+        ? globalThis.String(object.facture_origine_id)
+        : "",
+      statutId: isSet(object.statutId)
+        ? globalThis.String(object.statutId)
+        : isSet(object.statut_id)
+        ? globalThis.String(object.statut_id)
+        : "",
+      emissionFactureId: isSet(object.emissionFactureId)
+        ? globalThis.String(object.emissionFactureId)
+        : isSet(object.emission_facture_id)
+        ? globalThis.String(object.emission_facture_id)
+        : "",
+      clientBaseId: isSet(object.clientBaseId)
+        ? globalThis.String(object.clientBaseId)
+        : isSet(object.client_base_id)
+        ? globalThis.String(object.client_base_id)
+        : "",
+      clientPartenaireId: isSet(object.clientPartenaireId)
+        ? globalThis.String(object.clientPartenaireId)
+        : isSet(object.client_partenaire_id)
+        ? globalThis.String(object.client_partenaire_id)
+        : "",
+      adresseFacturationId: isSet(object.adresseFacturationId)
+        ? globalThis.String(object.adresseFacturationId)
+        : isSet(object.adresse_facturation_id)
+        ? globalThis.String(object.adresse_facturation_id)
+        : "",
+      motifAvoir: isSet(object.motifAvoir)
+        ? globalThis.String(object.motifAvoir)
+        : isSet(object.motif_avoir)
+        ? globalThis.String(object.motif_avoir)
+        : "",
+      lignes: globalThis.Array.isArray(object?.lignes)
+        ? object.lignes.map((e: any) => CreateLigneFactureItem.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: CreateAvoirRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.factureOrigineId !== "") {
+      obj.factureOrigineId = message.factureOrigineId;
+    }
+    if (message.statutId !== "") {
+      obj.statutId = message.statutId;
+    }
+    if (message.emissionFactureId !== "") {
+      obj.emissionFactureId = message.emissionFactureId;
+    }
+    if (message.clientBaseId !== "") {
+      obj.clientBaseId = message.clientBaseId;
+    }
+    if (message.clientPartenaireId !== "") {
+      obj.clientPartenaireId = message.clientPartenaireId;
+    }
+    if (message.adresseFacturationId !== "") {
+      obj.adresseFacturationId = message.adresseFacturationId;
+    }
+    if (message.motifAvoir !== "") {
+      obj.motifAvoir = message.motifAvoir;
+    }
+    if (message.lignes?.length) {
+      obj.lignes = message.lignes.map((e) => CreateLigneFactureItem.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateAvoirRequest>, I>>(base?: I): CreateAvoirRequest {
+    return CreateAvoirRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateAvoirRequest>, I>>(object: I): CreateAvoirRequest {
+    const message = createBaseCreateAvoirRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.factureOrigineId = object.factureOrigineId ?? "";
+    message.statutId = object.statutId ?? "";
+    message.emissionFactureId = object.emissionFactureId ?? "";
+    message.clientBaseId = object.clientBaseId ?? "";
+    message.clientPartenaireId = object.clientPartenaireId ?? "";
+    message.adresseFacturationId = object.adresseFacturationId ?? "";
+    message.motifAvoir = object.motifAvoir ?? "";
+    message.lignes = object.lignes?.map((e) => CreateLigneFactureItem.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseListAvoirsByFactureRequest(): ListAvoirsByFactureRequest {
+  return { factureOrigineId: "", pagination: undefined };
+}
+
+export const ListAvoirsByFactureRequest: MessageFns<ListAvoirsByFactureRequest> = {
+  encode(message: ListAvoirsByFactureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.factureOrigineId !== "") {
+      writer.uint32(10).string(message.factureOrigineId);
+    }
+    if (message.pagination !== undefined) {
+      PaginationRequest.encode(message.pagination, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListAvoirsByFactureRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListAvoirsByFactureRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.factureOrigineId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.pagination = PaginationRequest.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListAvoirsByFactureRequest {
+    return {
+      factureOrigineId: isSet(object.factureOrigineId)
+        ? globalThis.String(object.factureOrigineId)
+        : isSet(object.facture_origine_id)
+        ? globalThis.String(object.facture_origine_id)
+        : "",
+      pagination: isSet(object.pagination) ? PaginationRequest.fromJSON(object.pagination) : undefined,
+    };
+  },
+
+  toJSON(message: ListAvoirsByFactureRequest): unknown {
+    const obj: any = {};
+    if (message.factureOrigineId !== "") {
+      obj.factureOrigineId = message.factureOrigineId;
+    }
+    if (message.pagination !== undefined) {
+      obj.pagination = PaginationRequest.toJSON(message.pagination);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListAvoirsByFactureRequest>, I>>(base?: I): ListAvoirsByFactureRequest {
+    return ListAvoirsByFactureRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListAvoirsByFactureRequest>, I>>(object: I): ListAvoirsByFactureRequest {
+    const message = createBaseListAvoirsByFactureRequest();
+    message.factureOrigineId = object.factureOrigineId ?? "";
+    message.pagination = (object.pagination !== undefined && object.pagination !== null)
+      ? PaginationRequest.fromPartial(object.pagination)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseListAvoirsResponse(): ListAvoirsResponse {
+  return { avoirs: [], pagination: undefined };
+}
+
+export const ListAvoirsResponse: MessageFns<ListAvoirsResponse> = {
+  encode(message: ListAvoirsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.avoirs) {
+      Facture.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.pagination !== undefined) {
+      PaginationResponse.encode(message.pagination, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListAvoirsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListAvoirsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.avoirs.push(Facture.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.pagination = PaginationResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListAvoirsResponse {
+    return {
+      avoirs: globalThis.Array.isArray(object?.avoirs) ? object.avoirs.map((e: any) => Facture.fromJSON(e)) : [],
+      pagination: isSet(object.pagination) ? PaginationResponse.fromJSON(object.pagination) : undefined,
+    };
+  },
+
+  toJSON(message: ListAvoirsResponse): unknown {
+    const obj: any = {};
+    if (message.avoirs?.length) {
+      obj.avoirs = message.avoirs.map((e) => Facture.toJSON(e));
+    }
+    if (message.pagination !== undefined) {
+      obj.pagination = PaginationResponse.toJSON(message.pagination);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListAvoirsResponse>, I>>(base?: I): ListAvoirsResponse {
+    return ListAvoirsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListAvoirsResponse>, I>>(object: I): ListAvoirsResponse {
+    const message = createBaseListAvoirsResponse();
+    message.avoirs = object.avoirs?.map((e) => Facture.fromPartial(e)) || [];
+    message.pagination = (object.pagination !== undefined && object.pagination !== null)
+      ? PaginationResponse.fromPartial(object.pagination)
+      : undefined;
     return message;
   },
 };
@@ -7413,6 +7894,25 @@ export const FactureServiceService = {
     responseSerialize: (value: Facture): Buffer => Buffer.from(Facture.encode(value).finish()),
     responseDeserialize: (value: Buffer): Facture => Facture.decode(value),
   },
+  createAvoir: {
+    path: "/factures.FactureService/CreateAvoir",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateAvoirRequest): Buffer => Buffer.from(CreateAvoirRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateAvoirRequest => CreateAvoirRequest.decode(value),
+    responseSerialize: (value: Facture): Buffer => Buffer.from(Facture.encode(value).finish()),
+    responseDeserialize: (value: Buffer): Facture => Facture.decode(value),
+  },
+  listAvoirsByFacture: {
+    path: "/factures.FactureService/ListAvoirsByFacture",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListAvoirsByFactureRequest): Buffer =>
+      Buffer.from(ListAvoirsByFactureRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListAvoirsByFactureRequest => ListAvoirsByFactureRequest.decode(value),
+    responseSerialize: (value: ListAvoirsResponse): Buffer => Buffer.from(ListAvoirsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListAvoirsResponse => ListAvoirsResponse.decode(value),
+  },
 } as const;
 
 export interface FactureServiceServer extends UntypedServiceImplementation {
@@ -7424,6 +7924,8 @@ export interface FactureServiceServer extends UntypedServiceImplementation {
   delete: handleUnaryCall<DeleteFactureRequest, DeleteFactureResponse>;
   validate: handleUnaryCall<ValidateFactureRequest, ValidateFactureResponse>;
   finalize: handleUnaryCall<FinalizeFactureRequest, Facture>;
+  createAvoir: handleUnaryCall<CreateAvoirRequest, Facture>;
+  listAvoirsByFacture: handleUnaryCall<ListAvoirsByFactureRequest, ListAvoirsResponse>;
 }
 
 export type FactureSettingsServiceService = typeof FactureSettingsServiceService;

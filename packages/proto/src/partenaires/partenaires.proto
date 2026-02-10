@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package partenaires;
+
+// ========== PARTENAIRE COMMERCIAL SERVICE ==========
+service PartenaireCommercialService {
+  rpc Create(CreatePartenaireCommercialRequest) returns (PartenaireCommercial);
+  rpc Update(UpdatePartenaireCommercialRequest) returns (PartenaireCommercial);
+  rpc Get(GetPartenaireCommercialRequest) returns (PartenaireCommercial);
+  rpc List(ListPartenaireCommercialRequest) returns (ListPartenaireCommercialResponse);
+  rpc Delete(DeletePartenaireCommercialRequest) returns (DeleteResponse);
+  rpc Search(SearchPartenaireCommercialRequest) returns (ListPartenaireCommercialResponse);
+  rpc Activer(ActivatePartenaireCommercialRequest) returns (PartenaireCommercial);
+  rpc Desactiver(ActivatePartenaireCommercialRequest) returns (PartenaireCommercial);
+  rpc ActiverPourSociete(PartenaireCommercialSocieteRequest) returns (PartenaireCommercialSociete);
+  rpc DesactiverPourSociete(PartenaireCommercialSocieteRequest) returns (PartenaireCommercialSociete);
+  rpc ListBySociete(ListPartenairesBySocieteRequest) returns (ListPartenaireCommercialResponse);
+}
+
+// ========== MESSAGES ==========
+
+message PartenaireCommercial {
+  string id = 1;
+  string organisation_id = 2;
+  string denomination = 3;
+  string type = 4;
+  string siren = 5;
+  string siret = 6;
+  string numero_tva = 7;
+  string adresses = 8;          // JSON string
+  string iban = 9;
+  string bic = 10;
+  string code_extranet = 11;
+  string api_base_url = 12;
+  string api_credentials = 13;  // JSON string (TODO: encrypted)
+  int32 sla_delai_traitement_heures = 14;
+  double sla_taux_disponibilite = 15;
+  string sla_contact_urgence = 16;
+  string contacts = 17;         // JSON string
+  string statut = 18;
+  string date_debut_contrat = 19;
+  string date_fin_contrat = 20;
+  string notes = 21;
+  string metadata = 22;         // JSON string
+  string created_by = 23;
+  string modified_by = 24;
+  string created_at = 25;
+  string updated_at = 26;
+  repeated PartenaireCommercialSociete societes = 27;
+}
+
+message PartenaireCommercialSociete {
+  string id = 1;
+  string partenaire_id = 2;
+  string societe_id = 3;
+  bool actif = 4;
+  string date_activation = 5;
+  string date_desactivation = 6;
+  string created_at = 7;
+}
+
+message CreatePartenaireCommercialRequest {
+  string organisation_id = 1;
+  string denomination = 2;
+  string type = 3;
+  string siren = 4;
+  string siret = 5;
+  string numero_tva = 6;
+  string adresses = 7;          // JSON string
+  string iban = 8;
+  string bic = 9;
+  string code_extranet = 10;
+  string api_base_url = 11;
+  string api_credentials = 12;  // JSON string
+  int32 sla_delai_traitement_heures = 13;
+  double sla_taux_disponibilite = 14;
+  string sla_contact_urgence = 15;
+  string contacts = 16;         // JSON string
+  string statut = 17;
+  string date_debut_contrat = 18;
+  string date_fin_contrat = 19;
+  string notes = 20;
+  string metadata = 21;         // JSON string
+  string created_by = 22;
+}
+
+message UpdatePartenaireCommercialRequest {
+  string id = 1;
+  string denomination = 2;
+  string type = 3;
+  string siren = 4;
+  string siret = 5;
+  string numero_tva = 6;
+  string adresses = 7;          // JSON string
+  string iban = 8;
+  string bic = 9;
+  string code_extranet = 10;
+  string api_base_url = 11;
+  string api_credentials = 12;  // JSON string
+  int32 sla_delai_traitement_heures = 13;
+  double sla_taux_disponibilite = 14;
+  string sla_contact_urgence = 15;
+  string contacts = 16;         // JSON string
+  string statut = 17;
+  string date_debut_contrat = 18;
+  string date_fin_contrat = 19;
+  string notes = 20;
+  string metadata = 21;         // JSON string
+  string modified_by = 22;
+}
+
+message GetPartenaireCommercialRequest {
+  string id = 1;
+}
+
+message ListPartenaireCommercialRequest {
+  string organisation_id = 1;
+  string type = 2;
+  string statut = 3;
+  bool actif_only = 4;
+  Pagination pagination = 5;
+}
+
+message SearchPartenaireCommercialRequest {
+  string organisation_id = 1;
+  string search = 2;
+  string type = 3;
+  string statut = 4;
+  Pagination pagination = 5;
+}
+
+message ActivatePartenaireCommercialRequest {
+  string id = 1;
+}
+
+message DeletePartenaireCommercialRequest {
+  string id = 1;
+}
+
+message PartenaireCommercialSocieteRequest {
+  string partenaire_id = 1;
+  string societe_id = 2;
+}
+
+message ListPartenairesBySocieteRequest {
+  string societe_id = 1;
+  bool actif_only = 2;
+  Pagination pagination = 3;
+}
+
+message ListPartenaireCommercialResponse {
+  repeated PartenaireCommercial partenaires = 1;
+  PaginationResult pagination = 2;
+}
+
+// ========== COMMON MESSAGES ==========
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}

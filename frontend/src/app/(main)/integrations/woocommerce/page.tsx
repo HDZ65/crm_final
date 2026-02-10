@@ -26,7 +26,7 @@ export default async function WooCommercePage() {
       activeOrgId={activeOrgId}
       initialConfigs={configsResult.data ? [configsResult.data] : null}
       initialMappings={mappingsResult.data?.mappings}
-      initialWebhooks={webhooksResult.data?.webhooks}
+      initialWebhooks={webhooksResult.data?.events}
     />
   )
 }

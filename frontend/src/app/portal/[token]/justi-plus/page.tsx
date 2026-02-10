@@ -42,26 +42,36 @@ const CATEGORIE_LABELS: Record<string, string> = {
 }
 
 async function getCases(token: string): Promise<CasJuridique[]> {
-  // Fetch legal cases for the client
-  const { data: casesData, error } = await listCas({ clientId: token });
+  // TODO: Get organisationId from client token or session
+  // For now, return empty array as we need organisationId to fetch cases
+  return [];
   
-  if (error || !casesData || !casesData.cas) {
-    console.error("[getCases] Error fetching cases:", error);
-    return [];
-  }
+  // Fetch legal cases for the client
+  // const { data: casesData, error } = await listCas({ 
+  //   organisationId: "", // TODO: Get from client
+  //   clientId: token,
+  //   pagination: { page: 1, limit: 100 }
+  // });
+  
+  // if (error || !casesData || !casesData.cas) {
+  //   console.error("[getCases] Error fetching cases:", error);
+  //   return [];
+  // }
 
   // Map proto response to CasJuridique interface
-  return casesData.cas.map(cas => ({
-    id: cas.id || "",
-    reference: cas.reference || "",
-    titre: cas.titre || "",
-    categorie: cas.categorie || "autre",
-    statut: (cas.statut || "ouvert") as "ouvert" | "en_cours" | "en_attente_documents" | "cloture",
-    avocatAssigne: cas.avocatAssigne || null,
-    dateOuverture: cas.dateOuverture ? new Date(cas.dateOuverture) : new Date(),
-    dateCloture: cas.dateCloture ? new Date(cas.dateCloture) : null,
-    documentsCount: cas.documentsCount || 0
-  }));
+  // return casesData.cas.map(cas => ({
+  //   id: cas.id || "",
+  //   reference: cas.reference || "",
+  //   titre: cas.titre || "",
+  //   categorie: cas.categorie || "autre",
+  //   statut: (cas.statut || "ouvert") as "ouvert" | "en_cours" | "en_attente_documents" | "cloture",
+  //   avocatAssigne: cas.avocatAssigne || null,
+  //   dateOuverture: cas.dateOuverture || "",
+  //   dateDerniereModification: cas.dateDerniereModification || "",
+  //   description: cas.description || "",
+  //   documentsCount: cas.documentsCount || 0,
+  //   messagesCount: cas.messagesCount || 0
+  // }));
 }
 
 export default async function JustiPlusPage({

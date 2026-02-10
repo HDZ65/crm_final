@@ -3,15 +3,15 @@
 import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
-import type { StatutCommissionResponseDto } from "@/types/commission"
+import type { StatutCommissionDisplay } from "@/lib/ui/display-types/commission"
 
 /**
  * Hook pour récupérer la liste des statuts de commission
  * GET /statuts-commission
  */
 export function useStatutsCommission() {
-  const [statuts, setStatuts] = useState<StatutCommissionResponseDto[]>([])
-  const { loading, error, execute } = useApi<StatutCommissionResponseDto[]>()
+  const [statuts, setStatuts] = useState<StatutCommissionDisplay[]>([])
+  const { loading, error, execute } = useApi<StatutCommissionDisplay[]>()
 
   const fetchStatuts = useCallback(async () => {
     try {
@@ -41,8 +41,8 @@ export function useStatutsCommission() {
  * GET /statuts-commission/:id
  */
 export function useStatutCommission(statutId: string | null) {
-  const [statut, setStatut] = useState<StatutCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<StatutCommissionResponseDto>()
+  const [statut, setStatut] = useState<StatutCommissionDisplay | null>(null)
+  const { loading, error, execute } = useApi<StatutCommissionDisplay>()
 
   const fetchStatut = useCallback(async () => {
     if (!statutId) return

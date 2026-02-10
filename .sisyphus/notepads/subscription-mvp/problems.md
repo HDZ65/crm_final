@@ -1,0 +1,2 @@
+- 2026-02-07: Open build blockers outside this task scope: missing `../../../../domain/products` import in `src/infrastructure/grpc/products/gamme.controller.ts` and missing `@proto/subscriptions` declarations in subscription gRPC controllers.
+- 2026-02-07: Unresolved tooling problem: `lsp_diagnostics` remains unavailable even after global install of TypeScript LSP binaries.

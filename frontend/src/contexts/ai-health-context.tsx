@@ -1,5 +1,15 @@
 "use client"
 
+/**
+ * REST EXCEPTION — AI Health Context
+ *
+ * This context intentionally uses REST (fetch) instead of gRPC because:
+ * 1. Browser-side health polling via HTTP GET
+ * 2. Uses Next.js API route proxy with direct backend fallback
+ * 3. gRPC is not appropriate for client-side periodic health checks
+ *
+ * Documented exception in the REST→gRPC migration (Wave 3 Task 8).
+ */
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react"
 
 const NEXT_API_HEALTH_URL = "/api/ai/health"

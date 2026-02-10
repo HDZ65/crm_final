@@ -20,7 +20,8 @@ import {
   deleteNotification as deleteNotificationAction,
   deleteAllNotifications as deleteAllNotificationsAction,
 } from '@/actions/notifications';
-import type { Notification, NotificationEvents } from '@/types/notification';
+import type { Notification } from '@proto/notifications/notifications';
+import type { NotificationEvents } from '@/lib/ui/display-types/notification';
 
 // WebSocket URL for notifications service (port 3001 by default)
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
@@ -96,7 +97,7 @@ export function NotificationProvider({ children, initialData }: NotificationProv
         lu: n.lu,
         utilisateurId: n.utilisateurId,
         organisationId: n.organisationId,
-        metadata: n.metadata,
+        metadata: n.metadata || {},
         lienUrl: n.lienUrl,
         createdAt: n.createdAt,
         updatedAt: n.updatedAt,

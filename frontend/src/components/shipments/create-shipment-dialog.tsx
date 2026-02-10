@@ -47,7 +47,8 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { useMaileva } from "@/hooks/email"
-import type { MailevaAddress, MailevaPricingResponse } from "@/types/maileva"
+import type { MailevaAddress } from "@/types/maileva"
+import type { PricingResponse, LabelResponse } from "@proto/logistics/logistics"
 
 // ============================================================================
 // Schema de validation
@@ -217,7 +218,7 @@ function PricingCard({
   pricing,
   isLoading
 }: {
-  pricing: MailevaPricingResponse | null
+  pricing: PricingResponse | null
   isLoading: boolean
 }) {
   if (isLoading) {
@@ -460,14 +461,19 @@ export function CreateShipmentDialog({
 
     try {
       const result = await generateLabel({
-        recipient: values.recipientAddress as MailevaAddress,
-        sender: values.senderAddress as MailevaAddress | undefined,
+        organisationId: "", // Will be set by backend from auth context
+        recipient: values.recipientAddress,
+        sender: values.senderAddress || undefined,
         serviceLevel: values.serviceLevel,
         format: values.format,
         weightGr: values.weightGr,
       })
 
-      setLabelResult(result)
+      setLabelResult({
+        trackingNumber: result.trackingNumber,
+        labelUrl: result.labelUrl,
+        estimatedDeliveryDate: result.estimatedDeliveryDate || "",
+      })
       setStep("success")
       toast.success("Étiquette générée avec succès !", {
         description: `Numéro de suivi : ${result.trackingNumber}`,

@@ -34,6 +34,9 @@ export class CompteService {
   }
 
   async findById(id: string): Promise<CompteEntity> {
+    if (!id) {
+      throw new RpcException({ code: status.INVALID_ARGUMENT, message: 'Compte id is required' });
+    }
     const entity = await this.repository.findOne({ where: { id } });
     if (!entity) {
       throw new RpcException({ code: status.NOT_FOUND, message: `Compte ${id} not found` });

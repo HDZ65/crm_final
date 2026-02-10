@@ -29,9 +29,9 @@ export class PalierCommissionEntity {
   @Column({ name: 'bareme_id', type: 'uuid' })
   baremeId: string;
 
-  @ManyToOne(() => BaremeCommissionEntity, (bareme) => bareme.paliers)
+  @ManyToOne('BaremeCommissionEntity', 'paliers')
   @JoinColumn({ name: 'bareme_id' })
-  bareme: BaremeCommissionEntity;
+  bareme: any;
 
   @Column({ type: 'varchar', length: 50 })
   code: string;

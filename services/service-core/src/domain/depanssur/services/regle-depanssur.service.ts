@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
+import { NatsService } from '@crm/shared-kernel';
+import { randomUUID } from 'crypto';
 import { AbonnementDepanssurEntity } from '../entities/abonnement-depanssur.entity';
 import { CompteurPlafondEntity } from '../entities/compteur-plafond.entity';
 
@@ -45,9 +47,12 @@ export interface AdresseRisqueChangeResult {
 
 @Injectable()
 export class RegleDepanssurService {
+  private readonly logger = new Logger(RegleDepanssurService.name);
+
   constructor(
     @InjectRepository(CompteurPlafondEntity)
     private readonly compteurRepository: Repository<CompteurPlafondEntity>,
+    private readonly natsService: NatsService,
   ) {}
 
   validerCarence(abonnement: AbonnementDepanssurEntity, dateDossier: Date): CarenceValidationResult {
@@ -249,7 +254,12 @@ export class RegleDepanssurService {
     compteur.nbInterventionsUtilisees += 1;
     compteur.montantCumule = this.formatDecimal(this.parseDecimal(compteur.montantCumule) + montantIntervention);
 
-    return manager.getRepository(CompteurPlafondEntity).save(compteur);
+    const saved = await manager.getRepository(CompteurPlafondEntity).save(compteur);
+
+    // Check for plafond threshold and exceeded events
+    await this.checkPlafondThresholds(abonnement, saved);
+
+    return saved;
   }
 
   private async getOrCreateCompteurForCycle(
@@ -377,5 +387,91 @@ export class RegleDepanssurService {
 
   private formatDecimal(value: number): string {
     return this.roundMontant(value).toFixed(2);
+  }
+
+  private async checkPlafondThresholds(
+    abonnement: AbonnementDepanssurEntity,
+    compteur: CompteurPlafondEntity,
+  ): Promise<void> {
+    const plafondAnnuel = this.parseNullableDecimal(abonnement?.plafondAnnuel);
+    if (plafondAnnuel === null) {
+      return; // No annual ceiling configured
+    }
+
+    const montantUtilise = this.parseDecimal(compteur.montantCumule);
+    const pourcentageUtilise = (montantUtilise / plafondAnnuel) * 100;
+
+    // Check if exceeded
+    if (montantUtilise > plafondAnnuel) {
+      await this.publishPlafondExceededEvent(
+        abonnement,
+        plafondAnnuel,
+        montantUtilise,
+        montantUtilise - plafondAnnuel,
+      );
+      return;
+    }
+
+    // Check if threshold reached (80%)
+    if (pourcentageUtilise >= 80) {
+      await this.publishPlafondThresholdReachedEvent(
+        abonnement,
+        plafondAnnuel,
+        montantUtilise,
+        pourcentageUtilise,
+      );
+    }
+  }
+
+  private async publishPlafondThresholdReachedEvent(
+    abonnement: AbonnementDepanssurEntity,
+    plafondAnnuel: number,
+    montantUtilise: number,
+    pourcentageUtilise: number,
+  ): Promise<void> {
+    try {
+      const event = {
+        event_id: randomUUID(),
+        timestamp: Date.now(),
+        correlation_id: null,
+        abonnement_id: abonnement.id,
+        client_id: abonnement.clientId,
+        organisation_id: abonnement.organisationId,
+        plafond_annuel: plafondAnnuel,
+        montant_utilise: montantUtilise,
+        pourcentage_utilise: pourcentageUtilise,
+        reached_at: new Date(),
+      };
+      await this.natsService.publish('depanssur.plafond.threshold_reached', event);
+      this.logger.debug(`Published depanssur.plafond.threshold_reached for ${abonnement.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish depanssur.plafond.threshold_reached: ${error}`);
+    }
+  }
+
+  private async publishPlafondExceededEvent(
+    abonnement: AbonnementDepanssurEntity,
+    plafondAnnuel: number,
+    montantUtilise: number,
+    montantDepasse: number,
+  ): Promise<void> {
+    try {
+      const event = {
+        event_id: randomUUID(),
+        timestamp: Date.now(),
+        correlation_id: null,
+        abonnement_id: abonnement.id,
+        client_id: abonnement.clientId,
+        organisation_id: abonnement.organisationId,
+        plafond_annuel: plafondAnnuel,
+        montant_utilise: montantUtilise,
+        montant_depasse: montantDepasse,
+        exceeded_at: new Date(),
+      };
+      await this.natsService.publish('depanssur.plafond.exceeded', event);
+      this.logger.debug(`Published depanssur.plafond.exceeded for ${abonnement.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish depanssur.plafond.exceeded: ${error}`);
+    }
   }
 }

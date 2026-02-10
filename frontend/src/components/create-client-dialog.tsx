@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { SubmitButton } from "@/components/ui/submit-button"
 import { NativeFormField, FormError } from "@/components/ui/form-field"
+import { DatePicker } from "@/components/ui/date-picker"
 import { toast } from "sonner"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { createClientAction } from "@/actions/clients"
@@ -131,7 +132,7 @@ export function CreateClientDialog({ open, onOpenChange, onSuccess }: CreateClie
             label="Date de naissance"
             errors={state.errors?.dateNaissance}
           >
-            <Input type="date" />
+            <DatePicker name="dateNaissance" placeholder="Sélectionnez une date" />
           </NativeFormField>
 
           <NativeFormField name="telephone" label="Telephone" errors={state.errors?.telephone}>

@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package events;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// SERVICE EVENTS
+// ============================================================================
+// Events emitted by new services: Conciergerie, Justi+, WinCash, Bundle
+// ============================================================================
+
+// ========== CONCIERGERIE EVENTS ==========
+
+// Emitted when a new demande de conciergerie is created
+message DemandeCreatedEvent {
+  // Event metadata
+  string event_id = 1;                                // UUID for idempotency
+  int64 timestamp = 2;                                // Unix timestamp in milliseconds
+  string correlation_id = 3;                          // Optional, for tracing
+
+  // Event data
+  string demande_id = 4;                              // Demande ID
+  string organisation_id = 5;                         // Organisation ID (tenant)
+  string client_id = 6;                               // Client ID
+  string titre = 7;                                   // Demande title
+  string categorie = 8;                               // Category
+  string priorite = 9;                                // Priority
+  google.protobuf.Timestamp created_at = 10;          // Creation timestamp
+}
+
+// Emitted when a demande de conciergerie is updated
+message DemandeUpdatedEvent {
+  // Event metadata
+  string event_id = 1;                                // UUID for idempotency
+  int64 timestamp = 2;                                // Unix timestamp in milliseconds
+  string correlation_id = 3;                          // Optional, for tracing
+
+  // Event data
+  string demande_id = 4;                              // Demande ID
+  string organisation_id = 5;                         // Organisation ID (tenant)
+  string ancien_statut = 6;                           // Previous status
+  string nouveau_statut = 7;                          // New status
+  optional string assigne_a = 8;                      // Assigned agent (if changed)
+  google.protobuf.Timestamp updated_at = 9;           // Update timestamp
+}
+
+// Emitted when a demande de conciergerie is closed
+message DemandeClosedEvent {
+  // Event metadata
+  string event_id = 1;                                // UUID for idempotency
+  int64 timestamp = 2;                                // Unix timestamp in milliseconds
+  string correlation_id = 3;                          // Optional, for tracing
+
+  // Event data
+  string demande_id = 4;                              // Demande ID
+  string organisation_id = 5;                         // Organisation ID (tenant)
+  string client_id = 6;                               // Client ID
+  string resolution_notes = 7;                        // Resolution summary
+  google.protobuf.Timestamp closed_at = 8;            // Closure timestamp
+}
+
+// ========== JUSTI-PLUS EVENTS ==========
+
+// Emitted when cas juridiques are synced from Justi+ partner
+message CasJuridiqueSyncedEvent {
+  // Event metadata
+  string event_id = 1;                                // UUID for idempotency
+  int64 timestamp = 2;                                // Unix timestamp in milliseconds
+  string correlation_id = 3;                          // Optional, for tracing
+
+  // Event data
+  string organisation_id = 4;                         // Organisation ID (tenant)
+  string sync_id = 5;                                 // Sync batch ID
+  int32 cas_crees = 6;                                // Number of cases created
+  int32 cas_mis_a_jour = 7;                           // Number of cases updated
+  int32 erreurs = 8;                                  // Number of errors
+  google.protobuf.Timestamp synced_at = 9;            // Sync timestamp
+}
+
+// ========== WINCASH EVENTS ==========
+
+// Emitted when cashback operations are synced from WinCash partner
+message CashbackSyncedEvent {
+  // Event metadata
+  string event_id = 1;                                // UUID for idempotency
+  int64 timestamp = 2;                                // Unix timestamp in milliseconds
+  string correlation_id = 3;                          // Optional, for tracing
+
+  // Event data
+  string organisation_id = 4;                         // Organisation ID (tenant)
+  string sync_id = 5;                                 // Sync batch ID
+  int32 operations_creees = 6;                        // Number of operations created
+  int32 operations_mises_a_jour = 7;                  // Number of operations updated
+  int32 erreurs = 8;                                  // Number of errors
+  double total_montant = 9;                           // Total amount synced
+  google.protobuf.Timestamp synced_at = 10;           // Sync timestamp
+}

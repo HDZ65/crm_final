@@ -18,7 +18,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { signupAction } from "@/actions/auth"
-import { getInitialFormState } from "@/lib/form-state"
+import { getInitialFormState } from "@/lib/forms/state"
 import logoCrm from "@/assets/logo-crm.png"
 
 export function SignupForm({
@@ -176,6 +176,7 @@ export function SignupForm({
               src={logoCrm}
               alt="Logo CRM"
               fill
+              priority
               className="object-contain"
             />
           </div>

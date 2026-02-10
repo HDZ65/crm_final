@@ -25,8 +25,9 @@ import { Separator } from "@/components/ui/separator"
 import { Calculator, CheckCircle2, AlertTriangle, Info } from "lucide-react"
 import { useCalculerCommission, useApporteurs } from "@/hooks"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { TypeProduit, CalculerCommissionResponseDto } from "@/types/commission"
+import type { TypeProduit, CalculerCommissionResponse } from "@/lib/ui/display-types/commission"
 import type { TypeOption } from "@/hooks/commissions/use-commission-config"
+import { formatMontant } from "@/lib/ui/helpers/format"
 
 interface CalculateCommissionDialogProps {
   trigger?: React.ReactNode
@@ -82,16 +83,10 @@ export function CalculateCommissionDialog({
       contratId: formData.contratId,
       apporteurId: formData.apporteurId,
       periode: formData.periode,
-      montantBase: parseFloat(formData.montantBase) || 0,
-      typeProduit: formData.typeProduit || undefined,
+      montantBase: formData.montantBase || "0",
+      typeProduit: formData.typeProduit || "",
+      profilRemuneration: "",
     })
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount)
   }
 
   const isFormValid =
@@ -203,7 +198,7 @@ export function CalculateCommissionDialog({
           </div>
 
           {/* Résultat du calcul */}
-          {result && <CalculationResult result={result} formatCurrency={formatCurrency} getTypeProduitLabel={getTypeProduitLabel} />}
+          {result && <CalculationResult result={result} getTypeProduitLabel={getTypeProduitLabel} />}
 
           {/* Erreur */}
           {error && (
@@ -231,12 +226,11 @@ export function CalculateCommissionDialog({
 }
 
 interface CalculationResultProps {
-  result: CalculerCommissionResponseDto
-  formatCurrency: (amount: number) => string
+  result: CalculerCommissionResponse
   getTypeProduitLabel: (value: string) => string
 }
 
-function CalculationResult({ result, formatCurrency, getTypeProduitLabel }: CalculationResultProps) {
+function CalculationResult({ result, getTypeProduitLabel }: CalculationResultProps) {
   if (result.erreur) {
     return (
       <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
@@ -287,7 +281,7 @@ function CalculationResult({ result, formatCurrency, getTypeProduitLabel }: Calc
             {result.bareme.montantFixe && (
               <div>
                 <span className="text-muted-foreground">Montant fixe:</span>{" "}
-                {formatCurrency(result.bareme.montantFixe)}
+                {formatMontant(result.bareme.montantFixe)}
               </div>
             )}
           </div>
@@ -300,7 +294,7 @@ function CalculationResult({ result, formatCurrency, getTypeProduitLabel }: Calc
           <div className="flex justify-between items-center">
             <span className="font-medium">Commission calculée</span>
             <span className="text-2xl font-bold text-success">
-              {formatCurrency(result.commission.montantBrut)}
+              {formatMontant(result.commission.montantBrut)}
             </span>
           </div>
           <div className="mt-2 text-sm text-muted-foreground">
@@ -326,7 +320,7 @@ function CalculationResult({ result, formatCurrency, getTypeProduitLabel }: Calc
                   </span>
                 </div>
                 <Badge className="bg-info text-info-foreground">
-                  +{formatCurrency(prime.montantPrime)}
+                  +{formatMontant(prime.montantPrime)}
                 </Badge>
               </div>
             ))}

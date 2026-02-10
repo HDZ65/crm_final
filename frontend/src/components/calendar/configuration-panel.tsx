@@ -16,22 +16,24 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import type {
-  SystemDebitConfigDto,
-  HolidayZoneDto,
-} from "@/types/calendar";
+  SystemDebitConfiguration,
+  HolidayZone,
+} from "@proto/calendar/calendar";
 import {
   DebitDateMode,
-  DebitDateModeLabels,
   DebitBatch,
-  DebitBatchLabels,
   DateShiftStrategy,
+} from "@proto/calendar/calendar";
+import {
+  DebitDateModeLabels,
+  DebitBatchLabels,
   DateShiftStrategyLabels,
-} from "@/types/calendar";
+} from "@/lib/ui/labels/calendar";
 import { updateSystemConfig } from "@/actions/calendar-config";
 
 interface ConfigurationPanelProps {
-  initialSystemConfig: SystemDebitConfigDto | null;
-  initialZones: HolidayZoneDto[];
+  initialSystemConfig: SystemDebitConfiguration | null;
+  initialZones: HolidayZone[];
   organisationId: string;
 }
 
@@ -105,7 +107,7 @@ export function ConfigurationPanel({
                   </Select>
                 </div>
 
-                {config.defaultMode === DebitDateMode.BATCH && (
+                {config.defaultMode === DebitDateMode.DEBIT_DATE_MODE_BATCH && (
                   <div className="space-y-2">
                     <Label>Lot par défaut</Label>
                     <Select
@@ -130,7 +132,7 @@ export function ConfigurationPanel({
                   </div>
                 )}
 
-                {config.defaultMode === DebitDateMode.FIXED_DAY && (
+                {config.defaultMode === DebitDateMode.DEBIT_DATE_MODE_FIXED_DAY && (
                   <div className="space-y-2">
                     <Label>Jour fixe du mois</Label>
                     <Input

@@ -7,21 +7,20 @@ services:
     container_name: dev-crm-service-finance
     ports:
       - "50059:50059"
-      - "50063:50063"
-      - "50068:50068"
+      - "3059:3059"
     env_file:
       - ../../services/service-finance/.env.development
+    environment:
+      - NODE_PATH=/app/services/service-finance/node_modules
     depends_on:
       postgres-main:
         condition: service_healthy
-      nats:
-        condition: service_started
     volumes:
       - ../../services/service-finance/src:/app/services/service-finance/src
     networks:
       - crm-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('net').connect(50059, 'localhost').on('connect', () => process.exit(0))"]
+      test: ["CMD", "node", "-e", "require('net').connect(3059, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
       timeout: 10s
       retries: 3

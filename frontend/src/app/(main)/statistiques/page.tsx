@@ -1,5 +1,5 @@
 import { StatistiquesPageClient } from "./statistiques-page-client"
-import { getActiveOrgId } from "@/lib/server-data"
+import { getActiveOrgId } from "@/lib/server/data"
 import { getDashboardData, getKpisCommerciaux, getAlertes } from "@/actions/dashboard"
 import type { DashboardFilters } from "@proto/dashboard/dashboard"
 

@@ -4,24 +4,34 @@ import { useCallback, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
 import type {
-  CalculerCommissionDto,
-  CalculerCommissionResponseDto,
-  GenererBordereauDto,
-  GenererBordereauResponseDto,
-  DeclencherRepriseDto,
-  RepriseCommissionResponseDto,
-} from "@/types/commission"
+  CalculerCommissionResponse,
+  GenererBordereauResponse,
+  RepriseWithDetails,
+} from "@/lib/ui/display-types/commission"
+import type {
+  CalculerCommissionRequest,
+  GenererBordereauRequest,
+} from "@proto/commission/commission"
+import type { TypeReprise } from "@/lib/ui/display-types/commission"
+
+interface DeclencherReprisePayload {
+  organisationId: string
+  commissionId: string
+  typeReprise: TypeReprise
+  motif?: string
+  commentaire?: string
+}
 
 /**
  * Hook pour calculer une commission via le moteur
  * POST /commission-engine/calculer
  */
 export function useCalculerCommission() {
-  const [result, setResult] = useState<CalculerCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<CalculerCommissionResponseDto>()
+  const [result, setResult] = useState<CalculerCommissionResponse | null>(null)
+  const { loading, error, execute } = useApi<CalculerCommissionResponse>()
 
   const calculer = useCallback(
-    async (data: CalculerCommissionDto) => {
+    async (data: CalculerCommissionRequest) => {
       try {
         const response = await execute(() => api.post("/commission-engine/calculer", data))
         if (response) {
@@ -54,11 +64,11 @@ export function useCalculerCommission() {
  * POST /commission-engine/generer-bordereau
  */
 export function useGenererBordereau() {
-  const [result, setResult] = useState<GenererBordereauResponseDto | null>(null)
-  const { loading, error, execute } = useApi<GenererBordereauResponseDto>()
+  const [result, setResult] = useState<GenererBordereauResponse | null>(null)
+  const { loading, error, execute } = useApi<GenererBordereauResponse>()
 
   const generer = useCallback(
-    async (data: GenererBordereauDto) => {
+    async (data: GenererBordereauRequest) => {
       try {
         const response = await execute(() => api.post("/commission-engine/generer-bordereau", data))
         if (response) {
@@ -91,11 +101,11 @@ export function useGenererBordereau() {
  * POST /commission-engine/declencher-reprise
  */
 export function useDeclencherReprise() {
-  const [reprise, setReprise] = useState<RepriseCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<RepriseCommissionResponseDto | null>()
+  const [reprise, setReprise] = useState<RepriseWithDetails | null>(null)
+  const { loading, error, execute } = useApi<RepriseWithDetails | null>()
 
   const declencher = useCallback(
-    async (data: DeclencherRepriseDto) => {
+    async (data: DeclencherReprisePayload) => {
       try {
         const response = await execute(() => api.post("/commission-engine/declencher-reprise", data))
         setReprise(response)

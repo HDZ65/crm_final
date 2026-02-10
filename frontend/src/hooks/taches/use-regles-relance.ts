@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import type {
-  RegleRelanceDto,
-  CreateRegleRelanceDto,
-  UpdateRegleRelanceDto,
-  HistoriqueRelanceDto,
-} from "@/types/regle-relance"
+  RegleRelance,
+  CreateRegleRelanceRequest,
+  UpdateRegleRelanceRequest,
+  HistoriqueRelance,
+} from "@proto/relance/relance"
 
 interface RegleRelanceFilters {
   organisationId?: string
@@ -16,7 +16,7 @@ interface RegleRelanceFilters {
 }
 
 export function useReglesRelance(filters?: RegleRelanceFilters) {
-  const [regles, setRegles] = useState<RegleRelanceDto[]>([])
+  const [regles, setRegles] = useState<RegleRelance[]>([])
   const [error, setError] = useState<Error | null>(null)
 
   const fetchRegles = useCallback(async () => {
@@ -31,10 +31,10 @@ export function useReglesRelance(filters?: RegleRelanceFilters) {
       const queryString = params.toString()
       const endpoint = queryString ? `/regles-relance?${queryString}` : "/regles-relance"
 
-      const data = await api.get<RegleRelanceDto[]>(endpoint)
+      const data = await api.get<RegleRelance[]>(endpoint)
       setRegles(data || [])
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Erreur lors du chargement des règles"))
+      setError(err instanceof Error ? err : new Error("Erreur lors du chargement des regles"))
     }
   }, [filters])
 
@@ -52,26 +52,26 @@ export function useReglesRelance(filters?: RegleRelanceFilters) {
 export function useRegleRelanceMutations() {
   const [error, setError] = useState<Error | null>(null)
 
-  const createRegle = useCallback(async (data: CreateRegleRelanceDto): Promise<RegleRelanceDto | null> => {
+  const createRegle = useCallback(async (data: CreateRegleRelanceRequest): Promise<RegleRelance | null> => {
     setError(null)
 
     try {
-      const result = await api.post<RegleRelanceDto>("/regles-relance", data)
+      const result = await api.post<RegleRelance>("/regles-relance", data)
       return result
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Erreur lors de la création"))
+      setError(err instanceof Error ? err : new Error("Erreur lors de la creation"))
       return null
     }
   }, [])
 
-  const updateRegle = useCallback(async (id: string, data: UpdateRegleRelanceDto): Promise<RegleRelanceDto | null> => {
+  const updateRegle = useCallback(async (id: string, data: UpdateRegleRelanceRequest): Promise<RegleRelance | null> => {
     setError(null)
 
     try {
-      const result = await api.put<RegleRelanceDto>(`/regles-relance/${id}`, data)
+      const result = await api.put<RegleRelance>(`/regles-relance/${id}`, data)
       return result
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Erreur lors de la mise à jour"))
+      setError(err instanceof Error ? err : new Error("Erreur lors de la mise a jour"))
       return null
     }
   }, [])
@@ -88,11 +88,11 @@ export function useRegleRelanceMutations() {
     }
   }, [])
 
-  const activerRegle = useCallback(async (id: string): Promise<RegleRelanceDto | null> => {
+  const activerRegle = useCallback(async (id: string): Promise<RegleRelance | null> => {
     setError(null)
 
     try {
-      const result = await api.put<RegleRelanceDto>(`/regles-relance/${id}/activer`)
+      const result = await api.put<RegleRelance>(`/regles-relance/${id}/activer`)
       return result
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors de l'activation"))
@@ -100,14 +100,14 @@ export function useRegleRelanceMutations() {
     }
   }, [])
 
-  const desactiverRegle = useCallback(async (id: string): Promise<RegleRelanceDto | null> => {
+  const desactiverRegle = useCallback(async (id: string): Promise<RegleRelance | null> => {
     setError(null)
 
     try {
-      const result = await api.put<RegleRelanceDto>(`/regles-relance/${id}/desactiver`)
+      const result = await api.put<RegleRelance>(`/regles-relance/${id}/desactiver`)
       return result
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Erreur lors de la désactivation"))
+      setError(err instanceof Error ? err : new Error("Erreur lors de la desactivation"))
       return null
     }
   }, [])
@@ -119,8 +119,8 @@ export function useRegleRelanceMutations() {
       const result = await api.post<{ success: boolean; message: string }>("/regles-relance/executer", { organisationId })
       return result
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Erreur lors de l'exécution"))
-      return { success: false, message: "Erreur lors de l'exécution des relances" }
+      setError(err instanceof Error ? err : new Error("Erreur lors de l'execution"))
+      return { success: false, message: "Erreur lors de l'execution des relances" }
     }
   }, [])
 
@@ -136,7 +136,7 @@ export function useRegleRelanceMutations() {
 }
 
 export function useHistoriqueRelances(filters?: { organisationId?: string; limit?: number }) {
-  const [historique, setHistorique] = useState<HistoriqueRelanceDto[]>([])
+  const [historique, setHistorique] = useState<HistoriqueRelance[]>([])
   const [error, setError] = useState<Error | null>(null)
 
   const fetchHistorique = useCallback(async () => {
@@ -150,7 +150,7 @@ export function useHistoriqueRelances(filters?: { organisationId?: string; limit
       const queryString = params.toString()
       const endpoint = queryString ? `/historique-relances?${queryString}` : "/historique-relances"
 
-      const data = await api.get<HistoriqueRelanceDto[]>(endpoint)
+      const data = await api.get<HistoriqueRelance[]>(endpoint)
       setHistorique(data || [])
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur lors du chargement de l'historique"))

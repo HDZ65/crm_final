@@ -132,14 +132,23 @@ enum CategorieProduit {
 }
 
 enum TypeTarification {
-  TYPE_TARIFICATION_UNSPECIFIED = 0;
-  TYPE_TARIFICATION_FIXE = 1;
-  TYPE_TARIFICATION_PALIER = 2;
-  TYPE_TARIFICATION_RECURRENT = 3;
-  TYPE_TARIFICATION_USAGE = 4;
-  TYPE_TARIFICATION_BUNDLE = 5;
-  TYPE_TARIFICATION_NEGOCIE = 6;
-  TYPE_TARIFICATION_INDEXE = 7;
+   TYPE_TARIFICATION_UNSPECIFIED = 0;
+   TYPE_TARIFICATION_FIXE = 1;
+   TYPE_TARIFICATION_PALIER = 2;
+   TYPE_TARIFICATION_RECURRENT = 3;
+   TYPE_TARIFICATION_USAGE = 4;
+   TYPE_TARIFICATION_BUNDLE = 5;
+   TYPE_TARIFICATION_NEGOCIE = 6;
+   TYPE_TARIFICATION_INDEXE = 7;
+}
+
+enum CanalVente {
+   CANAL_VENTE_UNSPECIFIED = 0;
+   CANAL_VENTE_TERRAIN = 1;
+   CANAL_VENTE_TELEPHONE = 2;
+   CANAL_VENTE_WEB = 3;
+   CANAL_VENTE_MARQUE_BLANCHE = 4;
+   CANAL_VENTE_MARKETPLACE = 5;
 }
 
 message Produit {
@@ -673,6 +682,130 @@ service PrixProduitService {
 }
 
 service CatalogService {
-  rpc GetCatalog(GetCatalogRequest) returns (GetCatalogResponse);
-  rpc CalculatePrice(CalculatePriceRequest) returns (CalculatePriceResponse);
+   rpc GetCatalog(GetCatalogRequest) returns (GetCatalogResponse);
+   rpc CalculatePrice(CalculatePriceRequest) returns (CalculatePriceResponse);
+}
+
+// ===== FORMULE PRODUIT (Product Formula/Variant) =====
+
+message GarantieFormule {
+   string nom = 1;
+   string description = 2;
+   double plafond = 3;
+   double franchise = 4;
+   bool actif = 5;
+}
+
+message OptionFormule {
+   string nom = 1;
+   double prix_supplement = 2;
+   string description = 3;
+   bool obligatoire = 4;
+}
+
+enum FranchiseType {
+   FRANCHISE_TYPE_UNSPECIFIED = 0;
+   FRANCHISE_TYPE_MONTANT = 1;
+   FRANCHISE_TYPE_POURCENTAGE = 2;
+}
+
+enum TypeAjustementPrix {
+   TYPE_AJUSTEMENT_PRIX_UNSPECIFIED = 0;
+   TYPE_AJUSTEMENT_PRIX_MONTANT = 1;
+   TYPE_AJUSTEMENT_PRIX_POURCENTAGE = 2;
+}
+
+message FormuleProduit {
+   string id = 1;
+   string produit_id = 2;
+   string code = 3;
+   string nom = 4;
+   string description = 5;
+   int32 ordre = 6;
+   repeated GarantieFormule garanties = 7;
+   repeated OptionFormule options = 8;
+   double franchise_montant = 9;
+   FranchiseType franchise_type = 10;
+   double prix_formule = 11;
+   TypeAjustementPrix type_ajustement_prix = 12;
+   bool actif = 13;
+   string version_produit_id = 14;
+   string metadata = 15;
+   string created_by = 16;
+   string modified_by = 17;
+   string created_at = 18;
+   string updated_at = 19;
+}
+
+message CreateFormuleProduitRequest {
+   string produit_id = 1;
+   string code = 2;
+   string nom = 3;
+   string description = 4;
+   int32 ordre = 5;
+   repeated GarantieFormule garanties = 6;
+   repeated OptionFormule options = 7;
+   double franchise_montant = 8;
+   FranchiseType franchise_type = 9;
+   double prix_formule = 10;
+   TypeAjustementPrix type_ajustement_prix = 11;
+   optional string version_produit_id = 12;
+   optional string metadata = 13;
+}
+
+message UpdateFormuleProduitRequest {
+   string id = 1;
+   optional string code = 2;
+   optional string nom = 3;
+   optional string description = 4;
+   optional int32 ordre = 5;
+   repeated GarantieFormule garanties = 6;
+   repeated OptionFormule options = 7;
+   optional double franchise_montant = 8;
+   optional FranchiseType franchise_type = 9;
+   optional double prix_formule = 10;
+   optional TypeAjustementPrix type_ajustement_prix = 11;
+   optional bool actif = 12;
+   optional string metadata = 13;
+}
+
+message GetFormuleProduitRequest {
+   string id = 1;
+}
+
+message ListFormulesProduitRequest {
+   string produit_id = 1;
+   optional bool actif = 2;
+   PaginationRequest pagination = 3;
+}
+
+message ListFormulesProduitResponse {
+   repeated FormuleProduit formules = 1;
+   PaginationResponse pagination = 2;
+}
+
+message DeleteFormuleProduitRequest {
+   string id = 1;
+}
+
+message DeleteFormuleProduitResponse {
+   bool success = 1;
+}
+
+message ActiverFormuleProduitRequest {
+   string id = 1;
+}
+
+message DesactiverFormuleProduitRequest {
+   string id = 1;
+}
+
+service FormuleProduitService {
+   rpc Create(CreateFormuleProduitRequest) returns (FormuleProduit);
+   rpc Update(UpdateFormuleProduitRequest) returns (FormuleProduit);
+   rpc Get(GetFormuleProduitRequest) returns (FormuleProduit);
+   rpc ListByProduit(ListFormulesProduitRequest) returns (ListFormulesProduitResponse);
+   rpc Delete(DeleteFormuleProduitRequest) returns (DeleteFormuleProduitResponse);
+   rpc Activer(ActiverFormuleProduitRequest) returns (FormuleProduit);
+   rpc Desactiver(DesactiverFormuleProduitRequest) returns (FormuleProduit);
 }

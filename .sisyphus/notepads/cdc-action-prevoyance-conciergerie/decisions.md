@@ -1,0 +1,3 @@
+- 2026-02-07: Implemented consolidated billing as a dedicated `ConsolidatedBillingService` instead of altering mono-service invoice creation semantics, to preserve backward compatibility.
+- 2026-02-07: Implemented selective dunning as a dedicated `SelectiveDunningService` with explicit branch logic: `CONCIERGERIE` non-payment recalculates/removes bundle discounts, other services trigger targeted schedule suspension only.
+- 2026-02-07: Extended recurring billing via `SchedulesService.generateRecurringBillingForClient`, mapping schedule metadata to consolidated invoice lines (service code, discounted price, catalog price).

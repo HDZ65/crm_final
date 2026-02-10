@@ -43,15 +43,16 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react"
-import type { ApporteurResponseDto, TypeApporteur } from "@/types/commission"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
+import type { TypeApporteur } from "@/lib/ui/display-types/commission"
 import type { TypeOption } from "@/hooks/commissions/use-commission-config"
 
 interface ApporteursListProps {
-  apporteurs: ApporteurResponseDto[]
+  apporteurs: Apporteur[]
   typesApporteur: TypeOption[]
   loading?: boolean
   loadingConfig?: boolean
-  onEdit?: (apporteur: ApporteurResponseDto) => void
+  onEdit?: (apporteur: Apporteur) => void
   onToggleActive?: (apporteurId: string, active: boolean) => Promise<void>
   onCreate?: (data: CreateApporteurData) => Promise<void>
 }
@@ -84,7 +85,7 @@ export function ApporteursList({
 }: ApporteursListProps) {
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
   const [detailDialogOpen, setDetailDialogOpen] = React.useState(false)
-  const [selectedApporteur, setSelectedApporteur] = React.useState<ApporteurResponseDto | null>(null)
+  const [selectedApporteur, setSelectedApporteur] = React.useState<Apporteur | null>(null)
   const [creating, setCreating] = React.useState(false)
   const [toggling, setToggling] = React.useState<string | null>(null)
 
@@ -110,12 +111,12 @@ export function ApporteursList({
     return type?.color || ""
   }, [typesApporteur])
 
-  const handleViewDetails = (apporteur: ApporteurResponseDto) => {
+  const handleViewDetails = (apporteur: Apporteur) => {
     setSelectedApporteur(apporteur)
     setDetailDialogOpen(true)
   }
 
-  const handleToggleActive = async (apporteur: ApporteurResponseDto) => {
+  const handleToggleActive = async (apporteur: Apporteur) => {
     if (!onToggleActive) return
     setToggling(apporteur.id)
     try {
@@ -169,7 +170,7 @@ export function ApporteursList({
     }
   }
 
-  const columns: ColumnDef<ApporteurResponseDto>[] = [
+  const columns: ColumnDef<Apporteur>[] = [
     {
       accessorKey: "nom",
       header: "Nom complet",

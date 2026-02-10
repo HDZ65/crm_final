@@ -1,13 +1,15 @@
 /**
- * React hooks pour utiliser les services Maileva via gRPC (logistics service)
- * Migrated from REST to gRPC — Wave 3 Task 8
- *
- * These hooks wrap the logistics gRPC client for label generation,
- * shipment tracking, pricing simulation, and address validation.
+ * React hooks pour utiliser les services Maileva via server actions
+ * These hooks call server actions (which handle gRPC internally on the server).
  */
 
 import { useState, useCallback } from 'react';
-import { logistics } from '@/lib/grpc/clients/logistics';
+import {
+  generateLabel as generateLabelAction,
+  trackShipment as trackShipmentAction,
+  simulatePricing as simulatePricingAction,
+  validateAddress as validateAddressAction,
+} from '@/actions/logistics';
 import type {
   GenerateLabelRequest,
   LabelResponse,
@@ -18,7 +20,7 @@ import type {
 } from '@proto/logistics/logistics';
 
 // ============================================================================
-// Hook: useMailevaLabel - Générer une étiquette d'envoi via gRPC
+// Hook: useMailevaLabel - Générer une étiquette d'envoi via server action
 // ============================================================================
 
 export function useMailevaLabel() {
@@ -29,15 +31,15 @@ export function useMailevaLabel() {
     async (request: GenerateLabelRequest): Promise<LabelResponse> => {
       setError(null);
 
-      try {
-        const result = await logistics.generateLabel(request);
-        setData(result);
-        return result;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Erreur inconnue');
-        setError(error);
-        throw error;
+      const result = await generateLabelAction(request as unknown as Parameters<typeof generateLabelAction>[0]);
+      if (result.error) {
+        const err = new Error(result.error);
+        setError(err);
+        throw err;
       }
+
+      setData(result.data);
+      return result.data!;
     },
     []
   );
@@ -50,7 +52,7 @@ export function useMailevaLabel() {
 }
 
 // ============================================================================
-// Hook: useMailevaTracking - Suivre un envoi via gRPC
+// Hook: useMailevaTracking - Suivre un envoi via server action
 // ============================================================================
 
 export function useMailevaTracking() {
@@ -61,15 +63,15 @@ export function useMailevaTracking() {
     async (trackingNumber: string): Promise<TrackingResponse> => {
       setError(null);
 
-      try {
-        const result = await logistics.trackShipment({ trackingNumber });
-        setData(result);
-        return result;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Erreur inconnue');
-        setError(error);
-        throw error;
+      const result = await trackShipmentAction(trackingNumber);
+      if (result.error) {
+        const err = new Error(result.error);
+        setError(err);
+        throw err;
       }
+
+      setData(result.data);
+      return result.data!;
     },
     []
   );
@@ -82,7 +84,7 @@ export function useMailevaTracking() {
 }
 
 // ============================================================================
-// Hook: useMailevaPricing - Simuler le tarif d'un envoi via gRPC
+// Hook: useMailevaPricing - Simuler le tarif d'un envoi via server action
 // ============================================================================
 
 export function useMailevaPricing() {
@@ -93,15 +95,15 @@ export function useMailevaPricing() {
     async (request: SimulatePricingRequest): Promise<PricingResponse> => {
       setError(null);
 
-      try {
-        const result = await logistics.simulatePricing(request);
-        setData(result);
-        return result;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Erreur inconnue');
-        setError(error);
-        throw error;
+      const result = await simulatePricingAction(request as unknown as Parameters<typeof simulatePricingAction>[0]);
+      if (result.error) {
+        const err = new Error(result.error);
+        setError(err);
+        throw err;
       }
+
+      setData(result.data);
+      return result.data!;
     },
     []
   );
@@ -114,7 +116,7 @@ export function useMailevaPricing() {
 }
 
 // ============================================================================
-// Hook: useMailevaAddressValidation - Valider une adresse via gRPC
+// Hook: useMailevaAddressValidation - Valider une adresse via server action
 // ============================================================================
 
 export function useMailevaAddressValidation() {
@@ -125,16 +127,15 @@ export function useMailevaAddressValidation() {
     async (addressInput: { line1: string; line2?: string; postalCode: string; city: string; country: string }): Promise<AddressValidationResponse> => {
       setError(null);
 
-      try {
-        // Wrap flat address into gRPC ValidateAddressRequest format
-        const result = await logistics.validateAddress({ address: addressInput });
-        setData(result);
-        return result;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Erreur inconnue');
-        setError(error);
-        throw error;
+      const result = await validateAddressAction(addressInput);
+      if (result.error) {
+        const err = new Error(result.error);
+        setError(err);
+        throw err;
       }
+
+      setData(result.data);
+      return result.data!;
     },
     []
   );
@@ -147,7 +148,7 @@ export function useMailevaAddressValidation() {
 }
 
 // ============================================================================
-// Hook combiné: useMaileva - Tous les services Maileva via gRPC
+// Hook combiné: useMaileva - Tous les services Maileva via server actions
 // ============================================================================
 
 export function useMaileva() {

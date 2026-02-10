@@ -358,6 +358,12 @@ export function ExpeditionsPageClient({ initialExpeditions }: ExpeditionsPageCli
 
           <div className="flex-1" />
 
+          <Button variant="secondary" size="sm" className="gap-2" asChild>
+            <a href="/expeditions/lots">
+              <Package className="size-4" />
+              Lots
+            </a>
+          </Button>
           <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
             <RefreshCw className="size-4" />
           </Button>
@@ -374,7 +380,7 @@ export function ExpeditionsPageClient({ initialExpeditions }: ExpeditionsPageCli
         {/* Filtres avancés (collapsible) */}
         <Collapsible open={showAdvancedFilters}>
           <CollapsibleContent>
-            <Card className="bg-blue-100 border border-blue-200">
+            <Card className="bg-card border-border">
               <CardContent className="pt-4 pb-4">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="relative">
@@ -508,7 +514,7 @@ export function ExpeditionsPageClient({ initialExpeditions }: ExpeditionsPageCli
         </div>
 
         {/* Tableau */}
-        <Card className="flex-1 min-h-0 bg-blue-100 border-blue-200 flex flex-col">
+        <Card className="flex-1 min-h-0 bg-card border-border flex flex-col">
           <CardContent className="flex-1 min-h-0 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">

@@ -18,12 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { Product, ProductCategory } from "@/types/product"
+import type { Produit } from "@proto/products/products"
+import { CATEGORIE_PRODUIT_LABELS } from "@/lib/ui/labels/product"
+import type { ProductCategory } from "@/lib/ui/labels/product"
 
 interface ProductTableProps {
-  products: Product[]
-  onViewDetails: (product: Product) => void
-  onAddToCart: (product: Product) => void
+  products: Produit[]
+  onViewDetails: (product: Produit) => void
+  onAddToCart: (product: Produit) => void
   selectedCategory: ProductCategory | "all"
   onCategoryChange: (category: ProductCategory | "all") => void
   categoryCounts: Record<ProductCategory | "all", number>
@@ -55,7 +57,7 @@ export function ProductTable({
   const filteredProducts = products.filter(
     (product) =>
       searchQuery === "" ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.sku.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -131,12 +133,9 @@ export function ProductTable({
                   <div
                     className={cn(
                       "h-1.5 w-1.5 rounded-full",
-                      product.status === "Disponible" && "bg-green-500",
-                      product.status === "Rupture" && "bg-red-500",
-                      product.status === "Sur commande" && "bg-orange-500",
-                      product.status === "Archivé" && "bg-gray-400"
+                      product.actif ? "bg-green-500" : "bg-gray-400"
                     )}
-                    title={product.status}
+                    title={product.actif ? "Disponible" : "Archivé"}
                   />
                 </div>
 
@@ -145,7 +144,7 @@ export function ProductTable({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-medium block truncate">
-                        {product.name}
+                        {product.nom}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {product.sku}
@@ -153,19 +152,11 @@ export function ProductTable({
                     </div>
                   </div>
 
-                  {/* Price and supplier */}
+                  {/* Price */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-primary">
-                      {product.price.toFixed(2)} {product.currency}
+                      {product.prix.toFixed(2)} {product.devise || "EUR"}
                     </span>
-                    {product.supplier && (
-                      <>
-                        <span className="text-xs text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground truncate">
-                          {product.supplier}
-                        </span>
-                      </>
-                    )}
                   </div>
                 </div>
               </button>

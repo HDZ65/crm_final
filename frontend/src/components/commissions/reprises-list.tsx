@@ -34,20 +34,14 @@ import {
   RotateCcw,
   FileText,
 } from "lucide-react"
-import type { RepriseCommissionResponseDto, StatutReprise, TypeReprise } from "@/types/commission"
+import type { RepriseWithDetails, StatutReprise, TypeReprise } from "@/lib/ui/display-types/commission"
+import { formatMontant } from "@/lib/ui/helpers/format"
 
 interface ReprisesListProps {
-  reprises: RepriseCommissionResponseDto[]
+  reprises: RepriseWithDetails[]
   loading?: boolean
   onCancel?: (repriseId: string, motif: string) => Promise<void>
-  onViewDetails?: (reprise: RepriseCommissionResponseDto) => void
-}
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount)
+  onViewDetails?: (reprise: RepriseWithDetails) => void
 }
 
 const formatDate = (date: Date | string) => {
@@ -88,12 +82,12 @@ const statutRepriseVariants: Record<StatutReprise, { icon: React.ReactNode; clas
 
 export function ReprisesList({ reprises, loading, onCancel, onViewDetails }: ReprisesListProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false)
-  const [selectedReprise, setSelectedReprise] = React.useState<RepriseCommissionResponseDto | null>(null)
+  const [selectedReprise, setSelectedReprise] = React.useState<RepriseWithDetails | null>(null)
   const [cancelMotif, setCancelMotif] = React.useState("")
   const [cancelError, setCancelError] = React.useState("")
   const [cancelling, setCancelling] = React.useState(false)
 
-  const handleCancelClick = (reprise: RepriseCommissionResponseDto) => {
+  const handleCancelClick = (reprise: RepriseWithDetails) => {
     setSelectedReprise(reprise)
     setCancelDialogOpen(true)
     setCancelMotif("")
@@ -125,7 +119,7 @@ export function ReprisesList({ reprises, loading, onCancel, onViewDetails }: Rep
     }
   }
 
-  const columns: ColumnDef<RepriseCommissionResponseDto>[] = [
+  const columns: ColumnDef<RepriseWithDetails>[] = [
     {
       accessorKey: "reference",
       header: "Référence",
@@ -155,7 +149,7 @@ export function ReprisesList({ reprises, loading, onCancel, onViewDetails }: Rep
       cell: ({ row }) => (
         <div className="font-semibold text-destructive flex items-center gap-1">
           <RotateCcw className="size-3" />
-          {formatCurrency(row.original.montantReprise)}
+          {formatMontant(row.original.montantReprise)}
         </div>
       ),
       size: 120,
@@ -165,7 +159,7 @@ export function ReprisesList({ reprises, loading, onCancel, onViewDetails }: Rep
       header: "Montant original",
       cell: ({ row }) => (
         <div className="text-sm text-muted-foreground">
-          {formatCurrency(row.original.montantOriginal)}
+          {formatMontant(row.original.montantOriginal)}
         </div>
       ),
       size: 120,

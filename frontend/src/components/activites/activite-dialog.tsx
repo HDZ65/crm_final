@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import { createActivite, updateActivite, deleteActivite } from "@/actions/activites"
-import type { ActiviteDto, TypeActiviteDto } from "@/types/activite"
+import type { ActiviteDto } from "@/actions/activites"
+import type { TypeActiviteDto } from "@/actions/type-activites"
 import { Loader2, Trash2 } from "lucide-react"
 import {
   AlertDialog,

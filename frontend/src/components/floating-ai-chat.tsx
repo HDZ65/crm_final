@@ -32,6 +32,12 @@ export function FloatingAiChat() {
     setToken(token || null)
   }, [token, setToken])
 
+  React.useEffect(() => {
+    const openAssistant = () => setIsOpen(true)
+    window.addEventListener("ai-assistant:open", openAssistant)
+    return () => window.removeEventListener("ai-assistant:open", openAssistant)
+  }, [])
+
   const [input, setInput] = React.useState("")
   const [sessionStartTime, setSessionStartTime] = React.useState(new Date())
   const messagesEndRef = React.useRef<HTMLDivElement>(null)

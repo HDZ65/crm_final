@@ -12,18 +12,60 @@ import {
   MAILEVA_ENDPOINTS,
   MAILEVA_AUTH_ENDPOINTS,
 } from './maileva-api.types';
-import type {
-  IMailevaService,
-  LogisticsAddress,
-  LabelRequest,
-  LabelResponse,
-  TrackingResponse,
-  AddressValidationResponse,
-  PricingResponse,
-} from '../../../application/logistics/ports';
+// Type definitions for Maileva service
+type LogisticsAddress = {
+  line1: string;
+  line2?: string | null;
+  postalCode: string;
+  city: string;
+  country: string;
+};
+
+type LabelRequest = {
+  serviceLevel: string;
+  format?: string;
+  weightGr?: number;
+  sender?: LogisticsAddress;
+  recipient: LogisticsAddress;
+  contractId?: string;
+};
+
+type LabelResponse = {
+  trackingNumber: string;
+  labelUrl: string;
+  estimatedDeliveryDate: string;
+};
+
+type TrackingResponse = {
+  trackingNumber: string;
+  status: string;
+  events: Array<{
+    code: string;
+    label: string;
+    date: string;
+    location?: string | null;
+  }>;
+  lastUpdatedAt: string;
+};
+
+type AddressValidationResponse = {
+  isValid: boolean;
+  normalizedAddress: LogisticsAddress;
+};
+
+type PricingResponse = {
+  serviceLevel: string;
+  totalPrice: number;
+  currency: string;
+  breakdown: Array<{
+    label: string;
+    amount: number;
+  }>;
+  estimatedDeliveryDays: number;
+};
 
 @Injectable()
-export class MailevaService implements IMailevaService {
+export class MailevaService {
   private readonly logger = new Logger(MailevaService.name);
   private readonly httpClient: AxiosInstance;
   private readonly login: string;

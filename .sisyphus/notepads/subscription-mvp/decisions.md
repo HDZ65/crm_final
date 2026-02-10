@@ -1,0 +1,7 @@
+- 2026-02-07: Implemented transition-specific NATS subjects for lifecycle operations: `subscription.activated`, `subscription.paused`, `subscription.resumed`, `subscription.past_due`, `subscription.canceled`, `subscription.expired`.
+- 2026-02-07: `cancel(cancelAtPeriodEnd=true)` persists `endDate` to current `nextChargeAt`; `cancelAtPeriodEnd=false` persists immediate ISO timestamp.
+- 2026-02-07: Scheduling frequencies handled with UTC-safe date math and month-end clamping: WEEKLY, BIWEEKLY, MONTHLY, BIMONTHLY, QUARTERLY, ANNUAL (+ YEARLY alias).
+- 2026-02-07: Charge engine emits uppercase event subjects `SUBSCRIPTION_CHARGED` and `SUBSCRIPTION_CHARGE_FAILED` to match fulfillment coupling requirements in the subscription MVP plan.
+- 2026-02-07: Charge engine converts subscription amount to minor units before PaymentService.CreatePaymentIntent and creates invoice through FactureService after successful payment intent creation.
+- 2026-02-07: Fulfillment lifecycle orchestration is implemented as a domain service with explicit ports (charged subscriptions, address/preferences sources, snapshot repositories, expedition bridge) to keep service-logistics decoupled from external bounded contexts.
+- 2026-02-07: `SUBSCRIPTION_CHARGED` events are queued against the OPEN batch and materialized into real batch lines only during `lockBatch`, ensuring snapshots are frozen exactly at lock boundary.

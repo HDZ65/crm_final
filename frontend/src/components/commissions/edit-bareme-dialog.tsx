@@ -42,7 +42,8 @@ import { getGammesByOrganisation, getProduitsByOrganisation } from "@/actions/ca
 import { useOrganisation } from "@/contexts/organisation-context"
 import type { Gamme, Produit } from "@proto/products/products"
 import type { TypeOption, DureeOption } from "@/hooks/commissions/use-commission-config"
-import type { BaremeCommissionResponseDto } from "@/types/commission"
+import type { BaremeWithPaliers } from "@/lib/ui/display-types/commission"
+import { parseMontant } from "@/lib/ui/helpers/format"
 
 const editBaremeSchema = z.object({
   nom: z.string().min(1, "Le nom est requis").max(100, "100 caractères maximum"),
@@ -89,13 +90,13 @@ interface EditBaremeFormValues {
 interface EditBaremeDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  bareme: BaremeCommissionResponseDto
+  bareme: BaremeWithPaliers
   typesCalcul: TypeOption[]
   typesBase: TypeOption[]
   typesApporteur: TypeOption[]
   dureesReprise: DureeOption[]
   loadingConfig?: boolean
-  onSuccess?: (bareme: BaremeCommissionResponseDto) => void
+  onSuccess?: (bareme: BaremeWithPaliers) => void
 }
 
 export function EditBaremeDialog({
@@ -167,19 +168,19 @@ export function EditBaremeDialog({
       description: bareme.description || "",
       typeCalcul: bareme.typeCalcul,
       baseCalcul: bareme.baseCalcul,
-      montantFixe: bareme.montantFixe ?? undefined,
-      tauxPourcentage: bareme.tauxPourcentage ?? undefined,
+      montantFixe: bareme.montantFixe != null ? parseMontant(bareme.montantFixe) : undefined,
+      tauxPourcentage: bareme.tauxPourcentage != null ? parseMontant(bareme.tauxPourcentage) : undefined,
       precomptee: bareme.precomptee ?? false,
       recurrenceActive: bareme.recurrenceActive,
-      tauxRecurrence: bareme.tauxRecurrence ?? undefined,
+      tauxRecurrence: bareme.tauxRecurrence != null ? parseMontant(bareme.tauxRecurrence) : undefined,
       dureeRecurrenceMois: bareme.dureeRecurrenceMois ?? undefined,
       dureeReprisesMois: bareme.dureeReprisesMois,
-      tauxReprise: bareme.tauxReprise,
+      tauxReprise: parseMontant(bareme.tauxReprise),
       gammeId: (bareme as { gammeId?: string }).gammeId || "",
       produitId: (bareme as { produitId?: string }).produitId || "",
       profilRemuneration: bareme.profilRemuneration || "__all__",
       canalVente: bareme.canalVente || "__all__",
-      dateFin: bareme.dateFin ? new Date(bareme.dateFin).toISOString().split("T")[0] : "",
+      dateFin: bareme.dateFin ? new Date(bareme.dateFin as string).toISOString().split("T")[0] : "",
       motifModification: "",
     },
   })
@@ -193,19 +194,19 @@ export function EditBaremeDialog({
         description: bareme.description || "",
         typeCalcul: bareme.typeCalcul,
         baseCalcul: bareme.baseCalcul,
-        montantFixe: bareme.montantFixe ?? undefined,
-        tauxPourcentage: bareme.tauxPourcentage ?? undefined,
+        montantFixe: bareme.montantFixe != null ? parseMontant(bareme.montantFixe) : undefined,
+        tauxPourcentage: bareme.tauxPourcentage != null ? parseMontant(bareme.tauxPourcentage) : undefined,
         precomptee: bareme.precomptee ?? false,
         recurrenceActive: bareme.recurrenceActive,
-        tauxRecurrence: bareme.tauxRecurrence ?? undefined,
+        tauxRecurrence: bareme.tauxRecurrence != null ? parseMontant(bareme.tauxRecurrence) : undefined,
         dureeRecurrenceMois: bareme.dureeRecurrenceMois ?? undefined,
         dureeReprisesMois: bareme.dureeReprisesMois,
-        tauxReprise: bareme.tauxReprise,
+        tauxReprise: parseMontant(bareme.tauxReprise),
         gammeId: baremeWithGamme.gammeId || "",
         produitId: baremeWithGamme.produitId || "",
         profilRemuneration: bareme.profilRemuneration || "__all__",
         canalVente: bareme.canalVente || "__all__",
-        dateFin: bareme.dateFin ? new Date(bareme.dateFin).toISOString().split("T")[0] : "",
+        dateFin: bareme.dateFin ? new Date(bareme.dateFin as string).toISOString().split("T")[0] : "",
         motifModification: "",
       })
       setSelectedGammeId(baremeWithGamme.gammeId || undefined)
@@ -262,23 +263,23 @@ export function EditBaremeDialog({
 
     if (result.data) {
       toast.success("Barème modifié avec succès")
-      // Map to BaremeCommissionResponseDto for onSuccess callback
-      const updatedBareme: BaremeCommissionResponseDto = {
+      // Map to BaremeWithPaliers for onSuccess callback
+      const updatedBareme: BaremeWithPaliers = {
         ...bareme,
         nom: data.nom,
         description: data.description ?? null,
         typeCalcul: data.typeCalcul,
         baseCalcul: data.baseCalcul,
-        montantFixe: data.montantFixe ?? null,
-        tauxPourcentage: data.tauxPourcentage ?? null,
+        montantFixe: data.montantFixe != null ? data.montantFixe.toString() : null,
+        tauxPourcentage: data.tauxPourcentage != null ? data.tauxPourcentage.toString() : null,
         precomptee: data.precomptee,
         recurrenceActive: data.recurrenceActive,
-        tauxRecurrence: data.tauxRecurrence ?? null,
+        tauxRecurrence: data.tauxRecurrence != null ? data.tauxRecurrence.toString() : null,
         dureeRecurrenceMois: data.dureeRecurrenceMois ?? null,
         dureeReprisesMois: data.dureeReprisesMois,
-        tauxReprise: data.tauxReprise,
-        profilRemuneration: data.profilRemuneration && data.profilRemuneration !== "__all__" ? data.profilRemuneration as BaremeCommissionResponseDto["profilRemuneration"] : null,
-        canalVente: data.canalVente && data.canalVente !== "__all__" ? data.canalVente as BaremeCommissionResponseDto["canalVente"] : null,
+        tauxReprise: data.tauxReprise.toString(),
+        profilRemuneration: data.profilRemuneration && data.profilRemuneration !== "__all__" ? data.profilRemuneration as BaremeWithPaliers["profilRemuneration"] : null,
+        canalVente: data.canalVente && data.canalVente !== "__all__" ? data.canalVente as BaremeWithPaliers["canalVente"] : null,
         dateFin: data.dateFin ?? null,
         updatedAt: new Date().toISOString(),
       }

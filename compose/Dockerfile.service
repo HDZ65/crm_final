@@ -41,8 +41,7 @@ COPY package.json package-lock.json turbo.json ./
 
 # Copy shared packages
 COPY packages/proto/package.json ./packages/proto/
-COPY packages/grpc-utils/package.json ./packages/grpc-utils/
-COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared-kernel/package.json ./packages/shared-kernel/
 
 # Copy service package.json
 COPY services/${SERVICE_NAME}/package.json ./services/${SERVICE_NAME}/
@@ -66,8 +65,7 @@ WORKDIR /app
 
 # Copy source code of shared packages
 COPY packages/proto/ ./packages/proto/
-COPY packages/grpc-utils/ ./packages/grpc-utils/
-COPY packages/shared/ ./packages/shared/
+COPY packages/shared-kernel/ ./packages/shared-kernel/
 
 # Copy service source code
 COPY services/${SERVICE_NAME}/ ./services/${SERVICE_NAME}/
@@ -85,15 +83,13 @@ WORKDIR /app
 
 # Copy source code of shared packages
 COPY packages/proto/ ./packages/proto/
-COPY packages/grpc-utils/ ./packages/grpc-utils/
-COPY packages/shared/ ./packages/shared/
+COPY packages/shared-kernel/ ./packages/shared-kernel/
 
 # Copy service source code
 COPY services/${SERVICE_NAME}/ ./services/${SERVICE_NAME}/
 
 # Build packages and service
-RUN npm run build --workspace=@crm/grpc-utils && \
-    npm run build --workspace=@crm/shared && \
+RUN npm run build --workspace=@crm/shared-kernel && \
     npm run build --workspace=@crm/${SERVICE_NAME}
 
 # Remove source maps to reduce image size
@@ -122,10 +118,8 @@ COPY --from=builder --chown=nestjs:nodejs /app/services/${SERVICE_NAME}/dist ./s
 
 # Copy compiled shared packages
 COPY --from=builder --chown=nestjs:nodejs /app/packages/proto ./packages/proto
-COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/dist ./packages/grpc-utils/dist
-COPY --from=builder --chown=nestjs:nodejs /app/packages/grpc-utils/package.json ./packages/grpc-utils/
-COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder --chown=nestjs:nodejs /app/packages/shared/package.json ./packages/shared/
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-kernel/dist ./packages/shared-kernel/dist
+COPY --from=builder --chown=nestjs:nodejs /app/packages/shared-kernel/package.json ./packages/shared-kernel/
 
 # Copy service package.json
 COPY --from=builder --chown=nestjs:nodejs /app/services/${SERVICE_NAME}/package.json ./services/${SERVICE_NAME}/

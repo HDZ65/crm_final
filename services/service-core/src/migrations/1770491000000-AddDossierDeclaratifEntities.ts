@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm';
 
-export class AddDossierDeclaratifEntities1770491000000 implements MigrationInterface {
+export class AddDossierDeclaratifEntities1770493000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create dossiers_declaratifs table
     await queryRunner.createTable(

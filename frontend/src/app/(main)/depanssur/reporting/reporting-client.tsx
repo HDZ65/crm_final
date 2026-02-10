@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { depanssurClient } from '@/lib/grpc/clients/depanssur';
+import { listAbonnementsAction, listDossiersAction } from '@/actions/depanssur';
 import { TrendingUp, TrendingDown, Users, FileText, Euro, AlertCircle, Percent } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -14,12 +14,20 @@ export function DepanssurReportingClient() {
 
   const { data: abonnements } = useQuery({
     queryKey: ['abonnements-all', 'org-id'],
-    queryFn: () => depanssurClient.listAbonnements({ organisationId: 'org-id', pagination: { page: 1, pageSize: 1000 } }),
+    queryFn: async () => {
+      const result = await listAbonnementsAction({ organisationId: 'org-id', pagination: { page: 1, limit: 1000, sortBy: "", sortOrder: "" } });
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
   });
 
   const { data: dossiers } = useQuery({
     queryKey: ['dossiers-all', 'org-id'],
-    queryFn: () => depanssurClient.listDossiers({ organisationId: 'org-id', pagination: { page: 1, pageSize: 1000 } }),
+    queryFn: async () => {
+      const result = await listDossiersAction({ organisationId: 'org-id', pagination: { page: 1, limit: 1000, sortBy: "", sortOrder: "" } });
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
   });
 
   // Calculs KPIs
@@ -63,7 +71,7 @@ export function DepanssurReportingClient() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Reporting Depanssur</h1>
+           <h1 className="text-3xl font-bold">Reporting SAV</h1>
           <p className="text-muted-foreground">Vue d'ensemble des métriques et statistiques</p>
         </div>
         <Select value={period} onValueChange={setPeriod}>

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { formDataTransformers } from "@/lib/form-validation";
+import { formDataTransformers } from "@/lib/forms/validation";
 
 /**
  * Schéma de validation pour le formulaire de création de client

@@ -9,11 +9,11 @@ services:
       - "50060:50060"
     env_file:
       - ../../services/service-logistics/.env.development
+    environment:
+      - NODE_PATH=/app/services/service-logistics/node_modules
     depends_on:
       postgres-main:
         condition: service_healthy
-      nats:
-        condition: service_started
     volumes:
       - ../../services/service-logistics/src:/app/services/service-logistics/src
     networks:

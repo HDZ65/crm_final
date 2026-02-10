@@ -14,10 +14,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { useSocietes } from "@/hooks/clients"
-import { PSPName, type CreatePaymentIntentDto } from "@/types/payment-intent"
+import type { CreatePaymentIntentRequest } from "@proto/payments/payment"
+
+const PSPName = {
+  GOCARDLESS: "gocardless",
+  SLIMPAY: "slimpay",
+  MULTISAFEPAY: "multisafepay",
+  EMERCHANTPAY: "emerchantpay",
+  STRIPE: "stripe",
+} as const;
+
+type PSPName = (typeof PSPName)[keyof typeof PSPName];
 
 interface PaymentIntentFormProps {
-  onSubmit: (data: CreatePaymentIntentDto) => Promise<void>
+  onSubmit: (data: CreatePaymentIntentRequest) => Promise<void>
   loading?: boolean
   scheduleId?: string
 }
@@ -38,7 +48,7 @@ export function PaymentIntentForm({
   const { activeOrganisation } = useOrganisation()
   const { societes } = useSocietes(activeOrganisation?.organisationId)
 
-  const [formData, setFormData] = useState<CreatePaymentIntentDto>({
+  const [formData, setFormData] = useState<CreatePaymentIntentRequest>({
     organisationId: "",
     scheduleId: scheduleId || "",
     societeId: "",
@@ -46,6 +56,7 @@ export function PaymentIntentForm({
     amount: 0,
     currency: "EUR",
     idempotencyKey: `key-${Date.now()}`,
+    metadata: {},
   })
 
   // Mettre à jour l'organisationId quand l'organisation active change

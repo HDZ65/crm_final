@@ -3,15 +3,15 @@
 import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
-import type { RepriseCommissionResponseDto, RepriseFiltersDto } from "@/types/commission"
+import type { RepriseWithDetails, RepriseFilters } from "@/lib/ui/display-types/commission"
 
 /**
  * Hook pour récupérer la liste des reprises de commission
  * GET /reprises-commission
  */
-export function useReprisesCommission(filters?: RepriseFiltersDto) {
-  const [reprises, setReprises] = useState<RepriseCommissionResponseDto[]>([])
-  const { loading, error, execute } = useApi<RepriseCommissionResponseDto[]>()
+export function useReprisesCommission(filters?: RepriseFilters) {
+  const [reprises, setReprises] = useState<RepriseWithDetails[]>([])
+  const { loading, error, execute } = useApi<RepriseWithDetails[]>()
 
   const fetchReprises = useCallback(async () => {
     try {
@@ -68,8 +68,8 @@ export function useReprisesCommission(filters?: RepriseFiltersDto) {
  * GET /reprises-commission/:id
  */
 export function useRepriseCommission(repriseId: string | null) {
-  const [reprise, setReprise] = useState<RepriseCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<RepriseCommissionResponseDto>()
+  const [reprise, setReprise] = useState<RepriseWithDetails | null>(null)
+  const { loading, error, execute } = useApi<RepriseWithDetails>()
 
   const fetchReprise = useCallback(async () => {
     if (!repriseId) return

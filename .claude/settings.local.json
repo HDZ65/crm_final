@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del \"c:\\\\Users\\\\Dev\\\\Desktop\\\\crm_final\\\\frontend\\\\src\\\\types\\\\notification.ts\")",
+      "Bash(npm run gen:all:*)",
+      "Bash(test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx --package typescript tsc:*)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker container inspect:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell -Command \"& ''C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe'' -Restart\")",
+      "Bash(wsl docker rm:*)",
+      "Bash(wsl -d Ubuntu docker rm:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker exec dev-crm-service-finance sh -c \"pwd; ls -la /app/services/service-finance/node_modules/@crm/grpc-utils/ 2>&1; cat /app/services/service-finance/node_modules/@crm/grpc-utils/package.json 2>&1 | head -5\")",
+      "Bash(docker exec dev-crm-service-core sh -c \"pwd; ls -la /app/services/service-core/node_modules/@crm/grpc-utils/ 2>&1; cat /app/services/service-core/node_modules/@crm/grpc-utils/package.json 2>&1 | head -5\")",
+      "Bash(docker exec:*)"
+    ]
+  }
+}

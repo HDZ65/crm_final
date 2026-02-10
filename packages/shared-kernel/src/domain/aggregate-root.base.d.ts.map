@@ -1,0 +1,1 @@
+{"version":3,"file":"aggregate-root.base.d.ts","sourceRoot":"","sources":["aggregate-root.base.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,aAAa,IAAI,iBAAiB,EAAE,MAAM,EAAE,MAAM,cAAc,CAAC;AAQ1E,8BAAsB,aAAa,CAAC,SAAS,SAAS,MAAM,GAAG,MAAM,CAAE,SAAQ,iBAAiB,CAAC,SAAS,CAAC;IACzG,OAAO,CAAC,OAAO,CAAa;IAE5B,SAAS,CAAC,gBAAgB,IAAI,IAAI;IAI3B,UAAU,IAAI,MAAM;IAIpB,qBAAqB,IAAI,IAAI;CAGrC"}

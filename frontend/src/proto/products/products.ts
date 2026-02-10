@@ -10,6 +10,51 @@ import type { handleUnaryCall, UntypedServiceImplementation } from "@grpc/grpc-j
 
 export const protobufPackage = "products";
 
+export enum TypeGamme {
+  TYPE_GAMME_UNSPECIFIED = 0,
+  RISQUE = 1,
+  FAMILLE = 2,
+  SOUS_FAMILLE = 3,
+  UNRECOGNIZED = -1,
+}
+
+export function typeGammeFromJSON(object: any): TypeGamme {
+  switch (object) {
+    case 0:
+    case "TYPE_GAMME_UNSPECIFIED":
+      return TypeGamme.TYPE_GAMME_UNSPECIFIED;
+    case 1:
+    case "RISQUE":
+      return TypeGamme.RISQUE;
+    case 2:
+    case "FAMILLE":
+      return TypeGamme.FAMILLE;
+    case 3:
+    case "SOUS_FAMILLE":
+      return TypeGamme.SOUS_FAMILLE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return TypeGamme.UNRECOGNIZED;
+  }
+}
+
+export function typeGammeToJSON(object: TypeGamme): string {
+  switch (object) {
+    case TypeGamme.TYPE_GAMME_UNSPECIFIED:
+      return "TYPE_GAMME_UNSPECIFIED";
+    case TypeGamme.RISQUE:
+      return "RISQUE";
+    case TypeGamme.FAMILLE:
+      return "FAMILLE";
+    case TypeGamme.SOUS_FAMILLE:
+      return "SOUS_FAMILLE";
+    case TypeGamme.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export enum TypeProduit {
   TYPE_PRODUIT_UNSPECIFIED = 0,
   INTERNE = 1,
@@ -163,6 +208,132 @@ export function categorieProduitToJSON(object: CategorieProduit): string {
   }
 }
 
+export enum TypeTarification {
+  TYPE_TARIFICATION_UNSPECIFIED = 0,
+  TYPE_TARIFICATION_FIXE = 1,
+  TYPE_TARIFICATION_PALIER = 2,
+  TYPE_TARIFICATION_RECURRENT = 3,
+  TYPE_TARIFICATION_USAGE = 4,
+  TYPE_TARIFICATION_BUNDLE = 5,
+  TYPE_TARIFICATION_NEGOCIE = 6,
+  TYPE_TARIFICATION_INDEXE = 7,
+  UNRECOGNIZED = -1,
+}
+
+export function typeTarificationFromJSON(object: any): TypeTarification {
+  switch (object) {
+    case 0:
+    case "TYPE_TARIFICATION_UNSPECIFIED":
+      return TypeTarification.TYPE_TARIFICATION_UNSPECIFIED;
+    case 1:
+    case "TYPE_TARIFICATION_FIXE":
+      return TypeTarification.TYPE_TARIFICATION_FIXE;
+    case 2:
+    case "TYPE_TARIFICATION_PALIER":
+      return TypeTarification.TYPE_TARIFICATION_PALIER;
+    case 3:
+    case "TYPE_TARIFICATION_RECURRENT":
+      return TypeTarification.TYPE_TARIFICATION_RECURRENT;
+    case 4:
+    case "TYPE_TARIFICATION_USAGE":
+      return TypeTarification.TYPE_TARIFICATION_USAGE;
+    case 5:
+    case "TYPE_TARIFICATION_BUNDLE":
+      return TypeTarification.TYPE_TARIFICATION_BUNDLE;
+    case 6:
+    case "TYPE_TARIFICATION_NEGOCIE":
+      return TypeTarification.TYPE_TARIFICATION_NEGOCIE;
+    case 7:
+    case "TYPE_TARIFICATION_INDEXE":
+      return TypeTarification.TYPE_TARIFICATION_INDEXE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return TypeTarification.UNRECOGNIZED;
+  }
+}
+
+export function typeTarificationToJSON(object: TypeTarification): string {
+  switch (object) {
+    case TypeTarification.TYPE_TARIFICATION_UNSPECIFIED:
+      return "TYPE_TARIFICATION_UNSPECIFIED";
+    case TypeTarification.TYPE_TARIFICATION_FIXE:
+      return "TYPE_TARIFICATION_FIXE";
+    case TypeTarification.TYPE_TARIFICATION_PALIER:
+      return "TYPE_TARIFICATION_PALIER";
+    case TypeTarification.TYPE_TARIFICATION_RECURRENT:
+      return "TYPE_TARIFICATION_RECURRENT";
+    case TypeTarification.TYPE_TARIFICATION_USAGE:
+      return "TYPE_TARIFICATION_USAGE";
+    case TypeTarification.TYPE_TARIFICATION_BUNDLE:
+      return "TYPE_TARIFICATION_BUNDLE";
+    case TypeTarification.TYPE_TARIFICATION_NEGOCIE:
+      return "TYPE_TARIFICATION_NEGOCIE";
+    case TypeTarification.TYPE_TARIFICATION_INDEXE:
+      return "TYPE_TARIFICATION_INDEXE";
+    case TypeTarification.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+export enum CanalVente {
+  CANAL_VENTE_UNSPECIFIED = 0,
+  CANAL_VENTE_TERRAIN = 1,
+  CANAL_VENTE_TELEPHONE = 2,
+  CANAL_VENTE_WEB = 3,
+  CANAL_VENTE_MARQUE_BLANCHE = 4,
+  CANAL_VENTE_MARKETPLACE = 5,
+  UNRECOGNIZED = -1,
+}
+
+export function canalVenteFromJSON(object: any): CanalVente {
+  switch (object) {
+    case 0:
+    case "CANAL_VENTE_UNSPECIFIED":
+      return CanalVente.CANAL_VENTE_UNSPECIFIED;
+    case 1:
+    case "CANAL_VENTE_TERRAIN":
+      return CanalVente.CANAL_VENTE_TERRAIN;
+    case 2:
+    case "CANAL_VENTE_TELEPHONE":
+      return CanalVente.CANAL_VENTE_TELEPHONE;
+    case 3:
+    case "CANAL_VENTE_WEB":
+      return CanalVente.CANAL_VENTE_WEB;
+    case 4:
+    case "CANAL_VENTE_MARQUE_BLANCHE":
+      return CanalVente.CANAL_VENTE_MARQUE_BLANCHE;
+    case 5:
+    case "CANAL_VENTE_MARKETPLACE":
+      return CanalVente.CANAL_VENTE_MARKETPLACE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return CanalVente.UNRECOGNIZED;
+  }
+}
+
+export function canalVenteToJSON(object: CanalVente): string {
+  switch (object) {
+    case CanalVente.CANAL_VENTE_UNSPECIFIED:
+      return "CANAL_VENTE_UNSPECIFIED";
+    case CanalVente.CANAL_VENTE_TERRAIN:
+      return "CANAL_VENTE_TERRAIN";
+    case CanalVente.CANAL_VENTE_TELEPHONE:
+      return "CANAL_VENTE_TELEPHONE";
+    case CanalVente.CANAL_VENTE_WEB:
+      return "CANAL_VENTE_WEB";
+    case CanalVente.CANAL_VENTE_MARQUE_BLANCHE:
+      return "CANAL_VENTE_MARQUE_BLANCHE";
+    case CanalVente.CANAL_VENTE_MARKETPLACE:
+      return "CANAL_VENTE_MARKETPLACE";
+    case CanalVente.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export enum TypeDocumentProduit {
   TYPE_DOCUMENT_PRODUIT_UNSPECIFIED = 0,
   TYPE_DOCUMENT_PRODUIT_DIPA = 1,
@@ -271,6 +442,84 @@ export function visibilitePublicationToJSON(object: VisibilitePublication): stri
   }
 }
 
+export enum FranchiseType {
+  FRANCHISE_TYPE_UNSPECIFIED = 0,
+  FRANCHISE_TYPE_MONTANT = 1,
+  FRANCHISE_TYPE_POURCENTAGE = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function franchiseTypeFromJSON(object: any): FranchiseType {
+  switch (object) {
+    case 0:
+    case "FRANCHISE_TYPE_UNSPECIFIED":
+      return FranchiseType.FRANCHISE_TYPE_UNSPECIFIED;
+    case 1:
+    case "FRANCHISE_TYPE_MONTANT":
+      return FranchiseType.FRANCHISE_TYPE_MONTANT;
+    case 2:
+    case "FRANCHISE_TYPE_POURCENTAGE":
+      return FranchiseType.FRANCHISE_TYPE_POURCENTAGE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return FranchiseType.UNRECOGNIZED;
+  }
+}
+
+export function franchiseTypeToJSON(object: FranchiseType): string {
+  switch (object) {
+    case FranchiseType.FRANCHISE_TYPE_UNSPECIFIED:
+      return "FRANCHISE_TYPE_UNSPECIFIED";
+    case FranchiseType.FRANCHISE_TYPE_MONTANT:
+      return "FRANCHISE_TYPE_MONTANT";
+    case FranchiseType.FRANCHISE_TYPE_POURCENTAGE:
+      return "FRANCHISE_TYPE_POURCENTAGE";
+    case FranchiseType.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+export enum TypeAjustementPrix {
+  TYPE_AJUSTEMENT_PRIX_UNSPECIFIED = 0,
+  TYPE_AJUSTEMENT_PRIX_MONTANT = 1,
+  TYPE_AJUSTEMENT_PRIX_POURCENTAGE = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function typeAjustementPrixFromJSON(object: any): TypeAjustementPrix {
+  switch (object) {
+    case 0:
+    case "TYPE_AJUSTEMENT_PRIX_UNSPECIFIED":
+      return TypeAjustementPrix.TYPE_AJUSTEMENT_PRIX_UNSPECIFIED;
+    case 1:
+    case "TYPE_AJUSTEMENT_PRIX_MONTANT":
+      return TypeAjustementPrix.TYPE_AJUSTEMENT_PRIX_MONTANT;
+    case 2:
+    case "TYPE_AJUSTEMENT_PRIX_POURCENTAGE":
+      return TypeAjustementPrix.TYPE_AJUSTEMENT_PRIX_POURCENTAGE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return TypeAjustementPrix.UNRECOGNIZED;
+  }
+}
+
+export function typeAjustementPrixToJSON(object: TypeAjustementPrix): string {
+  switch (object) {
+    case TypeAjustementPrix.TYPE_AJUSTEMENT_PRIX_UNSPECIFIED:
+      return "TYPE_AJUSTEMENT_PRIX_UNSPECIFIED";
+    case TypeAjustementPrix.TYPE_AJUSTEMENT_PRIX_MONTANT:
+      return "TYPE_AJUSTEMENT_PRIX_MONTANT";
+    case TypeAjustementPrix.TYPE_AJUSTEMENT_PRIX_POURCENTAGE:
+      return "TYPE_AJUSTEMENT_PRIX_POURCENTAGE";
+    case TypeAjustementPrix.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export interface Empty {
 }
 
@@ -297,6 +546,9 @@ export interface Gamme {
   code: string;
   ordre: number;
   actif: boolean;
+  parentId?: string | undefined;
+  niveau: number;
+  typeGamme: TypeGamme;
   createdAt: string;
   updatedAt: string;
 }
@@ -343,6 +595,24 @@ export interface DeleteGammeResponse {
   success: boolean;
 }
 
+export interface GammeNode {
+  id: string;
+  nom: string;
+  code: string;
+  niveau: number;
+  typeGamme: TypeGamme;
+  children: GammeNode[];
+}
+
+export interface GetGammeTreeRequest {
+  organisationId: string;
+  parentId?: string | undefined;
+}
+
+export interface GetGammeTreeResponse {
+  roots: GammeNode[];
+}
+
 export interface Produit {
   id: string;
   organisationId: string;
@@ -368,6 +638,21 @@ export interface Produit {
   /** Relations */
   gamme: Gamme | undefined;
   statutCycle: StatutCycleProduit;
+  /** Contractual terms */
+  dureeEngagementMois?: number | undefined;
+  frequenceRenouvellement: string;
+  conditionsResiliation: string;
+  uniteVente: string;
+  /** Accounting mapping */
+  codeComptable: string;
+  compteProduit: string;
+  journalVente: string;
+  /** Partner & distribution */
+  partenaireCommercialId: string;
+  modeleDistributionId: string;
+  /** Tarification model */
+  typeTarification: TypeTarification;
+  configTarification: string;
 }
 
 export interface CreateProduitRequest {
@@ -765,6 +1050,106 @@ export interface CalculatePriceResponse {
   promotionAppliquee: boolean;
 }
 
+export interface GarantieFormule {
+  nom: string;
+  description: string;
+  plafond: number;
+  franchise: number;
+  actif: boolean;
+}
+
+export interface OptionFormule {
+  nom: string;
+  prixSupplement: number;
+  description: string;
+  obligatoire: boolean;
+}
+
+export interface FormuleProduit {
+  id: string;
+  produitId: string;
+  code: string;
+  nom: string;
+  description: string;
+  ordre: number;
+  garanties: GarantieFormule[];
+  options: OptionFormule[];
+  franchiseMontant: number;
+  franchiseType: FranchiseType;
+  prixFormule: number;
+  typeAjustementPrix: TypeAjustementPrix;
+  actif: boolean;
+  versionProduitId: string;
+  metadata: string;
+  createdBy: string;
+  modifiedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFormuleProduitRequest {
+  produitId: string;
+  code: string;
+  nom: string;
+  description: string;
+  ordre: number;
+  garanties: GarantieFormule[];
+  options: OptionFormule[];
+  franchiseMontant: number;
+  franchiseType: FranchiseType;
+  prixFormule: number;
+  typeAjustementPrix: TypeAjustementPrix;
+  versionProduitId?: string | undefined;
+  metadata?: string | undefined;
+}
+
+export interface UpdateFormuleProduitRequest {
+  id: string;
+  code?: string | undefined;
+  nom?: string | undefined;
+  description?: string | undefined;
+  ordre?: number | undefined;
+  garanties: GarantieFormule[];
+  options: OptionFormule[];
+  franchiseMontant?: number | undefined;
+  franchiseType?: FranchiseType | undefined;
+  prixFormule?: number | undefined;
+  typeAjustementPrix?: TypeAjustementPrix | undefined;
+  actif?: boolean | undefined;
+  metadata?: string | undefined;
+}
+
+export interface GetFormuleProduitRequest {
+  id: string;
+}
+
+export interface ListFormulesProduitRequest {
+  produitId: string;
+  actif?: boolean | undefined;
+  pagination: PaginationRequest | undefined;
+}
+
+export interface ListFormulesProduitResponse {
+  formules: FormuleProduit[];
+  pagination: PaginationResponse | undefined;
+}
+
+export interface DeleteFormuleProduitRequest {
+  id: string;
+}
+
+export interface DeleteFormuleProduitResponse {
+  success: boolean;
+}
+
+export interface ActiverFormuleProduitRequest {
+  id: string;
+}
+
+export interface DesactiverFormuleProduitRequest {
+  id: string;
+}
+
 function createBaseEmpty(): Empty {
   return {};
 }
@@ -1046,6 +1431,9 @@ function createBaseGamme(): Gamme {
     code: "",
     ordre: 0,
     actif: false,
+    parentId: undefined,
+    niveau: 0,
+    typeGamme: 0,
     createdAt: "",
     updatedAt: "",
   };
@@ -1077,11 +1465,20 @@ export const Gamme: MessageFns<Gamme> = {
     if (message.actif !== false) {
       writer.uint32(64).bool(message.actif);
     }
+    if (message.parentId !== undefined) {
+      writer.uint32(74).string(message.parentId);
+    }
+    if (message.niveau !== 0) {
+      writer.uint32(80).int32(message.niveau);
+    }
+    if (message.typeGamme !== 0) {
+      writer.uint32(88).int32(message.typeGamme);
+    }
     if (message.createdAt !== "") {
-      writer.uint32(74).string(message.createdAt);
+      writer.uint32(98).string(message.createdAt);
     }
     if (message.updatedAt !== "") {
-      writer.uint32(82).string(message.updatedAt);
+      writer.uint32(106).string(message.updatedAt);
     }
     return writer;
   },
@@ -1162,11 +1559,35 @@ export const Gamme: MessageFns<Gamme> = {
             break;
           }
 
-          message.createdAt = reader.string();
+          message.parentId = reader.string();
           continue;
         }
         case 10: {
-          if (tag !== 82) {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.niveau = reader.int32();
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.typeGamme = reader.int32() as any;
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
             break;
           }
 
@@ -1196,6 +1617,17 @@ export const Gamme: MessageFns<Gamme> = {
       code: isSet(object.code) ? globalThis.String(object.code) : "",
       ordre: isSet(object.ordre) ? globalThis.Number(object.ordre) : 0,
       actif: isSet(object.actif) ? globalThis.Boolean(object.actif) : false,
+      parentId: isSet(object.parentId)
+        ? globalThis.String(object.parentId)
+        : isSet(object.parent_id)
+        ? globalThis.String(object.parent_id)
+        : undefined,
+      niveau: isSet(object.niveau) ? globalThis.Number(object.niveau) : 0,
+      typeGamme: isSet(object.typeGamme)
+        ? typeGammeFromJSON(object.typeGamme)
+        : isSet(object.type_gamme)
+        ? typeGammeFromJSON(object.type_gamme)
+        : 0,
       createdAt: isSet(object.createdAt)
         ? globalThis.String(object.createdAt)
         : isSet(object.created_at)
@@ -1235,6 +1667,15 @@ export const Gamme: MessageFns<Gamme> = {
     if (message.actif !== false) {
       obj.actif = message.actif;
     }
+    if (message.parentId !== undefined) {
+      obj.parentId = message.parentId;
+    }
+    if (message.niveau !== 0) {
+      obj.niveau = Math.round(message.niveau);
+    }
+    if (message.typeGamme !== 0) {
+      obj.typeGamme = typeGammeToJSON(message.typeGamme);
+    }
     if (message.createdAt !== "") {
       obj.createdAt = message.createdAt;
     }
@@ -1257,6 +1698,9 @@ export const Gamme: MessageFns<Gamme> = {
     message.code = object.code ?? "";
     message.ordre = object.ordre ?? 0;
     message.actif = object.actif ?? false;
+    message.parentId = object.parentId ?? undefined;
+    message.niveau = object.niveau ?? 0;
+    message.typeGamme = object.typeGamme ?? 0;
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
     return message;
@@ -1921,6 +2365,296 @@ export const DeleteGammeResponse: MessageFns<DeleteGammeResponse> = {
   },
 };
 
+function createBaseGammeNode(): GammeNode {
+  return { id: "", nom: "", code: "", niveau: 0, typeGamme: 0, children: [] };
+}
+
+export const GammeNode: MessageFns<GammeNode> = {
+  encode(message: GammeNode, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.nom !== "") {
+      writer.uint32(18).string(message.nom);
+    }
+    if (message.code !== "") {
+      writer.uint32(26).string(message.code);
+    }
+    if (message.niveau !== 0) {
+      writer.uint32(32).int32(message.niveau);
+    }
+    if (message.typeGamme !== 0) {
+      writer.uint32(40).int32(message.typeGamme);
+    }
+    for (const v of message.children) {
+      GammeNode.encode(v!, writer.uint32(50).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GammeNode {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGammeNode();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.nom = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.code = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.niveau = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.typeGamme = reader.int32() as any;
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.children.push(GammeNode.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GammeNode {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      nom: isSet(object.nom) ? globalThis.String(object.nom) : "",
+      code: isSet(object.code) ? globalThis.String(object.code) : "",
+      niveau: isSet(object.niveau) ? globalThis.Number(object.niveau) : 0,
+      typeGamme: isSet(object.typeGamme)
+        ? typeGammeFromJSON(object.typeGamme)
+        : isSet(object.type_gamme)
+        ? typeGammeFromJSON(object.type_gamme)
+        : 0,
+      children: globalThis.Array.isArray(object?.children)
+        ? object.children.map((e: any) => GammeNode.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GammeNode): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.nom !== "") {
+      obj.nom = message.nom;
+    }
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    if (message.niveau !== 0) {
+      obj.niveau = Math.round(message.niveau);
+    }
+    if (message.typeGamme !== 0) {
+      obj.typeGamme = typeGammeToJSON(message.typeGamme);
+    }
+    if (message.children?.length) {
+      obj.children = message.children.map((e) => GammeNode.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GammeNode>, I>>(base?: I): GammeNode {
+    return GammeNode.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GammeNode>, I>>(object: I): GammeNode {
+    const message = createBaseGammeNode();
+    message.id = object.id ?? "";
+    message.nom = object.nom ?? "";
+    message.code = object.code ?? "";
+    message.niveau = object.niveau ?? 0;
+    message.typeGamme = object.typeGamme ?? 0;
+    message.children = object.children?.map((e) => GammeNode.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseGetGammeTreeRequest(): GetGammeTreeRequest {
+  return { organisationId: "", parentId: undefined };
+}
+
+export const GetGammeTreeRequest: MessageFns<GetGammeTreeRequest> = {
+  encode(message: GetGammeTreeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.parentId !== undefined) {
+      writer.uint32(18).string(message.parentId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetGammeTreeRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetGammeTreeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.parentId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetGammeTreeRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      parentId: isSet(object.parentId)
+        ? globalThis.String(object.parentId)
+        : isSet(object.parent_id)
+        ? globalThis.String(object.parent_id)
+        : undefined,
+    };
+  },
+
+  toJSON(message: GetGammeTreeRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.parentId !== undefined) {
+      obj.parentId = message.parentId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetGammeTreeRequest>, I>>(base?: I): GetGammeTreeRequest {
+    return GetGammeTreeRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetGammeTreeRequest>, I>>(object: I): GetGammeTreeRequest {
+    const message = createBaseGetGammeTreeRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.parentId = object.parentId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetGammeTreeResponse(): GetGammeTreeResponse {
+  return { roots: [] };
+}
+
+export const GetGammeTreeResponse: MessageFns<GetGammeTreeResponse> = {
+  encode(message: GetGammeTreeResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.roots) {
+      GammeNode.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetGammeTreeResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetGammeTreeResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.roots.push(GammeNode.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetGammeTreeResponse {
+    return {
+      roots: globalThis.Array.isArray(object?.roots) ? object.roots.map((e: any) => GammeNode.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: GetGammeTreeResponse): unknown {
+    const obj: any = {};
+    if (message.roots?.length) {
+      obj.roots = message.roots.map((e) => GammeNode.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetGammeTreeResponse>, I>>(base?: I): GetGammeTreeResponse {
+    return GetGammeTreeResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetGammeTreeResponse>, I>>(object: I): GetGammeTreeResponse {
+    const message = createBaseGetGammeTreeResponse();
+    message.roots = object.roots?.map((e) => GammeNode.fromPartial(e)) || [];
+    return message;
+  },
+};
+
 function createBaseProduit(): Produit {
   return {
     id: "",
@@ -1946,6 +2680,17 @@ function createBaseProduit(): Produit {
     updatedAt: "",
     gamme: undefined,
     statutCycle: 0,
+    dureeEngagementMois: undefined,
+    frequenceRenouvellement: "",
+    conditionsResiliation: "",
+    uniteVente: "",
+    codeComptable: "",
+    compteProduit: "",
+    journalVente: "",
+    partenaireCommercialId: "",
+    modeleDistributionId: "",
+    typeTarification: 0,
+    configTarification: "",
   };
 }
 
@@ -2019,6 +2764,39 @@ export const Produit: MessageFns<Produit> = {
     }
     if (message.statutCycle !== 0) {
       writer.uint32(184).int32(message.statutCycle);
+    }
+    if (message.dureeEngagementMois !== undefined) {
+      writer.uint32(192).int32(message.dureeEngagementMois);
+    }
+    if (message.frequenceRenouvellement !== "") {
+      writer.uint32(202).string(message.frequenceRenouvellement);
+    }
+    if (message.conditionsResiliation !== "") {
+      writer.uint32(210).string(message.conditionsResiliation);
+    }
+    if (message.uniteVente !== "") {
+      writer.uint32(218).string(message.uniteVente);
+    }
+    if (message.codeComptable !== "") {
+      writer.uint32(226).string(message.codeComptable);
+    }
+    if (message.compteProduit !== "") {
+      writer.uint32(234).string(message.compteProduit);
+    }
+    if (message.journalVente !== "") {
+      writer.uint32(242).string(message.journalVente);
+    }
+    if (message.partenaireCommercialId !== "") {
+      writer.uint32(250).string(message.partenaireCommercialId);
+    }
+    if (message.modeleDistributionId !== "") {
+      writer.uint32(258).string(message.modeleDistributionId);
+    }
+    if (message.typeTarification !== 0) {
+      writer.uint32(264).int32(message.typeTarification);
+    }
+    if (message.configTarification !== "") {
+      writer.uint32(274).string(message.configTarification);
     }
     return writer;
   },
@@ -2214,6 +2992,94 @@ export const Produit: MessageFns<Produit> = {
           message.statutCycle = reader.int32() as any;
           continue;
         }
+        case 24: {
+          if (tag !== 192) {
+            break;
+          }
+
+          message.dureeEngagementMois = reader.int32();
+          continue;
+        }
+        case 25: {
+          if (tag !== 202) {
+            break;
+          }
+
+          message.frequenceRenouvellement = reader.string();
+          continue;
+        }
+        case 26: {
+          if (tag !== 210) {
+            break;
+          }
+
+          message.conditionsResiliation = reader.string();
+          continue;
+        }
+        case 27: {
+          if (tag !== 218) {
+            break;
+          }
+
+          message.uniteVente = reader.string();
+          continue;
+        }
+        case 28: {
+          if (tag !== 226) {
+            break;
+          }
+
+          message.codeComptable = reader.string();
+          continue;
+        }
+        case 29: {
+          if (tag !== 234) {
+            break;
+          }
+
+          message.compteProduit = reader.string();
+          continue;
+        }
+        case 30: {
+          if (tag !== 242) {
+            break;
+          }
+
+          message.journalVente = reader.string();
+          continue;
+        }
+        case 31: {
+          if (tag !== 250) {
+            break;
+          }
+
+          message.partenaireCommercialId = reader.string();
+          continue;
+        }
+        case 32: {
+          if (tag !== 258) {
+            break;
+          }
+
+          message.modeleDistributionId = reader.string();
+          continue;
+        }
+        case 33: {
+          if (tag !== 264) {
+            break;
+          }
+
+          message.typeTarification = reader.int32() as any;
+          continue;
+        }
+        case 34: {
+          if (tag !== 274) {
+            break;
+          }
+
+          message.configTarification = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2296,6 +3162,61 @@ export const Produit: MessageFns<Produit> = {
         : isSet(object.statut_cycle)
         ? statutCycleProduitFromJSON(object.statut_cycle)
         : 0,
+      dureeEngagementMois: isSet(object.dureeEngagementMois)
+        ? globalThis.Number(object.dureeEngagementMois)
+        : isSet(object.duree_engagement_mois)
+        ? globalThis.Number(object.duree_engagement_mois)
+        : undefined,
+      frequenceRenouvellement: isSet(object.frequenceRenouvellement)
+        ? globalThis.String(object.frequenceRenouvellement)
+        : isSet(object.frequence_renouvellement)
+        ? globalThis.String(object.frequence_renouvellement)
+        : "",
+      conditionsResiliation: isSet(object.conditionsResiliation)
+        ? globalThis.String(object.conditionsResiliation)
+        : isSet(object.conditions_resiliation)
+        ? globalThis.String(object.conditions_resiliation)
+        : "",
+      uniteVente: isSet(object.uniteVente)
+        ? globalThis.String(object.uniteVente)
+        : isSet(object.unite_vente)
+        ? globalThis.String(object.unite_vente)
+        : "",
+      codeComptable: isSet(object.codeComptable)
+        ? globalThis.String(object.codeComptable)
+        : isSet(object.code_comptable)
+        ? globalThis.String(object.code_comptable)
+        : "",
+      compteProduit: isSet(object.compteProduit)
+        ? globalThis.String(object.compteProduit)
+        : isSet(object.compte_produit)
+        ? globalThis.String(object.compte_produit)
+        : "",
+      journalVente: isSet(object.journalVente)
+        ? globalThis.String(object.journalVente)
+        : isSet(object.journal_vente)
+        ? globalThis.String(object.journal_vente)
+        : "",
+      partenaireCommercialId: isSet(object.partenaireCommercialId)
+        ? globalThis.String(object.partenaireCommercialId)
+        : isSet(object.partenaire_commercial_id)
+        ? globalThis.String(object.partenaire_commercial_id)
+        : "",
+      modeleDistributionId: isSet(object.modeleDistributionId)
+        ? globalThis.String(object.modeleDistributionId)
+        : isSet(object.modele_distribution_id)
+        ? globalThis.String(object.modele_distribution_id)
+        : "",
+      typeTarification: isSet(object.typeTarification)
+        ? typeTarificationFromJSON(object.typeTarification)
+        : isSet(object.type_tarification)
+        ? typeTarificationFromJSON(object.type_tarification)
+        : 0,
+      configTarification: isSet(object.configTarification)
+        ? globalThis.String(object.configTarification)
+        : isSet(object.config_tarification)
+        ? globalThis.String(object.config_tarification)
+        : "",
     };
   },
 
@@ -2370,6 +3291,39 @@ export const Produit: MessageFns<Produit> = {
     if (message.statutCycle !== 0) {
       obj.statutCycle = statutCycleProduitToJSON(message.statutCycle);
     }
+    if (message.dureeEngagementMois !== undefined) {
+      obj.dureeEngagementMois = Math.round(message.dureeEngagementMois);
+    }
+    if (message.frequenceRenouvellement !== "") {
+      obj.frequenceRenouvellement = message.frequenceRenouvellement;
+    }
+    if (message.conditionsResiliation !== "") {
+      obj.conditionsResiliation = message.conditionsResiliation;
+    }
+    if (message.uniteVente !== "") {
+      obj.uniteVente = message.uniteVente;
+    }
+    if (message.codeComptable !== "") {
+      obj.codeComptable = message.codeComptable;
+    }
+    if (message.compteProduit !== "") {
+      obj.compteProduit = message.compteProduit;
+    }
+    if (message.journalVente !== "") {
+      obj.journalVente = message.journalVente;
+    }
+    if (message.partenaireCommercialId !== "") {
+      obj.partenaireCommercialId = message.partenaireCommercialId;
+    }
+    if (message.modeleDistributionId !== "") {
+      obj.modeleDistributionId = message.modeleDistributionId;
+    }
+    if (message.typeTarification !== 0) {
+      obj.typeTarification = typeTarificationToJSON(message.typeTarification);
+    }
+    if (message.configTarification !== "") {
+      obj.configTarification = message.configTarification;
+    }
     return obj;
   },
 
@@ -2401,6 +3355,17 @@ export const Produit: MessageFns<Produit> = {
     message.updatedAt = object.updatedAt ?? "";
     message.gamme = (object.gamme !== undefined && object.gamme !== null) ? Gamme.fromPartial(object.gamme) : undefined;
     message.statutCycle = object.statutCycle ?? 0;
+    message.dureeEngagementMois = object.dureeEngagementMois ?? undefined;
+    message.frequenceRenouvellement = object.frequenceRenouvellement ?? "";
+    message.conditionsResiliation = object.conditionsResiliation ?? "";
+    message.uniteVente = object.uniteVente ?? "";
+    message.codeComptable = object.codeComptable ?? "";
+    message.compteProduit = object.compteProduit ?? "";
+    message.journalVente = object.journalVente ?? "";
+    message.partenaireCommercialId = object.partenaireCommercialId ?? "";
+    message.modeleDistributionId = object.modeleDistributionId ?? "";
+    message.typeTarification = object.typeTarification ?? 0;
+    message.configTarification = object.configTarification ?? "";
     return message;
   },
 };
@@ -9088,6 +10053,1704 @@ export const CalculatePriceResponse: MessageFns<CalculatePriceResponse> = {
   },
 };
 
+function createBaseGarantieFormule(): GarantieFormule {
+  return { nom: "", description: "", plafond: 0, franchise: 0, actif: false };
+}
+
+export const GarantieFormule: MessageFns<GarantieFormule> = {
+  encode(message: GarantieFormule, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.nom !== "") {
+      writer.uint32(10).string(message.nom);
+    }
+    if (message.description !== "") {
+      writer.uint32(18).string(message.description);
+    }
+    if (message.plafond !== 0) {
+      writer.uint32(25).double(message.plafond);
+    }
+    if (message.franchise !== 0) {
+      writer.uint32(33).double(message.franchise);
+    }
+    if (message.actif !== false) {
+      writer.uint32(40).bool(message.actif);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GarantieFormule {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGarantieFormule();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.nom = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 25) {
+            break;
+          }
+
+          message.plafond = reader.double();
+          continue;
+        }
+        case 4: {
+          if (tag !== 33) {
+            break;
+          }
+
+          message.franchise = reader.double();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.actif = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GarantieFormule {
+    return {
+      nom: isSet(object.nom) ? globalThis.String(object.nom) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      plafond: isSet(object.plafond) ? globalThis.Number(object.plafond) : 0,
+      franchise: isSet(object.franchise) ? globalThis.Number(object.franchise) : 0,
+      actif: isSet(object.actif) ? globalThis.Boolean(object.actif) : false,
+    };
+  },
+
+  toJSON(message: GarantieFormule): unknown {
+    const obj: any = {};
+    if (message.nom !== "") {
+      obj.nom = message.nom;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.plafond !== 0) {
+      obj.plafond = message.plafond;
+    }
+    if (message.franchise !== 0) {
+      obj.franchise = message.franchise;
+    }
+    if (message.actif !== false) {
+      obj.actif = message.actif;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GarantieFormule>, I>>(base?: I): GarantieFormule {
+    return GarantieFormule.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GarantieFormule>, I>>(object: I): GarantieFormule {
+    const message = createBaseGarantieFormule();
+    message.nom = object.nom ?? "";
+    message.description = object.description ?? "";
+    message.plafond = object.plafond ?? 0;
+    message.franchise = object.franchise ?? 0;
+    message.actif = object.actif ?? false;
+    return message;
+  },
+};
+
+function createBaseOptionFormule(): OptionFormule {
+  return { nom: "", prixSupplement: 0, description: "", obligatoire: false };
+}
+
+export const OptionFormule: MessageFns<OptionFormule> = {
+  encode(message: OptionFormule, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.nom !== "") {
+      writer.uint32(10).string(message.nom);
+    }
+    if (message.prixSupplement !== 0) {
+      writer.uint32(17).double(message.prixSupplement);
+    }
+    if (message.description !== "") {
+      writer.uint32(26).string(message.description);
+    }
+    if (message.obligatoire !== false) {
+      writer.uint32(32).bool(message.obligatoire);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): OptionFormule {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseOptionFormule();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.nom = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 17) {
+            break;
+          }
+
+          message.prixSupplement = reader.double();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.obligatoire = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): OptionFormule {
+    return {
+      nom: isSet(object.nom) ? globalThis.String(object.nom) : "",
+      prixSupplement: isSet(object.prixSupplement)
+        ? globalThis.Number(object.prixSupplement)
+        : isSet(object.prix_supplement)
+        ? globalThis.Number(object.prix_supplement)
+        : 0,
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      obligatoire: isSet(object.obligatoire) ? globalThis.Boolean(object.obligatoire) : false,
+    };
+  },
+
+  toJSON(message: OptionFormule): unknown {
+    const obj: any = {};
+    if (message.nom !== "") {
+      obj.nom = message.nom;
+    }
+    if (message.prixSupplement !== 0) {
+      obj.prixSupplement = message.prixSupplement;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.obligatoire !== false) {
+      obj.obligatoire = message.obligatoire;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<OptionFormule>, I>>(base?: I): OptionFormule {
+    return OptionFormule.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<OptionFormule>, I>>(object: I): OptionFormule {
+    const message = createBaseOptionFormule();
+    message.nom = object.nom ?? "";
+    message.prixSupplement = object.prixSupplement ?? 0;
+    message.description = object.description ?? "";
+    message.obligatoire = object.obligatoire ?? false;
+    return message;
+  },
+};
+
+function createBaseFormuleProduit(): FormuleProduit {
+  return {
+    id: "",
+    produitId: "",
+    code: "",
+    nom: "",
+    description: "",
+    ordre: 0,
+    garanties: [],
+    options: [],
+    franchiseMontant: 0,
+    franchiseType: 0,
+    prixFormule: 0,
+    typeAjustementPrix: 0,
+    actif: false,
+    versionProduitId: "",
+    metadata: "",
+    createdBy: "",
+    modifiedBy: "",
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const FormuleProduit: MessageFns<FormuleProduit> = {
+  encode(message: FormuleProduit, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.produitId !== "") {
+      writer.uint32(18).string(message.produitId);
+    }
+    if (message.code !== "") {
+      writer.uint32(26).string(message.code);
+    }
+    if (message.nom !== "") {
+      writer.uint32(34).string(message.nom);
+    }
+    if (message.description !== "") {
+      writer.uint32(42).string(message.description);
+    }
+    if (message.ordre !== 0) {
+      writer.uint32(48).int32(message.ordre);
+    }
+    for (const v of message.garanties) {
+      GarantieFormule.encode(v!, writer.uint32(58).fork()).join();
+    }
+    for (const v of message.options) {
+      OptionFormule.encode(v!, writer.uint32(66).fork()).join();
+    }
+    if (message.franchiseMontant !== 0) {
+      writer.uint32(73).double(message.franchiseMontant);
+    }
+    if (message.franchiseType !== 0) {
+      writer.uint32(80).int32(message.franchiseType);
+    }
+    if (message.prixFormule !== 0) {
+      writer.uint32(89).double(message.prixFormule);
+    }
+    if (message.typeAjustementPrix !== 0) {
+      writer.uint32(96).int32(message.typeAjustementPrix);
+    }
+    if (message.actif !== false) {
+      writer.uint32(104).bool(message.actif);
+    }
+    if (message.versionProduitId !== "") {
+      writer.uint32(114).string(message.versionProduitId);
+    }
+    if (message.metadata !== "") {
+      writer.uint32(122).string(message.metadata);
+    }
+    if (message.createdBy !== "") {
+      writer.uint32(130).string(message.createdBy);
+    }
+    if (message.modifiedBy !== "") {
+      writer.uint32(138).string(message.modifiedBy);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(146).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(154).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FormuleProduit {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFormuleProduit();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.produitId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.code = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.nom = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.ordre = reader.int32();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.garanties.push(GarantieFormule.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.options.push(OptionFormule.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 9: {
+          if (tag !== 73) {
+            break;
+          }
+
+          message.franchiseMontant = reader.double();
+          continue;
+        }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.franchiseType = reader.int32() as any;
+          continue;
+        }
+        case 11: {
+          if (tag !== 89) {
+            break;
+          }
+
+          message.prixFormule = reader.double();
+          continue;
+        }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.typeAjustementPrix = reader.int32() as any;
+          continue;
+        }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.actif = reader.bool();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.versionProduitId = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.metadata = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.createdBy = reader.string();
+          continue;
+        }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.modifiedBy = reader.string();
+          continue;
+        }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 19: {
+          if (tag !== 154) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FormuleProduit {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      produitId: isSet(object.produitId)
+        ? globalThis.String(object.produitId)
+        : isSet(object.produit_id)
+        ? globalThis.String(object.produit_id)
+        : "",
+      code: isSet(object.code) ? globalThis.String(object.code) : "",
+      nom: isSet(object.nom) ? globalThis.String(object.nom) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      ordre: isSet(object.ordre) ? globalThis.Number(object.ordre) : 0,
+      garanties: globalThis.Array.isArray(object?.garanties)
+        ? object.garanties.map((e: any) => GarantieFormule.fromJSON(e))
+        : [],
+      options: globalThis.Array.isArray(object?.options)
+        ? object.options.map((e: any) => OptionFormule.fromJSON(e))
+        : [],
+      franchiseMontant: isSet(object.franchiseMontant)
+        ? globalThis.Number(object.franchiseMontant)
+        : isSet(object.franchise_montant)
+        ? globalThis.Number(object.franchise_montant)
+        : 0,
+      franchiseType: isSet(object.franchiseType)
+        ? franchiseTypeFromJSON(object.franchiseType)
+        : isSet(object.franchise_type)
+        ? franchiseTypeFromJSON(object.franchise_type)
+        : 0,
+      prixFormule: isSet(object.prixFormule)
+        ? globalThis.Number(object.prixFormule)
+        : isSet(object.prix_formule)
+        ? globalThis.Number(object.prix_formule)
+        : 0,
+      typeAjustementPrix: isSet(object.typeAjustementPrix)
+        ? typeAjustementPrixFromJSON(object.typeAjustementPrix)
+        : isSet(object.type_ajustement_prix)
+        ? typeAjustementPrixFromJSON(object.type_ajustement_prix)
+        : 0,
+      actif: isSet(object.actif) ? globalThis.Boolean(object.actif) : false,
+      versionProduitId: isSet(object.versionProduitId)
+        ? globalThis.String(object.versionProduitId)
+        : isSet(object.version_produit_id)
+        ? globalThis.String(object.version_produit_id)
+        : "",
+      metadata: isSet(object.metadata) ? globalThis.String(object.metadata) : "",
+      createdBy: isSet(object.createdBy)
+        ? globalThis.String(object.createdBy)
+        : isSet(object.created_by)
+        ? globalThis.String(object.created_by)
+        : "",
+      modifiedBy: isSet(object.modifiedBy)
+        ? globalThis.String(object.modifiedBy)
+        : isSet(object.modified_by)
+        ? globalThis.String(object.modified_by)
+        : "",
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: FormuleProduit): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.produitId !== "") {
+      obj.produitId = message.produitId;
+    }
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    if (message.nom !== "") {
+      obj.nom = message.nom;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.ordre !== 0) {
+      obj.ordre = Math.round(message.ordre);
+    }
+    if (message.garanties?.length) {
+      obj.garanties = message.garanties.map((e) => GarantieFormule.toJSON(e));
+    }
+    if (message.options?.length) {
+      obj.options = message.options.map((e) => OptionFormule.toJSON(e));
+    }
+    if (message.franchiseMontant !== 0) {
+      obj.franchiseMontant = message.franchiseMontant;
+    }
+    if (message.franchiseType !== 0) {
+      obj.franchiseType = franchiseTypeToJSON(message.franchiseType);
+    }
+    if (message.prixFormule !== 0) {
+      obj.prixFormule = message.prixFormule;
+    }
+    if (message.typeAjustementPrix !== 0) {
+      obj.typeAjustementPrix = typeAjustementPrixToJSON(message.typeAjustementPrix);
+    }
+    if (message.actif !== false) {
+      obj.actif = message.actif;
+    }
+    if (message.versionProduitId !== "") {
+      obj.versionProduitId = message.versionProduitId;
+    }
+    if (message.metadata !== "") {
+      obj.metadata = message.metadata;
+    }
+    if (message.createdBy !== "") {
+      obj.createdBy = message.createdBy;
+    }
+    if (message.modifiedBy !== "") {
+      obj.modifiedBy = message.modifiedBy;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FormuleProduit>, I>>(base?: I): FormuleProduit {
+    return FormuleProduit.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FormuleProduit>, I>>(object: I): FormuleProduit {
+    const message = createBaseFormuleProduit();
+    message.id = object.id ?? "";
+    message.produitId = object.produitId ?? "";
+    message.code = object.code ?? "";
+    message.nom = object.nom ?? "";
+    message.description = object.description ?? "";
+    message.ordre = object.ordre ?? 0;
+    message.garanties = object.garanties?.map((e) => GarantieFormule.fromPartial(e)) || [];
+    message.options = object.options?.map((e) => OptionFormule.fromPartial(e)) || [];
+    message.franchiseMontant = object.franchiseMontant ?? 0;
+    message.franchiseType = object.franchiseType ?? 0;
+    message.prixFormule = object.prixFormule ?? 0;
+    message.typeAjustementPrix = object.typeAjustementPrix ?? 0;
+    message.actif = object.actif ?? false;
+    message.versionProduitId = object.versionProduitId ?? "";
+    message.metadata = object.metadata ?? "";
+    message.createdBy = object.createdBy ?? "";
+    message.modifiedBy = object.modifiedBy ?? "";
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateFormuleProduitRequest(): CreateFormuleProduitRequest {
+  return {
+    produitId: "",
+    code: "",
+    nom: "",
+    description: "",
+    ordre: 0,
+    garanties: [],
+    options: [],
+    franchiseMontant: 0,
+    franchiseType: 0,
+    prixFormule: 0,
+    typeAjustementPrix: 0,
+    versionProduitId: undefined,
+    metadata: undefined,
+  };
+}
+
+export const CreateFormuleProduitRequest: MessageFns<CreateFormuleProduitRequest> = {
+  encode(message: CreateFormuleProduitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.produitId !== "") {
+      writer.uint32(10).string(message.produitId);
+    }
+    if (message.code !== "") {
+      writer.uint32(18).string(message.code);
+    }
+    if (message.nom !== "") {
+      writer.uint32(26).string(message.nom);
+    }
+    if (message.description !== "") {
+      writer.uint32(34).string(message.description);
+    }
+    if (message.ordre !== 0) {
+      writer.uint32(40).int32(message.ordre);
+    }
+    for (const v of message.garanties) {
+      GarantieFormule.encode(v!, writer.uint32(50).fork()).join();
+    }
+    for (const v of message.options) {
+      OptionFormule.encode(v!, writer.uint32(58).fork()).join();
+    }
+    if (message.franchiseMontant !== 0) {
+      writer.uint32(65).double(message.franchiseMontant);
+    }
+    if (message.franchiseType !== 0) {
+      writer.uint32(72).int32(message.franchiseType);
+    }
+    if (message.prixFormule !== 0) {
+      writer.uint32(81).double(message.prixFormule);
+    }
+    if (message.typeAjustementPrix !== 0) {
+      writer.uint32(88).int32(message.typeAjustementPrix);
+    }
+    if (message.versionProduitId !== undefined) {
+      writer.uint32(98).string(message.versionProduitId);
+    }
+    if (message.metadata !== undefined) {
+      writer.uint32(106).string(message.metadata);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateFormuleProduitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateFormuleProduitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.produitId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.code = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.nom = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.ordre = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.garanties.push(GarantieFormule.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.options.push(OptionFormule.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 8: {
+          if (tag !== 65) {
+            break;
+          }
+
+          message.franchiseMontant = reader.double();
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.franchiseType = reader.int32() as any;
+          continue;
+        }
+        case 10: {
+          if (tag !== 81) {
+            break;
+          }
+
+          message.prixFormule = reader.double();
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.typeAjustementPrix = reader.int32() as any;
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.versionProduitId = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.metadata = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateFormuleProduitRequest {
+    return {
+      produitId: isSet(object.produitId)
+        ? globalThis.String(object.produitId)
+        : isSet(object.produit_id)
+        ? globalThis.String(object.produit_id)
+        : "",
+      code: isSet(object.code) ? globalThis.String(object.code) : "",
+      nom: isSet(object.nom) ? globalThis.String(object.nom) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      ordre: isSet(object.ordre) ? globalThis.Number(object.ordre) : 0,
+      garanties: globalThis.Array.isArray(object?.garanties)
+        ? object.garanties.map((e: any) => GarantieFormule.fromJSON(e))
+        : [],
+      options: globalThis.Array.isArray(object?.options)
+        ? object.options.map((e: any) => OptionFormule.fromJSON(e))
+        : [],
+      franchiseMontant: isSet(object.franchiseMontant)
+        ? globalThis.Number(object.franchiseMontant)
+        : isSet(object.franchise_montant)
+        ? globalThis.Number(object.franchise_montant)
+        : 0,
+      franchiseType: isSet(object.franchiseType)
+        ? franchiseTypeFromJSON(object.franchiseType)
+        : isSet(object.franchise_type)
+        ? franchiseTypeFromJSON(object.franchise_type)
+        : 0,
+      prixFormule: isSet(object.prixFormule)
+        ? globalThis.Number(object.prixFormule)
+        : isSet(object.prix_formule)
+        ? globalThis.Number(object.prix_formule)
+        : 0,
+      typeAjustementPrix: isSet(object.typeAjustementPrix)
+        ? typeAjustementPrixFromJSON(object.typeAjustementPrix)
+        : isSet(object.type_ajustement_prix)
+        ? typeAjustementPrixFromJSON(object.type_ajustement_prix)
+        : 0,
+      versionProduitId: isSet(object.versionProduitId)
+        ? globalThis.String(object.versionProduitId)
+        : isSet(object.version_produit_id)
+        ? globalThis.String(object.version_produit_id)
+        : undefined,
+      metadata: isSet(object.metadata) ? globalThis.String(object.metadata) : undefined,
+    };
+  },
+
+  toJSON(message: CreateFormuleProduitRequest): unknown {
+    const obj: any = {};
+    if (message.produitId !== "") {
+      obj.produitId = message.produitId;
+    }
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    if (message.nom !== "") {
+      obj.nom = message.nom;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.ordre !== 0) {
+      obj.ordre = Math.round(message.ordre);
+    }
+    if (message.garanties?.length) {
+      obj.garanties = message.garanties.map((e) => GarantieFormule.toJSON(e));
+    }
+    if (message.options?.length) {
+      obj.options = message.options.map((e) => OptionFormule.toJSON(e));
+    }
+    if (message.franchiseMontant !== 0) {
+      obj.franchiseMontant = message.franchiseMontant;
+    }
+    if (message.franchiseType !== 0) {
+      obj.franchiseType = franchiseTypeToJSON(message.franchiseType);
+    }
+    if (message.prixFormule !== 0) {
+      obj.prixFormule = message.prixFormule;
+    }
+    if (message.typeAjustementPrix !== 0) {
+      obj.typeAjustementPrix = typeAjustementPrixToJSON(message.typeAjustementPrix);
+    }
+    if (message.versionProduitId !== undefined) {
+      obj.versionProduitId = message.versionProduitId;
+    }
+    if (message.metadata !== undefined) {
+      obj.metadata = message.metadata;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateFormuleProduitRequest>, I>>(base?: I): CreateFormuleProduitRequest {
+    return CreateFormuleProduitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateFormuleProduitRequest>, I>>(object: I): CreateFormuleProduitRequest {
+    const message = createBaseCreateFormuleProduitRequest();
+    message.produitId = object.produitId ?? "";
+    message.code = object.code ?? "";
+    message.nom = object.nom ?? "";
+    message.description = object.description ?? "";
+    message.ordre = object.ordre ?? 0;
+    message.garanties = object.garanties?.map((e) => GarantieFormule.fromPartial(e)) || [];
+    message.options = object.options?.map((e) => OptionFormule.fromPartial(e)) || [];
+    message.franchiseMontant = object.franchiseMontant ?? 0;
+    message.franchiseType = object.franchiseType ?? 0;
+    message.prixFormule = object.prixFormule ?? 0;
+    message.typeAjustementPrix = object.typeAjustementPrix ?? 0;
+    message.versionProduitId = object.versionProduitId ?? undefined;
+    message.metadata = object.metadata ?? undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateFormuleProduitRequest(): UpdateFormuleProduitRequest {
+  return {
+    id: "",
+    code: undefined,
+    nom: undefined,
+    description: undefined,
+    ordre: undefined,
+    garanties: [],
+    options: [],
+    franchiseMontant: undefined,
+    franchiseType: undefined,
+    prixFormule: undefined,
+    typeAjustementPrix: undefined,
+    actif: undefined,
+    metadata: undefined,
+  };
+}
+
+export const UpdateFormuleProduitRequest: MessageFns<UpdateFormuleProduitRequest> = {
+  encode(message: UpdateFormuleProduitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.code !== undefined) {
+      writer.uint32(18).string(message.code);
+    }
+    if (message.nom !== undefined) {
+      writer.uint32(26).string(message.nom);
+    }
+    if (message.description !== undefined) {
+      writer.uint32(34).string(message.description);
+    }
+    if (message.ordre !== undefined) {
+      writer.uint32(40).int32(message.ordre);
+    }
+    for (const v of message.garanties) {
+      GarantieFormule.encode(v!, writer.uint32(50).fork()).join();
+    }
+    for (const v of message.options) {
+      OptionFormule.encode(v!, writer.uint32(58).fork()).join();
+    }
+    if (message.franchiseMontant !== undefined) {
+      writer.uint32(65).double(message.franchiseMontant);
+    }
+    if (message.franchiseType !== undefined) {
+      writer.uint32(72).int32(message.franchiseType);
+    }
+    if (message.prixFormule !== undefined) {
+      writer.uint32(81).double(message.prixFormule);
+    }
+    if (message.typeAjustementPrix !== undefined) {
+      writer.uint32(88).int32(message.typeAjustementPrix);
+    }
+    if (message.actif !== undefined) {
+      writer.uint32(96).bool(message.actif);
+    }
+    if (message.metadata !== undefined) {
+      writer.uint32(106).string(message.metadata);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateFormuleProduitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateFormuleProduitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.code = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.nom = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.ordre = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.garanties.push(GarantieFormule.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.options.push(OptionFormule.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 8: {
+          if (tag !== 65) {
+            break;
+          }
+
+          message.franchiseMontant = reader.double();
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.franchiseType = reader.int32() as any;
+          continue;
+        }
+        case 10: {
+          if (tag !== 81) {
+            break;
+          }
+
+          message.prixFormule = reader.double();
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.typeAjustementPrix = reader.int32() as any;
+          continue;
+        }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.actif = reader.bool();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.metadata = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateFormuleProduitRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      code: isSet(object.code) ? globalThis.String(object.code) : undefined,
+      nom: isSet(object.nom) ? globalThis.String(object.nom) : undefined,
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+      ordre: isSet(object.ordre) ? globalThis.Number(object.ordre) : undefined,
+      garanties: globalThis.Array.isArray(object?.garanties)
+        ? object.garanties.map((e: any) => GarantieFormule.fromJSON(e))
+        : [],
+      options: globalThis.Array.isArray(object?.options)
+        ? object.options.map((e: any) => OptionFormule.fromJSON(e))
+        : [],
+      franchiseMontant: isSet(object.franchiseMontant)
+        ? globalThis.Number(object.franchiseMontant)
+        : isSet(object.franchise_montant)
+        ? globalThis.Number(object.franchise_montant)
+        : undefined,
+      franchiseType: isSet(object.franchiseType)
+        ? franchiseTypeFromJSON(object.franchiseType)
+        : isSet(object.franchise_type)
+        ? franchiseTypeFromJSON(object.franchise_type)
+        : undefined,
+      prixFormule: isSet(object.prixFormule)
+        ? globalThis.Number(object.prixFormule)
+        : isSet(object.prix_formule)
+        ? globalThis.Number(object.prix_formule)
+        : undefined,
+      typeAjustementPrix: isSet(object.typeAjustementPrix)
+        ? typeAjustementPrixFromJSON(object.typeAjustementPrix)
+        : isSet(object.type_ajustement_prix)
+        ? typeAjustementPrixFromJSON(object.type_ajustement_prix)
+        : undefined,
+      actif: isSet(object.actif) ? globalThis.Boolean(object.actif) : undefined,
+      metadata: isSet(object.metadata) ? globalThis.String(object.metadata) : undefined,
+    };
+  },
+
+  toJSON(message: UpdateFormuleProduitRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.code !== undefined) {
+      obj.code = message.code;
+    }
+    if (message.nom !== undefined) {
+      obj.nom = message.nom;
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    if (message.ordre !== undefined) {
+      obj.ordre = Math.round(message.ordre);
+    }
+    if (message.garanties?.length) {
+      obj.garanties = message.garanties.map((e) => GarantieFormule.toJSON(e));
+    }
+    if (message.options?.length) {
+      obj.options = message.options.map((e) => OptionFormule.toJSON(e));
+    }
+    if (message.franchiseMontant !== undefined) {
+      obj.franchiseMontant = message.franchiseMontant;
+    }
+    if (message.franchiseType !== undefined) {
+      obj.franchiseType = franchiseTypeToJSON(message.franchiseType);
+    }
+    if (message.prixFormule !== undefined) {
+      obj.prixFormule = message.prixFormule;
+    }
+    if (message.typeAjustementPrix !== undefined) {
+      obj.typeAjustementPrix = typeAjustementPrixToJSON(message.typeAjustementPrix);
+    }
+    if (message.actif !== undefined) {
+      obj.actif = message.actif;
+    }
+    if (message.metadata !== undefined) {
+      obj.metadata = message.metadata;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateFormuleProduitRequest>, I>>(base?: I): UpdateFormuleProduitRequest {
+    return UpdateFormuleProduitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateFormuleProduitRequest>, I>>(object: I): UpdateFormuleProduitRequest {
+    const message = createBaseUpdateFormuleProduitRequest();
+    message.id = object.id ?? "";
+    message.code = object.code ?? undefined;
+    message.nom = object.nom ?? undefined;
+    message.description = object.description ?? undefined;
+    message.ordre = object.ordre ?? undefined;
+    message.garanties = object.garanties?.map((e) => GarantieFormule.fromPartial(e)) || [];
+    message.options = object.options?.map((e) => OptionFormule.fromPartial(e)) || [];
+    message.franchiseMontant = object.franchiseMontant ?? undefined;
+    message.franchiseType = object.franchiseType ?? undefined;
+    message.prixFormule = object.prixFormule ?? undefined;
+    message.typeAjustementPrix = object.typeAjustementPrix ?? undefined;
+    message.actif = object.actif ?? undefined;
+    message.metadata = object.metadata ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetFormuleProduitRequest(): GetFormuleProduitRequest {
+  return { id: "" };
+}
+
+export const GetFormuleProduitRequest: MessageFns<GetFormuleProduitRequest> = {
+  encode(message: GetFormuleProduitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetFormuleProduitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetFormuleProduitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetFormuleProduitRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: GetFormuleProduitRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetFormuleProduitRequest>, I>>(base?: I): GetFormuleProduitRequest {
+    return GetFormuleProduitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetFormuleProduitRequest>, I>>(object: I): GetFormuleProduitRequest {
+    const message = createBaseGetFormuleProduitRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseListFormulesProduitRequest(): ListFormulesProduitRequest {
+  return { produitId: "", actif: undefined, pagination: undefined };
+}
+
+export const ListFormulesProduitRequest: MessageFns<ListFormulesProduitRequest> = {
+  encode(message: ListFormulesProduitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.produitId !== "") {
+      writer.uint32(10).string(message.produitId);
+    }
+    if (message.actif !== undefined) {
+      writer.uint32(16).bool(message.actif);
+    }
+    if (message.pagination !== undefined) {
+      PaginationRequest.encode(message.pagination, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListFormulesProduitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListFormulesProduitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.produitId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.actif = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.pagination = PaginationRequest.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListFormulesProduitRequest {
+    return {
+      produitId: isSet(object.produitId)
+        ? globalThis.String(object.produitId)
+        : isSet(object.produit_id)
+        ? globalThis.String(object.produit_id)
+        : "",
+      actif: isSet(object.actif) ? globalThis.Boolean(object.actif) : undefined,
+      pagination: isSet(object.pagination) ? PaginationRequest.fromJSON(object.pagination) : undefined,
+    };
+  },
+
+  toJSON(message: ListFormulesProduitRequest): unknown {
+    const obj: any = {};
+    if (message.produitId !== "") {
+      obj.produitId = message.produitId;
+    }
+    if (message.actif !== undefined) {
+      obj.actif = message.actif;
+    }
+    if (message.pagination !== undefined) {
+      obj.pagination = PaginationRequest.toJSON(message.pagination);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListFormulesProduitRequest>, I>>(base?: I): ListFormulesProduitRequest {
+    return ListFormulesProduitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListFormulesProduitRequest>, I>>(object: I): ListFormulesProduitRequest {
+    const message = createBaseListFormulesProduitRequest();
+    message.produitId = object.produitId ?? "";
+    message.actif = object.actif ?? undefined;
+    message.pagination = (object.pagination !== undefined && object.pagination !== null)
+      ? PaginationRequest.fromPartial(object.pagination)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseListFormulesProduitResponse(): ListFormulesProduitResponse {
+  return { formules: [], pagination: undefined };
+}
+
+export const ListFormulesProduitResponse: MessageFns<ListFormulesProduitResponse> = {
+  encode(message: ListFormulesProduitResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.formules) {
+      FormuleProduit.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.pagination !== undefined) {
+      PaginationResponse.encode(message.pagination, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListFormulesProduitResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListFormulesProduitResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.formules.push(FormuleProduit.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.pagination = PaginationResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListFormulesProduitResponse {
+    return {
+      formules: globalThis.Array.isArray(object?.formules)
+        ? object.formules.map((e: any) => FormuleProduit.fromJSON(e))
+        : [],
+      pagination: isSet(object.pagination) ? PaginationResponse.fromJSON(object.pagination) : undefined,
+    };
+  },
+
+  toJSON(message: ListFormulesProduitResponse): unknown {
+    const obj: any = {};
+    if (message.formules?.length) {
+      obj.formules = message.formules.map((e) => FormuleProduit.toJSON(e));
+    }
+    if (message.pagination !== undefined) {
+      obj.pagination = PaginationResponse.toJSON(message.pagination);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListFormulesProduitResponse>, I>>(base?: I): ListFormulesProduitResponse {
+    return ListFormulesProduitResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListFormulesProduitResponse>, I>>(object: I): ListFormulesProduitResponse {
+    const message = createBaseListFormulesProduitResponse();
+    message.formules = object.formules?.map((e) => FormuleProduit.fromPartial(e)) || [];
+    message.pagination = (object.pagination !== undefined && object.pagination !== null)
+      ? PaginationResponse.fromPartial(object.pagination)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseDeleteFormuleProduitRequest(): DeleteFormuleProduitRequest {
+  return { id: "" };
+}
+
+export const DeleteFormuleProduitRequest: MessageFns<DeleteFormuleProduitRequest> = {
+  encode(message: DeleteFormuleProduitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteFormuleProduitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteFormuleProduitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteFormuleProduitRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: DeleteFormuleProduitRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteFormuleProduitRequest>, I>>(base?: I): DeleteFormuleProduitRequest {
+    return DeleteFormuleProduitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteFormuleProduitRequest>, I>>(object: I): DeleteFormuleProduitRequest {
+    const message = createBaseDeleteFormuleProduitRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseDeleteFormuleProduitResponse(): DeleteFormuleProduitResponse {
+  return { success: false };
+}
+
+export const DeleteFormuleProduitResponse: MessageFns<DeleteFormuleProduitResponse> = {
+  encode(message: DeleteFormuleProduitResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeleteFormuleProduitResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeleteFormuleProduitResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteFormuleProduitResponse {
+    return { success: isSet(object.success) ? globalThis.Boolean(object.success) : false };
+  },
+
+  toJSON(message: DeleteFormuleProduitResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeleteFormuleProduitResponse>, I>>(base?: I): DeleteFormuleProduitResponse {
+    return DeleteFormuleProduitResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeleteFormuleProduitResponse>, I>>(object: I): DeleteFormuleProduitResponse {
+    const message = createBaseDeleteFormuleProduitResponse();
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseActiverFormuleProduitRequest(): ActiverFormuleProduitRequest {
+  return { id: "" };
+}
+
+export const ActiverFormuleProduitRequest: MessageFns<ActiverFormuleProduitRequest> = {
+  encode(message: ActiverFormuleProduitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ActiverFormuleProduitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseActiverFormuleProduitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ActiverFormuleProduitRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: ActiverFormuleProduitRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ActiverFormuleProduitRequest>, I>>(base?: I): ActiverFormuleProduitRequest {
+    return ActiverFormuleProduitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ActiverFormuleProduitRequest>, I>>(object: I): ActiverFormuleProduitRequest {
+    const message = createBaseActiverFormuleProduitRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseDesactiverFormuleProduitRequest(): DesactiverFormuleProduitRequest {
+  return { id: "" };
+}
+
+export const DesactiverFormuleProduitRequest: MessageFns<DesactiverFormuleProduitRequest> = {
+  encode(message: DesactiverFormuleProduitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DesactiverFormuleProduitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDesactiverFormuleProduitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DesactiverFormuleProduitRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: DesactiverFormuleProduitRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DesactiverFormuleProduitRequest>, I>>(base?: I): DesactiverFormuleProduitRequest {
+    return DesactiverFormuleProduitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DesactiverFormuleProduitRequest>, I>>(
+    object: I,
+  ): DesactiverFormuleProduitRequest {
+    const message = createBaseDesactiverFormuleProduitRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
 export type GammeServiceService = typeof GammeServiceService;
 export const GammeServiceService = {
   create: {
@@ -9135,6 +11798,16 @@ export const GammeServiceService = {
     responseSerialize: (value: DeleteGammeResponse): Buffer => Buffer.from(DeleteGammeResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): DeleteGammeResponse => DeleteGammeResponse.decode(value),
   },
+  getTree: {
+    path: "/products.GammeService/GetTree",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetGammeTreeRequest): Buffer => Buffer.from(GetGammeTreeRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetGammeTreeRequest => GetGammeTreeRequest.decode(value),
+    responseSerialize: (value: GetGammeTreeResponse): Buffer =>
+      Buffer.from(GetGammeTreeResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetGammeTreeResponse => GetGammeTreeResponse.decode(value),
+  },
 } as const;
 
 export interface GammeServiceServer extends UntypedServiceImplementation {
@@ -9143,6 +11816,7 @@ export interface GammeServiceServer extends UntypedServiceImplementation {
   get: handleUnaryCall<GetGammeRequest, Gamme>;
   list: handleUnaryCall<ListGammesRequest, ListGammesResponse>;
   delete: handleUnaryCall<DeleteGammeRequest, DeleteGammeResponse>;
+  getTree: handleUnaryCall<GetGammeTreeRequest, GetGammeTreeResponse>;
 }
 
 export type ProduitServiceService = typeof ProduitServiceService;
@@ -9612,6 +12286,93 @@ export const CatalogServiceService = {
 export interface CatalogServiceServer extends UntypedServiceImplementation {
   getCatalog: handleUnaryCall<GetCatalogRequest, GetCatalogResponse>;
   calculatePrice: handleUnaryCall<CalculatePriceRequest, CalculatePriceResponse>;
+}
+
+export type FormuleProduitServiceService = typeof FormuleProduitServiceService;
+export const FormuleProduitServiceService = {
+  create: {
+    path: "/products.FormuleProduitService/Create",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateFormuleProduitRequest): Buffer =>
+      Buffer.from(CreateFormuleProduitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateFormuleProduitRequest => CreateFormuleProduitRequest.decode(value),
+    responseSerialize: (value: FormuleProduit): Buffer => Buffer.from(FormuleProduit.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FormuleProduit => FormuleProduit.decode(value),
+  },
+  update: {
+    path: "/products.FormuleProduitService/Update",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateFormuleProduitRequest): Buffer =>
+      Buffer.from(UpdateFormuleProduitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateFormuleProduitRequest => UpdateFormuleProduitRequest.decode(value),
+    responseSerialize: (value: FormuleProduit): Buffer => Buffer.from(FormuleProduit.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FormuleProduit => FormuleProduit.decode(value),
+  },
+  get: {
+    path: "/products.FormuleProduitService/Get",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetFormuleProduitRequest): Buffer =>
+      Buffer.from(GetFormuleProduitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetFormuleProduitRequest => GetFormuleProduitRequest.decode(value),
+    responseSerialize: (value: FormuleProduit): Buffer => Buffer.from(FormuleProduit.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FormuleProduit => FormuleProduit.decode(value),
+  },
+  listByProduit: {
+    path: "/products.FormuleProduitService/ListByProduit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListFormulesProduitRequest): Buffer =>
+      Buffer.from(ListFormulesProduitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListFormulesProduitRequest => ListFormulesProduitRequest.decode(value),
+    responseSerialize: (value: ListFormulesProduitResponse): Buffer =>
+      Buffer.from(ListFormulesProduitResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListFormulesProduitResponse => ListFormulesProduitResponse.decode(value),
+  },
+  delete: {
+    path: "/products.FormuleProduitService/Delete",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeleteFormuleProduitRequest): Buffer =>
+      Buffer.from(DeleteFormuleProduitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeleteFormuleProduitRequest => DeleteFormuleProduitRequest.decode(value),
+    responseSerialize: (value: DeleteFormuleProduitResponse): Buffer =>
+      Buffer.from(DeleteFormuleProduitResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DeleteFormuleProduitResponse => DeleteFormuleProduitResponse.decode(value),
+  },
+  activer: {
+    path: "/products.FormuleProduitService/Activer",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ActiverFormuleProduitRequest): Buffer =>
+      Buffer.from(ActiverFormuleProduitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ActiverFormuleProduitRequest => ActiverFormuleProduitRequest.decode(value),
+    responseSerialize: (value: FormuleProduit): Buffer => Buffer.from(FormuleProduit.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FormuleProduit => FormuleProduit.decode(value),
+  },
+  desactiver: {
+    path: "/products.FormuleProduitService/Desactiver",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DesactiverFormuleProduitRequest): Buffer =>
+      Buffer.from(DesactiverFormuleProduitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DesactiverFormuleProduitRequest =>
+      DesactiverFormuleProduitRequest.decode(value),
+    responseSerialize: (value: FormuleProduit): Buffer => Buffer.from(FormuleProduit.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FormuleProduit => FormuleProduit.decode(value),
+  },
+} as const;
+
+export interface FormuleProduitServiceServer extends UntypedServiceImplementation {
+  create: handleUnaryCall<CreateFormuleProduitRequest, FormuleProduit>;
+  update: handleUnaryCall<UpdateFormuleProduitRequest, FormuleProduit>;
+  get: handleUnaryCall<GetFormuleProduitRequest, FormuleProduit>;
+  listByProduit: handleUnaryCall<ListFormulesProduitRequest, ListFormulesProduitResponse>;
+  delete: handleUnaryCall<DeleteFormuleProduitRequest, DeleteFormuleProduitResponse>;
+  activer: handleUnaryCall<ActiverFormuleProduitRequest, FormuleProduit>;
+  desactiver: handleUnaryCall<DesactiverFormuleProduitRequest, FormuleProduit>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

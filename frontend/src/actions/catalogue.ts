@@ -21,11 +21,7 @@ import type {
   Societe,
   ListSocieteResponse,
 } from "@proto/organisations/organisations";
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { ActionResult } from "@/lib/types/common";
 
 // ============================================
 // GAMMES
@@ -42,6 +38,7 @@ export async function getGammesByOrganisation(params: {
     const data = await gammes.list({
       organisationId: params.organisationId,
       actif: params.actif,
+      pagination: undefined,
     });
     return { data, error: null };
   } catch (err) {
@@ -161,6 +158,7 @@ export async function getProduitsByOrganisation(params: {
       organisationId: params.organisationId,
       gammeId: params.gammeId,
       actif: params.actif,
+      pagination: undefined,
     });
     return { data, error: null };
   } catch (err) {
@@ -592,6 +590,7 @@ export async function getSocietesByOrganisation(
   try {
     const data = await societes.listByOrganisation({
       organisationId,
+      pagination: undefined,
     });
     return { data, error: null };
   } catch (err) {
@@ -615,6 +614,174 @@ export async function getSociete(id: string): Promise<ActionResult<Societe>> {
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors du chargement de la société",
+    };
+  }
+}
+
+// ============================================
+// FORMULES PRODUIT
+// ============================================
+
+/**
+ * Fetch liste des formules pour un produit
+ */
+export async function getFormulesByProduit(params: {
+  produitId: string;
+  actif?: boolean;
+}): Promise<ActionResult<any>> {
+  try {
+    const data = await produits.listFormulesByProduit({
+      produitId: params.produitId,
+      actif: params.actif,
+      pagination: undefined,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getFormulesByProduit] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des formules",
+    };
+  }
+}
+
+/**
+ * Créer une formule produit
+ */
+export async function createFormuleProduit(input: {
+  produitId: string;
+  code: string;
+  nom: string;
+  description?: string;
+  ordre?: number;
+  garanties?: any[];
+  options?: any[];
+  franchiseMontant?: number;
+  franchiseType?: number;
+  prixFormule?: number;
+  typeAjustementPrix?: number;
+  versionProduitId?: string;
+  metadata?: string;
+}): Promise<ActionResult<any>> {
+  try {
+    const data = await produits.createFormule({
+      produitId: input.produitId,
+      code: input.code,
+      nom: input.nom,
+      description: input.description || "",
+      ordre: input.ordre || 0,
+      garanties: input.garanties || [],
+      options: input.options || [],
+      franchiseMontant: input.franchiseMontant || 0,
+      franchiseType: input.franchiseType || 0,
+      prixFormule: input.prixFormule || 0,
+      typeAjustementPrix: input.typeAjustementPrix || 0,
+      versionProduitId: input.versionProduitId || "",
+      metadata: input.metadata || "",
+    });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[createFormuleProduit] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la création de la formule",
+    };
+  }
+}
+
+/**
+ * Mettre à jour une formule produit
+ */
+export async function updateFormuleProduit(input: {
+  id: string;
+  code?: string;
+  nom?: string;
+  description?: string;
+  ordre?: number;
+  garanties?: any[];
+  options?: any[];
+  franchiseMontant?: number;
+  franchiseType?: number;
+  prixFormule?: number;
+  typeAjustementPrix?: number;
+  actif?: boolean;
+  metadata?: string;
+}): Promise<ActionResult<any>> {
+  try {
+    const data = await produits.updateFormule({
+      id: input.id,
+      code: input.code,
+      nom: input.nom,
+      description: input.description,
+      ordre: input.ordre,
+      garanties: input.garanties || [],
+      options: input.options || [],
+      franchiseMontant: input.franchiseMontant,
+      franchiseType: input.franchiseType,
+      prixFormule: input.prixFormule,
+      typeAjustementPrix: input.typeAjustementPrix,
+      actif: input.actif,
+      metadata: input.metadata,
+    });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[updateFormuleProduit] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la mise à jour de la formule",
+    };
+  }
+}
+
+/**
+ * Supprimer une formule produit
+ */
+export async function deleteFormuleProduit(id: string): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const result = await produits.deleteFormule({ id });
+    revalidatePath("/catalogue");
+    return { data: { success: result.success }, error: null };
+  } catch (err) {
+    console.error("[deleteFormuleProduit] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la suppression de la formule",
+    };
+  }
+}
+
+/**
+ * Activer une formule produit
+ */
+export async function activerFormuleProduit(id: string): Promise<ActionResult<any>> {
+  try {
+    const data = await produits.activerFormule({ id });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[activerFormuleProduit] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de l'activation de la formule",
+    };
+  }
+}
+
+/**
+ * Désactiver une formule produit
+ */
+export async function desactiverFormuleProduit(id: string): Promise<ActionResult<any>> {
+  try {
+    const data = await produits.desactiverFormule({ id });
+    revalidatePath("/catalogue");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[desactiverFormuleProduit] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la désactivation de la formule",
     };
   }
 }

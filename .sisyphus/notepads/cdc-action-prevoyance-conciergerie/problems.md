@@ -1,0 +1,1 @@
+- 2026-02-07: Unresolved environment blocker: automated LSP diagnostics are unavailable due `typescript-language-server` lookup failure in the LSP tool process PATH.

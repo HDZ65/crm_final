@@ -2,10 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
-import {
-  getPSPAccountsSummary,
-  type PSPAccountInfo,
-} from "@/actions/payments"
+import { getPSPAccountsSummary } from "@/actions/payments"
+import type { PSPAccountInfo } from "@proto/payments/payment"
 
 // Types
 export interface PspAccount {

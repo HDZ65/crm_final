@@ -26,8 +26,9 @@ import { Separator } from "@/components/ui/separator"
 import { RotateCcw, AlertTriangle, CheckCircle2 } from "lucide-react"
 import { useDeclencherReprise } from "@/hooks"
 import { useOrganisation } from "@/contexts/organisation-context"
-import type { TypeReprise, RepriseCommissionResponseDto } from "@/types/commission"
+import type { TypeReprise, RepriseWithDetails } from "@/lib/ui/display-types/commission"
 import type { TypeOption } from "@/hooks/commissions/use-commission-config"
+import { formatMontant } from "@/lib/ui/helpers/format"
 
 interface TriggerRepriseDialogProps {
   trigger?: React.ReactNode
@@ -35,7 +36,7 @@ interface TriggerRepriseDialogProps {
   commissionRef?: string
   typesReprise: TypeOption[]
   loadingConfig?: boolean
-  onSuccess?: (reprise: RepriseCommissionResponseDto) => void
+  onSuccess?: (reprise: RepriseWithDetails) => void
 }
 
 export function TriggerRepriseDialog({
@@ -223,7 +224,7 @@ export function TriggerRepriseDialog({
                   <div>
                     <span className="text-muted-foreground">Montant:</span>
                     <p className="font-medium text-destructive">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(reprise.montantReprise)}
+                      {formatMontant(reprise.montantReprise)}
                     </p>
                   </div>
                   <div>

@@ -33,24 +33,24 @@ export async function createMailbox(input: {
 }): Promise<ActionResult<Mailbox>> {
   try {
     const response = await mailbox.create({
-      organisation_id: input.organisationId,
-      societe_id: input.societeId,
-      user_id: input.userId,
+      organisationId: input.organisationId,
+      societeId: input.societeId,
+      userId: input.userId,
       nom: input.nom,
-      adresse_email: input.adresseEmail,
+      adresseEmail: input.adresseEmail,
       fournisseur: input.fournisseur,
-      type_connexion: input.typeConnexion,
-      smtp_host: input.smtpHost,
-      smtp_port: input.smtpPort,
-      imap_host: input.imapHost,
-      imap_port: input.imapPort,
+      typeConnexion: input.typeConnexion,
+      smtpHost: input.smtpHost,
+      smtpPort: input.smtpPort,
+      imapHost: input.imapHost,
+      imapPort: input.imapPort,
       username: input.username,
       password: input.password,
-      access_token: input.accessToken,
-      refresh_token: input.refreshToken,
-      token_expiry: input.tokenExpiry,
+      accessToken: input.accessToken,
+      refreshToken: input.refreshToken,
+      tokenExpiry: input.tokenExpiry,
       signature: input.signature,
-      is_default: input.isDefault ?? false,
+      isDefault: input.isDefault ?? false,
     });
     revalidatePath("/mailbox");
     revalidatePath("/settings");
@@ -92,7 +92,7 @@ export async function getMailboxesByOrganisation(
 ): Promise<ActionResult<MailboxListResponse>> {
   try {
     const response = await mailbox.getByOrganisation({
-      organisation_id: organisationId,
+      organisationId: organisationId,
       limit,
       offset,
     });
@@ -116,7 +116,7 @@ export async function getMailboxesBySociete(
 ): Promise<ActionResult<MailboxListResponse>> {
   try {
     const response = await mailbox.getBySociete({
-      societe_id: societeId,
+      societeId: societeId,
       limit,
       offset,
     });
@@ -156,21 +156,21 @@ export async function updateMailbox(input: {
     const response = await mailbox.update({
       id: input.id,
       nom: input.nom,
-      adresse_email: input.adresseEmail,
+      adresseEmail: input.adresseEmail,
       fournisseur: input.fournisseur,
-      type_connexion: input.typeConnexion,
-      smtp_host: input.smtpHost,
-      smtp_port: input.smtpPort,
-      imap_host: input.imapHost,
-      imap_port: input.imapPort,
+      typeConnexion: input.typeConnexion,
+      smtpHost: input.smtpHost,
+      smtpPort: input.smtpPort,
+      imapHost: input.imapHost,
+      imapPort: input.imapPort,
       username: input.username,
       password: input.password,
-      access_token: input.accessToken,
-      refresh_token: input.refreshToken,
-      token_expiry: input.tokenExpiry,
+      accessToken: input.accessToken,
+      refreshToken: input.refreshToken,
+      tokenExpiry: input.tokenExpiry,
       signature: input.signature,
-      is_default: input.isDefault,
-      is_active: input.isActive,
+      isDefault: input.isDefault,
+      isActive: input.isActive,
     });
     revalidatePath("/mailbox");
     revalidatePath("/settings");

@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SERVICE_REGISTRY = exports.getServiceUrl = exports.getServiceConfig = exports.resolveProtoPaths = exports.resolveProtoPath = exports.isProduction = exports.isDocker = exports.getProtoLoaderConfig = exports.getProtoIncludeDirs = exports.getProtoBaseDir = exports.getMultiGrpcOptions = exports.getGrpcOptions = exports.loadGrpcPackage = exports.getGrpcClientModuleOptions = void 0;
+var grpc_client_js_1 = require("./grpc-client.js");
+Object.defineProperty(exports, "getGrpcClientModuleOptions", { enumerable: true, get: function () { return grpc_client_js_1.getGrpcClientModuleOptions; } });
+Object.defineProperty(exports, "loadGrpcPackage", { enumerable: true, get: function () { return grpc_client_js_1.loadGrpcPackage; } });
+var proto_loader_js_1 = require("./proto-loader.js");
+Object.defineProperty(exports, "getGrpcOptions", { enumerable: true, get: function () { return proto_loader_js_1.getGrpcOptions; } });
+Object.defineProperty(exports, "getMultiGrpcOptions", { enumerable: true, get: function () { return proto_loader_js_1.getMultiGrpcOptions; } });
+Object.defineProperty(exports, "getProtoBaseDir", { enumerable: true, get: function () { return proto_loader_js_1.getProtoBaseDir; } });
+Object.defineProperty(exports, "getProtoIncludeDirs", { enumerable: true, get: function () { return proto_loader_js_1.getProtoIncludeDirs; } });
+Object.defineProperty(exports, "getProtoLoaderConfig", { enumerable: true, get: function () { return proto_loader_js_1.getProtoLoaderConfig; } });
+Object.defineProperty(exports, "isDocker", { enumerable: true, get: function () { return proto_loader_js_1.isDocker; } });
+Object.defineProperty(exports, "isProduction", { enumerable: true, get: function () { return proto_loader_js_1.isProduction; } });
+Object.defineProperty(exports, "resolveProtoPath", { enumerable: true, get: function () { return proto_loader_js_1.resolveProtoPath; } });
+Object.defineProperty(exports, "resolveProtoPaths", { enumerable: true, get: function () { return proto_loader_js_1.resolveProtoPaths; } });
+var service_config_js_1 = require("./service-config.js");
+Object.defineProperty(exports, "getServiceConfig", { enumerable: true, get: function () { return service_config_js_1.getServiceConfig; } });
+Object.defineProperty(exports, "getServiceUrl", { enumerable: true, get: function () { return service_config_js_1.getServiceUrl; } });
+Object.defineProperty(exports, "SERVICE_REGISTRY", { enumerable: true, get: function () { return service_config_js_1.SERVICE_REGISTRY; } });
+//# sourceMappingURL=index.js.map

@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { createRoutingRule, deleteRoutingRule, listRoutingRules, updateRoutingRule } from "@/actions/routing"
 import { toast } from "sonner"
-import { GitBranch, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react"
+import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react"
 
 interface RoutingPageClientProps {
   initialRules?: any[] | null
@@ -89,7 +89,7 @@ export function RoutingPageClient({ initialRules, initialSocieteId }: RoutingPag
     }
 
     setLoading(true)
-    const result = await listRoutingRules({ societeId, page: 1, pageSize: 100 } as any)
+    const result = await listRoutingRules({ societeId, page: 1, limit: 100 } as any)
     if (result.error) {
       toast.error(result.error)
     } else {
@@ -209,17 +209,11 @@ export function RoutingPageClient({ initialRules, initialSocieteId }: RoutingPag
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <GitBranch className="size-6" />
-            Routing paiements
-          </h1>
-          <p className="text-muted-foreground">
-            Configurez les regles de routage PSP et leur priorite.
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Configurez les regles de routage PSP et leur priorite.
+        </p>
         <Button onClick={handleCreate} disabled={!societeId}>
           <Plus className="mr-2 size-4" />
           Nouvelle regle
@@ -455,6 +449,6 @@ export function RoutingPageClient({ initialRules, initialSocieteId }: RoutingPag
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+    </div>
   )
 }

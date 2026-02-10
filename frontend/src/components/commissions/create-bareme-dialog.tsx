@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Select,
   SelectContent,
@@ -39,8 +40,8 @@ import { toast } from "sonner"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { createBareme } from "@/actions/commissions"
 import { getGammesByOrganisation, getProduitsByOrganisation } from "@/actions/catalogue"
-import type { TypeOption, DureeOption } from "@/lib/commission-config"
-import type { BaremeCommissionResponseDto } from "@/types/commission"
+import type { TypeOption, DureeOption } from "@/lib/config/commission"
+import type { BaremeWithPaliers } from "@/lib/ui/display-types/commission"
 import type { Gamme, Produit } from "@proto/products/products"
 
 const createBaremeSchema = z.object({
@@ -94,7 +95,7 @@ interface CreateBaremeDialogProps {
   typesApporteur: TypeOption[]
   dureesReprise: DureeOption[]
   loadingConfig?: boolean
-  onSuccess?: (bareme: BaremeCommissionResponseDto) => void
+  onSuccess?: (bareme: BaremeWithPaliers) => void
 }
 
 export function CreateBaremeDialog({
@@ -220,8 +221,8 @@ export function CreateBaremeDialog({
 
     if (result.data) {
       toast.success("Barème créé avec succès")
-      // Map to BaremeCommissionResponseDto for onSuccess callback
-      const baremeResponse: BaremeCommissionResponseDto = {
+      // Map to BaremeWithPaliers for onSuccess callback
+      const baremeResponse: BaremeWithPaliers = {
         id: (result.data as { bareme?: { id: string } }).bareme?.id || "",
         organisationId: activeOrganisation.organisationId,
         code: data.code,
@@ -229,24 +230,24 @@ export function CreateBaremeDialog({
         description: data.description ?? null,
         typeCalcul: data.typeCalcul,
         baseCalcul: data.baseCalcul,
-        montantFixe: data.montantFixe ?? null,
-        tauxPourcentage: data.tauxPourcentage ?? null,
+        montantFixe: data.montantFixe != null ? data.montantFixe.toString() : null,
+        tauxPourcentage: data.tauxPourcentage != null ? data.tauxPourcentage.toString() : null,
         precomptee: data.precomptee,
         recurrenceActive: data.recurrenceActive,
-        tauxRecurrence: data.tauxRecurrence ?? null,
+        tauxRecurrence: data.tauxRecurrence != null ? data.tauxRecurrence.toString() : null,
         dureeRecurrenceMois: data.dureeRecurrenceMois ?? null,
         dureeReprisesMois: data.dureeReprisesMois,
-        tauxReprise: data.tauxReprise,
+        tauxReprise: data.tauxReprise.toString(),
         typeProduit: null,
         gammeId: data.gammeId && data.gammeId !== "__all__" ? data.gammeId : null,
         produitId: data.produitId && data.produitId !== "__all__" ? data.produitId : null,
-        profilRemuneration: data.profilRemuneration && data.profilRemuneration !== "__all__" ? data.profilRemuneration as BaremeCommissionResponseDto["profilRemuneration"] : null,
+        profilRemuneration: data.profilRemuneration && data.profilRemuneration !== "__all__" ? data.profilRemuneration as BaremeWithPaliers["profilRemuneration"] : null,
         societeId: null,
-        canalVente: data.canalVente && data.canalVente !== "__all__" ? data.canalVente as BaremeCommissionResponseDto["canalVente"] : null,
-        repartitionCommercial: 100,
-        repartitionManager: 0,
-        repartitionAgence: 0,
-        repartitionEntreprise: 0,
+        canalVente: data.canalVente && data.canalVente !== "__all__" ? data.canalVente as BaremeWithPaliers["canalVente"] : null,
+        repartitionCommercial: "100",
+        repartitionManager: "0",
+        repartitionAgence: "0",
+        repartitionEntreprise: "0",
         version: 1,
         dateEffet: data.dateEffet,
         dateFin: data.dateFin ?? null,
@@ -509,7 +510,12 @@ export function CreateBaremeDialog({
                     <FormItem>
                       <FormLabel>Date d&apos;effet *</FormLabel>
                       <FormControl>
-                        <Input className="w-full" type="date" {...field} />
+                        <DatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Sélectionnez une date"
+                          className="w-full"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -12,20 +12,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { LogisticsModule } from './logistics.module';
 import { FulfillmentModule } from './fulfillment.module';
 
-// Domain entities for TypeORM configuration
-import {
-  CarrierAccountEntity,
-  ColisEntity,
-  ExpeditionEntity,
-  TrackingEventEntity,
-} from './domain/logistics/entities';
-import {
-  FulfillmentBatchEntity,
-  FulfillmentBatchLineEntity,
-  FulfillmentCutoffConfigEntity,
-  AddressSnapshotEntity,
-  PreferenceSnapshotEntity,
-} from './domain/fulfillment/entities';
+
 
 @Module({
   imports: [
@@ -49,17 +36,7 @@ import {
         password: configService.get('DB_PASSWORD', 'postgres'),
         database: configService.get('DB_DATABASE', 'logistics_db'),
         namingStrategy: new SnakeNamingStrategy(),
-        entities: [
-          CarrierAccountEntity,
-          ColisEntity,
-          ExpeditionEntity,
-          TrackingEventEntity,
-          FulfillmentBatchEntity,
-          FulfillmentBatchLineEntity,
-          FulfillmentCutoffConfigEntity,
-          AddressSnapshotEntity,
-          PreferenceSnapshotEntity,
-        ],
+        autoLoadEntities: true,
         synchronize: configService.get('NODE_ENV') !== 'production',
         migrationsRun: true,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],

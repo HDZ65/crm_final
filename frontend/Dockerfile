@@ -1,5 +1,5 @@
 # ============================================================================
-# Frontend Dockerfile - Multi-stage build for Next.js with bun
+# Frontend Dockerfile - Multi-stage build for Next.js 16 with Bun
 # ============================================================================
 
 # ---------------------------------------------------------
@@ -7,26 +7,26 @@
 # ---------------------------------------------------------
 FROM oven/bun:1-alpine AS deps
 
-RUN apk add --no-cache libc6-compat
-
 WORKDIR /app
 
-COPY frontend/package.json frontend/bun.lock* ./
+# Copy only dependency files first (cache layer)
+COPY frontend/package.json frontend/bun.lock ./
 
+# Install dependencies with frozen lockfile
 RUN bun install --frozen-lockfile
 
 # ---------------------------------------------------------
-# Stage 2: Development - Hot-reload mode (target: development)
+# Stage 2: Development - Hot-reload mode
 # ---------------------------------------------------------
-FROM oven/bun:1-alpine AS development
+FROM node:22-alpine AS development
 
 WORKDIR /app
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy pre-generated proto files
-COPY packages/proto/gen/ts-frontend /packages/proto/gen/ts-frontend
+# Copy proto package for runtime
+COPY packages/proto /packages/proto
 
 # Copy package.json for scripts
 COPY frontend/package.json ./
@@ -39,8 +39,9 @@ ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 3000
 
-# Copy proto files at startup and run dev server
-CMD sh -c "mkdir -p src/proto && cp -r /packages/proto/gen/ts-frontend/* src/proto/ 2>/dev/null || true && bun --bun run dev"
+# Copy proto files at startup and run dev server with Node.js runtime
+# (Bun runtime has a known bug with Turbopack serverExternalPackages - oven-sh/bun#25370)
+CMD sh -c "mkdir -p src/proto && cp -r /packages/proto/gen/ts-frontend/* src/proto/ && npx next dev"
 
 # ---------------------------------------------------------
 # Stage 3: Builder - Build the application
@@ -52,11 +53,11 @@ WORKDIR /app
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy pre-generated proto files
-COPY packages/proto/gen/ts-frontend /packages/proto/gen/ts-frontend
+# Copy shared proto package (for ts-frontend generation)
+COPY packages/proto /packages/proto
 
-# Build argument for environment (development, staging, production)
-ARG BUILD_ENV=production
+# Build argument for environment (development or production)
+ARG BUILD_ENV=development
 
 # Copy configuration files
 COPY frontend/package.json ./
@@ -65,27 +66,25 @@ COPY frontend/next.config.ts ./
 COPY frontend/postcss.config.mjs ./
 COPY frontend/biome.json ./
 COPY frontend/components.json ./
-
-# Copy env file for build
-COPY frontend/.env.${BUILD_ENV} ./.env.local
+COPY frontend/.env.${BUILD_ENV} ./.env
 
 # Copy source code
 COPY frontend/src ./src
 COPY frontend/public ./public
 
-# Copy proto files from ts-frontend (generated types without NestJS)
+# Copy proto files from ts-frontend (generated without NestJS dependencies)
 RUN mkdir -p src/proto && \
-    cp -r /packages/proto/gen/ts-frontend/* ./src/proto/ 2>/dev/null || true
+    cp -r /packages/proto/gen/ts-frontend/* ./src/proto/
 
 # Set production environment for build
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build Next.js application
-RUN bun --bun run build
+RUN bun run next build
 
 # ---------------------------------------------------------
-# Stage 4: Production - Runtime image (target: production)
+# Stage 3: Production - Runtime image (standalone mode)
 # ---------------------------------------------------------
 FROM oven/bun:1-alpine AS production
 
@@ -96,25 +95,20 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+# User non-root (Alpine style with explicit group)
+RUN addgroup -S bun 2>/dev/null || true && adduser -S nextjs -G bun -u 1001
 
 # Copy build output with correct ownership
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Set correct permissions for prerender cache
-RUN mkdir .next && chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:bun /app/public ./public
+COPY --from=builder --chown=nextjs:bun /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:bun /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:bun /app/.env ./.env
 
 USER nextjs
 
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD bun -e "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+    CMD bun -e "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["bun", "run", "server.js"]
+CMD ["bun", "server.js"]

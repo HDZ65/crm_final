@@ -40,8 +40,8 @@ import { useOrganisation } from "@/contexts/organisation-context"
 import { useAuth } from "@/hooks/auth"
 import { listMembresWithUsers, type MembreWithUserDto } from "@/actions/membres"
 import { toast } from "sonner"
-import type { TacheType, TachePriorite } from "@/types/tache"
-import { TACHE_TYPE_LABELS, TACHE_PRIORITE_LABELS } from "@/types/tache"
+import type { TacheType, TachePriorite } from "@/lib/ui/labels/tache"
+import { TACHE_TYPE_LABELS, TACHE_PRIORITE_LABELS } from "@/lib/ui/labels/tache"
 import { createTache } from "@/actions/taches"
 
 const formSchema = z.object({
@@ -121,14 +121,17 @@ export function CreateTacheDialog({
     const result = await createTache({
       organisationId: activeOrganisation.organisationId,
       titre: values.titre,
-      description: values.description,
+      description: values.description || "",
       type: values.type as TacheType,
       priorite: values.priorite as TachePriorite,
       dateEcheance: values.dateEcheance.toISOString(),
       assigneA: values.assigneA,
       creePar: currentUserDbId,
-      clientId,
-      contratId,
+      clientId: clientId || "",
+      contratId: contratId || "",
+      factureId: "",
+      regleRelanceId: "",
+      metadata: "",
     })
     setLoading(false)
 

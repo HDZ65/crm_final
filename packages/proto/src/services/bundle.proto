@@ -1,0 +1,232 @@
+syntax = "proto3";
+
+package bundle;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// BUNDLE SERVICE
+// ============================================================================
+// Gestion des configurations de bundles (offres groupees) et calcul de prix
+// Permet de regrouper plusieurs produits/services en offres packagées
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum StatutBundle {
+  STATUT_BUNDLE_UNSPECIFIED = 0;
+  STATUT_BUNDLE_BROUILLON = 1;
+  STATUT_BUNDLE_ACTIF = 2;
+  STATUT_BUNDLE_INACTIF = 3;
+  STATUT_BUNDLE_ARCHIVE = 4;
+}
+
+enum TypeRemise {
+  TYPE_REMISE_UNSPECIFIED = 0;
+  TYPE_REMISE_POURCENTAGE = 1;
+  TYPE_REMISE_MONTANT_FIXE = 2;
+  TYPE_REMISE_PRIX_FORFAITAIRE = 3;
+}
+
+// ========== MESSAGES ==========
+
+message BundleConfiguration {
+  string id = 1;
+  string organisation_id = 2;
+  string code = 3;
+  string nom = 4;
+  string description = 5;
+  StatutBundle statut = 6;
+  repeated BundleItem items = 7;
+  TypeRemise type_remise = 8;
+  double valeur_remise = 9;                           // Discount value (% or fixed amount)
+  double prix_plancher = 10;                          // Minimum price floor
+  string date_debut = 11;
+  string date_fin = 12;
+  int32 quantite_minimum = 13;                        // Min items to qualify
+  bool combinable = 14;                               // Can combine with other discounts
+  string conditions = 15;                             // JSON eligibility conditions
+  string metadata = 16;
+  string created_at = 17;
+  string updated_at = 18;
+}
+
+message BundleItem {
+  string id = 1;
+  string bundle_id = 2;
+  string produit_id = 3;
+  int32 quantite = 4;
+  bool obligatoire = 5;                               // Required in bundle
+  double remise_specifique = 6;                       // Item-specific discount override
+  int32 ordre = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+// ========== CONFIGURATION REQUESTS/RESPONSES ==========
+
+message GetConfigurationRequest {
+  string id = 1;
+}
+
+message GetConfigurationResponse {
+  BundleConfiguration configuration = 1;
+}
+
+message GetConfigurationByCodeRequest {
+  string organisation_id = 1;
+  string code = 2;
+}
+
+message CreateConfigurationRequest {
+  string organisation_id = 1;
+  string code = 2;
+  string nom = 3;
+  string description = 4;
+  repeated CreateBundleItemRequest items = 5;
+  TypeRemise type_remise = 6;
+  double valeur_remise = 7;
+  optional double prix_plancher = 8;
+  optional string date_debut = 9;
+  optional string date_fin = 10;
+  optional int32 quantite_minimum = 11;
+  optional bool combinable = 12;
+  optional string conditions = 13;
+}
+
+message CreateBundleItemRequest {
+  string produit_id = 1;
+  int32 quantite = 2;
+  bool obligatoire = 3;
+  optional double remise_specifique = 4;
+  optional int32 ordre = 5;
+}
+
+message UpdateConfigurationRequest {
+  string id = 1;
+  optional string nom = 2;
+  optional string description = 3;
+  optional StatutBundle statut = 4;
+  optional TypeRemise type_remise = 5;
+  optional double valeur_remise = 6;
+  optional double prix_plancher = 7;
+  optional string date_debut = 8;
+  optional string date_fin = 9;
+  optional int32 quantite_minimum = 10;
+  optional bool combinable = 11;
+  optional string conditions = 12;
+}
+
+message UpdateConfigurationResponse {
+  BundleConfiguration configuration = 1;
+}
+
+message ListConfigurationsRequest {
+  string organisation_id = 1;
+  optional StatutBundle statut = 2;
+  optional string search = 3;
+  PaginationRequest pagination = 4;
+}
+
+message ListConfigurationsResponse {
+  repeated BundleConfiguration configurations = 1;
+  PaginationResponse pagination = 2;
+}
+
+message DeleteConfigurationRequest {
+  string id = 1;
+}
+
+message DeleteConfigurationResponse {
+  bool success = 1;
+}
+
+// ========== PRICE CALCULATION ==========
+
+message BundleCalculatePriceRequest {
+  string bundle_id = 1;
+  string client_id = 2;
+  optional string grille_tarifaire_id = 3;
+  repeated BundleItemOverride item_overrides = 4;     // Optional quantity overrides
+}
+
+message BundleItemOverride {
+  string produit_id = 1;
+  int32 quantite = 2;
+}
+
+message BundleCalculatePriceResponse {
+  string bundle_id = 1;
+  repeated BundleItemPrice items = 2;
+  double sous_total_ht = 3;                           // Subtotal before bundle discount
+  double remise_bundle = 4;                           // Bundle discount amount
+  double total_ht = 5;                                // Total after discount
+  double tva = 6;
+  double total_ttc = 7;
+  TypeRemise type_remise_appliquee = 8;
+  double valeur_remise_appliquee = 9;
+}
+
+message BundleItemPrice {
+  string produit_id = 1;
+  string nom_produit = 2;
+  int32 quantite = 3;
+  double prix_unitaire = 4;
+  double remise_item = 5;
+  double prix_ligne_ht = 6;
+}
+
+// ========== RECALCULATE CLIENT ==========
+
+message RecalculateClientRequest {
+  string client_id = 1;
+  string organisation_id = 2;
+}
+
+message RecalculateClientResponse {
+  string client_id = 1;
+  int32 bundles_evalues = 2;
+  repeated BundleEligibilite eligibilites = 3;
+}
+
+message BundleEligibilite {
+  string bundle_id = 1;
+  string bundle_nom = 2;
+  bool eligible = 3;
+  string raison = 4;                                  // Reason if not eligible
+  double economie_estimee = 5;                        // Estimated savings
+}
+
+// ========== PAGINATION ==========
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+// ========== SERVICE ==========
+
+service BundleSvc {
+  // Configuration management
+  rpc GetConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse);
+  rpc GetConfigurationByCode(GetConfigurationByCodeRequest) returns (GetConfigurationResponse);
+  rpc CreateConfiguration(CreateConfigurationRequest) returns (GetConfigurationResponse);
+  rpc UpdateConfiguration(UpdateConfigurationRequest) returns (UpdateConfigurationResponse);
+  rpc ListConfigurations(ListConfigurationsRequest) returns (ListConfigurationsResponse);
+  rpc DeleteConfiguration(DeleteConfigurationRequest) returns (DeleteConfigurationResponse);
+
+  // Pricing
+  rpc CalculatePrice(BundleCalculatePriceRequest) returns (BundleCalculatePriceResponse);
+
+  // Client recalculation
+  rpc RecalculateClient(RecalculateClientRequest) returns (RecalculateClientResponse);
+}

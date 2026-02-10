@@ -22,9 +22,22 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Settings2,
 } from "lucide-react"
+import Link from "next/link"
 import { toast } from "sonner"
-import type { TacheDto, TacheStatsDto, TacheStatut, PaginatedTachesDto } from "@/types/tache"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ErrorState } from "@/components/ui/error-state"
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty"
+import type { Tache, TacheStats } from "@proto/activites/activites"
+import type { TacheStatut, PaginatedTachesDto } from "@/lib/ui/labels/tache"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +63,7 @@ type FilterType = "toutes" | "a_faire" | "en_cours" | "terminees" | "en_retard"
 
 interface TachesPageClientProps {
   initialTaches?: PaginatedTachesDto | null
-  initialStats?: TacheStatsDto | null
+  initialStats?: TacheStats | null
   initialMembres?: MembreWithUserDto[] | null
 }
 
@@ -79,7 +92,7 @@ export function TachesPageClient({
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
   const [editDialogOpen, setEditDialogOpen] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
-  const [selectedTache, setSelectedTache] = React.useState<TacheDto | null>(null)
+  const [selectedTache, setSelectedTache] = React.useState<Tache | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [currentPage, setCurrentPage] = React.useState(1)
@@ -87,12 +100,13 @@ export function TachesPageClient({
   const pageSize = 20
 
   // State for data from Server Actions - initialize with SSR data if available
-  const [taches, setTaches] = React.useState<TacheDto[]>(initialTaches?.data || [])
+  const [taches, setTaches] = React.useState<Tache[]>(initialTaches?.data || [])
   const [loading, setLoading] = React.useState(!initialTaches)
   const [isRefetching, setIsRefetching] = React.useState(false)
   const [total, setTotal] = React.useState(initialTaches?.total || 0)
   const [totalPages, setTotalPages] = React.useState(initialTaches?.totalPages || 1)
-  const [stats, setStats] = React.useState<TacheStatsDto | null>(initialStats || null)
+  const [stats, setStats] = React.useState<TacheStats | null>(initialStats || null)
+  const [error, setError] = React.useState<string | null>(null)
 
   // Trouver l'ID utilisateur de la BDD à partir de l'email
   const currentUserDbId = React.useMemo(() => {
@@ -114,7 +128,10 @@ export function TachesPageClient({
 
   // Reset page when filter changes
   React.useEffect(() => {
-    setCurrentPage(1)
+    setCurrentPage((prev) => {
+      if (prev === 1) return prev
+      return activeFilter || mesTachesOnly ? 1 : 1
+    })
   }, [activeFilter, mesTachesOnly])
 
   // Déterminer le filtre statut basé sur le filtre actif
@@ -154,6 +171,9 @@ export function TachesPageClient({
       setTaches(result.data.data)
       setTotal(result.data.total)
       setTotalPages(result.data.totalPages)
+      setError(null)
+    } else {
+      setError(result.error || "Erreur lors du chargement des tâches")
     }
     setIsRefetching(false)
   }, [activeOrganisation?.organisationId, mesTachesOnly, currentUserDbId, statutFilter, enRetardFilter, debouncedSearch, currentPage])
@@ -192,7 +212,7 @@ export function TachesPageClient({
     return () => window.removeEventListener("tache:show-retard", handleShowRetard)
   }, [])
 
-  const handleStart = async (tache: TacheDto) => {
+  const handleStart = React.useCallback(async (tache: Tache) => {
     const result = await marquerTacheEnCours(tache.id)
     if (result.data) {
       toast.success("Tâche démarrée")
@@ -201,9 +221,9 @@ export function TachesPageClient({
     } else {
       toast.error(result.error || "Erreur lors du démarrage de la tâche")
     }
-  }
+  }, [refetch, refetchStats])
 
-  const handleComplete = async (tache: TacheDto) => {
+  const handleComplete = React.useCallback(async (tache: Tache) => {
     const result = await marquerTacheTerminee(tache.id)
     if (result.data) {
       toast.success("Tâche terminée")
@@ -212,9 +232,9 @@ export function TachesPageClient({
     } else {
       toast.error(result.error || "Erreur lors de la complétion de la tâche")
     }
-  }
+  }, [refetch, refetchStats])
 
-  const handleCancel = async (tache: TacheDto) => {
+  const handleCancel = React.useCallback(async (tache: Tache) => {
     const result = await marquerTacheAnnulee(tache.id)
     if (result.data) {
       toast.success("Tâche annulée")
@@ -223,12 +243,12 @@ export function TachesPageClient({
     } else {
       toast.error(result.error || "Erreur lors de l'annulation de la tâche")
     }
-  }
+  }, [refetch, refetchStats])
 
-  const handleDeleteClick = (tache: TacheDto) => {
+  const handleDeleteClick = React.useCallback((tache: Tache) => {
     setSelectedTache(tache)
     setDeleteDialogOpen(true)
-  }
+  }, [])
 
   const handleDeleteConfirm = async () => {
     if (!selectedTache) return
@@ -250,10 +270,10 @@ export function TachesPageClient({
     refetchStats()
   }
 
-  const handleView = (tache: TacheDto) => {
+  const handleView = React.useCallback((tache: Tache) => {
     setSelectedTache(tache)
     setEditDialogOpen(true)
-  }
+  }, [])
 
   const columns = React.useMemo(
     () =>
@@ -265,7 +285,7 @@ export function TachesPageClient({
         onDelete: handleDeleteClick,
         membres,
       }),
-    [membres]
+    [membres, handleView, handleStart, handleComplete, handleCancel, handleDeleteClick]
   )
 
   // Helper pour déterminer si une carte est active
@@ -365,6 +385,11 @@ export function TachesPageClient({
             <div className="text-sm text-muted-foreground">
               {total} tâche{total > 1 ? 's' : ''}
             </div>
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/taches/configuration">
+                <Settings2 className="h-4 w-4" />
+              </Link>
+            </Button>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Nouvelle tâche
@@ -373,9 +398,60 @@ export function TachesPageClient({
 
           {/* Tableau */}
           <div className="flex-1 min-h-0 flex flex-col">
-            {loading && taches.length === 0 ? (
+            {error ? (
               <div className="flex items-center justify-center py-12">
-                <p className="text-muted-foreground">Chargement...</p>
+                <ErrorState
+                  status="network"
+                  onRetry={() => {
+                    setError(null)
+                    setLoading(true)
+                    Promise.all([fetchTaches(), fetchStats()]).finally(() => setLoading(false))
+                  }}
+                />
+              </div>
+            ) : loading && taches.length === 0 ? (
+              <div className="space-y-3 p-4">
+                {["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4", "skeleton-5"].map((skeletonKey) => (
+                  <div key={skeletonKey} className="flex items-center gap-4 p-3 rounded-lg border">
+                    <Skeleton className="h-4 w-4 rounded" />
+                    <Skeleton className="h-4 w-[200px]" />
+                    <Skeleton className="h-4 w-[150px]" />
+                    <Skeleton className="h-4 w-[80px]" />
+                    <Skeleton className="h-4 w-[100px]" />
+                    <div className="flex-1" />
+                    <Skeleton className="h-4 w-[80px]" />
+                  </div>
+                ))}
+              </div>
+            ) : !loading && taches.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia>
+                      <ListTodo className="h-10 w-10 text-muted-foreground" />
+                    </EmptyMedia>
+                    <EmptyTitle>Aucune tâche</EmptyTitle>
+                  </EmptyHeader>
+                  <EmptyContent>
+                    <EmptyDescription>
+                      {activeFilter === "a_faire"
+                        ? "Aucune tâche à faire pour le moment."
+                        : activeFilter === "en_cours"
+                          ? "Aucune tâche en cours actuellement."
+                          : activeFilter === "terminees"
+                            ? "Aucune tâche terminée."
+                            : activeFilter === "en_retard"
+                              ? "Aucune tâche en retard."
+                              : debouncedSearch
+                                ? "Aucune tâche trouvée pour cette recherche."
+                                : "Aucune tâche créée. Commencez par en créer une !"}
+                    </EmptyDescription>
+                    <Button onClick={() => setCreateDialogOpen(true)} className="mt-4">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Créer votre première tâche
+                    </Button>
+                  </EmptyContent>
+                </Empty>
               </div>
             ) : (
               <div className={`flex-1 min-h-0 transition-opacity duration-150 ${isRefetching ? "opacity-50 pointer-events-none" : ""}`}>

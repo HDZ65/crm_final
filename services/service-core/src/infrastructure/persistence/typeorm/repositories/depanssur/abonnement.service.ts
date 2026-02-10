@@ -3,8 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import { NatsService } from '@crm/shared-kernel';
+import { randomUUID } from 'crypto';
 import { AbonnementDepanssurEntity } from '../../../../../domain/depanssur/entities/abonnement-depanssur.entity';
 import { HistoriqueStatutAbonnementEntity } from '../../../../../domain/depanssur/entities/historique-statut-abonnement.entity';
+import {
+  RegleDepanssurError,
+  RegleDepanssurService,
+} from '../../../../../domain/depanssur/services/regle-depanssur.service';
 import type { IAbonnementRepository } from '../../../../../domain/depanssur/repositories/IAbonnementRepository';
 
 @Injectable()
@@ -16,6 +22,8 @@ export class AbonnementService implements IAbonnementRepository {
     private readonly repository: Repository<AbonnementDepanssurEntity>,
     @InjectRepository(HistoriqueStatutAbonnementEntity)
     private readonly historiqueRepository: Repository<HistoriqueStatutAbonnementEntity>,
+    private readonly regleDepanssurService: RegleDepanssurService,
+    private readonly natsService: NatsService,
   ) {}
 
   async create(input: any): Promise<AbonnementDepanssurEntity> {
@@ -47,7 +55,12 @@ export class AbonnementService implements IAbonnementRepository {
         : null,
     });
 
-    return this.repository.save(entity);
+    const saved = await this.repository.save(entity);
+
+    // Publish AbonnementCreatedEvent
+    await this.publishAbonnementCreatedEvent(saved);
+
+    return saved;
   }
 
   async update(input: any): Promise<AbonnementDepanssurEntity> {
@@ -57,8 +70,35 @@ export class AbonnementService implements IAbonnementRepository {
     }
 
     const oldStatut = entity.statut;
+    const oldPlanType = entity.planType;
 
-    if (input.planType ?? input.plan_type) entity.planType = input.planType ?? input.plan_type;
+    const requestedPlanType = input.planType ?? input.plan_type;
+    if (requestedPlanType !== undefined && requestedPlanType !== null && requestedPlanType !== entity.planType) {
+      const nouveauPlan = String(requestedPlanType);
+      const downgrade = this.isDowngrade(entity.planType, nouveauPlan);
+
+      try {
+        if (downgrade) {
+          const result = this.regleDepanssurService.downgraderPlan(entity, nouveauPlan);
+          if (result.estImmediat) {
+            entity.planType = nouveauPlan;
+          } else {
+            this.logger.log(
+              `Downgrade abonnement ${entity.id} programme au ${result.dateEffet.toISOString()} (N+1), plan courant conserve`,
+            );
+          }
+        } else {
+          const result = this.regleDepanssurService.upgraderPlan(entity, nouveauPlan);
+          entity.planType = result.planTypeEffectif;
+        }
+      } catch (error) {
+        if (error instanceof RegleDepanssurError) {
+          throw new RpcException({ code: status.FAILED_PRECONDITION, message: error.message });
+        }
+        throw error;
+      }
+    }
+
     if (input.periodicite !== undefined) entity.periodicite = input.periodicite;
     if (input.periodeAttente ?? input.periode_attente !== undefined) entity.periodeAttente = input.periodeAttente ?? input.periode_attente;
     if (input.franchise !== undefined) entity.franchise = input.franchise != null ? String(input.franchise) : null;
@@ -103,6 +143,20 @@ export class AbonnementService implements IAbonnementRepository {
         motif: input.motifResiliation ?? input.motif_resiliation ?? null,
       });
       await this.historiqueRepository.save(historique);
+
+      // Publish AbonnementStatusChangedEvent
+      await this.publishAbonnementStatusChangedEvent(saved, oldStatut, entity.statut, input.motifResiliation ?? input.motif_resiliation);
+    }
+
+    // Check for plan upgrade/downgrade
+    if (entity.planType !== oldPlanType) {
+      const downgrade = this.isDowngrade(oldPlanType, entity.planType);
+      
+      if (downgrade) {
+        await this.publishAbonnementDowngradedEvent(saved, oldPlanType, entity.planType);
+      } else {
+        await this.publishAbonnementUpgradedEvent(saved, oldPlanType, entity.planType);
+      }
     }
 
     return saved;
@@ -175,5 +229,117 @@ export class AbonnementService implements IAbonnementRepository {
 
   async save(entity: AbonnementDepanssurEntity): Promise<AbonnementDepanssurEntity> {
     return this.repository.save(entity);
+  }
+
+  private isDowngrade(planActuel: string, nouveauPlan: string): boolean {
+    const ordrePlan: Record<string, number> = {
+      ESSENTIEL: 1,
+      STANDARD: 2,
+      PREMIUM: 3,
+    };
+
+    const rangActuel = ordrePlan[(planActuel || '').toUpperCase()];
+    const rangNouveau = ordrePlan[(nouveauPlan || '').toUpperCase()];
+
+    if (!rangActuel || !rangNouveau) {
+      return false;
+    }
+
+    return rangNouveau < rangActuel;
+  }
+
+  private async publishAbonnementCreatedEvent(abonnement: AbonnementDepanssurEntity): Promise<void> {
+    try {
+      const event = {
+        event_id: randomUUID(),
+        timestamp: Date.now(),
+        correlation_id: null,
+        abonnement_id: abonnement.id,
+        client_id: abonnement.clientId,
+        organisation_id: abonnement.organisationId,
+        formule: abonnement.planType,
+        statut: abonnement.statut,
+        date_debut: abonnement.dateEffet,
+        created_at: abonnement.createdAt,
+      };
+      await this.natsService.publish('depanssur.abonnement.created', event);
+      this.logger.debug(`Published depanssur.abonnement.created for ${abonnement.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish depanssur.abonnement.created: ${error}`);
+    }
+  }
+
+  private async publishAbonnementStatusChangedEvent(
+    abonnement: AbonnementDepanssurEntity,
+    ancienStatut: string,
+    nouveauStatut: string,
+    motif?: string,
+  ): Promise<void> {
+    try {
+      const event = {
+        event_id: randomUUID(),
+        timestamp: Date.now(),
+        correlation_id: null,
+        abonnement_id: abonnement.id,
+        client_id: abonnement.clientId,
+        organisation_id: abonnement.organisationId,
+        ancien_statut: ancienStatut,
+        nouveau_statut: nouveauStatut,
+        motif: motif || null,
+        changed_at: new Date(),
+      };
+      await this.natsService.publish('depanssur.abonnement.status_changed', event);
+      this.logger.debug(`Published depanssur.abonnement.status_changed for ${abonnement.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish depanssur.abonnement.status_changed: ${error}`);
+    }
+  }
+
+  private async publishAbonnementUpgradedEvent(
+    abonnement: AbonnementDepanssurEntity,
+    ancienneFormule: string,
+    nouvelleFormule: string,
+  ): Promise<void> {
+    try {
+      const event = {
+        event_id: randomUUID(),
+        timestamp: Date.now(),
+        correlation_id: null,
+        abonnement_id: abonnement.id,
+        client_id: abonnement.clientId,
+        organisation_id: abonnement.organisationId,
+        ancienne_formule: ancienneFormule,
+        nouvelle_formule: nouvelleFormule,
+        upgraded_at: new Date(),
+      };
+      await this.natsService.publish('depanssur.abonnement.upgraded', event);
+      this.logger.debug(`Published depanssur.abonnement.upgraded for ${abonnement.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish depanssur.abonnement.upgraded: ${error}`);
+    }
+  }
+
+  private async publishAbonnementDowngradedEvent(
+    abonnement: AbonnementDepanssurEntity,
+    ancienneFormule: string,
+    nouvelleFormule: string,
+  ): Promise<void> {
+    try {
+      const event = {
+        event_id: randomUUID(),
+        timestamp: Date.now(),
+        correlation_id: null,
+        abonnement_id: abonnement.id,
+        client_id: abonnement.clientId,
+        organisation_id: abonnement.organisationId,
+        ancienne_formule: ancienneFormule,
+        nouvelle_formule: nouvelleFormule,
+        downgraded_at: new Date(),
+      };
+      await this.natsService.publish('depanssur.abonnement.downgraded', event);
+      this.logger.debug(`Published depanssur.abonnement.downgraded for ${abonnement.id}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish depanssur.abonnement.downgraded: ${error}`);
+    }
   }
 }

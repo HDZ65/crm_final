@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { NatsService } from '@crm/shared-kernel';
 import {
   ScheduleEntity,
   ScheduleStatus,
@@ -35,6 +36,7 @@ export class DunningMaxRetriesExceededHandler implements OnModuleInit {
   private readonly logger = new Logger(DunningMaxRetriesExceededHandler.name);
 
   constructor(
+    private readonly natsService: NatsService,
     @InjectRepository(ScheduleEntity)
     private readonly scheduleRepository: Repository<ScheduleEntity>,
     @Inject(IMS_CLIENT_TOKEN)
@@ -45,8 +47,10 @@ export class DunningMaxRetriesExceededHandler implements OnModuleInit {
     this.logger.log(
       'DunningMaxRetriesExceededHandler initialized — ready for dunning.max_retries_exceeded',
     );
-    // TODO: Wire NATS subscription when nats-utils transport is available.
-    // await this.natsService.subscribeProto('dunning.max_retries_exceeded', this.handle.bind(this));
+    await this.natsService.subscribe<DunningMaxRetriesExceededEvent>(
+      'dunning.max_retries_exceeded',
+      this.handle.bind(this),
+    );
   }
 
   async handle(event: DunningMaxRetriesExceededEvent): Promise<void> {

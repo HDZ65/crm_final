@@ -39,18 +39,19 @@ import {
   Plus,
 } from "lucide-react"
 import type {
-  BaremeCommissionResponseDto,
+  BaremeWithPaliers,
   TypeCalcul,
-  PalierCommissionResponseDto,
-} from "@/types/commission"
+  PalierDisplay,
+} from "@/lib/ui/display-types/commission"
 import type { TypeOption, DureeOption } from "@/hooks/commissions/use-commission-config"
+import { formatMontant } from "@/lib/ui/helpers/format"
 import { usePaliersCommission } from "@/hooks"
 import { CreateBaremeDialog } from "./create-bareme-dialog"
 import { EditBaremeDialog } from "./edit-bareme-dialog"
 import { ManagePaliersDialog } from "./manage-paliers-dialog"
 
 interface BaremesListProps {
-  baremes: BaremeCommissionResponseDto[]
+  baremes: BaremeWithPaliers[]
   typesCalcul: TypeOption[]
   typesBase: TypeOption[]
   typesApporteur: TypeOption[]
@@ -58,17 +59,14 @@ interface BaremesListProps {
   dureesReprise: DureeOption[]
   loading?: boolean
   loadingConfig?: boolean
-  onViewDetails?: (bareme: BaremeCommissionResponseDto) => void
-  onBaremeCreated?: (bareme: BaremeCommissionResponseDto) => void
-  onBaremeUpdated?: (bareme: BaremeCommissionResponseDto) => void
+  onViewDetails?: (bareme: BaremeWithPaliers) => void
+  onBaremeCreated?: (bareme: BaremeWithPaliers) => void
+  onBaremeUpdated?: (bareme: BaremeWithPaliers) => void
 }
 
-const formatCurrency = (amount: number | null) => {
-  if (amount === null) return "—"
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount)
+const formatCurrencyStr = (amount: string | null) => {
+  if (amount === null) return "--"
+  return formatMontant(amount)
 }
 
 const formatDate = (date: Date | string | null) => {
@@ -103,11 +101,11 @@ export function BaremesList({
   onBaremeUpdated,
 }: BaremesListProps) {
   const [detailDialogOpen, setDetailDialogOpen] = React.useState(false)
-  const [selectedBareme, setSelectedBareme] = React.useState<BaremeCommissionResponseDto | null>(null)
+  const [selectedBareme, setSelectedBareme] = React.useState<BaremeWithPaliers | null>(null)
   const [editDialogOpen, setEditDialogOpen] = React.useState(false)
-  const [editingBareme, setEditingBareme] = React.useState<BaremeCommissionResponseDto | null>(null)
+  const [editingBareme, setEditingBareme] = React.useState<BaremeWithPaliers | null>(null)
   const [paliersDialogOpen, setPaliersDialogOpen] = React.useState(false)
-  const [paliersBareme, setPaliersBareme] = React.useState<BaremeCommissionResponseDto | null>(null)
+  const [paliersBareme, setPaliersBareme] = React.useState<BaremeWithPaliers | null>(null)
 
   // Charger les paliers du barème sélectionné
   const { paliers, loading: loadingPaliers } = usePaliersCommission(
@@ -136,23 +134,23 @@ export function BaremesList({
     return type?.label || value
   }, [typesApporteur])
 
-  const handleViewDetails = (bareme: BaremeCommissionResponseDto) => {
+  const handleViewDetails = (bareme: BaremeWithPaliers) => {
     setSelectedBareme(bareme)
     setDetailDialogOpen(true)
     onViewDetails?.(bareme)
   }
 
-  const handleEditBareme = (bareme: BaremeCommissionResponseDto) => {
+  const handleEditBareme = (bareme: BaremeWithPaliers) => {
     setEditingBareme(bareme)
     setEditDialogOpen(true)
   }
 
-  const handleManagePaliers = (bareme: BaremeCommissionResponseDto) => {
+  const handleManagePaliers = (bareme: BaremeWithPaliers) => {
     setPaliersBareme(bareme)
     setPaliersDialogOpen(true)
   }
 
-  const columns: ColumnDef<BaremeCommissionResponseDto>[] = [
+  const columns: ColumnDef<BaremeWithPaliers>[] = [
     {
       accessorKey: "code",
       header: "Code",
@@ -217,7 +215,7 @@ export function BaremesList({
       accessorKey: "montantFixe",
       header: "Montant fixe",
       cell: ({ row }) => (
-        <div className="text-sm">{formatCurrency(row.original.montantFixe)}</div>
+        <div className="text-sm">{formatCurrencyStr(row.original.montantFixe)}</div>
       ),
       size: 110,
     },
@@ -404,7 +402,7 @@ export function BaremesList({
                     </div>
                     <div>
                       <span className="text-muted-foreground">Montant fixe :</span>
-                      <p className="font-medium">{formatCurrency(selectedBareme.montantFixe)}</p>
+                      <p className="font-medium">{formatCurrencyStr(selectedBareme.montantFixe)}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Statut :</span>
@@ -528,7 +526,7 @@ export function BaremesList({
                           </tr>
                         </thead>
                         <tbody>
-                          {paliers.map((palier: PalierCommissionResponseDto) => (
+                          {paliers.map((palier: PalierDisplay) => (
                             <tr key={palier.id} className="border-t">
                               <td className="p-2 font-mono text-xs">{palier.code}</td>
                               <td className="p-2">{palier.nom}</td>
@@ -540,7 +538,7 @@ export function BaremesList({
                               <td className="p-2 text-right">{palier.seuilMin}</td>
                               <td className="p-2 text-right">{palier.seuilMax ?? "∞"}</td>
                               <td className="p-2 text-right text-success font-medium">
-                                {formatCurrency(palier.montantPrime)}
+                                {formatCurrencyStr(palier.montantPrime)}
                               </td>
                               <td className="p-2 text-center">
                                 {palier.actif ? (

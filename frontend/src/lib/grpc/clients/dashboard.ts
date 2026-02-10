@@ -1,12 +1,12 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, GrpcClient } from "./config";
 import {
-  DashboardKpisServiceClient,
-  EvolutionCaServiceClient,
-  RepartitionProduitsServiceClient,
-  StatsSocietesServiceClient,
-  KpisCommerciauxServiceClient,
-  AlertesServiceClient,
+  DashboardKpisServiceService,
+  EvolutionCaServiceService,
+  RepartitionProduitsServiceService,
+  StatsSocietesServiceService,
+  KpisCommerciauxServiceService,
+  AlertesServiceService,
   type GetKpisRequest,
   type KpisResponse,
   type GetEvolutionCaRequest,
@@ -21,16 +21,18 @@ import {
   type AlertesResponse,
 } from "@proto/dashboard/dashboard";
 
-let dashboardKpisInstance: DashboardKpisServiceClient | null = null;
-let evolutionCaInstance: EvolutionCaServiceClient | null = null;
-let repartitionProduitsInstance: RepartitionProduitsServiceClient | null = null;
-let statsSocietesInstance: StatsSocietesServiceClient | null = null;
-let kpisCommerciauxInstance: KpisCommerciauxServiceClient | null = null;
-let alertesInstance: AlertesServiceClient | null = null;
+let dashboardKpisInstance: GrpcClient | null = null;
+let evolutionCaInstance: GrpcClient | null = null;
+let repartitionProduitsInstance: GrpcClient | null = null;
+let statsSocietesInstance: GrpcClient | null = null;
+let kpisCommerciauxInstance: GrpcClient | null = null;
+let alertesInstance: GrpcClient | null = null;
 
-function getDashboardKpisClient(): DashboardKpisServiceClient {
+function getDashboardKpisClient(): GrpcClient {
   if (!dashboardKpisInstance) {
-    dashboardKpisInstance = new DashboardKpisServiceClient(
+    dashboardKpisInstance = makeClient(
+      DashboardKpisServiceService,
+      "DashboardKpisService",
       SERVICES.dashboard,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -38,9 +40,11 @@ function getDashboardKpisClient(): DashboardKpisServiceClient {
   return dashboardKpisInstance;
 }
 
-function getEvolutionCaClient(): EvolutionCaServiceClient {
+function getEvolutionCaClient(): GrpcClient {
   if (!evolutionCaInstance) {
-    evolutionCaInstance = new EvolutionCaServiceClient(
+    evolutionCaInstance = makeClient(
+      EvolutionCaServiceService,
+      "EvolutionCaService",
       SERVICES.dashboard,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -48,9 +52,11 @@ function getEvolutionCaClient(): EvolutionCaServiceClient {
   return evolutionCaInstance;
 }
 
-function getRepartitionProduitsClient(): RepartitionProduitsServiceClient {
+function getRepartitionProduitsClient(): GrpcClient {
   if (!repartitionProduitsInstance) {
-    repartitionProduitsInstance = new RepartitionProduitsServiceClient(
+    repartitionProduitsInstance = makeClient(
+      RepartitionProduitsServiceService,
+      "RepartitionProduitsService",
       SERVICES.dashboard,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -58,9 +64,11 @@ function getRepartitionProduitsClient(): RepartitionProduitsServiceClient {
   return repartitionProduitsInstance;
 }
 
-function getStatsSocietesClient(): StatsSocietesServiceClient {
+function getStatsSocietesClient(): GrpcClient {
   if (!statsSocietesInstance) {
-    statsSocietesInstance = new StatsSocietesServiceClient(
+    statsSocietesInstance = makeClient(
+      StatsSocietesServiceService,
+      "StatsSocietesService",
       SERVICES.dashboard,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -68,9 +76,11 @@ function getStatsSocietesClient(): StatsSocietesServiceClient {
   return statsSocietesInstance;
 }
 
-function getKpisCommerciauxClient(): KpisCommerciauxServiceClient {
+function getKpisCommerciauxClient(): GrpcClient {
   if (!kpisCommerciauxInstance) {
-    kpisCommerciauxInstance = new KpisCommerciauxServiceClient(
+    kpisCommerciauxInstance = makeClient(
+      KpisCommerciauxServiceService,
+      "KpisCommerciauxService",
       SERVICES.dashboard,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -78,9 +88,11 @@ function getKpisCommerciauxClient(): KpisCommerciauxServiceClient {
   return kpisCommerciauxInstance;
 }
 
-function getAlertesClient(): AlertesServiceClient {
+function getAlertesClient(): GrpcClient {
   if (!alertesInstance) {
-    alertesInstance = new AlertesServiceClient(
+    alertesInstance = makeClient(
+      AlertesServiceService,
+      "AlertesService",
       SERVICES.dashboard,
       createAuthChannelCredentials(credentials.createInsecure())
     );

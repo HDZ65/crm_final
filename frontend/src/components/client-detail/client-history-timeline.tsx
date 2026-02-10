@@ -4,7 +4,7 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { History, Clock } from "lucide-react"
-import type { EventItem } from "@/types/client"
+import type { EventItem } from "@/lib/ui/display-types/client"
 
 interface ClientHistoryTimelineProps {
   contractRef: string

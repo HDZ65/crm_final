@@ -1,10 +1,10 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
 import {
-  CalendarEngineServiceClient,
-  DebitConfigurationServiceClient,
-  HolidayServiceClient,
-  CalendarAdminServiceClient,
+  CalendarEngineServiceService,
+  DebitConfigurationServiceService,
+  HolidayServiceService,
+  CalendarAdminServiceService,
   type CalculatePlannedDateRequest,
   type CalculatePlannedDateResponse,
   type CalculatePlannedDatesBatchRequest,
@@ -78,14 +78,16 @@ import {
   type DeleteResponse as CalendarDeleteResponse,
 } from "@proto/calendar/calendar";
 
-let calendarEngineInstance: CalendarEngineServiceClient | null = null;
-let debitConfigInstance: DebitConfigurationServiceClient | null = null;
-let holidayInstance: HolidayServiceClient | null = null;
-let calendarAdminInstance: CalendarAdminServiceClient | null = null;
+let calendarEngineInstance: GrpcClient | null = null;
+let debitConfigInstance: GrpcClient | null = null;
+let holidayInstance: GrpcClient | null = null;
+let calendarAdminInstance: GrpcClient | null = null;
 
-function getCalendarEngineClient(): CalendarEngineServiceClient {
+function getCalendarEngineClient(): GrpcClient {
   if (!calendarEngineInstance) {
-    calendarEngineInstance = new CalendarEngineServiceClient(
+    calendarEngineInstance = makeClient(
+      CalendarEngineServiceService,
+      "CalendarEngineService",
       SERVICES.calendar,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -93,9 +95,11 @@ function getCalendarEngineClient(): CalendarEngineServiceClient {
   return calendarEngineInstance;
 }
 
-function getDebitConfigClient(): DebitConfigurationServiceClient {
+function getDebitConfigClient(): GrpcClient {
   if (!debitConfigInstance) {
-    debitConfigInstance = new DebitConfigurationServiceClient(
+    debitConfigInstance = makeClient(
+      DebitConfigurationServiceService,
+      "DebitConfigurationService",
       SERVICES.calendar,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -103,9 +107,11 @@ function getDebitConfigClient(): DebitConfigurationServiceClient {
   return debitConfigInstance;
 }
 
-function getHolidayClient(): HolidayServiceClient {
+function getHolidayClient(): GrpcClient {
   if (!holidayInstance) {
-    holidayInstance = new HolidayServiceClient(
+    holidayInstance = makeClient(
+      HolidayServiceService,
+      "HolidayService",
       SERVICES.calendar,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -113,9 +119,11 @@ function getHolidayClient(): HolidayServiceClient {
   return holidayInstance;
 }
 
-function getCalendarAdminClient(): CalendarAdminServiceClient {
+function getCalendarAdminClient(): GrpcClient {
   if (!calendarAdminInstance) {
-    calendarAdminInstance = new CalendarAdminServiceClient(
+    calendarAdminInstance = makeClient(
+      CalendarAdminServiceService,
+      "CalendarAdminService",
       SERVICES.calendar,
       createAuthChannelCredentials(credentials.createInsecure())
     );

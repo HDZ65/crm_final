@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/field"
 import { validateLoginAction } from "@/actions/auth"
 import type { LoginFormData } from "@/lib/schemas/auth"
-import { getInitialFormState } from "@/lib/form-state"
+import { getInitialFormState } from "@/lib/forms/state"
 import logoCrm from "@/assets/logo-crm.png"
 
 export function LoginForm({
@@ -140,6 +140,7 @@ export function LoginForm({
               src={logoCrm}
               alt="Logo CRM"
               fill
+              priority
               className="object-contain"
             />
           </div>

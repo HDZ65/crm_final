@@ -26,7 +26,7 @@ export class HistoriqueStatutAbonnementEntity {
   @Column({ name: 'nouveau_statut', length: 50 })
   nouveauStatut: string;
 
-  @Column({ length: 500, nullable: true })
+  @Column({ type: 'varchar', length: 500, nullable: true })
   motif: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

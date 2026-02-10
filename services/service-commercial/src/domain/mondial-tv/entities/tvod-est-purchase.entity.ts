@@ -77,6 +77,7 @@ export class TvodEstPurchaseEntity {
     name: 'store_source',
     type: 'enum',
     enum: StoreSource,
+    enumName: 'tvod_store_source_enum',
   })
   storeSource: StoreSource;
 

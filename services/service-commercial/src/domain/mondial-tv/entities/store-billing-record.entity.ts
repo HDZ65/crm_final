@@ -50,6 +50,7 @@ export class StoreBillingRecordEntity {
     name: 'store_source',
     type: 'enum',
     enum: StoreSource,
+    enumName: 'store_source_enum',
   })
   storeSource: StoreSource;
 

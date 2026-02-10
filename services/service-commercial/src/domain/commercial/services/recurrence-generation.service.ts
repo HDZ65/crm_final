@@ -69,7 +69,9 @@ const defaultDeps: RecurrenceDependencies = {
 
 @Injectable()
 export class RecurrenceGenerationService {
-  constructor(private readonly deps: RecurrenceDependencies = defaultDeps) {}
+  private readonly deps: RecurrenceDependencies = defaultDeps;
+
+  constructor() {}
 
   async genererRecurrence(
     contratId: string,

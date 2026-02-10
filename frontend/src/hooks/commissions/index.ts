@@ -47,6 +47,8 @@ export {
   useLignesBordereau,
   useLigneBordereau,
   useLignesSelectionnees,
+  usePreselectionnerLignes,
+  useRecalculerTotaux,
 } from './use-lignes-bordereau'
 
 // Commission Engine
@@ -79,16 +81,69 @@ export {
   useDeletePalier,
 } from './use-commission-mutations'
 
+// Display types re-exported for convenience
 export type {
-  CreateApporteurDto,
-  UpdateApporteurDto,
   AnnulerRepriseDto,
   ValiderBordereauDto,
-  CreateBaremeDto,
-  UpdateBaremeDto,
-  CreatePalierDto,
-  UpdatePalierDto,
-} from './use-commission-mutations'
+} from '@/lib/ui/display-types/commission'
+
+// Proto request types re-exported for convenience
+export type {
+  CreateApporteurRequest,
+  UpdateApporteurRequest,
+} from '@proto/commerciaux/commerciaux'
+
+export type {
+  CreateBaremeRequest,
+  UpdateBaremeRequest,
+  CreatePalierRequest,
+  UpdatePalierRequest,
+} from '@proto/commission/commission'
+
+// Contestations Commission
+export {
+  useContestations,
+  useCreerContestation,
+  useResoudreContestation,
+} from './use-contestations-commission'
+
+export type {
+  ContestationFilters,
+  CreerContestationPayload,
+  ResoudreContestationPayload,
+} from './use-contestations-commission'
+
+// Audit Logs Commission
+export {
+  useAuditLogs,
+  useAuditLogsByCommission,
+} from './use-audit-logs-commission'
+
+export type {
+  AuditLogDisplay,
+  AuditLogFilters,
+} from './use-audit-logs-commission'
+
+// Recurrences Commission
+export {
+  useRecurrences,
+  useRecurrencesByContrat,
+} from './use-recurrences-commission'
+
+export type {
+  RecurrenceDisplay,
+  RecurrenceFilters,
+} from './use-recurrences-commission'
+
+// Reports Negatifs Commission
+export {
+  useReportsNegatifs,
+} from './use-reports-negatifs-commission'
+
+export type {
+  ReportNegatifDisplay,
+  ReportsNegatifsFilters,
+} from './use-reports-negatifs-commission'
 
 // Commission Config
 export {

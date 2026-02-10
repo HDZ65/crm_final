@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
-  CalendarDayDto,
-  HolidayZoneDto,
-  SystemDebitConfigDto,
-} from "@/types/calendar";
+  CalendarDay,
+  HolidayZone,
+  SystemDebitConfiguration,
+} from "@proto/calendar/calendar";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { CalendarHeatmap } from "@/components/calendar/calendar-heatmap";
 import { ConfigurationPanel } from "@/components/calendar/configuration-panel";
@@ -14,9 +14,9 @@ import { HolidaysManager } from "@/components/calendar/holidays-manager";
 import { AuditLogsTable } from "@/components/calendar/audit-logs-table";
 
 interface CalendrierPageClientProps {
-  initialCalendar: { days: CalendarDayDto[] } | null;
-  initialZones: HolidayZoneDto[] | undefined | null;
-  initialSystemConfig: SystemDebitConfigDto | null;
+  initialCalendar: { days: CalendarDay[] } | null;
+  initialZones: HolidayZone[] | undefined | null;
+  initialSystemConfig: SystemDebitConfiguration | null;
   organisationId: string;
 }
 

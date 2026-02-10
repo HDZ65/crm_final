@@ -6,7 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useQuery } from '@tanstack/react-query';
-import { depanssurClient } from '@/lib/grpc/clients/depanssur';
+import { getAbonnementByClientAction, getCurrentCompteurAction, listOptionsAction } from '@/actions/depanssur';
+import { statutAbonnementToJSON, StatutAbonnement } from '@/proto/depanssur/depanssur';
 import { Loader2, AlertCircle, Calendar, Euro, Activity, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -19,18 +20,33 @@ interface ClientAbonnementDepanssurProps {
 export function ClientAbonnementDepanssur({ clientId, organisationId }: ClientAbonnementDepanssurProps) {
   const { data: abonnement, isLoading, error } = useQuery({
     queryKey: ['abonnement-depanssur', clientId, organisationId],
-    queryFn: () => depanssurClient.getAbonnementByClient({ clientId, organisationId }),
+    queryFn: async () => {
+      const result = await getAbonnementByClientAction({ clientId, organisationId });
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
   });
 
   const { data: compteur } = useQuery({
-    queryKey: ['compteur-depanssur', abonnement?.id, organisationId],
-    queryFn: () => depanssurClient.getCurrentCompteur({ abonnementId: abonnement!.id, organisationId }),
+    queryKey: ['compteur-depanssur', abonnement?.id],
+    queryFn: async () => {
+      const result = await getCurrentCompteurAction({ abonnementId: abonnement!.id });
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!abonnement?.id,
   });
 
   const { data: options } = useQuery({
-    queryKey: ['options-depanssur', abonnement?.id, organisationId],
-    queryFn: () => depanssurClient.listOptions({ abonnementId: abonnement!.id, organisationId }),
+    queryKey: ['options-depanssur', abonnement?.id],
+    queryFn: async () => {
+      const result = await listOptionsAction({ 
+        abonnementId: abonnement!.id,
+        pagination: { page: 1, limit: 100, sortBy: '', sortOrder: 'asc' }
+      });
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
     enabled: !!abonnement?.id,
   });
 
@@ -88,9 +104,9 @@ export function ClientAbonnementDepanssur({ clientId, organisationId }: ClientAb
   };
 
   const nbInterventionsUtilisees = compteur?.nbInterventionsUtilisees || 0;
-  const montantUtilise = parseFloat(compteur?.montantCumule || '0');
+  const montantUtilise = parseFloat(String(compteur?.montantCumule || '0'));
   const progressInterventions = calculateProgress(nbInterventionsUtilisees, abonnement.nbInterventionsMax || 0);
-  const progressMontant = calculateProgress(montantUtilise, parseFloat(abonnement.plafondAnnuel || '0'));
+  const progressMontant = calculateProgress(montantUtilise, parseFloat(String(abonnement.plafondAnnuel || '0')));
 
   return (
     <div className="space-y-6">
@@ -102,7 +118,7 @@ export function ClientAbonnementDepanssur({ clientId, organisationId }: ClientAb
               <CardTitle className="text-2xl">Abonnement {abonnement.planType}</CardTitle>
               <CardDescription>Souscrit le {format(new Date(abonnement.dateEffet), 'PPP', { locale: fr })}</CardDescription>
             </div>
-            <Badge className={getStatutColor(abonnement.statut)}>{getStatutLabel(abonnement.statut)}</Badge>
+            <Badge className={getStatutColor(statutAbonnementToJSON(abonnement.statut))}>{getStatutLabel(statutAbonnementToJSON(abonnement.statut))}</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -127,7 +143,7 @@ export function ClientAbonnementDepanssur({ clientId, organisationId }: ClientAb
                 <Euro className="h-4 w-4 mr-1" />
                 Prix
               </div>
-              <p className="font-medium">{parseFloat(abonnement.prixTtc).toFixed(2)} € TTC</p>
+              <p className="font-medium">{parseFloat(String(abonnement.prixTtc)).toFixed(2)} € TTC</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center text-sm text-muted-foreground">
@@ -160,15 +176,15 @@ export function ClientAbonnementDepanssur({ clientId, organisationId }: ClientAb
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-muted rounded-lg p-3">
                 <p className="text-sm text-muted-foreground">Franchise</p>
-                <p className="text-lg font-semibold">{parseFloat(abonnement.franchise || '0').toFixed(2)} €</p>
+                <p className="text-lg font-semibold">{parseFloat(String(abonnement.franchise || '0')).toFixed(2)} €</p>
               </div>
               <div className="bg-muted rounded-lg p-3">
                 <p className="text-sm text-muted-foreground">Plafond par intervention</p>
-                <p className="text-lg font-semibold">{parseFloat(abonnement.plafondParIntervention || '0').toFixed(2)} €</p>
+                <p className="text-lg font-semibold">{parseFloat(String(abonnement.plafondParIntervention || '0')).toFixed(2)} €</p>
               </div>
               <div className="bg-muted rounded-lg p-3">
                 <p className="text-sm text-muted-foreground">Plafond annuel</p>
-                <p className="text-lg font-semibold">{parseFloat(abonnement.plafondAnnuel || '0').toFixed(2)} €</p>
+                <p className="text-lg font-semibold">{parseFloat(String(abonnement.plafondAnnuel || '0')).toFixed(2)} €</p>
               </div>
             </div>
           </div>
@@ -201,7 +217,7 @@ export function ClientAbonnementDepanssur({ clientId, organisationId }: ClientAb
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium">Montant annuel consommé</span>
               <span className="text-sm text-muted-foreground">
-                {montantUtilise.toFixed(2)} € / {parseFloat(abonnement.plafondAnnuel || '0').toFixed(2)} €
+                {montantUtilise.toFixed(2)} € / {parseFloat(String(abonnement.plafondAnnuel || '0')).toFixed(2)} €
               </span>
             </div>
             <Progress value={progressMontant} className={getProgressColor(progressMontant)} />
@@ -263,9 +279,9 @@ export function ClientAbonnementDepanssur({ clientId, organisationId }: ClientAb
             </Button>
             <Button variant="outline">Gérer les options</Button>
             <Separator orientation="vertical" className="h-8" />
-            {abonnement.statut === 'ACTIF' ? (
+            {abonnement.statut === StatutAbonnement.STATUT_ABONNEMENT_ACTIF ? (
               <Button variant="destructive">Suspendre l'abonnement</Button>
-            ) : abonnement.statut === 'SUSPENDU_IMPAYE' ? (
+            ) : abonnement.statut === StatutAbonnement.STATUT_ABONNEMENT_SUSPENDU_IMPAYE ? (
               <Button variant="default">Réactiver l'abonnement</Button>
             ) : null}
           </div>

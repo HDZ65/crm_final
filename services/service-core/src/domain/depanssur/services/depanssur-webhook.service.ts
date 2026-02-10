@@ -160,18 +160,17 @@ export class DepanssurWebhookService {
     this.logger.log(`handleCustomerCreated: ${JSON.stringify(data)}`);
 
     await this.clientBaseService.create({
-      organisationId: data.organisationId ?? data.organisation_id,
-      typeClient: data.typeClient ?? data.type_client ?? 'PARTICULIER',
+      organisation_id: data.organisationId ?? data.organisation_id,
+      type_client: data.typeClient ?? data.type_client ?? 'PARTICULIER',
       nom: data.nom ?? data.lastName ?? '',
       prenom: data.prenom ?? data.firstName ?? '',
-      dateNaissance: data.dateNaissance ?? data.date_naissance ?? null,
-      compteCode: data.compteCode ?? data.compte_code ?? 'DEFAULT',
-      partenaireId: data.partenaireId ?? data.partenaire_id,
+      date_naissance: data.dateNaissance ?? data.date_naissance ?? '',
+      compte_code: data.compteCode ?? data.compte_code ?? 'DEFAULT',
+      partenaire_id: data.partenaireId ?? data.partenaire_id,
       telephone: data.telephone ?? data.phone ?? '',
-      email: data.email ?? null,
+      email: data.email ?? '',
       statut: data.statut ?? 'ACTIF',
-      societeId: data.societeId ?? data.societe_id ?? null,
-      civilite: data.civilite ?? null,
+      societe_id: data.societeId ?? data.societe_id,
     });
   }
 
@@ -193,7 +192,6 @@ export class DepanssurWebhookService {
       telephone: data.telephone ?? data.phone,
       email: data.email,
       statut: data.statut,
-      civilite: data.civilite,
     });
   }
 

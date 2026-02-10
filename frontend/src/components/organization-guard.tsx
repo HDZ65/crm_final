@@ -8,30 +8,35 @@ export function OrganizationGuard({ children }: { children: React.ReactNode }) {
     const { ready, isAuthenticated } = useAuth();
     const { hasOrganisation, isLoading, error } = useOrganisation();
 
-    // Attendre que l'authentification soit prête
-    if (!ready || (isAuthenticated && isLoading)) {
+    // Not authenticated users pass through (middleware handles redirect to login)
+    if (!isAuthenticated && ready) {
         return <>{children}</>;
     }
 
-    // Si erreur API, afficher quand même le contenu
+    // While loading auth or organisation data, render nothing — never expose content
+    if (!ready || isLoading) {
+        return null;
+    }
+
+    // API error: show the welcome form anyway so the user can retry creating an org
+    // NEVER fall through to children when we can't confirm organisation membership
     if (error) {
-        if (process.env.NODE_ENV !== 'development') {
-            console.error("OrganizationGuard error:", error);
-        }
-        return <>{children}</>;
+        return (
+            <div className="h-screen w-screen fixed inset-0 z-50 bg-background flex items-center justify-center">
+                <WelcomeForm />
+            </div>
+        );
     }
 
-    // Afficher le formulaire si l'utilisateur n'a pas d'organisation
-    const showWelcome = isAuthenticated && !hasOrganisation;
+    // User is authenticated but has no organisation — block with welcome form
+    if (!hasOrganisation) {
+        return (
+            <div className="h-screen w-screen fixed inset-0 z-50 bg-background flex items-center justify-center">
+                <WelcomeForm />
+            </div>
+        );
+    }
 
-    return (
-        <>
-            {children}
-            {showWelcome && (
-                <div className="h-screen w-screen fixed inset-0 z-50 bg-sidebar/50 backdrop-blur-sm flex items-center justify-center">
-                    <WelcomeForm />
-                </div>
-            )}
-        </>
-    );
+    // User is authenticated AND has an organisation — render the app
+    return <>{children}</>;
 }

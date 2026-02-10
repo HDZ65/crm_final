@@ -19,7 +19,7 @@ export interface SauvegarderExportsResult {
 
 @Injectable()
 export class BordereauFileStorageService {
-  constructor(private readonly uploadsRoot: string = resolve(process.cwd(), 'uploads')) {}
+  private readonly uploadsRoot = resolve(process.cwd(), 'uploads');
 
   async sauvegarderExports(input: SauvegarderExportsInput): Promise<SauvegarderExportsResult> {
     const societe = this.sanitizeSegment(input.societe);

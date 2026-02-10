@@ -22,8 +22,9 @@ import {
 import { format, isPast, isToday, isTomorrow } from "date-fns"
 import { fr } from "date-fns/locale"
 import { toast } from "sonner"
-import type { TacheDto, TacheType } from "@/types/tache"
-import { TACHE_TYPE_LABELS, TACHE_PRIORITE_LABELS } from "@/types/tache"
+import type { Tache } from "@proto/activites/activites"
+import type { TacheType, TachePriorite } from "@/lib/ui/labels/tache"
+import { TACHE_TYPE_LABELS, TACHE_PRIORITE_LABELS } from "@/lib/ui/labels/tache"
 
 const TYPE_ICONS: Record<TacheType, React.ReactNode> = {
   APPEL: <Phone className="h-4 w-4" />,
@@ -43,7 +44,7 @@ function getDateLabel(date: Date): string {
   return format(date, "dd MMM", { locale: fr })
 }
 
-function TacheItem({ tache, onComplete }: { tache: TacheDto; onComplete: (id: string) => void }) {
+function TacheItem({ tache, onComplete }: { tache: Tache; onComplete: (id: string) => void }) {
   const date = new Date(tache.dateEcheance)
   const isLate = tache.statut !== 'TERMINEE' && tache.statut !== 'ANNULEE' && isPast(date)
   const isDueToday = isToday(date)
@@ -51,7 +52,7 @@ function TacheItem({ tache, onComplete }: { tache: TacheDto; onComplete: (id: st
   return (
     <div className={`flex items-center gap-3 p-3 rounded-lg border ${isLate ? 'border-destructive bg-destructive/5' : 'border-border'}`}>
       <div className={`p-2 rounded-full ${isLate ? 'bg-destructive/10 text-destructive' : 'bg-muted'}`}>
-        {TYPE_ICONS[tache.type]}
+        {TYPE_ICONS[tache.type as TacheType]}
       </div>
 
       <div className="flex-1 min-w-0">
@@ -59,7 +60,7 @@ function TacheItem({ tache, onComplete }: { tache: TacheDto; onComplete: (id: st
           {tache.titre}
         </p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{TACHE_TYPE_LABELS[tache.type]}</span>
+          <span>{TACHE_TYPE_LABELS[tache.type as TacheType]}</span>
           <span>•</span>
           <span className={isLate ? 'text-destructive font-medium' : isDueToday ? 'text-orange-600 font-medium' : ''}>
             {getDateLabel(date)}
@@ -75,7 +76,7 @@ function TacheItem({ tache, onComplete }: { tache: TacheDto; onComplete: (id: st
           }
           className="text-xs"
         >
-          {TACHE_PRIORITE_LABELS[tache.priorite]}
+          {TACHE_PRIORITE_LABELS[tache.priorite as TachePriorite]}
         </Badge>
         <Button
           variant="ghost"
@@ -92,7 +93,7 @@ function TacheItem({ tache, onComplete }: { tache: TacheDto; onComplete: (id: st
 
 export function TachesWidget() {
   const { utilisateur } = useOrganisation()
-  const [taches, setTaches] = React.useState<TacheDto[]>([])
+  const [taches, setTaches] = React.useState<Tache[]>([])
   const fetchTaches = React.useCallback(async () => {
     if (!utilisateur?.id) return
     const result = await listMyTaches(utilisateur.id, "semaine")
@@ -117,7 +118,7 @@ export function TachesWidget() {
 
   // Trier par priorité puis par date
   const sortedTaches = React.useMemo(() => {
-    const priorityOrder = { HAUTE: 0, MOYENNE: 1, BASSE: 2 }
+    const priorityOrder: Record<string, number> = { HAUTE: 0, MOYENNE: 1, BASSE: 2 }
     return [...taches]
       .filter(t => t.statut === 'A_FAIRE' || t.statut === 'EN_COURS')
       .sort((a, b) => {
@@ -127,8 +128,8 @@ export function TachesWidget() {
         if (aLate !== bLate) return aLate - bLate
 
         // Puis par priorité
-        const aPriority = priorityOrder[a.priorite]
-        const bPriority = priorityOrder[b.priorite]
+        const aPriority = priorityOrder[a.priorite] ?? 1
+        const bPriority = priorityOrder[b.priorite] ?? 1
         if (aPriority !== bPriority) return aPriority - bPriority
 
         // Puis par date

@@ -14,12 +14,19 @@ import {
   ConfigurationBundleEntity,
   FormuleProduitEntity,
 } from './domain/products/entities';
+import { TarificationService } from './domain/products/services/tarification.engine';
 
 // Infrastructure services
 import { BundleEngineService, ProduitService, GammeService, FormuleProduitService } from './infrastructure/persistence/typeorm/repositories/products';
 
 // Interface controllers
-import { BundleController, ProduitController, GammeController } from './infrastructure/grpc/products';
+import {
+  BundleController,
+  CatalogController,
+  ProduitController,
+  GammeController,
+  FormuleProduitController,
+} from './infrastructure/grpc/products';
 
 // Cross-context dependencies
 import { ContratsModule } from './contrats.module';
@@ -44,18 +51,22 @@ import { ContratsModule } from './contrats.module';
     ProduitController,
     BundleController,
     GammeController,
+    CatalogController,
+    FormuleProduitController,
   ],
   providers: [
     ProduitService,
     BundleEngineService,
     GammeService,
     FormuleProduitService,
+    TarificationService,
   ],
   exports: [
     ProduitService,
     BundleEngineService,
     GammeService,
     FormuleProduitService,
+    TarificationService,
   ],
 })
 export class ProductsModule {}

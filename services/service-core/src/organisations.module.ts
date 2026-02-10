@@ -32,7 +32,7 @@ import {
   ThemeMarqueController,
   PartenaireMarqueBlancheController,
   MembrePartenaireController,
-} from './interfaces/grpc/controllers/organisations';
+} from './infrastructure/grpc/organisations';
 
 // Cross-context dependencies
 import { UsersModule } from './users.module';

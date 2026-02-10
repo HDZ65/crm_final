@@ -1,11 +1,12 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
 import {
-  GammeServiceClient,
-  ProduitServiceClient,
-  ProduitVersionServiceClient,
-  ProduitDocumentServiceClient,
-  ProduitPublicationServiceClient,
+  GammeServiceService,
+  ProduitServiceService,
+  ProduitVersionServiceService,
+  ProduitDocumentServiceService,
+  ProduitPublicationServiceService,
+  FormuleProduitServiceService,
   type Gamme,
   type CreateGammeRequest,
   type UpdateGammeRequest,
@@ -43,17 +44,30 @@ import {
   type ListProduitPublicationsByVersionRequest,
   type ListProduitPublicationsBySocieteRequest,
   type ListProduitPublicationsResponse,
+  type FormuleProduit,
+  type CreateFormuleProduitRequest,
+  type UpdateFormuleProduitRequest,
+  type GetFormuleProduitRequest,
+  type ListFormulesProduitRequest,
+  type ListFormulesProduitResponse,
+  type DeleteFormuleProduitRequest,
+  type DeleteFormuleProduitResponse,
+  type ActiverFormuleProduitRequest,
+  type DesactiverFormuleProduitRequest,
 } from "@proto/products/products";
 
-let gammeInstance: GammeServiceClient | null = null;
-let produitInstance: ProduitServiceClient | null = null;
-let produitVersionInstance: ProduitVersionServiceClient | null = null;
-let produitDocumentInstance: ProduitDocumentServiceClient | null = null;
-let produitPublicationInstance: ProduitPublicationServiceClient | null = null;
+let gammeInstance: GrpcClient | null = null;
+let produitInstance: GrpcClient | null = null;
+let produitVersionInstance: GrpcClient | null = null;
+let produitDocumentInstance: GrpcClient | null = null;
+let produitPublicationInstance: GrpcClient | null = null;
+let formuleProduitInstance: GrpcClient | null = null;
 
-function getGammeClient(): GammeServiceClient {
+function getGammeClient(): GrpcClient {
   if (!gammeInstance) {
-    gammeInstance = new GammeServiceClient(
+    gammeInstance = makeClient(
+      GammeServiceService,
+      "GammeService",
       SERVICES.products,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -61,9 +75,11 @@ function getGammeClient(): GammeServiceClient {
   return gammeInstance;
 }
 
-function getProduitClient(): ProduitServiceClient {
+function getProduitClient(): GrpcClient {
   if (!produitInstance) {
-    produitInstance = new ProduitServiceClient(
+    produitInstance = makeClient(
+      ProduitServiceService,
+      "ProduitService",
       SERVICES.products,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -71,9 +87,11 @@ function getProduitClient(): ProduitServiceClient {
   return produitInstance;
 }
 
-function getProduitVersionClient(): ProduitVersionServiceClient {
+function getProduitVersionClient(): GrpcClient {
   if (!produitVersionInstance) {
-    produitVersionInstance = new ProduitVersionServiceClient(
+    produitVersionInstance = makeClient(
+      ProduitVersionServiceService,
+      "ProduitVersionService",
       SERVICES.products,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -81,9 +99,11 @@ function getProduitVersionClient(): ProduitVersionServiceClient {
   return produitVersionInstance;
 }
 
-function getProduitDocumentClient(): ProduitDocumentServiceClient {
+function getProduitDocumentClient(): GrpcClient {
   if (!produitDocumentInstance) {
-    produitDocumentInstance = new ProduitDocumentServiceClient(
+    produitDocumentInstance = makeClient(
+      ProduitDocumentServiceService,
+      "ProduitDocumentService",
       SERVICES.products,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -91,14 +111,28 @@ function getProduitDocumentClient(): ProduitDocumentServiceClient {
   return produitDocumentInstance;
 }
 
-function getProduitPublicationClient(): ProduitPublicationServiceClient {
+function getProduitPublicationClient(): GrpcClient {
   if (!produitPublicationInstance) {
-    produitPublicationInstance = new ProduitPublicationServiceClient(
+    produitPublicationInstance = makeClient(
+      ProduitPublicationServiceService,
+      "ProduitPublicationService",
       SERVICES.products,
       createAuthChannelCredentials(credentials.createInsecure())
     );
   }
   return produitPublicationInstance;
+}
+
+function getFormuleProduitClient(): GrpcClient {
+  if (!formuleProduitInstance) {
+    formuleProduitInstance = makeClient(
+      FormuleProduitServiceService,
+      "FormuleProduitService",
+      SERVICES.products,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return formuleProduitInstance;
 }
 
 export const gammes = {
@@ -158,12 +192,54 @@ export const produits = {
       "setPromotion"
     )(request),
 
-  clearPromotion: (request: ClearPromotionRequest): Promise<Produit> =>
-    promisify<ClearPromotionRequest, Produit>(
-      getProduitClient(),
-      "clearPromotion"
-    )(request),
-};
+   clearPromotion: (request: ClearPromotionRequest): Promise<Produit> =>
+     promisify<ClearPromotionRequest, Produit>(
+       getProduitClient(),
+       "clearPromotion"
+     )(request),
+
+   createFormule: (request: CreateFormuleProduitRequest): Promise<FormuleProduit> =>
+     promisify<CreateFormuleProduitRequest, FormuleProduit>(
+       getFormuleProduitClient(),
+       "create"
+     )(request),
+
+   updateFormule: (request: UpdateFormuleProduitRequest): Promise<FormuleProduit> =>
+     promisify<UpdateFormuleProduitRequest, FormuleProduit>(
+       getFormuleProduitClient(),
+       "update"
+     )(request),
+
+   getFormule: (request: GetFormuleProduitRequest): Promise<FormuleProduit> =>
+     promisify<GetFormuleProduitRequest, FormuleProduit>(
+       getFormuleProduitClient(),
+       "get"
+     )(request),
+
+   listFormulesByProduit: (request: ListFormulesProduitRequest): Promise<ListFormulesProduitResponse> =>
+     promisify<ListFormulesProduitRequest, ListFormulesProduitResponse>(
+       getFormuleProduitClient(),
+       "listByProduit"
+     )(request),
+
+   deleteFormule: (request: DeleteFormuleProduitRequest): Promise<DeleteFormuleProduitResponse> =>
+     promisify<DeleteFormuleProduitRequest, DeleteFormuleProduitResponse>(
+       getFormuleProduitClient(),
+       "delete"
+     )(request),
+
+   activerFormule: (request: ActiverFormuleProduitRequest): Promise<FormuleProduit> =>
+     promisify<ActiverFormuleProduitRequest, FormuleProduit>(
+       getFormuleProduitClient(),
+       "activer"
+     )(request),
+
+   desactiverFormule: (request: DesactiverFormuleProduitRequest): Promise<FormuleProduit> =>
+     promisify<DesactiverFormuleProduitRequest, FormuleProduit>(
+       getFormuleProduitClient(),
+       "desactiver"
+     )(request),
+ };
 
 export const produitVersions = {
   create: (request: CreateProduitVersionRequest): Promise<ProduitVersion> =>

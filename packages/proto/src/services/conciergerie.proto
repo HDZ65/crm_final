@@ -1,0 +1,198 @@
+syntax = "proto3";
+
+package conciergerie;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// CONCIERGERIE SERVICE
+// ============================================================================
+// Gestion des demandes de conciergerie pour les clients
+// Services: assistance, demarches administratives, etc.
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum StatutDemande {
+  STATUT_DEMANDE_UNSPECIFIED = 0;
+  STATUT_DEMANDE_NOUVELLE = 1;
+  STATUT_DEMANDE_EN_COURS = 2;
+  STATUT_DEMANDE_EN_ATTENTE = 3;
+  STATUT_DEMANDE_RESOLUE = 4;
+  STATUT_DEMANDE_CLOTUREE = 5;
+  STATUT_DEMANDE_ANNULEE = 6;
+}
+
+enum PrioriteDemande {
+  PRIORITE_DEMANDE_UNSPECIFIED = 0;
+  PRIORITE_DEMANDE_BASSE = 1;
+  PRIORITE_DEMANDE_NORMALE = 2;
+  PRIORITE_DEMANDE_HAUTE = 3;
+  PRIORITE_DEMANDE_URGENTE = 4;
+}
+
+enum CategorieDemande {
+  CATEGORIE_DEMANDE_UNSPECIFIED = 0;
+  CATEGORIE_DEMANDE_ADMINISTRATIVE = 1;
+  CATEGORIE_DEMANDE_JURIDIQUE = 2;
+  CATEGORIE_DEMANDE_TECHNIQUE = 3;
+  CATEGORIE_DEMANDE_FINANCIERE = 4;
+  CATEGORIE_DEMANDE_AUTRE = 5;
+}
+
+// ========== MESSAGES ==========
+
+message DemandeConciergerie {
+  string id = 1;
+  string organisation_id = 2;
+  string client_id = 3;
+  string reference = 4;
+  string titre = 5;
+  string description = 6;
+  CategorieDemande categorie = 7;
+  StatutDemande statut = 8;
+  PrioriteDemande priorite = 9;
+  string assigne_a = 10;                              // User ID of assigned agent
+  string canal_origine = 11;                          // Channel: email, telephone, chat
+  repeated string tags = 12;
+  string date_echeance = 13;
+  string date_resolution = 14;
+  string resolution_notes = 15;
+  string created_at = 16;
+  string updated_at = 17;
+  // Relations
+  repeated CommentaireDemande commentaires = 18;
+}
+
+message CommentaireDemande {
+  string id = 1;
+  string demande_id = 2;
+  string auteur_id = 3;
+  string contenu = 4;
+  bool interne = 5;                                   // Internal note vs client-visible
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+// ========== REQUESTS/RESPONSES ==========
+
+message CreateDemandeRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string titre = 3;
+  string description = 4;
+  CategorieDemande categorie = 5;
+  PrioriteDemande priorite = 6;
+  optional string canal_origine = 7;
+  repeated string tags = 8;
+  optional string date_echeance = 9;
+}
+
+message CreateDemandeResponse {
+  DemandeConciergerie demande = 1;
+}
+
+message GetDemandeRequest {
+  string id = 1;
+}
+
+message GetDemandeResponse {
+  DemandeConciergerie demande = 1;
+}
+
+message UpdateDemandeRequest {
+  string id = 1;
+  optional string titre = 2;
+  optional string description = 3;
+  optional CategorieDemande categorie = 4;
+  optional StatutDemande statut = 5;
+  optional PrioriteDemande priorite = 6;
+  repeated string tags = 7;
+  optional string date_echeance = 8;
+}
+
+message UpdateDemandeResponse {
+  DemandeConciergerie demande = 1;
+}
+
+message ListDemandesRequest {
+  string organisation_id = 1;
+  optional string client_id = 2;
+  optional string assigne_a = 3;
+  optional StatutDemande statut = 4;
+  optional PrioriteDemande priorite = 5;
+  optional CategorieDemande categorie = 6;
+  optional string search = 7;
+  PaginationRequest pagination = 8;
+}
+
+message ListDemandesResponse {
+  repeated DemandeConciergerie demandes = 1;
+  PaginationResponse pagination = 2;
+}
+
+message AddCommentaireRequest {
+  string demande_id = 1;
+  string auteur_id = 2;
+  string contenu = 3;
+  bool interne = 4;
+}
+
+message AddCommentaireResponse {
+  CommentaireDemande commentaire = 1;
+}
+
+message AssignerDemandeRequest {
+  string demande_id = 1;
+  string assigne_a = 2;
+}
+
+message AssignerDemandeResponse {
+  DemandeConciergerie demande = 1;
+}
+
+message CloturerDemandeRequest {
+  string demande_id = 1;
+  string resolution_notes = 2;
+}
+
+message CloturerDemandeResponse {
+  DemandeConciergerie demande = 1;
+}
+
+message DeleteDemandeRequest {
+  string id = 1;
+}
+
+message DeleteDemandeResponse {
+  bool success = 1;
+}
+
+// ========== PAGINATION ==========
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+// ========== SERVICE ==========
+
+service ConciergerieSvc {
+  rpc CreateDemande(CreateDemandeRequest) returns (CreateDemandeResponse);
+  rpc GetDemande(GetDemandeRequest) returns (GetDemandeResponse);
+  rpc ListDemandes(ListDemandesRequest) returns (ListDemandesResponse);
+  rpc UpdateDemande(UpdateDemandeRequest) returns (UpdateDemandeResponse);
+  rpc AddCommentaire(AddCommentaireRequest) returns (AddCommentaireResponse);
+  rpc AssignerDemande(AssignerDemandeRequest) returns (AssignerDemandeResponse);
+  rpc CloturerDemande(CloturerDemandeRequest) returns (CloturerDemandeResponse);
+  rpc DeleteDemande(DeleteDemandeRequest) returns (DeleteDemandeResponse);
+}

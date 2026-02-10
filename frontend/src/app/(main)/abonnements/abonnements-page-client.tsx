@@ -41,6 +41,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import { toast } from "sonner"
 import {
   createSubscription,
@@ -736,24 +737,24 @@ export function AbonnementsPageClient({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="subscription-start-date">Date de debut</Label>
-                <Input
+                <DatePicker
                   id="subscription-start-date"
-                  type="date"
                   value={subscriptionFormData.startDate}
-                  onChange={(event) =>
-                    setSubscriptionFormData((prev) => ({ ...prev, startDate: event.target.value }))
+                  onChange={(value) =>
+                    setSubscriptionFormData((prev) => ({ ...prev, startDate: value }))
                   }
+                  placeholder="Sélectionnez une date"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subscription-end-date">Date de fin</Label>
-                <Input
+                <DatePicker
                   id="subscription-end-date"
-                  type="date"
                   value={subscriptionFormData.endDate}
-                  onChange={(event) =>
-                    setSubscriptionFormData((prev) => ({ ...prev, endDate: event.target.value }))
+                  onChange={(value) =>
+                    setSubscriptionFormData((prev) => ({ ...prev, endDate: value }))
                   }
+                  placeholder="Sélectionnez une date"
                 />
               </div>
             </div>

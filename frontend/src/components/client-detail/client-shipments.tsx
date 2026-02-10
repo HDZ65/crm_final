@@ -19,7 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Package, Plus, Eye, Truck, CheckCircle2, XCircle, Clock, MapPin } from "lucide-react"
-import type { Shipment, ShipmentStatus } from "@/types/client"
+import type { Shipment, ShipmentStatus } from "@/lib/ui/display-types/client"
 
 interface ClientShipmentsProps {
   shipments: Shipment[]

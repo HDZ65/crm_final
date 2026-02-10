@@ -1,6 +1,7 @@
 "use server";
 
 import { comptes, organisations, membresCompte, rolesPartenaire, membresPartenaire, invitationsCompte } from "@/lib/grpc";
+import type { ActionResult } from "@/lib/types/common";
 
 export interface OrganisationResponse {
   id: string;
@@ -38,11 +39,6 @@ export interface CompteWithOwnerResponse {
     roleId: string;
     etat: string;
   };
-}
-
-export interface ActionResult<T> {
-  data: T | null;
-  error: string | null;
 }
 
 /**
@@ -122,13 +118,13 @@ export async function getOrganisation(id: string): Promise<ActionResult<Organisa
       data: {
         id: result.id,
         nom: result.nom,
-        description: result.description || undefined,
-        siret: result.siret || undefined,
-        adresse: result.adresse || undefined,
-        telephone: result.telephone || undefined,
-        email: result.email || undefined,
+        description: result.description,
+        siret: result.siret,
+        adresse: result.adresse,
+        telephone: result.telephone,
+        email: result.email,
         actif: result.actif,
-        etat: result.etat || undefined,
+        etat: result.etat,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
       },
@@ -175,13 +171,13 @@ export async function updateOrganisation(
       data: {
         id: result.id,
         nom: result.nom,
-        description: result.description || undefined,
-        siret: result.siret || undefined,
-        adresse: result.adresse || undefined,
-        telephone: result.telephone || undefined,
-        email: result.email || undefined,
+        description: result.description,
+        siret: result.siret,
+        adresse: result.adresse,
+        telephone: result.telephone,
+        email: result.email,
         actif: result.actif,
-        etat: result.etat || undefined,
+        etat: result.etat,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
       },
@@ -224,7 +220,7 @@ export async function leaveOrganisation(
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
     // First, find the member record
-    const membres = await membresCompte.listByOrganisation({ organisationId });
+    const membres = await membresCompte.listByOrganisation({ organisationId, pagination: undefined });
     const membre = membres.membres?.find((m) => m.utilisateurId === utilisateurId);
 
     if (!membre) {
@@ -309,7 +305,7 @@ export interface RolePartenaireResponse {
  */
 export async function getAvailableRoles(): Promise<ActionResult<RolePartenaireResponse[]>> {
   try {
-    const result = await rolesPartenaire.list({});
+    const result = await rolesPartenaire.list({ pagination: undefined });
     return {
       data: result.roles?.map((role) => ({
         id: role.id,
@@ -361,7 +357,7 @@ export async function getOrganisationMembers(
   partenaireId: string
 ): Promise<ActionResult<MembrePartenaireResponse[]>> {
   try {
-    const result = await membresPartenaire.listByPartenaire({ partenaireId });
+    const result = await membresPartenaire.listByPartenaire({ partenaireId, pagination: undefined });
     return {
       data: result.membres || [],
       error: null,
@@ -383,7 +379,7 @@ export async function getMyRole(
   utilisateurId: string
 ): Promise<ActionResult<MembrePartenaireResponse | null>> {
   try {
-    const result = await membresPartenaire.listByUtilisateur({ utilisateurId });
+    const result = await membresPartenaire.listByUtilisateur({ utilisateurId, pagination: undefined });
     const myMember = result.membres?.find((m) => m.partenaireId === partenaireId);
     return {
       data: myMember || null,
@@ -421,7 +417,7 @@ export async function getOrganisationInvitations(
   organisationId: string
 ): Promise<ActionResult<InvitationCompteResponse[]>> {
   try {
-    const result = await invitationsCompte.listByOrganisation({ organisationId });
+    const result = await invitationsCompte.listByOrganisation({ organisationId, pagination: undefined });
     return {
       data: result.invitations || [],
       error: null,

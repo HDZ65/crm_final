@@ -26,6 +26,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Package2,
   ShoppingCart,
@@ -41,7 +42,9 @@ import {
   Plus,
 } from "lucide-react"
 import { toast } from "sonner"
-import type { Product, ProductStatus, ProductType } from "@/types/product"
+import type { Produit } from "@proto/products/products"
+import { TYPE_PRODUIT_LABELS, CATEGORIE_PRODUIT_LABELS } from "@/lib/ui/labels/product"
+import type { ProductStatus, ProductType } from "@/lib/ui/labels/product"
 import {
   createProduitDocument,
   createProduitPublication,
@@ -56,12 +59,12 @@ import type {
   ProduitDocument,
   ProduitPublication,
 } from "@proto/products/products"
-import { TypeDocumentProduit, VisibilitePublication } from "@/lib/proto/enums"
+import { TypeDocumentProduit, VisibilitePublication } from "@proto/products/products"
 import type { Societe } from "@proto/organisations/organisations"
 
 interface ProductDetailsPanelProps {
-  product: Product | null
-  onAddToCart: (product: Product) => void
+  product: Produit | null
+  onAddToCart: (product: Produit) => void
 }
 
 const statusColors: Record<ProductStatus, string> = {
@@ -217,7 +220,7 @@ export function ProductDetailsPanel({
   }, [selectedVersionId, fetchDocuments, fetchPublications])
 
   const formatDate = (value?: string) => {
-    if (!value) return "—"
+    if (!value) return "\u2014"
     return new Date(value).toLocaleDateString("fr-FR")
   }
 
@@ -428,12 +431,15 @@ export function ProductDetailsPanel({
     )
   }
 
+  const statusLabel = product.actif ? "Disponible" : "Archivé"
+  const typeLabel = TYPE_PRODUIT_LABELS[product.type] || "Interne"
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
       <div className="p-3 border-b flex items-center justify-between gap-2">
         <h2 className="text-sm font-medium text-muted-foreground truncate">
-          {product.name}
+          {product.nom}
         </h2>
         <div className="flex items-center gap-1 shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -460,7 +466,7 @@ export function ProductDetailsPanel({
           <div className="space-y-3">
             <div>
               <h1 className="text-xl font-semibold leading-tight">
-                {product.name}
+                {product.nom}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
                 Réf: {product.sku}
@@ -468,10 +474,10 @@ export function ProductDetailsPanel({
             </div>
             <div className="flex items-baseline gap-2 p-4 bg-primary/5 rounded-lg border border-primary/20">
               <span className="text-3xl font-bold text-primary">
-                {product.price.toFixed(2)}
+                {product.prix.toFixed(2)}
               </span>
               <span className="text-lg text-muted-foreground">
-                {product.currency}
+                {product.devise || "EUR"}
               </span>
               <span className="text-sm text-muted-foreground ml-auto">
                 / mois
@@ -483,59 +489,17 @@ export function ProductDetailsPanel({
           <div className="flex flex-wrap gap-2">
             <Badge
               variant="outline"
-              className={cn("border", typeColors[product.type as keyof typeof typeColors])}
+              className={cn("border", typeColors[typeLabel as keyof typeof typeColors])}
             >
-              {product.type}
+              {typeLabel}
             </Badge>
             <Badge
               variant="outline"
-              className={cn("border", statusColors[product.status as keyof typeof statusColors])}
+              className={cn("border", statusColors[statusLabel as keyof typeof statusColors])}
             >
-              {product.status}
+              {statusLabel}
             </Badge>
-            {product.supplier && (
-              <Badge variant="outline" className="border-gray-200">
-                {product.supplier}
-              </Badge>
-            )}
           </div>
-
-          {/* Low Stock Warning */}
-          {product.stock !== undefined && product.stock < 50 && (
-            <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-orange-900">
-                  Stock faible
-                </p>
-                <p className="text-xs text-orange-700">
-                  Seulement {product.stock} unité(s) disponible(s)
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Stats */}
-          {(product.stock !== undefined || product.minQuantity) && (
-            <div className="grid grid-cols-2 gap-3">
-              {product.stock !== undefined && (
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Stock disponible
-                  </p>
-                  <p className="text-lg font-bold">{product.stock}</p>
-                </div>
-              )}
-              {product.minQuantity && (
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Quantité min.
-                  </p>
-                  <p className="text-lg font-bold">{product.minQuantity}</p>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Description */}
           <div className="space-y-2">
@@ -559,7 +523,7 @@ export function ProductDetailsPanel({
               <TabsContent value="versions" className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
-                    Dernière version: {versions[0]?.version ?? "—"}
+                    Dernière version: {versions[0]?.version ?? "\u2014"}
                   </p>
                   <Button variant="outline" size="sm" onClick={openVersionDialog}>
                     <Plus className="h-4 w-4" />
@@ -591,7 +555,7 @@ export function ProductDetailsPanel({
               <TabsContent value="documents" className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
-                    Version sélectionnée: {selectedVersionId ? versions[0]?.version : "—"}
+                    Version sélectionnée: {selectedVersionId ? versions[0]?.version : "\u2014"}
                   </p>
                   <Button
                     variant="outline"
@@ -617,7 +581,7 @@ export function ProductDetailsPanel({
                         </Badge>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Type: {documentTypeLabels[doc.type] || "—"} · Publié: {formatDate(doc.publishedAt)}
+                        Type: {documentTypeLabels[doc.type] || "\u2014"} · Publié: {formatDate(doc.publishedAt)}
                       </div>
                     </div>
                   ))
@@ -627,7 +591,7 @@ export function ProductDetailsPanel({
               <TabsContent value="publications" className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
-                    Version sélectionnée: {selectedVersionId ? versions[0]?.version : "—"}
+                    Version sélectionnée: {selectedVersionId ? versions[0]?.version : "\u2014"}
                   </p>
                   <Button
                     variant="outline"
@@ -648,10 +612,10 @@ export function ProductDetailsPanel({
                     <div key={pub.id} className="rounded-lg border p-3">
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">Société: {getSocieteLabel(pub.societeId)}</div>
-                        <Badge variant="secondary">{visibiliteLabels[pub.visibilite] || "—"}</Badge>
+                        <Badge variant="secondary">{visibiliteLabels[pub.visibilite] || "\u2014"}</Badge>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Canaux: {pub.channels.join(", ") || "—"}
+                        Canaux: {pub.channels.join(", ") || "\u2014"}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         Début: {formatDate(pub.startAt)} · Fin: {formatDate(pub.endAt)}
@@ -684,28 +648,28 @@ export function ProductDetailsPanel({
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Date d'effet</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={versionForm.effectiveFrom}
-                        onChange={(event) =>
+                        onChange={(value) =>
                           setVersionForm((prev) => ({
                             ...prev,
-                            effectiveFrom: event.target.value,
+                            effectiveFrom: value,
                           }))
                         }
+                        placeholder="Sélectionnez une date"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Date de fin</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={versionForm.effectiveTo}
-                        onChange={(event) =>
+                        onChange={(value) =>
                           setVersionForm((prev) => ({
                             ...prev,
-                            effectiveTo: event.target.value,
+                            effectiveTo: value,
                           }))
                         }
+                        placeholder="Sélectionnez une date"
                       />
                     </div>
                   </div>
@@ -903,22 +867,22 @@ export function ProductDetailsPanel({
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Date début</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={publicationForm.startAt}
-                        onChange={(event) =>
-                          setPublicationForm((prev) => ({ ...prev, startAt: event.target.value }))
+                        onChange={(value) =>
+                          setPublicationForm((prev) => ({ ...prev, startAt: value }))
                         }
+                        placeholder="Sélectionnez une date"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Date fin</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={publicationForm.endAt}
-                        onChange={(event) =>
-                          setPublicationForm((prev) => ({ ...prev, endAt: event.target.value }))
+                        onChange={(value) =>
+                          setPublicationForm((prev) => ({ ...prev, endAt: value }))
                         }
+                        placeholder="Sélectionnez une date"
                       />
                     </div>
                   </div>
@@ -957,49 +921,9 @@ export function ProductDetailsPanel({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Catégorie</p>
-                  <p className="text-sm font-medium">{product.category}</p>
+                  <p className="text-sm font-medium">{CATEGORIE_PRODUIT_LABELS[product.categorie]}</p>
                 </div>
               </div>
-
-              {product.stock !== undefined && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                    <Package2 className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Stock</p>
-                    <p className="text-sm font-medium">
-                      {product.stock} unité(s)
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {product.minQuantity && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                    <Box className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">
-                      Quantité minimum
-                    </p>
-                    <p className="text-sm font-medium">{product.minQuantity}</p>
-                  </div>
-                </div>
-              )}
-
-              {product.supplier && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Fournisseur</p>
-                    <p className="text-sm font-medium">{product.supplier}</p>
-                  </div>
-                </div>
-              )}
 
               {product.createdAt && (
                 <div className="flex items-center gap-3">
@@ -1016,23 +940,6 @@ export function ProductDetailsPanel({
               )}
             </div>
           </div>
-
-          {/* Tags */}
-          {product.tags && product.tags.length > 0 && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold">Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
         </div>
       </ScrollArea>
 
@@ -1042,10 +949,10 @@ export function ProductDetailsPanel({
           className="w-full gap-2"
           size="lg"
           onClick={() => onAddToCart(product)}
-          disabled={product.status === "Rupture"}
+          disabled={!product.actif}
         >
           <ShoppingCart className="h-4 w-4" />
-          {product.status === "Sur commande" ? "Commander" : "Ajouter au panier"}
+          {product.actif ? "Ajouter au panier" : "Indisponible"}
         </Button>
         <Button variant="outline" className="w-full" size="lg">
           Voir les détails complets

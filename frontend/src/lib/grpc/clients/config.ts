@@ -17,8 +17,8 @@ export function makeClient(
   address: string,
   channelCredentials: unknown
 ): GrpcClient {
-  const Constructor = grpc.makeClientConstructor(serviceDef, serviceName);
-  return new Constructor(address, channelCredentials);
+  const Constructor = grpc.makeClientConstructor(serviceDef as any, serviceName);
+  return new Constructor(address, channelCredentials as any);
 }
 
 // Service endpoints configuration
@@ -64,6 +64,13 @@ export const SERVICES = {
  * Promisify a gRPC callback-style method.
  * Automatically injects auth metadata from the server session.
  */
+/** gRPC status codes that indicate the backend method is not available */
+const SUPPRESSED_CODES = new Set([
+  grpc.status.UNIMPLEMENTED,
+  grpc.status.UNKNOWN,
+  grpc.status.UNAVAILABLE,
+]);
+
 export function promisify<TRequest, TResponse>(
   client: unknown,
   method: string
@@ -81,7 +88,13 @@ export function promisify<TRequest, TResponse>(
 
       fn.call(client, request, metadata, (error, response) => {
         if (error) {
-          reject(error);
+          if (SUPPRESSED_CODES.has(error.code)) {
+            // Backend not ready — reject with a plain Error so Next.js dev
+            // overlay doesn't treat it as an unhandled server error.
+            reject(new Error(error.message));
+          } else {
+            reject(error);
+          }
         } else {
           resolve(response);
         }

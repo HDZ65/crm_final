@@ -7,7 +7,7 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-import { stripePromiseInstance, stripeAppearance, formatAmount, getStripeErrorMessage } from '@/lib/stripe';
+import { stripePromiseInstance, stripeAppearance, formatAmount, getStripeErrorMessage } from '@/lib/payments/stripe';
 import { useStripePayment } from '@/hooks/use-stripe-payment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

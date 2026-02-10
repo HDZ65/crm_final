@@ -2,12 +2,8 @@
 
 import { holidays } from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
-import type {
-  HolidayZoneDto,
-  HolidayDto,
-  ActionResult,
-  PaginatedResult,
-} from "@/types/calendar";
+import type { HolidayZone, Holiday } from "@proto/calendar/calendar";
+import type { ActionResult, PaginatedResult } from "@/lib/types/common";
 
 function mapHolidayZone(zone: {
   id: string;
@@ -19,14 +15,14 @@ function mapHolidayZone(zone: {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}): HolidayZoneDto {
+}): HolidayZone {
   return {
     id: zone.id,
     organisationId: zone.organisationId,
     code: zone.code,
     name: zone.name,
     countryCode: zone.countryCode,
-    regionCode: zone.regionCode || undefined,
+    regionCode: zone.regionCode,
     isActive: zone.isActive,
     createdAt: zone.createdAt,
     updatedAt: zone.updatedAt,
@@ -45,7 +41,7 @@ function mapHoliday(holiday: {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}): HolidayDto {
+}): Holiday {
   return {
     id: holiday.id,
     holidayZoneId: holiday.holidayZoneId,
@@ -53,8 +49,8 @@ function mapHoliday(holiday: {
     name: holiday.name,
     holidayType: holiday.holidayType as number,
     isRecurring: holiday.isRecurring,
-    recurringMonth: holiday.recurringMonth || undefined,
-    recurringDay: holiday.recurringDay || undefined,
+    recurringMonth: holiday.recurringMonth,
+    recurringDay: holiday.recurringDay,
     isActive: holiday.isActive,
     createdAt: holiday.createdAt,
     updatedAt: holiday.updatedAt,
@@ -66,7 +62,7 @@ export async function listHolidayZones(input: {
   countryCode?: string;
   page?: number;
   limit?: number;
-}): Promise<ActionResult<PaginatedResult<HolidayZoneDto>>> {
+}): Promise<ActionResult<PaginatedResult<HolidayZone>>> {
   try {
     const response = await holidays.listZones({
       organisationId: input.organisationId,
@@ -102,7 +98,7 @@ export async function listHolidayZones(input: {
 
 export async function getHolidayZone(
   id: string
-): Promise<ActionResult<HolidayZoneDto>> {
+): Promise<ActionResult<HolidayZone>> {
   try {
     const response = await holidays.getZone({ id });
     return { data: mapHolidayZone(response), error: null };
@@ -124,7 +120,7 @@ export async function createHolidayZone(input: {
   name: string;
   countryCode: string;
   regionCode?: string;
-}): Promise<ActionResult<HolidayZoneDto>> {
+}): Promise<ActionResult<HolidayZone>> {
   try {
     const response = await holidays.createZone({
       organisationId: input.organisationId,
@@ -154,7 +150,7 @@ export async function updateHolidayZone(input: {
   countryCode: string;
   regionCode?: string;
   isActive: boolean;
-}): Promise<ActionResult<HolidayZoneDto>> {
+}): Promise<ActionResult<HolidayZone>> {
   try {
     const response = await holidays.updateZone({
       id: input.id,
@@ -202,7 +198,7 @@ export async function listHolidays(input: {
   year?: number;
   page?: number;
   limit?: number;
-}): Promise<ActionResult<PaginatedResult<HolidayDto>>> {
+}): Promise<ActionResult<PaginatedResult<Holiday>>> {
   try {
     const response = await holidays.list({
       holidayZoneId: input.holidayZoneId,
@@ -238,7 +234,7 @@ export async function listHolidays(input: {
 
 export async function getHoliday(
   id: string
-): Promise<ActionResult<HolidayDto>> {
+): Promise<ActionResult<Holiday>> {
   try {
     const response = await holidays.get({ id });
     return { data: mapHoliday(response), error: null };
@@ -262,7 +258,7 @@ export async function createHoliday(input: {
   isRecurring: boolean;
   recurringMonth?: number;
   recurringDay?: number;
-}): Promise<ActionResult<HolidayDto>> {
+}): Promise<ActionResult<Holiday>> {
   try {
     const response = await holidays.create({
       holidayZoneId: input.holidayZoneId,
@@ -296,7 +292,7 @@ export async function updateHoliday(input: {
   recurringMonth?: number;
   recurringDay?: number;
   isActive: boolean;
-}): Promise<ActionResult<HolidayDto>> {
+}): Promise<ActionResult<Holiday>> {
   try {
     const response = await holidays.update({
       id: input.id,

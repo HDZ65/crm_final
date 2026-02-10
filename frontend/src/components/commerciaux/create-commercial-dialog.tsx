@@ -33,7 +33,7 @@ import { toast } from "sonner"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { createApporteur } from "@/actions/commerciaux"
 import { getSocietesByOrganisation } from "@/actions/catalogue"
-import { TYPE_COMMERCIAL_LABELS } from "@/types/commercial"
+import { TYPE_COMMERCIAL_LABELS } from "@/lib/ui/labels/commercial"
 import type { Societe } from "@proto/organisations/organisations"
 
 const createCommercialSchema = z.object({

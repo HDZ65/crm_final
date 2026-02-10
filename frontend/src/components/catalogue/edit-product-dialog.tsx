@@ -32,40 +32,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { CategorieProduit, TypeProduit, type Product, type UpdateProduitDto } from "@/types/product"
-import type { SocieteDto } from "@/hooks/clients"
+import {
+  CategorieProduit,
+  TypeProduit,
+  type Produit,
+  type UpdateProduitRequest,
+} from "@proto/products/products"
+import {
+  CATEGORIE_PRODUIT_LABELS,
+  TYPE_PRODUIT_LABELS,
+} from "@/lib/ui/labels/product"
+import type { Societe } from "@proto/organisations/organisations"
 
-// Mapping des strings de catégorie vers l'enum CategorieProduit
-const categoryToEnum: Record<string, CategorieProduit> = {
-  "Assistance": CategorieProduit.ASSISTANCE,
-  "Bleulec": CategorieProduit.BLEULEC,
-  "Bleulec Assur": CategorieProduit.BLEULEC_ASSUR,
-  "Décès toutes causes": CategorieProduit.DECES_TOUTES_CAUSES,
-  "Dépendance": CategorieProduit.DEPENDANCE,
-  "Garantie des accidents de la vie": CategorieProduit.GARANTIE_ACCIDENTS_VIE,
-  "Multirisques habitation": CategorieProduit.MULTIRISQUES_HABITATION,
-  "Obsèque": CategorieProduit.OBSEQUE,
-  "Protection juridique": CategorieProduit.PROTECTION_JURIDIQUE,
-  "Santé": CategorieProduit.SANTE,
-}
+// Selectable category values (excluding unspecified and unrecognized)
+const SELECTABLE_CATEGORIES = [
+  CategorieProduit.ASSURANCE,
+  CategorieProduit.PREVOYANCE,
+  CategorieProduit.EPARGNE,
+  CategorieProduit.SERVICE,
+  CategorieProduit.ACCESSOIRE,
+] as const
 
-// Mapping des strings de type vers l'enum TypeProduit
-const typeToEnum: Record<string, TypeProduit> = {
-  "Interne": TypeProduit.INTERNE,
-  "Partenaire": TypeProduit.PARTENAIRE,
-}
-
-const CATEGORIES = [
-  "Assistance",
-  "Bleulec",
-  "Bleulec Assur",
-  "Décès toutes causes",
-  "Dépendance",
-  "Garantie des accidents de la vie",
-  "Multirisques habitation",
-  "Obsèque",
-  "Protection juridique",
-  "Santé",
+// Selectable type values
+const SELECTABLE_TYPES = [
+  TypeProduit.INTERNE,
+  TypeProduit.PARTENAIRE,
 ] as const
 
 const formSchema = z.object({
@@ -73,12 +64,11 @@ const formSchema = z.object({
   sku: z.string().min(1, "Le SKU est requis"),
   nom: z.string().min(1, "Le nom est requis"),
   description: z.string().min(1, "La description est requise"),
-  categorie: z.string().min(1, "La catégorie est requise"),
-  type: z.enum(["Interne", "Partenaire"]),
+  categorie: z.coerce.number(),
+  type: z.coerce.number(),
   prix: z.coerce.number().min(0, "Le prix doit être positif"),
   tauxTVA: z.coerce.number().min(0, "Le taux doit être positif").max(100, "Le taux ne peut pas dépasser 100%"),
   devise: z.string().default("EUR"),
-  fournisseur: z.string().optional(),
   actif: z.boolean().default(true),
   // Champs promotion
   promotionActive: z.boolean().default(false),
@@ -92,9 +82,9 @@ type FormValues = z.infer<typeof formSchema>
 interface EditProductDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (id: string, data: UpdateProduitDto) => Promise<void>
-  product: Product | null
-  societes: SocieteDto[]
+  onSubmit: (id: string, data: UpdateProduitRequest) => Promise<void>
+  product: Produit | null
+  societes: Societe[]
   loading?: boolean
 }
 
@@ -114,12 +104,11 @@ export function EditProductDialog({
       sku: "",
       nom: "",
       description: "",
-      categorie: "",
-      type: "Interne",
+      categorie: CategorieProduit.ASSURANCE,
+      type: TypeProduit.INTERNE,
       prix: 0,
       tauxTVA: 20,
       devise: "EUR",
-      fournisseur: "",
       actif: true,
       promotionActive: false,
       promotionPourcentage: undefined,
@@ -134,19 +123,20 @@ export function EditProductDialog({
       form.reset({
         societeId: product.organisationId,
         sku: product.sku,
-        nom: product.name,
+        nom: product.nom,
         description: product.description,
-        categorie: product.category || "",
-        type: product.type as "Interne" | "Partenaire",
-        prix: product.price,
-        tauxTVA: product.taxRate,
-        devise: product.currency,
-        fournisseur: product.supplier || "",
+        categorie: product.categorie,
+        type: product.type,
+        prix: product.prix,
+        tauxTVA: product.tauxTva,
+        devise: product.devise || "EUR",
         actif: product.actif,
         promotionActive: product.promotionActive ?? false,
-        promotionPourcentage: product.promotionPourcentage,
-        promotionDateDebut: product.promotionDateDebut || "",
-        promotionDateFin: product.promotionDateFin || "",
+        promotionPourcentage: product.promotionActive && product.prixPromotion && product.prix > 0
+          ? Math.round((1 - product.prixPromotion / product.prix) * 100)
+          : undefined,
+        promotionDateDebut: product.dateDebutPromotion || "",
+        promotionDateFin: product.dateFinPromotion || "",
       })
     }
   }, [product, open, form])
@@ -159,8 +149,8 @@ export function EditProductDialog({
       sku: values.sku,
       nom: values.nom,
       description: values.description,
-      categorie: categoryToEnum[values.categorie],
-      type: typeToEnum[values.type],
+      categorie: values.categorie as CategorieProduit,
+      type: values.type as TypeProduit,
       prix: values.prix,
       tauxTva: values.tauxTVA,
       devise: values.devise,
@@ -255,15 +245,18 @@ export function EditProductDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value)}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionnez un type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Interne">Interne</SelectItem>
-                        <SelectItem value="Partenaire">Partenaire</SelectItem>
+                        {SELECTABLE_TYPES.map((t) => (
+                          <SelectItem key={t} value={String(t)}>
+                            {TYPE_PRODUIT_LABELS[t]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -310,16 +303,16 @@ export function EditProductDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Catégorie *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value)}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionnez une catégorie" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
+                      {SELECTABLE_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={String(cat)}>
+                          {CATEGORIE_PRODUIT_LABELS[cat]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -406,23 +399,14 @@ export function EditProductDialog({
               />
             </div>
 
-            {productType === "Partenaire" && (
-              <FormField
-                control={form.control}
-                name="fournisseur"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fournisseur / Partenaire</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nom du partenaire" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Indiquez le nom du partenaire qui fournit ce produit.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {productType === TypeProduit.PARTENAIRE && (
+              <FormItem>
+                <FormLabel>Fournisseur / Partenaire</FormLabel>
+                <Input placeholder="Nom du partenaire" disabled />
+                <FormDescription>
+                  Indiquez le nom du partenaire qui fournit ce produit.
+                </FormDescription>
+              </FormItem>
             )}
 
             <FormField

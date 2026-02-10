@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { depanssurClient } from '@/lib/grpc/clients/depanssur';
-import { DataTable } from '@/components/ui/data-table';
+import { listDossiersAction } from '@/actions/depanssur';
+import { DataTable } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -21,14 +21,17 @@ export function DossiersPageClient() {
 
   const { data: dossiers, isLoading } = useQuery({
     queryKey: ['dossiers-depanssur', search, statutFilter, typeFilter],
-    queryFn: () =>
-      depanssurClient.listDossiers({
+    queryFn: async () => {
+      const result = await listDossiersAction({
         organisationId: 'org-id', // TODO: Get from context
         search,
-        statut: statutFilter || undefined,
-        type: typeFilter || undefined,
-        pagination: { page: 1, pageSize: 50 },
-      }),
+        statut: statutFilter ? (statutFilter as any) : undefined,
+        type: typeFilter ? (typeFilter as any) : undefined,
+        pagination: { page: 1, limit: 50, sortBy: "", sortOrder: "" },
+      });
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
   });
 
   const getStatutColor = (statut: string) => {
@@ -130,7 +133,7 @@ export function DossiersPageClient() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dossiers Depanssur</h1>
+           <h1 className="text-3xl font-bold">Dossiers SAV</h1>
           <p className="text-muted-foreground">Gestion des dossiers déclaratifs</p>
         </div>
         <Button>
@@ -190,7 +193,7 @@ export function DossiersPageClient() {
       {/* Table */}
       <Card>
         <CardContent className="pt-6">
-          <DataTable columns={columns} data={dossiers?.dossiers || []} isLoading={isLoading} />
+          <DataTable data={(dossiers?.dossiers || []) as any} />
         </CardContent>
       </Card>
     </div>

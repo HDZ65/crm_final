@@ -1,0 +1,4 @@
+- 2026-02-07: `lsp_diagnostics` is blocked in this environment because the tool cannot resolve `typescript-language-server` from its own PATH context.
+- 2026-02-07: `bun run build` for `service-commercial` fails due to existing unrelated import resolution issues in gRPC controllers.
+- 2026-02-07: Installed `typescript-language-server` globally, but `lsp_diagnostics` still cannot resolve the binary in the tool runtime context.
+- 2026-02-07: For fulfillment task verification, TypeScript correctness had to be validated via `bunx tsc --noEmit` + `bun run build` because `lsp_diagnostics` remains unavailable in the current tool environment.

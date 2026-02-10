@@ -90,6 +90,12 @@ export const SERVICE_REGISTRY: Record<string, ServiceConfig> = {
     defaultPort: 50062,
     serviceName: 'OrganisationsService',
   },
+  depanssur: {
+    package: 'depanssur',
+    protoFile: 'depanssur/depanssur.proto',
+    defaultPort: 50052,
+    serviceName: 'DepanssurService',
+  },
   payments: {
     package: 'payment',
     protoFile: 'payments/payment.proto',
@@ -179,6 +185,12 @@ export const SERVICE_REGISTRY: Record<string, ServiceConfig> = {
      protoFile: 'subscriptions/subscriptions.proto',
      defaultPort: 50074,
      serviceName: 'WooCommerceService',
+   },
+   partenaires: {
+     package: 'partenaires',
+     protoFile: 'partenaires/partenaires.proto',
+     defaultPort: 50053,
+     serviceName: 'PartenaireCommercialService',
    },
    'fulfillment-batches': {
      package: 'fulfillment',

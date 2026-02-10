@@ -115,6 +115,16 @@ export interface Societe {
   numeroTva: string;
   createdAt: string;
   updatedAt: string;
+  logoUrl: string;
+  devise: string;
+  ics: string;
+  journalVente: string;
+  compteProduitDefaut: string;
+  planComptable: string;
+  adresseSiege: string;
+  telephone: string;
+  emailContact: string;
+  parametresFiscaux: string;
 }
 
 export interface CreateSocieteRequest {
@@ -122,6 +132,16 @@ export interface CreateSocieteRequest {
   raisonSociale: string;
   siren: string;
   numeroTva: string;
+  logoUrl: string;
+  devise: string;
+  ics: string;
+  journalVente: string;
+  compteProduitDefaut: string;
+  planComptable: string;
+  adresseSiege: string;
+  telephone: string;
+  emailContact: string;
+  parametresFiscaux: string;
 }
 
 export interface UpdateSocieteRequest {
@@ -129,6 +149,16 @@ export interface UpdateSocieteRequest {
   raisonSociale: string;
   siren: string;
   numeroTva: string;
+  logoUrl: string;
+  devise: string;
+  ics: string;
+  journalVente: string;
+  compteProduitDefaut: string;
+  planComptable: string;
+  adresseSiege: string;
+  telephone: string;
+  emailContact: string;
+  parametresFiscaux: string;
 }
 
 export interface GetSocieteRequest {
@@ -2012,7 +2042,25 @@ export const DeleteOrganisationRequest: MessageFns<DeleteOrganisationRequest> = 
 };
 
 function createBaseSociete(): Societe {
-  return { id: "", organisationId: "", raisonSociale: "", siren: "", numeroTva: "", createdAt: "", updatedAt: "" };
+  return {
+    id: "",
+    organisationId: "",
+    raisonSociale: "",
+    siren: "",
+    numeroTva: "",
+    createdAt: "",
+    updatedAt: "",
+    logoUrl: "",
+    devise: "",
+    ics: "",
+    journalVente: "",
+    compteProduitDefaut: "",
+    planComptable: "",
+    adresseSiege: "",
+    telephone: "",
+    emailContact: "",
+    parametresFiscaux: "",
+  };
 }
 
 export const Societe: MessageFns<Societe> = {
@@ -2037,6 +2085,36 @@ export const Societe: MessageFns<Societe> = {
     }
     if (message.updatedAt !== "") {
       writer.uint32(58).string(message.updatedAt);
+    }
+    if (message.logoUrl !== "") {
+      writer.uint32(66).string(message.logoUrl);
+    }
+    if (message.devise !== "") {
+      writer.uint32(74).string(message.devise);
+    }
+    if (message.ics !== "") {
+      writer.uint32(82).string(message.ics);
+    }
+    if (message.journalVente !== "") {
+      writer.uint32(90).string(message.journalVente);
+    }
+    if (message.compteProduitDefaut !== "") {
+      writer.uint32(98).string(message.compteProduitDefaut);
+    }
+    if (message.planComptable !== "") {
+      writer.uint32(106).string(message.planComptable);
+    }
+    if (message.adresseSiege !== "") {
+      writer.uint32(114).string(message.adresseSiege);
+    }
+    if (message.telephone !== "") {
+      writer.uint32(122).string(message.telephone);
+    }
+    if (message.emailContact !== "") {
+      writer.uint32(130).string(message.emailContact);
+    }
+    if (message.parametresFiscaux !== "") {
+      writer.uint32(138).string(message.parametresFiscaux);
     }
     return writer;
   },
@@ -2104,6 +2182,86 @@ export const Societe: MessageFns<Societe> = {
           message.updatedAt = reader.string();
           continue;
         }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.logoUrl = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.devise = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.ics = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.journalVente = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.compteProduitDefaut = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.planComptable = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.adresseSiege = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.telephone = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.emailContact = reader.string();
+          continue;
+        }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.parametresFiscaux = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2142,6 +2300,44 @@ export const Societe: MessageFns<Societe> = {
         : isSet(object.updated_at)
         ? globalThis.String(object.updated_at)
         : "",
+      logoUrl: isSet(object.logoUrl)
+        ? globalThis.String(object.logoUrl)
+        : isSet(object.logo_url)
+        ? globalThis.String(object.logo_url)
+        : "",
+      devise: isSet(object.devise) ? globalThis.String(object.devise) : "",
+      ics: isSet(object.ics) ? globalThis.String(object.ics) : "",
+      journalVente: isSet(object.journalVente)
+        ? globalThis.String(object.journalVente)
+        : isSet(object.journal_vente)
+        ? globalThis.String(object.journal_vente)
+        : "",
+      compteProduitDefaut: isSet(object.compteProduitDefaut)
+        ? globalThis.String(object.compteProduitDefaut)
+        : isSet(object.compte_produit_defaut)
+        ? globalThis.String(object.compte_produit_defaut)
+        : "",
+      planComptable: isSet(object.planComptable)
+        ? globalThis.String(object.planComptable)
+        : isSet(object.plan_comptable)
+        ? globalThis.String(object.plan_comptable)
+        : "",
+      adresseSiege: isSet(object.adresseSiege)
+        ? globalThis.String(object.adresseSiege)
+        : isSet(object.adresse_siege)
+        ? globalThis.String(object.adresse_siege)
+        : "",
+      telephone: isSet(object.telephone) ? globalThis.String(object.telephone) : "",
+      emailContact: isSet(object.emailContact)
+        ? globalThis.String(object.emailContact)
+        : isSet(object.email_contact)
+        ? globalThis.String(object.email_contact)
+        : "",
+      parametresFiscaux: isSet(object.parametresFiscaux)
+        ? globalThis.String(object.parametresFiscaux)
+        : isSet(object.parametres_fiscaux)
+        ? globalThis.String(object.parametres_fiscaux)
+        : "",
     };
   },
 
@@ -2168,6 +2364,36 @@ export const Societe: MessageFns<Societe> = {
     if (message.updatedAt !== "") {
       obj.updatedAt = message.updatedAt;
     }
+    if (message.logoUrl !== "") {
+      obj.logoUrl = message.logoUrl;
+    }
+    if (message.devise !== "") {
+      obj.devise = message.devise;
+    }
+    if (message.ics !== "") {
+      obj.ics = message.ics;
+    }
+    if (message.journalVente !== "") {
+      obj.journalVente = message.journalVente;
+    }
+    if (message.compteProduitDefaut !== "") {
+      obj.compteProduitDefaut = message.compteProduitDefaut;
+    }
+    if (message.planComptable !== "") {
+      obj.planComptable = message.planComptable;
+    }
+    if (message.adresseSiege !== "") {
+      obj.adresseSiege = message.adresseSiege;
+    }
+    if (message.telephone !== "") {
+      obj.telephone = message.telephone;
+    }
+    if (message.emailContact !== "") {
+      obj.emailContact = message.emailContact;
+    }
+    if (message.parametresFiscaux !== "") {
+      obj.parametresFiscaux = message.parametresFiscaux;
+    }
     return obj;
   },
 
@@ -2183,12 +2409,37 @@ export const Societe: MessageFns<Societe> = {
     message.numeroTva = object.numeroTva ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
+    message.logoUrl = object.logoUrl ?? "";
+    message.devise = object.devise ?? "";
+    message.ics = object.ics ?? "";
+    message.journalVente = object.journalVente ?? "";
+    message.compteProduitDefaut = object.compteProduitDefaut ?? "";
+    message.planComptable = object.planComptable ?? "";
+    message.adresseSiege = object.adresseSiege ?? "";
+    message.telephone = object.telephone ?? "";
+    message.emailContact = object.emailContact ?? "";
+    message.parametresFiscaux = object.parametresFiscaux ?? "";
     return message;
   },
 };
 
 function createBaseCreateSocieteRequest(): CreateSocieteRequest {
-  return { organisationId: "", raisonSociale: "", siren: "", numeroTva: "" };
+  return {
+    organisationId: "",
+    raisonSociale: "",
+    siren: "",
+    numeroTva: "",
+    logoUrl: "",
+    devise: "",
+    ics: "",
+    journalVente: "",
+    compteProduitDefaut: "",
+    planComptable: "",
+    adresseSiege: "",
+    telephone: "",
+    emailContact: "",
+    parametresFiscaux: "",
+  };
 }
 
 export const CreateSocieteRequest: MessageFns<CreateSocieteRequest> = {
@@ -2204,6 +2455,36 @@ export const CreateSocieteRequest: MessageFns<CreateSocieteRequest> = {
     }
     if (message.numeroTva !== "") {
       writer.uint32(34).string(message.numeroTva);
+    }
+    if (message.logoUrl !== "") {
+      writer.uint32(42).string(message.logoUrl);
+    }
+    if (message.devise !== "") {
+      writer.uint32(50).string(message.devise);
+    }
+    if (message.ics !== "") {
+      writer.uint32(58).string(message.ics);
+    }
+    if (message.journalVente !== "") {
+      writer.uint32(66).string(message.journalVente);
+    }
+    if (message.compteProduitDefaut !== "") {
+      writer.uint32(74).string(message.compteProduitDefaut);
+    }
+    if (message.planComptable !== "") {
+      writer.uint32(82).string(message.planComptable);
+    }
+    if (message.adresseSiege !== "") {
+      writer.uint32(90).string(message.adresseSiege);
+    }
+    if (message.telephone !== "") {
+      writer.uint32(98).string(message.telephone);
+    }
+    if (message.emailContact !== "") {
+      writer.uint32(106).string(message.emailContact);
+    }
+    if (message.parametresFiscaux !== "") {
+      writer.uint32(114).string(message.parametresFiscaux);
     }
     return writer;
   },
@@ -2247,6 +2528,86 @@ export const CreateSocieteRequest: MessageFns<CreateSocieteRequest> = {
           message.numeroTva = reader.string();
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.logoUrl = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.devise = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.ics = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.journalVente = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.compteProduitDefaut = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.planComptable = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.adresseSiege = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.telephone = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.emailContact = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.parametresFiscaux = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2274,6 +2635,44 @@ export const CreateSocieteRequest: MessageFns<CreateSocieteRequest> = {
         : isSet(object.numero_tva)
         ? globalThis.String(object.numero_tva)
         : "",
+      logoUrl: isSet(object.logoUrl)
+        ? globalThis.String(object.logoUrl)
+        : isSet(object.logo_url)
+        ? globalThis.String(object.logo_url)
+        : "",
+      devise: isSet(object.devise) ? globalThis.String(object.devise) : "",
+      ics: isSet(object.ics) ? globalThis.String(object.ics) : "",
+      journalVente: isSet(object.journalVente)
+        ? globalThis.String(object.journalVente)
+        : isSet(object.journal_vente)
+        ? globalThis.String(object.journal_vente)
+        : "",
+      compteProduitDefaut: isSet(object.compteProduitDefaut)
+        ? globalThis.String(object.compteProduitDefaut)
+        : isSet(object.compte_produit_defaut)
+        ? globalThis.String(object.compte_produit_defaut)
+        : "",
+      planComptable: isSet(object.planComptable)
+        ? globalThis.String(object.planComptable)
+        : isSet(object.plan_comptable)
+        ? globalThis.String(object.plan_comptable)
+        : "",
+      adresseSiege: isSet(object.adresseSiege)
+        ? globalThis.String(object.adresseSiege)
+        : isSet(object.adresse_siege)
+        ? globalThis.String(object.adresse_siege)
+        : "",
+      telephone: isSet(object.telephone) ? globalThis.String(object.telephone) : "",
+      emailContact: isSet(object.emailContact)
+        ? globalThis.String(object.emailContact)
+        : isSet(object.email_contact)
+        ? globalThis.String(object.email_contact)
+        : "",
+      parametresFiscaux: isSet(object.parametresFiscaux)
+        ? globalThis.String(object.parametresFiscaux)
+        : isSet(object.parametres_fiscaux)
+        ? globalThis.String(object.parametres_fiscaux)
+        : "",
     };
   },
 
@@ -2291,6 +2690,36 @@ export const CreateSocieteRequest: MessageFns<CreateSocieteRequest> = {
     if (message.numeroTva !== "") {
       obj.numeroTva = message.numeroTva;
     }
+    if (message.logoUrl !== "") {
+      obj.logoUrl = message.logoUrl;
+    }
+    if (message.devise !== "") {
+      obj.devise = message.devise;
+    }
+    if (message.ics !== "") {
+      obj.ics = message.ics;
+    }
+    if (message.journalVente !== "") {
+      obj.journalVente = message.journalVente;
+    }
+    if (message.compteProduitDefaut !== "") {
+      obj.compteProduitDefaut = message.compteProduitDefaut;
+    }
+    if (message.planComptable !== "") {
+      obj.planComptable = message.planComptable;
+    }
+    if (message.adresseSiege !== "") {
+      obj.adresseSiege = message.adresseSiege;
+    }
+    if (message.telephone !== "") {
+      obj.telephone = message.telephone;
+    }
+    if (message.emailContact !== "") {
+      obj.emailContact = message.emailContact;
+    }
+    if (message.parametresFiscaux !== "") {
+      obj.parametresFiscaux = message.parametresFiscaux;
+    }
     return obj;
   },
 
@@ -2303,12 +2732,37 @@ export const CreateSocieteRequest: MessageFns<CreateSocieteRequest> = {
     message.raisonSociale = object.raisonSociale ?? "";
     message.siren = object.siren ?? "";
     message.numeroTva = object.numeroTva ?? "";
+    message.logoUrl = object.logoUrl ?? "";
+    message.devise = object.devise ?? "";
+    message.ics = object.ics ?? "";
+    message.journalVente = object.journalVente ?? "";
+    message.compteProduitDefaut = object.compteProduitDefaut ?? "";
+    message.planComptable = object.planComptable ?? "";
+    message.adresseSiege = object.adresseSiege ?? "";
+    message.telephone = object.telephone ?? "";
+    message.emailContact = object.emailContact ?? "";
+    message.parametresFiscaux = object.parametresFiscaux ?? "";
     return message;
   },
 };
 
 function createBaseUpdateSocieteRequest(): UpdateSocieteRequest {
-  return { id: "", raisonSociale: "", siren: "", numeroTva: "" };
+  return {
+    id: "",
+    raisonSociale: "",
+    siren: "",
+    numeroTva: "",
+    logoUrl: "",
+    devise: "",
+    ics: "",
+    journalVente: "",
+    compteProduitDefaut: "",
+    planComptable: "",
+    adresseSiege: "",
+    telephone: "",
+    emailContact: "",
+    parametresFiscaux: "",
+  };
 }
 
 export const UpdateSocieteRequest: MessageFns<UpdateSocieteRequest> = {
@@ -2324,6 +2778,36 @@ export const UpdateSocieteRequest: MessageFns<UpdateSocieteRequest> = {
     }
     if (message.numeroTva !== "") {
       writer.uint32(34).string(message.numeroTva);
+    }
+    if (message.logoUrl !== "") {
+      writer.uint32(42).string(message.logoUrl);
+    }
+    if (message.devise !== "") {
+      writer.uint32(50).string(message.devise);
+    }
+    if (message.ics !== "") {
+      writer.uint32(58).string(message.ics);
+    }
+    if (message.journalVente !== "") {
+      writer.uint32(66).string(message.journalVente);
+    }
+    if (message.compteProduitDefaut !== "") {
+      writer.uint32(74).string(message.compteProduitDefaut);
+    }
+    if (message.planComptable !== "") {
+      writer.uint32(82).string(message.planComptable);
+    }
+    if (message.adresseSiege !== "") {
+      writer.uint32(90).string(message.adresseSiege);
+    }
+    if (message.telephone !== "") {
+      writer.uint32(98).string(message.telephone);
+    }
+    if (message.emailContact !== "") {
+      writer.uint32(106).string(message.emailContact);
+    }
+    if (message.parametresFiscaux !== "") {
+      writer.uint32(114).string(message.parametresFiscaux);
     }
     return writer;
   },
@@ -2367,6 +2851,86 @@ export const UpdateSocieteRequest: MessageFns<UpdateSocieteRequest> = {
           message.numeroTva = reader.string();
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.logoUrl = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.devise = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.ics = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.journalVente = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.compteProduitDefaut = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.planComptable = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.adresseSiege = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.telephone = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.emailContact = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.parametresFiscaux = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2390,6 +2954,44 @@ export const UpdateSocieteRequest: MessageFns<UpdateSocieteRequest> = {
         : isSet(object.numero_tva)
         ? globalThis.String(object.numero_tva)
         : "",
+      logoUrl: isSet(object.logoUrl)
+        ? globalThis.String(object.logoUrl)
+        : isSet(object.logo_url)
+        ? globalThis.String(object.logo_url)
+        : "",
+      devise: isSet(object.devise) ? globalThis.String(object.devise) : "",
+      ics: isSet(object.ics) ? globalThis.String(object.ics) : "",
+      journalVente: isSet(object.journalVente)
+        ? globalThis.String(object.journalVente)
+        : isSet(object.journal_vente)
+        ? globalThis.String(object.journal_vente)
+        : "",
+      compteProduitDefaut: isSet(object.compteProduitDefaut)
+        ? globalThis.String(object.compteProduitDefaut)
+        : isSet(object.compte_produit_defaut)
+        ? globalThis.String(object.compte_produit_defaut)
+        : "",
+      planComptable: isSet(object.planComptable)
+        ? globalThis.String(object.planComptable)
+        : isSet(object.plan_comptable)
+        ? globalThis.String(object.plan_comptable)
+        : "",
+      adresseSiege: isSet(object.adresseSiege)
+        ? globalThis.String(object.adresseSiege)
+        : isSet(object.adresse_siege)
+        ? globalThis.String(object.adresse_siege)
+        : "",
+      telephone: isSet(object.telephone) ? globalThis.String(object.telephone) : "",
+      emailContact: isSet(object.emailContact)
+        ? globalThis.String(object.emailContact)
+        : isSet(object.email_contact)
+        ? globalThis.String(object.email_contact)
+        : "",
+      parametresFiscaux: isSet(object.parametresFiscaux)
+        ? globalThis.String(object.parametresFiscaux)
+        : isSet(object.parametres_fiscaux)
+        ? globalThis.String(object.parametres_fiscaux)
+        : "",
     };
   },
 
@@ -2407,6 +3009,36 @@ export const UpdateSocieteRequest: MessageFns<UpdateSocieteRequest> = {
     if (message.numeroTva !== "") {
       obj.numeroTva = message.numeroTva;
     }
+    if (message.logoUrl !== "") {
+      obj.logoUrl = message.logoUrl;
+    }
+    if (message.devise !== "") {
+      obj.devise = message.devise;
+    }
+    if (message.ics !== "") {
+      obj.ics = message.ics;
+    }
+    if (message.journalVente !== "") {
+      obj.journalVente = message.journalVente;
+    }
+    if (message.compteProduitDefaut !== "") {
+      obj.compteProduitDefaut = message.compteProduitDefaut;
+    }
+    if (message.planComptable !== "") {
+      obj.planComptable = message.planComptable;
+    }
+    if (message.adresseSiege !== "") {
+      obj.adresseSiege = message.adresseSiege;
+    }
+    if (message.telephone !== "") {
+      obj.telephone = message.telephone;
+    }
+    if (message.emailContact !== "") {
+      obj.emailContact = message.emailContact;
+    }
+    if (message.parametresFiscaux !== "") {
+      obj.parametresFiscaux = message.parametresFiscaux;
+    }
     return obj;
   },
 
@@ -2419,6 +3051,16 @@ export const UpdateSocieteRequest: MessageFns<UpdateSocieteRequest> = {
     message.raisonSociale = object.raisonSociale ?? "";
     message.siren = object.siren ?? "";
     message.numeroTva = object.numeroTva ?? "";
+    message.logoUrl = object.logoUrl ?? "";
+    message.devise = object.devise ?? "";
+    message.ics = object.ics ?? "";
+    message.journalVente = object.journalVente ?? "";
+    message.compteProduitDefaut = object.compteProduitDefaut ?? "";
+    message.planComptable = object.planComptable ?? "";
+    message.adresseSiege = object.adresseSiege ?? "";
+    message.telephone = object.telephone ?? "";
+    message.emailContact = object.emailContact ?? "";
+    message.parametresFiscaux = object.parametresFiscaux ?? "";
     return message;
   },
 };

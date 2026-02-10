@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table"
 import { listExportJobs } from "@/actions/exports"
 import { toast } from "sonner"
-import { Archive, RefreshCw, Search } from "lucide-react"
+import { RefreshCw, Search } from "lucide-react"
 
 interface ArchivesPageClientProps {
   initialArchives?: any[] | null
@@ -42,7 +42,7 @@ export function ArchivesPageClient({ initialArchives, initialSocieteId }: Archiv
     }
 
     setLoading(true)
-    const result = await listExportJobs({ societeId, status: "COMPLETED", page: 1, pageSize: 100 } as any)
+    const result = await listExportJobs({ societeId, status: "COMPLETED", page: 1, limit: 100 } as any)
     if (result.error) {
       toast.error(result.error)
     } else {
@@ -65,17 +65,11 @@ export function ArchivesPageClient({ initialArchives, initialSocieteId }: Archiv
   }, [archives, search])
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <Archive className="size-6" />
-            Archives paiements
-          </h1>
-          <p className="text-muted-foreground">
-            Consultez les archives de paiements exportes (lecture seule).
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Consultez les archives de paiements exportes (lecture seule).
+        </p>
         <Button variant="outline" onClick={fetchArchives} disabled={loading || !societeId}>
           <RefreshCw className="mr-2 size-4" />
           Actualiser
@@ -162,6 +156,6 @@ export function ArchivesPageClient({ initialArchives, initialSocieteId }: Archiv
           </Table>
         </CardContent>
       </Card>
-    </main>
+    </div>
   )
 }

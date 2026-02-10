@@ -17,10 +17,10 @@ import {
 } from './domain/calendar/entities';
 
 // Infrastructure services
-import { ConfigurationService } from './infrastructure/persistence/typeorm/repositories/calendar';
+import { ConfigurationService, CalendarAdminService } from './infrastructure/persistence/typeorm/repositories/calendar';
 
 // Interface controllers
-import { ConfigurationController } from './interfaces/grpc/controllers/calendar';
+import { ConfigurationController, CalendarAdminController } from './infrastructure/grpc/calendar';
 
 @Module({
   imports: [
@@ -40,12 +40,15 @@ import { ConfigurationController } from './interfaces/grpc/controllers/calendar'
   ],
   controllers: [
     ConfigurationController,
+    CalendarAdminController,
   ],
   providers: [
     ConfigurationService,
+    CalendarAdminService,
   ],
   exports: [
     ConfigurationService,
+    CalendarAdminService,
   ],
 })
 export class CalendarModule {}

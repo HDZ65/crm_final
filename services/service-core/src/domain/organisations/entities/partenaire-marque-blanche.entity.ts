@@ -31,11 +31,17 @@ export class PartenaireMarqueBlancheEntity {
   @Column({ type: 'varchar', length: 50 })
   telephone: string;
 
-  @Column({ name: 'statut_id', type: 'uuid' })
-  statutId: string;
+   @Column({ name: 'statut_id', type: 'uuid' })
+   statutId: string;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+   createdBy: string | null;
+
+   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+   modifiedBy: string | null;
+
+   @CreateDateColumn({ name: 'created_at' })
+   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

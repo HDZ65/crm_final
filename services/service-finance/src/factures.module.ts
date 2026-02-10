@@ -15,10 +15,14 @@ import {
 } from './domain/factures/entities';
 
 // Infrastructure services
-import { FactureService } from './infrastructure/persistence/typeorm/repositories/factures';
+import {
+  ConsolidatedBillingService,
+  FactureService,
+} from './infrastructure/persistence/typeorm/repositories/factures';
+import { BundlePriceRecalculatedHandler } from './infrastructure/messaging/nats/handlers';
 
 // Interface controllers
-import { FactureController } from './interfaces/grpc/controllers/factures';
+import { FactureController, StatutFactureController } from './infrastructure/grpc/factures';
 
 @Module({
   imports: [
@@ -36,12 +40,16 @@ import { FactureController } from './interfaces/grpc/controllers/factures';
   ],
   controllers: [
     FactureController,
+    StatutFactureController,
   ],
   providers: [
     FactureService,
+    ConsolidatedBillingService,
+    BundlePriceRecalculatedHandler,
   ],
   exports: [
     FactureService,
+    ConsolidatedBillingService,
   ],
 })
 export class FacturesModule {}

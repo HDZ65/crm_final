@@ -13,14 +13,11 @@ import {
   BoiteMailService,
 } from './infrastructure/persistence/typeorm/repositories/documents';
 
-// Infrastructure handlers
-import { ContractSignedHandler } from './infrastructure/messaging/nats/handlers';
-
 // Interface controllers
 import {
   PieceJointeController,
   BoiteMailController,
-} from './interfaces/grpc/controllers/documents';
+} from './infrastructure/grpc/documents';
 
 @Module({
   imports: [
@@ -36,7 +33,6 @@ import {
   providers: [
     PieceJointeService,
     BoiteMailService,
-    ContractSignedHandler,
   ],
   exports: [
     PieceJointeService,

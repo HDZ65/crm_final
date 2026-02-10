@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useStripePayment } from '@/hooks/use-stripe-payment';
-import { formatAmount } from '@/lib/stripe';
+import { formatAmount } from '@/lib/payments/stripe';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ExternalLink, AlertCircle } from 'lucide-react';

@@ -38,27 +38,22 @@ import {
   Download,
 } from "lucide-react"
 import type {
-  BordereauWithDetailsResponseDto,
+  BordereauWithDetails,
   StatutBordereau,
   TypeApporteur,
-  LigneBordereauResponseDto,
-} from "@/types/commission"
+  LigneBordereauDisplay,
+} from "@/lib/ui/display-types/commission"
+import { formatMontant, parseMontant } from "@/lib/ui/helpers/format"
 import { useLignesBordereau } from "@/hooks"
 
 interface BordereauxListProps {
-  bordereaux: BordereauWithDetailsResponseDto[]
+  bordereaux: BordereauWithDetails[]
   loading?: boolean
   onValidate?: (bordereauId: string) => Promise<void>
   onExportPDF?: (bordereauId: string) => Promise<void>
   onExportExcel?: (bordereauId: string) => Promise<void>
 }
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(amount)
-}
 
 const formatDate = (date: Date | string | null) => {
   if (!date) return "—"
@@ -110,7 +105,7 @@ export function BordereauxList({
   onExportExcel,
 }: BordereauxListProps) {
   const [detailDialogOpen, setDetailDialogOpen] = React.useState(false)
-  const [selectedBordereau, setSelectedBordereau] = React.useState<BordereauWithDetailsResponseDto | null>(null)
+  const [selectedBordereau, setSelectedBordereau] = React.useState<BordereauWithDetails | null>(null)
   const [validating, setValidating] = React.useState<string | null>(null)
   const [exporting, setExporting] = React.useState<string | null>(null)
 
@@ -119,7 +114,7 @@ export function BordereauxList({
     selectedBordereau ? { bordereauId: selectedBordereau.id } : null
   )
 
-  const handleViewDetails = (bordereau: BordereauWithDetailsResponseDto) => {
+  const handleViewDetails = (bordereau: BordereauWithDetails) => {
     setSelectedBordereau(bordereau)
     setDetailDialogOpen(true)
   }
@@ -154,7 +149,7 @@ export function BordereauxList({
     }
   }
 
-  const columns: ColumnDef<BordereauWithDetailsResponseDto>[] = [
+  const columns: ColumnDef<BordereauWithDetails>[] = [
     {
       accessorKey: "reference",
       header: "Référence",
@@ -210,7 +205,7 @@ export function BordereauxList({
       accessorKey: "totalBrut",
       header: "Total brut",
       cell: ({ row }) => (
-        <div className="font-medium text-success">{formatCurrency(row.original.totalBrut)}</div>
+        <div className="font-medium text-success">{formatMontant(row.original.totalBrut)}</div>
       ),
       size: 120,
     },
@@ -219,8 +214,8 @@ export function BordereauxList({
       header: "Reprises",
       cell: ({ row }) => {
         const reprises = row.original.totalReprises
-        if (reprises === 0) return <div className="text-muted-foreground">—</div>
-        return <div className="font-medium text-destructive">{formatCurrency(-reprises)}</div>
+        if (parseMontant(reprises) === 0) return <div className="text-muted-foreground">--</div>
+        return <div className="font-medium text-destructive">{formatMontant(String(-parseMontant(reprises)))}</div>
       },
       size: 100,
     },
@@ -228,7 +223,7 @@ export function BordereauxList({
       accessorKey: "totalNetAPayer",
       header: "Net à payer",
       cell: ({ row }) => (
-        <div className="font-bold text-info text-base">{formatCurrency(row.original.totalNetAPayer)}</div>
+        <div className="font-bold text-info text-base">{formatMontant(row.original.totalNetAPayer)}</div>
       ),
       size: 130,
     },
@@ -384,19 +379,19 @@ export function BordereauxList({
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="p-3 bg-success/10 rounded-lg border border-success/20">
                       <span className="text-xs text-success">Total brut</span>
-                      <p className="text-lg font-bold text-success">{formatCurrency(selectedBordereau.totalBrut)}</p>
+                      <p className="text-lg font-bold text-success">{formatMontant(selectedBordereau.totalBrut)}</p>
                     </div>
                     <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                       <span className="text-xs text-destructive">Reprises</span>
-                      <p className="text-lg font-bold text-destructive">{formatCurrency(-selectedBordereau.totalReprises)}</p>
+                      <p className="text-lg font-bold text-destructive">{formatMontant(String(-parseMontant(selectedBordereau.totalReprises)))}</p>
                     </div>
                     <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
                       <span className="text-xs text-warning">Acomptes</span>
-                      <p className="text-lg font-bold text-warning">{formatCurrency(-selectedBordereau.totalAcomptes)}</p>
+                      <p className="text-lg font-bold text-warning">{formatMontant(String(-parseMontant(selectedBordereau.totalAcomptes)))}</p>
                     </div>
                     <div className="p-3 bg-info/10 rounded-lg border-2 border-info/30">
                       <span className="text-xs text-info">Net à payer</span>
-                      <p className="text-xl font-bold text-info">{formatCurrency(selectedBordereau.totalNetAPayer)}</p>
+                      <p className="text-xl font-bold text-info">{formatMontant(selectedBordereau.totalNetAPayer)}</p>
                     </div>
                   </div>
                 </div>
@@ -425,7 +420,7 @@ export function BordereauxList({
                           </tr>
                         </thead>
                         <tbody>
-                          {lignes.map((ligne: LigneBordereauResponseDto) => (
+                          {lignes.map((ligne: LigneBordereauDisplay) => (
                             <tr key={ligne.id} className="border-t">
                               <td className="p-2 font-mono text-xs">{ligne.contratReference}</td>
                               <td className="p-2 text-muted-foreground">{ligne.clientNom || "—"}</td>
@@ -434,11 +429,11 @@ export function BordereauxList({
                                   {ligne.typeLigne}
                                 </Badge>
                               </td>
-                              <td className="p-2 text-right text-success">{formatCurrency(ligne.montantBrut)}</td>
+                              <td className="p-2 text-right text-success">{formatMontant(ligne.montantBrut)}</td>
                               <td className="p-2 text-right text-destructive">
-                                {ligne.montantReprise !== 0 ? formatCurrency(ligne.montantReprise) : "—"}
+                                {parseMontant(ligne.montantReprise) !== 0 ? formatMontant(ligne.montantReprise) : "--"}
                               </td>
-                              <td className="p-2 text-right font-medium">{formatCurrency(ligne.montantNet)}</td>
+                              <td className="p-2 text-right font-medium">{formatMontant(ligne.montantNet)}</td>
                               <td className="p-2 text-center">
                                 {ligne.selectionne ? (
                                   <CheckCircle2 className="size-4 text-success inline" />

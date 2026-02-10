@@ -1,3 +1,4 @@
+// @ts-expect-error -- consul package is an optional dependency for service discovery
 import Consul from "consul";
 
 const CONSUL_HOST = process.env.CONSUL_HOST;

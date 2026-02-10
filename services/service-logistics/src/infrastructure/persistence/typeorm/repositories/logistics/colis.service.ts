@@ -2,10 +2,9 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ColisEntity } from '../../../../../domain/logistics/entities';
-import type { IColisService } from '../../../../../application/logistics/ports';
 
 @Injectable()
-export class ColisService implements IColisService {
+export class ColisService {
   private readonly logger = new Logger(ColisService.name);
 
   constructor(

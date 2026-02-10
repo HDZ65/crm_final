@@ -1,0 +1,2212 @@
+1. Présentation & Objectifs
+1.1 Contexte du projet
+Le module de gestion des paiements du groupe Winvest Capital a pour objectif d’assurer la gestion complète, centralisée et sécurisée des paiements clients, couvrant l’ensemble des sociétés du groupe : France Téléphone, Mondial TV, Action Prévoyance, et les futures entités à venir.
+Ce module constitue une brique essentielle du CRM global du groupe, permettant la consolidation des flux financiers, la traçabilité des transactions et la conformité avec les réglementations européennes (SEPA, DSP2, RGPD, PCI-DSS).
+Il vise à remplacer les outils fragmentés ou semi-automatisés actuellement utilisés pour le traitement des prélèvements SEPA et des paiements par carte bancaire, en les unifiant dans un système unique, piloté et supervisé par la Direction Financière.
+Ce projet s’inscrit dans une démarche d’automatisation globale du groupe, en lien direct avec les modules Contrats, Clients, Comptabilité, et Reporting Financier.
+1.2 Objectifs
+Le module doit permettre de :
+•	Centraliser la gestion des paiements SEPA et cartes bancaires au sein d’un environnement unique.
+•	Connecter plusieurs fournisseurs de paiement (Slimpay, MultiSafepay, Emerchantpay, GoCardless) via API sécurisées.
+•	Automatiser les opérations critiques : émission, réémission, suivi et archivage des paiements.
+•	Routage dynamique : permettre à la Direction Financière de définir et ajuster les règles de répartition entre fournisseurs selon les canaux d’acquisition, la date de souscription, le type de contrat ou le montant.
+•	Assurer la conformité légale (SEPA Rulebook, CNIL, RGPD, DSP2, PCI-DSS).
+•	Garantir la performance et la fiabilité : traitement massif de paiements en simultané (> 10 000 transactions/jour) avec supervision et alertes.
+1.3 Utilisateurs concernés
+Le module sera utilisé par plusieurs départements clés :
+•	ADV (Administration des ventes) : émission et suivi quotidien des paiements, relances, gestion des rejets.
+•	Comptabilité : export comptable, rapprochement bancaire automatique (CAMT.053), reporting financier.
+•	Direction Financière : paramétrage et pilotage des fournisseurs, supervision du routage et contrôle des performances.
+•	IT / Infrastructure : maintenance, monitoring des API, sécurité, supervision des flux et alertes techniques.
+Le module doit être conçu pour permettre une interopérabilité totale entre ces profils, avec des accès différenciés (RBAC) et une interface adaptée à chaque fonction.
+2. Architecture fonctionnelle (version mise à jour avec calendrier de prélèvements)
+2.1 Schéma global
+Le module de gestion des paiements repose sur une architecture modulaire, pensée pour la scalabilité, la résilience et la traçabilité. Il s’intègre nativement avec le CRM interne du groupe Winvest Capital.
+Entités principales
+•	Clients : identifiés de manière unique, rattachés à une société du groupe.
+•	Contrats : contiennent les informations commerciales, les produits, les dates d’échéance, le fournisseur par défaut, le jour de prélèvement et le lot (L1–L4).
+•	Calendrier de prélèvements (Calendar Engine) : calcule les dates de prélèvement (planned_debit_date) à partir du jour fixe ou du lot défini dans le contrat ou le client.
+•	Mandats SEPA : stockent les références RUM, les informations IBAN/BIC chiffrées et le type de signature (électronique, papier ou vocale).
+•	Paiements : représentent chaque opération financière (émission, réémission, remboursement, annulation) avec sa date planifiée.
+•	Fournisseurs PSP : prestataires connectés via API sécurisée (Slimpay, MultiSafepay, Emerchantpay, GoCardless).
+•	Moteur de routage & scoring (optionnel) : évalue la fiabilité client et peut modifier la date ou le PSP d’émission selon le risque d’impayé.
+Interconnexions
+•	CRM interne ↔ Module Paiements : communication bidirectionnelle via API REST interne et webhooks.
+•	Module Paiements ↔ Fournisseurs PSP : intégration API pour émission, suivi et mise à jour automatique des statuts.
+•	Module Paiements ↔ Comptabilité : export automatique des écritures et rapprochement bancaire.
+•	Module Paiements ↔ Moteur Scoring (IA) : option d’analyse prédictive pour réorganisation automatique des lots à risque.
+Flux général
+Création du contrat
+   ↓
+Affectation du jour/lot de prélèvement (Calendar Engine)
+   ↓
+Génération du paiement (planned_debit_date)
+   ↓
+Émission automatique à la date planifiée
+   ↓
+Retour fournisseur (webhook) → mise à jour du statut
+   ↓
+Archivage, réémission ou reporting selon le statut final
+Ce flux permet une planification proactive et un lissage mensuel des volumes de prélèvements.
+________________________________________
+2.2 Processus métier
+Étape 1 : Création du contrat
+•	Lors de la validation d’un contrat, le module crée automatiquement un mandat SEPA et l’associe au client.
+•	Le contrat définit : le produit, le montant, le mode de paiement, le fournisseur par défaut (si applicable), le jour de prélèvement (preferred_debit_day) et/ou le lot (debit_lot_code).
+•	Le RUM est généré automatiquement selon le format défini {ICS}-{ContractID}-{YYYY}.
+Étape 2 : Génération du paiement et planification
+•	Chaque contrat actif génère un paiement planifié selon son jour de prélèvement ou son lot.
+•	Le moteur de calendrier (Calendar Engine) calcule et enregistre la date planifiée (planned_debit_date).
+•	Si aucun jour n’est défini, le module applique la configuration par défaut de la société (company_settings.debit_calendar).
+•	Le paiement reste en statut PENDING jusqu’à l’émission.
+Étape 3 : Émission automatique à la date planifiée
+•	Un job planifié (tâche cron interne) s’exécute chaque jour à 02:00.
+•	Le job sélectionne les paiements dont planned_debit_date = today et status = PENDING.
+•	Le système respecte le cutoff horaire défini (ex. 14h). Si dépassé, l’émission est décalée au prochain jour ouvré.
+•	Le module applique ensuite les règles de routage fournisseur (canal, lot, jour, scoring).
+•	Les paiements sont transmis automatiquement via l’API du PSP choisi.
+•	Le statut passe à SUBMITTED et l’action est historisée dans payment_logs.
+Étape 4 : Retour fournisseur (webhook)
+•	Chaque PSP envoie des notifications HTTP sécurisées (HMAC) au CRM pour signaler les changements d’état.
+•	Les événements sont traités en temps réel :
+o	executed → PAID
+o	rejected + AM04 → REJECT_INSUFF_FUNDS
+o	rejected + autre motif → REJECT_OTHER
+o	refunded → REFUNDED
+o	error → API_ERROR
+•	Chaque changement est historisé dans la table payment_logs.
+•	Si un client présente des rejets répétés, le moteur de scoring peut le faire basculer vers un lot plus précoce (S1/S2) ou un PSP différent.
+Étape 5 : Archivage automatique
+•	Tous les paiements en statut final (PAID, REFUNDED, CANCELLED, REJECT_OTHER) sont automatiquement archivés après un délai paramétrable (ex. 30 jours).
+•	Les paiements archivés restent accessibles en lecture seule pour consultation ou export.
+•	Le module supporte un partitionnement mensuel de la table payments pour absorber un volume supérieur à 5 millions d’opérations par an.
+________________________________________
+2.3 Nouveaux composants techniques
+•	Calendar Engine : moteur centralisé de calcul et d’attribution des dates de prélèvement.
+•	Debit Calendar JSON (company_settings) : paramétrage des jours fixes et lots L1→L4.
+•	Risk Scoring Engine (option) : ajustement dynamique des lots/PSP selon la probabilité d’impayé.
+•	Batch Scheduler : service de planification et d’exécution des lots de prélèvements.
+Ces composants assurent la souplesse opérationnelle (calendrier fixe) et la prévention des impayés (routage intelligent).
+3. Fonctionnalités principales (version mise à jour avec calendrier et lots)
+3.1 Émission des paiements planifiés
+Le module gère l’ensemble du cycle d’émission des paiements, qu’ils soient planifiés automatiquement par jour/lot ou déclenchés manuellement par les équipes ADV.
+Émission automatique (calendrier de prélèvements)
+•	Un job planifié s’exécute chaque jour à 02:00.
+•	Il détecte les paiements dont la date planifiée (planned_debit_date) correspond à la date du jour.
+•	Le calendrier est défini à partir :
+o	du jour de prélèvement (preferred_debit_day) du contrat ou du client, ou
+o	du lot attribué (L1–L4) selon la configuration company_settings.debit_calendar.
+•	Le job respecte le cutoff horaire (ex. 14h). Si dépassé, l’émission est décalée au prochain jour ouvré.
+•	Les paiements sont routés automatiquement selon les règles du moteur de routage (jour, lot, PSP, scoring).
+•	Une fois transmis au fournisseur, les paiements passent au statut SUBMITTED et sont historisés dans payment_logs.
+Émission manuelle (interface ADV)
+•	L’ADV peut sélectionner des paiements à émettre en dehors du calendrier.
+•	Filtres disponibles : société, fournisseur, date planifiée, commercial, lot, statut.
+•	Actions possibles :
+o	Émettre via API d’un PSP sélectionné.
+o	Exporter les paiements au format SEPA XML ou CSV.
+o	Visualiser l’historique (payment_logs).
+Traçabilité
+•	Toutes les émissions (automatiques ou manuelles) sont enregistrées dans les journaux d’audit (payment_logs, audit_logs).
+•	Chaque action conserve : date, heure, utilisateur, fournisseur, lot, et statut final.
+________________________________________
+3.2 Réémission automatique (AM04)
+Les rejets insuffisance de fonds (AM04) déclenchent une réémission automatique selon la policy retry_policies.
+Logique de réémission
+•	Délais standards : J+5, J+10, J+20.
+•	Conditions : contrat actif, mandat actif, retry_count < max_attempts.
+•	Le scheduler retry_scheduler relance les paiements éligibles en tenant compte de leur date planifiée.
+•	Si un contrat a un lot défini, la réémission peut être recadrée sur le prochain jour du lot (ex. L2 ou L3).
+•	Historisation complète dans payment_logs (RETRY_SCHEDULED, RETRY_SENT, STATUS_CHANGE).
+Sécurité & alertes
+•	Si le taux de rejets dépasse 20 %, une alerte REJECT_SPIKES est générée.
+•	Les paiements non réémissibles sont archivés automatiquement et signalés en UI.
+________________________________________
+3.3 Suivi et reporting
+Le tableau de bord ADV et Finance présente une vue consolidée des paiements, avec filtres par date planifiée, jour, lot, fournisseur, statut.
+Tableau ADV
+•	Colonnes : client, contrat, société, fournisseur, lot, date planifiée, montant, statut, commercial.
+•	Badges couleur :
+o	Vert : payé (PAID)
+o	Orange : rejet insuffisance de fonds (REJECT_INSUFF_FUNDS)
+o	Rouge : rejet autre (REJECT_OTHER)
+o	Violet : remboursé (REFUNDED)
+o	Gris : annulé (CANCELLED)
+o	Bleu : soumis (SUBMITTED)
+•	Filtres combinés : PSP, jour, lot, société, période, commercial.
+Vue Comptabilité
+•	Export mensuel consolidé (CSV, Excel, JSON).
+•	KPI : montants émis/payés/rejetés, taux de rejet global et par PSP.
+•	Rapprochement bancaire automatique (CAMT.053 / CSV banque).
+Vue Direction Financière
+•	Tableau global par société et PSP.
+•	Indicateurs : volume total, taux de recouvrement, rejets par lot/jour.
+•	Comparatifs hebdomadaires (L1→L4) pour le pilotage de trésorerie.
+________________________________________
+3.4 Archivage automatique
+•	Les paiements soldés (PAID, REFUNDED, CANCELLED, REJECT_OTHER) sont automatiquement archivés après J+30.
+•	Archivage géré par le job archive_scheduler (exécution 03:00).
+•	Les paiements archivés restent consultables en lecture seule.
+•	Filtres spécifiques : date planifiée, jour, lot, PSP.
+•	Export asynchrone (CSV/XLSX) via lien signé valable 24 h.
+________________________________________
+3.5 Gestion du calendrier & lots (nouvelle section)
+Le Calendar Engine permet de planifier les paiements selon des jours fixes et des lots hebdomadaires (L1–L4).
+Objectif
+•	Répartir les prélèvements pour lisser les flux de trésorerie.
+•	Assurer la prévisibilité pour la Direction Financière.
+•	Offrir la flexibilité d’un paramétrage par client, contrat ou société.
+Fonctionnement
+•	À la création d’un contrat, le jour (preferred_debit_day) ou le lot (debit_lot_code) est attribué.
+•	Le calendrier de la société (debit_calendar) définit les jours exacts pour chaque lot.
+•	Le module calcule et enregistre la planned_debit_date.
+•	Le job quotidien émet automatiquement les paiements planifiés pour la date du jour.
+Paramétrage Finance / ADV
+•	Administration via interface dédiée (vue calendrier).
+•	Import CSV pour mise à jour massive (affectation jours/lots).
+•	Aperçu des volumes planifiés par jour et par PSP (heatmap).
+Interaction avec le routage
+•	Les règles du moteur de routage peuvent inclure les champs preferred_debit_day et debit_lot_code.
+•	Exemple : lots L1/L2 → MultiSafepay, L3/L4 → Emerchantpay.
+•	Le scoring peut ajuster la planification (forcer un lot plus précoce pour client à risque élevé).
+________________________________________
+4. Routage dynamique des fournisseurs (version enrichie avec calendrier et scoring)
+4.1 Objectif
+Le routage dynamique des fournisseurs permet à la Direction Financière de piloter la répartition des paiements entre les différents PSP (Slimpay, MultiSafepay, Emerchantpay, GoCardless) selon des règles métiers paramétrables.
+Il s’appuie désormais sur les informations du calendrier de prélèvements (jour/lot) et, en option, sur le moteur de scoring prédictif pour ajuster dynamiquement le fournisseur et la date d’émission.
+Finalités principales
+•	Répartir la charge et les volumes entre PSP pour optimiser les coûts de transaction.
+•	Améliorer la sécurité des encaissements en privilégiant les PSP les plus fiables pour les clients à risque.
+•	Intégrer la dimension calendrier (jours fixes / lots hebdomadaires) pour équilibrer la trésorerie.
+•	Permettre la modification en masse ou le basculement rapide des PSP sans intervention technique.
+________________________________________
+4.2 Table provider_routing_rules (mise à jour)
+Champ	Type	Description
+rule_id	UUID (PK)	Identifiant unique de la règle
+company_id	UUID (FK)	Société concernée
+name	String	Nom de la règle (ex. L1→MSP, Risque haut→Slimpay)
+priority	Int	Priorité d’évaluation (1 = plus haute)
+conditions	JSONB	Ensemble de conditions à remplir (jour, lot, canal, scoring, etc.)
+provider_account_id	UUID (FK)	Fournisseur PSP ciblé
+fallback	Bool	Règle de secours appliquée si aucune autre ne correspond
+is_enabled	Bool	Activation/désactivation de la règle
+created_at / updated_at	Timestamp	Dates de création et mise à jour
+Nouvelles conditions possibles (extension)
+{
+  "debit_lot_code_in": ["L1", "L2"],
+  "preferred_debit_day_in": [1, 2, 8, 9],
+  "source_channel": ["TERRAIN"],
+  "contract_age_months_gte": 4,
+  "risk_tier": ["HIGH"],
+  "product_code": ["BLEUBOX"]
+}
+Les règles peuvent désormais combiner :
+•	Jour de prélèvement (preferred_debit_day_in)
+•	Lot hebdomadaire (debit_lot_code_in)
+•	Canal d’acquisition (source_channel)
+•	Ancienneté contrat / scoring de risque (contract_age_months, risk_tier)
+•	Produit / gamme (product_code)
+________________________________________
+4.3 Fonctionnement du moteur de routage
+1.	Lors de la création ou de l’émission d’un paiement, le système évalue les règles actives dans l’ordre de priorité.
+2.	Si plusieurs règles correspondent, la première règle valide est appliquée.
+3.	En l’absence de correspondance, la règle fallback est utilisée (par défaut : PSP principal de la société).
+4.	Le résultat est stocké dans payments.provider_account_id.
+5.	Toute décision de routage est journalisée (payment_logs, event=ROUTING_DECISION).
+Interaction avec le calendrier
+•	Les règles peuvent être liées aux lots de prélèvement pour répartir la charge PSP :
+o	Exemple : L1 & L2 → MultiSafepay ; L3 & L4 → Emerchantpay.
+•	Le moteur lit le champ planned_debit_date pour appliquer les conditions liées au jour.
+•	Si une société ajuste ses lots (via le calendrier JSON), les règles se mettent automatiquement à jour.
+Interaction avec le scoring (optionnel)
+•	Si le moteur de scoring prédit un risque élevé (risk_tier = HIGH), le routage peut :
+o	soit forcer un PSP plus fiable (ex. Slimpay, GoCardless),
+o	soit avancer le lot (de L4 vers L1).
+•	La décision est loguée : payment_logs(event=ROUTING_OVERRIDE, reason=HIGH_RISK).
+________________________________________
+4.4 Réaffectation par lot ou fournisseur
+La Direction Financière peut effectuer une migration massive de contrats vers un autre PSP ou lot de prélèvement.
+Fonctionnalités principales
+•	Sélection par critères : société, PSP actuel, jour, lot, scoring, date d’échéance, etc.
+•	Simulation (dry-run) : aperçu des paiements concernés et impact sur la volumétrie.
+•	Planification : exécution immédiate ou différée.
+•	Audit complet : traçabilité des changements dans audit_logs.
+•	Rollback possible en cas d’erreur.
+________________________________________
+4.5 UX & Administration
+•	Interface dédiée à la Direction Financière.
+•	Écran “Routage fournisseurs” : liste, recherche, édition et priorisation des règles.
+•	Testeur de règle : saisie d’un contrat/paiement → simulation du fournisseur attribué.
+•	Tableau de bord volumétrique : répartition par PSP, jour, lot, scoring, canal.
+________________________________________
+4.6 Sécurité & alertes
+•	Accès restreint au rôle FINANCE_ADMIN.
+•	Alerte PROVIDER_ROUTING_NOT_FOUND si aucune règle ne correspond.
+•	Alerte BATCH_DAY_EMPTY si un jour planifié n’a généré aucun envoi.
+•	Alerte HIGH_RISK_MISROUTED si un client à risque élevé est affecté à un PSP non autorisé.
+________________________________________
+4.7 Résumé des améliorations
+•	Ajout de critères jour/lot dans les règles de routage.
+•	Possibilité d’intégrer le scoring de risque pour arbitrage PSP.
+•	Pilotage renforcé de la Direction Financière via interface et simulations.
+•	Traçabilité totale des décisions dans payment_logs et audit_logs.
+•	Compatibilité complète avec le calendrier de prélèvements (Annexe O).
+5. Supervision & alertes (version enrichie avec calendrier et scoring)
+Le module de gestion des paiements intègre un système complet de supervision et d’alertes permettant de surveiller en continu le fonctionnement, les performances et les anomalies liées au calendrier de prélèvements, au routage PSP et au scoring de risque.
+________________________________________
+5.1 Objectifs de la supervision
+•	Assurer une surveillance continue du fonctionnement du module, des jobs planifiés et des connexions PSP.
+•	Détecter rapidement les anomalies sur les lots de prélèvements (jours fixes) ou les volumes routés.
+•	Identifier les risques d’impayés prédits et les clients à suivre.
+•	Garantir la traçabilité et la réactivité via alertes automatiques multi-canaux.
+________________________________________
+5.2 Types d’alertes principales
+Code	Description	Gravité	Action automatique
+PROVIDER_ROUTING_NOT_FOUND	Aucune règle de routage valide trouvée pour un paiement.	Critique	Paiement mis en attente + notification Direction Financière.
+API_CREDENTIALS_INVALID	Clé API invalide ou expirée pour un fournisseur.	Critique	Suspension des émissions pour le PSP concerné.
+PAYMENT_NOT_SUBMITTED	Échec d’émission (timeout, erreur API).	Majeure	Relance automatique (backoff) + alerte ADV/IT.
+REJECT_SPIKES	Taux de rejet > 20 % sur 24 h.	Majeure	Alerte ADV/Finance + rapport automatique.
+BATCH_DAY_EMPTY	Aucun paiement émis alors que des paiements planifiés étaient prévus pour le jour en cours.	Majeure	Notification IT/Finance.
+CUTOFF_MISSED	Job d’émission lancé après l’heure de cut-off définie.	Majeure	Replanification automatique + alerte IT.
+HIGH_RISK_MISROUTED	Client à risque élevé routé vers un PSP non autorisé.	Critique	Blocage émission + notification Finance.
+HIGH_RISK_SCORE	Détection d’un nombre élevé de paiements à risque selon scoring.	Majeure	Rapport automatique de risque pour Finance.
+FAILED_REMINDER	Relance automatique échouée après 3 tentatives.	Mineure	Alerte ADV pour action manuelle.
+________________________________________
+5.3 Canaux de notification
+•	Email : notifications automatiques aux équipes ADV, IT et Finance.
+•	Slack / Teams : intégration via webhook d’entreprise (canaux #paiements-it, #paiements-adv).
+•	Interface CRM : affichage direct des alertes (bannière rouge/orange) avec bouton « Voir détails ».
+•	Rapports périodiques : synthèse quotidienne ou hebdomadaire des incidents (taux d’échec, volumes, rejets).
+________________________________________
+5.4 Monitoring technique et métier
+Les indicateurs (Prometheus/Grafana) couvrent à la fois les aspects techniques (API, latence, queues) et métiers (volumes par lot, taux de rejet, scoring).
+Indicateurs clés
+Catégorie	Indicateur	Seuil & Action
+API PSP	Latence moyenne	< 3 s (alerte si >10 s sur 5 min)
+API PSP	Taux d’erreur	< 0,5 % (alerte si >5 %)
+Calendrier / Lots	Paiements prévus vs émis	Alerte BATCH_DAY_EMPTY si écart > 10 %
+Calendrier / Cut-off	Heure d’exécution réelle	Alerte CUTOFF_MISSED si > cutoff_hour
+Routage PSP	Volume par fournisseur	Alerte si déséquilibre > seuil paramétré (Finance)
+Scoring	Moyenne score global	Alerte HIGH_RISK_SCORE si moyenne > seuil (ex. 70 %)
+Webhooks	Volume traité vs reçu	Alerte si >5 % non traités après 15 min
+Rejets	Taux global par jour	Alerte REJECT_SPIKES si > 20 %
+Relances	Échecs relances	Alerte FAILED_REMINDER si 3 échecs consécutifs
+________________________________________
+5.5 Historisation et gestion des alertes
+•	Les alertes sont stockées dans la table alerts : alert_id, scope, severity, code, message, channels, acknowledged_by, acknowledged_at, created_at.
+•	Les utilisateurs habilités (Finance, IT, ADV) peuvent accuser réception et clôturer une alerte via l’interface CRM.
+•	Historique des alertes conservé 24 mois avec export JSON/CSV.
+•	Les alertes critiques déclenchent automatiquement une notification multi-canal (email + Slack + UI).
+________________________________________
+5.6 Tableaux de bord Grafana
+•	Vue IT : latence API, erreurs 4xx/5xx, délais webhooks, exécution jobs, queues retries.
+•	Vue Finance : volumes planifiés vs réalisés, taux de rejet par PSP et par lot, scoring moyen, alertes actives.
+•	Vue Direction : SLA global, disponibilité, incidents majeurs par société.
+________________________________________
+5.7 Résumé des nouveautés
+•	Ajout des alertes spécifiques au calendrier de prélèvements (BATCH_DAY_EMPTY, CUTOFF_MISSED).
+•	Intégration du scoring de risque avec alertes HIGH_RISK_SCORE et HIGH_RISK_MISROUTED.
+•	Suivi avancé des lots hebdomadaires et performances par jour.
+•	Monitoring combiné technique + métier pour une supervision complète.
+•	Historisation centralisée et exportable pour audit et analyse de tendance.
+
+6. Sécurité & conformité
+Le module de gestion des paiements est conçu selon les plus hauts standards de sécurité et de conformité applicables en Europe. Il répond aux exigences des réglementations RGPD, DSP2, PCI DSS et au SEPA Rulebook, garantissant la confidentialité, l’intégrité et la traçabilité des données bancaires et contractuelles.
+________________________________________
+6.1 Conformité RGPD / CNIL
+Principes fondamentaux
+•	Minimisation des données : seules les informations strictement nécessaires au traitement des paiements sont collectées et conservées.
+•	Base légale : traitement justifié par l’exécution du contrat (Article 6.1.b du RGPD).
+•	Droits des personnes : accès, rectification, suppression, limitation, portabilité et opposition.
+•	Durée de conservation : les données bancaires sont supprimées ou anonymisées après expiration des délais légaux.
+•	Registre de traitement : chaque société du groupe déclare le traitement « Gestion des paiements SEPA et CB » dans son registre RGPD.
+Sécurisation des données personnelles
+•	Données bancaires chiffrées via AES-256.
+•	Transmission des flux via HTTPS/TLS 1.3.
+•	Accès restreint aux utilisateurs autorisés (ADV, Finance, IT).
+•	Journaux d’accès et d’action horodatés et conservés 24 mois.
+________________________________________
+6.2 Conformité DSP2 / PCI DSS / SEPA Rulebook
+Directive DSP2
+•	Authentification forte du client pour toute action sensible (réémission manuelle, modification mandat, export comptable).
+•	Traçabilité des opérations et gestion des consentements.
+•	Journalisation complète conforme à l’article 97 de la DSP2.
+Norme PCI DSS
+•	Aucune donnée de carte complète (PAN, CVV, date d’expiration) n’est stockée dans le système.
+•	Seuls des tokens sécurisés fournis par les PSP sont conservés.
+•	Les environnements sont segmentés (Production / Sandbox / Test).
+•	Audits de sécurité réalisés au moins une fois par an.
+SEPA Rulebook
+•	Respect des règles du European Payments Council (EPC) : format XML ISO 20022, génération RUM, gestion des délais de représentation.
+•	Conservation légale des mandats 14 mois après la dernière opération.
+•	Conformité au règlement (UE) n°260/2012 sur les paiements SEPA.
+________________________________________
+6.3 Chiffrement et protection des données
+•	AES-256 pour les IBAN, BIC et informations sensibles.
+•	Salage et hachage SHA-512 pour les identifiants sensibles.
+•	Rotation automatique des clés de chiffrement tous les 90 jours.
+•	Masquage automatique des IBAN dans les logs et exports (FR76 **** **** 1234).
+•	Les clés API des PSP sont stockées chiffrées dans un coffre-fort sécurisé (Vault).
+________________________________________
+6.4 Authentification et contrôle des accès
+•	SSO (Single Sign-On) via Microsoft 365 pour tous les utilisateurs internes.
+•	MFA (Multi-Factor Authentication) obligatoire à la connexion.
+•	Gestion des droits via RBAC (Role-Based Access Control) :
+o	ADV : émission, suivi, relances.
+o	Finance : paramétrage fournisseurs, reporting, routage.
+o	Comptabilité : exports et rapprochements.
+o	IT/Admin : supervision, monitoring et audit.
+•	Journalisation de chaque modification de droits ou d’accès.
+________________________________________
+6.5 Audit logs et traçabilité
+•	Tous les événements critiques sont enregistrés dans la table audit_logs : création, modification, suppression logique, changement de statut, connexion, export.
+•	Les logs sont immuables et signés numériquement.
+•	Conservation : 24 mois.
+•	Export possible vers un SIEM externe (ELK, Splunk).
+________________________________________
+6.6 Politique de rétention des données
+Type de données	Durée de conservation	Mode de suppression
+Données bancaires (IBAN/BIC/token)	24 mois après fin de contrat	Suppression définitive ou anonymisation
+Mandats SEPA	14 mois après dernière transaction	Archivage GED chiffrée
+Logs techniques et audit	24 mois	Suppression automatisée
+Exports comptables	10 ans (obligation légale)	Archivage sécurisé
+Documents PDF mandats	10 ans	Stockage chiffré GED
+________________________________________
+6.7 Résumé
+Le dispositif de sécurité du module assure :
+•	la confidentialité des informations clients et bancaires,
+•	la traçabilité complète des opérations et des accès,
+•	la conformité totale avec les normes RGPD, DSP2 et PCI DSS,
+•	une infrastructure sécurisée et auditable adaptée aux volumes et aux exigences du groupe Winvest Capital.
+7. UX/UI & performance (version enrichie avec calendrier, lots et scoring)
+L’interface du module de gestion des paiements a été repensée pour offrir une ergonomie complète autour du calendrier de prélèvements, des lots hebdomadaires et du scoring prédictif, tout en maintenant une performance optimale pour le traitement de gros volumes.
+________________________________________
+7.1 Écrans principaux
+Le module comporte désormais six écrans majeurs, répondant chacun à une fonction métier :
+1.	Émission planifiée (Calendrier) :
+o	Vue calendrier mensuel (jours 1–28) affichant les paiements planifiés (planned_debit_date).
+o	Filtres par société, lot, PSP, scoring et statut.
+o	Résumé des volumes par jour (heatmap) et total par semaine.
+o	Actions rapides : émettre maintenant, ajuster lot, voir logs API.
+2.	Suivi des paiements (opérationnel) :
+o	Tableau des paiements en cours avec colonnes : client, contrat, société, lot, jour, PSP, statut, montant, scoring.
+o	Filtres dynamiques combinés : date planifiée, jour, lot, fournisseur, commercial.
+o	Badges couleur : vert = payé, orange = rejet insuff. fonds, rouge = rejet autre, violet = remboursé, gris = annulé, bleu = soumis.
+o	Affichage instantané des changements de statut via WebSocket.
+3.	Reporting & KPI :
+o	Graphiques consolidés : taux de rejet, volumes planifiés/réalisés, scoring moyen, répartitions PSP/jour/lot.
+o	Exports CSV/Excel/JSON avec liens signés (valables 24h).
+o	Comparaison des performances entre lots (L1→L4).
+4.	Paiements archivés :
+o	Vue séparée pour les paiements soldés.
+o	Filtres : société, jour, lot, statut, PSP, commercial.
+o	Export asynchrone, lecture seule, lien signé 24h.
+5.	Routage Finance (Direction Financière) :
+o	Liste et gestion des règles de routage (provider_routing_rules).
+o	Ajout des critères jour de prélèvement et lot (L1–L4).
+o	Simulation d’une règle (test sur contrat/paiement).
+o	Vue analytique : répartition volumes PSP/jour/lot/scoring.
+6.	Scoring & relances automatiques (optionnel) :
+o	Tableau des paiements triés par risque (faible, moyen, élevé).
+o	Indicateurs : score, PSP attribué, prochaine date de prélèvement, statut client.
+o	Actions rapides : réassigner PSP, changer lot, déclencher relance.
+o	Liens directs vers les scripts de relance (email, SMS, appel).
+________________________________________
+7.2 Filtres et recherche
+•	Filtres combinés : société, fournisseur, jour, lot, statut, commercial, score de risque.
+•	Recherche directe par client, contrat, RUM, référence de paiement.
+•	Sauvegarde des filtres favoris (ADV et Finance).
+•	Tri multi-colonnes : date planifiée, score, montant, PSP.
+________________________________________
+7.3 Pagination, performance et virtualisation
+•	Pagination serveur (100 lignes/page par défaut, paramétrable).
+•	Virtual scroll activé pour afficher en continu les gros volumes (>10k lignes).
+•	Indexation renforcée : (status_code, due_date, planned_debit_date, company_id, provider_id).
+•	Temps de réponse cible : < 1 seconde pour 10 000 paiements filtrés.
+•	Optimisation du tri par planned_debit_date pour les vues calendrier.
+________________________________________
+7.4 Interface Calendrier & Lots (nouveautés)
+•	Affichage par lot hebdomadaire (L1→L4) avec volume et montant total par semaine.
+•	Heatmap couleur : intensité du volume journalier (vert → faible / rouge → élevé).
+•	Actions par jour : voir paiements, exporter jour, ajouter commentaire Finance.
+•	Gestion par glisser-déposer : possibilité de déplacer un contrat d’un lot à un autre.
+•	Notifications automatiques si modification d’un lot impacte le routage PSP.
+________________________________________
+7.5 Performance globale & SLA UI
+Élément	Objectif
+Temps d’affichage d’un écran principal	< 1 s
+Rafraîchissement statuts (WebSocket)	< 5 s
+Génération export CSV/XLSX	< 2 min
+Changement de lot ou jour	Application immédiate (< 1 s)
+Disponibilité UI (CRM)	99,9 %
+________________________________________
+7.6 Accessibilité & design
+•	Interface responsive (desktop et tablette).
+•	Thème clair/sombre selon préférence utilisateur.
+•	Navigation fluide entre les écrans via menu latéral et onglets.
+•	Respect des standards WCAG 2.1 : contraste, navigation clavier, lisibilité.
+•	Messages contextuels et codes couleur harmonisés avec le statut des paiements.
+________________________________________
+7.7 Nouveaux indicateurs visuels
+•	Score de risque : indicateur circulaire (vert = <40, orange = 40–70, rouge = >70).
+•	Jour planifié : badge bleu clair avec date (planned_debit_date).
+•	Lot : icône L1–L4 colorée selon semaine.
+•	PSP attribué : logo du fournisseur avec tooltip (Slimpay, MSP, EMP, GoCardless).
+________________________________________
+7.8 Résumé des améliorations UX/UI
+•	Ajout d’un écran calendrier complet pour la gestion des lots et jours fixes.
+•	Amélioration du routage visuel (affichage PSP + scoring + lot).
+•	Intégration du scoring de risque et des relances automatiques dans l’interface.
+•	Navigation unifiée pour ADV, Comptabilité et Finance.
+•	Maintien des performances optimales (<1 s d’affichage, exports asynchrones).
+8. Monitoring & SLA internes (version enrichie avec calendrier, lots et scoring)
+Le module de gestion des paiements assure un haut niveau de performance, de disponibilité et de contrôle grâce à un système de monitoring étendu et à des engagements SLA adaptés à la gestion planifiée par jour, lot et scoring de risque.
+________________________________________
+8.1 Objectifs du monitoring
+•	Surveiller en continu la performance opérationnelle (émission planifiée, délais d’exécution, équilibre des lots).
+•	Mesurer la fiabilité des prédictions de scoring et leur impact sur les taux d’impayés.
+•	Vérifier la bonne exécution des jobs planifiés : émission quotidienne, réémission, archivage, routage.
+•	Garantir la disponibilité continue des connexions PSP et de l’interface CRM.
+________________________________________
+8.2 Indicateurs SLA principaux
+Indicateur	Objectif	Description
+Mise à jour statuts PSP	< 5 min	Délai entre webhook PSP et mise à jour payments.status_code.
+Latence API moyenne	< 3 s	Temps d’aller-retour moyen entre émission et réponse PSP.
+Émission planifiée	100 % dans les délais	Tous les paiements dont planned_debit_date = today doivent être émis avant cutoff_hour.
+Équilibre des lots (L1–L4)	±10 %	Écart maximum autorisé entre volumes planifiés par lot.
+Génération export comptable	< 2 min	Temps maximal de génération de fichier CSV/XLSX.
+Taux d’échec émission	< 0,5 %	Proportion de paiements non soumis pour cause d’erreur API.
+Disponibilité globale module	99,9 %	Taux de disponibilité du service mensuel.
+Fiabilité du scoring	> 85 %	Corrélation entre score prédit et résultat réel (impayé vs payé).
+Traitement relances	100 % en < 15 min	Temps maximum entre déclenchement relance et envoi effectif multi-canaux.
+________________________________________
+8.3 Outils et supervision
+•	Prometheus + Grafana : collecte et visualisation des métriques.
+•	Alertmanager : gestion des seuils critiques et notifications multi-canaux.
+•	Job Tracker interne : suivi en temps réel des exécutions (émission, retry, archivage, export).
+•	Audit Dashboard : vue globale des anomalies détectées et des SLA non respectés.
+________________________________________
+8.4 Seuils d’alerte & actions
+Indicateur	Seuil d’alerte	Action
+Émission planifiée incomplète	< 95 % paiements émis	Alerte BATCH_DAY_EMPTY + relance job manuelle.
+Équilibre lots (volumétrie)	> ±10 %	Alerte Direction Financière pour réajustement planning.
+Fiabilité scoring	< 80 %	Rapport Finance/IT pour recalibrage modèle.
+Taux d’échec émission	> 1 %	Suspension temporaire PSP et investigation.
+Latence API	> 10 s sur 5 min	Alerte IT/PSP.
+Webhooks traités	< 95 % en 15 min	Alerte IT (risque backlog).
+Relances échouées	> 3 échecs consécutifs	Alerte ADV FAILED_REMINDER.
+________________________________________
+8.5 Tableaux de bord SLA
+•	Vue IT : latence API, volumes PSP, backlog webhooks, temps exécution jobs, erreurs routage.
+•	Vue Finance : taux de réussite par lot/jour, scoring vs taux impayés, répartition PSP, équilibre trésorerie.
+•	Vue Direction : SLA consolidés, disponibilité mensuelle, comparatif performances fournisseurs.
+•	Vue ADV : suivi relances, paiements à risque élevé, taux recouvrement post-relance.
+________________________________________
+8.6 Reporting & audits
+•	Export mensuel SLA : PDF consolidant les indicateurs (latence, fiabilité, disponibilité, impayés).
+•	Archivage SLA : conservation 24 mois pour analyse historique.
+•	Audit interne semestriel pour vérifier conformité aux objectifs SLA et validité du scoring prédictif.
+________________________________________
+8.7 Résumé des nouveautés
+•	Ajout du suivi SLA spécifique au calendrier de prélèvements (volumes planifiés vs émis).
+•	Intégration du suivi de fiabilité du moteur de scoring.
+•	Introduction de nouveaux KPI : équilibre des lots, rapidité des relances, corrélation scoring/impayés.
+•	Tableaux de bord consolidés pour IT, Finance, Direction et ADV.
+•	Engagements de performance inchangés : disponibilité 99,9 %, latence < 3 s, exports < 2 min.
+9. Tests & validation (version enrichie avec calendrier, lots et scoring)
+Le module de gestion des paiements doit être validé par une campagne complète de tests fonctionnels, techniques et métiers, incluant les nouvelles fonctionnalités de calendrier de prélèvements, de routage dynamique par lot et du moteur de scoring prédictif.
+________________________________________
+9.1 Objectifs des tests
+•	Vérifier la planification correcte des paiements selon jour et lot (planned_debit_date).
+•	Valider le routage fournisseur en fonction des critères jour/lot/scoring.
+•	Tester la fiabilité du moteur de scoring et son impact sur la réduction des impayés.
+•	Garantir la performance (volumétrie > 10 000 paiements simultanés) et la stabilité du système.
+•	S’assurer du respect des SLA et de la conformité RGPD / DSP2.
+________________________________________
+9.2 Tests fonctionnels
+Scénario	Description	Résultat attendu
+Planification jour fixe	Création contrat avec preferred_debit_day = 5	Paiement généré avec planned_debit_date = 5 du mois suivant.
+Planification par lot (L1–L4)	Attribution lot L2 → jour 8, L4 → jour 23	Les paiements apparaissent dans les bons lots selon le calendrier.
+Émission automatique	Exécution du job d’émission à 02:00	Seuls les paiements planned_debit_date = today sont envoyés.
+Cut-off horaire	Émission après cutoff_hour (14h)	Paiement décalé au prochain jour ouvré.
+Routage par lot	L1/L2 → MultiSafepay, L3/L4 → Emerchantpay	Les paiements sont émis vers le bon PSP selon la règle.
+Routage scoring élevé	risk_tier = HIGH → forcer Slimpay	Paiement routé vers Slimpay, log ROUTING_OVERRIDE.
+Réémission AM04	J+5, J+10, J+20 après rejet	Nouvelle tentative automatique selon la policy retry_policies.
+Archivage automatique	Paiements soldés après 30 jours	Transfert vers table archivés, lecture seule.
+Relance automatique	Échec de paiement → relance multi-canaux	Message email/SMS envoyé et consigné dans customer_interactions.
+Portail de paiement	Client règle via lien sécurisé RUM	Paiement mis à jour status_code = PAID.
+________________________________________
+9.3 Tests de charge & performance
+Objectif : garantir une performance stable même à fort volume.
+•	Données cibles : 10 000 paiements émis simultanément, 100 webhooks/s.
+•	Outils : JMeter / Locust pour les API, Prometheus/Grafana pour la supervision.
+•	Critères de succès :
+o	Temps d’émission moyen < 3 s / paiement.
+o	Latence webhook → mise à jour statut < 5 min.
+o	Export comptable < 2 min / 100k lignes.
+o	Aucun backlog ou perte de webhook.
+o	Répartition des volumes équilibrée sur les 4 lots (±10 %).
+________________________________________
+9.4 Tests de sécurité
+•	Validation de la signature HMAC et du mécanisme anti-replay (5 min).
+•	Vérification du chiffrement AES-256 pour IBAN et tokens.
+•	Tests SSO/MFA et contrôle d’accès RBAC.
+•	Aucune donnée en clair dans les logs (IBAN masqué).
+•	Audit RGPD : suppression/anonymisation après 24 mois.
+________________________________________
+9.5 Tests de scoring prédictif
+Objectif : mesurer la précision du moteur et son effet sur les impayés.
+Test	Description	Résultat attendu
+Entraînement du modèle	Simulation avec historique 6 mois	Génération score 0–100, seuils LOW/MEDIUM/HIGH.
+Application scoring	500 paiements simulés	Risque élevé → routage différent (Slimpay ou GoCardless).
+Comparaison post-paiement	30 jours après échéance	Corrélation score/impayé ≥ 85 %.
+Recalibrage mensuel	Réentraînement modèle avec données récentes	Scores actualisés sans dégradation de performance.
+________________________________________
+9.6 Tests du calendrier & lots
+•	Génération calendrier complet sur mois de 28, 30 et 31 jours.
+•	Tests des années bissextiles.
+•	Gestion jours fériés (décalage NEXT_BUSINESS_DAY).
+•	Changement de lot d’un contrat en cours de mois : recalcul automatique des dates futures.
+•	Vérification cohérence entre calendrier paramétré et paiements émis.
+________________________________________
+9.7 Recette métier
+Équipes impliquées :
+•	ADV : émission manuelle, reporting, relances.
+•	Comptabilité : exports comptables, rapprochement bancaire.
+•	Finance : paramétrage des lots, règles de routage, scoring.
+•	IT : monitoring, webhooks, sécurité, SLA.
+Chaque équipe valide son périmètre via un plan de recette documenté (tests, résultats, corrections, validation).
+________________________________________
+9.8 Validation finale & mise en production
+•	Phase de préproduction complète avec sandbox PSP.
+•	Tests de non-régression CI/CD.
+•	Vérification SLA (latence, disponibilité, équilibre lots).
+•	Signature de validation par ADV, Comptabilité, Finance et IT avant mise en production.
+________________________________________
+9.9 Résumé des nouveautés
+•	Ajout des scénarios de test calendrier/jour/lot.
+•	Validation du routage PSP basé sur scoring et jour planifié.
+•	Tests de performance et précision du moteur de scoring.
+•	Intégration complète des nouvelles alertes SLA et du monitoring calendrier/lot.
+•	Recette métier élargie à la Direction Financière et au module de scoring.
+10. Livrables attendus (version enrichie avec calendrier, scoring et relances)
+Le projet du module de gestion des paiements aboutira à la livraison d’un ensemble complet de livrables techniques, fonctionnels et documentaires intégrant les nouveautés suivantes : calendrier de prélèvements planifiés, moteur de scoring prédictif, portail client de paiement et relances automatiques.
+________________________________________
+10.1 Interfaces utilisateur
+•	Interfaces complètes et responsives, accessibles depuis desktop et tablette.
+•	Design harmonisé selon la charte Winvest Capital.
+•	Nouveaux écrans :
+o	Calendrier des prélèvements (jour/lot) avec heatmap de volumes.
+o	Scoring & relances (ADV/Finance) avec filtres de risque.
+o	Portail de paiement client connecté au RUM pour régularisation manuelle.
+•	Navigation fluide entre les modules : Émission | Suivi | Reporting | Archivés | Routage Finance | Scoring.
+•	Accessibilité WCAG 2.1 et thèmes clair/sombre.
+________________________________________
+10.2 Connecteurs API PSP
+•	Slimpay, MultiSafepay, Emerchantpay, GoCardless : intégration REST complète (émission, statuts, webhooks).
+•	Sécurisation HMAC SHA256 et anti-replay 5 min.
+•	Gestion multi-sociétés, multi-clés et multi-environnements (sandbox/prod).
+•	Routing intelligent : sélection PSP selon jour/lot, scoring, canal et produit.
+•	Portail client : redirection vers PSP compatible (CB, SEPA instantané, virement) selon configuration.
+________________________________________
+10.3 Moteurs & automatisations
+•	Calendar Engine : attribution automatique des dates planifiées (planned_debit_date) selon jours et lots L1–L4.
+•	Batch Scheduler : émission quotidienne à 02:00 + respect du cutoff_hour.
+•	Retry Scheduler : relances automatiques AM04 (J+5, J+10, J+20).
+•	Archive Scheduler : archivage automatique des paiements soldés (J+30).
+•	Risk Scoring Engine (IA) : calcul du score d’impayé, classement par risque (LOW/MEDIUM/HIGH).
+•	Reminder Engine : relances multi-canaux (email, SMS, appel) paramétrables.
+•	Payment Portal Engine : validation des règlements manuels via lien sécurisé RUM/token.
+________________________________________
+10.4 Routage dynamique & Direction Financière
+•	Interface routage fournisseurs : gestion règles (jour, lot, scoring, canal, produit).
+•	Simulation / dry-run avant activation d’une règle.
+•	Migration par lot avec planification et rollback.
+•	Audit logs complets pour traçabilité (routage, scoring, relance, paiements).
+________________________________________
+10.5 Tableaux de bord et reporting
+•	Vue ADV : paiements en cours, rejets, relances.
+•	Vue Comptabilité : exports comptables (CSV, XLSX, JSON), rapprochements CAMT.053.
+•	Vue Finance : taux de rejet, volumes par jour/lot/PSP, scoring moyen, équilibre des lots.
+•	Vue Direction : SLA consolidé, fiabilité du scoring, performance fournisseurs.
+•	KPI principaux : taux impayés, scoring accuracy, délais relance, équilibre trésorerie, performance routage.
+________________________________________
+10.6 Documentation livrée
+•	Documentation technique : schémas API, schéma de données complet, webhooks, jobs planifiés, sécurité HMAC.
+•	Documentation fonctionnelle : processus calendrier/lot, scoring, routage, relances, portail client.
+•	Documentation sécurité & conformité : RGPD, DSP2, PCI-DSS, PRA/PCA.
+•	Guide utilisateurs : ADV, Comptabilité, Finance, Direction, IT.
+•	Plan de tests et rapport de recette complets (calendrier, scoring, relances).
+________________________________________
+10.7 Livrables techniques complémentaires
+Composant	Description
+Calendar Engine	Service de calcul et planification des jours/lot (JSON configurable).
+Risk Scoring Engine	Moteur IA d’analyse d’historique impayés (scoring 0–100).
+Reminder Engine	Automatisation des relances multi-canaux.
+Payment Portal	Espace client sécurisé connecté au RUM pour paiement.
+Routing Rules Engine	Gestion dynamique des fournisseurs par critères multiples.
+Monitoring Dashboard	Grafana/Prometheus – KPI API, SLA, scoring, calendrier, relances.
+________________________________________
+10.8 Conditions de livraison & support
+•	Livraison validée après recette complète et tests multi-PSP (Slimpay, MSP, EMP, GoCardless).
+•	Formation utilisateurs : sessions ADV, Finance, IT.
+•	Support post-livraison : période de garantie 90 jours.
+•	Maintenance évolutive : intégration de nouvelles sources PSP ou IA.
+•	Mises à jour documentaires automatisées via référentiel technique central.
+________________________________________
+10.9 Résumé des livrables majeurs
+•	Interfaces complètes (Émission, Suivi, Reporting, Routage, Scoring, Portail Client).
+•	Connecteurs PSP interopérables et sécurisés.
+•	Automatisations (émission, retry, archivage, relances).
+•	Moteurs (calendrier, scoring, relance, routage).
+•	Reporting multi-vues et tableaux de bord SLA.
+•	Documentation exhaustive et guides utilisateurs.
+•	Système de support et maintenance post-déploiement.
+
+Annexe A – Schéma de données (Calendrier, Lots, Scoring, Portail)
+Toutes les clés primaires sont en UUIDv4. Horodatage systématique : created_at, updated_at. Champs archived (bool) lorsque pertinent. Données sensibles chiffrées AES 256.
+________________________________________
+A.1 Tables existantes (mises à jour)
+A.1.1 companies
+•	company_id (PK) · legal_name · brand_name · ics (identifiant créancier SEPA, nullable) · status
+•	Nouveau : debit_calendar (jsonb) — mapping lots→jours + règles (holiday_shift_rule, cutoff_hour, weekend_policy).
+A.1.2 customers
+•	customer_id (PK) · company_id (FK) · identité/contact · adresse · external_ref · status
+•	Nouveau : preferred_debit_day (int 1–28, nullable)
+A.1.3 contracts
+•	contract_id (PK) · company_id (FK) · customer_id (FK) · product_code · status · start_date · end_date (nullable) · commercial_id (FK users) · default_provider_account_id (FK) · source_channel
+•	Nouveaux champs :
+o	preferred_debit_day (int 1–28, nullable)
+o	debit_lot_code (enum: L1|L2|L3|L4, nullable)
+o	mandate_id (FK → sepa_mandates)
+A.1.4 payments
+•	payment_id (PK) · company_id (FK) · contract_id (FK) · customer_id (FK) · provider_account_id (FK) · payment_method_id (FK)
+•	currency (char(3)=EUR) · amount_cents (int) · due_date (date) · emitted_at (timestamptz, nullable)
+•	origin (enum: SCHEDULED|MANUAL|RETRY|IMPORT) · status_code (FK → payment_statuses) · retry_count (int) · last_error_code (string, nullable) · archived (bool)
+•	Nouveau : planned_debit_date (date)
+Index clés :
+•	payments(company_id, status_code, planned_debit_date)
+•	payments(contract_id, emitted_at)
+•	payments(provider_account_id, archived, planned_debit_date)
+A.1.5 payment_logs
+•	log_id (PK) · payment_id (FK) · event_type (enum: API_REQUEST|API_RESPONSE|STATUS_CHANGE|RETRY_SCHEDULED|RETRY_SENT|ERROR|ROUTING_DECISION|ROUTING_OVERRIDE|EMIT_SCHEDULED)
+•	payload_in (jsonb) · payload_out (jsonb) · http_status (int, nullable) · message (text) · created_at
+A.1.6 webhook_events
+•	webhook_id (PK) · provider_account_id (FK) · provider_event_type (string) · provider_event_id (string unique) · payload (jsonb)
+•	signature_valid (bool) · processed (bool) · processed_at (timestamptz)
+A.1.7 retry_policies
+•	policy_id (PK) · company_id (FK) · reason (enum: INSUFF_FUNDS|TECHNICAL|OTHER) · delays_days (jsonb) · max_attempts (int) · auto_retry_enabled (bool)
+•	Nouveaux champs optionnels : business_day_shift (enum) · cutoff_hour (int) · min_days_between_retries (int)
+A.1.8 provider_routing_rules
+•	rule_id (PK) · company_id (FK) · name · priority (int) · conditions (jsonb) · provider_account_id (FK) · fallback (bool) · is_enabled (bool)
+•	Nouveaux attributs supportés dans conditions : preferred_debit_day_in (int[]) · debit_lot_code_in (string[]) · risk_tier (LOW|MEDIUM|HIGH)
+A.1.9 alerts
+•	alert_id (PK) · scope (enum: PAYMENT|PROVIDER|SYSTEM) · scope_ref (string, nullable) · severity (INFO|WARNING|CRITICAL) · code (string) · message (text)
+•	notified_channels (jsonb) · acknowledged_by (FK users) · acknowledged_at (timestamptz) · created_at
+A.1.10 export_jobs
+•	export_job_id (PK) · company_id (FK) · period_from (date) · period_to (date) · format (enum: CSV|XLSX|JSON)
+•	status (enum: PENDING|RUNNING|DONE|FAILED) · file_id (FK → files) · created_by (FK users) · created_at · duration_ms
+________________________________________
+A.2 Nouvelles tables (V2)
+A.2.1 risk_scores
+•	risk_score_id (PK) · payment_id (FK, unique) ou contract_id (FK) (selon granularité choisie) · score (int 0–100)
+•	risk_tier (enum: LOW|MEDIUM|HIGH) · factors (jsonb, ex: {"prev_rejects":2,"channel":"TERRAIN"})
+•	evaluated_at (timestamptz)
+Index : risk_scores(payment_id) / risk_scores(contract_id) ; risk_scores(risk_tier, evaluated_at desc)
+A.2.2 customer_interactions
+•	interaction_id (PK) · company_id (FK) · customer_id (FK) · payment_id (FK, nullable)
+•	channel (enum: EMAIL|SMS|CALL) · message_type (string) · payload (jsonb) · status (SENT|FAILED|QUEUED)
+•	sent_at (timestamptz) · error_message (text, nullable)
+Index : customer_interactions(customer_id, sent_at desc) ; customer_interactions(payment_id)
+A.2.3 payment_portal_sessions
+•	session_id (PK) · payment_id (FK) · rum (string) · pay_token (string, chiffré) · expires_at (timestamptz)
+•	paid_at (timestamptz, nullable) · provider_redirect (jsonb, nullable)
+Index : payment_portal_sessions(payment_id) ; payment_portal_sessions(rum)
+________________________________________
+A.3 Référentiels & mapping
+A.3.1 payment_statuses (rappel)
+•	status_code (PK) — PENDING, SUBMITTED, PAID, REJECT_INSUFF_FUNDS, REJECT_OTHER, CANCELLED, REFUNDED, API_ERROR
+•	label (string) · is_final (bool) · can_retry (bool) · ui_badge_color (string)
+A.3.2 provider_status_mapping (rappel)
+•	mapping_id (PK) · provider_id (FK) · provider_raw_status · provider_raw_reason (nullable)
+•	status_code (FK → payment_statuses) · retry_advice (enum: AUTO|MANUAL|NEVER)
+•	Unique : (provider_id, provider_raw_status, coalesce(provider_raw_reason,''))
+________________________________________
+A.4 Intégrité, triggers & jobs
+•	Triggers : payments_before_update → historise tout changement status_code dans payment_logs (event = STATUS_CHANGE).
+•	Jobs :
+o	payment_emitter (quotidien 02:00) — émet planned_debit_date = today
+o	retry_scheduler — réémission AM04 (J+5/J+10/J+20)
+o	archive_scheduler — auto archivage J+30 des statuts finaux
+o	Nouveau batch_scheduler — pilotage des lots / respect cutoff_hour
+________________________________________
+A.5 Performances & partitionnement
+•	Index composites recommandés :
+o	payments(company_id, status_code, planned_debit_date)
+o	payments(archived, planned_debit_date, emitted_at desc)
+o	webhook_events(provider_account_id, processed)
+•	Partitionnement mensuel de payments si volumétrie > 5M lignes/an. Compression/maintenance hebdo.
+________________________________________
+A.6 Sécurité & conformité (données)
+•	IBAN/BIC chiffrés (AES 256) · pay_token chiffré · masquage IBAN dans logs/exports.
+•	Logs immuables exportables vers SIEM. Rétentions : bancaires 24 mois après fin de contrat ; exports 10 ans ; logs 24 mois.
+________________________________________
+A.7 Diagramme relationnel (ASCII)
+companies 1─* customers 1─* contracts 1─* payments 1─* payment_logs
+                                 │                │
+                                 │                ├─* risk_scores
+                                 │                └─* payment_portal_sessions
+customers 1─* customer_interactions
+payments *─1 provider_accounts *─1 providers
+payments *─1 payment_statuses
+provider_accounts 1─* webhook_events
+companies 1─* provider_routing_rules
+companies 1─* retry_policies
+________________________________________
+A.8 Objectifs couverts
+•	Calendrier & lots : preferred_debit_day, debit_lot_code, planned_debit_date, debit_calendar.
+•	Scoring : risk_scores (score, tier, facteurs).
+•	Relances : customer_interactions (multi canal, statut).
+•	Portail client : payment_portal_sessions (RUM + token sécurisé).
+Ce schéma constitue la référence unique pour le développement, les migrations et la documentation API associée.
+
+Annexe B – Politique de réémission (AM04) – V Calendrier & Scoring
+Cette version étend la réémission automatique des rejets insuffisance de fonds (AM04) avec l’intégration du calendrier de prélèvements (jour/lot) et du moteur de scoring.
+________________________________________
+B.1 Périmètre & objectifs
+•	Réémettre automatiquement les paiements AM04 selon des délais standard (J+5, J+10, J+20) et les politiques par société.
+•	Tenir compte du calendrier planifié et de l’appétence au risque (scoring) pour optimiser le recouvrement.
+________________________________________
+B.2 Conditions d’éligibilité (rappel)
+Un paiement est réémissible si :
+1.	status_code = REJECT_INSUFF_FUNDS
+2.	retry_count < max_attempts (policy société)
+3.	Contrat en ACTIVE et mandat SEPA en ACTIVE
+4.	Pas de changement IBAN/mandat en attente de validation
+Si une condition échoue → pas de réémission, alerte PAYMENT_NOT_SUBMITTED.
+________________________________________
+B.3 Délais & calendrier
+•	Délais par défaut : [5, 10, 20] jours après la date du rejet.
+•	Calendrier & lots :
+o	Si la date calculée tombe avant le prochain jour/lot disponible, la réémission est recadrée sur ce jour/lot (via company_settings.debit_calendar).
+o	Respect du cutoff_hour et décalage selon holiday_shift_rule (jours fériés/week end).
+Exemple : Rejet le 6, policy J+5 ⇒ date calculée = 11 ; si lot L2 = jour 8/9, et on a dépassé, recadrer sur prochain lot (ex. L3 = jour 15/16).
+________________________________________
+B.4 Scoring & appétence au risque
+•	Si risk_tier = HIGH :
+o	Option A (safe) : suspension de la réémission automatique (auto_retry_enabled=false au niveau paiement) + alerte HIGH_RISK_SCORE.
+o	Option B (agile) : forcer la réémission sur le premier lot disponible (L1/L2) ou sur un PSP plus fiable (routage override).
+•	Traçabilité : payment_logs(event=RETRY_POLICY_OVERRIDE, reason=HIGH_RISK, action=SUSPEND|FORCE_LOT|FORCE_PSP).
+________________________________________
+B.5 Scheduler & ordre d’exécution
+Job : retry_scheduler (02:15, configurable)
+1.	Sélection des paiements AM04 éligibles dont J+N atteint.
+2.	Application règles calendrier (recadrage lot/jour, cut off).
+3.	Évaluation routage (jour/lot/scoring) → provider_account_id cible.
+4.	Emission → logs RETRY_SCHEDULED puis RETRY_SENT.
+5.	Mise à jour statut par webhook (PAID/REJECT_*) + log STATUS_CHANGE.
+Backoff technique en cas d’erreurs API (exponential + jitter, DLQ si persistant).
+________________________________________
+B.6 Paramétrage par société (retry_policies)
+•	reason = INSUFF_FUNDS
+•	delays_days = [5,10,20]
+•	max_attempts = 3
+•	auto_retry_enabled = true
+•	Extensions : business_day_shift, cutoff_hour, min_days_between_retries, reroute_on_retry (bool)
+Exemple JSON :
+{
+  "reason": "INSUFF_FUNDS",
+  "delays_days": [5,10,20],
+  "max_attempts": 3,
+  "auto_retry_enabled": true,
+  "business_day_shift": "NEXT_BUSINESS_DAY",
+  "cutoff_hour": 14,
+  "min_days_between_retries": 5,
+  "reroute_on_retry": true
+}
+________________________________________
+B.7 UX & notifications
+•	Écran Suivi : badge « Rejet AM04 (réémissible) » + compteur retry_count / max_attempts + Prochaine réémission.
+•	Actions ADV : Réémettre maintenant, Suspendre auto réémission, Changer de lot/PSP.
+•	Alertes : HIGH_RISK_SCORE, REJECT_SPIKES, PAYMENT_NOT_SUBMITTED.
+________________________________________
+B.8 Comptabilité & reporting
+•	KPI : taux de recouvrement post réémission (tentative 1/2/3), montants récupérés, répartition par PSP/lot.
+•	Export enrichi : attempt_no, date de réémission, PSP utilisé, résultat.
+•	Rapprochement bancaire : inchangé (rapprochement sur paiement PAID quelle que soit la tentative).
+________________________________________
+B.9 Résumé
+La réémission AM04 s’aligne sur le calendrier (jours/lots) et s’adapte au risque (scoring) pour maximiser le recouvrement : recadrage intelligent des dates, routage optimisé, et possibilité de suspension ou de forçage contrôlé avec traçabilité complète.
+Annexe C – Routage fournisseurs (Direction Financière)
+Cette annexe décrit le fonctionnement complet du routage dynamique des fournisseurs de paiement (PSP). Ce mécanisme, piloté par la Direction Financière, permet d’attribuer automatiquement chaque paiement au fournisseur approprié selon des règles métier configurables.
+________________________________________
+C.1 Objectif
+•	Optimiser la répartition des paiements entre les fournisseurs selon des critères définis par la Direction Financière.
+•	Garantir la souplesse dans la gestion des PSP sans intervention technique.
+•	Permettre une adaptation rapide lors de l’intégration d’un nouveau prestataire ou de la modification d’une stratégie financière.
+________________________________________
+C.2 Table principale : provider_routing_rules
+Cette table stocke les règles de routage configurées par la Direction Financière.
+Champ	Type	Description
+rule_id	UUID (PK)	Identifiant unique de la règle
+company_id	UUID (FK)	Société concernée
+name	String	Nom de la règle
+priority	Int	Priorité d’évaluation (1 = plus haute)
+conditions	JSONB	Ensemble des conditions à remplir
+provider_account_id	UUID (FK)	Fournisseur PSP ciblé
+fallback	Bool	Définit une règle de secours
+is_enabled	Bool	Activation/désactivation de la règle
+created_at, updated_at	Timestamps	Dates de création et mise à jour
+Exemple de contenu du champ conditions :
+{
+  "source_channel": ["TERRAIN"],
+  "contract_age_months_gte": 4,
+  "product_code": ["BLEUBOX", "BLEUFIXE"]
+}
+________________________________________
+C.3 Exemples de règles
+Priorité	Condition	Fournisseur ciblé	Description
+1	Canal = TERRAIN ET ancienneté >= 4 mois	Slimpay	Contrats Terrain anciens vers Slimpay
+2	Canal = TERRAIN ET ancienneté < 4 mois	Emerchantpay	Nouveaux contrats Terrain vers Emerchantpay
+3	Canal = WEB	GoCardless	Ventes en ligne gérées par GoCardless
+4	Aucun critère	MultiSafepay	Règle de secours par défaut
+________________________________________
+C.4 Overrides spécifiques
+Les overrides permettent de forcer le choix du fournisseur pour un client ou un contrat particulier, en contournant temporairement les règles générales.
+Table provider_overrides
+Champ	Type	Description
+override_id	UUID (PK)	Identifiant unique
+scope	Enum (CLIENT / CONTRAT)	Niveau d’application
+scope_id	UUID	Identifiant du client ou du contrat
+provider_account_id	UUID (FK)	Fournisseur assigné
+reason	String	Motif de l’override
+created_by, created_at	String / Timestamp	Auteur et date de création
+Exemple d’utilisation :
+Un client à risque ou un contrat VIP peut être basculé manuellement vers un fournisseur plus fiable, indépendamment des règles standard.
+________________________________________
+C.5 Réaffectation par lot
+La Direction Financière peut effectuer des migrations massives de contrats ou de clients vers un autre fournisseur.
+Table provider_reassignment_jobs
+Champ	Type	Description
+job_id	UUID (PK)	Identifiant du lot
+company_id	UUID (FK)	Société concernée
+from_provider_account_id	UUID (FK)	Fournisseur d’origine
+to_provider_account_id	UUID (FK)	Nouveau fournisseur
+selection_query	JSONB	Critères de sélection (canal, produit, ancienneté, etc.)
+status	Enum	DRAFT / SCHEDULED / RUNNING / COMPLETED / FAILED / ROLLED_BACK
+dry_run	Bool	Simulation sans exécution réelle
+scheduled_at	Timestamp	Date planifiée d’exécution
+report_file_id	UUID (FK → files)	Rapport CSV associé
+Fonctionnalités clés
+•	Simulation (dry-run) avant exécution pour visualiser l’impact.
+•	Planification des migrations en heures creuses.
+•	Rapport de migration détaillé avec succès, erreurs et nombre d’éléments traités.
+•	Audit complet de toutes les modifications.
+•	Rollback automatique possible en cas d’erreur majeure.
+________________________________________
+C.6 Sécurité et supervision
+•	Accès réservé aux utilisateurs avec rôle FINANCE_ADMIN.
+•	Historisation des changements dans audit_logs.
+•	Alerte PROVIDER_ROUTING_NOT_FOUND en cas d’absence de règle valide.
+•	Notifications automatiques en cas de migration échouée.
+________________________________________
+C.7 Résumé
+Le module de routage permet à la Direction Financière de :
+•	configurer dynamiquement les fournisseurs selon leurs critères internes ;
+•	basculer rapidement de prestataire sans impact technique ;
+•	réaffecter par lot les contrats existants en toute sécurité ;
+•	et auditer intégralement toutes les décisions et change
+Annexe D – Webhooks PSP (Portail & Événements dédiés)
+Cette annexe complète la spécification des webhooks pour intégrer :
+1.	les événements liés au portail de paiement client (régularisation via RUM + token),
+2.	des événements dédiés permettant une meilleure traçabilité métier (routage, calendrier, relances).
+________________________________________
+D.1 Endpoints (rappel & extension)
+Endpoints namespacés par PSP et multi sociétés via company_id :
+•	POST /api/payments/webhooks/slimpay/{company_id}
+•	POST /api/payments/webhooks/multisafepay/{company_id}
+•	POST /api/payments/webhooks/emerchantpay/{company_id}
+•	POST /api/payments/webhooks/gocardless/{company_id}
+Nouveaux endpoints internes (portail & système) :
+•	POST /api/payments/webhooks/portal/{company_id}
+→ réceptionne les événements du Portail Paiement (paiement client, annulation, expiration).
+•	POST /api/payments/webhooks/system/{company_id}
+→ réceptionne les événements système dédiés (émission planifiée, routage override, rappel relance).
+Tous les endpoints exigent HTTPS/TLS 1.3, signature HMAC SHA 256, anti replay 5 minutes, et idempotence par provider_event_id.
+________________________________________
+D.2 Sécurisation
+•	Signature HMAC : en-tête X-Signature contenant t=<timestamp>, v1=<hmac> ; secret stocké chiffré dans provider_accounts.webhook_secret (PSP) ou company_webhook_secret (portail/système).
+•	Anti replay : différence absolue entre t et l’horloge serveur ≤ 300 s.
+•	Idempotence : clé unique provider_event_id (ou portal_event_id) persistée dans webhook_events ; doublons → 200 OK sans retraitement.
+•	Allowlist IP (optionnelle) sur reverse proxy pour PSP connus.
+________________________________________
+D.3 Journalisation & état
+À la réception :
+1.	Vérifier signature / anti replay → 401 si invalide ou expiré.
+2.	Vérifier idempotence → 200 si doublon.
+3.	Insérer dans webhook_events : provider_account_id|source=PORTAL|SYSTEM, provider_event_type, provider_event_id, payload, signature_valid=true, processed=false.
+4.	Traiter l’événement, mettre à jour le domaine (payments, payment_portal_sessions, customer_interactions), puis marquer processed=true + processed_at.
+________________________________________
+D.4 Événements PSP (métier) – mapping (rappel)
+•	payment.executed|completed|settled|confirmed → PAID
+•	payment.rejected (AM04) / chargeback (AM04) / returned (AM04) → REJECT_INSUFF_FUNDS + retry_advice=AUTO
+•	payment.rejected (autre)|declined|expired|returned(other) → REJECT_OTHER
+•	payment.cancelled → CANCELLED
+•	payment.refunded / paid_out → REFUNDED
+•	payment.error → API_ERROR
+Chaque mapping entraîne un log payment_logs(event=STATUS_CHANGE) avec payload_in/payload_out.
+________________________________________
+D.5 Événements Portail Paiement (nouveaux)
+Source : portal
+1.	portal.payment_approved
+•	Contexte : le client règle via le portail (lien RUM + token).
+•	Action : payments.status_code = PAID, payment_portal_sessions.paid_at = now() ; création d’un log payment_logs(event=PORTAL_PAYMENT_APPROVED) ; option de rapprochement immédiat si preuve de paiement (PSP carte).
+•	Payload (exemple) :
+{
+  "portal_event_id": "PRT-001",
+  "payment_id": "PAY-123",
+  "rum": "FT123...-CTR-2025-00045-2025",
+  "method": "CARD",
+  "amount_cents": 1990,
+  "approved_at": "2025-11-08T10:22:01Z"
+}
+2.	portal.payment_cancelled
+•	Action : aucun changement statut paiement ; log PORTAL_PAYMENT_CANCELLED.
+•	Usage : suivi des abandons panier/portail.
+3.	portal.session_expired
+•	Action : invalider la session (payment_portal_sessions.expires_at < now) ; log PORTAL_SESSION_EXPIRED.
+4.	portal.bank_update_requested (option)
+•	Action : création d’une tâche ADV pour mise à jour IBAN/mandat ; log PORTAL_BANK_UPDATE_REQUESTED ; notification ADV.
+________________________________________
+D.6 Événements Système dédiés (nouveaux)
+Source : system
+1.	system.emit_scheduled
+•	Contexte : planification d’émission via Calendar/Batch Scheduler (jour/lot).
+•	Action : log EMIT_SCHEDULED dans payment_logs + prévision volume/jour (KPI calendrier).
+2.	system.routing_override
+•	Contexte : changement de PSP ou de lot décidé par la Finance (ou scoring).
+•	Action : log ROUTING_OVERRIDE (avant émission) avec raisons (HIGH_RISK, LOT_REBALANCE).
+3.	system.reminder_sent
+•	Contexte : relance automatique envoyée (email/SMS/call).
+•	Action : insertion dans customer_interactions + log REMINDER_SENT.
+________________________________________
+D.7 Codes de réponse (rappel)
+Code	Signification
+200	{ "status": "ok" } – événement reçu (même doublon)
+401	Signature invalide / fenêtre anti-replay expirée
+5xx	Erreur serveur – le producteur d’événements retente
+DLQ : au-delà de N échecs, l’événement est déplacé en dead letter queue pour relecture manuelle (interface admin « Webhooks »).
+________________________________________
+D.8 Exemples de payloads PSP (rappel + GoCardless)
+•	Slimpay : payment.status.changed { state: executed|rejected, reasonCode: AM04 }
+•	MultiSafepay : transaction.updated { status: completed|declined|chargeback }
+•	Emerchantpay : sepa.returned { status: returned, reason: AM04 }
+•	GoCardless : events[ { resource_type: payments, action: confirmed|failed|charged_back } ]
+________________________________________
+D.9 Sécurité & conformité
+•	Secrets chiffrés et rotations ≤ 90 jours ; gestion via Vault.
+•	HMAC, TLS 1.3, anti replay 5 min, allowlist IP (PSP), logs immuables.
+•	Données personnelles minimisées dans les payloads ; pas d’IBAN en clair.
+•	Rétention webhook_events : 24 mois.
+________________________________________
+D.10 Tests & recette
+•	Vérifier : signature HMAC, horodatage, idempotence.
+•	Simuler : PAID, REJECT_INSUFF_FUNDS (AM04), REJECT_OTHER, REFUNDED, CANCELLED.
+•	Tester nouveaux événements portail (portal.payment_approved, portal.session_expired) et système (system.emit_scheduled, system.routing_override).
+•	Objectif SLA : traitement < 5 min, 0 perte d’événements, DLQ vidée.
+________________________________________
+D.11 Résumé
+Cette version des webhooks étend le périmètre aux règlements via portail, formalise les événements métiers dédiés (calendrier, routage, relances) et renforce la sécurisation et la traçabilité de bout en bout.
+
+Annexe E – Monitoring et alertes
+Cette annexe précise le dispositif de supervision temps réel et d’alerting du module de paiements. L’objectif est d’assurer la détection précoce des incidents, le respect des SLA et la traçabilité des actions correctives.
+________________________________________
+E.1 Outils et périmètre
+•	Prometheus : collecte des métriques applicatives et systèmes (exporters).
+•	Grafana : tableaux de bord temps réel (IT, Finance, Direction).
+•	Alertmanager : règles d’alertes, escalades et silences planifiés.
+•	Logs centralisés : corrélation événements API, webhooks, retries, exports.
+________________________________________
+E.2 Métriques clés suivies
+Domaine	Métrique	Détail
+API PSP	Latence moyenne & p95/p99	Temps entre requête émission et réponse PSP
+API PSP	Taux d’erreurs (4xx/5xx)	Par fournisseur (Slimpay, GoCardless, MSP, EMP)
+Webhooks	Reçus vs traités	File en attente, délai moyen de traitement
+Retries	Longueur de queue	Nombre de paiements en réémission programmée
+Rejets	Taux de rejets	Global et par PSP, motif AM04 vs autres
+Système	CPU/RAM/IO	Microservices paiements, DB, queues
+________________________________________
+E.3 Seuils critiques & déclencheurs
+•	Latence API > 30 s sur 5 min : CRITICAL (risque indisponibilité PSP).
+•	Taux de rejets > 20 % sur 100 derniers paiements : MAJOR (alerte REJECT_SPIKES).
+•	API down ≥ 5 min (100 % d’échecs) : CRITICAL + bascule en mode dégradé.
+•	Webhooks en attente > 15 min ou DLQ > seuil : MAJOR.
+•	Queue retries > 5 000 éléments : WARNING (risque saturation).
+________________________________________
+E.4 Canaux de notification
+•	Email : envoi aux listes IT/ADV/Finance selon gravité.
+•	Slack / Teams : webhook d’entreprise (canaux #paiements-it, #paiements-adv).
+•	UI CRM : bannières rouge/orange avec détail et actions rapides (acknowledge, ouvrir dashboard).
+•	Rapports périodiques : résumé quotidien/hebdo des incidents et temps de rétablissement (MTTR).
+________________________________________
+E.5 Historisation & gestion des alertes
+•	Stockage dans la table alerts : alert_id, scope, severity, code, message, notified_channels, acknowledged_by, acknowledged_at, created_at.
+•	Acquittement : les rôles autorisés (IT, Finance, ADV) peuvent accuser réception et clôturer.
+•	Rétention : 24 mois, export JSON/CSV possible pour audit.
+________________________________________
+E.6 Tableaux de bord Grafana (exemples)
+•	Vue IT : latence API par PSP (moyenne/p95), erreurs 4xx/5xx, files webhooks/retries, charge DB.
+•	Vue Finance : volumes émis, taux de rejet (AM04 vs autres), succès post réémission, distribution par PSP.
+•	Vue Direction : SLA globaux, disponibilité, incidents majeurs et tendance mensuelle.
+________________________________________
+E.7 Recette & tests
+•	Simuler indisponibilité d’un PSP (timeouts) → alerte latence + échecs.
+•	Injecter 100 webhooks/s → vérifier délai de traitement < 5 min et absence de perte.
+•	Provoquer pic de rejets (données sandbox) → alerte REJECT_SPIKES.
+________________________________________
+E.8 Résumé
+Le dispositif Monitoring & Alertes assure :
+•	une détection rapide des anomalies,
+•	une communication multi canal efficace,
+•	une traçabilité complète des incidents et résolutions,
+•	et le respect des SLA contractés (99,9 % de disponibilité).
+Annexe F – Performance & archivage (ajout interactions)
+Cette annexe définit les optimisations techniques et les mécanismes d’archivage permettant au module de paiements de maintenir des performances constantes tout en intégrant la conservation des interactions clients (relances multi canaux, notifications portail, scoring).
+________________________________________
+F.1 Objectifs
+•	Assurer la stabilité des performances du module malgré une volumétrie croissante (plusieurs millions de paiements/an).
+•	Prévenir la surcharge des écrans utilisateurs et des requêtes SQL.
+•	Garantir un archivage intelligent des paiements, interactions et journaux associés.
+•	Permettre des exports rapides sans altérer les performances globales.
+________________________________________
+F.2 Pagination et virtualisation
+•	Pagination côté serveur (100 lignes/page par défaut).
+•	Virtual scroll pour chargement progressif des grandes listes.
+•	Tri et filtres exécutés côté base avec index multi colonne (status_code, planned_debit_date, company_id).
+•	Temps de réponse cible : < 1 s pour 10 000 enregistrements filtrés.
+________________________________________
+F.3 Auto archivage
+•	Paiements soldés (PAID, REFUNDED, CANCELLED, REJECT_OTHER) déplacés automatiquement vers la table payments_archive.
+•	Délai d’archivage par défaut : J+30 après statut final.
+•	Paramétrable par société (company_settings.archive_policy).
+•	Archivage exécuté par le job archive_scheduler (quotidien à 03:00).
+•	Les paiements archivés deviennent en lecture seule et exclus des jobs automatiques (retry, routing, scoring).
+________________________________________
+F.4 Archivage des interactions clients
+•	Les interactions client (table customer_interactions) sont archivées pour suivre l’historique des relances et contacts.
+•	Règle :
+o	Interactions liées à un paiement archivé → archivées simultanément.
+o	Interactions indépendantes → archivées à J+90.
+•	Conservation minimale : 24 mois (lecture seule).
+•	Archivage exécuté par le job interaction_archiver (quotidien 04:00).
+•	Historique exportable (interaction_exports) avec les champs : date, canal, statut, message, opérateur.
+________________________________________
+F.5 Partitionnement des données
+•	La table payments est partitionnée par mois sur le champ created_at.
+•	Activation automatique si le volume annuel > 5 M de lignes.
+•	Tables secondaires partitionnées : payment_logs, customer_interactions, webhook_events.
+•	Les partitions antérieures à 12 mois sont compressées.
+•	Objectif : maintenir le temps moyen de requête < 300 ms.
+________________________________________
+F.6 Exports asynchrones
+•	Exports massifs (CSV / XLSX / JSON) exécutés en tâche de fond (export_jobs).
+•	Lien signé valable 24 h envoyé à l’utilisateur (email ou UI).
+•	Statuts : PENDING, RUNNING, DONE, FAILED.
+•	Monitoring Prometheus : durée d’exécution, taille, statut.
+Formats
+Format	Usage
+CSV	Export comptable / reporting volumique
+XLSX	Lecture utilisateur (ADV, Finance)
+JSON	Intégration API / automatisation
+________________________________________
+F.7 Surveillance & maintenance
+•	Monitoring du temps d’exécution (Prometheus).
+•	Alerte si durée > 15 min ou taux d’échec > 2 %.
+•	Nettoyage automatique des fichiers temporaires (>7 jours).
+•	Maintenance hebdomadaire : VACUUM, REINDEX, ANALYZE.
+________________________________________
+F.8 Archivage du scoring & portail
+•	Les scores de risque (table risk_scores) sont conservés 24 mois pour analyse historique.
+•	Les sessions portail (payment_portal_sessions) expirées sont archivées à J+7.
+•	Suppression des tokens chiffrés après expiration.
+•	Objectif : assurer la conformité RGPD tout en préservant les données analytiques.
+________________________________________
+F.9 Résumé
+•	Auto archivage unifié pour paiements, interactions, scoring et sessions portail.
+•	Partitionnement mensuel garantissant des performances stables à grande échelle.
+•	Exports asynchrones sécurisés et traçables.
+•	Conservation contrôlée pour conformité et auditabilité.
+Annexe G – Sécurité & conformité (Portail client & Scoring)
+Cette annexe précise les exigences de sécurité et de conformité applicables au module de paiements, en incluant :
+1.	le portail de paiement client connecté au RUM et
+2.	le moteur de scoring (pseudonymisation et gouvernance des modèles).
+________________________________________
+G.1 Référentiels et cadre réglementaire
+•	RGPD / CNIL : minimisation, base légale (exécution du contrat – art. 6.1.b), droits (accès, rectification, effacement, portabilité, opposition), registre de traitement par société.
+•	DSP2 : authentification forte pour actions sensibles (réémission manuelle, modification mandat, export).
+•	PCI-DSS : pas de stockage PAN/CVV dans le SI ; uniquement tokens renvoyés par les PSP pour les paiements CB.
+•	SEPA Rulebook (EPC) : RUM unique/immuable, conservation mandat ≥ 14 mois après dernière opération.
+________________________________________
+G.2 Données sensibles & chiffrement
+•	AES 256 at rest (IBAN/BIC, tokens de carte, pay_token portail).
+•	TLS 1.3 in transit (CRM↔PSP, CRM↔Portail, Portail↔PSP).
+•	Masquage des IBAN dans les logs/exports (FR76 **** **** 1234).
+•	Pseudonymisation scoring : séparation des identifiants directs (customer_id) et des variables d’entraînement ; stockage des facteurs dans risk_scores.factors filtrés des PII non nécessaires.
+________________________________________
+G.3 Gestion des secrets & clés
+•	Secrets chiffrés dans coffre (Vault) : clés API PSP, secrets HMAC webhooks, clés de signature pay_token.
+•	Rotation ≤ 90 jours : procédure standardisée avec validation et double contrôle (4 eyes).
+•	Traçabilité via audit_logs de toute mise à jour (provider_accounts.updated_at).
+________________________________________
+G.4 Authentification, autorisation & sessions
+•	SSO Microsoft 365 + MFA obligatoires pour tous les utilisateurs internes (ADV, Finance, IT).
+•	RBAC : rôles et périmètres (société, client, contrat).
+•	Portail client : sessions courtes, pay_token signé (JWT/HMAC) avec portée minimale (paiement unique) et expiration courte (≤ 30 min).
+•	Limitation de tentatives et rate limiting sur endpoints portail et webhooks.
+________________________________________
+G.5 Portail de paiement client (régularisation)
+•	Accès via lien sécurisé /pay/{RUM}?t={pay_token} (signature HMAC + timestamp).
+•	CSP (Content Security Policy) stricte, X Frame Options: DENY, HSTS activé.
+•	Aucune donnée carte saisie/stokée par le portail : redirection vers PSP CB (MultiSafepay/Emerchantpay) ; pour SEPA : redirection vers PSP SEPA (Slimpay/GoCardless).
+•	Sur confirmation PSP : payments.status_code = PAID, payment_portal_sessions.paid_at renseigné, log PORTAL_PAYMENT_APPROVED.
+________________________________________
+G.6 Scoring : gouvernance & conformité
+•	Finalité : prévention du risque d’impayés (exécution du contrat, intérêt légitime) ; pas d’utilisation pour profilage marketing.
+•	Transparence : documentation du modèle (variables, version, date d’entraînement) ; auditabilité des décisions (payment_logs(event=ROUTING_OVERRIDE) quand le score impacte le PSP/lot).
+•	Qualité des données : sources, nettoyage, gestion des biais ; réentraînement mensuel/trim.
+•	Droits RGPD : fournir, sur demande, une explication simplifiée de l’influence du score ; permettre opposition si usage non contractuel.
+________________________________________
+G.7 Journalisation & audit
+•	Audit logs immuables : connexions, changements de droits, émissions/réémissions, routage, scoring overrides, exports, actions portail.
+•	Conservation 24 mois (logs), 10 ans (exports), 24 mois (données bancaires après fin de contrat).
+•	Export SIEM (ELK/Splunk) pour corrélation sécurité.
+________________________________________
+G.8 Protection contre la fraude & abus
+•	HMAC + anti replay 5 min sur webhooks (PSP/Portail/Système).
+•	Allowlist IP (option PSP) et WAF applicatif.
+•	Détection d’anomalies : alertes HIGH_RISK_MISROUTED, CUTOFF_MISSED, pics d’échecs portail (3 tentatives).
+•	Rate limit sur tentatives de paiement/relance pour éviter l’abus.
+________________________________________
+G.9 PRA/PCA (rappels spécifiques)
+•	RPO 15 min / RTO 2 h pour DB paiements, mandats, sessions portail, scores.
+•	Sauvegardes : DB 15 min, GED quotidienne ; restauration testée 1×/semestre.
+•	Reprise sécurisée du portail (invalidation des pay_token pré incident ; ré émission contrôlée).
+________________________________________
+G.10 Checklist de conformité (extraits)
+•	Registre RGPD « Gestion des paiements & Portail » à jour par société.
+•	DPA/attestations PSP (RGPD, PCI DSS/DSP2) archivées.
+•	Politique de rotation des secrets validée et tracée.
+•	Politiques de rétention appliquées (24m/10a/24m).
+•	Tests HMAC/anti replay/CSRF/Rate limit OK en pré prod.
+•	Documentation modèle de scoring (versioning, variables, précision) disponible.
+________________________________________
+G.11 Résumé
+•	Portail sécurisé (token signé, redirections PSP, CSP) et zéro stockage carte.
+•	Scoring conforme (pseudonymisé, gouverné, explicable) et limité à la prévention d’impayés.
+•	Sécurité globale : AES 256, TLS 1.3, SSO+MFA, HMAC, journaux immuables, PRA/PCA.
+•	Conformité : RGPD, DSP2, PCI DSS (via PSP), SEPA Rulebook (mandats/RUM).
+Annexe H – Scénarios de tests (mise à jour : portail client, scoring IA, relances)
+Cette annexe complète la batterie de tests pour couvrir les règlements via portail, le scoring prédictif et les relances automatiques multi canaux, en plus des scénarios existants (émission, réémission AM04, mapping statuts, webhooks, archivage…).
+________________________________________
+H.1 Pré requis généraux
+•	Environnements : Sandbox actifs pour Slimpay, GoCardless, MultiSafepay, Emerchantpay.
+•	Jeux de données : contrats ACTIVE avec mandats valides, lots L1→L4, jours planifiés, différents niveaux de scoring (LOW/MEDIUM/HIGH).
+•	Accès : comptes ADV/Finance/IT (SSO+MFA), webhooks configurés (HMAC, anti replay 5 min).
+________________________________________
+H.2 Portail de paiement client (régularisation)
+Objectif : vérifier qu’un client peut régulariser un paiement via lien sécurisé RUM + token et que le statut est mis à jour correctement.
+1.	Création session
+•	Action : générer /pay/{RUM}?t={pay_token} (exp. ≤ 30 min).
+•	Attendu : payment_portal_sessions.expires_at défini ; log PORTAL_SESSION_CREATED (optionnel).
+2.	Paiement approuvé
+•	Action : redirection vers PSP CB / SEPA → confirmation.
+•	Attendu : payments.status_code = PAID, payment_portal_sessions.paid_at renseigné, log PORTAL_PAYMENT_APPROVED, webhook portail traité < 5 min.
+3.	Annulation / abandon
+•	Action : fermeture ou retour arrière.
+•	Attendu : log PORTAL_PAYMENT_CANCELLED, aucun changement de statut paiement.
+4.	Expiration session
+•	Action : attendre expires_at.
+•	Attendu : log PORTAL_SESSION_EXPIRED, session inutilisable.
+5.	Sécurité portail
+•	Action : rejouer un pay_token expiré / altéré.
+•	Attendu : 401 + aucun effet ; alerte si récidive.
+KPI : taux de réussite portail, latence confirmation, erreurs/100 sessions.
+________________________________________
+H.3 Scoring prédictif (IA)
+Objectif : valider la qualité du modèle et ses effets (routage/lot) sans dégrader la performance.
+1.	Génération score
+•	Action : exécuter le pipeline d’évaluation sur 500 paiements.
+•	Attendu : risk_scores(score, risk_tier, factors, evaluated_at) créés, temps total < X s.
+2.	Arbitrage routage
+•	Action : pour risk_tier = HIGH, vérifier override PSP et/ou lot (L1/L2).
+•	Attendu : log ROUTING_OVERRIDE(reason=HIGH_RISK) ; PSP ciblé conforme à la règle Finance.
+3.	Corrélation post paiement
+•	Action : comparer résultats réels 30 jours après échéance.
+•	Attendu : corrélation score↔impayé ≥ 85 % (seuil paramétrable) ; rapport exporté.
+4.	Biais & variables
+•	Action : analyser factors ; vérifier absence de PII non nécessaires.
+•	Attendu : conformité RGPD (pseudonymisation), documentation du modèle (version, variables).
+KPI : précision globale, TPR/FPR, lift, stabilité mensuelle, temps d’inférence/paiement.
+________________________________________
+H.4 Relances automatiques (email/SMS/appel)
+Objectif : s’assurer que les relances partent selon les règles et sont tracées.
+1.	Déclenchement relance
+•	Action : passer un paiement en échec (REJECT_*) puis attendre le délai (J+X).
+•	Attendu : insertion dans customer_interactions (channel, message_type, payload, status=SENT).
+2.	Échec d’envoi
+•	Action : simuler erreur sur le canal (SMTP/SMS gateway).
+•	Attendu : status=FAILED, error_message renseigné ; alerte FAILED_REMINDER après 3 échecs.
+3.	Chronologie multicanale
+•	Action : email → si non payée à J+2 → SMS → si non payée à J+4 → appel.
+•	Attendu : séquence respectée, time stamps ordonnés ; possibilité d’arrêt si paiement reçu.
+4.	Opt out / consentement
+•	Action : désinscription d’un canal.
+•	Attendu : relance sur autres canaux uniquement, traçabilité.
+KPI : taux de contact, taux de conversion post relance, délai moyen de régularisation.
+________________________________________
+H.5 Calendrier & lots (compléments)
+•	Émission planifiée : vérifier planned_debit_date = today → émission avant cutoff_hour.
+•	Recadrage jour/lot : après AM04, recaler sur prochain lot disponible ; logs conformes.
+•	Équilibre lots : contrôler répartition L1→L4 (±10 %) ; rapport volumétrie.
+________________________________________
+H.6 Webhooks & DLQ (stress)
+•	Injections 100 événements/s (PSP + portail + système) pendant 5 min.
+•	Attendu : traitement < 5 min, 0 doublon, DLQ vidée, processed=true pour tous les events.
+________________________________________
+H.7 Sécurité & conformité (focus nouveautés)
+•	Portail : HMAC, anti replay, CSP, X Frame Options, HSTS ; 0 PAN/CVV ; tokens expirés.
+•	Scoring : pseudonymisation, explication simplifiée, audit trail des overrides.
+•	Relances : respect consentement, rubriques RGPD.
+________________________________________
+H.8 Critères Go/No Go (résumé)
+•	100 % des scénarios H.2→H.7 OK en pré prod.
+•	KPI respectés : précision scoring ≥ seuil, émissions planifiées 100 % < cutoff, taux d’échec relance < seuil.
+•	SLA atteints : latence API < 3 s, MAJ statuts < 5 min, exports < 2 min.
+•	PV de recette signé par ADV, Comptabilité, Finance, IT.
+________________________________________
+H.9 Annexes de test (livrables)
+•	Jeux de données anonymisés (clients/contrats/paiements).
+•	Scripts d’injection webhooks (PSP/Portail).
+•	Scénarios BDD (Gherkin) pour portail et scoring.
+•	Tableaux de bord Grafana préconfigurés pour la phase de test.
+Annexe I – Glossaire technique (ajouts : Scoring, Risk Tier, Customer Interaction, Payment Portal)
+Ce glossaire actualisé regroupe l’ensemble des termes techniques et fonctionnels utilisés dans le module de gestion des paiements, incluant désormais les notions liées au scoring prédictif, aux interactions clients et au portail de paiement.
+________________________________________
+I.1 Termes principaux
+Terme	Définition
+PSP (Payment Service Provider)	Prestataire de services de paiement (Slimpay, GoCardless, MultiSafepay, Emerchantpay).
+ADV (Administration des ventes)	Équipe en charge de la gestion et du suivi des paiements.
+HMAC (Hash-Based Message Authentication Code)	Méthode de signature sécurisée des webhooks, garantissant intégrité et authenticité.
+RUM (Référence Unique de Mandat)	Identifiant unique SEPA associé à un mandat client.
+Retry Policy	Politique de réémission automatique des paiements rejetés (AM04).
+Webhook	Notification HTTP émise par un PSP, le portail ou le système interne pour signaler un changement d’état.
+Fallback Rule	Règle de secours utilisée par le moteur de routage en absence de correspondance.
+________________________________________
+I.2 Nouveaux termes ajoutés
+Terme	Définition
+Scoring (ou Risk Scoring)	Mécanisme d’analyse prédictive qui attribue à chaque client ou paiement un score (0–100) selon son risque d’impayé. Le scoring s’appuie sur des données historiques et comportementales.
+Risk Tier	Catégorie de risque issue du scoring (LOW, MEDIUM, HIGH) utilisée pour le routage fournisseur, la priorisation des lots ou la suspension des réémissions.
+Customer Interaction	Enregistrement d’une communication automatisée ou manuelle avec le client (email, SMS, appel) liée à un paiement ou une relance. Stockée dans la table customer_interactions.
+Payment Portal	Interface sécurisée permettant au client de régulariser ses paiements en ligne via un lien RUM + token. Connectée au module Paiements et aux PSP pour confirmation temps réel.
+Planned Debit Date	Date exacte de prélèvement calculée à l’avance selon le calendrier (jour/lot).
+Debit Lot Code	Code de lot (L1–L4) indiquant la semaine ou période de prélèvement planifiée.
+Calendar Engine	Composant du module chargé de calculer et planifier les dates de prélèvement.
+Reminder Engine	Système de relances automatiques multi-canaux (email, SMS, appel).
+Risk Scores Table (risk_scores)	Table contenant les valeurs du scoring, les facteurs associés et la date d’évaluation.
+Customer Interactions Table (customer_interactions)	Table enregistrant les actions de contact client (relance, rappel, notification).
+Payment Portal Sessions Table (payment_portal_sessions)	Table stockant les sessions de paiement client (token, expiration, validation).
+________________________________________
+I.3 Abréviations internes (rappel)
+Abréviation	Signification
+FT	France Téléphone
+MTV	Mondial TV
+AP	Action Prévoyance
+DF	Direction Financière
+DSI	Direction des Systèmes d’Information
+CRM	Customer Relationship Management
+UI	Interface Utilisateur
+KPI	Key Performance Indicator
+________________________________________
+I.4 Notes d’usage
+•	Les termes Scoring, Risk Tier, Customer Interaction et Payment Portal sont interconnectés : le scoring influence le routage et les relances, qui peuvent déclencher des interactions ou redirections vers le portail.
+•	Toutes les définitions doivent être cohérentes avec la base documentaire interne (Annexes A, B, G et H).
+________________________________________
+I.5 Objectif du glossaire
+Assurer la compréhension commune des termes entre équipes ADV, Finance, Comptabilité, IT, et les prestataires PSP, pour une exploitation claire et homogène du module de paiements.
+Annexe J – Exports comptables & Callbacks (ajout des champs jour/lot/score/relances)
+Cette annexe décrit les exports comptables enrichis pour inclure les informations de calendrier (jour/lot), le scoring de risque, et le suivi des relances clients, tout en conservant la compatibilité avec les systèmes comptables existants.
+________________________________________
+J.1 Formats disponibles
+•	CSV : séparateur ;, encodage UTF-8, entête incluse.
+•	XLSX : pour lecture et reporting humain (ADV, Finance).
+•	JSON : pour intégrations API ou automatisations.
+Les exports sont horodatés, signés et stockés dans la table export_jobs avec leur export_batch_id.
+________________________________________
+J.2 Colonnes standard enrichies
+Champ	Description
+entry_id	Identifiant unique de l’écriture comptable.
+company_id	Société émettrice.
+journal_code	Code journal comptable (VTE, BAN, ACH).
+entry_date	Date de l’écriture comptable.
+document_ref	Référence paiement interne ou PSP.
+account_debit	Compte débité (ex. 512 Banque).
+account_credit	Compte crédité (ex. 706 Ventes).
+amount_excl_tax	Montant HT.
+vat_rate	Taux de TVA.
+vat_amount	Montant de TVA.
+amount_incl_tax	Montant TTC.
+currency	Devise (EUR).
+customer_ref	Référence client.
+contract_ref	Référence contrat.
+provider_name	PSP utilisé.
+provider_ref	Référence transaction PSP.
+status_code	Statut du paiement (PAID, REJECT_*, etc.).
+preferred_debit_day	Jour de prélèvement prévu (1–28).
+debit_lot_code	Lot planifié (L1–L4).
+planned_debit_date	Date exacte de prélèvement.
+risk_score	Score de risque du paiement (0–100).
+risk_tier	Niveau de risque (LOW, MEDIUM, HIGH).
+reminder_count	Nombre de relances effectuées.
+created_by	Utilisateur ayant lancé l’export.
+export_batch_id	Identifiant du lot d’export.
+________________________________________
+J.3 Fréquences & planification
+•	Quotidien : génération à 06:00 pour la veille.
+•	Hebdomadaire : chaque lundi à 06:30.
+•	Mensuel : premier jour du mois à 07:00.
+•	Exports automatiques planifiables par société dans company_settings.export_policy.
+________________________________________
+J.4 Canaux de diffusion
+•	Téléchargement UI : via lien signé (valable 24 h).
+•	SFTP cabinet : transfert automatisé vers le dossier comptable (/SOCIETE/AAAA/MM/).
+•	Email (option) : envoi du lien sécurisé au responsable comptable.
+•	Tous les fichiers sont compressés (ZIP) et hashés (SHA256).
+________________________________________
+J.5 Callbacks PSP & Portail
+Source	Endpoint	Description
+PSP (Slimpay, MSP, EMP, GoCardless)	/api/payments/webhooks/{psp}/{company_id}	Mises à jour statut (PAID, REJECT_*, REFUNDED).
+Portail client	/api/payments/webhooks/portal/{company_id}	Confirmation de paiement via lien RUM + token.
+Système interne	/api/payments/webhooks/system/{company_id}	Événements internes (émission planifiée, relance, routage).
+Les retours PSP et portail sont intégrés dans les exports via les champs provider_ref, status_code, planned_debit_date et risk_score.
+________________________________________
+J.6 Mapping des statuts comptables
+Statut paiement	Code comptable	Action comptable
+PAID	Encaissement validé	Génération écriture BAN/CLIENT.
+REJECT_INSUFF_FUNDS	Rejet bancaire	Écriture contre-passation, planification retry.
+REJECT_OTHER	Rejet non réémissible	Provision perte client.
+REFUNDED	Remboursement client	Écriture sortie trésorerie.
+CANCELLED	Annulation	Aucun impact comptable.
+API_ERROR	Erreur technique	Suivi interne, pas d’écriture.
+________________________________________
+J.7 Historisation & audit
+•	Chaque export est tracé dans audit_logs avec : export_job_id, user_id, period, format, duration_ms, file_hash.
+•	Conservation des exports : 10 ans (obligation légale).
+•	Logs associés conservés 24 mois.
+________________________________________
+J.8 Exemple JSON d’export (extrait simplifié)
+{
+  "entry_id": "E123",
+  "company_id": "C001",
+  "contract_ref": "CTR-2025-0456",
+  "provider_name": "Slimpay",
+  "status_code": "PAID",
+  "amount_incl_tax": 2990,
+  "currency": "EUR",
+  "preferred_debit_day": 5,
+  "debit_lot_code": "L1",
+  "planned_debit_date": "2025-11-05",
+  "risk_score": 42,
+  "risk_tier": "LOW",
+  "reminder_count": 0,
+  "export_batch_id": "BATCH-2025-11-001"
+}
+________________________________________
+J.9 Résumé
+•	Enrichissement des exports avec données de calendrier (jour, lot, date planifiée).
+•	Ajout du scoring de risque et du suivi des relances.
+•	Intégration des paiements via portail client et des callbacks système.
+•	Export unifié compatible comptabilité et reporting interne.
+Annexe K – Mapping des statuts fournisseurs
+Cette annexe normalise les statuts bruts renvoyés par les prestataires (PSP) vers des statuts internes homogènes, utilisés par l’UI, le reporting et les exports.
+________________________________________
+K.1 Table de correspondance
+Table : provider_status_mapping
+Clé unique : (provider_id, provider_raw_status, coalesce(provider_raw_reason,''))
+Champs :
+•	mapping_id (UUID, PK)
+•	provider_id (FK → providers)
+•	provider_raw_status (string)
+•	provider_raw_reason (string, nullable)
+•	status_code (enum interne : PENDING, SUBMITTED, PAID, REJECT_INSUFF_FUNDS, REJECT_OTHER, CANCELLED, REFUNDED, API_ERROR)
+•	retry_advice (enum : AUTO | MANUAL | NEVER)
+•	created_at / updated_at
+Règles : un statut fournisseur doit être transformé en un seul statut interne (idempotence métier).
+________________________________________
+K.2 Slimpay → Statuts internes
+Statut Slimpay (brut)	Détail / Raison	Statut interne	Retry advice
+created	—	PENDING	AUTO
+accepted	—	SUBMITTED	AUTO
+executed	—	PAID	NONE
+rejected	AM04	REJECT_INSUFF_FUNDS	AUTO
+rejected	autre	REJECT_OTHER	MANUAL
+cancelled	—	CANCELLED	NONE
+refunded	—	REFUNDED	NONE
+error	—	API_ERROR	MANUAL
+________________________________________
+K.3 MultiSafepay → Statuts internes
+Statut MSP (brut)	Détail / Raison	Statut interne	Retry advice
+initialized	—	PENDING	AUTO
+uncleared	—	SUBMITTED	AUTO
+completed	—	PAID	NONE
+declined	—	REJECT_OTHER	MANUAL
+expired	—	REJECT_OTHER	MANUAL
+chargeback	AM04 / insuffisance	REJECT_INSUFF_FUNDS	AUTO
+cancelled	—	CANCELLED	NONE
+refunded	—	REFUNDED	NONE
+error	—	API_ERROR	MANUAL
+________________________________________
+K.4 Emerchantpay → Statuts internes
+Statut EMP (brut)	Détail / Raison	Statut interne	Retry advice
+pending	—	PENDING	AUTO
+submitted	—	SUBMITTED	AUTO
+settled	—	PAID	NONE
+returned	AM04	REJECT_INSUFF_FUNDS	AUTO
+returned	autre	REJECT_OTHER	MANUAL
+declined	—	REJECT_OTHER	MANUAL
+cancelled	—	CANCELLED	NONE
+refunded	—	REFUNDED	NONE
+error	—	API_ERROR	MANUAL
+________________________________________
+K.5 Notes d’implémentation
+•	Les mappings sont chargés au démarrage (seed) et éditables via une interface admin.
+•	Toute évolution fournisseur (nouveau statut/raison) doit être ajoutée à la table pour éviter les statuts « inconnus ».
+•	retry_advice = AUTO autorise la réémission automatique si les conditions métier sont réunies (voir Annexe B).
+•	Les labels FR et couleurs de badges sont pilotés par le référentiel payment_statuses.
+________________________________________
+K.6 Extension (option) – GoCardless
+Si utilisé :
+Statut GoCardless (brut)	Interne
+created / submitted	SUBMITTED
+confirmed / paid_out	PAID
+failed	REJECT_OTHER ou REJECT_INSUFF_FUNDS selon cause
+charged_back	REJECT_INSUFF_FUNDS
+cancelled	CANCELLED
+refunded	REFUNDED
+Le champ cause de GoCardless (ex. bank_account_closed, insufficient_funds) détermine le mapping détaillé.
+Annexe L – Politique de génération des RUM
+Cette annexe définit la méthode uniforme de génération et de gestion des Références Uniques de Mandat (RUM) pour l’ensemble des sociétés du groupe Winvest Capital.
+________________________________________
+L.1 Objectif
+•	Garantir l’unicité des RUM pour chaque société (identifiant créancier SEPA – ICS).
+•	Respecter les règles du SEPA Rulebook (EPC) en matière d’immuabilité et de traçabilité.
+•	Centraliser la création, la vérification et la conservation des RUM au sein du module Paiements.
+________________________________________
+L.2 Format recommandé
+{ICS}-{ContractID}-{YYYY}
+Exemple : FT123456789-CTR-2025-00045-2025
+Détails des composants
+•	ICS : identifiant créancier SEPA de la société (ex. FT123456789).
+•	ContractID : identifiant interne unique du contrat (UUID ou référence incrémentale).
+•	YYYY : année de génération du mandat.
+Ce format permet une lecture immédiate du contexte du mandat tout en garantissant l’unicité.
+________________________________________
+L.3 Unicité & immuabilité
+•	Le RUM est unique par ICS : aucune duplication possible pour un même identifiant créancier.
+•	Le couple (company_id, mandate_reference) est indexé en unicité dans la base.
+•	Le RUM reste inchangé pendant toute la durée de vie du mandat SEPA.
+•	En cas de révocation ou expiration du mandat, le RUM devient inactif mais n’est jamais réutilisé.
+________________________________________
+L.4 Multi-contrats simultanés
+Certains clients peuvent souscrire plusieurs contrats simultanément avec un seul mandat SEPA.
+Règle d’association
+•	Un RUM principal est généré au niveau du dossier de souscription.
+•	Ce RUM unique est associé à tous les contrats signés dans le même dossier.
+•	En base de données :
+o	Table sepa_mandates → champ mandate_reference = RUM principal.
+o	Table contracts → champ mandate_id liant chaque contrat au RUM global.
+Exemple :
+Dossier DS-2025-00987 → RUM généré FT123456789-DS-2025-00987-2025
+Contrats associés : CTR-2025-01001, CTR-2025-01002, CTR-2025-01003.
+________________________________________
+L.5 Processus opérationnel
+1.	Création du contrat en statut DRAFT.
+2.	Signature électronique du mandat SEPA (RUM non encore généré).
+3.	Validation ADV → génération automatique du RUM selon le format défini.
+4.	Insertion du RUM dans la table sepa_mandates.
+5.	Association du RUM à tous les contrats concernés.
+________________________________________
+L.6 Points techniques
+•	Table sepa_mandates : champ mandate_reference = RUM.
+•	Service : RUMGeneratorService gère la génération et la validation d’unicité.
+•	Hash SHA-256 du RUM stocké en base pour vérification d’intégrité.
+•	API :
+o	POST /api/mandates/generate → génère et renvoie un RUM.
+o	GET /api/mandates/{mandate_id} → renvoie les informations du mandat et les contrats liés.
+________________________________________
+L.7 Conformité SEPA
+•	Le RUM doit être attribué avant la première présentation en banque.
+•	Il reste valide tant que le mandat est actif.
+•	En cas de modification du mandat, un nouveau RUM est créé.
+•	Conservation légale : 14 mois après la dernière opération.
+________________________________________
+L.8 Résumé
+Le format {ICS}-{ContractID}-{YYYY} assure une référence claire, unique et traçable pour chaque mandat SEPA.
+Cette politique garantit la conformité au SEPA Rulebook et la cohérence multi-sociétés du groupe Winvest Capital.
+Annexe M – PRA/PCA & Résilience (ajout reprise scoring & portail)
+Cette annexe complète le dispositif de Plan de Reprise d’Activité (PRA) et de Plan de Continuité d’Activité (PCA) en intégrant les composants liés au moteur de scoring et au portail de paiement client.
+________________________________________
+M.1 Objectifs et périmètre
+•	Garantir la disponibilité du module de paiements, y compris les services de scoring prédictif et du portail de paiement.
+•	Limiter l’interruption maximale de service à 2 heures (RTO) et la perte de données à 15 minutes (RPO).
+•	Assurer la reprise coordonnée entre les bases de données principales (paiements, scoring, sessions portail, interactions clients) et les services API externes (PSP, scoring IA, portail).
+________________________________________
+M.2 Données et services couverts
+Domaine	Éléments inclus	Fréquence de sauvegarde
+Paiements & mandats	tables payments, contracts, sepa_mandates	Snapshots 15 min
+Interactions clients	table customer_interactions	30 min
+Scores de risque	table risk_scores + modèle IA (fichier entraînement)	1 h
+Portail sessions	table payment_portal_sessions + tokens	15 min
+Exports & logs	tables export_jobs, payment_logs, webhook_events	15 min
+Toutes les sauvegardes sont chiffrées AES-256 et répliquées dans un second datacenter.
+________________________________________
+M.3 Architecture de résilience
+•	Base principale : cluster haute disponibilité (PostgreSQL ou équivalent) avec réplication synchrone vers site secondaire.
+•	Microservices : paiements, scoring, portail et relances conteneurisés et orchestrés (Kubernetes).
+•	Queues : persistance disque (RabbitMQ/Kafka) ; reprise automatique post-redémarrage.
+•	Fichiers GED (mandats, exports) : stockage objet redondé (S3 compatible).
+________________________________________
+M.4 Reprise du moteur de scoring
+•	Composants à restaurer : table risk_scores, API de calcul, modèle IA entraîné (model.bin).
+•	Procédure :
+1.	Vérifier cohérence table risk_scores (compare evaluated_at < snapshot).
+2.	Recharger le modèle IA depuis sauvegarde.
+3.	Redémarrer service risk_scoring_api.
+4.	Vérifier intégrité via test d’inférence (10 échantillons).
+•	RPO spécifique scoring : 60 min maximum (réévaluation possible via recompute_missing_scores).
+•	Logs d’audit : audit_logs(event=PRA_RESTORE_SCORING).
+________________________________________
+M.5 Reprise du portail de paiement client
+•	Composants : table payment_portal_sessions, service payment_portal_api, clés de signature pay_token.
+•	Procédure :
+1.	Annuler toutes les sessions expirées ou antérieures à l’incident.
+2.	Révoquer les pay_token actifs à l’heure de l’incident.
+3.	Réinitialiser les connexions PSP (API OAuth2/clé).
+4.	Redémarrer le portail (pod/VM) et vérifier POST /healthcheck.
+•	RTO spécifique portail : 1 h.
+•	Journalisation : audit_logs(event=PRA_RESTORE_PORTAL).
+________________________________________
+M.6 Procédures générales PRA
+1.	Détection incident (alerte monitoring IT/PSP).
+2.	Activation PRA : validation DSI + Direction Financière.
+3.	Bascule DB vers cluster secondaire (réplication synchrone).
+4.	Redémarrage microservices sur cluster secours.
+5.	Relance batchs : payment_emitter, retry_scheduler, archive_scheduler, interaction_archiver.
+6.	Contrôle intégrité : comparaison volumes avant/après PRA.
+7.	Communication : notification interne Slack + email clients majeurs si interruption > 30 min.
+________________________________________
+M.7 Tests & audit PRA/PCA
+•	Fréquence : 1 test PRA complet / semestre.
+•	Tests ciblés :
+o	Reprise scoring : cohérence des scores post-reprise.
+o	Reprise portail : vérification accès, expiration token, sécurité HMAC.
+o	Reprise paiements : relance automatique des jobs planifiés.
+o	Restauration simultanée base + fichiers GED.
+•	Rapport PRA : chronologie, durées RTO/RPO réelles, anomalies, actions correctives.
+________________________________________
+M.8 Responsabilités
+Acteur	Responsabilité
+DSI	Activation PRA/PCA, bascule infra, supervision technique.
+Finance	Validation cohérence paiements, lots, PSP.
+IT Sécurité	Révocation clés et tokens, vérification conformité post-incident.
+ADV	Relance manuelle clients si sessions portail impactées.
+________________________________________
+M.9 Résumé
+•	Intégration complète du scoring et du portail dans les procédures PRA/PCA.
+•	RPO 15 min / RTO 2 h global, scoring 1 h / portail 1 h spécifiques.
+•	Reprise automatisée des services critiques : scoring API, portail client, jobs paiements.
+•	Conformité RGPD, sécurité (chiffrement, rotation clés), audit trail PRA complet.
+Annexe N – Rapprochement bancaire (intégration paiements portail client)
+Cette annexe décrit le fonctionnement du rapprochement bancaire dans le module de paiements, incluant désormais les paiements réalisés via le portail client et les régularisations manuelles effectuées en ligne.
+________________________________________
+N.1 Objectifs
+•	Automatiser le rapprochement entre les paiements internes et les relevés bancaires.
+•	Intégrer les flux provenant du portail de paiement client (régularisation via RUM/token).
+•	Réduire les traitements manuels en assurant une traçabilité complète.
+•	Permettre le suivi global des encaissements SEPA, CB et portails en un seul tableau.
+________________________________________
+N.2 Sources de données
+Source	Type	Détail
+Flux SEPA	XML CAMT.053	Prélèvements SEPA (Slimpay, GoCardless, Emerchantpay).
+Flux CB / e-paiement	CSV / API PSP	Transactions carte (MultiSafepay, Emerchantpay).
+Portail client	API interne / webhook	Paiements en ligne via lien RUM + token.
+Manuels internes	Interface ADV	Ajustements ou règlements par virement hors portail.
+________________________________________
+N.3 Mécanisme de rapprochement
+1.	Import des relevés bancaires : CAMT.053, CSV ou API directe.
+2.	Appariement automatique selon la règle de priorité :
+o	(provider_ref ou rum) exact match.
+o	(montant + date ±2 jours) si RUM manquant.
+o	(customer_ref + montant) si doublon détecté.
+3.	Mise à jour du statut :
+o	Paiement trouvé → status_code = PAID + log RECONCILIATION_MATCHED.
+o	Écart (montant ou date) → status_code = TO_VERIFY + alerte ADV.
+o	Non trouvé → status_code = UNMATCHED.
+4.	Archivage : rapprochements réussis déplacés en historique à J+30.
+________________________________________
+N.4 Intégration des paiements via portail client
+Les règlements effectués sur le portail (via portal.payment_approved) sont directement pré-rapprochés :
+•	Le webhook portail renseigne provider_ref et paid_at.
+•	Lors de l’import du relevé CAMT.053 ou CSV, la correspondance est automatique (RUM + montant + date).
+•	Si concordance confirmée :
+o	payments.status_code reste PAID.
+o	reconciliation_status = AUTO_MATCHED.
+o	Log payment_logs(event=RECONCILIATION_PORTAL_MATCHED).
+•	Si non retrouvé (ex. décalage jour/heure) : tentative J+1 avec marge ±48h.
+•	Les paiements manuels (hors portail) peuvent être saisis en UI pour rapprochement ultérieur.
+________________________________________
+N.5 Interface de rapprochement (UI)
+•	Vue Comptabilité :
+o	Colonnes : date opération, RUM, PSP, client, contrat, montant, statut, source (SEPA / CB / Portail / Manuel).
+o	Filtres : société, période, fournisseur, mode de paiement, statut rapprochement.
+o	Actions : forcer rapprochement, annuler, exporter.
+•	Colorimétrie statuts :
+o	Vert : Réconcilié (AUTO_MATCHED, MANUAL_MATCHED).
+o	Orange : À vérifier (TO_VERIFY).
+o	Rouge : Non rapproché (UNMATCHED).
+________________________________________
+N.6 Export comptable post-rapprochement
+•	Les écritures rapprochées sont envoyées vers le journal comptable avec :
+o	entry_type = RECONCILIATION
+o	source = SEPA | CB | PORTAL | MANUAL
+o	reconciliation_batch_id (lot d’export).
+•	Exportable en CSV/XLSX/JSON via module Reporting.
+________________________________________
+N.7 Alertes & supervision
+Code	Description	Gravité	Action
+RECONCILIATION_MISMATCH	Montant ou date incohérente entre PSP et relevé.	Majeure	Notification Comptabilité.
+RECONCILIATION_UNMATCHED	Paiement non trouvé après 48h.	Majeure	Relance manuelle ADV.
+PORTAL_MATCH_FAILED	Paiement portail non retrouvé dans relevé bancaire.	Mineure	Relance J+1.
+________________________________________
+N.8 Suivi & reporting
+•	Tableau de bord Finance :
+o	taux de rapprochement global (%),
+o	part automatique (SEPA, CB, Portail),
+o	anomalies à corriger.
+•	Rapports périodiques (quotidien, hebdomadaire, mensuel) exportables depuis Grafana ou UI.
+________________________________________
+N.9 Résumé
+•	Intégration complète des paiements issus du portail client dans le rapprochement bancaire.
+•	Appariement automatique grâce aux références RUM + montants + dates.
+•	Suivi unifié SEPA / CB / Portail / Manuels.
+•	Interface de supervision enrichie et exports comptables automatisés.
+Annexe O – Calendrier de prélèvements & Lots (jours fixes)
+Cette annexe formalise la planification par jour fixe et par lot (L1–L4) des prélèvements, ainsi que son intégration avec le routage fournisseurs et, en option, le scoring de risque.
+________________________________________
+O.1 Objectifs
+•	Définir à l’avance le jour de prélèvement par client et/ou contrat.
+•	Planifier des lots hebdomadaires (L1→L4) pour lisser la trésorerie et la charge PSP.
+•	Permettre des règles de routage basées sur le jour et/ou le lot.
+•	Autoriser, en option, l’arbitrage par scoring (décaler/forcer lot/PSP pour profils à risque).
+________________________________________
+O.2 Modèle de données (extensions)
+•	customers.preferred_debit_day (int 1–28, nullable) : préférence globale du client.
+•	contracts.preferred_debit_day (int 1–28, nullable) : priorité sur celle du client.
+•	contracts.debit_lot_code (enum: L1|L2|L3|L4, nullable) : lot hebdomadaire.
+•	company_settings.debit_calendar (jsonb) : mapping lots ↔ jours + règles calendrier.
+•	payments.planned_debit_date (date) : date de prélèvement calculée et figée.
+JSON company_settings.debit_calendar (exemple)
+{
+  "lots": {
+    "L1": {"days": [1, 2]},
+    "L2": {"days": [8, 9]},
+    "L3": {"days": [15, 16]},
+    "L4": {"days": [22, 23]}
+  },
+  "holiday_shift_rule": "NEXT_BUSINESS_DAY",
+  "cutoff_hour": 14,
+  "weekend_policy": "NEXT_BUSINESS_DAY"
+}
+________________________________________
+O.3 Algorithme de calcul planned_debit_date
+Entrées : contrat, mois cible, preferred_debit_day, debit_lot_code, debit_calendar.
+Priorité :
+1.	contracts.preferred_debit_day si défini, sinon
+2.	customers.preferred_debit_day si défini, sinon
+3.	jour issu de debit_lot_code via debit_calendar.lots[L*].days[0].
+Pseudocode
+function compute_planned_date(contract, month):
+  day = contract.preferred_debit_day
+        ?? contract.customer.preferred_debit_day
+        ?? first(debit_calendar.lots[contract.debit_lot_code].days)
+
+  date = make_date(year=month.year, month=month.month, day=clamp(day,1,28))
+
+  if is_weekend_or_holiday(date):
+     date = shift(date, policy=debit_calendar.weekend_policy)
+
+  if now.hour >= debit_calendar.cutoff_hour and date == today():
+     date = next_business_day(date)
+
+  return date
+Notes :
+•	clamp(…,1,28) évite les problèmes de fin de mois (février).
+•	Le calcul est réalisé lors de la génération des paiements et mis à jour en cas de modification du contrat.
+________________________________________
+O.4 Job d’émission (intégration)
+•	Le job quotidien n’émet que les paiements où planned_debit_date = today et status = PENDING.
+•	Respect strict du cutoff_hour ; en cas de dépassement, décalage au prochain jour ouvré.
+•	Journalisation : payment_logs(event=EMIT_SCHEDULED|API_REQUEST|STATUS_CHANGE).
+________________________________________
+O.5 Routage fournisseurs par jour/lot
+Ajout de conditions utilisables dans provider_routing_rules.conditions :
+•	preferred_debit_day_in: [1,2,8,9,15,16,22,23]
+•	debit_lot_code_in: ["L1","L2"]
+Exemples :
+{"debit_lot_code_in":["L1","L2"], "provider_account_id":"provacc-msp"}
+{"preferred_debit_day_in":[1,2,3,4,5], "provider_account_id":"provacc-gocardless"}
+________________________________________
+O.6 Option scoring (arbitrage)
+•	Si risk_tier = HIGH, possibilité de forcer debit_lot_code vers L1/L2 ou changer de PSP avant émission.
+•	Traçabilité : payment_logs(event=ROUTING_OVERRIDE, reason=HIGH_RISK, from=EMP, to=MSP).
+________________________________________
+O.7 UX / Administration
+•	Fiche Contrat : champs Jour de prélèvement (1–28) et Lot (L1–L4) avec aperçu des 6 prochaines dates.
+•	Écran Émission : filtres par jour/lot ; widget “Aujourd’hui : N paiements – Σ montant”.
+•	Import CSV (DF/ADV) : assignation en masse Jour/Lot (validation & prévisualisation).
+•	Aperçu calendrier (mois) : heatmap volumes prévus par jour et par PSP.
+________________________________________
+O.8 Alertes & Monitoring
+•	BATCH_DAY_EMPTY : aucun envoi réalisé alors que des paiements étaient planifiés pour today.
+•	CUTOFF_MISSED : émission réalisée après l’heure de cut off (risque rejet ou retard).
+•	KPI : % d’envois à la date planifiée, volumes/jour, répartition par lot et par PSP.
+________________________________________
+O.9 Exports & reporting
+•	Colonnes additionnelles (Annexe J) : preferred_debit_day, debit_lot_code, planned_debit_date.
+•	Rapports : volumes et montants par lot (L1–L4), taux d’impayés par jour, comparaison prévu vs réalisé.
+________________________________________
+O.10 Tests & cas limites
+•	Mois à 28/30/31 jours ; années bissextiles.
+•	Jours fériés & week ends (politiques de décalage).
+•	Changement de jour/lot en cours de mois (recalcul sécurisé).
+•	Volume massif avec partitionnement actif (>5M/an).
+________________________________________
+O.11 Résumé
+Le calendrier de prélèvements par jour et par lots simplifie l’exploitation, stabilise la trésorerie et ouvre la voie à des optimisations intelligentes via routage et scoring — tout en restant prévisible, traçable et paramétrable par les équipes Finance/ADV.
+Annexe P – Référentiel des motifs de rejet
+Cette annexe décrit la gestion centralisée des motifs de rejet dans le module de paiements. Elle a pour but d’harmoniser les libellés, de faciliter l’analyse statistique et de permettre un affichage clair dans les interfaces utilisateurs et les exports.
+________________________________________
+P.1 Objectifs
+•	Uniformiser les motifs de rejet transmis par les PSP (Slimpay, GoCardless, MultiSafepay, Emerchantpay).
+•	Faciliter le suivi des rejets par catégorie : insuffisance de fonds, contestation, technique, autre.
+•	Permettre un reporting consolidé par fournisseur, période, et motif.
+•	Offrir une base unique pour l’affichage, les exports et les indicateurs financiers.
+________________________________________
+P.2 Table rejection_reasons
+Champ	Type	Description
+reason_id	UUID (PK)	Identifiant unique du motif.
+provider_name	String	PSP émetteur (Slimpay, GoCardless, etc.).
+provider_code	String	Code brut envoyé par le fournisseur (ex. AM04, AC04, MD01).
+label_fr	String	Libellé normalisé en français (ex. « Insuffisance de fonds »).
+category	Enum	Catégorie principale : INSUFFISANCE, TECHNIQUE, CONTESTATION, AUTRE.
+is_retryable	Bool	Indique si la réémission est possible (true si AM04).
+comment	Text	Informations complémentaires (fournisseur ou banque).
+created_at / updated_at	Timestamps	Gestion de l’historique.
+________________________________________
+P.3 Exemples de données
+Provider	Code	Libellé	Catégorie	Réémissible
+Slimpay	AM04	Insuffisance de fonds	INSUFFISANCE	✅
+GoCardless	AC04	Compte fermé	TECHNIQUE	❌
+Emerchantpay	MD01	Mandat invalide	TECHNIQUE	❌
+MultiSafepay	AG01	Transaction refusée	AUTRE	❌
+Slimpay	MS03	Contestation client	CONTESTATION	❌
+________________________________________
+P.4 Affichage dans les interfaces
+•	Vue Suivi paiements : colonne « Motif de rejet » affichant le label_fr + code brut en tooltip.
+•	Fiche paiement : bloc détaillé avec motif, catégorie, réémissibilité.
+•	Filtres : catégorie (INSUFFISANCE, TECHNIQUE, etc.) et fournisseur.
+•	Icônes visuelles : ⚠️ (insuffisance), 🧩 (technique), ❌ (contestation), ℹ️ (autre).
+________________________________________
+P.5 Reporting & KPI
+•	KPI principaux :
+o	Taux de rejet global = (Rejets / Paiements soumis) × 100.
+o	Répartition des rejets par catégorie et PSP.
+o	Évolution mensuelle (graphiques empilés par type).
+o	Montants rejetés par motif et par fournisseur.
+•	Exports enrichis : champs rejection_category et rejection_label_fr ajoutés aux exports comptables (voir Annexe J).
+•	Dashboard Finance :
+o	Filtre multi-fournisseurs.
+o	Courbes de tendance par type de rejet.
+o	Comparatif AM04 vs autres rejets (impact réémission).
+________________________________________
+P.6 Maintenance & évolutivité
+•	La table rejection_reasons est éditable via interface admin (rôle IT ou DF).
+•	Ajout/modification d’un motif → versionning automatique (updated_at).
+•	Import initial possible depuis un CSV fournisseur (Slimpay, GoCardless…).
+•	Synchronisation automatisée optionnelle (API PSP → mise à jour code/raison).
+________________________________________
+P.7 Sécurité & audit
+•	Toutes les modifications sont journalisées dans audit_logs (event=REJECTION_REASON_UPDATE).
+•	Accès restreint : rôles FINANCE_ADMIN et IT_ADMIN uniquement.
+•	Historisation : conservation des anciens libellés 24 mois.
+________________________________________
+P.8 Résumé
+•	Centralisation et normalisation des motifs de rejet.
+•	Affichage clair et reporting catégorisé dans toutes les vues.
+•	Interopérabilité avec les exports et les tableaux de bord Finance.
+•	Maintenance simple et traçabilité complète pour conformité interne.
+Annexe Q – Portail de paiement client
+Cette annexe décrit le portail de paiement client permettant la régularisation des paiements en ligne de manière sécurisée, connectée au module principal de gestion des paiements.
+________________________________________
+Q.1 Objectifs
+•	Permettre au client de régulariser un paiement impayé ou à venir via un lien sécurisé (RUM + token).
+•	Offrir une interface simple et conforme aux normes de sécurité (DSP2, RGPD, PCI-DSS).
+•	Assurer la mise à jour automatique des paiements après confirmation du PSP.
+•	Intégrer le portail dans le processus global : paiements → webhooks → rapprochement bancaire.
+________________________________________
+Q.2 Architecture et intégration
+Composants principaux
+•	Frontend Portail : application web responsive (HTML5, JS, Tailwind).
+•	API Portail : service backend léger (authentification tokenisée, communication avec CRM).
+•	CRM Paiements : création sessions, suivi statut, archivage.
+•	PSP : gestion des transactions (Slimpay, GoCardless pour SEPA ; MultiSafepay, Emerchantpay pour CB).
+Flux global
+1.	CRM crée une session (payment_portal_sessions) et génère un pay_token signé.
+2.	Client reçoit le lien /pay/{RUM}?t={token} et accède au portail.
+3.	Portail affiche les infos (montant, date, contrat) et propose les options de paiement (CB/SEPA).
+4.	Redirection PSP : saisie et validation du paiement.
+5.	Webhook portail → CRM : mise à jour status_code = PAID.
+6.	Rapprochement bancaire via CAMT.053 ou API PSP.
+________________________________________
+Q.3 Sécurité et conformité
+•	Tokenisation HMAC/JWT :
+o	Contient payment_id, rum, expiry_timestamp, signature.
+o	Valide 30 minutes maximum, usage unique.
+o	Vérification côté serveur avant chaque affichage ou soumission.
+•	HTTPS/TLS 1.3 obligatoire, aucune donnée non chiffrée en transit.
+•	CSP (Content Security Policy) stricte + X-Frame-Options: DENY + HSTS activé.
+•	Rate-limit 5 requêtes/minute par IP pour éviter les abus.
+•	Zéro stockage carte : redirection vers le PSP pour la saisie (PCI-DSS compliance).
+•	Audit logs : PORTAL_SESSION_CREATED, PORTAL_PAYMENT_APPROVED, PORTAL_SESSION_EXPIRED, PORTAL_PAYMENT_CANCELLED.
+________________________________________
+Q.4 Données et modèles
+Table payment_portal_sessions
+Champ	Type	Description
+session_id	UUID	Identifiant unique.
+payment_id	FK → payments	Paiement concerné.
+rum	String	Référence unique SEPA.
+pay_token	String (chiffré)	Jeton signé, usage unique.
+expires_at	Timestamp	Date d’expiration du token.
+paid_at	Timestamp (nullable)	Date du paiement réussi.
+provider_redirect	JSONB	Informations PSP (URL, réponse).
+Liens avec le CRM
+•	payments.status_code mis à jour à PAID via webhook portal.payment_approved.
+•	payment_logs mis à jour (event=PORTAL_PAYMENT_APPROVED).
+•	Les sessions expirées sont archivées à J+7 (archive_scheduler).
+________________________________________
+Q.5 UX et parcours utilisateur
+Écrans clés
+1.	Accueil : affichage contrat, montant, échéance, boutons [Payer par CB] / [Payer par SEPA].
+2.	Redirection PSP : interface de saisie sécurisée du prestataire.
+3.	Confirmation : message succès/échec, reçu téléchargeable, lien d’assistance.
+4.	Erreur / Token expiré : affichage message et contact ADV.
+Principes UX
+•	Temps de chargement < 2 s.
+•	Responsive (mobile, tablette, desktop).
+•	Respect des standards WCAG 2.1 (contraste, navigation clavier).
+•	Personnalisation charte France Téléphone / Winvest Capital.
+________________________________________
+Q.6 API Portail (principaux endpoints)
+Méthode	Endpoint	Description
+POST	/api/portal/sessions	Génère une session et renvoie le lien sécurisé.
+GET	/api/portal/payments/{RUM}	Retourne les infos d’un paiement (via token).
+POST	/api/portal/confirm	Callback après validation PSP.
+GET	/api/portal/health	Vérifie l’état du service.
+Authentification : token signé obligatoire (pay_token).
+Logs : chaque appel inscrit dans api_audit_logs.
+________________________________________
+Q.7 Webhooks associés
+•	Portail → CRM :
+o	portal.payment_approved : confirmation paiement.
+o	portal.payment_cancelled : abandon utilisateur.
+o	portal.session_expired : expiration session.
+o	portal.bank_update_requested : demande de mise à jour IBAN (optionnelle).
+•	CRM → Portail :
+o	system.reminder_sent : notifier portail lors d’une relance automatique.
+SLA : traitement < 5 min, idempotence stricte.
+________________________________________
+Q.8 Reporting et KPI
+•	Taux de conversion portail = (paiements validés / sessions créées) × 100.
+•	Taux d’abandon = (sessions expirées / sessions créées) × 100.
+•	Temps moyen de règlement = (approved_at – session_created_at).
+•	Erreurs PSP : nombre et répartition par fournisseur.
+•	Tableaux de bord Grafana : sessions créées, paiements réussis, délais moyens.
+________________________________________
+Q.9 Tests et recette
+•	Unitaires : création session, vérification token, expiration, webhook.
+•	Fonctionnels : paiement complet CB/SEPA, abandon, expiration.
+•	Sécurité : HMAC, anti-replay, CSP, XFO, HSTS, rate-limit.
+•	Charge : 100 sessions/min, 100 webhooks/s, latence < 3 s.
+•	Recette métier : validation par ADV (suivi), Finance (intégration comptable), IT (webhooks/SLA).
+________________________________________
+Q.10 Résumé
+•	Portail sécurisé de régularisation client connecté au module Paiements.
+•	Lien RUM + token HMAC (usage unique, TTL 30 min).
+•	Redirection PSP (zéro stockage carte).
+•	Intégration complète : paiements, webhooks, rapprochement bancaire.
+•	Suivi KPI et supervision via Grafana.
+•	Conforme RGPD, DSP2, PCI-DSS et SEPA Rulebook.
+Annexe R – Procédures utilisateurs (ADV & Comptabilité)
+Cette annexe définit les procédures opérationnelles à suivre par les équipes ADV, Comptabilité et Direction Financière dans l’utilisation quotidienne du module de gestion des paiements.
+________________________________________
+R.1 Objectifs
+•	Décrire les tâches quotidiennes, hebdomadaires et mensuelles liées à la gestion des paiements.
+•	Harmoniser les pratiques entre ADV, Comptabilité et Finance.
+•	Garantir la conformité, la traçabilité et la qualité des opérations.
+________________________________________
+R.2 Rôles & responsabilités
+Rôle	Responsabilités principales
+ADV (Administration des ventes)	Émission, suivi, relances, gestion des anomalies.
+Comptabilité	Exports, rapprochements bancaires, TVA, rejets & remboursements.
+Direction Financière	Paramétrage fournisseurs, règles de routage, reporting & validation mensuelle.
+IT / Support	Supervision technique, gestion des erreurs API, maintenance des webhooks et jobs planifiés.
+________________________________________
+R.3 Procédures quotidiennes (ADV)
+1.	Émission des paiements
+o	Vérifier le tableau “Émission planifiée”.
+o	S’assurer que les paiements planned_debit_date = today ont été transmis avant le cutoff_hour.
+o	En cas d’échec, relancer manuellement ou alerter IT (PAYMENT_NOT_SUBMITTED).
+2.	Suivi des rejets (AM04)
+o	Contrôler les statuts REJECT_INSUFF_FUNDS.
+o	Vérifier la planification de réémission automatique (J+5/J+10/J+20).
+o	Si client à risque (risk_tier = HIGH), prévenir Finance pour décision manuelle.
+3.	Relances automatiques
+o	Consulter l’onglet “Relances” : email, SMS, appel.
+o	Vérifier les envois échoués (FAILED_REMINDER) et les relancer.
+4.	Portail client
+o	Répondre aux demandes d’assistance (sessions expirées, erreurs PSP).
+o	Suivre les paiements portal.payment_approved dans le tableau de bord.
+5.	Communication avec les clients
+o	Utiliser les modèles validés (email/SMS).
+o	Documenter chaque contact dans customer_interactions.
+________________________________________
+R.4 Procédures hebdomadaires (Comptabilité)
+1.	Rapprochement bancaire
+o	Importer les fichiers CAMT.053 ou CSV banque.
+o	Vérifier l’appariement automatique (AUTO_MATCHED).
+o	Résoudre les statuts TO_VERIFY et UNMATCHED.
+2.	Exports comptables
+o	Générer l’export hebdomadaire (lundi 06h30).
+o	Vérifier les colonnes : planned_debit_date, provider_name, risk_score.
+o	Transférer le fichier au cabinet via SFTP (sécurisé).
+3.	Contrôle des écritures
+o	Vérifier cohérence comptes 512/411/706/4457.
+o	Identifier les rejets à contre-passer (REJECT_OTHER).
+4.	Vérification TVA
+o	S’assurer du bon taux (vat_rate) et du montant (vat_amount).
+________________________________________
+R.5 Procédures mensuelles (Direction Financière)
+1.	Analyse volumétrique
+o	Contrôler l’équilibre des lots (L1–L4) ±10 %.
+o	Vérifier la répartition PSP et la charge mensuelle.
+2.	Reporting & KPI
+o	Générer les rapports (rejets, recouvrement, scoring, portail).
+o	Taux d’impayés / taux de réussite / délai moyen de régularisation.
+3.	Paramétrage fournisseurs
+o	Ajuster les règles de routage (provider_routing_rules).
+o	Activer/désactiver les fournisseurs selon les performances.
+4.	Contrôle des PRA & sauvegardes
+o	Vérifier le dernier test PRA (bascule scoring/portail).
+o	Confirmer la rotation des clés API PSP (≤ 90 jours).
+________________________________________
+R.6 Gestion des anomalies
+Type	Exemple	Action
+Émission	Job non exécuté	Relancer manuellement ou notifier IT.
+Routage	Fournisseur non trouvé	Alerte PROVIDER_ROUTING_NOT_FOUND.
+Réémission	Paiement bloqué	Vérifier retry_policies, statut contrat/mandat.
+Portail	Token invalide	Régénérer session, alerter ADV.
+Relances	Envoi échoué	Retenter ou passer sur canal secondaire.
+Comptabilité	Écart rapprochement	Corriger manuellement, documenter.
+________________________________________
+R.7 Sécurité & conformité utilisateur
+•	Accès via SSO Microsoft 365 + MFA.
+•	Droits gérés par rôle (RBAC) : ADV / Finance / Compta / IT.
+•	Interdiction de modifier les statuts manuellement hors process autorisé.
+•	Audit de toutes les actions dans audit_logs.
+________________________________________
+R.8 Checklists opérationnelles
+Quotidienne (ADV)
+•	Émission planifiée OK (< cutoff).
+•	Rejets AM04 traités.
+•	Relances automatiques validées.
+•	Portail : sessions actives et paiements reçus.
+Hebdomadaire (Comptabilité)
+•	Export comptable généré et validé.
+•	Rapprochement CAMT.053 complet.
+•	Contrôle TVA effectué.
+Mensuelle (Finance)
+•	Reporting complet (lots, PSP, scoring, impayés).
+•	Vérification PRA, clés API, conformité.
+________________________________________
+R.9 Résumé
+•	Ensemble de procédures pour ADV, Comptabilité et Finance.
+•	Intégration des relances et paiements portail dans la routine quotidienne.
+•	Checklists de contrôle garantissant conformité, performance et fiabilité du module.
+Annexe T – Partenaires & documentation
+Cette annexe centralise les références techniques, exigences d’intégration, checklists sandbox et checklists de mise en production pour chacun des prestataires (PSP) utilisés par le module Paiements.
+________________________________________
+T.1 Prestataires couverts
+•	Slimpay — SEPA Direct Debit.
+•	GoCardless — SEPA Direct Debit.
+•	MultiSafepay — Cartes & e paiements.
+•	Emerchantpay — SEPA & Cartes.
+Nota : toute intégration d’un nouveau PSP devra suivre les mêmes checklists et normes (HMAC, anti replay, idempotence, sandbox → prod).
+________________________________________
+T.2 Informations communes (tous PSP)
+•	Environnements : Sandbox et Production.
+•	Authentification : clé API / OAuth2 selon PSP ; stockage chiffré (Vault) ; rotation ≤ 90 jours.
+•	Webhooks : signature HMAC, horodatage, anti replay 5 min, idempotence par provider_event_id.
+•	IP allowlist (si disponible) + TLS 1.3 obligatoire.
+•	Événements minimum à supporter : PAID, REJECT_* (AM04/other), CANCELLED, REFUNDED, ERROR.
+•	SLAs internes : traitement webhook < 5 min, 0 perte (DLQ/replay), logs immuables.
+________________________________________
+T.3 Détails par partenaire
+T.3.1 Slimpay (SEPA)
+•	Domaines/Docs : API REST, Webhooks, Rulebook SEPA Core.
+•	Liens & ressources officielles :
+o	Documentation API : https://dev.slimpay.com
+o	Webhooks : https://dev.slimpay.com/hapi/
+o	Portail Sandbox : https://sandbox.slimpay.com
+•	Sandbox : compte test + ICS de test.
+•	Événements : created, accepted, executed, rejected(AMxx), cancelled, refunded, error.
+•	Mapping interne : executed→PAID, rejected+AM04→REJECT_INSUFF_FUNDS, rejected+autre→REJECT_OTHER, refunded→REFUNDED.
+•	Checklist :
+1.	Créer provider_account (clé, secret webhook).
+2.	Configurer endpoint /api/payments/webhooks/slimpay/{company_id}.
+3.	Tester executed, rejected AM04, rejected autre, cancelled.
+4.	Vérifier idempotence/horodatage/signature (HMAC).
+T.3.2 GoCardless (SEPA)
+•	Domaines/Docs : API, Events, Mandats, Webhooks.
+•	Liens & ressources officielles :
+o	API Reference : https://developer.gocardless.com/api-reference/
+o	Webhooks : https://developer.gocardless.com/getting-started/webhooks/
+o	Sandbox : https://manage-sandbox.gocardless.com
+•	Sandbox : compte + producteur d’événements.
+•	Événements : created/submitted/confirmed/paid_out/failed/charged_back/cancelled/refunded.
+•	Mapping : confirmed|paid_out→PAID, failed→REJECT_*, charged_back→REJECT_INSUFF_FUNDS.
+•	Checklist :
+1.	Enregistrer webhook /gocardless/{company_id}.
+2.	Simuler confirmed, failed(cause), charged_back.
+3.	Vérifier RUM/mandats, rapprochement CAMT.053.
+T.3.3 MultiSafepay (Cartes)
+•	Domaines/Docs : Transactions API, Webhooks, Refunds.
+•	Liens & ressources officielles :
+o	Developer Portal : https://docs.multisafepay.com/api/
+o	Webhooks : https://docs.multisafepay.com/reference/webhooks
+o	Sandbox : https://testmerchant.multisafepay.com/
+•	Sandbox : compte test CB.
+•	Événements : initialized/uncleared/completed/declined/expired/chargeback/cancelled/refunded/error.
+•	Mapping : completed→PAID, declined|expired→REJECT_OTHER, chargeback→REJECT_INSUFF_FUNDS.
+•	Checklist :
+1.	Configurer /multisafepay/{company_id}.
+2.	Tester completed, declined, chargeback, refunded.
+3.	Vérifier tokenisation (zéro PAN/CVV en base).
+T.3.4 Emerchantpay (SEPA & Cartes)
+•	Domaines/Docs : API, Payment Notifications.
+•	Liens & ressources officielles :
+o	API Reference : https://docs.emerchantpay.com/
+o	Notifications (webhooks) : https://docs.emerchantpay.com/#notifications
+o	Sandbox : https://sandbox.emerchantpay.net
+•	Sandbox : compte test.
+•	Événements : pending/submitted/settled/returned/declined/cancelled/refunded/error.
+•	Mapping : settled→PAID, returned+AM04→REJECT_INSUFF_FUNDS, declined→REJECT_OTHER.
+•	Checklist :
+1.	Configurer /emerchantpay/{company_id}.
+2.	Simuler settled, returned(AM04), declined.
+3.	Vérifier rapprochement et écriture comptable.
+________________________________________
+T.4 Checklists « Sandbox → Production »
+Pré prod
+•	Comptes PSP sandbox créés et secrets chargés (Vault).
+•	Webhooks actifs (HMAC, horodatage, idempotence).
+•	Scénarios end to end validés : PAID, REJECT_AM04, REJECT_OTHER, REFUNDED.
+•	Monitoring Grafana (latence, taux d’erreurs, DLQ).
+•	Export comptable test (CSV/XLSX/JSON).
+Go live
+•	Clés PROD générées, Vault mis à jour, rotation validée.
+•	Endpoints PROD ouverts (IP allowlist si dispo).
+•	Replay webhooks critique testé (DLQ).
+•	Plan PRA (bascule DB, jobs) vérifié.
+Post prod (Semaine 1)
+•	Suivi rejets (AM04 vs autres) et taux de réussite.
+•	Ajustement routage (lots/PSP) si déséquilibres.
+•	Rapport Finance (KPI, incidents, actions).
+________________________________________
+T.5 Obligations & preuves de conformité
+•	DPA/attestations PSP (RGPD, DSP2, PCI DSS/SEPA) archivées.
+•	Registre de traitements « Paiements & Portail » par société.
+•	Preuves de tests HMAC/anti replay/idempotence.
+•	Journal des rotations de clés (≤ 90 jours).
+•	Procès verbaux PRA/PCA (tests semestriels).
+________________________________________
+T.6 Contacts & support partenaires
+•	Coordonnées techniques, SLA, canaux d’escalade (tickets/phone), statut incidents publiés.
+•	Délai de réponse attendu, fenêtres de maintenance, notifications planifiées.
+________________________________________
+T.7 Résumé
+•	Référentiel unique pour intégrer, tester et exploiter chacun des PSP.
+•	Liens directs vers les documentations officielles (API, Webhooks, Sandbox).
+•	Checklists standardisées sandbox → production pour réduire les risques.
+•	Exigences sécurité/conformité homogènes (HMAC, TLS, idempotence).
+•	Base documentaire unique pour les équipes Finance, Comptabilité, IT.
+Annexe U – Glossaire & abréviations (complet)
+Cette annexe recense l’ensemble des abréviations et acronymes utilisés dans le projet de gestion des paiements (SEPA & CB). Elle vise à garantir une compréhension commune entre les équipes ADV, IT, Comptabilité, Finance et les partenaires PSP.
+________________________________________
+U.1 Objectif
+•	Centraliser toutes les abréviations techniques, réglementaires et fonctionnelles.
+•	Uniformiser le vocabulaire employé dans les documents internes, les interfaces et les échanges avec les prestataires.
+•	Faciliter la lecture du cahier des charges et des annexes associées.
+________________________________________
+U.2 Abréviations (liste alphabétique)
+Acronyme	Signification
+ADV	Administration des ventes
+API	Application Programming Interface
+BIC	Bank Identifier Code
+CB	Carte Bancaire
+CNIL	Commission Nationale de l’Informatique et des Libertés
+CSV	Comma-Separated Values
+DSP2	Directive sur les Services de Paiement 2
+GED	Gestion Électronique des Documents
+ICS	Identifiant Créancier SEPA
+IBAN	International Bank Account Number
+JSON	JavaScript Object Notation
+KPI	Key Performance Indicator
+MFA	Multi-Factor Authentication
+PCA	Plan de Continuité d’Activité
+PCI DSS	Payment Card Industry Data Security Standard
+PK	Primary Key (clé primaire)
+PRA	Plan de Reprise d’Activité
+PSP	Payment Service Provider (prestataire de services de paiement)
+RBAC	Role-Based Access Control
+RPO	Recovery Point Objective (point de reprise des données)
+RTO	Recovery Time Objective (temps de rétablissement cible)
+RUM	Référence Unique de Mandat (mandat SEPA)
+SEPA	Single Euro Payments Area
+SFTP	Secure File Transfer Protocol
+SIEM	Security Information and Event Management
+SLA	Service Level Agreement (engagement de service)
+SSO	Single Sign-On
+TLS	Transport Layer Security
+TVA	Taxe sur la Valeur Ajoutée
+UUID	Universally Unique Identifier
+XML	Extensible Markup Language
+________________________________________
+U.3 Usage et maintenance
+•	Le glossaire est mis à jour au minimum une fois par semestre ou lors de l’ajout de nouvelles fonctionnalités au CRM Paiements.
+•	Toute nouvelle abréviation introduite dans le code, les documents ou les écrans doit être intégrée ici.
+•	Versionning : chaque édition du glossaire porte un numéro de version et une date (ex. v1.0 – Novembre 2025).
+•	Responsable de la mise à jour : Service IT / Qualité documentaire.
+________________________________________
+U.4 Résumé
+•	Référentiel commun pour tous les acteurs du projet.
+•	Liste exhaustive des termes techniques, réglementaires et fonctionnels utilisés.
+•	Document à tenir à jour pour garantir la cohérence documentaire sur l’ensemble du cycle de vie du module.

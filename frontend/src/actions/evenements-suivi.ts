@@ -6,6 +6,7 @@ import type {
   EvenementSuivi,
   ListEvenementSuiviResponse,
 } from "@proto/activites/activites";
+import type { ActionResult } from "@/lib/types/common";
 
 export interface EvenementSuiviDto {
   id: string;
@@ -33,10 +34,6 @@ export interface PaginatedEvenementsSuiviDto {
   totalPages: number;
 }
 
-export interface EvenementSuiviActionResult<T> {
-  data: T | null;
-  error: string | null;
-}
 
 function mapEvenementSuiviToDto(evenement: EvenementSuivi): EvenementSuiviDto {
   return {
@@ -45,8 +42,8 @@ function mapEvenementSuiviToDto(evenement: EvenementSuivi): EvenementSuiviDto {
     code: evenement.code,
     label: evenement.label,
     dateEvenement: evenement.dateEvenement,
-    lieu: evenement.lieu || undefined,
-    raw: evenement.raw || undefined,
+    lieu: evenement.lieu,
+    raw: evenement.raw,
     createdAt: evenement.createdAt,
     updatedAt: evenement.updatedAt,
   };
@@ -54,7 +51,7 @@ function mapEvenementSuiviToDto(evenement: EvenementSuivi): EvenementSuiviDto {
 
 export async function listEvenementsSuivi(
   filters: EvenementSuiviFilters
-): Promise<EvenementSuiviActionResult<PaginatedEvenementsSuiviDto>> {
+): Promise<ActionResult<PaginatedEvenementsSuiviDto>> {
   try {
     const data = await evenementsSuivi.list({
       search: filters.search || "",
@@ -90,7 +87,7 @@ export async function listEvenementsSuivi(
 export async function listEvenementsSuiviByExpedition(
   expeditionId: string,
   filters?: Pick<EvenementSuiviFilters, "page" | "limit">
-): Promise<EvenementSuiviActionResult<PaginatedEvenementsSuiviDto>> {
+): Promise<ActionResult<PaginatedEvenementsSuiviDto>> {
   try {
     const data = await evenementsSuivi.listByExpedition({
       expeditionId,
@@ -125,7 +122,7 @@ export async function listEvenementsSuiviByExpedition(
 
 export async function getEvenementSuivi(
   id: string
-): Promise<EvenementSuiviActionResult<EvenementSuiviDto>> {
+): Promise<ActionResult<EvenementSuiviDto>> {
   try {
     const data = await evenementsSuivi.get({ id });
     return { data: mapEvenementSuiviToDto(data), error: null };
@@ -148,7 +145,7 @@ export async function createEvenementSuivi(input: {
   dateEvenement: string;
   lieu?: string;
   raw?: string;
-}): Promise<EvenementSuiviActionResult<EvenementSuiviDto>> {
+}): Promise<ActionResult<EvenementSuiviDto>> {
   try {
     const data = await evenementsSuivi.create({
       expeditionId: input.expeditionId,
@@ -179,7 +176,7 @@ export async function updateEvenementSuivi(input: {
   dateEvenement?: string;
   lieu?: string;
   raw?: string;
-}): Promise<EvenementSuiviActionResult<EvenementSuiviDto>> {
+}): Promise<ActionResult<EvenementSuiviDto>> {
   try {
     const data = await evenementsSuivi.update({
       id: input.id,
@@ -204,7 +201,7 @@ export async function updateEvenementSuivi(input: {
 
 export async function deleteEvenementSuivi(
   id: string
-): Promise<EvenementSuiviActionResult<{ success: boolean }>> {
+): Promise<ActionResult<{ success: boolean }>> {
   try {
     await evenementsSuivi.delete({ id });
     return { data: { success: true }, error: null };

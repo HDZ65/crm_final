@@ -4,18 +4,17 @@ import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
 import type {
-  BordereauCommissionResponseDto,
-  BordereauWithDetailsResponseDto,
-  BordereauFiltersDto,
-} from "@/types/commission"
+  BordereauWithDetails,
+  BordereauFilters,
+} from "@/lib/ui/display-types/commission"
 
 /**
  * Hook pour récupérer la liste des bordereaux de commission
  * GET /bordereaux-commission
  */
-export function useBordereauxCommission(filters?: BordereauFiltersDto) {
-  const [bordereaux, setBordereaux] = useState<BordereauCommissionResponseDto[]>([])
-  const { loading, error, execute } = useApi<BordereauCommissionResponseDto[]>()
+export function useBordereauxCommission(filters?: BordereauFilters) {
+  const [bordereaux, setBordereaux] = useState<BordereauWithDetails[]>([])
+  const { loading, error, execute } = useApi<BordereauWithDetails[]>()
 
   const fetchBordereaux = useCallback(async () => {
     try {
@@ -64,8 +63,8 @@ export function useBordereauxCommission(filters?: BordereauFiltersDto) {
  * GET /bordereaux-commission/with-details
  */
 export function useBordereauxWithDetails(organisationId?: string) {
-  const [bordereaux, setBordereaux] = useState<BordereauWithDetailsResponseDto[]>([])
-  const { loading, error, execute } = useApi<BordereauWithDetailsResponseDto[]>()
+  const [bordereaux, setBordereaux] = useState<BordereauWithDetails[]>([])
+  const { loading, error, execute } = useApi<BordereauWithDetails[]>()
 
   const fetchBordereaux = useCallback(async () => {
     try {
@@ -105,8 +104,8 @@ export function useBordereauxWithDetails(organisationId?: string) {
  * GET /bordereaux-commission/:id
  */
 export function useBordereauCommission(bordereauId: string | null) {
-  const [bordereau, setBordereau] = useState<BordereauCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<BordereauCommissionResponseDto>()
+  const [bordereau, setBordereau] = useState<BordereauWithDetails | null>(null)
+  const { loading, error, execute } = useApi<BordereauWithDetails>()
 
   const fetchBordereau = useCallback(async () => {
     if (!bordereauId) return

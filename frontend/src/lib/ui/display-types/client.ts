@@ -1,0 +1,163 @@
+/**
+ * UI display types for client module.
+ * Proto types (ClientBase, Adresse) come from @proto/clients/clients.
+ * Contract display types come from @/lib/ui/display-types/contract.
+ */
+
+import type { ContratSimpleDto } from "@/lib/ui/display-types/contract"
+
+// Statut client pour l'UI
+export type ClientStatus = "Actif" | "Impaye" | "Suspendu"
+
+// Filtres pour la recherche de clients
+export interface ClientFilters {
+  organisationId?: string
+  statutId?: string
+  societeId?: string
+}
+
+// Client pour les listes
+export interface ClientRow {
+  id: string
+  name: string
+  status: ClientStatus
+  contracts: string[]
+  createdAgo: string
+  email?: string
+  phone?: string
+  societeIds: string[]
+}
+
+// Informations personnelles du client
+export interface ClientInfo {
+  nom: string
+  prenom: string
+  profession: string
+  phone: string
+  birthDate: string
+  email: string
+  address: string
+}
+
+// Informations de conformite
+export interface ComplianceInfo {
+  kycStatus: string
+  kycStatusVariant: "success" | "warning" | "error"
+  gdprConsent: string
+  gdprConsentVariant: "success" | "warning" | "error"
+  language: string
+}
+
+// Informations bancaires
+export interface BankInfo {
+  iban: string
+  sepaMandateStatus: string
+  sepaMandateStatusVariant: "success" | "warning" | "error"
+}
+
+// Client complet pour l'affichage detaille
+export interface ClientDetail {
+  id: string
+  name: string
+  status: ClientStatus
+  location: string
+  memberSince: string
+  info: ClientInfo
+  compliance: ComplianceInfo
+  bank: BankInfo
+  contracts: ContratSimpleDto[]
+  payments: PaiementDto[]
+  documents: DocumentDto[]
+  events: EvenementDto[]
+  balance: string
+  balanceStatus: string
+}
+
+// Paiement
+export interface PaiementDto {
+  id: string
+  contratId: string
+  montant: number
+  devise: string
+  datePaiement: string
+  statut: string
+  reference: string
+}
+
+// Document
+export interface DocumentDto {
+  id: string
+  clientId: string
+  nom: string
+  type: string
+  dateUpload: string
+  url?: string
+}
+
+// Evenement historique
+export interface EvenementDto {
+  id: string
+  contratId?: string
+  clientId: string
+  type: string
+  description: string
+  date: string
+}
+
+// Evenement pour la timeline/historique
+export interface EventItem {
+  icon?: React.ElementType
+  label: string
+  date: string
+  ref?: string
+  description?: string
+}
+
+// Paiement pour l'affichage
+export interface Payment {
+  label: string
+  date: string
+  amount: string
+  status: string
+}
+
+// Document pour l'affichage
+export interface Document {
+  name: string
+  type: string
+  updated: string
+  url?: string
+}
+
+// Types pour le suivi d'expedition
+export type ShipmentStatus =
+  | "pending"
+  | "in_transit"
+  | "out_for_delivery"
+  | "delivered"
+  | "failed"
+  | "returned"
+
+export interface ShipmentEvent {
+  date: string
+  status: string
+  location?: string
+  description: string
+}
+
+export interface Shipment {
+  id: string
+  trackingNumber: string
+  status: ShipmentStatus
+  recipientName: string
+  recipientAddress: string
+  senderName?: string
+  senderAddress?: string
+  product: string
+  weight?: number
+  createdAt: string
+  estimatedDelivery?: string
+  deliveredAt?: string
+  events: ShipmentEvent[]
+  contractRef?: string
+}

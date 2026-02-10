@@ -1,8 +1,38 @@
 import { translateBackendError, extractValidationErrors } from "../errors/messages";
 
 /**
- * REST→gRPC MIGRATION PLAN
- * 
+ * REST API CLIENT — PARTIAL MIGRATION STATUS (Wave 3 Task 8)
+ *
+ * MIGRATED TO gRPC (Tasks 4-8):
+ * - Contract orchestration (activateContrat, suspendContrat, etc.)
+ * - Stripe payments (8 endpoints)
+ * - PSP accounts (6 PSPs)
+ * - GoCardless (mandates, payments, subscriptions)
+ * - Payment intents, events, schedules
+ * - Maileva / logistics (labels, tracking, pricing, address validation)
+ * - Auth signup (users.create via gRPC)
+ *
+ * DEFERRED — NOT in Wave 3 scope (25 hooks still using REST):
+ * - Commissions (12 hooks): apporteurs, baremes, bordereaux, config, engine,
+ *   mutations, commissions, lignes, paliers, reprises, statuts
+ * - Stats (6 hooks): alerts, ca-evolution, commercial-kpis, company-stats,
+ *   dashboard-kpis, product-distribution
+ * - Contracts (1 hook): use-contrats
+ * - Factures (1 hook): index
+ * - Logistics (1 hook): use-expeditions
+ * - Taches (3 hooks): regles-relance, tache-notifications, taches
+ * - Auth (1 hook): useAuth
+ * - Core (1 hook): use-error-handler (ApiError type)
+ *
+ * REST EXCEPTIONS (will NOT be migrated):
+ * - AI health check (hooks/ai/use-ai-health.ts) — browser-side HTTP polling
+ * - AI health context (contexts/ai-health-context.tsx) — browser-side HTTP polling
+ * - AI briefing (components/dashboard/greeting-briefing.tsx) — SSE streaming
+ *
+ * These deferred hooks will be migrated in future waves (Wave 4-5).
+ *
+ * REST→gRPC MIGRATION PLAN (original)
+ *
  * This ApiClient is a temporary REST adapter for legacy endpoints.
  * All endpoints below are scheduled for migration to gRPC in Waves 3-5.
  * 

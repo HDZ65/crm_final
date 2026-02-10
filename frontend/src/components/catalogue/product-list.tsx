@@ -23,12 +23,14 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
-import type { Product, ProductStatus, ProductType, ProductCategory } from "@/types/product"
+import type { Produit } from "@proto/products/products"
+import { TYPE_PRODUIT_LABELS, CATEGORIE_PRODUIT_LABELS } from "@/lib/ui/labels/product"
+import type { ProductStatus, ProductType, ProductCategory } from "@/lib/ui/labels/product"
 
 interface ProductListProps {
-  products: Product[]
-  onViewDetails: (product: Product) => void
-  onAddToCart: (product: Product) => void
+  products: Produit[]
+  onViewDetails: (product: Produit) => void
+  onAddToCart: (product: Produit) => void
   selectedCategory: ProductCategory | "all"
   onCategoryChange: (category: ProductCategory | "all") => void
   categoryCounts: Record<ProductCategory | "all", number>
@@ -66,13 +68,15 @@ export function ProductList({
     const filtered = products.filter((product) => {
       const matchesSearch =
         searchQuery === "" ||
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.sku.toLowerCase().includes(searchQuery.toLowerCase())
 
+      const statusLabel = product.actif ? "Disponible" : "Archivé"
       const matchesStatus =
-        statusFilter === "all" || product.status === statusFilter
+        statusFilter === "all" || statusLabel === statusFilter
 
-      const matchesType = typeFilter === "all" || product.type === typeFilter
+      const typeLabel = TYPE_PRODUIT_LABELS[product.type] || "Interne"
+      const matchesType = typeFilter === "all" || typeLabel === typeFilter
 
       return matchesSearch && matchesStatus && matchesType
     })
@@ -81,13 +85,11 @@ export function ProductList({
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "name":
-          return a.name.localeCompare(b.name, "fr-FR")
+          return a.nom.localeCompare(b.nom, "fr-FR")
         case "price-asc":
-          return a.price - b.price
+          return a.prix - b.prix
         case "price-desc":
-          return b.price - a.price
-        case "stock":
-          return (b.stock || 0) - (a.stock || 0)
+          return b.prix - a.prix
         default:
           return 0
       }
@@ -217,7 +219,6 @@ export function ProductList({
               <SelectItem value="name">Nom (A-Z)</SelectItem>
               <SelectItem value="price-asc">Prix croissant</SelectItem>
               <SelectItem value="price-desc">Prix décroissant</SelectItem>
-              <SelectItem value="stock">Stock disponible</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -237,111 +238,82 @@ export function ProductList({
               </p>
             </div>
           ) : (
-            paginatedProducts.map((product) => (
-              <Card key={product.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start gap-4">
-                  {/* Product image placeholder */}
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
-                    <Package2 className="h-8 w-8 text-muted-foreground" />
-                  </div>
+            paginatedProducts.map((product) => {
+              const statusLabel = product.actif ? "Disponible" : "Archivé"
+              const typeLabel = TYPE_PRODUIT_LABELS[product.type] || "Interne"
 
-                  {/* Product info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base mb-1 truncate">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          SKU: {product.sku}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-xl font-bold">
-                          {product.price.toFixed(2)} {product.currency}
+              return (
+                <Card key={product.id} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    {/* Product image placeholder */}
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <Package2 className="h-8 w-8 text-muted-foreground" />
+                    </div>
+
+                    {/* Product info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base mb-1 truncate">
+                            {product.nom}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            SKU: {product.sku}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-xl font-bold">
+                            {product.prix.toFixed(2)} {product.devise || "EUR"}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {product.description}
-                    </p>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {product.description}
+                      </p>
 
-                    {/* Badges and metadata */}
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <Badge
-                        variant="outline"
-                        className={cn("border", typeColors[product.type as keyof typeof typeColors])}
-                      >
-                        {product.type}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className={cn("border", statusColors[product.status as keyof typeof statusColors])}
-                      >
-                        {product.status}
-                      </Badge>
-                      {product.supplier && (
-                        <Badge variant="outline" className="border-gray-200">
-                          {product.supplier}
-                        </Badge>
-                      )}
-                      {product.stock !== undefined && (
+                      {/* Badges and metadata */}
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
                         <Badge
                           variant="outline"
-                          className={cn(
-                            "border",
-                            product.stock < 50
-                              ? "bg-orange-500/10 text-orange-700 border-orange-200"
-                              : "border-gray-200"
-                          )}
+                          className={cn("border", typeColors[typeLabel as keyof typeof typeColors])}
                         >
-                          <Package2 className="h-3 w-3 mr-1" />
-                          Stock: {product.stock}
+                          {typeLabel}
                         </Badge>
-                      )}
-                      {product.minQuantity && (
-                        <Badge variant="outline" className="border-gray-200">
-                          Min: {product.minQuantity}
+                        <Badge
+                          variant="outline"
+                          className={cn("border", statusColors[statusLabel as keyof typeof statusColors])}
+                        >
+                          {statusLabel}
                         </Badge>
-                      )}
-                    </div>
-
-                    {/* Low stock warning */}
-                    {product.stock !== undefined && product.stock < 50 && (
-                      <div className="flex items-center gap-2 text-sm text-orange-600 mb-3">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>Stock faible</span>
                       </div>
-                    )}
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onViewDetails(product)}
-                        className="gap-2"
-                      >
-                        <Eye className="h-4 w-4" />
-                        Détails
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => onAddToCart(product)}
-                        disabled={product.status === "Rupture"}
-                        className="gap-2"
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                        {product.status === "Sur commande"
-                          ? "Commander"
-                          : "Ajouter"}
-                      </Button>
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onViewDetails(product)}
+                          className="gap-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Détails
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => onAddToCart(product)}
+                          disabled={!product.actif}
+                          className="gap-2"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                          {product.actif ? "Ajouter" : "Indisponible"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))
+                </Card>
+              )
+            })
           )}
         </div>
       </ScrollArea>

@@ -1,9 +1,9 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
 import {
-  RegleRelanceServiceClient,
-  HistoriqueRelanceServiceClient,
-  RelanceEngineServiceClient,
+  RegleRelanceServiceService,
+  HistoriqueRelanceServiceService,
+  RelanceEngineServiceService,
   type RegleRelance,
   type CreateRegleRelanceRequest,
   type UpdateRegleRelanceRequest,
@@ -21,13 +21,15 @@ import {
   type ExecuteRelancesResponse,
 } from "@proto/relance/relance";
 
-let regleRelanceInstance: RegleRelanceServiceClient | null = null;
-let historiqueRelanceInstance: HistoriqueRelanceServiceClient | null = null;
-let relanceEngineInstance: RelanceEngineServiceClient | null = null;
+let regleRelanceInstance: GrpcClient | null = null;
+let historiqueRelanceInstance: GrpcClient | null = null;
+let relanceEngineInstance: GrpcClient | null = null;
 
-function getRegleRelanceClient(): RegleRelanceServiceClient {
+function getRegleRelanceClient(): GrpcClient {
   if (!regleRelanceInstance) {
-    regleRelanceInstance = new RegleRelanceServiceClient(
+    regleRelanceInstance = makeClient(
+      RegleRelanceServiceService,
+      "RegleRelanceService",
       SERVICES.relance,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -35,9 +37,11 @@ function getRegleRelanceClient(): RegleRelanceServiceClient {
   return regleRelanceInstance;
 }
 
-function getHistoriqueRelanceClient(): HistoriqueRelanceServiceClient {
+function getHistoriqueRelanceClient(): GrpcClient {
   if (!historiqueRelanceInstance) {
-    historiqueRelanceInstance = new HistoriqueRelanceServiceClient(
+    historiqueRelanceInstance = makeClient(
+      HistoriqueRelanceServiceService,
+      "HistoriqueRelanceService",
       SERVICES.relance,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -45,9 +49,11 @@ function getHistoriqueRelanceClient(): HistoriqueRelanceServiceClient {
   return historiqueRelanceInstance;
 }
 
-function getRelanceEngineClient(): RelanceEngineServiceClient {
+function getRelanceEngineClient(): GrpcClient {
   if (!relanceEngineInstance) {
-    relanceEngineInstance = new RelanceEngineServiceClient(
+    relanceEngineInstance = makeClient(
+      RelanceEngineServiceService,
+      "RelanceEngineService",
       SERVICES.relance,
       createAuthChannelCredentials(credentials.createInsecure())
     );

@@ -144,6 +144,20 @@ message ClientBase {
   string updated_at = 14;
   repeated Adresse adresses = 15;
   optional string societe_id = 16;
+  optional string profession = 17;
+  optional string iban = 18;
+  optional bool mandat_sepa = 19;
+  optional string kyc_status = 20;
+  optional bool gdpr_consent = 21;
+  optional string gdpr_consent_date = 22;
+  optional string langue = 23;
+  optional bool has_conciergerie = 24;
+  optional bool has_justi_plus = 25;
+  optional bool has_wincash = 26;
+  optional string uuid_wincash = 27;
+  optional string uuid_justi_plus = 28;
+  optional string date_premiere_souscription = 29;
+  optional string canal_acquisition = 30;
 }
 
 message CreateClientBaseRequest {
@@ -158,6 +172,13 @@ message CreateClientBaseRequest {
   string email = 9;
   string statut = 10;
   optional string societe_id = 11;
+  optional bool has_conciergerie = 12;
+  optional bool has_justi_plus = 13;
+  optional bool has_wincash = 14;
+  optional string uuid_wincash = 15;
+  optional string uuid_justi_plus = 16;
+  optional string date_premiere_souscription = 17;
+  optional string canal_acquisition = 18;
 }
 
 message UpdateClientBaseRequest {
@@ -172,6 +193,13 @@ message UpdateClientBaseRequest {
   optional string email = 9;
   optional string statut = 10;
   optional string societe_id = 11;
+  optional bool has_conciergerie = 12;
+  optional bool has_justi_plus = 13;
+  optional bool has_wincash = 14;
+  optional string uuid_wincash = 15;
+  optional string uuid_justi_plus = 16;
+  optional string date_premiere_souscription = 17;
+  optional string canal_acquisition = 18;
 }
 
 message GetClientBaseRequest {

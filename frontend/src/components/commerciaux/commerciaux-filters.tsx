@@ -5,8 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User, Mail, Phone, Briefcase } from "lucide-react"
-import type { CommercialFilters, TypeCommercial } from "@/types/commercial"
-import { TYPE_COMMERCIAL_LABELS } from "@/types/commercial"
+import type { CommercialFilters, TypeCommercial } from "@/lib/ui/labels/commercial"
+import { TYPE_COMMERCIAL_LABELS } from "@/lib/ui/labels/commercial"
 
 interface CommercialsFiltersProps {
   filters: CommercialFilters

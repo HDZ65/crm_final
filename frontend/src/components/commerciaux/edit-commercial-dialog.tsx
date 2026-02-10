@@ -32,8 +32,8 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { updateApporteur, activerApporteur, desactiverApporteur } from "@/actions/commerciaux"
-import { TYPE_COMMERCIAL_LABELS } from "@/types/commercial"
-import type { Commercial } from "@/types/commercial"
+import { TYPE_COMMERCIAL_LABELS } from "@/lib/ui/labels/commercial"
+import type { Apporteur } from "@proto/commerciaux/commerciaux"
 
 const editCommercialSchema = z.object({
   nom: z.string().min(1, "Le nom est requis"),
@@ -49,7 +49,7 @@ type EditCommercialFormValues = z.infer<typeof editCommercialSchema>
 interface EditCommercialDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  commercial: Commercial
+  commercial: Apporteur
   onSuccess?: () => void
 }
 

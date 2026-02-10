@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
-import type { Facture, StatutFacture, FactureFilters } from "@/types/facture"
+import type { Facture, StatutFacture } from "@proto/factures/factures"
+import type { FactureFilters } from "@/lib/ui/labels/facture"
 
 /**
  * Hook pour récupérer la liste des factures

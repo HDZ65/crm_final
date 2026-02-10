@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { X, Filter } from "lucide-react"
-import type { ProductFilters, ProductType, ProductStatus } from "@/types/product"
+import type { ProductFilters, ProductType, ProductStatus } from "@/lib/ui/labels/product"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Collapsible,

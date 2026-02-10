@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { X, Filter } from "lucide-react"
-import type { PaymentFilters, PaymentStatus, PaymentMethod, PSPProvider, DebitLot, RiskTier, SourceChannel } from "@/types/payment"
+import type { PaymentFilters, PaymentMethod, PSPProvider, DebitLot, RiskTier, SourceChannel } from "@/lib/ui/display-types/payment"
+import type { PaymentStatus } from "@proto/payments/payment"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Collapsible,
@@ -118,7 +119,7 @@ export function PaymentFiltersComponent({ filters, onFiltersChange }: PaymentFil
                 <Select
                   value={filters.status || "all"}
                   onValueChange={(value) =>
-                    handleFilterChange("status", value === "all" ? undefined : (value as PaymentStatus))
+                    handleFilterChange("status", value === "all" ? undefined : value)
                   }
                 >
                   <SelectTrigger id="status" className="h-9">

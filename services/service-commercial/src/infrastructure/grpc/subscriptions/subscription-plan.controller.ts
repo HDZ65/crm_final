@@ -6,6 +6,7 @@ import type {
   UpdateSubscriptionPlanRequest,
   GetByIdRequest,
   DeleteByIdRequest,
+  ListSubscriptionPlanRequest,
   ListByOrganisationRequest,
 } from '@proto/subscriptions';
 
@@ -59,6 +60,23 @@ export class SubscriptionPlanController {
   async delete(data: DeleteByIdRequest) {
     const success = await this.subscriptionPlanService.delete(data.id);
     return { success };
+  }
+
+  @GrpcMethod('SubscriptionPlanService', 'List')
+  async list(data: ListSubscriptionPlanRequest) {
+    const result = await this.subscriptionPlanService.findAll({
+      page: data.pagination?.page,
+      limit: data.pagination?.limit,
+    });
+    return {
+      plans: result.plans,
+      pagination: {
+        total: result.pagination.total,
+        page: result.pagination.page,
+        limit: result.pagination.limit,
+        total_pages: result.pagination.totalPages,
+      },
+    };
   }
 
   @GrpcMethod('SubscriptionPlanService', 'ListByOrganisation')

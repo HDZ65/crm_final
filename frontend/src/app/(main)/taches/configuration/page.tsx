@@ -80,9 +80,10 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import type { RegleRelanceDto, RelanceDeclencheur, RelanceActionType } from "@/types/regle-relance"
-import { DECLENCHEUR_LABELS, ACTION_TYPE_LABELS } from "@/types/regle-relance"
-import { TACHE_PRIORITE_LABELS } from "@/types/tache"
+import type { RegleRelanceDto, RelanceDeclencheur, RelanceActionType } from "@/lib/ui/labels/regle-relance"
+import { DECLENCHEUR_LABELS, ACTION_TYPE_LABELS } from "@/lib/ui/labels/regle-relance"
+import { relanceDeclencheurToJSON, relanceActionTypeToJSON, prioriteToJSON, relanceDeclencheurFromJSON, relanceActionTypeFromJSON, prioriteFromJSON, relanceResultatToJSON } from "@/proto/relance/relance"
+import { TACHE_PRIORITE_LABELS } from "@/lib/ui/labels/tache"
 
 const formSchema = z.object({
   nom: z.string().min(1, "Le nom est requis"),
@@ -102,7 +103,7 @@ export default function ConfigurationRelancesPage() {
 
   // State for data from Server Actions
   const [regles, setRegles] = React.useState<RegleRelanceDto[]>([])
-  const [historique, setHistorique] = React.useState<import("@/types/regle-relance").HistoriqueRelanceDto[]>([])
+  const [historique, setHistorique] = React.useState<import("@/lib/ui/labels/regle-relance").HistoriqueRelanceDto[]>([])
   const [loading, setLoading] = React.useState(false)
   const [mutationLoading, setMutationLoading] = React.useState(false)
 
@@ -156,19 +157,19 @@ export default function ConfigurationRelancesPage() {
     },
   })
 
-  const handleOpenDialog = (regle?: RegleRelanceDto) => {
-    if (regle) {
-      setEditingRegle(regle)
-      form.reset({
-        nom: regle.nom,
-        description: regle.description || "",
-        declencheur: regle.declencheur,
-        delaiJours: regle.delaiJours,
-        actionType: regle.actionType,
-        prioriteTache: regle.prioriteTache,
-        templateTitreTache: regle.templateTitreTache || "",
-        templateDescriptionTache: regle.templateDescriptionTache || "",
-      })
+   const handleOpenDialog = (regle?: RegleRelanceDto) => {
+     if (regle) {
+       setEditingRegle(regle)
+       form.reset({
+         nom: regle.nom,
+         description: regle.description || "",
+         declencheur: relanceDeclencheurToJSON(regle.declencheur) as RelanceDeclencheur,
+         delaiJours: regle.delaiJours,
+         actionType: relanceActionTypeToJSON(regle.actionType) as RelanceActionType,
+         prioriteTache: prioriteToJSON(regle.prioriteTache) as any,
+         templateTitreTache: regle.templateTitreTache || "",
+         templateDescriptionTache: regle.templateDescriptionTache || "",
+       })
     } else {
       setEditingRegle(null)
       form.reset()
@@ -176,34 +177,48 @@ export default function ConfigurationRelancesPage() {
     setDialogOpen(true)
   }
 
-  const handleSubmit = async (values: FormValues) => {
-    if (!activeOrganisation?.organisationId) return
+   const handleSubmit = async (values: FormValues) => {
+     if (!activeOrganisation?.organisationId) return
 
-    setMutationLoading(true)
-    if (editingRegle) {
-      const result = await updateRegleRelance(editingRegle.id, values)
-      if (result.data) {
-        toast.success("Règle mise à jour")
-        setDialogOpen(false)
-        refetch()
-      } else {
-        toast.error(result.error || "Erreur lors de la mise à jour")
-      }
-    } else {
-      const result = await createRegleRelance({
-        ...values,
-        organisationId: activeOrganisation.organisationId,
-      })
-      if (result.data) {
-        toast.success("Règle créée")
-        setDialogOpen(false)
-        refetch()
-      } else {
-        toast.error(result.error || "Erreur lors de la création")
-      }
-    }
-    setMutationLoading(false)
-  }
+     setMutationLoading(true)
+     // Convert form string values back to proto enums
+     const protoValues = {
+       ...values,
+       declencheur: relanceDeclencheurFromJSON(values.declencheur),
+       actionType: relanceActionTypeFromJSON(values.actionType),
+       prioriteTache: prioriteFromJSON(values.prioriteTache),
+     }
+
+     if (editingRegle) {
+       const result = await updateRegleRelance(editingRegle.id, protoValues)
+       if (result.data) {
+         toast.success("Règle mise à jour")
+         setDialogOpen(false)
+         refetch()
+       } else {
+         toast.error(result.error || "Erreur lors de la mise à jour")
+       }
+     } else {
+       const result = await createRegleRelance({
+         ...protoValues,
+         organisationId: activeOrganisation.organisationId,
+         templateEmailId: "",
+         assigneParDefaut: "",
+         ordre: 0,
+         description: protoValues.description || "",
+         templateTitreTache: protoValues.templateTitreTache || "",
+         templateDescriptionTache: protoValues.templateDescriptionTache || "",
+       })
+       if (result.data) {
+         toast.success("Règle créée")
+         setDialogOpen(false)
+         refetch()
+       } else {
+         toast.error(result.error || "Erreur lors de la création")
+       }
+     }
+     setMutationLoading(false)
+   }
 
   const handleToggleActive = async (regle: RegleRelanceDto) => {
     if (regle.actif) {
@@ -331,13 +346,13 @@ export default function ConfigurationRelancesPage() {
                      {regles.map((regle) => (
                        <TableRow key={regle.id}>
                          <TableCell className="font-medium">{regle.nom}</TableCell>
-                         <TableCell>
-                           <Badge variant="outline">
-                             {DECLENCHEUR_LABELS[regle.declencheur]}
-                           </Badge>
-                         </TableCell>
-                         <TableCell>{regle.delaiJours} jours</TableCell>
-                         <TableCell>{ACTION_TYPE_LABELS[regle.actionType]}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {DECLENCHEUR_LABELS[relanceDeclencheurToJSON(regle.declencheur) as RelanceDeclencheur]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{regle.delaiJours} jours</TableCell>
+                          <TableCell>{ACTION_TYPE_LABELS[relanceActionTypeToJSON(regle.actionType) as RelanceActionType]}</TableCell>
                          <TableCell>
                            <Switch
                              checked={regle.actif}
@@ -383,14 +398,14 @@ export default function ConfigurationRelancesPage() {
                ) : (
                  <div className="space-y-3">
                    {historique.map((h) => (
-                     <div key={h.id} className="flex items-start gap-2 text-sm">
-                       {h.resultat === 'SUCCES' ? (
-                         <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                       ) : h.resultat === 'ECHEC' ? (
-                         <XCircle className="h-4 w-4 text-destructive mt-0.5" />
-                       ) : (
-                         <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
-                       )}
+                      <div key={h.id} className="flex items-start gap-2 text-sm">
+                        {relanceResultatToJSON(h.resultat) === 'SUCCES' ? (
+                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        ) : relanceResultatToJSON(h.resultat) === 'ECHEC' ? (
+                          <XCircle className="h-4 w-4 text-destructive mt-0.5" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        )}
                        <div className="flex-1">
                          <p className="text-muted-foreground">
                            {format(new Date(h.dateExecution), "dd MMM HH:mm", { locale: fr })}

@@ -70,12 +70,20 @@ export class UtilisateurService {
     return entity;
   }
 
-  async findByKeycloakId(keycloakId: string): Promise<UtilisateurEntity | null> {
-    return this.repository.findOne({ where: { keycloakId } });
+  async findByKeycloakId(keycloakId: string): Promise<UtilisateurEntity> {
+    const entity = await this.repository.findOne({ where: { keycloakId } });
+    if (!entity) {
+      throw new RpcException({ code: status.NOT_FOUND, message: `Utilisateur with keycloakId ${keycloakId} not found` });
+    }
+    return entity;
   }
 
-  async findByEmail(email: string): Promise<UtilisateurEntity | null> {
-    return this.repository.findOne({ where: { email } });
+  async findByEmail(email: string): Promise<UtilisateurEntity> {
+    const entity = await this.repository.findOne({ where: { email } });
+    if (!entity) {
+      throw new RpcException({ code: status.NOT_FOUND, message: `Utilisateur with email ${email} not found` });
+    }
+    return entity;
   }
 
   async findAll(

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { ProductCard } from "./product-card"
-import type { Product } from "@/types/product"
+import type { Produit } from "@proto/products/products"
 import { Card, CardContent } from "@/components/ui/card"
 import { Package, Search } from "lucide-react"
 import {
@@ -16,9 +16,9 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface CatalogueGridProps {
-  products: Product[]
-  onViewDetails?: (product: Product) => void
-  onAddToCart?: (product: Product) => void
+  products: Produit[]
+  onViewDetails?: (product: Produit) => void
+  onAddToCart?: (product: Produit) => void
 }
 
 const ITEMS_PER_PAGE_OPTIONS = [12, 24, 36, 48]

@@ -18,7 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { HeatmapCellDto } from "@/types/calendar";
+import type { HeatmapCell } from "@proto/calendar/calendar";
 import { getVolumeHeatmap } from "@/actions/calendar-admin";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +43,7 @@ function formatCurrency(amountCents: number, currency: string = "EUR"): string {
 export function CalendarHeatmap({ organisationId }: CalendarHeatmapProps) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState<number | undefined>(undefined);
-  const [cells, setCells] = useState<HeatmapCellDto[]>([]);
+  const [cells, setCells] = useState<HeatmapCell[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadHeatmap = useCallback(async () => {
@@ -74,7 +74,7 @@ export function CalendarHeatmap({ organisationId }: CalendarHeatmapProps) {
     if (!acc[key]) acc[key] = [];
     acc[key].push(cell);
     return acc;
-  }, {} as Record<string, HeatmapCellDto[]>);
+  }, {} as Record<string, HeatmapCell[]>);
 
   return (
     <Card>

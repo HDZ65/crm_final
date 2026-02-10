@@ -3,10 +3,10 @@
  */
 
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
-import { credentials, SERVICES, promisify } from "./config";
+import { credentials, SERVICES, promisify, makeClient, GrpcClient } from "./config";
 import {
-  FactureServiceClient,
-  StatutFactureServiceClient,
+  FactureServiceService,
+  StatutFactureServiceService,
   type Facture,
   type CreateFactureRequest,
   type UpdateFactureRequest,
@@ -24,11 +24,13 @@ import {
 } from "@proto/factures/factures";
 
 // Facture Service Client
-let factureInstance: FactureServiceClient | null = null;
+let factureInstance: GrpcClient | null = null;
 
-function getFactureClient(): FactureServiceClient {
+function getFactureClient(): GrpcClient {
   if (!factureInstance) {
-    factureInstance = new FactureServiceClient(
+    factureInstance = makeClient(
+      FactureServiceService,
+      "FactureService",
       SERVICES.factures,
       createAuthChannelCredentials(credentials.createInsecure())
     );
@@ -78,11 +80,13 @@ export const factures = {
 };
 
 // Statut Facture Service Client
-let statutFactureInstance: StatutFactureServiceClient | null = null;
+let statutFactureInstance: GrpcClient | null = null;
 
-function getStatutFactureClient(): StatutFactureServiceClient {
+function getStatutFactureClient(): GrpcClient {
   if (!statutFactureInstance) {
-    statutFactureInstance = new StatutFactureServiceClient(
+    statutFactureInstance = makeClient(
+      StatutFactureServiceService,
+      "StatutFactureService",
       SERVICES.factures,
       createAuthChannelCredentials(credentials.createInsecure())
     );

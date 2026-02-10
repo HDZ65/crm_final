@@ -1,0 +1,242 @@
+syntax = "proto3";
+
+package woocommerce;
+
+// ============================================================================
+// WOOCOMMERCE WEBHOOK SERVICE
+// ============================================================================
+
+service WooCommerceWebhookService {
+  rpc ProcessWebhook(ProcessWebhookRequest) returns (ProcessWebhookResponse);
+  rpc ListWebhookEvents(ListWebhookEventsRequest) returns (ListWebhookEventsResponse);
+  rpc GetWebhookEvent(GetWebhookEventRequest) returns (WooCommerceWebhookEvent);
+  rpc RetryWebhookEvent(RetryWebhookEventRequest) returns (ProcessWebhookResponse);
+}
+
+// ============================================================================
+// WOOCOMMERCE MAPPING SERVICE
+// ============================================================================
+
+service WooCommerceMappingService {
+  rpc Create(CreateWooCommerceMappingRequest) returns (WooCommerceMapping);
+  rpc Update(UpdateWooCommerceMappingRequest) returns (WooCommerceMapping);
+  rpc Get(GetWooCommerceMappingRequest) returns (WooCommerceMapping);
+  rpc GetByExternalId(GetWooCommerceMappingByExternalIdRequest) returns (WooCommerceMapping);
+  rpc List(ListWooCommerceMappingRequest) returns (ListWooCommerceMappingResponse);
+  rpc Delete(DeleteWooCommerceMappingRequest) returns (DeleteResponse);
+}
+
+// ============================================================================
+// WOOCOMMERCE CONFIG SERVICE
+// ============================================================================
+
+service WooCommerceConfigService {
+  rpc Create(CreateWooCommerceConfigRequest) returns (WooCommerceConfig);
+  rpc Update(UpdateWooCommerceConfigRequest) returns (WooCommerceConfig);
+  rpc Get(GetWooCommerceConfigRequest) returns (WooCommerceConfig);
+  rpc GetByOrganisation(GetWooCommerceConfigByOrganisationRequest) returns (WooCommerceConfig);
+  rpc Delete(DeleteWooCommerceConfigRequest) returns (DeleteResponse);
+  rpc TestConnection(TestWooCommerceConnectionRequest) returns (TestWooCommerceConnectionResponse);
+}
+
+// ============================================================================
+// WEBHOOK EVENT MESSAGES
+// ============================================================================
+
+message WooCommerceWebhookEvent {
+  string id = 1;
+  string organisation_id = 2;
+  string topic = 3;
+  string resource = 4;
+  string external_id = 5;
+  string payload = 6;
+  string status = 7;
+  string error_message = 8;
+  int32 retry_count = 9;
+  string processed_at = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+message ProcessWebhookRequest {
+  string organisation_id = 1;
+  string topic = 2;
+  string resource = 3;
+  string external_id = 4;
+  string payload = 5;
+  string signature = 6;
+}
+
+message ProcessWebhookResponse {
+  bool success = 1;
+  string message = 2;
+  string event_id = 3;
+}
+
+message ListWebhookEventsRequest {
+  string organisation_id = 1;
+  string topic = 2;
+  string status = 3;
+  string search = 4;
+  Pagination pagination = 5;
+}
+
+message ListWebhookEventsResponse {
+  repeated WooCommerceWebhookEvent events = 1;
+  PaginationResult pagination = 2;
+}
+
+message GetWebhookEventRequest {
+  string id = 1;
+}
+
+message RetryWebhookEventRequest {
+  string id = 1;
+}
+
+// ============================================================================
+// MAPPING MESSAGES
+// ============================================================================
+
+message WooCommerceMapping {
+  string id = 1;
+  string organisation_id = 2;
+  string entity_type = 3;
+  string external_id = 4;
+  string internal_id = 5;
+  string external_data = 6;
+  string sync_status = 7;
+  string last_synced_at = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+message CreateWooCommerceMappingRequest {
+  string organisation_id = 1;
+  string entity_type = 2;
+  string external_id = 3;
+  string internal_id = 4;
+  string external_data = 5;
+}
+
+message UpdateWooCommerceMappingRequest {
+  string id = 1;
+  string internal_id = 2;
+  string external_data = 3;
+  string sync_status = 4;
+}
+
+message GetWooCommerceMappingRequest {
+  string id = 1;
+}
+
+message GetWooCommerceMappingByExternalIdRequest {
+  string organisation_id = 1;
+  string entity_type = 2;
+  string external_id = 3;
+}
+
+message ListWooCommerceMappingRequest {
+  string organisation_id = 1;
+  string entity_type = 2;
+  string sync_status = 3;
+  string search = 4;
+  Pagination pagination = 5;
+}
+
+message ListWooCommerceMappingResponse {
+  repeated WooCommerceMapping mappings = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteWooCommerceMappingRequest {
+  string id = 1;
+}
+
+// ============================================================================
+// CONFIG MESSAGES
+// ============================================================================
+
+message WooCommerceConfig {
+  string id = 1;
+  string organisation_id = 2;
+  string store_url = 3;
+  string consumer_key = 4;
+  string consumer_secret = 5;
+  string webhook_secret = 6;
+  bool sync_products = 7;
+  bool sync_orders = 8;
+  bool sync_customers = 9;
+  bool active = 10;
+  string last_sync_at = 11;
+  string created_at = 12;
+  string updated_at = 13;
+}
+
+message CreateWooCommerceConfigRequest {
+  string organisation_id = 1;
+  string store_url = 2;
+  string consumer_key = 3;
+  string consumer_secret = 4;
+  string webhook_secret = 5;
+  bool sync_products = 6;
+  bool sync_orders = 7;
+  bool sync_customers = 8;
+}
+
+message UpdateWooCommerceConfigRequest {
+  string id = 1;
+  string store_url = 2;
+  string consumer_key = 3;
+  string consumer_secret = 4;
+  string webhook_secret = 5;
+  bool sync_products = 6;
+  bool sync_orders = 7;
+  bool sync_customers = 8;
+  bool active = 9;
+}
+
+message GetWooCommerceConfigRequest {
+  string id = 1;
+}
+
+message GetWooCommerceConfigByOrganisationRequest {
+  string organisation_id = 1;
+}
+
+message DeleteWooCommerceConfigRequest {
+  string id = 1;
+}
+
+message TestWooCommerceConnectionRequest {
+  string organisation_id = 1;
+}
+
+message TestWooCommerceConnectionResponse {
+  bool success = 1;
+  string message = 2;
+  string store_name = 3;
+  string woocommerce_version = 4;
+}
+
+// ============================================================================
+// COMMON MESSAGES
+// ============================================================================
+
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}

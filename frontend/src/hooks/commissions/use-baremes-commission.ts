@@ -4,18 +4,18 @@ import { useCallback, useEffect, useState } from "react"
 import { useApi } from "../core/use-api"
 import { api } from "@/lib/api"
 import type {
-  BaremeCommissionResponseDto,
-  BaremeFiltersDto,
-  BaremeApplicableFiltersDto,
-} from "@/types/commission"
+  BaremeWithPaliers,
+  BaremeFilters,
+  BaremeApplicableFilters,
+} from "@/lib/ui/display-types/commission"
 
 /**
  * Hook pour récupérer la liste des barèmes de commission
  * GET /baremes-commission
  */
-export function useBaremesCommission(filters?: BaremeFiltersDto) {
-  const [baremes, setBaremes] = useState<BaremeCommissionResponseDto[]>([])
-  const { loading, error, execute } = useApi<BaremeCommissionResponseDto[]>()
+export function useBaremesCommission(filters?: BaremeFilters) {
+  const [baremes, setBaremes] = useState<BaremeWithPaliers[]>([])
+  const { loading, error, execute } = useApi<BaremeWithPaliers[]>()
 
   const fetchBaremes = useCallback(async () => {
     try {
@@ -58,9 +58,9 @@ export function useBaremesCommission(filters?: BaremeFiltersDto) {
  * Hook pour récupérer le barème applicable
  * GET /baremes-commission/applicable
  */
-export function useBaremeApplicable(filters: BaremeApplicableFiltersDto | null) {
-  const [bareme, setBareme] = useState<BaremeCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<BaremeCommissionResponseDto | null>()
+export function useBaremeApplicable(filters: BaremeApplicableFilters | null) {
+  const [bareme, setBareme] = useState<BaremeWithPaliers | null>(null)
+  const { loading, error, execute } = useApi<BaremeWithPaliers | null>()
 
   const fetchBareme = useCallback(async () => {
     if (!filters?.organisationId) return
@@ -101,8 +101,8 @@ export function useBaremeApplicable(filters: BaremeApplicableFiltersDto | null) 
  * GET /baremes-commission/code/:code
  */
 export function useBaremeByCode(code: string | null) {
-  const [bareme, setBareme] = useState<BaremeCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<BaremeCommissionResponseDto | null>()
+  const [bareme, setBareme] = useState<BaremeWithPaliers | null>(null)
+  const { loading, error, execute } = useApi<BaremeWithPaliers | null>()
 
   const fetchBareme = useCallback(async () => {
     if (!code) return
@@ -134,8 +134,8 @@ export function useBaremeByCode(code: string | null) {
  * GET /baremes-commission/:id
  */
 export function useBaremeCommission(baremeId: string | null) {
-  const [bareme, setBareme] = useState<BaremeCommissionResponseDto | null>(null)
-  const { loading, error, execute } = useApi<BaremeCommissionResponseDto>()
+  const [bareme, setBareme] = useState<BaremeWithPaliers | null>(null)
+  const { loading, error, execute } = useApi<BaremeWithPaliers>()
 
   const fetchBareme = useCallback(async () => {
     if (!baremeId) return

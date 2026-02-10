@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package wincash;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// WINCASH SERVICE
+// ============================================================================
+// Synchronisation et gestion des operations de cashback depuis WinCash
+// Programme de fidelite et cashback pour les clients
+// ============================================================================
+
+// ========== ENUMS ==========
+
+enum StatutOperation {
+  STATUT_OPERATION_UNSPECIFIED = 0;
+  STATUT_OPERATION_EN_ATTENTE = 1;
+  STATUT_OPERATION_VALIDEE = 2;
+  STATUT_OPERATION_REJETEE = 3;
+  STATUT_OPERATION_VERSEE = 4;
+  STATUT_OPERATION_ANNULEE = 5;
+  STATUT_OPERATION_EXPIREE = 6;
+}
+
+enum TypeOperation {
+  TYPE_OPERATION_UNSPECIFIED = 0;
+  TYPE_OPERATION_GAIN = 1;                            // Cashback earned
+  TYPE_OPERATION_UTILISATION = 2;                     // Cashback used
+  TYPE_OPERATION_AJUSTEMENT = 3;                      // Manual adjustment
+  TYPE_OPERATION_EXPIRATION = 4;                      // Expired cashback
+  TYPE_OPERATION_BONUS = 5;                           // Bonus/promotional cashback
+}
+
+// ========== MESSAGES ==========
+
+message OperationCashback {
+  string id = 1;
+  string organisation_id = 2;
+  string client_id = 3;
+  string contrat_id = 4;                              // Linked contract
+  string reference_externe = 5;                       // External reference from WinCash
+  TypeOperation type = 6;
+  StatutOperation statut = 7;
+  double montant = 8;                                 // Amount in EUR
+  string devise = 9;
+  string description = 10;
+  string date_operation = 11;
+  string date_validation = 12;
+  string date_versement = 13;
+  string date_expiration = 14;
+  string metadata = 15;                               // JSON metadata from partner
+  string synced_at = 16;                              // Last sync timestamp
+  string created_at = 17;
+  string updated_at = 18;
+}
+
+// ========== SYNC ==========
+
+message SyncCashbackRequest {
+  string organisation_id = 1;
+  optional string client_id = 2;                      // Sync specific client, or all if empty
+  optional string since = 3;                          // ISO date, incremental sync
+  bool force_full_sync = 4;
+}
+
+message SyncCashbackResponse {
+  int32 operations_creees = 1;
+  int32 operations_mises_a_jour = 2;
+  int32 operations_ignorees = 3;
+  int32 erreurs = 4;
+  repeated SyncError errors = 5;
+  string sync_id = 6;
+  google.protobuf.Timestamp synced_at = 7;
+}
+
+message SyncError {
+  string reference_externe = 1;
+  string message = 2;
+  string code = 3;
+}
+
+// ========== REQUESTS/RESPONSES ==========
+
+message GetOperationRequest {
+  string id = 1;
+}
+
+message GetOperationResponse {
+  OperationCashback operation = 1;
+}
+
+message ListOperationsRequest {
+  string organisation_id = 1;
+  optional string client_id = 2;
+  optional string contrat_id = 3;
+  optional StatutOperation statut = 4;
+  optional TypeOperation type = 5;
+  optional string search = 6;
+  PaginationRequest pagination = 7;
+}
+
+message ListOperationsResponse {
+  repeated OperationCashback operations = 1;
+  PaginationResponse pagination = 2;
+  double total_gains = 3;                             // Summary: total earned
+  double total_utilise = 4;                           // Summary: total used
+  double solde_disponible = 5;                        // Summary: available balance
+}
+
+// ========== PAGINATION ==========
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}
+
+// ========== SERVICE ==========
+
+service WincashSvc {
+  rpc SyncCashback(SyncCashbackRequest) returns (SyncCashbackResponse);
+  rpc GetOperation(GetOperationRequest) returns (GetOperationResponse);
+  rpc ListOperations(ListOperationsRequest) returns (ListOperationsResponse);
+}

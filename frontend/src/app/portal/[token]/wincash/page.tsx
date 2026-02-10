@@ -35,33 +35,40 @@ const STATUT_COLORS = {
 }
 
 async function getOperations(token: string): Promise<OperationCashback[]> {
-  // Fetch cashback operations for the client
-  const { data: operationsData, error } = await listOperations({ clientId: token });
+  // TODO: Get organisationId from client token or session
+  // For now, return empty array as we need organisationId to fetch operations
+  return [];
   
-  if (error || !operationsData || !operationsData.operations) {
-    console.error("[getOperations] Error fetching operations:", error);
-    return [];
-  }
+  // Fetch cashback operations for the client
+  // const { data: operationsData, error } = await listOperations({ 
+  //   organisationId: "", // TODO: Get from client
+  //   clientId: token,
+  //   pagination: { page: 1, limit: 100 }
+  // });
+  
+  // if (error || !operationsData || !operationsData.operations) {
+  //   console.error("[getOperations] Error fetching operations:", error);
+  //   return [];
+  // }
 
   // Map proto response to OperationCashback interface
-  return operationsData.operations.map(op => {
-    const montantAchat = parseFloat(op.montantAchat || "0");
-    const montantCashback = parseFloat(op.montantCashback || "0");
-    const tauxCashback = montantAchat > 0 ? (montantCashback / montantAchat) * 100 : 0;
+  // return operationsData.operations.map(op => {
+  //   const montantAchat = parseFloat(op.montantAchat || "0");
+  //   const montantCashback = parseFloat(op.montantCashback || "0");
+  //   const tauxCashback = montantAchat > 0 ? (montantCashback / montantAchat) * 100 : 0;
 
-    return {
-      id: op.id || "",
-      reference: op.externalId || "",
-      marchand: op.marchand || "",
-      montantAchat,
-      montantCashback,
-      tauxCashback,
-      statut: (op.statut || "tracked") as "tracked" | "validated" | "paid" | "rejected",
-      dateAchat: op.dateAchat ? new Date(op.dateAchat) : new Date(),
-      dateValidation: op.dateValidation ? new Date(op.dateValidation) : null,
-      dateVersement: op.datePaiement ? new Date(op.datePaiement) : null
-    };
-  });
+  //   return {
+  //     id: op.id || "",
+  //     reference: op.reference || "",
+  //     dateOperation: op.dateOperation || "",
+  //     commercant: op.commercant || "",
+  //     montantAchat,
+  //     montantCashback,
+  //     tauxCashback,
+  //     statut: (op.statut || "en_attente") as "en_attente" | "valide" | "verse" | "annule",
+  //     dateVersement: op.dateVersement || null
+  //   };
+  // });
 }
 
 export default async function WincashPage({

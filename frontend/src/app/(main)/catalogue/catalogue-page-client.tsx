@@ -3,7 +3,15 @@
 import * as React from "react"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { useSocieteStore } from "@/stores/societe-store"
-import type { Product, CreateProduitDto, UpdateProduitDto } from "@/types/product"
+import {
+  TypeProduit,
+  CategorieProduit,
+  type Produit,
+  type CreateProduitRequest,
+  type UpdateProduitRequest,
+  type Gamme,
+} from "@proto/products/products"
+import { TYPE_PRODUIT_LABELS, CATEGORIE_PRODUIT_LABELS } from "@/lib/ui/labels/product"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import {
@@ -14,118 +22,12 @@ import {
   updateProduit as updateProduitAction,
   getSocietesByOrganisation,
 } from "@/actions/catalogue"
-import type { Gamme as GrpcGamme, Produit as GrpcProduit, TypeProduit, CategorieProduit } from "@proto/products/products"
-
-// Local enum values matching proto - avoids importing grpc runtime in client bundle
-const TypeProduitValues = {
-  TYPE_PRODUIT_UNSPECIFIED: 0,
-  INTERNE: 1,
-  PARTENAIRE: 2,
-  UNRECOGNIZED: -1,
-} as const
-
-const CategorieProduitValues = {
-  CATEGORIE_PRODUIT_UNSPECIFIED: 0,
-  ASSURANCE: 1,
-  PREVOYANCE: 2,
-  EPARGNE: 3,
-  SERVICE: 4,
-  ACCESSOIRE: 5,
-  UNRECOGNIZED: -1,
-} as const
 import type { Societe } from "@proto/organisations/organisations"
-import type { Gamme } from "@/types/gamme"
-import type { SocieteDto } from "@/types/societe"
 
 interface CataloguePageClientProps {
   initialSocietes?: Societe[] | null
-  initialGammes?: GrpcGamme[] | null
-  initialProduits?: GrpcProduit[] | null
-}
-
-// Mapping functions
-function mapGrpcGammeToGamme(grpc: GrpcGamme): Gamme {
-  return {
-    id: grpc.id,
-    organisationId: grpc.organisationId,
-    name: grpc.nom,
-    description: grpc.description || undefined,
-    icon: grpc.icone || undefined,
-    active: grpc.actif,
-    createdAt: grpc.createdAt,
-    updatedAt: grpc.updatedAt,
-  }
-}
-
-function mapSocieteToDto(societe: Societe): SocieteDto {
-  return {
-    id: societe.id,
-    organisationId: societe.organisationId,
-    raisonSociale: societe.raisonSociale,
-    siren: societe.siren || "",
-    numeroTVA: societe.numeroTva || "",
-    createdAt: societe.createdAt,
-    updatedAt: societe.updatedAt,
-  }
-}
-
-function mapGrpcProduitToProduct(grpc: GrpcProduit): Product {
-  const prixTTC = grpc.prix * (1 + grpc.tauxTva / 100)
-  const prixPromoTTC = grpc.promotionActive && grpc.prixPromotion
-    ? grpc.prixPromotion * (1 + grpc.tauxTva / 100)
-    : undefined
-
-  const typeMap: Record<TypeProduit, "Interne" | "Partenaire"> = {
-    [TypeProduitValues.TYPE_PRODUIT_UNSPECIFIED]: "Interne",
-    [TypeProduitValues.INTERNE]: "Interne",
-    [TypeProduitValues.PARTENAIRE]: "Partenaire",
-    [TypeProduitValues.UNRECOGNIZED]: "Interne",
-  }
-
-  const categoryMap: Record<CategorieProduit, string> = {
-    [CategorieProduitValues.CATEGORIE_PRODUIT_UNSPECIFIED]: "Autre",
-    [CategorieProduitValues.ASSURANCE]: "Assurance",
-    [CategorieProduitValues.PREVOYANCE]: "Prévoyance",
-    [CategorieProduitValues.EPARGNE]: "Épargne",
-    [CategorieProduitValues.SERVICE]: "Service",
-    [CategorieProduitValues.ACCESSOIRE]: "Accessoire",
-    [CategorieProduitValues.UNRECOGNIZED]: "Autre",
-  }
-
-  // Calculate promotion percentage
-  const promotionPourcentage = grpc.promotionActive && grpc.prixPromotion && grpc.prix > 0
-    ? Math.round((1 - grpc.prixPromotion / grpc.prix) * 100)
-    : undefined
-
-  return {
-    id: grpc.id,
-    organisationId: grpc.organisationId,
-    gammeId: grpc.gammeId || undefined,
-    name: grpc.nom,
-    description: grpc.description || "",
-    type: typeMap[grpc.type as TypeProduit] || "Interne",
-    category: categoryMap[grpc.categorie as CategorieProduit] || "Autre",
-    status: grpc.actif ? "Disponible" : "Archivé",
-    price: grpc.prix,
-    taxRate: grpc.tauxTva,
-    priceTTC: prixTTC,
-    currency: grpc.devise || "EUR",
-    sku: grpc.sku,
-    actif: grpc.actif,
-    promotionActive: grpc.promotionActive,
-    promotionPrice: grpc.promotionActive ? grpc.prixPromotion : undefined,
-    promotionPourcentage,
-    prixPromo: grpc.promotionActive ? grpc.prixPromotion : undefined,
-    prixPromoTTC,
-    promotionDateDebut: grpc.dateDebutPromotion || undefined,
-    promotionDateFin: grpc.dateFinPromotion || undefined,
-    imageUrl: grpc.imageUrl || undefined,
-    image: grpc.imageUrl || undefined,
-    supplier: undefined,
-    tags: [],
-    createdAt: grpc.createdAt,
-    updatedAt: grpc.updatedAt,
-  }
+  initialGammes?: Gamme[] | null
+  initialProduits?: Produit[] | null
 }
 
 // UI Components
@@ -179,6 +81,24 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   Archivé: { label: "Archivé", className: "bg-gray-100 text-gray-600" },
 }
 
+/** Derive a display status from the proto `actif` field */
+function getStatusLabel(produit: Produit): string {
+  return produit.actif ? "Disponible" : "Archivé"
+}
+
+/** Compute TTC price */
+function computePrixTTC(prixHT: number, tauxTva: number): number {
+  return prixHT * (1 + tauxTva / 100)
+}
+
+/** Compute promotion percentage */
+function computePromotionPourcentage(produit: Produit): number | undefined {
+  if (produit.promotionActive && produit.prixPromotion && produit.prix > 0) {
+    return Math.round((1 - produit.prixPromotion / produit.prix) * 100)
+  }
+  return undefined
+}
+
 export function CataloguePageClient({
   initialSocietes,
   initialGammes,
@@ -195,14 +115,14 @@ export function CataloguePageClient({
   const hasFetchedProduits = React.useRef(!!initialProduits)
 
   // Data state - initialize with SSR data if available
-  const [societes, setSocietes] = React.useState<SocieteDto[]>(
-    initialSocietes ? initialSocietes.map(mapSocieteToDto) : []
+  const [societes, setSocietes] = React.useState<Societe[]>(
+    initialSocietes ?? []
   )
   const [gammes, setGammes] = React.useState<Gamme[]>(
-    initialGammes ? initialGammes.map(mapGrpcGammeToGamme) : []
+    initialGammes ?? []
   )
-  const [produits, setProduits] = React.useState<Product[]>(
-    initialProduits ? initialProduits.map(mapGrpcProduitToProduct) : []
+  const [produits, setProduits] = React.useState<Produit[]>(
+    initialProduits ?? []
   )
   const [gammesLoading, setGammesLoading] = React.useState(!initialGammes)
   const [produitsLoading, setProduitsLoading] = React.useState(!initialProduits)
@@ -214,10 +134,10 @@ export function CataloguePageClient({
   const [selectedGammeId, setSelectedGammeId] = React.useState<string | null>("all")
   const [gammeSearchQuery, setGammeSearchQuery] = React.useState("")
   const [productSearchQuery, setProductSearchQuery] = React.useState("")
-  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null)
+  const [selectedProduct, setSelectedProduct] = React.useState<Produit | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
-  const [productToEdit, setProductToEdit] = React.useState<Product | null>(null)
+  const [productToEdit, setProductToEdit] = React.useState<Produit | null>(null)
   const [isCreateGammeDialogOpen, setIsCreateGammeDialogOpen] = React.useState(false)
   const [newGammeForm, setNewGammeForm] = React.useState({
     societeId: "",
@@ -230,7 +150,7 @@ export function CataloguePageClient({
     if (!activeOrganisation?.organisationId) return
     const result = await getSocietesByOrganisation(activeOrganisation.organisationId)
     if (result.data?.societes) {
-      setSocietes(result.data.societes.map(mapSocieteToDto))
+      setSocietes(result.data.societes)
     }
   }, [activeOrganisation?.organisationId])
 
@@ -242,7 +162,7 @@ export function CataloguePageClient({
       organisationId: activeOrganisation.organisationId,
     })
     if (result.data?.gammes) {
-      setGammes(result.data.gammes.map(mapGrpcGammeToGamme))
+      setGammes(result.data.gammes)
     }
     setGammesLoading(false)
   }, [activeOrganisation?.organisationId])
@@ -256,7 +176,7 @@ export function CataloguePageClient({
       gammeId: selectedGammeId && selectedGammeId !== "all" ? selectedGammeId : undefined,
     })
     if (result.data?.produits) {
-      setProduits(result.data.produits.map(mapGrpcProduitToProduct))
+      setProduits(result.data.produits)
     }
     setProduitsLoading(false)
   }, [activeOrganisation?.organisationId, selectedGammeId])
@@ -299,7 +219,7 @@ export function CataloguePageClient({
     if (!gammeSearchQuery) return gammes
     const query = gammeSearchQuery.toLowerCase()
     return gammes.filter((g) =>
-      g.name.toLowerCase().includes(query) ||
+      g.nom.toLowerCase().includes(query) ||
       g.description?.toLowerCase().includes(query)
     )
   }, [gammes, gammeSearchQuery])
@@ -313,7 +233,7 @@ export function CataloguePageClient({
       const query = productSearchQuery.toLowerCase()
       result = result.filter(
         (p) =>
-          p.name.toLowerCase().includes(query) ||
+          p.nom.toLowerCase().includes(query) ||
           p.sku.toLowerCase().includes(query) ||
           p.description?.toLowerCase().includes(query)
       )
@@ -340,34 +260,13 @@ export function CataloguePageClient({
   }, [selectedGammeId])
 
   // Handlers
-  const handleCreateProduct = async (data: CreateProduitDto) => {
+  const handleCreateProduct = async (data: CreateProduitRequest) => {
     if (!activeOrganisation?.organisationId) return
     setCreateLoading(true)
 
-    const typeMap: Record<string, TypeProduit> = {
-      Interne: TypeProduitValues.INTERNE as TypeProduit,
-      Partenaire: TypeProduitValues.PARTENAIRE as TypeProduit,
-    }
-
-    const categoryMap: Record<string, CategorieProduit> = {
-      Assurance: CategorieProduitValues.ASSURANCE as CategorieProduit,
-      Prévoyance: CategorieProduitValues.PREVOYANCE as CategorieProduit,
-      Épargne: CategorieProduitValues.EPARGNE as CategorieProduit,
-      Service: CategorieProduitValues.SERVICE as CategorieProduit,
-      Accessoire: CategorieProduitValues.ACCESSOIRE as CategorieProduit,
-    }
-
     const result = await createProduitAction({
+      ...data,
       organisationId: activeOrganisation.organisationId,
-      gammeId: data.gammeId || "",
-      nom: data.nom,
-      sku: data.sku,
-      description: data.description || "",
-      type: typeMap[data.type] || (TypeProduitValues.INTERNE as TypeProduit),
-      categorie: categoryMap[data.categorie || ""] || (CategorieProduitValues.ASSURANCE as CategorieProduit),
-      prix: data.prix,
-      tauxTva: data.tauxTva || 20,
-      devise: data.devise || "EUR",
     })
 
     setCreateLoading(false)
@@ -381,34 +280,12 @@ export function CataloguePageClient({
     }
   }
 
-  const handleUpdateProduct = async (id: string, data: UpdateProduitDto) => {
+  const handleUpdateProduct = async (id: string, data: UpdateProduitRequest) => {
     setUpdateLoading(true)
 
-    const typeMap: Record<string, TypeProduit> = {
-      Interne: TypeProduitValues.INTERNE as TypeProduit,
-      Partenaire: TypeProduitValues.PARTENAIRE as TypeProduit,
-    }
-
-    const categoryMap: Record<string, CategorieProduit> = {
-      Assurance: CategorieProduitValues.ASSURANCE as CategorieProduit,
-      Prévoyance: CategorieProduitValues.PREVOYANCE as CategorieProduit,
-      Épargne: CategorieProduitValues.EPARGNE as CategorieProduit,
-      Service: CategorieProduitValues.SERVICE as CategorieProduit,
-      Accessoire: CategorieProduitValues.ACCESSOIRE as CategorieProduit,
-    }
-
     const result = await updateProduitAction({
+      ...data,
       id,
-      gammeId: data.gammeId,
-      nom: data.nom,
-      sku: data.sku,
-      description: data.description,
-      type: data.type ? typeMap[data.type] : undefined,
-      categorie: data.categorie ? categoryMap[data.categorie] : undefined,
-      prix: data.prix,
-      tauxTva: data.tauxTva,
-      devise: data.devise,
-      actif: data.actif,
     })
 
     setUpdateLoading(false)
@@ -423,12 +300,12 @@ export function CataloguePageClient({
       refetch()
       // Update selected product if it was being viewed
       if (result.data && selectedProduct?.id === id) {
-        setSelectedProduct(mapGrpcProduitToProduct(result.data))
+        setSelectedProduct(result.data)
       }
     }
   }
 
-  const handleOpenEditDialog = (product: Product) => {
+  const handleOpenEditDialog = (product: Produit) => {
     setProductToEdit(product)
     setIsEditDialogOpen(true)
   }
@@ -465,7 +342,8 @@ export function CataloguePageClient({
   const loading = produitsLoading || gammesLoading
 
   return (
-    <main className="flex flex-1 flex-col min-h-0">
+    <main className="flex flex-1 flex-col min-h-0 gap-4">
+
       {/* 2 Column Layout - La sélection de société se fait via la sidebar */}
       <Card className="flex-1 min-h-0 bg-card border-border flex flex-col overflow-hidden">
         <CardContent className="flex-1 min-h-0 p-0 grid grid-cols-[280px_1fr] divide-x">
@@ -555,7 +433,7 @@ export function CataloguePageClient({
                             : "hover:bg-muted/50"
                         )}
                       >
-                        <span className="truncate capitalize">{gamme.name.toLowerCase()}</span>
+                        <span className="truncate capitalize">{gamme.nom.toLowerCase()}</span>
                         {selectedGammeId === gamme.id && (
                           <ChevronRight className="h-4 w-4 shrink-0" />
                         )}
@@ -747,11 +625,13 @@ function ProductCard({
   onClick,
   onEdit,
 }: {
-  product: Product
+  product: Produit
   onClick: () => void
   onEdit: () => void
 }) {
-  const status = statusConfig[product.status] || statusConfig.Disponible
+  const statusLabel = getStatusLabel(product)
+  const status = statusConfig[statusLabel] || statusConfig.Disponible
+  const promoPct = computePromotionPourcentage(product)
 
   return (
     <Card
@@ -766,17 +646,17 @@ function ProductCard({
           {/* Left: Name and promo */}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-medium truncate">{capitalizeWords(product.name)}</h3>
-              {product.promotionActive && (
+              <h3 className="font-medium truncate">{capitalizeWords(product.nom)}</h3>
+              {product.promotionActive && promoPct != null && (
                 <Badge className="bg-green-500 text-white text-xs shrink-0">
-                  -{product.promotionPourcentage}%
+                  -{promoPct}%
                 </Badge>
               )}
             </div>
             <div className="flex items-center gap-3 mt-0.5">
               <p className="text-xs text-muted-foreground font-mono">{product.sku}</p>
-              {product.category && (
-                <span className="text-xs text-muted-foreground">• {product.category}</span>
+              {product.categorie != null && (
+                <span className="text-xs text-muted-foreground">• {CATEGORIE_PRODUIT_LABELS[product.categorie]}</span>
               )}
             </div>
           </div>
@@ -784,13 +664,13 @@ function ProductCard({
           {/* Center: Price */}
           <div className="flex items-center gap-1 shrink-0">
             <Euro className="h-3.5 w-3.5 text-muted-foreground" />
-            {product.promotionActive && product.prixPromo ? (
+            {product.promotionActive && product.prixPromotion ? (
               <>
-                <span className="text-muted-foreground line-through text-sm tabular-nums">{product.price.toFixed(2)}</span>
-                <span className="font-semibold text-green-600 tabular-nums">{product.prixPromo.toFixed(2)}</span>
+                <span className="text-muted-foreground line-through text-sm tabular-nums">{product.prix.toFixed(2)}</span>
+                <span className="font-semibold text-green-600 tabular-nums">{product.prixPromotion.toFixed(2)}</span>
               </>
             ) : (
-              <span className="font-semibold tabular-nums">{product.price.toFixed(2)}</span>
+              <span className="font-semibold tabular-nums">{product.prix.toFixed(2)}</span>
             )}
             <span className="text-xs text-muted-foreground">/ mois</span>
           </div>
@@ -801,7 +681,7 @@ function ProductCard({
               {status.label}
             </Badge>
             <Badge variant="outline" className="text-xs">
-              {product.type}
+              {TYPE_PRODUIT_LABELS[product.type]}
             </Badge>
             {/* Edit button - visible on hover */}
             <Button
@@ -827,22 +707,27 @@ function ProductDetail({
   onClose,
   onEdit,
 }: {
-  product: Product
+  product: Produit
   onClose: () => void
   onEdit: () => void
 }) {
-  const status = statusConfig[product.status] || statusConfig.Disponible
+  const statusLabel = getStatusLabel(product)
+  const status = statusConfig[statusLabel] || statusConfig.Disponible
+  const promoPct = computePromotionPourcentage(product)
+  const prixTTC = computePrixTTC(product.prix, product.tauxTva)
+  const prixPromoTTC = product.promotionActive && product.prixPromotion
+    ? computePrixTTC(product.prixPromotion, product.tauxTva)
+    : undefined
 
   const handleCopyInfo = async () => {
-    const info = `${product.name}
+    const info = `${product.nom}
 Référence: ${product.sku}
-Prix HT: ${product.price.toFixed(2)} €
-TVA: ${product.taxRate}%
-Prix TTC: ${product.priceTTC.toFixed(2)} €
-Type: ${product.type}
-Catégorie: ${product.category}
-${product.description ? `Description: ${product.description}` : ""}
-${product.supplier ? `Fournisseur: ${product.supplier}` : ""}`
+Prix HT: ${product.prix.toFixed(2)} \u20ac
+TVA: ${product.tauxTva}%
+Prix TTC: ${prixTTC.toFixed(2)} \u20ac
+Type: ${TYPE_PRODUIT_LABELS[product.type]}
+Catégorie: ${CATEGORIE_PRODUIT_LABELS[product.categorie]}
+${product.description ? `Description: ${product.description}` : ""}`
 
     try {
       await navigator.clipboard.writeText(info.trim())
@@ -857,7 +742,7 @@ ${product.supplier ? `Fournisseur: ${product.supplier}` : ""}`
       <SheetHeader className="p-6 pb-0">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0 pr-4">
-            <SheetTitle className="text-xl">{product.name}</SheetTitle>
+            <SheetTitle className="text-xl">{product.nom}</SheetTitle>
             <p className=" text-muted-foreground mt-1">{product.sku}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -875,17 +760,17 @@ ${product.supplier ? `Fournisseur: ${product.supplier}` : ""}`
                 <div className="flex items-center gap-2">
                   <Badge className="bg-green-500 text-white">PROMO</Badge>
                   <span className="font-semibold text-green-700 dark:text-green-400">
-                    -{product.promotionPourcentage}% de réduction
+                    -{promoPct}% de réduction
                   </span>
                 </div>
               </div>
-              {(product.promotionDateDebut || product.promotionDateFin) && (
+              {(product.dateDebutPromotion || product.dateFinPromotion) && (
                 <p className="text-sm text-green-600 dark:text-green-500 mt-2">
-                  {product.promotionDateDebut && product.promotionDateFin
-                    ? `Du ${new Date(product.promotionDateDebut).toLocaleDateString("fr-FR")} au ${new Date(product.promotionDateFin).toLocaleDateString("fr-FR")}`
-                    : product.promotionDateDebut
-                      ? `À partir du ${new Date(product.promotionDateDebut).toLocaleDateString("fr-FR")}`
-                      : `Jusqu'au ${new Date(product.promotionDateFin!).toLocaleDateString("fr-FR")}`}
+                  {product.dateDebutPromotion && product.dateFinPromotion
+                    ? `Du ${new Date(product.dateDebutPromotion).toLocaleDateString("fr-FR")} au ${new Date(product.dateFinPromotion).toLocaleDateString("fr-FR")}`
+                    : product.dateDebutPromotion
+                      ? `À partir du ${new Date(product.dateDebutPromotion).toLocaleDateString("fr-FR")}`
+                      : `Jusqu'au ${new Date(product.dateFinPromotion).toLocaleDateString("fr-FR")}`}
                 </p>
               )}
             </div>
@@ -900,34 +785,34 @@ ${product.supplier ? `Fournisseur: ${product.supplier}` : ""}`
           )}>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Prix HT</span>
-              {product.promotionActive && product.prixPromo ? (
+              {product.promotionActive && product.prixPromotion ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground line-through">{product.price.toFixed(2)} €</span>
-                  <span className="font-medium text-green-600">{product.prixPromo.toFixed(2)} €</span>
+                  <span className="text-muted-foreground line-through">{product.prix.toFixed(2)} \u20ac</span>
+                  <span className="font-medium text-green-600">{product.prixPromotion.toFixed(2)} \u20ac</span>
                 </div>
               ) : (
-                <span className="font-medium">{product.price.toFixed(2)} €</span>
+                <span className="font-medium">{product.prix.toFixed(2)} \u20ac</span>
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">TVA ({product.taxRate}%)</span>
+              <span className="text-muted-foreground">TVA ({product.tauxTva}%)</span>
               <span className="font-medium">
-                {((product.promotionActive && product.prixPromo ? product.prixPromo : product.price) * product.taxRate / 100).toFixed(2)} €
+                {((product.promotionActive && product.prixPromotion ? product.prixPromotion : product.prix) * product.tauxTva / 100).toFixed(2)} \u20ac
               </span>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <span className="font-medium">Prix TTC / mois</span>
-              {product.promotionActive && product.prixPromoTTC ? (
+              {product.promotionActive && prixPromoTTC ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground line-through">{product.priceTTC.toFixed(2)} €</span>
+                  <span className="text-muted-foreground line-through">{prixTTC.toFixed(2)} \u20ac</span>
                   <span className="text-xl font-bold text-green-600">
-                    {product.prixPromoTTC.toFixed(2)} €
+                    {prixPromoTTC.toFixed(2)} \u20ac
                   </span>
                 </div>
               ) : (
                 <span className="text-xl font-bold text-primary">
-                  {product.priceTTC.toFixed(2)} €
+                  {prixTTC.toFixed(2)} \u20ac
                 </span>
               )}
             </div>
@@ -936,8 +821,8 @@ ${product.supplier ? `Fournisseur: ${product.supplier}` : ""}`
           {/* Status & Type */}
           <div className="flex flex-wrap gap-2">
             <Badge className={cn(status.className)}>{status.label}</Badge>
-            <Badge variant="outline">{product.type}</Badge>
-            <Badge variant="outline">{product.category}</Badge>
+            <Badge variant="outline">{TYPE_PRODUIT_LABELS[product.type]}</Badge>
+            <Badge variant="outline">{CATEGORIE_PRODUIT_LABELS[product.categorie]}</Badge>
           </div>
 
           {/* Description */}
@@ -955,11 +840,8 @@ ${product.supplier ? `Fournisseur: ${product.supplier}` : ""}`
             <h4 className=" font-medium">Informations</h4>
 
             <DetailRow icon={Tag} label="Référence" value={product.sku} />
-            <DetailRow icon={Package} label="Catégorie" value={product.category || "Non définie"} />
-            <DetailRow icon={Percent} label="Taux TVA" value={`${product.taxRate}%`} />
-            {product.supplier && (
-              <DetailRow icon={Building2} label="Fournisseur" value={product.supplier} />
-            )}
+            <DetailRow icon={Package} label="Catégorie" value={CATEGORIE_PRODUIT_LABELS[product.categorie] || "Non définie"} />
+            <DetailRow icon={Percent} label="Taux TVA" value={`${product.tauxTva}%`} />
             {product.createdAt && (
               <DetailRow
                 icon={Calendar}
@@ -968,23 +850,6 @@ ${product.supplier ? `Fournisseur: ${product.supplier}` : ""}`
               />
             )}
           </div>
-
-          {/* Tags */}
-          {product.tags && product.tags.length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <h4 className=" font-medium mb-2">Tags</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {product.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
         </div>
       </ScrollArea>
 

@@ -22,8 +22,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Search, RefreshCw } from "lucide-react";
-import type { CalendarAuditLogDto } from "@/types/calendar";
-import { AuditSource, AuditSourceLabels } from "@/types/calendar";
+import type { CalendarAuditLog } from "@proto/calendar/calendar";
+import { AuditSource } from "@proto/calendar/calendar";
+import { AuditSourceLabels } from "@/lib/ui/labels/calendar";
 import { getAuditLogs } from "@/actions/calendar-admin";
 
 interface AuditLogsTableProps {
@@ -37,7 +38,7 @@ const ACTION_BADGES: Record<string, "default" | "secondary" | "destructive" | "o
 };
 
 export function AuditLogsTable({ organisationId }: AuditLogsTableProps) {
-  const [logs, setLogs] = useState<CalendarAuditLogDto[]>([]);
+  const [logs, setLogs] = useState<CalendarAuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);

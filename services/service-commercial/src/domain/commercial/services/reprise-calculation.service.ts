@@ -70,7 +70,9 @@ export interface ContestationRegularisationResult {
 
 @Injectable()
 export class RepriseCalculationService {
-  constructor(private readonly deps?: Partial<RepriseDependencies>) {}
+  private readonly deps: Partial<RepriseDependencies> = {};
+
+  constructor() {}
 
   async calculerReprise(
     contratId: string,

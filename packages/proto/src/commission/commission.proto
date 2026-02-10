@@ -39,6 +39,7 @@ service CommissionService {
   rpc UpdateBordereau(UpdateBordereauRequest) returns (BordereauResponse);
   rpc ValidateBordereau(ValidateBordereauRequest) returns (BordereauResponse);
   rpc ExportBordereau(GetByIdRequest) returns (ExportBordereauResponse);
+  rpc ExportBordereauFiles(ExportBordereauRequest) returns (ExportBordereauResponse);
   rpc DeleteBordereau(GetByIdRequest) returns (DeleteResponse);
 
   // ===== LigneBordereau CRUD =====
@@ -57,6 +58,11 @@ service CommissionService {
   rpc ApplyReprise(ApplyRepriseRequest) returns (RepriseResponse);
   rpc CancelReprise(GetByIdRequest) returns (RepriseResponse);
   rpc DeleteReprise(GetByIdRequest) returns (DeleteResponse);
+
+  // ===== Contestations =====
+  rpc CreerContestation(CreerContestationRequest) returns (ContestationResponse);
+  rpc GetContestations(GetContestationsRequest) returns (GetContestationsResponse);
+  rpc ResoudreContestation(ResoudreContestationRequest) returns (ContestationResponse);
 
   // ===== StatutCommission CRUD =====
   rpc CreateStatut(CreateStatutRequest) returns (StatutResponse);
@@ -82,6 +88,18 @@ service CommissionService {
 
   // ===== Reports Negatifs =====
   rpc GetReportsNegatifs(GetReportsNegatifsRequest) returns (ReportNegatifListResponse);
+
+  // ===== ADV Validation =====
+  rpc PreselectionnerLignes(PreselectionRequest) returns (PreselectionResponse);
+  rpc RecalculerTotauxBordereau(RecalculerTotauxRequest) returns (TotauxResponse);
+  rpc ValiderBordereauFinal(ValiderBordereauFinalRequest) returns (ValiderBordereauFinalResponse);
+  rpc GetLignesForValidation(GetLignesForValidationRequest) returns (GetLignesForValidationResponse);
+
+  // ===== Dashboard KPI =====
+  rpc GetDashboardKpi(GetDashboardKpiRequest) returns (GetDashboardKpiResponse);
+  rpc GenererSnapshotKpi(GenererSnapshotKpiRequest) returns (GenererSnapshotKpiResponse);
+  rpc GetComparatifs(GetComparatifsRequest) returns (GetComparatifsResponse);
+  rpc ExportAnalytique(ExportAnalytiqueRequest) returns (ExportAnalytiqueResponse);
 }
 
 // ============================================
@@ -148,6 +166,19 @@ enum StatutReprise {
   STATUT_REPRISE_EN_ATTENTE = 1;
   STATUT_REPRISE_APPLIQUEE = 2;
   STATUT_REPRISE_ANNULEE = 3;
+}
+
+enum StatutContestation {
+  STATUT_CONTESTATION_UNSPECIFIED = 0;
+  STATUT_CONTESTATION_EN_COURS = 1;
+  STATUT_CONTESTATION_ACCEPTEE = 2;
+  STATUT_CONTESTATION_REJETEE = 3;
+}
+
+enum ExportFormatAnalytique {
+  EXPORT_FORMAT_ANALYTIQUE_UNSPECIFIED = 0;
+  EXPORT_FORMAT_ANALYTIQUE_CSV = 1;
+  EXPORT_FORMAT_ANALYTIQUE_EXCEL = 2;
 }
 
 enum StatutRecurrence {
@@ -554,10 +585,16 @@ message ValidateBordereauRequest {
   string validateur_id = 2;
 }
 
+message ExportBordereauRequest {
+  string bordereau_id = 1;
+  string organisation_id = 2;
+}
+
 message ExportBordereauResponse {
   bool success = 1;
   string pdf_url = 2;
   string excel_url = 3;
+  string hash_sha256 = 4;
 }
 
 message BordereauResponse {
@@ -710,6 +747,63 @@ message RepriseResponse {
 
 message RepriseListResponse {
   repeated Reprise reprises = 1;
+  int32 total = 2;
+}
+
+// ============================================
+// CONTESTATION MESSAGES
+// ============================================
+
+message Contestation {
+  string id = 1;
+  string organisation_id = 2;
+  string commission_id = 3;
+  string bordereau_id = 4;
+  string apporteur_id = 5;
+  string motif = 6;
+  string date_contestation = 7;
+  string date_limite = 8;
+  StatutContestation statut = 9;
+  optional string commentaire_resolution = 10;
+  optional string resolu_par = 11;
+  optional string date_resolution = 12;
+  optional string ligne_regularisation_id = 13;
+  string created_at = 14;
+  string updated_at = 15;
+}
+
+message CreerContestationRequest {
+  string organisation_id = 1;
+  string commission_id = 2;
+  string bordereau_id = 3;
+  string apporteur_id = 4;
+  string motif = 5;
+  optional string date_contestation = 6;
+}
+
+message GetContestationsRequest {
+  string organisation_id = 1;
+  optional string commission_id = 2;
+  optional string bordereau_id = 3;
+  optional string apporteur_id = 4;
+  optional StatutContestation statut = 5;
+  optional int32 limit = 6;
+  optional int32 offset = 7;
+}
+
+message ResoudreContestationRequest {
+  string id = 1;
+  bool acceptee = 2;
+  string commentaire = 3;
+  string resolu_par = 4;
+}
+
+message ContestationResponse {
+  Contestation contestation = 1;
+}
+
+message GetContestationsResponse {
+  repeated Contestation contestations = 1;
   int32 total = 2;
 }
 
@@ -943,4 +1037,145 @@ message GetAuditLogsByRefRequest {
 message AuditLogListResponse {
   repeated AuditLog logs = 1;
   int32 total = 2;
+}
+
+// ============================================
+// ADV VALIDATION MESSAGES
+// ============================================
+
+message PreselectionRequest {
+  string bordereau_id = 1;
+  string organisation_id = 2;
+}
+
+message PreselectionResponse {
+  int32 nombre_lignes_selectionnees = 1;
+  int32 nombre_lignes_total = 2;
+  repeated string ligne_ids_selectionnees = 3;
+}
+
+message RecalculerTotauxRequest {
+  string bordereau_id = 1;
+  repeated string ligne_ids_selectionnees = 2;
+}
+
+message TotauxResponse {
+  string total_brut = 1;
+  string total_reprises = 2;
+  string total_acomptes = 3;
+  string total_net = 4;
+  int32 nombre_lignes_selectionnees = 5;
+}
+
+message ValiderBordereauFinalRequest {
+  string bordereau_id = 1;
+  string validateur_id = 2;
+  repeated string ligne_ids_validees = 3;
+}
+
+message ValiderBordereauFinalResponse {
+  bool success = 1;
+  Bordereau bordereau = 2;
+  string date_validation = 3;
+}
+
+message GetLignesForValidationRequest {
+  string bordereau_id = 1;
+  string organisation_id = 2;
+  optional int32 limit = 3;
+  optional int32 offset = 4;
+}
+
+message GetLignesForValidationResponse {
+  repeated LigneBordereau lignes = 1;
+  int32 total = 2;
+  TotauxResponse totaux = 3;
+}
+
+// ============================================
+// DASHBOARD KPI MESSAGES
+// ============================================
+
+message DashboardKpiFilters {
+  string organisation_id = 1;
+  optional string periode = 2;
+  optional string apporteur_id = 3;
+  optional string produit_id = 4;
+  optional string date_debut = 5;
+  optional string date_fin = 6;
+}
+
+message KpiProduit {
+  string produit_id = 1;
+  string total_brut = 2;
+  string total_net = 3;
+  string total_reprises = 4;
+  int32 volume = 5;
+}
+
+message DashboardKpi {
+  string periode = 1;
+  string generated_at = 2;
+  string source = 3;
+  string total_brut = 4;
+  string total_net = 5;
+  string total_reprises = 6;
+  string total_recurrence = 7;
+  string taux_reprise = 8;
+  int32 volume = 9;
+  string delai_validation_moyen_jours = 10;
+  repeated KpiProduit par_produit = 11;
+}
+
+message GetDashboardKpiRequest {
+  DashboardKpiFilters filters = 1;
+}
+
+message GetDashboardKpiResponse {
+  DashboardKpi kpi = 1;
+}
+
+message GenererSnapshotKpiRequest {
+  DashboardKpiFilters filters = 1;
+  optional string generated_by = 2;
+}
+
+message GenererSnapshotKpiResponse {
+  bool success = 1;
+  DashboardKpi kpi = 2;
+}
+
+message ComparatifKpi {
+  string periode = 1;
+  string total_brut = 2;
+  string total_net = 3;
+  string total_reprises = 4;
+  string total_recurrence = 5;
+  string taux_reprise = 6;
+  int32 volume = 7;
+  string delai_validation_moyen_jours = 8;
+  string variation_brut_pct = 9;
+}
+
+message GetComparatifsRequest {
+  DashboardKpiFilters filters = 1;
+}
+
+message GetComparatifsResponse {
+  ComparatifKpi courant = 1;
+  ComparatifKpi m1 = 2;
+  ComparatifKpi m3 = 3;
+  ComparatifKpi m12 = 4;
+}
+
+message ExportAnalytiqueRequest {
+  DashboardKpiFilters filters = 1;
+  ExportFormatAnalytique format = 2;
+  optional bool include_comparatifs = 3;
+}
+
+message ExportAnalytiqueResponse {
+  string file_name = 1;
+  string mime_type = 2;
+  string content = 3;
 }

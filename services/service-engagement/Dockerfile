@@ -9,9 +9,7 @@ WORKDIR /app
 
 # Copy shared packages (needed for file: references)
 COPY packages/proto/ ./packages/proto/
-COPY packages/grpc-utils/ ./packages/grpc-utils/
-COPY packages/shared/ ./packages/shared/
-COPY packages/nats-utils/ ./packages/nats-utils/
+COPY packages/shared-kernel/ ./packages/shared-kernel/
 
 # Copy service
 COPY services/service-engagement/ ./services/service-engagement/
@@ -34,8 +32,7 @@ CMD ["bun", "run", "start:dev"]
 # ==========================================
 FROM deps AS builder
 
-RUN bun run --cwd /app/packages/grpc-utils build && \
-    bun run --cwd /app/packages/shared build && \
+RUN bun run --cwd /app/packages/shared-kernel build && \
     bun run build
 
 # ==========================================

@@ -5,7 +5,6 @@ import {
   CreditCard,
   FileText,
   Package,
-  FlaskConical,
   Truck,
   DollarSign,
   ShieldCheck,
@@ -14,7 +13,6 @@ import {
   ListTodo,
   Calendar,
   CalendarDays,
-  Mail,
   GitBranch,
   Archive,
   Bell,
@@ -22,7 +20,6 @@ import {
   Settings,
   Shield,
   Palette,
-  Rocket,
   Zap,
 } from "lucide-react"
 import { type LucideIcon } from "lucide-react"
@@ -82,25 +79,11 @@ export const NAV_CRM_GROUP: NavGroup = {
       title: "Tâches",
       url: "/taches",
       icon: ListTodo,
-      children: [
-        {
-          title: "Configuration",
-          url: "/taches/configuration",
-          icon: Settings,
-          parentUrl: "/taches",
-        },
-      ],
     },
     {
-      title: "Messagerie",
-      url: "/messagerie",
-      icon: Mail,
-    },
-    {
-      title: "Calendrier",
-      url: "/calendrier",
-      icon: CalendarDays,
-      description: "Jours fériés & zones",
+      title: "Réunions",
+      url: "/reunions",
+      icon: Calendar,
     },
   ],
 }
@@ -117,20 +100,6 @@ export const NAV_FINANCE_VENTES_GROUP: NavGroup = {
       title: "Commissions",
       url: "/commissions",
       icon: DollarSign,
-      children: [
-        {
-          title: "Validation ADV",
-          url: "/commissions/validation",
-          icon: ShieldCheck,
-          parentUrl: "/commissions",
-        },
-        {
-          title: "Reporting",
-          url: "/commissions/reporting",
-          icon: BarChart3,
-          parentUrl: "/commissions",
-        },
-      ],
     },
     {
       title: "Facturation",
@@ -141,14 +110,11 @@ export const NAV_FINANCE_VENTES_GROUP: NavGroup = {
       title: "Abonnements",
       url: "/abonnements",
       icon: CreditCard,
-      children: [
-        {
-          title: "Plans",
-          url: "/abonnements/plans",
-          icon: FileText,
-          parentUrl: "/abonnements",
-        },
-      ],
+    },
+    {
+      title: "Paiements",
+      url: "/paiements",
+      icon: CreditCard,
     },
     {
       title: "Statistiques",
@@ -170,131 +136,30 @@ export const NAV_CATALOGUE_OPERATIONS_GROUP: NavGroup = {
       title: "Catalogue",
       url: "/catalogue",
       icon: Package,
-      children: [
-        {
-          title: "Formules",
-          url: "/catalogue/formules",
-          icon: FlaskConical,
-          parentUrl: "/catalogue",
-        },
-      ],
     },
     {
       title: "Expéditions",
       url: "/expeditions",
       icon: Truck,
-      children: [
-        {
-          title: "Lots",
-          url: "/expeditions/lots",
-          icon: Package,
-          parentUrl: "/expeditions",
-        },
-      ],
     },
     {
-      title: "DepanSur",
-      url: "/depanssur",
+      title: "Dossiers SAV",
+      url: "/depanssur/dossiers",
       icon: Zap,
       children: [
         {
           title: "Dossiers",
           url: "/depanssur/dossiers",
           icon: FileText,
-          parentUrl: "/depanssur",
+          parentUrl: "/depanssur/dossiers",
         },
         {
           title: "Reporting",
           url: "/depanssur/reporting",
           icon: BarChart3,
-          parentUrl: "/depanssur",
+          parentUrl: "/depanssur/dossiers",
         },
       ],
-    },
-  ],
-}
-
-/**
- * Paiements Group - Payment management
- */
-export const NAV_PAIEMENTS_GROUP: NavGroup = {
-  id: "paiements",
-  label: "Paiements",
-  defaultOpen: false,
-  items: [
-    {
-      title: "Routage",
-      url: "/paiements/routing",
-      icon: GitBranch,
-    },
-    {
-      title: "Archives",
-      url: "/paiements/archives",
-      icon: Archive,
-    },
-    {
-      title: "Alertes",
-      url: "/paiements/alertes",
-      icon: Bell,
-    },
-    {
-      title: "Exports",
-      url: "/paiements/exports",
-      icon: FileDown,
-    },
-  ],
-}
-
-/**
- * Administration Group - System administration and settings
- */
-export const NAV_ADMINISTRATION_GROUP: NavGroup = {
-  id: "administration",
-  label: "Administration",
-  defaultOpen: false,
-  items: [
-    {
-      title: "Paramètres",
-      url: "/parametres/types-activites",
-      icon: Settings,
-    },
-    {
-      title: "Permissions",
-      url: "/parametres/permissions",
-      icon: Shield,
-    },
-    {
-      title: "Rôles & Permissions",
-      url: "/parametres/roles-permissions",
-      icon: ShieldCheck,
-    },
-    {
-      title: "Marque Blanche",
-      url: "/parametres/marque-blanche",
-      icon: Palette,
-      children: [
-        { title: "Partenaires", url: "/parametres/marque-blanche/partenaires", parentUrl: "/parametres/marque-blanche" },
-        { title: "Thèmes", url: "/parametres/marque-blanche/themes", parentUrl: "/parametres/marque-blanche" },
-        { title: "Statuts", url: "/parametres/marque-blanche/statuts", parentUrl: "/parametres/marque-blanche" },
-      ],
-    },
-    {
-      title: "Intégrations",
-      url: "/integrations",
-      icon: Zap,
-      children: [
-        {
-          title: "WooCommerce",
-          url: "/integrations/woocommerce",
-          icon: Package,
-          parentUrl: "/integrations",
-        },
-      ],
-    },
-    {
-      title: "Onboarding",
-      url: "/onboarding",
-      icon: Rocket,
     },
   ],
 }
@@ -306,8 +171,6 @@ export const NAV_GROUPS: NavGroup[] = [
   NAV_CRM_GROUP,
   NAV_FINANCE_VENTES_GROUP,
   NAV_CATALOGUE_OPERATIONS_GROUP,
-  NAV_PAIEMENTS_GROUP,
-  NAV_ADMINISTRATION_GROUP,
 ]
 
 /**
@@ -324,9 +187,8 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   "commerciaux": "Commerciaux",
   "taches": "Tâches",
   "taches/configuration": "Configuration des tâches",
-  "messagerie": "Messagerie",
   "calendrier": "Calendrier",
-  "agenda": "Agenda",
+  "reunions": "Réunions",
 
   // Finance & Ventes routes
   "commissions": "Commissions",
@@ -335,34 +197,14 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   "facturation": "Facturation",
   "abonnements": "Abonnements",
   "abonnements/plans": "Plans d'abonnement",
+  "paiements": "Paiements",
   "statistiques": "Statistiques",
 
   // Catalogue & Opérations routes
   "catalogue": "Catalogue",
-  "catalogue/formules": "Formules",
   "expeditions": "Expéditions",
   "expeditions/lots": "Lots d'expédition",
-  "depanssur": "DepanSur",
-  "depanssur/dossiers": "Dossiers DepanSur",
-  "depanssur/reporting": "Reporting DepanSur",
-
-  // Paiements routes
-  "paiements": "Paiements",
-  "paiements/routing": "Routage des paiements",
-  "paiements/archives": "Archives des paiements",
-  "paiements/alertes": "Alertes de paiement",
-  "paiements/exports": "Exports de paiement",
-
-  // Administration routes
-  "parametres": "Paramètres",
-  "parametres/types-activites": "Types d'activités",
-  "parametres/permissions": "Permissions",
-  "parametres/roles-permissions": "Rôles & Permissions",
-  "parametres/marque-blanche": "Marque Blanche",
-  "parametres/marque-blanche/partenaires": "Partenaires",
-  "parametres/marque-blanche/themes": "Thèmes",
-  "parametres/marque-blanche/statuts": "Statuts",
-  "integrations": "Intégrations",
-  "integrations/woocommerce": "WooCommerce",
-  "onboarding": "Onboarding",
+  "depanssur": "Dossiers SAV",
+  "depanssur/dossiers": "Dossiers",
+  "depanssur/reporting": "Reporting",
 }

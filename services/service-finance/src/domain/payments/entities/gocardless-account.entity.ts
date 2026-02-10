@@ -45,4 +45,8 @@ export class GoCardlessAccountEntity {
   isLiveMode(): boolean {
     return !this.isSandbox;
   }
+
+  hasWebhookSecret(): boolean {
+    return !!this.webhookSecret;
+  }
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import {
   Bell,
   Lock,
@@ -12,10 +13,16 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
+  ShieldCheck,
+  Palette,
+  CalendarDays,
+  ListTree,
+  Zap,
 } from "lucide-react"
 import { usePspAccounts, PspType } from "@/hooks/use-psp-accounts"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { useSocietes } from "@/hooks/clients"
+import { RolesPermissionsSettings } from "@/components/settings/roles-permissions-settings"
 
 import {
   Breadcrumb,
@@ -36,10 +43,12 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -54,10 +63,17 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
 const navItems = [
-  { id: "profil", name: "Profil", icon: User },
-  { id: "notifications", name: "Notifications", icon: Bell },
-  { id: "paiements", name: "Paiements", icon: CreditCard },
-  { id: "securite", name: "Sécurité", icon: Shield },
+  // Groupe Compte
+  { id: "profil", name: "Profil", icon: User, group: "compte" },
+  { id: "notifications", name: "Notifications", icon: Bell, group: "compte" },
+  { id: "securite", name: "Sécurité", icon: Shield, group: "compte" },
+  // Groupe Organisation
+  { id: "paiements", name: "PSP / Prestataires", icon: CreditCard, group: "organisation" },
+  { id: "roles-permissions", name: "Rôles & Permissions", icon: ShieldCheck, group: "organisation" },
+  { id: "marque-blanche", name: "Marque Blanche", icon: Palette, group: "organisation" },
+  { id: "calendrier", name: "Calendrier", icon: CalendarDays, group: "organisation" },
+  { id: "types-activites", name: "Types d'activités", icon: ListTree, group: "organisation" },
+  { id: "integrations", name: "Intégrations", icon: Zap, group: "organisation" },
 ]
 
 interface SettingsDialogProps {
@@ -568,6 +584,83 @@ function SecuriteSettings() {
   )
 }
 
+function AdminSectionLink({ title, description, path, onOpenChange }: { title: string; description: string; path: string; onOpenChange: (open: boolean) => void }) {
+  const router = useRouter()
+
+  const handleNavigate = () => {
+    router.push(path)
+    onOpenChange(false)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">{title}</h3>
+        <p className="text-sm text-muted-foreground">
+          {description}
+        </p>
+      </div>
+      <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
+        <AlertCircle className="h-5 w-5 shrink-0 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">
+          Pour configurer {title.toLowerCase()}, accédez à la page dédiée.
+        </p>
+      </div>
+      <Button onClick={handleNavigate} className="w-fit">
+        Ouvrir {title}
+      </Button>
+    </div>
+  )
+}
+
+function RolesPermissionsSettingsWrapper({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+  return <RolesPermissionsSettings onOpenChange={onOpenChange} />
+}
+
+function MarqueBlancheSettings({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+  return (
+    <AdminSectionLink
+      title="Marque Blanche"
+      description="Personnalisez l'apparence de votre plateforme."
+      path="/parametres/marque-blanche"
+      onOpenChange={onOpenChange}
+    />
+  )
+}
+
+function CalendrierSettings({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+  return (
+    <AdminSectionLink
+      title="Calendrier"
+      description="Gérez les paramètres du calendrier."
+      path="/calendrier"
+      onOpenChange={onOpenChange}
+    />
+  )
+}
+
+function TypesActivitesSettings({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+  return (
+    <AdminSectionLink
+      title="Types d'activités"
+      description="Configurez les types d'activités disponibles."
+      path="/parametres/types-activites"
+      onOpenChange={onOpenChange}
+    />
+  )
+}
+
+function IntegrationsSettings({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+  return (
+    <AdminSectionLink
+      title="Intégrations"
+      description="Gérez les intégrations externes."
+      path="/integrations/woocommerce"
+      onOpenChange={onOpenChange}
+    />
+  )
+}
+
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [activeSection, setActiveSection] = React.useState("profil")
 
@@ -581,6 +674,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         return <PaiementsSettings />
       case "securite":
         return <SecuriteSettings />
+      case "roles-permissions":
+        return <RolesPermissionsSettingsWrapper onOpenChange={onOpenChange} />
+      case "marque-blanche":
+        return <MarqueBlancheSettings onOpenChange={onOpenChange} />
+      case "calendrier":
+        return <CalendrierSettings onOpenChange={onOpenChange} />
+      case "types-activites":
+        return <TypesActivitesSettings onOpenChange={onOpenChange} />
+      case "integrations":
+        return <IntegrationsSettings onOpenChange={onOpenChange} />
       default:
         return <ProfilSettings />
     }
@@ -598,10 +701,34 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         <SidebarProvider className="items-start">
           <Sidebar collapsible="none" className="hidden md:flex bg-background text-foreground">
             <SidebarContent>
+              {/* Groupe Compte */}
               <SidebarGroup>
-                <SidebarGroupContent >
-                  <SidebarMenu >
-                    {navItems.map((item) => (
+                <SidebarGroupLabel>Compte</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {navItems.filter(item => item.group === "compte").map((item) => (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          isActive={item.id === activeSection}
+                          onClick={() => setActiveSection(item.id)}
+                        >
+                          <item.icon />
+                          <span>{item.name}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+
+              <SidebarSeparator />
+
+              {/* Groupe Organisation */}
+              <SidebarGroup>
+                <SidebarGroupLabel>Organisation</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {navItems.filter(item => item.group === "organisation").map((item) => (
                       <SidebarMenuItem key={item.id}>
                         <SidebarMenuButton
                           isActive={item.id === activeSection}

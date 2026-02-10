@@ -63,11 +63,15 @@ import {
 
 // PSP connectors
 import { SlimpayApiService, SlimpayWebhookHandler } from './infrastructure/psp/slimpay';
+import { GoCardlessApiService, GoCardlessWebhookHandler } from './infrastructure/psp/gocardless';
+import { StripeApiService, StripeWebhookHandler } from './infrastructure/psp/stripe';
 
 // Interface controllers
 import { SchedulesController, StatusMappingController } from './infrastructure/grpc/payments';
 import { SlimpayController } from './interfaces/grpc/controllers/payments/slimpay.controller';
+import { GoCardlessController } from './interfaces/grpc/controllers/payments/gocardless.controller';
 import { MultiSafepayController } from './interfaces/grpc/controllers/payments/multisafepay.controller';
+import { StripeController } from './interfaces/grpc/controllers/payments/stripe.controller';
 import { ArchiveController } from './interfaces/grpc/controllers/payments/archive.controller';
 import { ExportController } from './interfaces/grpc/controllers/payments/export.controller';
 import { ExportService } from './infrastructure/persistence/typeorm/repositories/payments/export.service';
@@ -84,6 +88,8 @@ import { MockSmsService } from './infrastructure/external/sms/mock-sms.service';
 import { IMS_CLIENT_TOKEN } from './infrastructure/external/ims/ims-client.interface';
 import { MockImsClientService } from './infrastructure/external/ims/mock-ims-client.service';
 import { CbUpdateSessionController } from './interfaces/http/controllers/payments/cb-update-session.controller';
+import { PaymentQueryService } from './application/queries/payment-query.service';
+import { PaymentQueryController } from './interfaces/grpc/controllers/payments/payment-query.controller';
 import { FacturesModule } from './factures.module';
 
 @Global()
@@ -132,11 +138,14 @@ import { FacturesModule } from './factures.module';
     SchedulesController,
     StatusMappingController,
     SlimpayController,
+    GoCardlessController,
     MultiSafepayController,
+    StripeController,
     ArchiveController,
     ExportController,
     AlertController,
     CbUpdateSessionController,
+    PaymentQueryController,
   ],
   providers: [
     SchedulesService,
@@ -146,8 +155,12 @@ import { FacturesModule } from './factures.module';
     IbanMaskingService,
     SlimpayApiService,
     SlimpayWebhookHandler,
+    GoCardlessApiService,
+    GoCardlessWebhookHandler,
     MultiSafepayApiService,
     MultiSafepayWebhookHandler,
+    StripeApiService,
+    StripeWebhookHandler,
     ArchiveSchedulerService,
     CustomerInteractionService,
     ScoringClientService,
@@ -160,6 +173,7 @@ import { FacturesModule } from './factures.module';
     DunningDepanssurService,
     DepanssurPaymentFailedHandler,
     DepanssurPaymentSucceededHandler,
+    PaymentQueryService,
     {
       provide: SMS_SERVICE_TOKEN,
       useClass: MockSmsService,
@@ -181,8 +195,12 @@ import { FacturesModule } from './factures.module';
     IbanMaskingService,
     SlimpayApiService,
     SlimpayWebhookHandler,
+    GoCardlessApiService,
+    GoCardlessWebhookHandler,
     MultiSafepayApiService,
     MultiSafepayWebhookHandler,
+    StripeApiService,
+    StripeWebhookHandler,
     ArchiveSchedulerService,
     CustomerInteractionService,
     ScoringClientService,
@@ -195,6 +213,7 @@ import { FacturesModule } from './factures.module';
     DunningDepanssurService,
     DepanssurPaymentFailedHandler,
     DepanssurPaymentSucceededHandler,
+    PaymentQueryService,
     SMS_SERVICE_TOKEN,
     IMS_CLIENT_TOKEN,
   ],

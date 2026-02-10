@@ -284,7 +284,7 @@ Parallel Track: Task 7 → Task 8/9 → Task 10
 
 ### PHASE 1 — Date de prélèvement dans le contrat
 
-- [ ] 2. Enrichir le proto Contrat avec les champs prélèvement
+- [x] 2. Enrichir le proto Contrat avec les champs prélèvement
 
   **What to do**:
   - Ouvrir `packages/proto/src/contrats/contrats.proto`
@@ -831,7 +831,7 @@ Parallel Track: Task 7 → Task 8/9 → Task 10
 
 ---
 
-- [ ] 8. Backend — Cron scheduler pour import automatique
+- [x] 8. Backend — Cron scheduler pour import automatique
 
   **What to do**:
   - Créer `services/service-commercial/src/infrastructure/scheduling/contrat-import-scheduler.service.ts`

@@ -4,15 +4,106 @@ import { Repository, Like, FindOptionsWhere } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { ContratEntity } from '../../../../../domain/contrats/entities/contrat.entity';
+import {
+  CalendarGrpcClient,
+  calculateNextDebitDate,
+} from '../../../../grpc/calendar/calendar-grpc-client';
+
+/** Contrat entity enriched with debit date fields from calendar service */
+export interface EnrichedContrat extends ContratEntity {
+  jour_prelevement?: number | null;
+  prochaine_date_prelevement?: string | null;
+}
 
 @Injectable()
 export class ContratService {
   private readonly logger = new Logger(ContratService.name);
+  private calendarClient: CalendarGrpcClient | null = null;
 
   constructor(
     @InjectRepository(ContratEntity)
     private readonly repository: Repository<ContratEntity>,
-  ) {}
+  ) {
+    try {
+      this.calendarClient = new CalendarGrpcClient();
+    } catch (error) {
+      this.logger.warn(
+        `Calendar gRPC client initialization failed: ${(error as Error).message}. Debit date enrichment disabled.`,
+      );
+    }
+  }
+
+  /**
+   * Enrich a single contrat entity with jour_prelevement + prochaine_date_prelevement
+   * from the calendar service. Non-blocking: returns original entity on failure.
+   */
+  private async enrichWithDebitDate(entity: ContratEntity): Promise<EnrichedContrat> {
+    const enriched = entity as EnrichedContrat;
+    enriched.jour_prelevement = null;
+    enriched.prochaine_date_prelevement = null;
+
+    if (!this.calendarClient) return enriched;
+
+    try {
+      const config = await this.calendarClient.getContractConfig(
+        entity.organisationId,
+        entity.id,
+      );
+      if (config && config.fixed_day > 0) {
+        enriched.jour_prelevement = config.fixed_day;
+        enriched.prochaine_date_prelevement = calculateNextDebitDate(config.fixed_day);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to enrich contrat ${entity.id} with debit date: ${(error as Error).message}`,
+      );
+    }
+
+    return enriched;
+  }
+
+  /**
+   * Enrich multiple contrats with debit date info.
+   * Calls calendar service in parallel for all contrats.
+   */
+  private async enrichManyWithDebitDate(entities: ContratEntity[]): Promise<EnrichedContrat[]> {
+    return Promise.all(entities.map((e) => this.enrichWithDebitDate(e)));
+  }
+
+  /**
+   * Create or update calendar debit config for a contrat.
+   * Non-blocking: logs warning on failure, never throws.
+   */
+  private async upsertDebitConfig(
+    organisationId: string,
+    contratId: string,
+    jourPrelevement: number,
+  ): Promise<void> {
+    if (!this.calendarClient) return;
+
+    try {
+      const existing = await this.calendarClient.getContractConfig(organisationId, contratId);
+      if (existing) {
+        await this.calendarClient.updateContractConfig(existing.id, jourPrelevement);
+        this.logger.log(
+          `Updated debit config ${existing.id} for contrat ${contratId} → day ${jourPrelevement}`,
+        );
+      } else {
+        await this.calendarClient.createContractConfig({
+          organisationId,
+          contratId,
+          fixedDay: jourPrelevement,
+        });
+        this.logger.log(
+          `Created debit config for contrat ${contratId} → day ${jourPrelevement}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to upsert debit config for contrat ${contratId}: ${(error as Error).message}`,
+      );
+    }
+  }
 
   async create(input: {
     organisationId: string;
@@ -33,7 +124,8 @@ export class ContratService {
     commercialId: string;
     societeId?: string;
     notes?: string;
-  }): Promise<ContratEntity> {
+    jourPrelevement?: number;
+  }): Promise<EnrichedContrat> {
     const existing = await this.repository.findOne({
       where: { organisationId: input.organisationId, reference: input.reference },
     });
@@ -64,7 +156,14 @@ export class ContratService {
       societeId: input.societeId || null,
       notes: input.notes || null,
     });
-    return this.repository.save(entity);
+    const saved = await this.repository.save(entity);
+
+    // Create calendar debit config if jour_prelevement provided
+    if (input.jourPrelevement && input.jourPrelevement > 0) {
+      await this.upsertDebitConfig(input.organisationId, saved.id, input.jourPrelevement);
+    }
+
+    return this.enrichWithDebitDate(saved);
   }
 
   async update(input: {
@@ -86,8 +185,9 @@ export class ContratService {
     commercialId?: string;
     societeId?: string;
     notes?: string;
-  }): Promise<ContratEntity> {
-    const entity = await this.findById(input.id);
+    jourPrelevement?: number;
+  }): Promise<EnrichedContrat> {
+    const entity = await this.findByIdRaw(input.id);
 
     if (input.reference !== undefined) entity.reference = input.reference;
     if (input.titre !== undefined) entity.titre = input.titre || null;
@@ -107,10 +207,26 @@ export class ContratService {
     if (input.societeId !== undefined) entity.societeId = input.societeId || null;
     if (input.notes !== undefined) entity.notes = input.notes || null;
 
-    return this.repository.save(entity);
+    const saved = await this.repository.save(entity);
+
+    // Create or update calendar debit config if jour_prelevement provided
+    if (input.jourPrelevement !== undefined && input.jourPrelevement > 0) {
+      await this.upsertDebitConfig(entity.organisationId, entity.id, input.jourPrelevement);
+    }
+
+    return this.enrichWithDebitDate(saved);
   }
 
-  async findById(id: string): Promise<ContratEntity> {
+  async findById(id: string): Promise<EnrichedContrat> {
+    const entity = await this.repository.findOne({ where: { id } });
+    if (!entity) {
+      throw new RpcException({ code: status.NOT_FOUND, message: `Contrat ${id} not found` });
+    }
+    return this.enrichWithDebitDate(entity);
+  }
+
+  /** Internal findById without enrichment (used by update to avoid double-enrichment) */
+  private async findByIdRaw(id: string): Promise<ContratEntity> {
     const entity = await this.repository.findOne({ where: { id } });
     if (!entity) {
       throw new RpcException({ code: status.NOT_FOUND, message: `Contrat ${id} not found` });
@@ -118,7 +234,7 @@ export class ContratService {
     return entity;
   }
 
-  async findByIdWithDetails(id: string): Promise<ContratEntity> {
+  async findByIdWithDetails(id: string): Promise<EnrichedContrat> {
     const entity = await this.repository.findOne({
       where: { id },
       relations: ['lignes', 'historique'],
@@ -126,10 +242,10 @@ export class ContratService {
     if (!entity) {
       throw new RpcException({ code: status.NOT_FOUND, message: `Contrat ${id} not found` });
     }
-    return entity;
+    return this.enrichWithDebitDate(entity);
   }
 
-  async findByReference(organisationId: string, reference: string): Promise<ContratEntity> {
+  async findByReference(organisationId: string, reference: string): Promise<EnrichedContrat> {
     const entity = await this.repository.findOne({
       where: { organisationId, reference },
     });
@@ -139,7 +255,7 @@ export class ContratService {
         message: `Contrat with reference ${reference} not found`,
       });
     }
-    return entity;
+    return this.enrichWithDebitDate(entity);
   }
 
   async findAll(
@@ -153,7 +269,7 @@ export class ContratService {
     },
     pagination?: { page?: number; limit?: number; sortBy?: string; sortOrder?: string },
   ): Promise<{
-    contrats: ContratEntity[];
+    contrats: EnrichedContrat[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }> {
     const page = pagination?.page ?? 1;
@@ -176,7 +292,9 @@ export class ContratService {
       take: limit,
     });
 
-    return { contrats, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    const enrichedContrats = await this.enrichManyWithDebitDate(contrats);
+
+    return { contrats: enrichedContrats, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async delete(id: string): Promise<boolean> {
@@ -184,9 +302,10 @@ export class ContratService {
     return (result.affected ?? 0) > 0;
   }
 
-  async updateStatus(id: string, statut: string): Promise<ContratEntity> {
-    const entity = await this.findById(id);
+  async updateStatus(id: string, statut: string): Promise<EnrichedContrat> {
+    const entity = await this.findByIdRaw(id);
     entity.statut = statut;
-    return this.repository.save(entity);
+    const saved = await this.repository.save(entity);
+    return this.enrichWithDebitDate(saved);
   }
 }

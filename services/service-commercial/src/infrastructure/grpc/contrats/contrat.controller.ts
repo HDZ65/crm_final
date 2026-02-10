@@ -1,6 +1,6 @@
 import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { ContratService } from '../../persistence/typeorm/repositories/contrats/contrat.service';
+import { ContratService, type EnrichedContrat } from '../../persistence/typeorm/repositories/contrats/contrat.service';
 import type {
   CreateContratRequest,
   UpdateContratRequest,
@@ -9,6 +9,38 @@ import type {
   ListContratRequest,
   DeleteContratRequest,
 } from '@proto/contrats';
+
+/**
+ * Map an EnrichedContrat entity to proto-compatible response shape.
+ * Adds jour_prelevement + prochaine_date_prelevement from calendar enrichment.
+ */
+function mapContratToResponse(entity: EnrichedContrat) {
+  return {
+    id: entity.id,
+    organisation_id: entity.organisationId,
+    reference: entity.reference,
+    titre: entity.titre,
+    description: entity.description,
+    type: entity.type,
+    statut: entity.statut,
+    date_debut: entity.dateDebut,
+    date_fin: entity.dateFin,
+    date_signature: entity.dateSignature,
+    montant: entity.montant,
+    devise: entity.devise,
+    frequence_facturation: entity.frequenceFacturation,
+    document_url: entity.documentUrl,
+    fournisseur: entity.fournisseur,
+    client_id: entity.clientId,
+    commercial_id: entity.commercialId,
+    societe_id: entity.societeId,
+    notes: entity.notes,
+    created_at: entity.createdAt?.toISOString?.() ?? entity.createdAt,
+    updated_at: entity.updatedAt?.toISOString?.() ?? entity.updatedAt,
+    jour_prelevement: entity.jour_prelevement ?? null,
+    prochaine_date_prelevement: entity.prochaine_date_prelevement ?? null,
+  };
+}
 
 @Controller()
 export class ContratController {
@@ -20,7 +52,7 @@ export class ContratController {
 
   @GrpcMethod('ContratService', 'Create')
   async createContrat(data: CreateContratRequest) {
-    return this.contratService.create({
+    const result = await this.contratService.create({
       organisationId: data.organisation_id,
       reference: data.reference,
       titre: data.titre,
@@ -39,12 +71,14 @@ export class ContratController {
       commercialId: data.commercial_id,
       societeId: data.societe_id,
       notes: data.notes,
+      jourPrelevement: data.jour_prelevement ?? undefined,
     });
+    return mapContratToResponse(result);
   }
 
   @GrpcMethod('ContratService', 'Update')
   async updateContrat(data: UpdateContratRequest) {
-    return this.contratService.update({
+    const result = await this.contratService.update({
       id: data.id,
       reference: data.reference,
       titre: data.titre,
@@ -63,24 +97,28 @@ export class ContratController {
       commercialId: data.commercial_id,
       societeId: data.societe_id,
       notes: data.notes,
+      jourPrelevement: data.jour_prelevement ?? undefined,
     });
+    return mapContratToResponse(result);
   }
 
   @GrpcMethod('ContratService', 'Get')
   async getContrat(data: GetContratRequest) {
-    return this.contratService.findById(data.id);
+    const result = await this.contratService.findById(data.id);
+    return mapContratToResponse(result);
   }
 
   @GrpcMethod('ContratService', 'GetByReference')
   async getContratByReference(data: GetContratByReferenceRequest) {
-    return this.contratService.findByReference(data.organisation_id, data.reference);
+    const result = await this.contratService.findByReference(data.organisation_id, data.reference);
+    return mapContratToResponse(result);
   }
 
   @GrpcMethod('ContratService', 'GetWithDetails')
   async getContratWithDetails(data: GetContratRequest) {
     const entity = await this.contratService.findByIdWithDetails(data.id);
     return {
-      contrat: entity,
+      contrat: mapContratToResponse(entity),
       lignes: entity.lignes ?? [],
       historique: entity.historique ?? [],
     };
@@ -88,7 +126,7 @@ export class ContratController {
 
   @GrpcMethod('ContratService', 'List')
   async listContrats(data: ListContratRequest) {
-    return this.contratService.findAll(
+    const result = await this.contratService.findAll(
       {
         organisationId: data.organisation_id,
         clientId: data.client_id,
@@ -104,6 +142,10 @@ export class ContratController {
         sortOrder: data.pagination?.sort_order,
       },
     );
+    return {
+      contrats: result.contrats.map(mapContratToResponse),
+      pagination: result.pagination,
+    };
   }
 
   @GrpcMethod('ContratService', 'Delete')

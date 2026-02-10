@@ -4,6 +4,7 @@ import { contrats } from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
 import type {
   Contrat,
+  ContratWithDetails,
   ListContratResponse,
 } from "@proto/contrats/contrats";
 import type { ActionResult } from "@/lib/types/common";
@@ -53,6 +54,27 @@ export async function getContrat(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors du chargement du contrat",
+    };
+  }
+}
+
+/**
+ * Fetch un contrat avec ses détails (lignes + historique) via gRPC
+ */
+export async function getContratWithDetails(
+  id: string
+): Promise<ActionResult<ContratWithDetails>> {
+  try {
+    const data = await contrats.getWithDetails({ id });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getContratWithDetails] gRPC error:", err);
+    return {
+      data: null,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Erreur lors du chargement du contrat detaille",
     };
   }
 }
@@ -136,6 +158,8 @@ export async function updateContrat(input: {
   documentUrl?: string;
   fournisseur?: string;
   societeId?: string;
+  jourPrelevement?: number;
+  jour_prelevement?: number;
   notes?: string;
 }): Promise<ActionResult<Contrat>> {
   try {
@@ -157,15 +181,70 @@ export async function updateContrat(input: {
       clientId: input.clientId || "",
       commercialId: input.commercialId || "",
       societeId: input.societeId || "",
+      jourPrelevement: input.jourPrelevement ?? input.jour_prelevement ?? undefined,
       notes: input.notes || "",
     });
     revalidatePath("/contrats");
+    revalidatePath(`/contrats/${input.id}`);
     return { data, error: null };
   } catch (err) {
     console.error("[updateContrat] gRPC error:", err);
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors de la mise à jour du contrat",
+    };
+  }
+}
+
+/**
+ * Met a jour uniquement le jour de prelevement d'un contrat
+ */
+export async function updateContratJourPrelevement(input: {
+  id: string;
+  jourPrelevement: number;
+}): Promise<ActionResult<Contrat>> {
+  try {
+    const details = await contrats.getWithDetails({ id: input.id });
+    const contrat = details.contrat;
+
+    if (!contrat) {
+      return { data: null, error: "Contrat introuvable" };
+    }
+
+    const data = await contrats.update({
+      id: contrat.id,
+      reference: contrat.reference,
+      titre: contrat.titre,
+      description: contrat.description,
+      type: contrat.type,
+      statut: contrat.statut,
+      dateDebut: contrat.dateDebut,
+      dateFin: contrat.dateFin,
+      dateSignature: contrat.dateSignature,
+      montant: contrat.montant,
+      devise: contrat.devise,
+      frequenceFacturation: contrat.frequenceFacturation,
+      documentUrl: contrat.documentUrl,
+      fournisseur: contrat.fournisseur,
+      clientId: contrat.clientId,
+      commercialId: contrat.commercialId,
+      societeId: contrat.societeId,
+      jourPrelevement: input.jourPrelevement,
+      notes: contrat.notes,
+    });
+
+    revalidatePath("/contrats");
+    revalidatePath(`/contrats/${input.id}`);
+
+    return { data, error: null };
+  } catch (err) {
+    console.error("[updateContratJourPrelevement] gRPC error:", err);
+    return {
+      data: null,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Erreur lors de la mise a jour du jour de prelevement",
     };
   }
 }

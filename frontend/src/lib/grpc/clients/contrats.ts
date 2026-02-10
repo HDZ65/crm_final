@@ -8,6 +8,7 @@ import {
   ContratServiceService,
   ContractOrchestrationServiceService,
   type Contrat,
+  type ContratWithDetails,
   type CreateContratRequest,
   type UpdateContratRequest,
   type GetContratRequest,
@@ -62,6 +63,12 @@ export const contrats = {
   get: (request: GetContratRequest): Promise<Contrat> =>
     promisify<GetContratRequest, Contrat>(getContratClient(), "get")(request),
 
+  getWithDetails: (request: GetContratRequest): Promise<ContratWithDetails> =>
+    promisify<GetContratRequest, ContratWithDetails>(
+      getContratClient(),
+      "getWithDetails"
+    )(request),
+
   list: (request: ListContratRequest): Promise<ListContratResponse> =>
     promisify<ListContratRequest, ListContratResponse>(
       getContratClient(),
@@ -103,6 +110,7 @@ export const contrats = {
 // Re-export types for convenience
 export type {
   Contrat,
+  ContratWithDetails,
   CreateContratRequest,
   ListContratRequest,
   ListContratResponse,

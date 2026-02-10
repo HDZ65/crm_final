@@ -15,6 +15,7 @@ import { getFacturesByOrganisation } from "@/actions/factures"
 import { useOrganisation } from "@/contexts/organisation-context"
 import type { Facture, StatutFacture } from "@proto/factures/factures"
 import { cn } from "@/lib/utils"
+import { CreateFactureDialog } from "@/components/create-facture-dialog"
 
 // Mapper la facture gRPC vers le type frontend
 function mapFacture(f: Facture): Facture {
@@ -34,6 +35,9 @@ function mapFacture(f: Facture): Facture {
     createdAt: f.createdAt,
     updatedAt: f.updatedAt,
     lignes: f.lignes || [],
+    typeDocument: f.typeDocument || "",
+    factureOrigineId: f.factureOrigineId || "",
+    motifAvoir: f.motifAvoir || "",
     client: f.client ? { id: f.client.id, nom: f.client.nom, prenom: f.client.prenom } : undefined,
     statut: f.statut ? {
       id: f.statut.id,
@@ -53,9 +57,10 @@ interface FacturationPageClientProps {
 }
 
 export function FacturationPageClient({ initialFactures, statuts }: FacturationPageClientProps) {
-  const { activeOrganisation } = useOrganisation()
-  const [isRefreshing, setIsRefreshing] = React.useState(false)
-  const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false)
+   const { activeOrganisation } = useOrganisation()
+   const [isRefreshing, setIsRefreshing] = React.useState(false)
+   const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false)
+   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
 
   // Ref to track initial fetch
   const hasFetched = React.useRef(!!initialFactures)
@@ -311,16 +316,16 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
             <Download className="mr-2 size-4" />
             Exporter
           </Button>
-          <Button size="sm" onClick={() => toast.info("Création de facture à venir")} className="gap-2">
-            <Plus className="size-4" />
-            Nouvelle facture
-          </Button>
+           <Button size="sm" onClick={() => setCreateDialogOpen(true)} className="gap-2">
+             <Plus className="size-4" />
+             Nouvelle facture
+           </Button>
         </div>
 
          {/* Filtres avancés (collapsible) */}
          <Collapsible open={isAdvancedFiltersOpen}>
           <CollapsibleContent>
-            <Card className="bg-blue-100 border border-blue-200">
+            <Card className="bg-card border-border">
               <CardContent className="pt-4 pb-4">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                   <div className="relative">
@@ -391,7 +396,7 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
         </Collapsible>
 
         {/* Card du tableau */}
-        <Card className="flex-1 min-h-0 bg-blue-100 border-blue-200 flex flex-col">
+        <Card className="flex-1 min-h-0 bg-card border-border flex flex-col">
           <CardContent className="flex-1 min-h-0 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -424,12 +429,12 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
                         : "Aucune facture ne correspond à vos critères de recherche"}
                     </p>
                   </div>
-                  {factures.length === 0 && (
-                    <Button onClick={() => toast.info("Création de facture à venir")}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Créer ma première facture
-                    </Button>
-                  )}
+                   {factures.length === 0 && (
+                     <Button onClick={() => setCreateDialogOpen(true)}>
+                       <Plus className="mr-2 h-4 w-4" />
+                       Créer ma première facture
+                     </Button>
+                   )}
                 </div>
               ) : (
                 <DataTable
@@ -440,8 +445,14 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
               )}
             </div>
           </CardContent>
-        </Card>
-      </div>
-    </main>
-  )
-}
+         </Card>
+       </div>
+       <CreateFactureDialog
+         open={createDialogOpen}
+         onOpenChange={setCreateDialogOpen}
+         statuts={mappedStatuts}
+         onSuccess={fetchData}
+       />
+     </main>
+   )
+ }

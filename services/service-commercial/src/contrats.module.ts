@@ -13,8 +13,11 @@ import {
 // Infrastructure services
 import { ContratService } from './infrastructure/persistence/typeorm/repositories/contrats';
 
+// Domain services
+import { ContratImportService } from './domain/contrats/services/contrat-import.service';
+
 // Interface controllers
-import { ContratController } from './infrastructure/grpc/contrats';
+import { ContratController, ContratImportController } from './infrastructure/grpc/contrats';
 
 // Cross-context dependencies
 import { CommercialModule } from './commercial.module';
@@ -34,9 +37,11 @@ import { ProductsModule } from './products.module';
   ],
   controllers: [
     ContratController,
+    ContratImportController,
   ],
   providers: [
     ContratService,
+    ContratImportService,
   ],
   exports: [
     ContratService,

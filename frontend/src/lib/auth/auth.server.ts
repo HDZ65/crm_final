@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
-import { users, membresCompte, comptes, roles } from "@/lib/grpc";
-import type { UserOrganisation, UserRole } from "@proto/organisations/users";
+import { users } from "@/lib/grpc";
 import type { AuthMeResponse } from "@/actions/auth";
 import { parseJWT } from "./token-manager";
 import { auth, handlers, signIn, signOut } from "./auth";
@@ -31,31 +30,62 @@ export async function getServerUserProfile(): Promise<AuthMeResponse | null> {
     }
 
     const keycloakId = tokenPayload.sub;
-    const user = await getOrCreateUser(keycloakId, tokenPayload);
 
-    if (!user) {
+    // Try to get profile directly
+    let profile = await users.getProfile({ keycloakId });
+
+    // If not found, create user and retry
+    if (!profile) {
+      await getOrCreateUser(keycloakId, tokenPayload);
+      profile = await users.getProfile({ keycloakId });
+    }
+
+    if (!profile?.utilisateur) {
       return null;
     }
 
-    const organisations = await fetchUserOrganisations(user.id);
-
     return {
-      utilisateur: {
-        id: user.id,
-        keycloakId: user.keycloakId,
-        email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        telephone: user.telephone || "",
-        actif: user.actif,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      },
-      organisations,
-      hasOrganisation: organisations.length > 0,
+      utilisateur: profile.utilisateur,
+      organisations: profile.organisations || [],
+      hasOrganisation: profile.hasOrganisation || false,
     };
   } catch (error) {
-    console.error("[getServerUserProfile] Error:", error);
+    const err = error as { code?: number; details?: string };
+    const isNotFound =
+      err.code === 5 ||
+      err.details?.includes("not found") ||
+      err.details?.includes("NOT_FOUND");
+
+    // If not found and we have token payload, try creating user
+    if (isNotFound) {
+      try {
+        const session = await auth();
+        if (!session?.accessToken) {
+          return null;
+        }
+
+        const tokenPayload = parseJWT(session.accessToken);
+        if (!tokenPayload?.sub) {
+          return null;
+        }
+
+        await getOrCreateUser(tokenPayload.sub, tokenPayload);
+        const profile = await users.getProfile({ keycloakId: tokenPayload.sub });
+
+        if (!profile?.utilisateur) {
+          return null;
+        }
+
+        return {
+          utilisateur: profile.utilisateur,
+          organisations: profile.organisations || [],
+          hasOrganisation: profile.hasOrganisation || false,
+        };
+      } catch {
+        return null;
+      }
+    }
+
     return null;
   }
 }
@@ -128,54 +158,4 @@ function parseNameFromToken(tokenPayload: TokenPayloadInfo): {
   };
 }
 
-async function fetchUserOrganisations(
-  userId: string
-): Promise<UserOrganisation[]> {
-  const membresResponse = await membresCompte.listByUtilisateur({
-    utilisateurId: userId,
-    pagination: undefined,
-  });
 
-  console.log("[fetchUserOrganisations] membres count:", membresResponse.membres?.length);
-  console.log("[fetchUserOrganisations] raw membres:", JSON.stringify(membresResponse.membres?.map(m => ({
-    id: m.id, orgId: m.organisationId, organisation_id: (m as unknown as Record<string, unknown>).organisation_id, roleId: m.roleId, role_id: (m as unknown as Record<string, unknown>).role_id,
-  }))));
-
-  const organisations = await Promise.all(
-    (membresResponse.membres || []).map(async (membre) => {
-      // Handle both camelCase and snake_case field names from gRPC
-      const membreOrgId = membre.organisationId || (membre as unknown as Record<string, unknown>).organisation_id as string || "";
-      const membreRoleId = membre.roleId || (membre as unknown as Record<string, unknown>).role_id as string || "";
-
-      const [compteResult, roleResult] = await Promise.allSettled([
-        comptes.get({ id: membreOrgId }),
-        roles.get({ id: membreRoleId }),
-      ]);
-
-      console.log("[fetchUserOrganisations] compte result:", compteResult.status, compteResult.status === "fulfilled" ? compteResult.value.nom : (compteResult as PromiseRejectedResult).reason?.message);
-      console.log("[fetchUserOrganisations] role result:", roleResult.status, roleResult.status === "fulfilled" ? roleResult.value.code : (roleResult as PromiseRejectedResult).reason?.message);
-
-      const organisationNom =
-        compteResult.status === "fulfilled" ? compteResult.value.nom : "";
-
-      const role: UserRole =
-        roleResult.status === "fulfilled"
-          ? {
-              id: roleResult.value.id,
-              code: roleResult.value.code,
-              nom: roleResult.value.nom,
-            }
-          : { id: "", code: "", nom: "" };
-
-      return {
-        organisationId: membreOrgId,
-        organisationNom,
-        role,
-        etat: membre.etat || "actif",
-      };
-    })
-  );
-
-  console.log("[fetchUserOrganisations] final organisations:", JSON.stringify(organisations));
-  return organisations;
-}

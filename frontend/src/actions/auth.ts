@@ -7,11 +7,10 @@ import {
   signupSchema,
 } from "@/lib/schemas/auth";
 import { parseFormData } from "@/lib/forms/validation";
-import { users, membresCompte, comptes, roles } from "@/lib/grpc";
+import { users } from "@/lib/grpc";
 import type { FormState } from "@/lib/forms/state";
 import type {
   UserOrganisation,
-  UserRole,
   Utilisateur,
 } from "@proto/organisations/users";
 import { COOKIE_NAMES, TOKEN_CONFIG } from "@/lib/auth/auth.config";
@@ -74,29 +73,63 @@ export async function getCurrentUserByKeycloakId(
   userInfo?: UserInfo
 ): Promise<ActionResult<AuthMeResponse>> {
   try {
-    const user = await getOrCreateUser(keycloakId, userInfo);
-    const organisations = await fetchUserOrganisations(user.id);
+    // Try to get profile directly
+    let profile = await users.getProfile({ keycloakId });
+
+    // If not found, create user and retry
+    if (!profile) {
+      await getOrCreateUser(keycloakId, userInfo);
+      profile = await users.getProfile({ keycloakId });
+    }
+
+    if (!profile?.utilisateur) {
+      throw new Error("Profile utilisateur not found");
+    }
 
     return {
       data: {
-        utilisateur: {
-          id: user.id,
-          keycloakId: user.keycloakId,
-          email: user.email,
-          nom: user.nom,
-          prenom: user.prenom,
-          telephone: user.telephone || "",
-          actif: user.actif,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-        },
-        organisations,
-        hasOrganisation: organisations.length > 0,
+        utilisateur: profile.utilisateur,
+        organisations: profile.organisations || [],
+        hasOrganisation: profile.hasOrganisation || false,
       },
       error: null,
     };
   } catch (err) {
-    console.error("[getCurrentUserByKeycloakId] Error:", err);
+    const error = err as { code?: number; details?: string };
+    const isNotFound =
+      error.code === 5 ||
+      error.details?.includes("not found") ||
+      error.details?.includes("NOT_FOUND");
+
+    // If not found and we have user info, create user and retry
+    if (isNotFound && userInfo?.email) {
+      try {
+        await getOrCreateUser(keycloakId, userInfo);
+        const profile = await users.getProfile({ keycloakId });
+
+        if (!profile?.utilisateur) {
+          throw new Error("Profile utilisateur not found after creation");
+        }
+
+        return {
+          data: {
+            utilisateur: profile.utilisateur,
+            organisations: profile.organisations || [],
+            hasOrganisation: profile.hasOrganisation || false,
+          },
+          error: null,
+        };
+      } catch (retryErr) {
+        return {
+          data: null,
+          error:
+            retryErr instanceof Error
+              ? retryErr.message
+              : "Erreur lors de la creation du profil",
+        };
+      }
+    }
+
     return {
       data: null,
       error:
@@ -245,48 +278,4 @@ function parseNameFromUserInfo(userInfo: UserInfo): {
   };
 }
 
-/**
- * Fetch user organisations with details
- */
-async function fetchUserOrganisations(
-  userId: string
-): Promise<UserOrganisation[]> {
-  const membresResponse = await membresCompte.listByUtilisateur({
-    utilisateurId: userId,
-    pagination: undefined,
-  });
 
-  return Promise.all(
-    (membresResponse.membres || []).map(async (membre) => {
-      // Handle both camelCase and snake_case field names from gRPC (keepCase: true)
-      const membreOrgId = membre.organisationId || ((membre as unknown as Record<string, unknown>).organisation_id as string) || "";
-      const membreRoleId = membre.roleId || ((membre as unknown as Record<string, unknown>).role_id as string) || "";
-
-      console.log("[fetchUserOrganisations] membre orgId:", membreOrgId, "roleId:", membreRoleId);
-
-      const [compteResult, roleResult] = await Promise.allSettled([
-        comptes.get({ id: membreOrgId }),
-        roles.get({ id: membreRoleId }),
-      ]);
-
-      const organisationNom =
-        compteResult.status === "fulfilled" ? compteResult.value.nom : "";
-
-      const role: UserRole =
-        roleResult.status === "fulfilled"
-          ? {
-              id: roleResult.value.id,
-              code: roleResult.value.code,
-              nom: roleResult.value.nom,
-            }
-          : { id: "", code: "", nom: "" };
-
-      return {
-        organisationId: membreOrgId,
-        organisationNom,
-        role,
-        etat: membre.etat || "actif",
-      };
-    })
-  );
-}

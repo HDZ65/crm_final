@@ -10,10 +10,12 @@ import {
   type UpdateUtilisateurRequest,
   type GetUtilisateurRequest,
   type GetByKeycloakIdRequest,
+  type GetProfileRequest,
   type ListUtilisateurRequest,
   type ListUtilisateurResponse,
   type DeleteUtilisateurRequest,
   type DeleteResponse as UserDeleteResponse,
+  type UserProfile,
   type MembreCompte,
   type Compte,
   type CompteWithOwner,
@@ -108,13 +110,19 @@ export const users = {
       "get"
     )(request),
 
-  getByKeycloakId: (request: GetByKeycloakIdRequest): Promise<Utilisateur> =>
-    promisify<GetByKeycloakIdRequest, Utilisateur>(
-      getUtilisateurClient(),
-      "getByKeycloakId"
-    )(request),
+   getByKeycloakId: (request: GetByKeycloakIdRequest): Promise<Utilisateur> =>
+     promisify<GetByKeycloakIdRequest, Utilisateur>(
+       getUtilisateurClient(),
+       "getByKeycloakId"
+     )(request),
 
-  list: (request: ListUtilisateurRequest): Promise<ListUtilisateurResponse> =>
+   getProfile: (request: GetProfileRequest): Promise<UserProfile> =>
+     promisify<GetProfileRequest, UserProfile>(
+       getUtilisateurClient(),
+       "getProfile"
+     )(request),
+
+   list: (request: ListUtilisateurRequest): Promise<ListUtilisateurResponse> =>
     promisify<ListUtilisateurRequest, ListUtilisateurResponse>(
       getUtilisateurClient(),
       "list"
@@ -220,6 +228,8 @@ export type {
   CreateUtilisateurRequest,
   ListUtilisateurRequest,
   ListUtilisateurResponse,
+  UserProfile,
+  GetProfileRequest,
   MembreCompte,
   CreateMembreCompteRequest,
   UpdateMembreCompteRequest,

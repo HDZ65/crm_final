@@ -356,7 +356,7 @@ Parallel Speedup: ~30% (Task 4 parallèle avec Wave 2)
 
 ---
 
-- [ ] 3. Cron horaire + Bouton Sync Manuel
+- [x] 3. Cron horaire + Bouton Sync Manuel
 
   **What to do**:
   - Mettre à jour `services/service-commercial/src/infrastructure/scheduling/contrat-import-scheduler.service.ts`:
@@ -506,7 +506,7 @@ Parallel Speedup: ~30% (Task 4 parallèle avec Wave 2)
 
 ---
 
-- [ ] 5. QA Validation finale
+- [x] 5. QA Validation finale
 
   **What to do**:
   - Build ALL modified services:

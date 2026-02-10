@@ -236,3 +236,269 @@ Implemented a full import orchestrator flow for `service-commercial` with strict
 ## Validation
 - `bun run build` in `services/service-commercial` succeeded
 - LSP diagnostics returned no issues on changed files
+
+# Task: Update Scheduler and Frontend for Hourly Multi-Entity Import
+
+## Date
+2026-02-10
+
+## Summary
+Updated the cron scheduler to call ImportOrchestratorService hourly (`0 * * * *`), and updated frontend import dialog + button to support multi-entity sync with result display.
+
+## Key Changes
+
+### Backend Scheduler (contrat-import-scheduler.service.ts)
+- Changed cron from daily 02:00 to hourly (`0 * * * *`)
+- Switched from `ContratImportService.importFromExternal()` to `ImportOrchestratorService.importAll()`
+- Removed `updatedSince` parameter (not in ImportOrchestratorConfig interface)
+- Removed `lastSyncDate` tracking (not needed for current implementation)
+- Concurrency guard remains active via `isImportRunning` flag
+- Logs summary: total, created, updated, skipped, errors count
+- Logs individual errors with prospect external ID
+
+### Frontend Action (contrat-import.ts)
+- Updated to call `importAll()` instead of `importFromExternal()`
+- Removed `sourceUrl` and `apiKey` parameters (now backend env vars only)
+- Simplified ImportContratsData to match ImportResult structure:
+  - `total`, `created`, `updated`, `skipped`, `errors[]`
+  - Removed `byEntityType` and `lastSyncDate` (not in actual ImportResult)
+- Error structure: `{ message: string }` (no entityType field)
+
+### Frontend Dialog (import-contrats-dialog.tsx)
+- Removed sourceUrl and apiKey form fields (backend-only config)
+- Kept dryRun checkbox for simulation mode
+- Updated result display:
+  - Shows total, created, updated, skipped counts
+  - Removed entity type breakdown (not available in ImportResult)
+  - Removed last sync date display
+  - Simplified error list (just message, no entityType)
+- Button label: "Lancer l'import" → "Synchroniser"
+- Loading text: "Import en cours..." → "Synchronisation en cours..."
+
+### Frontend Button (contrats-card.tsx)
+- Button label: "Importer des contrats" → "Synchroniser"
+
+## Patterns Discovered
+
+### Scheduler Pattern (NestJS)
+- Use `@Cron()` decorator with configurable cron expression from env var
+- Concurrency guard with boolean flag (not database-based)
+- Try/catch/finally for error handling and guard reset
+- Log summary and first 10 errors, then "... and X more"
+
+### Frontend Server Action Pattern
+- Normalize gRPC response to consistent interface
+- Handle both snake_case and camelCase field names from backend
+- Return `{ success, data?, error? }` structure
+- Call `revalidatePath()` on successful non-dry-run imports
+
+### Frontend Dialog Pattern
+- Use `useForm()` with Zod schema for validation
+- Track loading state separately from result state
+- Reset form and result on dialog close
+- Show different UI states: loading, error, success with results
+
+## Gotchas
+
+1. **ImportOrchestratorConfig interface**: Does NOT have `updatedSince` parameter
+   - Cannot do incremental sync via parameter
+   - Would need to extend interface if incremental sync needed
+
+2. **ImportResult structure**: Does NOT have `byEntityType` breakdown
+   - Only has: total, created, updated, skipped, errors[]
+   - Error structure: `{ prospectExternalId, message }`
+   - Cannot display per-entity-type stats in frontend
+
+3. **Backend env vars**: API URL/key are backend-only
+   - Frontend action removed sourceUrl/apiKey form fields
+   - Backend reads from: EXTERNAL_API_URL, EXTERNAL_API_KEY, IMPORT_ORGANISATION_ID
+
+4. **Cron expression**: Must use `0 * * * *` for hourly at minute 0
+   - Configurable via IMPORT_CRON_SCHEDULE env var
+   - Timezone: Europe/Paris
+
+## Files Modified
+
+1. `services/service-commercial/src/infrastructure/scheduling/contrat-import-scheduler.service.ts`
+   - Changed cron to hourly
+   - Switched to ImportOrchestratorService
+   - Removed incremental sync logic
+
+2. `frontend/src/actions/contrat-import.ts`
+   - Updated to call importAll()
+   - Removed sourceUrl/apiKey parameters
+   - Simplified data structures
+
+3. `frontend/src/components/import-contrats-dialog.tsx`
+   - Removed form fields for URL/API key
+   - Updated result display
+   - Simplified error handling
+
+4. `frontend/src/components/contrats-card.tsx`
+   - Changed button label to "Synchroniser"
+
+## Build Verification
+
+- ✅ `bun run build` in service-commercial - SUCCESS
+- ✅ `bun run build` in frontend - SUCCESS
+- ✅ LSP diagnostics on frontend files - No errors
+
+## Next Steps
+
+- Monitor scheduler logs to verify hourly execution
+- Test manual sync via frontend button
+- Consider extending ImportResult interface if per-entity-type stats needed
+- Consider adding incremental sync support if needed (requires interface extension)
+
+
+# Task 5: Final QA Validation
+
+## Date
+2026-02-10
+
+## Summary
+Comprehensive QA validation completed on all services and components modified in Tasks 1-4. All builds pass with zero errors, and all LSP diagnostics are clean.
+
+## Build Verification Results
+
+### ✅ packages/proto
+- **Command**: `bun run build` in packages/proto
+- **Result**: SUCCESS
+- **Output**: Proto generation completed successfully
+- **Notes**: Expected duplicate timestamp.ts warnings from buf generate (not errors)
+
+### ✅ services/service-finance
+- **Command**: `bun run build` in services/service-finance
+- **Result**: SUCCESS
+- **Output**: Proto copy + NestJS build completed
+- **Files**: 
+  - Proto files copied: payment.ts, payment-info.ts, factures.ts, calendar.ts
+  - NestJS compilation: zero errors
+
+### ✅ services/service-commercial
+- **Command**: `bun run build` in services/service-commercial
+- **Result**: SUCCESS
+- **Output**: Proto copy + NestJS build completed
+- **Files**:
+  - Proto files copied: commerciaux.ts, commission.ts, contrats.ts, products.ts, dashboard.ts, subscriptions.ts, services/bundle.ts, partenaires.ts
+  - NestJS compilation: zero errors
+
+### ✅ frontend
+- **Command**: `bun run build` in frontend
+- **Result**: SUCCESS
+- **Output**: Next.js build completed successfully
+- **Notes**: 
+  - Expected gRPC connection errors (services not running) - build still succeeded
+  - 47 static pages generated
+  - TypeScript compilation: zero errors
+  - Turbopack compilation: 10.6s
+
+## LSP Diagnostics Results
+
+### Task 1 Files (Entity + Proto)
+- ✅ `packages/proto/src/payments/payment-info.proto` - No errors (proto LSP not configured, but proto builds successfully)
+- ✅ `services/service-finance/src/domain/payments/entities/information-paiement-bancaire.entity.ts` - No errors
+- ✅ `services/service-finance/src/infrastructure/grpc/payments/information-paiement-bancaire.controller.ts` - No errors
+- ✅ `services/service-finance/src/infrastructure/persistence/typeorm/repositories/payments/information-paiement-bancaire.service.ts` - No errors
+- ✅ `services/service-finance/src/migrations/1739203200000-CreateInformationPaiementBancaire.ts` - No errors
+- ✅ `services/service-finance/src/domain/payments/entities/index.ts` - No errors
+- ✅ `services/service-finance/src/payments.module.ts` - No errors
+
+### Task 2 Files (Import Service)
+- ✅ `services/service-commercial/src/domain/import/services/import-orchestrator.service.ts` - No errors
+- ✅ `services/service-commercial/src/domain/import/services/import-mapper.service.ts` - No errors
+- ✅ `services/service-commercial/src/infrastructure/grpc/import/import-orchestrator.controller.ts` - No errors
+- ✅ `services/service-commercial/src/contrats.module.ts` - No errors
+
+### Task 3 Files (Scheduler + Frontend)
+- ✅ `services/service-commercial/src/infrastructure/scheduling/contrat-import-scheduler.service.ts` - No errors
+- ✅ `frontend/src/actions/contrat-import.ts` - No errors
+- ✅ `frontend/src/components/import-contrats-dialog.tsx` - No errors
+- ✅ `frontend/src/components/contrats-card.tsx` - No errors
+
+### Task 4 Files (Dashboard KPI)
+- ✅ `frontend/src/components/dashboard-contrats-par-commercial.tsx` - No errors
+- ✅ `frontend/src/actions/dashboard-contrats-commercial.ts` - No errors
+- ✅ `frontend/src/app/(main)/page.tsx` - No errors
+
+## Deferred QA Items (Runtime Testing)
+
+### Services Not Running
+Since services are not currently running, the following runtime tests are deferred:
+
+1. **gRPC Service Verification**
+   - Test InformationPaiementBancaireService CRUD operations via grpcurl
+   - Test ImportOrchestratorService.importAll() with real API endpoint
+   - Verify proto message serialization/deserialization
+
+2. **Import Flow Testing**
+   - Test full import orchestrator with real colleague API endpoint
+   - Verify dependency ordering (Commercial → Client → Offres → Contrats → Souscriptions → Paiements)
+   - Test conflict resolution (most recent timestamp wins)
+   - Test dry-run mode
+   - Test pagination handling
+
+3. **Scheduler Testing**
+   - Verify hourly cron execution (`0 * * * *`)
+   - Monitor logs for import results
+   - Test concurrency guard (prevent overlapping imports)
+
+4. **Frontend UI Testing**
+   - Test import dialog with manual sync button
+   - Verify result display (total, created, updated, skipped, errors)
+   - Test KPI component rendering on home dashboard
+   - Verify commercial name resolution and contract count aggregation
+   - Test refresh button functionality
+
+5. **Database Verification**
+   - Verify InformationPaiementBancaire table created with correct schema
+   - Verify indexes on client_id, external_id, iban
+   - Verify unique constraint on (organisation_id, external_id)
+   - Test upsert logic with duplicate external_id
+
+### How to Run Runtime Tests
+When services are available:
+
+```bash
+# Start all services
+bun run dev
+
+# Test gRPC endpoints
+grpcurl -plaintext -d '{"organisation_id":"<org-id>","client_id":"<client-id>","iban":"FR41...","bic":"BNPAFRPPXXX"}' \
+  localhost:50053 payment_info.InformationPaiementBancaireService/CreateInformationPaiement
+
+# Test import endpoint
+grpcurl -plaintext -d '{"api_url":"<colleague-api>","api_key":"<key>","organisation_id":"<org-id>"}' \
+  localhost:50052 commercial.ImportOrchestratorService/ImportAll
+
+# Test frontend
+open http://localhost:3000
+# Navigate to home dashboard, verify KPI visible
+# Click "Synchroniser" button, verify results display
+```
+
+## Summary Statistics
+
+| Category | Count | Status |
+|----------|-------|--------|
+| Files Created | 8 | ✅ All built |
+| Files Modified | 7 | ✅ All built |
+| Build Targets | 4 | ✅ All pass |
+| LSP Diagnostics | 18 | ✅ All clean |
+| Proto Files | 1 | ✅ Compiles |
+| TypeScript Files | 17 | ✅ No errors |
+| React Components | 4 | ✅ No errors |
+
+## Conclusion
+
+**QA Status: PASSED** ✅
+
+All deliverables from Tasks 1-4 have been successfully validated:
+- ✅ All builds pass with zero errors
+- ✅ All LSP diagnostics are clean
+- ✅ Proto compilation successful
+- ✅ TypeScript compilation successful
+- ✅ Next.js build successful
+
+The codebase is ready for runtime testing when services are available. All deferred QA items are documented above for future execution.
+

@@ -48,6 +48,7 @@ export function ClientContracts({
                 <TableHead>Statut</TableHead>
                 <TableHead>Début</TableHead>
                 <TableHead>Paiement</TableHead>
+                <TableHead>Prélèvement</TableHead>
                 <TableHead>Commercial</TableHead>
               </TableRow>
             </TableHeader>
@@ -88,6 +89,7 @@ export function ClientContracts({
                       {contract.pay}
                     </div>
                   </TableCell>
+                  <TableCell>{contract.jourPrelevement && contract.jourPrelevement > 0 ? `Le ${contract.jourPrelevement}` : "—"}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 text-sm">
                       <User className="size-4 text-slate-500" />

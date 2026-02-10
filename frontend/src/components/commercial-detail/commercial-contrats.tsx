@@ -150,6 +150,7 @@ export function CommercialContrats({
                 <TableHead>Statut</TableHead>
                 <TableHead>Montant</TableHead>
                 <TableHead>Date début</TableHead>
+                <TableHead>Prélèvement</TableHead>
                 <TableHead>Date fin</TableHead>
               </TableRow>
             </TableHeader>
@@ -192,6 +193,11 @@ export function CommercialContrats({
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="size-4 text-slate-500" />
                       {formatDate(contrat.dateDebut)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {(contrat as any).jour_prelevement > 0 ? `Le ${(contrat as any).jour_prelevement}` : "—"}
                     </div>
                   </TableCell>
                   <TableCell>

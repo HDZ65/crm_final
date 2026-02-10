@@ -71,10 +71,12 @@ const contratSchema = z.object({
     devise: z.string().optional(),
     frequenceFacturation: z.string().optional(),
     fournisseur: z.string().optional(),
+    jourPrelevement: z.coerce.number().min(1).max(28).optional(),
     notes: z.string().optional(),
 })
 
-type ContratFormValues = z.infer<typeof contratSchema>
+type ContratFormValues = z.input<typeof contratSchema>
+type ContratSubmitValues = z.output<typeof contratSchema>
 
 interface CreateContratDto {
     organisationId: string
@@ -92,6 +94,7 @@ interface CreateContratDto {
     devise?: string
     frequenceFacturation?: string
     fournisseur?: string
+    jour_prelevement?: number
     notes?: string
 }
 
@@ -183,7 +186,7 @@ export function CreateContratDialog({
 
     const isLoadingData = loadingClients || loadingApporteurs
 
-    const form = useForm<ContratFormValues>({
+    const form = useForm<ContratFormValues, unknown, ContratSubmitValues>({
         resolver: zodResolver(contratSchema),
         defaultValues: {
             organisationId: "",
@@ -215,7 +218,7 @@ export function CreateContratDialog({
         onOpenChange(isOpen)
     }
 
-    const onSubmit = async (data: ContratFormValues) => {
+    const onSubmit = async (data: ContratSubmitValues) => {
         setLoading(true)
 
         const result = await createContrat({
@@ -234,6 +237,7 @@ export function CreateContratDialog({
             devise: data.devise || undefined,
             frequenceFacturation: data.frequenceFacturation || undefined,
             fournisseur: data.fournisseur || undefined,
+            jour_prelevement: data.jourPrelevement,
             notes: data.notes || undefined,
         })
 
@@ -262,6 +266,7 @@ export function CreateContratDialog({
                 devise: result.data.devise,
                 frequenceFacturation: result.data.frequenceFacturation,
                 fournisseur: result.data.fournisseur,
+                jour_prelevement: (result.data as any).jour_prelevement,
                 notes: result.data.notes,
                 createdAt: result.data.createdAt,
                 updatedAt: result.data.updatedAt,
@@ -581,6 +586,28 @@ export function CreateContratDialog({
                                         )}
                                     />
                                 </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="jourPrelevement"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Jour de prélèvement</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    min={1}
+                                                    max={28}
+                                                    placeholder="Ex: 15"
+                                                    disabled={loading}
+                                                    value={field.value ?? ""}
+                                                    onChange={(e) => field.onChange(e.target.value === "" ? undefined : e.target.value)}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
                                 <FormField
                                     control={form.control}

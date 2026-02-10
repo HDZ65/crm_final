@@ -21,6 +21,8 @@ export interface Contract {
   status: string;
   start: string;
   pay: string;
+  jourPrelevement?: number;
+  prochaineDatePrelevement?: string;
   sales: string;
   history: ContractEvent[];
 }

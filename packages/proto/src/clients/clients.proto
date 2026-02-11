@@ -128,78 +128,81 @@ message DeleteAdresseRequest {
 // ===== CLIENT BASE =====
 
 message ClientBase {
-  string id = 1;
-  string organisation_id = 2;
-  string type_client = 3;
-  string nom = 4;
-  string prenom = 5;
-  string date_naissance = 6;
-  string compte_code = 7;
-  string partenaire_id = 8;
-  string date_creation = 9;
-  string telephone = 10;
-  string email = 11;
-  string statut = 12;
-  string created_at = 13;
-  string updated_at = 14;
-  repeated Adresse adresses = 15;
-  optional string societe_id = 16;
-  optional string profession = 17;
-  optional string iban = 18;
-  optional bool mandat_sepa = 19;
-  optional string kyc_status = 20;
-  optional bool gdpr_consent = 21;
-  optional string gdpr_consent_date = 22;
-  optional string langue = 23;
-  optional bool has_conciergerie = 24;
-  optional bool has_justi_plus = 25;
-  optional bool has_wincash = 26;
-  optional string uuid_wincash = 27;
-  optional string uuid_justi_plus = 28;
-  optional string date_premiere_souscription = 29;
-  optional string canal_acquisition = 30;
+   string id = 1;
+   string organisation_id = 2;
+   string type_client = 3;
+   string nom = 4;
+   string prenom = 5;
+   string date_naissance = 6;
+   string compte_code = 7;
+   string partenaire_id = 8;
+   string date_creation = 9;
+   string telephone = 10;
+   string email = 11;
+   string statut = 12;
+   string created_at = 13;
+   string updated_at = 14;
+   repeated Adresse adresses = 15;
+   optional string societe_id = 16;
+   optional string profession = 17;
+   optional string iban = 18;
+   optional bool mandat_sepa = 19;
+   optional string kyc_status = 20;
+   optional bool gdpr_consent = 21;
+   optional string gdpr_consent_date = 22;
+   optional string langue = 23;
+   optional bool has_conciergerie = 24;
+   optional bool has_justi_plus = 25;
+   optional bool has_wincash = 26;
+   optional string uuid_wincash = 27;
+   optional string uuid_justi_plus = 28;
+   optional string date_premiere_souscription = 29;
+   optional string canal_acquisition = 30;
+   optional string source = 31;
 }
 
 message CreateClientBaseRequest {
-  string organisation_id = 1;
-  string type_client = 2;
-  string nom = 3;
-  string prenom = 4;
-  string date_naissance = 5;
-  string compte_code = 6;
-  string partenaire_id = 7;
-  string telephone = 8;
-  string email = 9;
-  string statut = 10;
-  optional string societe_id = 11;
-  optional bool has_conciergerie = 12;
-  optional bool has_justi_plus = 13;
-  optional bool has_wincash = 14;
-  optional string uuid_wincash = 15;
-  optional string uuid_justi_plus = 16;
-  optional string date_premiere_souscription = 17;
-  optional string canal_acquisition = 18;
+   string organisation_id = 1;
+   string type_client = 2;
+   string nom = 3;
+   string prenom = 4;
+   string date_naissance = 5;
+   string compte_code = 6;
+   string partenaire_id = 7;
+   string telephone = 8;
+   string email = 9;
+   string statut = 10;
+   optional string societe_id = 11;
+   optional bool has_conciergerie = 12;
+   optional bool has_justi_plus = 13;
+   optional bool has_wincash = 14;
+   optional string uuid_wincash = 15;
+   optional string uuid_justi_plus = 16;
+   optional string date_premiere_souscription = 17;
+   optional string canal_acquisition = 18;
+   optional string source = 19;
 }
 
 message UpdateClientBaseRequest {
-  string id = 1;
-  optional string type_client = 2;
-  optional string nom = 3;
-  optional string prenom = 4;
-  optional string date_naissance = 5;
-  optional string compte_code = 6;
-  optional string partenaire_id = 7;
-  optional string telephone = 8;
-  optional string email = 9;
-  optional string statut = 10;
-  optional string societe_id = 11;
-  optional bool has_conciergerie = 12;
-  optional bool has_justi_plus = 13;
-  optional bool has_wincash = 14;
-  optional string uuid_wincash = 15;
-  optional string uuid_justi_plus = 16;
-  optional string date_premiere_souscription = 17;
-  optional string canal_acquisition = 18;
+   string id = 1;
+   optional string type_client = 2;
+   optional string nom = 3;
+   optional string prenom = 4;
+   optional string date_naissance = 5;
+   optional string compte_code = 6;
+   optional string partenaire_id = 7;
+   optional string telephone = 8;
+   optional string email = 9;
+   optional string statut = 10;
+   optional string societe_id = 11;
+   optional bool has_conciergerie = 12;
+   optional bool has_justi_plus = 13;
+   optional bool has_wincash = 14;
+   optional string uuid_wincash = 15;
+   optional string uuid_justi_plus = 16;
+   optional string date_premiere_souscription = 17;
+   optional string canal_acquisition = 18;
+   optional string source = 19;
 }
 
 message GetClientBaseRequest {
@@ -207,11 +210,12 @@ message GetClientBaseRequest {
 }
 
 message ListClientsBaseRequest {
-  string organisation_id = 1;
-  optional string statut_id = 2;
-  optional string societe_id = 3;
-  optional string search = 4;
-  PaginationRequest pagination = 5;
+   string organisation_id = 1;
+   optional string statut_id = 2;
+   optional string societe_id = 3;
+   optional string search = 4;
+   optional string source = 5;
+   PaginationRequest pagination = 6;
 }
 
 message ListClientsBaseResponse {

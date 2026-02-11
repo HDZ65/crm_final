@@ -47,7 +47,8 @@
     "./mondial-tv/coupon": "./gen/ts/mondial-tv/coupon.ts",
     "./fulfillment": "./gen/ts/fulfillment/fulfillment.ts",
     "./woocommerce": "./gen/ts/woocommerce/woocommerce.ts",
-    "./depanssur": "./gen/ts/depanssur/depanssur.ts"
+    "./depanssur": "./gen/ts/depanssur/depanssur.ts",
+    "./winleadplus": "./gen/ts/winleadplus/winleadplus.ts"
   },
   "files": [
     "src/**/*.proto",

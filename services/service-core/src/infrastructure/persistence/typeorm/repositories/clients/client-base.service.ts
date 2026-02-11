@@ -38,9 +38,10 @@ export class ClientBaseService {
       partenaireId: input.partenaire_id,
       dateCreation: new Date(),
       telephone: input.telephone,
-      email: input.email || null,
+      email: input.email,
       statut: input.statut || 'ACTIF',
-      societeId: input.societe_id || null,
+      societeId: input.societe_id,
+      source: input.source,
     });
 
     return this.repository.save(entity);
@@ -56,9 +57,10 @@ export class ClientBaseService {
     if (input.compte_code !== undefined) entity.compteCode = input.compte_code;
     if (input.partenaire_id !== undefined) entity.partenaireId = input.partenaire_id;
     if (input.telephone !== undefined) entity.telephone = input.telephone;
-    if (input.email !== undefined) entity.email = input.email || null;
+    if (input.email !== undefined) entity.email = input.email;
     if (input.statut !== undefined) entity.statut = input.statut;
-    if (input.societe_id !== undefined) entity.societeId = input.societe_id || null;
+    if (input.societe_id !== undefined) entity.societeId = input.societe_id;
+    if (input.source !== undefined) entity.source = input.source;
 
     return this.repository.save(entity);
   }
@@ -102,6 +104,10 @@ export class ClientBaseService {
 
     if (request.societe_id) {
       qb.andWhere('c.societeId = :societeId', { societeId: request.societe_id });
+    }
+
+    if (request.source) {
+      qb.andWhere('c.source = :source', { source: request.source });
     }
 
     if (request.search) {

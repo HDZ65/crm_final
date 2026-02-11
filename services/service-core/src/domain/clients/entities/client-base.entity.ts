@@ -67,11 +67,14 @@ export class ClientBaseEntity {
   @Column({ name: 'date_premiere_souscription', type: 'date', nullable: true })
   datePremiereSouscription: Date | null;
 
-   @Column({ name: 'canal_acquisition', type: 'varchar', length: 100, nullable: true })
-   canalAcquisition: string | null;
+    @Column({ name: 'canal_acquisition', type: 'varchar', length: 100, nullable: true })
+    canalAcquisition: string | null;
 
-   @Column({ type: 'varchar', length: 50, nullable: true })
-   civilite: string | null;
+    @Column({ type: 'varchar', length: 50, nullable: true })
+    source: string | null;
+
+    @Column({ type: 'varchar', length: 50, nullable: true })
+    civilite: string | null;
 
     @OneToMany('AdresseEntity', 'client')
     adresses: AdresseEntity[];

@@ -29,6 +29,9 @@ import {
   TransporteurCompteService,
 } from './infrastructure/persistence/typeorm/repositories/clients';
 
+// NATS handlers
+import { ClientNatsWorkersService } from './infrastructure/messaging/nats/handlers';
+
 // Interface controllers
 import {
   ClientBaseController,
@@ -81,6 +84,7 @@ import {
     FacturationParService,
     PeriodeFacturationService,
     TransporteurCompteService,
+    ClientNatsWorkersService,
   ],
   exports: [
     ClientBaseService,

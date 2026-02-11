@@ -619,6 +619,44 @@ export async function getSociete(id: string): Promise<ActionResult<Societe>> {
 }
 
 // ============================================
+// CATALOGUE WEBHOOK SYNC
+// ============================================
+
+/**
+ * Synchroniser le catalogue produits vers le webhook partenaire
+ */
+export async function syncCatalogue(params: {
+  organisationId: string;
+}): Promise<ActionResult<{ success: boolean; productsSynced: number }>> {
+  try {
+    const response = await produits.syncCatalogue({
+      organisationId: params.organisationId,
+    });
+
+    if (!response.success) {
+      return {
+        data: null,
+        error: response.error || "Échec de la synchronisation du catalogue",
+      };
+    }
+
+    return {
+      data: {
+        success: true,
+        productsSynced: response.productsSynced,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[syncCatalogue] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la synchronisation du catalogue",
+    };
+  }
+}
+
+// ============================================
 // FORMULES PRODUIT
 // ============================================
 

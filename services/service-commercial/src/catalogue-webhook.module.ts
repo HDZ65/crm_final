@@ -18,6 +18,9 @@ import { CatalogueWebhookNatsWorker } from './infrastructure/messaging/nats/hand
 // HTTP controllers
 import { CatalogueWebhookController } from './infrastructure/http/catalogue-webhook/catalogue-webhook.controller';
 
+// gRPC controllers
+import { CatalogueWebhookGrpcController } from './infrastructure/grpc/catalogue-webhook/catalogue-webhook.controller';
+
 // Cross-module dependency — ProduitService for worker (Task 4)
 import { ProductsModule } from './products.module';
 
@@ -26,7 +29,7 @@ import { ProductsModule } from './products.module';
     TypeOrmModule.forFeature([CatalogueWebhookEventEntity, ProduitEntity]),
     forwardRef(() => ProductsModule),
   ],
-  controllers: [CatalogueWebhookController],
+  controllers: [CatalogueWebhookController, CatalogueWebhookGrpcController],
   providers: [
     CatalogueWebhookEventRepoService,
     CatalogueWebhookMappingService,

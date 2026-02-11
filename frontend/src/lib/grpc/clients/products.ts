@@ -25,6 +25,8 @@ import {
   type DeleteProduitResponse,
   type SetPromotionRequest,
   type ClearPromotionRequest,
+  type SyncCatalogueRequest,
+  type SyncCatalogueResponse,
   type ProduitVersion,
   type CreateProduitVersionRequest,
   type UpdateProduitVersionRequest,
@@ -196,6 +198,12 @@ export const produits = {
      promisify<ClearPromotionRequest, Produit>(
        getProduitClient(),
        "clearPromotion"
+     )(request),
+
+   syncCatalogue: (request: SyncCatalogueRequest): Promise<SyncCatalogueResponse> =>
+     promisify<SyncCatalogueRequest, SyncCatalogueResponse>(
+       getProduitClient(),
+       "syncCatalogue"
      )(request),
 
    createFormule: (request: CreateFormuleProduitRequest): Promise<FormuleProduit> =>

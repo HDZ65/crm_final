@@ -21,6 +21,7 @@ import {
   createProduit as createProduitAction,
   updateProduit as updateProduitAction,
   getSocietesByOrganisation,
+  syncCatalogue,
 } from "@/actions/catalogue"
 import type { Societe } from "@proto/organisations/organisations"
 
@@ -67,6 +68,8 @@ import {
   Percent,
   Copy,
   Edit,
+  RefreshCw,
+  Loader2,
 } from "lucide-react"
 // Note: Building2 kept for product detail fournisseur
 
@@ -129,6 +132,7 @@ export function CataloguePageClient({
   const [createLoading, setCreateLoading] = React.useState(false)
   const [updateLoading, setUpdateLoading] = React.useState(false)
   const [createGammeLoading, setCreateGammeLoading] = React.useState(false)
+  const [isSyncing, setIsSyncing] = React.useState(false)
 
   // State - "all" selected by default for gammes to show all products
   const [selectedGammeId, setSelectedGammeId] = React.useState<string | null>("all")
@@ -458,16 +462,48 @@ export function CataloguePageClient({
                     </Badge>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1"
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  disabled={!canCreateProduct}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span className="text-xs">Nouveau</span>
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1"
+                    onClick={async () => {
+                      if (!activeOrganisation?.organisationId || isSyncing) return
+                      setIsSyncing(true)
+                      try {
+                        const result = await syncCatalogue({ organisationId: activeOrganisation.organisationId })
+                        if (result.error) {
+                          toast.error(result.error)
+                        } else if (result.data) {
+                          toast.success(`${result.data.productsSynced} produits synchronisés`)
+                          refetch()
+                        }
+                      } catch {
+                        toast.error("Erreur lors de la synchronisation")
+                      } finally {
+                        setIsSyncing(false)
+                      }
+                    }}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
+                    <span className="text-xs">Synchroniser</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1"
+                    onClick={() => setIsCreateDialogOpen(true)}
+                    disabled={!canCreateProduct}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span className="text-xs">Nouveau</span>
+                  </Button>
+                </div>
               </div>
               {selectedGammeId && (
                 <div className="relative mt-2">

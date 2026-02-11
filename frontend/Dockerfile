@@ -51,9 +51,10 @@ ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 3000
 
-# Copy proto files at startup and run dev server with Node.js runtime
+# Copy proto files at startup (if available) and run dev server with Node.js runtime
 # (Bun runtime has a known bug with Turbopack serverExternalPackages - oven-sh/bun#25370)
-CMD sh -c "mkdir -p src/proto && cp -r /packages/proto/gen/ts-frontend/* src/proto/ && npx next dev"
+# Proto files are pre-committed in src/proto/, so the copy is optional
+CMD sh -c "mkdir -p src/proto && (cp -r /packages/proto/gen/ts-frontend/* src/proto/ 2>/dev/null || true) && npx next dev"
 
 # ---------------------------------------------------------
 # Stage 3: Builder - Build the application

@@ -16,6 +16,7 @@ import { DashboardModule } from './dashboard.module';
 import { ProductsModule } from './products.module';
 import { SubscriptionsModule } from './subscriptions.module';
 import { WooCommerceModule } from './woocommerce.module';
+import { CatalogueWebhookModule } from './catalogue-webhook.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { WooCommerceModule } from './woocommerce.module';
     ProductsModule,
     SubscriptionsModule,
     WooCommerceModule,
+    CatalogueWebhookModule,
   ],
   controllers: [],
   providers: [

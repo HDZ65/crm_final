@@ -20,6 +20,7 @@ services:
       # On surcharge l'accès DB pour pointer le container global
       - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_commercial
       - MIGRATIONS_RUN=false
+      - WINLEADPLUS_API_URL=https://winleadplus.com/api/prospects
     # depends_on retiré car global_postgres est externe
     networks:
       - shared_dev_net

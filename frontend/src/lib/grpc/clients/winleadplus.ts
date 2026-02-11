@@ -5,16 +5,18 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify, makeClient, GrpcClient } from "./config";
 import {
-  WinLeadPlusSyncServiceService,
-  type SyncProspectsRequest,
-  type SyncProspectsResponse,
-  type GetSyncStatusRequest,
-  type GetSyncStatusResponse,
-  type ListWinLeadPlusSyncLogsRequest,
-  type ListWinLeadPlusSyncLogsResponse,
-  type TestConnectionRequest,
-  type TestConnectionResponse as WinLeadPlusTestConnectionResponse,
-} from "@proto/winleadplus/winleadplus";
+   WinLeadPlusSyncServiceService,
+   type SyncProspectsRequest,
+   type SyncProspectsResponse,
+   type GetSyncStatusRequest,
+   type GetSyncStatusResponse,
+   type ListWinLeadPlusSyncLogsRequest,
+   type ListWinLeadPlusSyncLogsResponse,
+   type TestConnectionRequest,
+   type TestConnectionResponse as WinLeadPlusTestConnectionResponse,
+   type GetWinLeadPlusConfigRequest,
+   type HasWinLeadPlusConfigResponse,
+ } from "@proto/winleadplus/winleadplus";
 
 let syncServiceInstance: GrpcClient | null = null;
 
@@ -49,21 +51,29 @@ export const winleadplus = {
       "getSyncLogs"
     )(request),
 
-  testConnection: (request: TestConnectionRequest): Promise<WinLeadPlusTestConnectionResponse> =>
-    promisify<TestConnectionRequest, WinLeadPlusTestConnectionResponse>(
-      getSyncServiceClient(),
-      "testConnection"
-    )(request),
-};
+   testConnection: (request: TestConnectionRequest): Promise<WinLeadPlusTestConnectionResponse> =>
+     promisify<TestConnectionRequest, WinLeadPlusTestConnectionResponse>(
+       getSyncServiceClient(),
+       "testConnection"
+     )(request),
+
+   hasConfig: (request: GetWinLeadPlusConfigRequest): Promise<HasWinLeadPlusConfigResponse> =>
+     promisify<GetWinLeadPlusConfigRequest, HasWinLeadPlusConfigResponse>(
+       getSyncServiceClient(),
+       "hasConfig"
+     )(request),
+ };
 
 // Re-export types for convenience
 export type {
-  SyncProspectsRequest,
-  SyncProspectsResponse,
-  GetSyncStatusRequest,
-  GetSyncStatusResponse,
-  ListWinLeadPlusSyncLogsRequest,
-  ListWinLeadPlusSyncLogsResponse,
-  TestConnectionRequest,
-};
-export type { WinLeadPlusTestConnectionResponse as TestConnectionResponse };
+   SyncProspectsRequest,
+   SyncProspectsResponse,
+   GetSyncStatusRequest,
+   GetSyncStatusResponse,
+   ListWinLeadPlusSyncLogsRequest,
+   ListWinLeadPlusSyncLogsResponse,
+   TestConnectionRequest,
+   GetWinLeadPlusConfigRequest,
+   HasWinLeadPlusConfigResponse,
+ };
+ export type { WinLeadPlusTestConnectionResponse as TestConnectionResponse };

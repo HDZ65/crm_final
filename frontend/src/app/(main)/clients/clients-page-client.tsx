@@ -56,11 +56,12 @@ function mapClientToRow(client: ClientBase, statutsMap: Map<string, string>): Cl
 const normalizePhone = (value: string) => value.replace(/\D/g, "")
 
 interface ClientsPageClientProps {
-  initialClients: ClientBase[]
-  statuts: readonly StatutClient[] | StatutClient[]
-}
+   initialClients: ClientBase[]
+   statuts: readonly StatutClient[] | StatutClient[]
+   hasWinLeadPlus?: boolean
+ }
 
-export function ClientsPageClient({ initialClients, statuts }: ClientsPageClientProps) {
+export function ClientsPageClient({ initialClients, statuts, hasWinLeadPlus = false }: ClientsPageClientProps) {
   const { activeOrganisation } = useOrganisation()
   const [createClientOpen, setCreateClientOpen] = React.useState(false)
   const [importDialogOpen, setImportDialogOpen] = React.useState(false)
@@ -392,15 +393,22 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
     [selectedClients, fetchData]
   )
 
-  // Load societes on mount
-  React.useEffect(() => {
-    if (!activeOrganisation) return
-    listSocietesByOrganisation(activeOrganisation.organisationId).then((result) => {
-      if (result.data) {
-        setBulkSocietes(result.data.map((s) => ({ id: s.id, raisonSociale: s.raisonSociale })))
-      }
-    })
-  }, [activeOrganisation])
+   // Load societes on mount
+   React.useEffect(() => {
+     if (!activeOrganisation) return
+     listSocietesByOrganisation(activeOrganisation.organisationId).then((result) => {
+       if (result.data) {
+         setBulkSocietes(result.data.map((s) => ({ id: s.id, raisonSociale: s.raisonSociale })))
+       }
+     })
+   }, [activeOrganisation])
+
+   // Reset source filter if WinLeadPlus is disabled and currently selected
+   React.useEffect(() => {
+     if (!hasWinLeadPlus && filters.source === "WinLeadPlus") {
+       updateFilter("source", "")
+     }
+   }, [hasWinLeadPlus, filters.source, updateFilter])
 
   return (
     <main className="flex flex-1 flex-col gap-4 min-h-0">
@@ -445,13 +453,15 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
 
           <div className="flex-1" />
 
-           <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
-             <RefreshCw className="size-4" />
-           </Button>
-           <Button variant="outline" size="sm" onClick={handleWinLeadPlusSync} disabled={isSyncing}>
-             <RefreshCw className={cn("mr-2 size-4", isSyncing && "animate-spin")} />
-             Sync WLP
-           </Button>
+            <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshCw className="size-4" />
+            </Button>
+            {hasWinLeadPlus && (
+              <Button variant="outline" size="sm" onClick={handleWinLeadPlusSync} disabled={isSyncing}>
+                <RefreshCw className={cn("mr-2 size-4", isSyncing && "animate-spin")} />
+                Sync WLP
+              </Button>
+            )}
            <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
              <Upload className="mr-2 size-4" />
              Importer
@@ -543,17 +553,19 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
                       onChange={handleFilterChange("iban")}
                     />
                   </div>
-                   <Select value={filters.source || "all"} onValueChange={(v) => updateFilter("source", v === "all" ? "" : v)}>
-                     <SelectTrigger className="bg-white">
-                       <Globe className="mr-2 size-4 text-muted-foreground" />
-                       <SelectValue placeholder="Source" />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="all">Toutes les sources</SelectItem>
-                       <SelectItem value="CRM">CRM</SelectItem>
-                       <SelectItem value="WinLeadPlus">WinLeadPlus</SelectItem>
-                     </SelectContent>
-                   </Select>
+                    <Select value={filters.source || "all"} onValueChange={(v) => updateFilter("source", v === "all" ? "" : v)}>
+                      <SelectTrigger className="bg-white">
+                        <Globe className="mr-2 size-4 text-muted-foreground" />
+                        <SelectValue placeholder="Source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Toutes les sources</SelectItem>
+                        <SelectItem value="CRM">CRM</SelectItem>
+                        {hasWinLeadPlus && (
+                          <SelectItem value="WinLeadPlus">WinLeadPlus</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                 </div>
               </CardContent>
             </Card>

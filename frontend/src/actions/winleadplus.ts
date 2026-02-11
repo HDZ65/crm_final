@@ -85,20 +85,36 @@ export async function getWinLeadPlusSyncLogs(params: {
  * Test WinLeadPlus API connectivity
  */
 export async function testWinLeadPlusConnection(params: {
-  organisationId: string;
-  apiEndpoint: string;
-}): Promise<ActionResult<TestConnectionResponse>> {
-  try {
-    const data = await winleadplus.testConnection({
-      organisationId: params.organisationId,
-      apiEndpoint: params.apiEndpoint,
-    });
-    return { data, error: null };
-  } catch (err) {
-    console.error("[testWinLeadPlusConnection] gRPC error:", err);
-    return {
-      data: null,
-      error: err instanceof Error ? err.message : "Erreur lors du test de connexion WinLeadPlus",
-    };
-  }
-}
+   organisationId: string;
+   apiEndpoint: string;
+ }): Promise<ActionResult<TestConnectionResponse>> {
+   try {
+     const data = await winleadplus.testConnection({
+       organisationId: params.organisationId,
+       apiEndpoint: params.apiEndpoint,
+     });
+     return { data, error: null };
+   } catch (err) {
+     console.error("[testWinLeadPlusConnection] gRPC error:", err);
+     return {
+       data: null,
+       error: err instanceof Error ? err.message : "Erreur lors du test de connexion WinLeadPlus",
+     };
+   }
+ }
+
+/**
+ * Check if organisation has an active WinLeadPlus config
+ */
+export async function hasWinLeadPlusConfig(params: {
+   organisationId: string;
+ }): Promise<boolean> {
+   try {
+     const data = await winleadplus.hasConfig({
+       organisationId: params.organisationId,
+     });
+     return data.enabled ?? false;
+   } catch {
+     return false; // Fail closed
+   }
+ }

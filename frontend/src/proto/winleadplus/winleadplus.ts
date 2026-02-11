@@ -6,37 +6,42 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import type { handleUnaryCall, UntypedServiceImplementation } from "@grpc/grpc-js";
+import type { handleUnaryCall, Metadata, UntypedServiceImplementation } from "@grpc/grpc-js";
+import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
+import { Observable } from "rxjs";
 
 export const protobufPackage = "winleadplus";
 
 export interface WinLeadPlusConfig {
   id: string;
-  organisationId: string;
-  apiEndpoint: string;
+  organisation_id: string;
+  api_endpoint: string;
   enabled: boolean;
-  syncIntervalMinutes: number;
-  lastSyncAt?: string | undefined;
-  createdAt: string;
-  updatedAt: string;
+  sync_interval_minutes: number;
+  last_sync_at?: string | undefined;
+  created_at: string;
+  updated_at: string;
+  has_api_token?: boolean | undefined;
 }
 
 export interface CreateWinLeadPlusConfigRequest {
-  organisationId: string;
-  apiEndpoint: string;
+  organisation_id: string;
+  api_endpoint: string;
   enabled: boolean;
-  syncIntervalMinutes: number;
+  sync_interval_minutes: number;
 }
 
 export interface UpdateWinLeadPlusConfigRequest {
   id: string;
-  apiEndpoint?: string | undefined;
+  api_endpoint?: string | undefined;
   enabled?: boolean | undefined;
-  syncIntervalMinutes?: number | undefined;
+  sync_interval_minutes?: number | undefined;
+  organisation_id?: string | undefined;
+  api_token?: string | undefined;
 }
 
 export interface GetWinLeadPlusConfigRequest {
-  organisationId: string;
+  organisation_id: string;
 }
 
 export interface HasWinLeadPlusConfigResponse {
@@ -45,24 +50,24 @@ export interface HasWinLeadPlusConfigResponse {
 
 export interface WinLeadPlusMapping {
   id: string;
-  organisationId: string;
-  winleadplusProspectId: string;
-  crmClientId: string;
-  crmContratIds: string[];
-  lastSyncedAt: string;
+  organisation_id: string;
+  winleadplus_prospect_id: string;
+  crm_client_id: string;
+  crm_contrat_ids: string[];
+  last_synced_at: string;
 }
 
 export interface CreateWinLeadPlusMappingRequest {
-  organisationId: string;
-  winleadplusProspectId: string;
-  crmClientId: string;
-  crmContratIds: string[];
+  organisation_id: string;
+  winleadplus_prospect_id: string;
+  crm_client_id: string;
+  crm_contrat_ids: string[];
 }
 
 export interface UpdateWinLeadPlusMappingRequest {
   id: string;
-  crmClientId?: string | undefined;
-  crmContratIds: string[];
+  crm_client_id?: string | undefined;
+  crm_contrat_ids: string[];
 }
 
 export interface GetWinLeadPlusMappingRequest {
@@ -70,9 +75,9 @@ export interface GetWinLeadPlusMappingRequest {
 }
 
 export interface ListWinLeadPlusMappingsRequest {
-  organisationId: string;
-  winleadplusProspectId?: string | undefined;
-  crmClientId?: string | undefined;
+  organisation_id: string;
+  winleadplus_prospect_id?: string | undefined;
+  crm_client_id?: string | undefined;
 }
 
 export interface ListWinLeadPlusMappingsResponse {
@@ -81,11 +86,11 @@ export interface ListWinLeadPlusMappingsResponse {
 
 export interface WinLeadPlusSyncLog {
   id: string;
-  organisationId: string;
-  startedAt: string;
-  finishedAt?: string | undefined;
+  organisation_id: string;
+  started_at: string;
+  finished_at?: string | undefined;
   status: string;
-  totalProspects: number;
+  total_prospects: number;
   created: number;
   updated: number;
   skipped: number;
@@ -97,7 +102,7 @@ export interface GetWinLeadPlusSyncLogRequest {
 }
 
 export interface ListWinLeadPlusSyncLogsRequest {
-  organisationId: string;
+  organisation_id: string;
   limit?: number | undefined;
 }
 
@@ -106,28 +111,29 @@ export interface ListWinLeadPlusSyncLogsResponse {
 }
 
 export interface SyncProspectsRequest {
-  organisationId: string;
-  dryRun: boolean;
+  organisation_id: string;
+  dry_run: boolean;
 }
 
 export interface SyncProspectsResponse {
   success: boolean;
-  syncLog: WinLeadPlusSyncLog | undefined;
+  sync_log: WinLeadPlusSyncLog | undefined;
 }
 
 export interface GetSyncStatusRequest {
-  organisationId: string;
+  organisation_id: string;
 }
 
 export interface GetSyncStatusResponse {
-  isSyncing: boolean;
-  currentSyncId?: string | undefined;
-  lastSyncAt?: string | undefined;
+  is_syncing: boolean;
+  current_sync_id?: string | undefined;
+  last_sync_at?: string | undefined;
 }
 
 export interface TestConnectionRequest {
-  organisationId: string;
-  apiEndpoint: string;
+  organisation_id: string;
+  api_endpoint: string;
+  api_token?: string | undefined;
 }
 
 export interface TestConnectionResponse {
@@ -138,16 +144,17 @@ export interface TestConnectionResponse {
 export interface Empty {
 }
 
+export const WINLEADPLUS_PACKAGE_NAME = "winleadplus";
+
 function createBaseWinLeadPlusConfig(): WinLeadPlusConfig {
   return {
     id: "",
-    organisationId: "",
-    apiEndpoint: "",
+    organisation_id: "",
+    api_endpoint: "",
     enabled: false,
-    syncIntervalMinutes: 0,
-    lastSyncAt: undefined,
-    createdAt: "",
-    updatedAt: "",
+    sync_interval_minutes: 0,
+    created_at: "",
+    updated_at: "",
   };
 }
 
@@ -156,26 +163,29 @@ export const WinLeadPlusConfig: MessageFns<WinLeadPlusConfig> = {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.organisationId !== "") {
-      writer.uint32(18).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(18).string(message.organisation_id);
     }
-    if (message.apiEndpoint !== "") {
-      writer.uint32(26).string(message.apiEndpoint);
+    if (message.api_endpoint !== "") {
+      writer.uint32(26).string(message.api_endpoint);
     }
     if (message.enabled !== false) {
       writer.uint32(32).bool(message.enabled);
     }
-    if (message.syncIntervalMinutes !== 0) {
-      writer.uint32(40).int32(message.syncIntervalMinutes);
+    if (message.sync_interval_minutes !== 0) {
+      writer.uint32(40).int32(message.sync_interval_minutes);
     }
-    if (message.lastSyncAt !== undefined) {
-      writer.uint32(50).string(message.lastSyncAt);
+    if (message.last_sync_at !== undefined) {
+      writer.uint32(50).string(message.last_sync_at);
     }
-    if (message.createdAt !== "") {
-      writer.uint32(58).string(message.createdAt);
+    if (message.created_at !== "") {
+      writer.uint32(58).string(message.created_at);
     }
-    if (message.updatedAt !== "") {
-      writer.uint32(66).string(message.updatedAt);
+    if (message.updated_at !== "") {
+      writer.uint32(66).string(message.updated_at);
+    }
+    if (message.has_api_token !== undefined) {
+      writer.uint32(72).bool(message.has_api_token);
     }
     return writer;
   },
@@ -200,7 +210,7 @@ export const WinLeadPlusConfig: MessageFns<WinLeadPlusConfig> = {
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 3: {
@@ -208,7 +218,7 @@ export const WinLeadPlusConfig: MessageFns<WinLeadPlusConfig> = {
             break;
           }
 
-          message.apiEndpoint = reader.string();
+          message.api_endpoint = reader.string();
           continue;
         }
         case 4: {
@@ -224,7 +234,7 @@ export const WinLeadPlusConfig: MessageFns<WinLeadPlusConfig> = {
             break;
           }
 
-          message.syncIntervalMinutes = reader.int32();
+          message.sync_interval_minutes = reader.int32();
           continue;
         }
         case 6: {
@@ -232,7 +242,7 @@ export const WinLeadPlusConfig: MessageFns<WinLeadPlusConfig> = {
             break;
           }
 
-          message.lastSyncAt = reader.string();
+          message.last_sync_at = reader.string();
           continue;
         }
         case 7: {
@@ -240,7 +250,7 @@ export const WinLeadPlusConfig: MessageFns<WinLeadPlusConfig> = {
             break;
           }
 
-          message.createdAt = reader.string();
+          message.created_at = reader.string();
           continue;
         }
         case 8: {
@@ -248,7 +258,15 @@ export const WinLeadPlusConfig: MessageFns<WinLeadPlusConfig> = {
             break;
           }
 
-          message.updatedAt = reader.string();
+          message.updated_at = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.has_api_token = reader.bool();
           continue;
         }
       }
@@ -259,107 +277,25 @@ export const WinLeadPlusConfig: MessageFns<WinLeadPlusConfig> = {
     }
     return message;
   },
-
-  fromJSON(object: any): WinLeadPlusConfig {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      apiEndpoint: isSet(object.apiEndpoint)
-        ? globalThis.String(object.apiEndpoint)
-        : isSet(object.api_endpoint)
-        ? globalThis.String(object.api_endpoint)
-        : "",
-      enabled: isSet(object.enabled) ? globalThis.Boolean(object.enabled) : false,
-      syncIntervalMinutes: isSet(object.syncIntervalMinutes)
-        ? globalThis.Number(object.syncIntervalMinutes)
-        : isSet(object.sync_interval_minutes)
-        ? globalThis.Number(object.sync_interval_minutes)
-        : 0,
-      lastSyncAt: isSet(object.lastSyncAt)
-        ? globalThis.String(object.lastSyncAt)
-        : isSet(object.last_sync_at)
-        ? globalThis.String(object.last_sync_at)
-        : undefined,
-      createdAt: isSet(object.createdAt)
-        ? globalThis.String(object.createdAt)
-        : isSet(object.created_at)
-        ? globalThis.String(object.created_at)
-        : "",
-      updatedAt: isSet(object.updatedAt)
-        ? globalThis.String(object.updatedAt)
-        : isSet(object.updated_at)
-        ? globalThis.String(object.updated_at)
-        : "",
-    };
-  },
-
-  toJSON(message: WinLeadPlusConfig): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.apiEndpoint !== "") {
-      obj.apiEndpoint = message.apiEndpoint;
-    }
-    if (message.enabled !== false) {
-      obj.enabled = message.enabled;
-    }
-    if (message.syncIntervalMinutes !== 0) {
-      obj.syncIntervalMinutes = Math.round(message.syncIntervalMinutes);
-    }
-    if (message.lastSyncAt !== undefined) {
-      obj.lastSyncAt = message.lastSyncAt;
-    }
-    if (message.createdAt !== "") {
-      obj.createdAt = message.createdAt;
-    }
-    if (message.updatedAt !== "") {
-      obj.updatedAt = message.updatedAt;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<WinLeadPlusConfig>, I>>(base?: I): WinLeadPlusConfig {
-    return WinLeadPlusConfig.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<WinLeadPlusConfig>, I>>(object: I): WinLeadPlusConfig {
-    const message = createBaseWinLeadPlusConfig();
-    message.id = object.id ?? "";
-    message.organisationId = object.organisationId ?? "";
-    message.apiEndpoint = object.apiEndpoint ?? "";
-    message.enabled = object.enabled ?? false;
-    message.syncIntervalMinutes = object.syncIntervalMinutes ?? 0;
-    message.lastSyncAt = object.lastSyncAt ?? undefined;
-    message.createdAt = object.createdAt ?? "";
-    message.updatedAt = object.updatedAt ?? "";
-    return message;
-  },
 };
 
 function createBaseCreateWinLeadPlusConfigRequest(): CreateWinLeadPlusConfigRequest {
-  return { organisationId: "", apiEndpoint: "", enabled: false, syncIntervalMinutes: 0 };
+  return { organisation_id: "", api_endpoint: "", enabled: false, sync_interval_minutes: 0 };
 }
 
 export const CreateWinLeadPlusConfigRequest: MessageFns<CreateWinLeadPlusConfigRequest> = {
   encode(message: CreateWinLeadPlusConfigRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(10).string(message.organisation_id);
     }
-    if (message.apiEndpoint !== "") {
-      writer.uint32(18).string(message.apiEndpoint);
+    if (message.api_endpoint !== "") {
+      writer.uint32(18).string(message.api_endpoint);
     }
     if (message.enabled !== false) {
       writer.uint32(24).bool(message.enabled);
     }
-    if (message.syncIntervalMinutes !== 0) {
-      writer.uint32(32).int32(message.syncIntervalMinutes);
+    if (message.sync_interval_minutes !== 0) {
+      writer.uint32(32).int32(message.sync_interval_minutes);
     }
     return writer;
   },
@@ -376,7 +312,7 @@ export const CreateWinLeadPlusConfigRequest: MessageFns<CreateWinLeadPlusConfigR
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 2: {
@@ -384,7 +320,7 @@ export const CreateWinLeadPlusConfigRequest: MessageFns<CreateWinLeadPlusConfigR
             break;
           }
 
-          message.apiEndpoint = reader.string();
+          message.api_endpoint = reader.string();
           continue;
         }
         case 3: {
@@ -400,7 +336,7 @@ export const CreateWinLeadPlusConfigRequest: MessageFns<CreateWinLeadPlusConfigR
             break;
           }
 
-          message.syncIntervalMinutes = reader.int32();
+          message.sync_interval_minutes = reader.int32();
           continue;
         }
       }
@@ -411,62 +347,10 @@ export const CreateWinLeadPlusConfigRequest: MessageFns<CreateWinLeadPlusConfigR
     }
     return message;
   },
-
-  fromJSON(object: any): CreateWinLeadPlusConfigRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      apiEndpoint: isSet(object.apiEndpoint)
-        ? globalThis.String(object.apiEndpoint)
-        : isSet(object.api_endpoint)
-        ? globalThis.String(object.api_endpoint)
-        : "",
-      enabled: isSet(object.enabled) ? globalThis.Boolean(object.enabled) : false,
-      syncIntervalMinutes: isSet(object.syncIntervalMinutes)
-        ? globalThis.Number(object.syncIntervalMinutes)
-        : isSet(object.sync_interval_minutes)
-        ? globalThis.Number(object.sync_interval_minutes)
-        : 0,
-    };
-  },
-
-  toJSON(message: CreateWinLeadPlusConfigRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.apiEndpoint !== "") {
-      obj.apiEndpoint = message.apiEndpoint;
-    }
-    if (message.enabled !== false) {
-      obj.enabled = message.enabled;
-    }
-    if (message.syncIntervalMinutes !== 0) {
-      obj.syncIntervalMinutes = Math.round(message.syncIntervalMinutes);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CreateWinLeadPlusConfigRequest>, I>>(base?: I): CreateWinLeadPlusConfigRequest {
-    return CreateWinLeadPlusConfigRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CreateWinLeadPlusConfigRequest>, I>>(
-    object: I,
-  ): CreateWinLeadPlusConfigRequest {
-    const message = createBaseCreateWinLeadPlusConfigRequest();
-    message.organisationId = object.organisationId ?? "";
-    message.apiEndpoint = object.apiEndpoint ?? "";
-    message.enabled = object.enabled ?? false;
-    message.syncIntervalMinutes = object.syncIntervalMinutes ?? 0;
-    return message;
-  },
 };
 
 function createBaseUpdateWinLeadPlusConfigRequest(): UpdateWinLeadPlusConfigRequest {
-  return { id: "", apiEndpoint: undefined, enabled: undefined, syncIntervalMinutes: undefined };
+  return { id: "" };
 }
 
 export const UpdateWinLeadPlusConfigRequest: MessageFns<UpdateWinLeadPlusConfigRequest> = {
@@ -474,14 +358,20 @@ export const UpdateWinLeadPlusConfigRequest: MessageFns<UpdateWinLeadPlusConfigR
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.apiEndpoint !== undefined) {
-      writer.uint32(18).string(message.apiEndpoint);
+    if (message.api_endpoint !== undefined) {
+      writer.uint32(18).string(message.api_endpoint);
     }
     if (message.enabled !== undefined) {
       writer.uint32(24).bool(message.enabled);
     }
-    if (message.syncIntervalMinutes !== undefined) {
-      writer.uint32(32).int32(message.syncIntervalMinutes);
+    if (message.sync_interval_minutes !== undefined) {
+      writer.uint32(32).int32(message.sync_interval_minutes);
+    }
+    if (message.organisation_id !== undefined) {
+      writer.uint32(42).string(message.organisation_id);
+    }
+    if (message.api_token !== undefined) {
+      writer.uint32(50).string(message.api_token);
     }
     return writer;
   },
@@ -506,7 +396,7 @@ export const UpdateWinLeadPlusConfigRequest: MessageFns<UpdateWinLeadPlusConfigR
             break;
           }
 
-          message.apiEndpoint = reader.string();
+          message.api_endpoint = reader.string();
           continue;
         }
         case 3: {
@@ -522,7 +412,23 @@ export const UpdateWinLeadPlusConfigRequest: MessageFns<UpdateWinLeadPlusConfigR
             break;
           }
 
-          message.syncIntervalMinutes = reader.int32();
+          message.sync_interval_minutes = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.organisation_id = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.api_token = reader.string();
           continue;
         }
       }
@@ -533,64 +439,16 @@ export const UpdateWinLeadPlusConfigRequest: MessageFns<UpdateWinLeadPlusConfigR
     }
     return message;
   },
-
-  fromJSON(object: any): UpdateWinLeadPlusConfigRequest {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      apiEndpoint: isSet(object.apiEndpoint)
-        ? globalThis.String(object.apiEndpoint)
-        : isSet(object.api_endpoint)
-        ? globalThis.String(object.api_endpoint)
-        : undefined,
-      enabled: isSet(object.enabled) ? globalThis.Boolean(object.enabled) : undefined,
-      syncIntervalMinutes: isSet(object.syncIntervalMinutes)
-        ? globalThis.Number(object.syncIntervalMinutes)
-        : isSet(object.sync_interval_minutes)
-        ? globalThis.Number(object.sync_interval_minutes)
-        : undefined,
-    };
-  },
-
-  toJSON(message: UpdateWinLeadPlusConfigRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.apiEndpoint !== undefined) {
-      obj.apiEndpoint = message.apiEndpoint;
-    }
-    if (message.enabled !== undefined) {
-      obj.enabled = message.enabled;
-    }
-    if (message.syncIntervalMinutes !== undefined) {
-      obj.syncIntervalMinutes = Math.round(message.syncIntervalMinutes);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<UpdateWinLeadPlusConfigRequest>, I>>(base?: I): UpdateWinLeadPlusConfigRequest {
-    return UpdateWinLeadPlusConfigRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<UpdateWinLeadPlusConfigRequest>, I>>(
-    object: I,
-  ): UpdateWinLeadPlusConfigRequest {
-    const message = createBaseUpdateWinLeadPlusConfigRequest();
-    message.id = object.id ?? "";
-    message.apiEndpoint = object.apiEndpoint ?? undefined;
-    message.enabled = object.enabled ?? undefined;
-    message.syncIntervalMinutes = object.syncIntervalMinutes ?? undefined;
-    return message;
-  },
 };
 
 function createBaseGetWinLeadPlusConfigRequest(): GetWinLeadPlusConfigRequest {
-  return { organisationId: "" };
+  return { organisation_id: "" };
 }
 
 export const GetWinLeadPlusConfigRequest: MessageFns<GetWinLeadPlusConfigRequest> = {
   encode(message: GetWinLeadPlusConfigRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(10).string(message.organisation_id);
     }
     return writer;
   },
@@ -607,7 +465,7 @@ export const GetWinLeadPlusConfigRequest: MessageFns<GetWinLeadPlusConfigRequest
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
       }
@@ -616,33 +474,6 @@ export const GetWinLeadPlusConfigRequest: MessageFns<GetWinLeadPlusConfigRequest
       }
       reader.skip(tag & 7);
     }
-    return message;
-  },
-
-  fromJSON(object: any): GetWinLeadPlusConfigRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-    };
-  },
-
-  toJSON(message: GetWinLeadPlusConfigRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetWinLeadPlusConfigRequest>, I>>(base?: I): GetWinLeadPlusConfigRequest {
-    return GetWinLeadPlusConfigRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetWinLeadPlusConfigRequest>, I>>(object: I): GetWinLeadPlusConfigRequest {
-    const message = createBaseGetWinLeadPlusConfigRequest();
-    message.organisationId = object.organisationId ?? "";
     return message;
   },
 };
@@ -682,37 +513,16 @@ export const HasWinLeadPlusConfigResponse: MessageFns<HasWinLeadPlusConfigRespon
     }
     return message;
   },
-
-  fromJSON(object: any): HasWinLeadPlusConfigResponse {
-    return { enabled: isSet(object.enabled) ? globalThis.Boolean(object.enabled) : false };
-  },
-
-  toJSON(message: HasWinLeadPlusConfigResponse): unknown {
-    const obj: any = {};
-    if (message.enabled !== false) {
-      obj.enabled = message.enabled;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<HasWinLeadPlusConfigResponse>, I>>(base?: I): HasWinLeadPlusConfigResponse {
-    return HasWinLeadPlusConfigResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<HasWinLeadPlusConfigResponse>, I>>(object: I): HasWinLeadPlusConfigResponse {
-    const message = createBaseHasWinLeadPlusConfigResponse();
-    message.enabled = object.enabled ?? false;
-    return message;
-  },
 };
 
 function createBaseWinLeadPlusMapping(): WinLeadPlusMapping {
   return {
     id: "",
-    organisationId: "",
-    winleadplusProspectId: "",
-    crmClientId: "",
-    crmContratIds: [],
-    lastSyncedAt: "",
+    organisation_id: "",
+    winleadplus_prospect_id: "",
+    crm_client_id: "",
+    crm_contrat_ids: [],
+    last_synced_at: "",
   };
 }
 
@@ -721,20 +531,20 @@ export const WinLeadPlusMapping: MessageFns<WinLeadPlusMapping> = {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.organisationId !== "") {
-      writer.uint32(18).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(18).string(message.organisation_id);
     }
-    if (message.winleadplusProspectId !== "") {
-      writer.uint32(26).string(message.winleadplusProspectId);
+    if (message.winleadplus_prospect_id !== "") {
+      writer.uint32(26).string(message.winleadplus_prospect_id);
     }
-    if (message.crmClientId !== "") {
-      writer.uint32(34).string(message.crmClientId);
+    if (message.crm_client_id !== "") {
+      writer.uint32(34).string(message.crm_client_id);
     }
-    for (const v of message.crmContratIds) {
+    for (const v of message.crm_contrat_ids) {
       writer.uint32(42).string(v!);
     }
-    if (message.lastSyncedAt !== "") {
-      writer.uint32(50).string(message.lastSyncedAt);
+    if (message.last_synced_at !== "") {
+      writer.uint32(50).string(message.last_synced_at);
     }
     return writer;
   },
@@ -759,7 +569,7 @@ export const WinLeadPlusMapping: MessageFns<WinLeadPlusMapping> = {
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 3: {
@@ -767,7 +577,7 @@ export const WinLeadPlusMapping: MessageFns<WinLeadPlusMapping> = {
             break;
           }
 
-          message.winleadplusProspectId = reader.string();
+          message.winleadplus_prospect_id = reader.string();
           continue;
         }
         case 4: {
@@ -775,7 +585,7 @@ export const WinLeadPlusMapping: MessageFns<WinLeadPlusMapping> = {
             break;
           }
 
-          message.crmClientId = reader.string();
+          message.crm_client_id = reader.string();
           continue;
         }
         case 5: {
@@ -783,7 +593,7 @@ export const WinLeadPlusMapping: MessageFns<WinLeadPlusMapping> = {
             break;
           }
 
-          message.crmContratIds.push(reader.string());
+          message.crm_contrat_ids.push(reader.string());
           continue;
         }
         case 6: {
@@ -791,7 +601,7 @@ export const WinLeadPlusMapping: MessageFns<WinLeadPlusMapping> = {
             break;
           }
 
-          message.lastSyncedAt = reader.string();
+          message.last_synced_at = reader.string();
           continue;
         }
       }
@@ -802,92 +612,24 @@ export const WinLeadPlusMapping: MessageFns<WinLeadPlusMapping> = {
     }
     return message;
   },
-
-  fromJSON(object: any): WinLeadPlusMapping {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      winleadplusProspectId: isSet(object.winleadplusProspectId)
-        ? globalThis.String(object.winleadplusProspectId)
-        : isSet(object.winleadplus_prospect_id)
-        ? globalThis.String(object.winleadplus_prospect_id)
-        : "",
-      crmClientId: isSet(object.crmClientId)
-        ? globalThis.String(object.crmClientId)
-        : isSet(object.crm_client_id)
-        ? globalThis.String(object.crm_client_id)
-        : "",
-      crmContratIds: globalThis.Array.isArray(object?.crmContratIds)
-        ? object.crmContratIds.map((e: any) => globalThis.String(e))
-        : globalThis.Array.isArray(object?.crm_contrat_ids)
-        ? object.crm_contrat_ids.map((e: any) => globalThis.String(e))
-        : [],
-      lastSyncedAt: isSet(object.lastSyncedAt)
-        ? globalThis.String(object.lastSyncedAt)
-        : isSet(object.last_synced_at)
-        ? globalThis.String(object.last_synced_at)
-        : "",
-    };
-  },
-
-  toJSON(message: WinLeadPlusMapping): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.winleadplusProspectId !== "") {
-      obj.winleadplusProspectId = message.winleadplusProspectId;
-    }
-    if (message.crmClientId !== "") {
-      obj.crmClientId = message.crmClientId;
-    }
-    if (message.crmContratIds?.length) {
-      obj.crmContratIds = message.crmContratIds;
-    }
-    if (message.lastSyncedAt !== "") {
-      obj.lastSyncedAt = message.lastSyncedAt;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<WinLeadPlusMapping>, I>>(base?: I): WinLeadPlusMapping {
-    return WinLeadPlusMapping.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<WinLeadPlusMapping>, I>>(object: I): WinLeadPlusMapping {
-    const message = createBaseWinLeadPlusMapping();
-    message.id = object.id ?? "";
-    message.organisationId = object.organisationId ?? "";
-    message.winleadplusProspectId = object.winleadplusProspectId ?? "";
-    message.crmClientId = object.crmClientId ?? "";
-    message.crmContratIds = object.crmContratIds?.map((e) => e) || [];
-    message.lastSyncedAt = object.lastSyncedAt ?? "";
-    return message;
-  },
 };
 
 function createBaseCreateWinLeadPlusMappingRequest(): CreateWinLeadPlusMappingRequest {
-  return { organisationId: "", winleadplusProspectId: "", crmClientId: "", crmContratIds: [] };
+  return { organisation_id: "", winleadplus_prospect_id: "", crm_client_id: "", crm_contrat_ids: [] };
 }
 
 export const CreateWinLeadPlusMappingRequest: MessageFns<CreateWinLeadPlusMappingRequest> = {
   encode(message: CreateWinLeadPlusMappingRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(10).string(message.organisation_id);
     }
-    if (message.winleadplusProspectId !== "") {
-      writer.uint32(18).string(message.winleadplusProspectId);
+    if (message.winleadplus_prospect_id !== "") {
+      writer.uint32(18).string(message.winleadplus_prospect_id);
     }
-    if (message.crmClientId !== "") {
-      writer.uint32(26).string(message.crmClientId);
+    if (message.crm_client_id !== "") {
+      writer.uint32(26).string(message.crm_client_id);
     }
-    for (const v of message.crmContratIds) {
+    for (const v of message.crm_contrat_ids) {
       writer.uint32(34).string(v!);
     }
     return writer;
@@ -905,7 +647,7 @@ export const CreateWinLeadPlusMappingRequest: MessageFns<CreateWinLeadPlusMappin
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 2: {
@@ -913,7 +655,7 @@ export const CreateWinLeadPlusMappingRequest: MessageFns<CreateWinLeadPlusMappin
             break;
           }
 
-          message.winleadplusProspectId = reader.string();
+          message.winleadplus_prospect_id = reader.string();
           continue;
         }
         case 3: {
@@ -921,7 +663,7 @@ export const CreateWinLeadPlusMappingRequest: MessageFns<CreateWinLeadPlusMappin
             break;
           }
 
-          message.crmClientId = reader.string();
+          message.crm_client_id = reader.string();
           continue;
         }
         case 4: {
@@ -929,7 +671,7 @@ export const CreateWinLeadPlusMappingRequest: MessageFns<CreateWinLeadPlusMappin
             break;
           }
 
-          message.crmContratIds.push(reader.string());
+          message.crm_contrat_ids.push(reader.string());
           continue;
         }
       }
@@ -940,66 +682,10 @@ export const CreateWinLeadPlusMappingRequest: MessageFns<CreateWinLeadPlusMappin
     }
     return message;
   },
-
-  fromJSON(object: any): CreateWinLeadPlusMappingRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      winleadplusProspectId: isSet(object.winleadplusProspectId)
-        ? globalThis.String(object.winleadplusProspectId)
-        : isSet(object.winleadplus_prospect_id)
-        ? globalThis.String(object.winleadplus_prospect_id)
-        : "",
-      crmClientId: isSet(object.crmClientId)
-        ? globalThis.String(object.crmClientId)
-        : isSet(object.crm_client_id)
-        ? globalThis.String(object.crm_client_id)
-        : "",
-      crmContratIds: globalThis.Array.isArray(object?.crmContratIds)
-        ? object.crmContratIds.map((e: any) => globalThis.String(e))
-        : globalThis.Array.isArray(object?.crm_contrat_ids)
-        ? object.crm_contrat_ids.map((e: any) => globalThis.String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: CreateWinLeadPlusMappingRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.winleadplusProspectId !== "") {
-      obj.winleadplusProspectId = message.winleadplusProspectId;
-    }
-    if (message.crmClientId !== "") {
-      obj.crmClientId = message.crmClientId;
-    }
-    if (message.crmContratIds?.length) {
-      obj.crmContratIds = message.crmContratIds;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CreateWinLeadPlusMappingRequest>, I>>(base?: I): CreateWinLeadPlusMappingRequest {
-    return CreateWinLeadPlusMappingRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CreateWinLeadPlusMappingRequest>, I>>(
-    object: I,
-  ): CreateWinLeadPlusMappingRequest {
-    const message = createBaseCreateWinLeadPlusMappingRequest();
-    message.organisationId = object.organisationId ?? "";
-    message.winleadplusProspectId = object.winleadplusProspectId ?? "";
-    message.crmClientId = object.crmClientId ?? "";
-    message.crmContratIds = object.crmContratIds?.map((e) => e) || [];
-    return message;
-  },
 };
 
 function createBaseUpdateWinLeadPlusMappingRequest(): UpdateWinLeadPlusMappingRequest {
-  return { id: "", crmClientId: undefined, crmContratIds: [] };
+  return { id: "", crm_contrat_ids: [] };
 }
 
 export const UpdateWinLeadPlusMappingRequest: MessageFns<UpdateWinLeadPlusMappingRequest> = {
@@ -1007,10 +693,10 @@ export const UpdateWinLeadPlusMappingRequest: MessageFns<UpdateWinLeadPlusMappin
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.crmClientId !== undefined) {
-      writer.uint32(18).string(message.crmClientId);
+    if (message.crm_client_id !== undefined) {
+      writer.uint32(18).string(message.crm_client_id);
     }
-    for (const v of message.crmContratIds) {
+    for (const v of message.crm_contrat_ids) {
       writer.uint32(26).string(v!);
     }
     return writer;
@@ -1036,7 +722,7 @@ export const UpdateWinLeadPlusMappingRequest: MessageFns<UpdateWinLeadPlusMappin
             break;
           }
 
-          message.crmClientId = reader.string();
+          message.crm_client_id = reader.string();
           continue;
         }
         case 3: {
@@ -1044,7 +730,7 @@ export const UpdateWinLeadPlusMappingRequest: MessageFns<UpdateWinLeadPlusMappin
             break;
           }
 
-          message.crmContratIds.push(reader.string());
+          message.crm_contrat_ids.push(reader.string());
           continue;
         }
       }
@@ -1053,49 +739,6 @@ export const UpdateWinLeadPlusMappingRequest: MessageFns<UpdateWinLeadPlusMappin
       }
       reader.skip(tag & 7);
     }
-    return message;
-  },
-
-  fromJSON(object: any): UpdateWinLeadPlusMappingRequest {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      crmClientId: isSet(object.crmClientId)
-        ? globalThis.String(object.crmClientId)
-        : isSet(object.crm_client_id)
-        ? globalThis.String(object.crm_client_id)
-        : undefined,
-      crmContratIds: globalThis.Array.isArray(object?.crmContratIds)
-        ? object.crmContratIds.map((e: any) => globalThis.String(e))
-        : globalThis.Array.isArray(object?.crm_contrat_ids)
-        ? object.crm_contrat_ids.map((e: any) => globalThis.String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: UpdateWinLeadPlusMappingRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.crmClientId !== undefined) {
-      obj.crmClientId = message.crmClientId;
-    }
-    if (message.crmContratIds?.length) {
-      obj.crmContratIds = message.crmContratIds;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<UpdateWinLeadPlusMappingRequest>, I>>(base?: I): UpdateWinLeadPlusMappingRequest {
-    return UpdateWinLeadPlusMappingRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<UpdateWinLeadPlusMappingRequest>, I>>(
-    object: I,
-  ): UpdateWinLeadPlusMappingRequest {
-    const message = createBaseUpdateWinLeadPlusMappingRequest();
-    message.id = object.id ?? "";
-    message.crmClientId = object.crmClientId ?? undefined;
-    message.crmContratIds = object.crmContratIds?.map((e) => e) || [];
     return message;
   },
 };
@@ -1135,43 +778,22 @@ export const GetWinLeadPlusMappingRequest: MessageFns<GetWinLeadPlusMappingReque
     }
     return message;
   },
-
-  fromJSON(object: any): GetWinLeadPlusMappingRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: GetWinLeadPlusMappingRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetWinLeadPlusMappingRequest>, I>>(base?: I): GetWinLeadPlusMappingRequest {
-    return GetWinLeadPlusMappingRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetWinLeadPlusMappingRequest>, I>>(object: I): GetWinLeadPlusMappingRequest {
-    const message = createBaseGetWinLeadPlusMappingRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
 };
 
 function createBaseListWinLeadPlusMappingsRequest(): ListWinLeadPlusMappingsRequest {
-  return { organisationId: "", winleadplusProspectId: undefined, crmClientId: undefined };
+  return { organisation_id: "" };
 }
 
 export const ListWinLeadPlusMappingsRequest: MessageFns<ListWinLeadPlusMappingsRequest> = {
   encode(message: ListWinLeadPlusMappingsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(10).string(message.organisation_id);
     }
-    if (message.winleadplusProspectId !== undefined) {
-      writer.uint32(18).string(message.winleadplusProspectId);
+    if (message.winleadplus_prospect_id !== undefined) {
+      writer.uint32(18).string(message.winleadplus_prospect_id);
     }
-    if (message.crmClientId !== undefined) {
-      writer.uint32(26).string(message.crmClientId);
+    if (message.crm_client_id !== undefined) {
+      writer.uint32(26).string(message.crm_client_id);
     }
     return writer;
   },
@@ -1188,7 +810,7 @@ export const ListWinLeadPlusMappingsRequest: MessageFns<ListWinLeadPlusMappingsR
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 2: {
@@ -1196,7 +818,7 @@ export const ListWinLeadPlusMappingsRequest: MessageFns<ListWinLeadPlusMappingsR
             break;
           }
 
-          message.winleadplusProspectId = reader.string();
+          message.winleadplus_prospect_id = reader.string();
           continue;
         }
         case 3: {
@@ -1204,7 +826,7 @@ export const ListWinLeadPlusMappingsRequest: MessageFns<ListWinLeadPlusMappingsR
             break;
           }
 
-          message.crmClientId = reader.string();
+          message.crm_client_id = reader.string();
           continue;
         }
       }
@@ -1213,53 +835,6 @@ export const ListWinLeadPlusMappingsRequest: MessageFns<ListWinLeadPlusMappingsR
       }
       reader.skip(tag & 7);
     }
-    return message;
-  },
-
-  fromJSON(object: any): ListWinLeadPlusMappingsRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      winleadplusProspectId: isSet(object.winleadplusProspectId)
-        ? globalThis.String(object.winleadplusProspectId)
-        : isSet(object.winleadplus_prospect_id)
-        ? globalThis.String(object.winleadplus_prospect_id)
-        : undefined,
-      crmClientId: isSet(object.crmClientId)
-        ? globalThis.String(object.crmClientId)
-        : isSet(object.crm_client_id)
-        ? globalThis.String(object.crm_client_id)
-        : undefined,
-    };
-  },
-
-  toJSON(message: ListWinLeadPlusMappingsRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.winleadplusProspectId !== undefined) {
-      obj.winleadplusProspectId = message.winleadplusProspectId;
-    }
-    if (message.crmClientId !== undefined) {
-      obj.crmClientId = message.crmClientId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListWinLeadPlusMappingsRequest>, I>>(base?: I): ListWinLeadPlusMappingsRequest {
-    return ListWinLeadPlusMappingsRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListWinLeadPlusMappingsRequest>, I>>(
-    object: I,
-  ): ListWinLeadPlusMappingsRequest {
-    const message = createBaseListWinLeadPlusMappingsRequest();
-    message.organisationId = object.organisationId ?? "";
-    message.winleadplusProspectId = object.winleadplusProspectId ?? undefined;
-    message.crmClientId = object.crmClientId ?? undefined;
     return message;
   },
 };
@@ -1299,43 +874,15 @@ export const ListWinLeadPlusMappingsResponse: MessageFns<ListWinLeadPlusMappings
     }
     return message;
   },
-
-  fromJSON(object: any): ListWinLeadPlusMappingsResponse {
-    return {
-      mappings: globalThis.Array.isArray(object?.mappings)
-        ? object.mappings.map((e: any) => WinLeadPlusMapping.fromJSON(e))
-        : [],
-    };
-  },
-
-  toJSON(message: ListWinLeadPlusMappingsResponse): unknown {
-    const obj: any = {};
-    if (message.mappings?.length) {
-      obj.mappings = message.mappings.map((e) => WinLeadPlusMapping.toJSON(e));
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListWinLeadPlusMappingsResponse>, I>>(base?: I): ListWinLeadPlusMappingsResponse {
-    return ListWinLeadPlusMappingsResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListWinLeadPlusMappingsResponse>, I>>(
-    object: I,
-  ): ListWinLeadPlusMappingsResponse {
-    const message = createBaseListWinLeadPlusMappingsResponse();
-    message.mappings = object.mappings?.map((e) => WinLeadPlusMapping.fromPartial(e)) || [];
-    return message;
-  },
 };
 
 function createBaseWinLeadPlusSyncLog(): WinLeadPlusSyncLog {
   return {
     id: "",
-    organisationId: "",
-    startedAt: "",
-    finishedAt: undefined,
+    organisation_id: "",
+    started_at: "",
     status: "",
-    totalProspects: 0,
+    total_prospects: 0,
     created: 0,
     updated: 0,
     skipped: 0,
@@ -1348,20 +895,20 @@ export const WinLeadPlusSyncLog: MessageFns<WinLeadPlusSyncLog> = {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.organisationId !== "") {
-      writer.uint32(18).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(18).string(message.organisation_id);
     }
-    if (message.startedAt !== "") {
-      writer.uint32(26).string(message.startedAt);
+    if (message.started_at !== "") {
+      writer.uint32(26).string(message.started_at);
     }
-    if (message.finishedAt !== undefined) {
-      writer.uint32(34).string(message.finishedAt);
+    if (message.finished_at !== undefined) {
+      writer.uint32(34).string(message.finished_at);
     }
     if (message.status !== "") {
       writer.uint32(42).string(message.status);
     }
-    if (message.totalProspects !== 0) {
-      writer.uint32(48).int32(message.totalProspects);
+    if (message.total_prospects !== 0) {
+      writer.uint32(48).int32(message.total_prospects);
     }
     if (message.created !== 0) {
       writer.uint32(56).int32(message.created);
@@ -1398,7 +945,7 @@ export const WinLeadPlusSyncLog: MessageFns<WinLeadPlusSyncLog> = {
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 3: {
@@ -1406,7 +953,7 @@ export const WinLeadPlusSyncLog: MessageFns<WinLeadPlusSyncLog> = {
             break;
           }
 
-          message.startedAt = reader.string();
+          message.started_at = reader.string();
           continue;
         }
         case 4: {
@@ -1414,7 +961,7 @@ export const WinLeadPlusSyncLog: MessageFns<WinLeadPlusSyncLog> = {
             break;
           }
 
-          message.finishedAt = reader.string();
+          message.finished_at = reader.string();
           continue;
         }
         case 5: {
@@ -1430,7 +977,7 @@ export const WinLeadPlusSyncLog: MessageFns<WinLeadPlusSyncLog> = {
             break;
           }
 
-          message.totalProspects = reader.int32();
+          message.total_prospects = reader.int32();
           continue;
         }
         case 7: {
@@ -1473,92 +1020,6 @@ export const WinLeadPlusSyncLog: MessageFns<WinLeadPlusSyncLog> = {
     }
     return message;
   },
-
-  fromJSON(object: any): WinLeadPlusSyncLog {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      startedAt: isSet(object.startedAt)
-        ? globalThis.String(object.startedAt)
-        : isSet(object.started_at)
-        ? globalThis.String(object.started_at)
-        : "",
-      finishedAt: isSet(object.finishedAt)
-        ? globalThis.String(object.finishedAt)
-        : isSet(object.finished_at)
-        ? globalThis.String(object.finished_at)
-        : undefined,
-      status: isSet(object.status) ? globalThis.String(object.status) : "",
-      totalProspects: isSet(object.totalProspects)
-        ? globalThis.Number(object.totalProspects)
-        : isSet(object.total_prospects)
-        ? globalThis.Number(object.total_prospects)
-        : 0,
-      created: isSet(object.created) ? globalThis.Number(object.created) : 0,
-      updated: isSet(object.updated) ? globalThis.Number(object.updated) : 0,
-      skipped: isSet(object.skipped) ? globalThis.Number(object.skipped) : 0,
-      errors: globalThis.Array.isArray(object?.errors)
-        ? object.errors.map((e: any) => globalThis.String(e))
-        : [],
-    };
-  },
-
-  toJSON(message: WinLeadPlusSyncLog): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.startedAt !== "") {
-      obj.startedAt = message.startedAt;
-    }
-    if (message.finishedAt !== undefined) {
-      obj.finishedAt = message.finishedAt;
-    }
-    if (message.status !== "") {
-      obj.status = message.status;
-    }
-    if (message.totalProspects !== 0) {
-      obj.totalProspects = Math.round(message.totalProspects);
-    }
-    if (message.created !== 0) {
-      obj.created = Math.round(message.created);
-    }
-    if (message.updated !== 0) {
-      obj.updated = Math.round(message.updated);
-    }
-    if (message.skipped !== 0) {
-      obj.skipped = Math.round(message.skipped);
-    }
-    if (message.errors?.length) {
-      obj.errors = message.errors;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<WinLeadPlusSyncLog>, I>>(base?: I): WinLeadPlusSyncLog {
-    return WinLeadPlusSyncLog.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<WinLeadPlusSyncLog>, I>>(object: I): WinLeadPlusSyncLog {
-    const message = createBaseWinLeadPlusSyncLog();
-    message.id = object.id ?? "";
-    message.organisationId = object.organisationId ?? "";
-    message.startedAt = object.startedAt ?? "";
-    message.finishedAt = object.finishedAt ?? undefined;
-    message.status = object.status ?? "";
-    message.totalProspects = object.totalProspects ?? 0;
-    message.created = object.created ?? 0;
-    message.updated = object.updated ?? 0;
-    message.skipped = object.skipped ?? 0;
-    message.errors = object.errors?.map((e) => e) || [];
-    return message;
-  },
 };
 
 function createBaseGetWinLeadPlusSyncLogRequest(): GetWinLeadPlusSyncLogRequest {
@@ -1596,37 +1057,16 @@ export const GetWinLeadPlusSyncLogRequest: MessageFns<GetWinLeadPlusSyncLogReque
     }
     return message;
   },
-
-  fromJSON(object: any): GetWinLeadPlusSyncLogRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: GetWinLeadPlusSyncLogRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetWinLeadPlusSyncLogRequest>, I>>(base?: I): GetWinLeadPlusSyncLogRequest {
-    return GetWinLeadPlusSyncLogRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetWinLeadPlusSyncLogRequest>, I>>(object: I): GetWinLeadPlusSyncLogRequest {
-    const message = createBaseGetWinLeadPlusSyncLogRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
 };
 
 function createBaseListWinLeadPlusSyncLogsRequest(): ListWinLeadPlusSyncLogsRequest {
-  return { organisationId: "", limit: undefined };
+  return { organisation_id: "" };
 }
 
 export const ListWinLeadPlusSyncLogsRequest: MessageFns<ListWinLeadPlusSyncLogsRequest> = {
   encode(message: ListWinLeadPlusSyncLogsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(10).string(message.organisation_id);
     }
     if (message.limit !== undefined) {
       writer.uint32(16).int32(message.limit);
@@ -1646,7 +1086,7 @@ export const ListWinLeadPlusSyncLogsRequest: MessageFns<ListWinLeadPlusSyncLogsR
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 2: {
@@ -1663,40 +1103,6 @@ export const ListWinLeadPlusSyncLogsRequest: MessageFns<ListWinLeadPlusSyncLogsR
       }
       reader.skip(tag & 7);
     }
-    return message;
-  },
-
-  fromJSON(object: any): ListWinLeadPlusSyncLogsRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      limit: isSet(object.limit) ? globalThis.Number(object.limit) : undefined,
-    };
-  },
-
-  toJSON(message: ListWinLeadPlusSyncLogsRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.limit !== undefined) {
-      obj.limit = Math.round(message.limit);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListWinLeadPlusSyncLogsRequest>, I>>(base?: I): ListWinLeadPlusSyncLogsRequest {
-    return ListWinLeadPlusSyncLogsRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListWinLeadPlusSyncLogsRequest>, I>>(
-    object: I,
-  ): ListWinLeadPlusSyncLogsRequest {
-    const message = createBaseListWinLeadPlusSyncLogsRequest();
-    message.organisationId = object.organisationId ?? "";
-    message.limit = object.limit ?? undefined;
     return message;
   },
 };
@@ -1736,44 +1142,19 @@ export const ListWinLeadPlusSyncLogsResponse: MessageFns<ListWinLeadPlusSyncLogs
     }
     return message;
   },
-
-  fromJSON(object: any): ListWinLeadPlusSyncLogsResponse {
-    return {
-      logs: globalThis.Array.isArray(object?.logs) ? object.logs.map((e: any) => WinLeadPlusSyncLog.fromJSON(e)) : [],
-    };
-  },
-
-  toJSON(message: ListWinLeadPlusSyncLogsResponse): unknown {
-    const obj: any = {};
-    if (message.logs?.length) {
-      obj.logs = message.logs.map((e) => WinLeadPlusSyncLog.toJSON(e));
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListWinLeadPlusSyncLogsResponse>, I>>(base?: I): ListWinLeadPlusSyncLogsResponse {
-    return ListWinLeadPlusSyncLogsResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListWinLeadPlusSyncLogsResponse>, I>>(
-    object: I,
-  ): ListWinLeadPlusSyncLogsResponse {
-    const message = createBaseListWinLeadPlusSyncLogsResponse();
-    message.logs = object.logs?.map((e) => WinLeadPlusSyncLog.fromPartial(e)) || [];
-    return message;
-  },
 };
 
 function createBaseSyncProspectsRequest(): SyncProspectsRequest {
-  return { organisationId: "", dryRun: false };
+  return { organisation_id: "", dry_run: false };
 }
 
 export const SyncProspectsRequest: MessageFns<SyncProspectsRequest> = {
   encode(message: SyncProspectsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(10).string(message.organisation_id);
     }
-    if (message.dryRun !== false) {
-      writer.uint32(16).bool(message.dryRun);
+    if (message.dry_run !== false) {
+      writer.uint32(16).bool(message.dry_run);
     }
     return writer;
   },
@@ -1790,7 +1171,7 @@ export const SyncProspectsRequest: MessageFns<SyncProspectsRequest> = {
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 2: {
@@ -1798,7 +1179,7 @@ export const SyncProspectsRequest: MessageFns<SyncProspectsRequest> = {
             break;
           }
 
-          message.dryRun = reader.bool();
+          message.dry_run = reader.bool();
           continue;
         }
       }
@@ -1809,46 +1190,10 @@ export const SyncProspectsRequest: MessageFns<SyncProspectsRequest> = {
     }
     return message;
   },
-
-  fromJSON(object: any): SyncProspectsRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      dryRun: isSet(object.dryRun)
-        ? globalThis.Boolean(object.dryRun)
-        : isSet(object.dry_run)
-        ? globalThis.Boolean(object.dry_run)
-        : false,
-    };
-  },
-
-  toJSON(message: SyncProspectsRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.dryRun !== false) {
-      obj.dryRun = message.dryRun;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<SyncProspectsRequest>, I>>(base?: I): SyncProspectsRequest {
-    return SyncProspectsRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<SyncProspectsRequest>, I>>(object: I): SyncProspectsRequest {
-    const message = createBaseSyncProspectsRequest();
-    message.organisationId = object.organisationId ?? "";
-    message.dryRun = object.dryRun ?? false;
-    return message;
-  },
 };
 
 function createBaseSyncProspectsResponse(): SyncProspectsResponse {
-  return { success: false, syncLog: undefined };
+  return { success: false, sync_log: undefined };
 }
 
 export const SyncProspectsResponse: MessageFns<SyncProspectsResponse> = {
@@ -1856,8 +1201,8 @@ export const SyncProspectsResponse: MessageFns<SyncProspectsResponse> = {
     if (message.success !== false) {
       writer.uint32(8).bool(message.success);
     }
-    if (message.syncLog !== undefined) {
-      WinLeadPlusSyncLog.encode(message.syncLog, writer.uint32(18).fork()).join();
+    if (message.sync_log !== undefined) {
+      WinLeadPlusSyncLog.encode(message.sync_log, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -1882,7 +1227,7 @@ export const SyncProspectsResponse: MessageFns<SyncProspectsResponse> = {
             break;
           }
 
-          message.syncLog = WinLeadPlusSyncLog.decode(reader, reader.uint32());
+          message.sync_log = WinLeadPlusSyncLog.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -1893,50 +1238,16 @@ export const SyncProspectsResponse: MessageFns<SyncProspectsResponse> = {
     }
     return message;
   },
-
-  fromJSON(object: any): SyncProspectsResponse {
-    return {
-      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
-      syncLog: isSet(object.syncLog)
-        ? WinLeadPlusSyncLog.fromJSON(object.syncLog)
-        : isSet(object.sync_log)
-        ? WinLeadPlusSyncLog.fromJSON(object.sync_log)
-        : undefined,
-    };
-  },
-
-  toJSON(message: SyncProspectsResponse): unknown {
-    const obj: any = {};
-    if (message.success !== false) {
-      obj.success = message.success;
-    }
-    if (message.syncLog !== undefined) {
-      obj.syncLog = WinLeadPlusSyncLog.toJSON(message.syncLog);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<SyncProspectsResponse>, I>>(base?: I): SyncProspectsResponse {
-    return SyncProspectsResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<SyncProspectsResponse>, I>>(object: I): SyncProspectsResponse {
-    const message = createBaseSyncProspectsResponse();
-    message.success = object.success ?? false;
-    message.syncLog = (object.syncLog !== undefined && object.syncLog !== null)
-      ? WinLeadPlusSyncLog.fromPartial(object.syncLog)
-      : undefined;
-    return message;
-  },
 };
 
 function createBaseGetSyncStatusRequest(): GetSyncStatusRequest {
-  return { organisationId: "" };
+  return { organisation_id: "" };
 }
 
 export const GetSyncStatusRequest: MessageFns<GetSyncStatusRequest> = {
   encode(message: GetSyncStatusRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(10).string(message.organisation_id);
     }
     return writer;
   },
@@ -1953,7 +1264,7 @@ export const GetSyncStatusRequest: MessageFns<GetSyncStatusRequest> = {
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
       }
@@ -1964,49 +1275,22 @@ export const GetSyncStatusRequest: MessageFns<GetSyncStatusRequest> = {
     }
     return message;
   },
-
-  fromJSON(object: any): GetSyncStatusRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-    };
-  },
-
-  toJSON(message: GetSyncStatusRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetSyncStatusRequest>, I>>(base?: I): GetSyncStatusRequest {
-    return GetSyncStatusRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetSyncStatusRequest>, I>>(object: I): GetSyncStatusRequest {
-    const message = createBaseGetSyncStatusRequest();
-    message.organisationId = object.organisationId ?? "";
-    return message;
-  },
 };
 
 function createBaseGetSyncStatusResponse(): GetSyncStatusResponse {
-  return { isSyncing: false, currentSyncId: undefined, lastSyncAt: undefined };
+  return { is_syncing: false };
 }
 
 export const GetSyncStatusResponse: MessageFns<GetSyncStatusResponse> = {
   encode(message: GetSyncStatusResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.isSyncing !== false) {
-      writer.uint32(8).bool(message.isSyncing);
+    if (message.is_syncing !== false) {
+      writer.uint32(8).bool(message.is_syncing);
     }
-    if (message.currentSyncId !== undefined) {
-      writer.uint32(18).string(message.currentSyncId);
+    if (message.current_sync_id !== undefined) {
+      writer.uint32(18).string(message.current_sync_id);
     }
-    if (message.lastSyncAt !== undefined) {
-      writer.uint32(26).string(message.lastSyncAt);
+    if (message.last_sync_at !== undefined) {
+      writer.uint32(26).string(message.last_sync_at);
     }
     return writer;
   },
@@ -2023,7 +1307,7 @@ export const GetSyncStatusResponse: MessageFns<GetSyncStatusResponse> = {
             break;
           }
 
-          message.isSyncing = reader.bool();
+          message.is_syncing = reader.bool();
           continue;
         }
         case 2: {
@@ -2031,7 +1315,7 @@ export const GetSyncStatusResponse: MessageFns<GetSyncStatusResponse> = {
             break;
           }
 
-          message.currentSyncId = reader.string();
+          message.current_sync_id = reader.string();
           continue;
         }
         case 3: {
@@ -2039,7 +1323,7 @@ export const GetSyncStatusResponse: MessageFns<GetSyncStatusResponse> = {
             break;
           }
 
-          message.lastSyncAt = reader.string();
+          message.last_sync_at = reader.string();
           continue;
         }
       }
@@ -2050,64 +1334,22 @@ export const GetSyncStatusResponse: MessageFns<GetSyncStatusResponse> = {
     }
     return message;
   },
-
-  fromJSON(object: any): GetSyncStatusResponse {
-    return {
-      isSyncing: isSet(object.isSyncing)
-        ? globalThis.Boolean(object.isSyncing)
-        : isSet(object.is_syncing)
-        ? globalThis.Boolean(object.is_syncing)
-        : false,
-      currentSyncId: isSet(object.currentSyncId)
-        ? globalThis.String(object.currentSyncId)
-        : isSet(object.current_sync_id)
-        ? globalThis.String(object.current_sync_id)
-        : undefined,
-      lastSyncAt: isSet(object.lastSyncAt)
-        ? globalThis.String(object.lastSyncAt)
-        : isSet(object.last_sync_at)
-        ? globalThis.String(object.last_sync_at)
-        : undefined,
-    };
-  },
-
-  toJSON(message: GetSyncStatusResponse): unknown {
-    const obj: any = {};
-    if (message.isSyncing !== false) {
-      obj.isSyncing = message.isSyncing;
-    }
-    if (message.currentSyncId !== undefined) {
-      obj.currentSyncId = message.currentSyncId;
-    }
-    if (message.lastSyncAt !== undefined) {
-      obj.lastSyncAt = message.lastSyncAt;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetSyncStatusResponse>, I>>(base?: I): GetSyncStatusResponse {
-    return GetSyncStatusResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetSyncStatusResponse>, I>>(object: I): GetSyncStatusResponse {
-    const message = createBaseGetSyncStatusResponse();
-    message.isSyncing = object.isSyncing ?? false;
-    message.currentSyncId = object.currentSyncId ?? undefined;
-    message.lastSyncAt = object.lastSyncAt ?? undefined;
-    return message;
-  },
 };
 
 function createBaseTestConnectionRequest(): TestConnectionRequest {
-  return { organisationId: "", apiEndpoint: "" };
+  return { organisation_id: "", api_endpoint: "" };
 }
 
 export const TestConnectionRequest: MessageFns<TestConnectionRequest> = {
   encode(message: TestConnectionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
+    if (message.organisation_id !== "") {
+      writer.uint32(10).string(message.organisation_id);
     }
-    if (message.apiEndpoint !== "") {
-      writer.uint32(18).string(message.apiEndpoint);
+    if (message.api_endpoint !== "") {
+      writer.uint32(18).string(message.api_endpoint);
+    }
+    if (message.api_token !== undefined) {
+      writer.uint32(26).string(message.api_token);
     }
     return writer;
   },
@@ -2124,7 +1366,7 @@ export const TestConnectionRequest: MessageFns<TestConnectionRequest> = {
             break;
           }
 
-          message.organisationId = reader.string();
+          message.organisation_id = reader.string();
           continue;
         }
         case 2: {
@@ -2132,7 +1374,15 @@ export const TestConnectionRequest: MessageFns<TestConnectionRequest> = {
             break;
           }
 
-          message.apiEndpoint = reader.string();
+          message.api_endpoint = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.api_token = reader.string();
           continue;
         }
       }
@@ -2141,42 +1391,6 @@ export const TestConnectionRequest: MessageFns<TestConnectionRequest> = {
       }
       reader.skip(tag & 7);
     }
-    return message;
-  },
-
-  fromJSON(object: any): TestConnectionRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      apiEndpoint: isSet(object.apiEndpoint)
-        ? globalThis.String(object.apiEndpoint)
-        : isSet(object.api_endpoint)
-        ? globalThis.String(object.api_endpoint)
-        : "",
-    };
-  },
-
-  toJSON(message: TestConnectionRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.apiEndpoint !== "") {
-      obj.apiEndpoint = message.apiEndpoint;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<TestConnectionRequest>, I>>(base?: I): TestConnectionRequest {
-    return TestConnectionRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<TestConnectionRequest>, I>>(object: I): TestConnectionRequest {
-    const message = createBaseTestConnectionRequest();
-    message.organisationId = object.organisationId ?? "";
-    message.apiEndpoint = object.apiEndpoint ?? "";
     return message;
   },
 };
@@ -2227,34 +1441,6 @@ export const TestConnectionResponse: MessageFns<TestConnectionResponse> = {
     }
     return message;
   },
-
-  fromJSON(object: any): TestConnectionResponse {
-    return {
-      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
-      message: isSet(object.message) ? globalThis.String(object.message) : "",
-    };
-  },
-
-  toJSON(message: TestConnectionResponse): unknown {
-    const obj: any = {};
-    if (message.success !== false) {
-      obj.success = message.success;
-    }
-    if (message.message !== "") {
-      obj.message = message.message;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<TestConnectionResponse>, I>>(base?: I): TestConnectionResponse {
-    return TestConnectionResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<TestConnectionResponse>, I>>(object: I): TestConnectionResponse {
-    const message = createBaseTestConnectionResponse();
-    message.success = object.success ?? false;
-    message.message = object.message ?? "";
-    return message;
-  },
 };
 
 function createBaseEmpty(): Empty {
@@ -2281,24 +1467,103 @@ export const Empty: MessageFns<Empty> = {
     }
     return message;
   },
-
-  fromJSON(_: any): Empty {
-    return {};
-  },
-
-  toJSON(_: Empty): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<Empty>, I>>(base?: I): Empty {
-    return Empty.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Empty>, I>>(_: I): Empty {
-    const message = createBaseEmpty();
-    return message;
-  },
 };
+
+export interface WinLeadPlusSyncServiceClient {
+  syncProspects(request: SyncProspectsRequest, metadata: Metadata, ...rest: any): Observable<SyncProspectsResponse>;
+
+  getSyncStatus(request: GetSyncStatusRequest, metadata: Metadata, ...rest: any): Observable<GetSyncStatusResponse>;
+
+  getSyncLogs(
+    request: ListWinLeadPlusSyncLogsRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Observable<ListWinLeadPlusSyncLogsResponse>;
+
+  testConnection(request: TestConnectionRequest, metadata: Metadata, ...rest: any): Observable<TestConnectionResponse>;
+
+  getConfig(request: GetWinLeadPlusConfigRequest, metadata: Metadata, ...rest: any): Observable<WinLeadPlusConfig>;
+
+  saveConfig(request: UpdateWinLeadPlusConfigRequest, metadata: Metadata, ...rest: any): Observable<WinLeadPlusConfig>;
+
+  hasConfig(
+    request: GetWinLeadPlusConfigRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Observable<HasWinLeadPlusConfigResponse>;
+}
+
+export interface WinLeadPlusSyncServiceController {
+  syncProspects(
+    request: SyncProspectsRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<SyncProspectsResponse> | Observable<SyncProspectsResponse> | SyncProspectsResponse;
+
+  getSyncStatus(
+    request: GetSyncStatusRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<GetSyncStatusResponse> | Observable<GetSyncStatusResponse> | GetSyncStatusResponse;
+
+  getSyncLogs(
+    request: ListWinLeadPlusSyncLogsRequest,
+    metadata: Metadata,
+    ...rest: any
+  ):
+    | Promise<ListWinLeadPlusSyncLogsResponse>
+    | Observable<ListWinLeadPlusSyncLogsResponse>
+    | ListWinLeadPlusSyncLogsResponse;
+
+  testConnection(
+    request: TestConnectionRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<TestConnectionResponse> | Observable<TestConnectionResponse> | TestConnectionResponse;
+
+  getConfig(
+    request: GetWinLeadPlusConfigRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<WinLeadPlusConfig> | Observable<WinLeadPlusConfig> | WinLeadPlusConfig;
+
+  saveConfig(
+    request: UpdateWinLeadPlusConfigRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<WinLeadPlusConfig> | Observable<WinLeadPlusConfig> | WinLeadPlusConfig;
+
+  hasConfig(
+    request: GetWinLeadPlusConfigRequest,
+    metadata: Metadata,
+    ...rest: any
+  ): Promise<HasWinLeadPlusConfigResponse> | Observable<HasWinLeadPlusConfigResponse> | HasWinLeadPlusConfigResponse;
+}
+
+export function WinLeadPlusSyncServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = [
+      "syncProspects",
+      "getSyncStatus",
+      "getSyncLogs",
+      "testConnection",
+      "getConfig",
+      "saveConfig",
+      "hasConfig",
+    ];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod("WinLeadPlusSyncService", method)(constructor.prototype[method], method, descriptor);
+    }
+    const grpcStreamMethods: string[] = [];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod("WinLeadPlusSyncService", method)(constructor.prototype[method], method, descriptor);
+    }
+  };
+}
+
+export const WIN_LEAD_PLUS_SYNC_SERVICE_NAME = "WinLeadPlusSyncService";
 
 export type WinLeadPlusSyncServiceService = typeof WinLeadPlusSyncServiceService;
 export const WinLeadPlusSyncServiceService = {
@@ -2388,27 +1653,7 @@ export interface WinLeadPlusSyncServiceServer extends UntypedServiceImplementati
   hasConfig: handleUnaryCall<GetWinLeadPlusConfigRequest, HasWinLeadPlusConfigResponse>;
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
-
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
-
-type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
-
-function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
-}
-
 export interface MessageFns<T> {
   encode(message: T, writer?: BinaryWriter): BinaryWriter;
   decode(input: BinaryReader | Uint8Array, length?: number): T;
-  fromJSON(object: any): T;
-  toJSON(message: T): unknown;
-  create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
-  fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
 }

@@ -13,6 +13,7 @@ message WinLeadPlusConfig {
   optional string last_sync_at = 6;
   string created_at = 7;
   string updated_at = 8;
+  optional bool has_api_token = 9;
 }
 
 message CreateWinLeadPlusConfigRequest {
@@ -27,6 +28,8 @@ message UpdateWinLeadPlusConfigRequest {
   optional string api_endpoint = 2;
   optional bool enabled = 3;
   optional int32 sync_interval_minutes = 4;
+  optional string organisation_id = 5;
+  optional string api_token = 6;
 }
 
 message GetWinLeadPlusConfigRequest {
@@ -128,6 +131,7 @@ message GetSyncStatusResponse {
 message TestConnectionRequest {
   string organisation_id = 1;
   string api_endpoint = 2;
+  optional string api_token = 3;
 }
 
 message TestConnectionResponse {

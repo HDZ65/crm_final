@@ -188,9 +188,18 @@ message Produit {
   // Partner & distribution
   string partenaire_commercial_id = 31;
   string modele_distribution_id = 32;
-  // Tarification model
-  TypeTarification type_tarification = 33;
-  string config_tarification = 34;
+   // Tarification model
+   TypeTarification type_tarification = 33;
+   string config_tarification = 34;
+   // Catalogue partner fields
+   bool popular = 35;
+   double rating = 36;
+   string logo_url = 37;
+   string features_data = 38;
+   string formules_data = 39;
+   string categorie_partenaire = 40;
+   string source_derniere_modif = 41;
+   string fournisseur = 42;
 }
 
 message CreateProduitRequest {
@@ -417,14 +426,25 @@ message ListProduitPublicationsResponse {
 
 // Promotion
 message SetPromotionRequest {
-  string produit_id = 1;
-  double prix_promotion = 2;
-  string date_debut = 3;
-  string date_fin = 4;
+   string produit_id = 1;
+   double prix_promotion = 2;
+   string date_debut = 3;
+   string date_fin = 4;
 }
 
 message ClearPromotionRequest {
-  string produit_id = 1;
+   string produit_id = 1;
+}
+
+// Sync Catalogue
+message SyncCatalogueRequest {
+   string organisation_id = 1;
+}
+
+message SyncCatalogueResponse {
+   bool success = 1;
+   int32 products_synced = 2;
+   string error = 3;
 }
 
 // ===== GRILLE TARIFAIRE (Pricing Grid) =====
@@ -629,14 +649,15 @@ service GammeService {
 }
 
 service ProduitService {
-  rpc Create(CreateProduitRequest) returns (Produit);
-  rpc Update(UpdateProduitRequest) returns (Produit);
-  rpc Get(GetProduitRequest) returns (Produit);
-  rpc GetBySku(GetProduitBySkuRequest) returns (Produit);
-  rpc List(ListProduitsRequest) returns (ListProduitsResponse);
-  rpc Delete(DeleteProduitRequest) returns (DeleteProduitResponse);
-  rpc SetPromotion(SetPromotionRequest) returns (Produit);
-  rpc ClearPromotion(ClearPromotionRequest) returns (Produit);
+   rpc Create(CreateProduitRequest) returns (Produit);
+   rpc Update(UpdateProduitRequest) returns (Produit);
+   rpc Get(GetProduitRequest) returns (Produit);
+   rpc GetBySku(GetProduitBySkuRequest) returns (Produit);
+   rpc List(ListProduitsRequest) returns (ListProduitsResponse);
+   rpc Delete(DeleteProduitRequest) returns (DeleteProduitResponse);
+   rpc SetPromotion(SetPromotionRequest) returns (Produit);
+   rpc ClearPromotion(ClearPromotionRequest) returns (Produit);
+   rpc SyncCatalogue(SyncCatalogueRequest) returns (SyncCatalogueResponse);
 }
 
 service ProduitVersionService {

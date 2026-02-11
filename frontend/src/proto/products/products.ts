@@ -653,6 +653,15 @@ export interface Produit {
   /** Tarification model */
   typeTarification: TypeTarification;
   configTarification: string;
+  /** Catalogue partner fields */
+  popular: boolean;
+  rating: number;
+  logoUrl: string;
+  featuresData: string;
+  formulesData: string;
+  categoriePartenaire: string;
+  sourceDerniereModif: string;
+  fournisseur: string;
 }
 
 export interface CreateProduitRequest {
@@ -864,6 +873,17 @@ export interface SetPromotionRequest {
 
 export interface ClearPromotionRequest {
   produitId: string;
+}
+
+/** Sync Catalogue */
+export interface SyncCatalogueRequest {
+  organisationId: string;
+}
+
+export interface SyncCatalogueResponse {
+  success: boolean;
+  productsSynced: number;
+  error: string;
 }
 
 export interface GrilleTarifaire {
@@ -2691,6 +2711,14 @@ function createBaseProduit(): Produit {
     modeleDistributionId: "",
     typeTarification: 0,
     configTarification: "",
+    popular: false,
+    rating: 0,
+    logoUrl: "",
+    featuresData: "",
+    formulesData: "",
+    categoriePartenaire: "",
+    sourceDerniereModif: "",
+    fournisseur: "",
   };
 }
 
@@ -2797,6 +2825,30 @@ export const Produit: MessageFns<Produit> = {
     }
     if (message.configTarification !== "") {
       writer.uint32(274).string(message.configTarification);
+    }
+    if (message.popular !== false) {
+      writer.uint32(280).bool(message.popular);
+    }
+    if (message.rating !== 0) {
+      writer.uint32(289).double(message.rating);
+    }
+    if (message.logoUrl !== "") {
+      writer.uint32(298).string(message.logoUrl);
+    }
+    if (message.featuresData !== "") {
+      writer.uint32(306).string(message.featuresData);
+    }
+    if (message.formulesData !== "") {
+      writer.uint32(314).string(message.formulesData);
+    }
+    if (message.categoriePartenaire !== "") {
+      writer.uint32(322).string(message.categoriePartenaire);
+    }
+    if (message.sourceDerniereModif !== "") {
+      writer.uint32(330).string(message.sourceDerniereModif);
+    }
+    if (message.fournisseur !== "") {
+      writer.uint32(338).string(message.fournisseur);
     }
     return writer;
   },
@@ -3080,6 +3132,70 @@ export const Produit: MessageFns<Produit> = {
           message.configTarification = reader.string();
           continue;
         }
+        case 35: {
+          if (tag !== 280) {
+            break;
+          }
+
+          message.popular = reader.bool();
+          continue;
+        }
+        case 36: {
+          if (tag !== 289) {
+            break;
+          }
+
+          message.rating = reader.double();
+          continue;
+        }
+        case 37: {
+          if (tag !== 298) {
+            break;
+          }
+
+          message.logoUrl = reader.string();
+          continue;
+        }
+        case 38: {
+          if (tag !== 306) {
+            break;
+          }
+
+          message.featuresData = reader.string();
+          continue;
+        }
+        case 39: {
+          if (tag !== 314) {
+            break;
+          }
+
+          message.formulesData = reader.string();
+          continue;
+        }
+        case 40: {
+          if (tag !== 322) {
+            break;
+          }
+
+          message.categoriePartenaire = reader.string();
+          continue;
+        }
+        case 41: {
+          if (tag !== 330) {
+            break;
+          }
+
+          message.sourceDerniereModif = reader.string();
+          continue;
+        }
+        case 42: {
+          if (tag !== 338) {
+            break;
+          }
+
+          message.fournisseur = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3217,6 +3333,34 @@ export const Produit: MessageFns<Produit> = {
         : isSet(object.config_tarification)
         ? globalThis.String(object.config_tarification)
         : "",
+      popular: isSet(object.popular) ? globalThis.Boolean(object.popular) : false,
+      rating: isSet(object.rating) ? globalThis.Number(object.rating) : 0,
+      logoUrl: isSet(object.logoUrl)
+        ? globalThis.String(object.logoUrl)
+        : isSet(object.logo_url)
+        ? globalThis.String(object.logo_url)
+        : "",
+      featuresData: isSet(object.featuresData)
+        ? globalThis.String(object.featuresData)
+        : isSet(object.features_data)
+        ? globalThis.String(object.features_data)
+        : "",
+      formulesData: isSet(object.formulesData)
+        ? globalThis.String(object.formulesData)
+        : isSet(object.formules_data)
+        ? globalThis.String(object.formules_data)
+        : "",
+      categoriePartenaire: isSet(object.categoriePartenaire)
+        ? globalThis.String(object.categoriePartenaire)
+        : isSet(object.categorie_partenaire)
+        ? globalThis.String(object.categorie_partenaire)
+        : "",
+      sourceDerniereModif: isSet(object.sourceDerniereModif)
+        ? globalThis.String(object.sourceDerniereModif)
+        : isSet(object.source_derniere_modif)
+        ? globalThis.String(object.source_derniere_modif)
+        : "",
+      fournisseur: isSet(object.fournisseur) ? globalThis.String(object.fournisseur) : "",
     };
   },
 
@@ -3324,6 +3468,30 @@ export const Produit: MessageFns<Produit> = {
     if (message.configTarification !== "") {
       obj.configTarification = message.configTarification;
     }
+    if (message.popular !== false) {
+      obj.popular = message.popular;
+    }
+    if (message.rating !== 0) {
+      obj.rating = message.rating;
+    }
+    if (message.logoUrl !== "") {
+      obj.logoUrl = message.logoUrl;
+    }
+    if (message.featuresData !== "") {
+      obj.featuresData = message.featuresData;
+    }
+    if (message.formulesData !== "") {
+      obj.formulesData = message.formulesData;
+    }
+    if (message.categoriePartenaire !== "") {
+      obj.categoriePartenaire = message.categoriePartenaire;
+    }
+    if (message.sourceDerniereModif !== "") {
+      obj.sourceDerniereModif = message.sourceDerniereModif;
+    }
+    if (message.fournisseur !== "") {
+      obj.fournisseur = message.fournisseur;
+    }
     return obj;
   },
 
@@ -3366,6 +3534,14 @@ export const Produit: MessageFns<Produit> = {
     message.modeleDistributionId = object.modeleDistributionId ?? "";
     message.typeTarification = object.typeTarification ?? 0;
     message.configTarification = object.configTarification ?? "";
+    message.popular = object.popular ?? false;
+    message.rating = object.rating ?? 0;
+    message.logoUrl = object.logoUrl ?? "";
+    message.featuresData = object.featuresData ?? "";
+    message.formulesData = object.formulesData ?? "";
+    message.categoriePartenaire = object.categoriePartenaire ?? "";
+    message.sourceDerniereModif = object.sourceDerniereModif ?? "";
+    message.fournisseur = object.fournisseur ?? "";
     return message;
   },
 };
@@ -6955,6 +7131,166 @@ export const ClearPromotionRequest: MessageFns<ClearPromotionRequest> = {
   fromPartial<I extends Exact<DeepPartial<ClearPromotionRequest>, I>>(object: I): ClearPromotionRequest {
     const message = createBaseClearPromotionRequest();
     message.produitId = object.produitId ?? "";
+    return message;
+  },
+};
+
+function createBaseSyncCatalogueRequest(): SyncCatalogueRequest {
+  return { organisationId: "" };
+}
+
+export const SyncCatalogueRequest: MessageFns<SyncCatalogueRequest> = {
+  encode(message: SyncCatalogueRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SyncCatalogueRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSyncCatalogueRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SyncCatalogueRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: SyncCatalogueRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SyncCatalogueRequest>, I>>(base?: I): SyncCatalogueRequest {
+    return SyncCatalogueRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SyncCatalogueRequest>, I>>(object: I): SyncCatalogueRequest {
+    const message = createBaseSyncCatalogueRequest();
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseSyncCatalogueResponse(): SyncCatalogueResponse {
+  return { success: false, productsSynced: 0, error: "" };
+}
+
+export const SyncCatalogueResponse: MessageFns<SyncCatalogueResponse> = {
+  encode(message: SyncCatalogueResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.productsSynced !== 0) {
+      writer.uint32(16).int32(message.productsSynced);
+    }
+    if (message.error !== "") {
+      writer.uint32(26).string(message.error);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SyncCatalogueResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSyncCatalogueResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.productsSynced = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.error = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SyncCatalogueResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      productsSynced: isSet(object.productsSynced)
+        ? globalThis.Number(object.productsSynced)
+        : isSet(object.products_synced)
+        ? globalThis.Number(object.products_synced)
+        : 0,
+      error: isSet(object.error) ? globalThis.String(object.error) : "",
+    };
+  },
+
+  toJSON(message: SyncCatalogueResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.productsSynced !== 0) {
+      obj.productsSynced = Math.round(message.productsSynced);
+    }
+    if (message.error !== "") {
+      obj.error = message.error;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SyncCatalogueResponse>, I>>(base?: I): SyncCatalogueResponse {
+    return SyncCatalogueResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SyncCatalogueResponse>, I>>(object: I): SyncCatalogueResponse {
+    const message = createBaseSyncCatalogueResponse();
+    message.success = object.success ?? false;
+    message.productsSynced = object.productsSynced ?? 0;
+    message.error = object.error ?? "";
     return message;
   },
 };
@@ -11897,6 +12233,16 @@ export const ProduitServiceService = {
     responseSerialize: (value: Produit): Buffer => Buffer.from(Produit.encode(value).finish()),
     responseDeserialize: (value: Buffer): Produit => Produit.decode(value),
   },
+  syncCatalogue: {
+    path: "/products.ProduitService/SyncCatalogue",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: SyncCatalogueRequest): Buffer => Buffer.from(SyncCatalogueRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): SyncCatalogueRequest => SyncCatalogueRequest.decode(value),
+    responseSerialize: (value: SyncCatalogueResponse): Buffer =>
+      Buffer.from(SyncCatalogueResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SyncCatalogueResponse => SyncCatalogueResponse.decode(value),
+  },
 } as const;
 
 export interface ProduitServiceServer extends UntypedServiceImplementation {
@@ -11908,6 +12254,7 @@ export interface ProduitServiceServer extends UntypedServiceImplementation {
   delete: handleUnaryCall<DeleteProduitRequest, DeleteProduitResponse>;
   setPromotion: handleUnaryCall<SetPromotionRequest, Produit>;
   clearPromotion: handleUnaryCall<ClearPromotionRequest, Produit>;
+  syncCatalogue: handleUnaryCall<SyncCatalogueRequest, SyncCatalogueResponse>;
 }
 
 export type ProduitVersionServiceService = typeof ProduitVersionServiceService;

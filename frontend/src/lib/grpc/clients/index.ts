@@ -23,3 +23,14 @@ export * from "./woocommerce";
 export * from "./permissions";
 export * from "./documents";
 export * from "./engagement";
+// Export winleadplus without TestConnectionResponse to avoid conflicts
+export { winleadplus } from "./winleadplus";
+export type {
+  SyncProspectsRequest,
+  SyncProspectsResponse,
+  GetSyncStatusRequest,
+  GetSyncStatusResponse,
+  ListWinLeadPlusSyncLogsRequest,
+  ListWinLeadPlusSyncLogsResponse,
+  TestConnectionRequest,
+} from "./winleadplus";

@@ -56,6 +56,7 @@ export async function getClientsByOrganisation(params: {
   statutId?: string;
   societeId?: string;
   search?: string;
+  source?: string;
 }): Promise<ActionResult<ListClientsBaseResponse>> {
   try {
     const data = await clients.list({

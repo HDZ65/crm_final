@@ -44,6 +44,7 @@ export const SERVICES = {
   contrats: process.env.GRPC_CONTRATS_URL || "localhost:50053",
   products: process.env.GRPC_PRODUCTS_URL || "localhost:50053",
   partenaires: process.env.GRPC_PARTENAIRES_URL || "localhost:50053",
+  winleadplus: process.env.GRPC_WINLEADPLUS_URL || "localhost:50053",
   // service-finance :50059
   calendar: process.env.GRPC_CALENDAR_URL || "localhost:50059",
   factures: process.env.GRPC_FACTURES_URL || "localhost:50059",

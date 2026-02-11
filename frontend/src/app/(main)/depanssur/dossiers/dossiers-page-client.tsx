@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { listDossiersAction } from '@/actions/depanssur';
-import { DataTable } from '@/components/data-table';
+import { DataTable } from '@/components/data-table-basic';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, FileText } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
@@ -142,60 +142,50 @@ statut: statutFilter && statutFilter !== 'all' ? (statutFilter as any) : undefin
         </Button>
       </div>
 
-      {/* Filtres */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtres</CardTitle>
-          <CardDescription>Recherchez et filtrez les dossiers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher par référence..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={statutFilter} onValueChange={setStatutFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tous les statuts" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="ENREGISTRE">Enregistré</SelectItem>
-                <SelectItem value="EN_ANALYSE">En analyse</SelectItem>
-                <SelectItem value="ACCEPTE">Accepté</SelectItem>
-                <SelectItem value="REFUSE">Refusé</SelectItem>
-                <SelectItem value="EN_ATTENTE_INFO">En attente d'info</SelectItem>
-                <SelectItem value="CLOTURE">Clôturé</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tous les types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
-                <SelectItem value="ELECTRICITE">⚡ Électricité</SelectItem>
-                <SelectItem value="PLOMBERIE">🚰 Plomberie</SelectItem>
-                <SelectItem value="ELECTROMENAGER">🔌 Électroménager</SelectItem>
-                <SelectItem value="SERRURERIE">🔑 Serrurerie</SelectItem>
-                <SelectItem value="AUTRE">🔧 Autre</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+       {/* Filtres */}
+       <div className="flex flex-col gap-4">
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <div className="relative">
+             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+             <Input
+               placeholder="Rechercher par référence..."
+               value={search}
+               onChange={(e) => setSearch(e.target.value)}
+               className="pl-9"
+             />
+           </div>
+           <Select value={statutFilter} onValueChange={setStatutFilter}>
+             <SelectTrigger>
+               <SelectValue placeholder="Tous les statuts" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="all">Tous les statuts</SelectItem>
+               <SelectItem value="ENREGISTRE">Enregistré</SelectItem>
+               <SelectItem value="EN_ANALYSE">En analyse</SelectItem>
+               <SelectItem value="ACCEPTE">Accepté</SelectItem>
+               <SelectItem value="REFUSE">Refusé</SelectItem>
+               <SelectItem value="EN_ATTENTE_INFO">En attente d'info</SelectItem>
+               <SelectItem value="CLOTURE">Clôturé</SelectItem>
+             </SelectContent>
+           </Select>
+           <Select value={typeFilter} onValueChange={setTypeFilter}>
+             <SelectTrigger>
+               <SelectValue placeholder="Tous les types" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="all">Tous les types</SelectItem>
+               <SelectItem value="ELECTRICITE">⚡ Électricité</SelectItem>
+               <SelectItem value="PLOMBERIE">🚰 Plomberie</SelectItem>
+               <SelectItem value="ELECTROMENAGER">🔌 Électroménager</SelectItem>
+               <SelectItem value="SERRURERIE">🔑 Serrurerie</SelectItem>
+               <SelectItem value="AUTRE">🔧 Autre</SelectItem>
+             </SelectContent>
+           </Select>
+         </div>
+       </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="pt-6">
-          <DataTable data={(dossiers?.dossiers || []) as any} />
-        </CardContent>
-      </Card>
+       {/* Table */}
+       <DataTable columns={columns} data={dossiers?.dossiers || []} />
     </div>
   );
 }

@@ -430,19 +430,6 @@ export interface CalculateTotalsResponse {
   montantTtc: number;
 }
 
-export interface GeneratePdfRequest {
-  id: string;
-  organisationId: string;
-}
-
-export interface GeneratePdfResponse {
-  success: boolean;
-  pdfUrl: string;
-  pdfHash: string;
-  filename: string;
-  error: string;
-}
-
 function createBaseEmpty(): Empty {
   return {};
 }
@@ -7624,218 +7611,6 @@ export const CalculateTotalsResponse: MessageFns<CalculateTotalsResponse> = {
   },
 };
 
-function createBaseGeneratePdfRequest(): GeneratePdfRequest {
-  return { id: "", organisationId: "" };
-}
-
-export const GeneratePdfRequest: MessageFns<GeneratePdfRequest> = {
-  encode(message: GeneratePdfRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.organisationId !== "") {
-      writer.uint32(18).string(message.organisationId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GeneratePdfRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGeneratePdfRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.organisationId = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GeneratePdfRequest {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-    };
-  },
-
-  toJSON(message: GeneratePdfRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GeneratePdfRequest>, I>>(base?: I): GeneratePdfRequest {
-    return GeneratePdfRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GeneratePdfRequest>, I>>(object: I): GeneratePdfRequest {
-    const message = createBaseGeneratePdfRequest();
-    message.id = object.id ?? "";
-    message.organisationId = object.organisationId ?? "";
-    return message;
-  },
-};
-
-function createBaseGeneratePdfResponse(): GeneratePdfResponse {
-  return { success: false, pdfUrl: "", pdfHash: "", filename: "", error: "" };
-}
-
-export const GeneratePdfResponse: MessageFns<GeneratePdfResponse> = {
-  encode(message: GeneratePdfResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.success !== false) {
-      writer.uint32(8).bool(message.success);
-    }
-    if (message.pdfUrl !== "") {
-      writer.uint32(18).string(message.pdfUrl);
-    }
-    if (message.pdfHash !== "") {
-      writer.uint32(26).string(message.pdfHash);
-    }
-    if (message.filename !== "") {
-      writer.uint32(34).string(message.filename);
-    }
-    if (message.error !== "") {
-      writer.uint32(42).string(message.error);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GeneratePdfResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGeneratePdfResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
-          }
-
-          message.success = reader.bool();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.pdfUrl = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.pdfHash = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.filename = reader.string();
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-
-          message.error = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GeneratePdfResponse {
-    return {
-      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
-      pdfUrl: isSet(object.pdfUrl)
-        ? globalThis.String(object.pdfUrl)
-        : isSet(object.pdf_url)
-        ? globalThis.String(object.pdf_url)
-        : "",
-      pdfHash: isSet(object.pdfHash)
-        ? globalThis.String(object.pdfHash)
-        : isSet(object.pdf_hash)
-        ? globalThis.String(object.pdf_hash)
-        : "",
-      filename: isSet(object.filename) ? globalThis.String(object.filename) : "",
-      error: isSet(object.error) ? globalThis.String(object.error) : "",
-    };
-  },
-
-  toJSON(message: GeneratePdfResponse): unknown {
-    const obj: any = {};
-    if (message.success !== false) {
-      obj.success = message.success;
-    }
-    if (message.pdfUrl !== "") {
-      obj.pdfUrl = message.pdfUrl;
-    }
-    if (message.pdfHash !== "") {
-      obj.pdfHash = message.pdfHash;
-    }
-    if (message.filename !== "") {
-      obj.filename = message.filename;
-    }
-    if (message.error !== "") {
-      obj.error = message.error;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GeneratePdfResponse>, I>>(base?: I): GeneratePdfResponse {
-    return GeneratePdfResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GeneratePdfResponse>, I>>(object: I): GeneratePdfResponse {
-    const message = createBaseGeneratePdfResponse();
-    message.success = object.success ?? false;
-    message.pdfUrl = object.pdfUrl ?? "";
-    message.pdfHash = object.pdfHash ?? "";
-    message.filename = object.filename ?? "";
-    message.error = object.error ?? "";
-    return message;
-  },
-};
-
 export type StatutFactureServiceService = typeof StatutFactureServiceService;
 export const StatutFactureServiceService = {
   create: {
@@ -8138,15 +7913,6 @@ export const FactureServiceService = {
     responseSerialize: (value: ListAvoirsResponse): Buffer => Buffer.from(ListAvoirsResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): ListAvoirsResponse => ListAvoirsResponse.decode(value),
   },
-  generatePdf: {
-    path: "/factures.FactureService/GeneratePdf",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GeneratePdfRequest): Buffer => Buffer.from(GeneratePdfRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GeneratePdfRequest => GeneratePdfRequest.decode(value),
-    responseSerialize: (value: GeneratePdfResponse): Buffer => Buffer.from(GeneratePdfResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): GeneratePdfResponse => GeneratePdfResponse.decode(value),
-  },
 } as const;
 
 export interface FactureServiceServer extends UntypedServiceImplementation {
@@ -8160,7 +7926,6 @@ export interface FactureServiceServer extends UntypedServiceImplementation {
   finalize: handleUnaryCall<FinalizeFactureRequest, Facture>;
   createAvoir: handleUnaryCall<CreateAvoirRequest, Facture>;
   listAvoirsByFacture: handleUnaryCall<ListAvoirsByFactureRequest, ListAvoirsResponse>;
-  generatePdf: handleUnaryCall<GeneratePdfRequest, GeneratePdfResponse>;
 }
 
 export type FactureSettingsServiceService = typeof FactureSettingsServiceService;

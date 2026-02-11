@@ -25,6 +25,7 @@ import { formatCreatedAgo, formatFullName } from "@/lib/formatters"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { deleteClient, updateClient } from "@/actions/clients"
+import { syncWinLeadPlusProspects } from "@/actions/winleadplus"
 import { listSocietesByOrganisation } from "@/actions/societes"
 
 // Helper pour mapper le statut vers le type UI
@@ -48,6 +49,7 @@ function mapClientToRow(client: ClientBase, statutsMap: Map<string, string>): Cl
     email: client.email,
     phone: client.telephone,
     societeIds: [],
+    source: client.source || undefined,
   }
 }
 
@@ -63,6 +65,7 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
   const [createClientOpen, setCreateClientOpen] = React.useState(false)
   const [importDialogOpen, setImportDialogOpen] = React.useState(false)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
+  const [isSyncing, setIsSyncing] = React.useState(false)
   const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({})
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
@@ -201,15 +204,17 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
       }
 
       // Filtres avancés
-      const matchesName = !filters.name || client.name.toLowerCase().includes(filters.name.toLowerCase())
-      const matchesEmail = !filters.email || (client.email?.toLowerCase().includes(filters.email.toLowerCase()) ?? false)
-      const clientPhone = client.phone ? normalizePhone(client.phone) : ""
-      const filterPhone = normalizePhone(filters.phone)
-      const matchesPhone = !filters.phone || clientPhone.includes(filterPhone)
+       const matchesName = !filters.name || client.name.toLowerCase().includes(filters.name.toLowerCase())
+       const matchesEmail = !filters.email || (client.email?.toLowerCase().includes(filters.email.toLowerCase()) ?? false)
+       const clientPhone = client.phone ? normalizePhone(client.phone) : ""
+       const filterPhone = normalizePhone(filters.phone)
+       const matchesPhone = !filters.phone || clientPhone.includes(filterPhone)
+       const matchesSource = !filters.source || 
+         (filters.source === "CRM" ? !client.source : client.source === filters.source)
 
-      return matchesName && matchesEmail && matchesPhone
-    })
-  }, [filters.globalSearch, filters.name, filters.email, filters.phone, clients])
+       return matchesName && matchesEmail && matchesPhone && matchesSource
+     })
+   }, [filters.globalSearch, filters.name, filters.email, filters.phone, filters.source, clients])
 
   // Compute selected clients from row selection indices
   const selectedClients = React.useMemo(() => {
@@ -227,6 +232,25 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
     setIsRefreshing(false)
     toast.success("Liste actualisée")
   }, [fetchData])
+
+  const handleWinLeadPlusSync = async () => {
+    if (!activeOrganisation?.organisationId) return
+    setIsSyncing(true)
+    try {
+      const result = await syncWinLeadPlusProspects({ organisationId: activeOrganisation.organisationId })
+      if (result.data?.syncLog) {
+        const log = result.data.syncLog
+        toast.success(`Sync terminée: ${log.created || 0} créés, ${log.updated || 0} mis à jour, ${log.skipped || 0} ignorés`)
+        handleRefresh()
+      } else {
+        toast.error(result.error || "Erreur de synchronisation")
+      }
+    } catch {
+      toast.error("Erreur de synchronisation WinLeadPlus")
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   const handleExport = React.useCallback(() => {
     if (filteredClients.length === 0) {
@@ -421,13 +445,17 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
 
           <div className="flex-1" />
 
-          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
-            <RefreshCw className="size-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
-            <Upload className="mr-2 size-4" />
-            Importer
-          </Button>
+           <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
+             <RefreshCw className="size-4" />
+           </Button>
+           <Button variant="outline" size="sm" onClick={handleWinLeadPlusSync} disabled={isSyncing}>
+             <RefreshCw className={cn("mr-2 size-4", isSyncing && "animate-spin")} />
+             Sync WLP
+           </Button>
+           <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
+             <Upload className="mr-2 size-4" />
+             Importer
+           </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="mr-2 size-4" />
             Exporter
@@ -515,15 +543,17 @@ export function ClientsPageClient({ initialClients, statuts }: ClientsPageClient
                       onChange={handleFilterChange("iban")}
                     />
                   </div>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Source"
-                      className="bg-white pl-10"
-                      value={filters.source}
-                      onChange={handleFilterChange("source")}
-                    />
-                  </div>
+                   <Select value={filters.source || "all"} onValueChange={(v) => updateFilter("source", v === "all" ? "" : v)}>
+                     <SelectTrigger className="bg-white">
+                       <Globe className="mr-2 size-4 text-muted-foreground" />
+                       <SelectValue placeholder="Source" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="all">Toutes les sources</SelectItem>
+                       <SelectItem value="CRM">CRM</SelectItem>
+                       <SelectItem value="WinLeadPlus">WinLeadPlus</SelectItem>
+                     </SelectContent>
+                   </Select>
                 </div>
               </CardContent>
             </Card>

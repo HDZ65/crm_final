@@ -57,6 +57,7 @@ export type ClientRow = {
   email?: string
   phone?: string
   societeIds?: string[]
+  source?: string
 }
 
 export const createColumns = (onDeleted?: () => void): ColumnDef<ClientRow>[] => [
@@ -91,12 +92,19 @@ export const createColumns = (onDeleted?: () => void): ColumnDef<ClientRow>[] =>
     accessorKey: "name",
     header: "Client",
     cell: ({ row }) => (
-      <Link
-        href={`/clients/${row.original.id}`}
-        className="font-medium text-slate-800 hover:underline"
-      >
-        {row.original.name}
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          href={`/clients/${row.original.id}`}
+          className="font-medium text-slate-800 hover:underline"
+        >
+          {row.original.name}
+        </Link>
+        {row.original.source === "WinLeadPlus" && (
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0 h-4">
+            WLP
+          </Badge>
+        )}
+      </div>
     ),
   },
   {

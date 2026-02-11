@@ -19,6 +19,9 @@ export class WinLeadPlusConfigEntity {
   @Column({ name: 'api_endpoint', type: 'varchar', length: 500 })
   apiEndpoint: string;
 
+  @Column({ name: 'api_token', type: 'text', nullable: true })
+  apiToken: string | null;
+
   @Column({ type: 'boolean', default: true })
   enabled: boolean;
 

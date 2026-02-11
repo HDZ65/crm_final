@@ -26,6 +26,7 @@ export interface ClientRow {
   email?: string
   phone?: string
   societeIds: string[]
+  source?: string
 }
 
 // Informations personnelles du client

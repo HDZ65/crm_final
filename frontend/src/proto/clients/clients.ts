@@ -159,6 +159,7 @@ export interface ClientBase {
   uuidJustiPlus?: string | undefined;
   datePremiereSouscription?: string | undefined;
   canalAcquisition?: string | undefined;
+  source?: string | undefined;
 }
 
 export interface CreateClientBaseRequest {
@@ -180,6 +181,7 @@ export interface CreateClientBaseRequest {
   uuidJustiPlus?: string | undefined;
   datePremiereSouscription?: string | undefined;
   canalAcquisition?: string | undefined;
+  source?: string | undefined;
 }
 
 export interface UpdateClientBaseRequest {
@@ -201,6 +203,7 @@ export interface UpdateClientBaseRequest {
   uuidJustiPlus?: string | undefined;
   datePremiereSouscription?: string | undefined;
   canalAcquisition?: string | undefined;
+  source?: string | undefined;
 }
 
 export interface GetClientBaseRequest {
@@ -212,6 +215,7 @@ export interface ListClientsBaseRequest {
   statutId?: string | undefined;
   societeId?: string | undefined;
   search?: string | undefined;
+  source?: string | undefined;
   pagination: PaginationRequest | undefined;
 }
 
@@ -2242,6 +2246,7 @@ function createBaseClientBase(): ClientBase {
     uuidJustiPlus: undefined,
     datePremiereSouscription: undefined,
     canalAcquisition: undefined,
+    source: undefined,
   };
 }
 
@@ -2336,6 +2341,9 @@ export const ClientBase: MessageFns<ClientBase> = {
     }
     if (message.canalAcquisition !== undefined) {
       writer.uint32(242).string(message.canalAcquisition);
+    }
+    if (message.source !== undefined) {
+      writer.uint32(250).string(message.source);
     }
     return writer;
   },
@@ -2587,6 +2595,14 @@ export const ClientBase: MessageFns<ClientBase> = {
           message.canalAcquisition = reader.string();
           continue;
         }
+        case 31: {
+          if (tag !== 250) {
+            break;
+          }
+
+          message.source = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2710,6 +2726,7 @@ export const ClientBase: MessageFns<ClientBase> = {
         : isSet(object.canal_acquisition)
         ? globalThis.String(object.canal_acquisition)
         : undefined,
+      source: isSet(object.source) ? globalThis.String(object.source) : undefined,
     };
   },
 
@@ -2805,6 +2822,9 @@ export const ClientBase: MessageFns<ClientBase> = {
     if (message.canalAcquisition !== undefined) {
       obj.canalAcquisition = message.canalAcquisition;
     }
+    if (message.source !== undefined) {
+      obj.source = message.source;
+    }
     return obj;
   },
 
@@ -2843,6 +2863,7 @@ export const ClientBase: MessageFns<ClientBase> = {
     message.uuidJustiPlus = object.uuidJustiPlus ?? undefined;
     message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
     message.canalAcquisition = object.canalAcquisition ?? undefined;
+    message.source = object.source ?? undefined;
     return message;
   },
 };
@@ -2867,6 +2888,7 @@ function createBaseCreateClientBaseRequest(): CreateClientBaseRequest {
     uuidJustiPlus: undefined,
     datePremiereSouscription: undefined,
     canalAcquisition: undefined,
+    source: undefined,
   };
 }
 
@@ -2925,6 +2947,9 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     }
     if (message.canalAcquisition !== undefined) {
       writer.uint32(146).string(message.canalAcquisition);
+    }
+    if (message.source !== undefined) {
+      writer.uint32(154).string(message.source);
     }
     return writer;
   },
@@ -3080,6 +3105,14 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
           message.canalAcquisition = reader.string();
           continue;
         }
+        case 19: {
+          if (tag !== 154) {
+            break;
+          }
+
+          message.source = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3161,6 +3194,7 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
         : isSet(object.canal_acquisition)
         ? globalThis.String(object.canal_acquisition)
         : undefined,
+      source: isSet(object.source) ? globalThis.String(object.source) : undefined,
     };
   },
 
@@ -3220,6 +3254,9 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     if (message.canalAcquisition !== undefined) {
       obj.canalAcquisition = message.canalAcquisition;
     }
+    if (message.source !== undefined) {
+      obj.source = message.source;
+    }
     return obj;
   },
 
@@ -3246,6 +3283,7 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     message.uuidJustiPlus = object.uuidJustiPlus ?? undefined;
     message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
     message.canalAcquisition = object.canalAcquisition ?? undefined;
+    message.source = object.source ?? undefined;
     return message;
   },
 };
@@ -3270,6 +3308,7 @@ function createBaseUpdateClientBaseRequest(): UpdateClientBaseRequest {
     uuidJustiPlus: undefined,
     datePremiereSouscription: undefined,
     canalAcquisition: undefined,
+    source: undefined,
   };
 }
 
@@ -3328,6 +3367,9 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     }
     if (message.canalAcquisition !== undefined) {
       writer.uint32(146).string(message.canalAcquisition);
+    }
+    if (message.source !== undefined) {
+      writer.uint32(154).string(message.source);
     }
     return writer;
   },
@@ -3483,6 +3525,14 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
           message.canalAcquisition = reader.string();
           continue;
         }
+        case 19: {
+          if (tag !== 154) {
+            break;
+          }
+
+          message.source = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3560,6 +3610,7 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
         : isSet(object.canal_acquisition)
         ? globalThis.String(object.canal_acquisition)
         : undefined,
+      source: isSet(object.source) ? globalThis.String(object.source) : undefined,
     };
   },
 
@@ -3619,6 +3670,9 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     if (message.canalAcquisition !== undefined) {
       obj.canalAcquisition = message.canalAcquisition;
     }
+    if (message.source !== undefined) {
+      obj.source = message.source;
+    }
     return obj;
   },
 
@@ -3645,6 +3699,7 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     message.uuidJustiPlus = object.uuidJustiPlus ?? undefined;
     message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
     message.canalAcquisition = object.canalAcquisition ?? undefined;
+    message.source = object.source ?? undefined;
     return message;
   },
 };
@@ -3708,7 +3763,14 @@ export const GetClientBaseRequest: MessageFns<GetClientBaseRequest> = {
 };
 
 function createBaseListClientsBaseRequest(): ListClientsBaseRequest {
-  return { organisationId: "", statutId: undefined, societeId: undefined, search: undefined, pagination: undefined };
+  return {
+    organisationId: "",
+    statutId: undefined,
+    societeId: undefined,
+    search: undefined,
+    source: undefined,
+    pagination: undefined,
+  };
 }
 
 export const ListClientsBaseRequest: MessageFns<ListClientsBaseRequest> = {
@@ -3725,8 +3787,11 @@ export const ListClientsBaseRequest: MessageFns<ListClientsBaseRequest> = {
     if (message.search !== undefined) {
       writer.uint32(34).string(message.search);
     }
+    if (message.source !== undefined) {
+      writer.uint32(42).string(message.source);
+    }
     if (message.pagination !== undefined) {
-      PaginationRequest.encode(message.pagination, writer.uint32(42).fork()).join();
+      PaginationRequest.encode(message.pagination, writer.uint32(50).fork()).join();
     }
     return writer;
   },
@@ -3775,6 +3840,14 @@ export const ListClientsBaseRequest: MessageFns<ListClientsBaseRequest> = {
             break;
           }
 
+          message.source = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
           message.pagination = PaginationRequest.decode(reader, reader.uint32());
           continue;
         }
@@ -3805,6 +3878,7 @@ export const ListClientsBaseRequest: MessageFns<ListClientsBaseRequest> = {
         ? globalThis.String(object.societe_id)
         : undefined,
       search: isSet(object.search) ? globalThis.String(object.search) : undefined,
+      source: isSet(object.source) ? globalThis.String(object.source) : undefined,
       pagination: isSet(object.pagination) ? PaginationRequest.fromJSON(object.pagination) : undefined,
     };
   },
@@ -3823,6 +3897,9 @@ export const ListClientsBaseRequest: MessageFns<ListClientsBaseRequest> = {
     if (message.search !== undefined) {
       obj.search = message.search;
     }
+    if (message.source !== undefined) {
+      obj.source = message.source;
+    }
     if (message.pagination !== undefined) {
       obj.pagination = PaginationRequest.toJSON(message.pagination);
     }
@@ -3838,6 +3915,7 @@ export const ListClientsBaseRequest: MessageFns<ListClientsBaseRequest> = {
     message.statutId = object.statutId ?? undefined;
     message.societeId = object.societeId ?? undefined;
     message.search = object.search ?? undefined;
+    message.source = object.source ?? undefined;
     message.pagination = (object.pagination !== undefined && object.pagination !== null)
       ? PaginationRequest.fromPartial(object.pagination)
       : undefined;

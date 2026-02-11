@@ -7,6 +7,7 @@ import type {
   SyncProspectsResponse,
   GetSyncStatusResponse,
   ListWinLeadPlusSyncLogsResponse,
+  WinLeadPlusConfig,
 } from "@proto/winleadplus/winleadplus";
 import type { TestConnectionResponse } from "@/lib/grpc/clients/winleadplus";
 
@@ -23,8 +24,8 @@ export async function syncWinLeadPlusProspects(params: {
 }): Promise<ActionResult<SyncProspectsResponse>> {
   try {
     const data = await winleadplus.syncProspects({
-      organisationId: params.organisationId,
-      dryRun: params.dryRun || false,
+      organisation_id: params.organisationId,
+      dry_run: params.dryRun || false,
     });
     if (!params.dryRun) {
       revalidatePath("/clients");
@@ -47,7 +48,7 @@ export async function getWinLeadPlusSyncStatus(params: {
 }): Promise<ActionResult<GetSyncStatusResponse>> {
   try {
     const data = await winleadplus.getSyncStatus({
-      organisationId: params.organisationId,
+      organisation_id: params.organisationId,
     });
     return { data, error: null };
   } catch (err) {
@@ -68,7 +69,7 @@ export async function getWinLeadPlusSyncLogs(params: {
 }): Promise<ActionResult<ListWinLeadPlusSyncLogsResponse>> {
   try {
     const data = await winleadplus.getSyncLogs({
-      organisationId: params.organisationId,
+      organisation_id: params.organisationId,
       limit: params.limit || 10,
     });
     return { data, error: null };
@@ -90,8 +91,8 @@ export async function testWinLeadPlusConnection(params: {
  }): Promise<ActionResult<TestConnectionResponse>> {
    try {
      const data = await winleadplus.testConnection({
-       organisationId: params.organisationId,
-       apiEndpoint: params.apiEndpoint,
+       organisation_id: params.organisationId,
+       api_endpoint: params.apiEndpoint,
      });
      return { data, error: null };
    } catch (err) {
@@ -107,14 +108,64 @@ export async function testWinLeadPlusConnection(params: {
  * Check if organisation has an active WinLeadPlus config
  */
 export async function hasWinLeadPlusConfig(params: {
-   organisationId: string;
- }): Promise<boolean> {
-   try {
-     const data = await winleadplus.hasConfig({
-       organisationId: params.organisationId,
-     });
-     return data.enabled ?? false;
-   } catch {
-     return false; // Fail closed
-   }
- }
+    organisationId: string;
+  }): Promise<boolean> {
+    try {
+      const data = await winleadplus.hasConfig({
+        organisation_id: params.organisationId,
+      });
+      return data.enabled ?? false;
+    } catch {
+      return false; // Fail closed
+    }
+  }
+
+/**
+ * Get WinLeadPlus configuration for an organisation
+ */
+export async function getWinLeadPlusConfig(params: {
+  organisationId: string;
+}): Promise<ActionResult<WinLeadPlusConfig>> {
+  try {
+    const data = await winleadplus.getConfig({
+      organisation_id: params.organisationId,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[getWinLeadPlusConfig] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la récupération de la configuration WinLeadPlus",
+    };
+  }
+}
+
+/**
+ * Save WinLeadPlus configuration (create or update)
+ */
+export async function saveWinLeadPlusConfig(params: {
+  id?: string;
+  organisationId?: string;
+  apiEndpoint?: string;
+  enabled?: boolean;
+  syncIntervalMinutes?: number;
+  apiToken?: string;
+}): Promise<ActionResult<WinLeadPlusConfig>> {
+  try {
+    const data = await winleadplus.saveConfig({
+      id: params.id || "",
+      organisation_id: params.organisationId,
+      api_endpoint: params.apiEndpoint,
+      enabled: params.enabled,
+      sync_interval_minutes: params.syncIntervalMinutes,
+      api_token: params.apiToken,
+    });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[saveWinLeadPlusConfig] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la sauvegarde de la configuration WinLeadPlus",
+    };
+  }
+}

@@ -5,18 +5,20 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify, makeClient, GrpcClient } from "./config";
 import {
-   WinLeadPlusSyncServiceService,
-   type SyncProspectsRequest,
-   type SyncProspectsResponse,
-   type GetSyncStatusRequest,
-   type GetSyncStatusResponse,
-   type ListWinLeadPlusSyncLogsRequest,
-   type ListWinLeadPlusSyncLogsResponse,
-   type TestConnectionRequest,
-   type TestConnectionResponse as WinLeadPlusTestConnectionResponse,
-   type GetWinLeadPlusConfigRequest,
-   type HasWinLeadPlusConfigResponse,
- } from "@proto/winleadplus/winleadplus";
+    WinLeadPlusSyncServiceService,
+    type SyncProspectsRequest,
+    type SyncProspectsResponse,
+    type GetSyncStatusRequest,
+    type GetSyncStatusResponse,
+    type ListWinLeadPlusSyncLogsRequest,
+    type ListWinLeadPlusSyncLogsResponse,
+    type TestConnectionRequest,
+    type TestConnectionResponse as WinLeadPlusTestConnectionResponse,
+    type GetWinLeadPlusConfigRequest,
+    type HasWinLeadPlusConfigResponse,
+    type WinLeadPlusConfig,
+    type UpdateWinLeadPlusConfigRequest,
+  } from "@proto/winleadplus/winleadplus";
 
 let syncServiceInstance: GrpcClient | null = null;
 
@@ -57,23 +59,37 @@ export const winleadplus = {
        "testConnection"
      )(request),
 
-   hasConfig: (request: GetWinLeadPlusConfigRequest): Promise<HasWinLeadPlusConfigResponse> =>
-     promisify<GetWinLeadPlusConfigRequest, HasWinLeadPlusConfigResponse>(
-       getSyncServiceClient(),
-       "hasConfig"
-     )(request),
- };
+    hasConfig: (request: GetWinLeadPlusConfigRequest): Promise<HasWinLeadPlusConfigResponse> =>
+      promisify<GetWinLeadPlusConfigRequest, HasWinLeadPlusConfigResponse>(
+        getSyncServiceClient(),
+        "hasConfig"
+      )(request),
+
+    getConfig: (request: GetWinLeadPlusConfigRequest): Promise<WinLeadPlusConfig> =>
+      promisify<GetWinLeadPlusConfigRequest, WinLeadPlusConfig>(
+        getSyncServiceClient(),
+        "getConfig"
+      )(request),
+
+    saveConfig: (request: UpdateWinLeadPlusConfigRequest): Promise<WinLeadPlusConfig> =>
+      promisify<UpdateWinLeadPlusConfigRequest, WinLeadPlusConfig>(
+        getSyncServiceClient(),
+        "saveConfig"
+      )(request),
+  };
 
 // Re-export types for convenience
 export type {
-   SyncProspectsRequest,
-   SyncProspectsResponse,
-   GetSyncStatusRequest,
-   GetSyncStatusResponse,
-   ListWinLeadPlusSyncLogsRequest,
-   ListWinLeadPlusSyncLogsResponse,
-   TestConnectionRequest,
-   GetWinLeadPlusConfigRequest,
-   HasWinLeadPlusConfigResponse,
- };
- export type { WinLeadPlusTestConnectionResponse as TestConnectionResponse };
+    SyncProspectsRequest,
+    SyncProspectsResponse,
+    GetSyncStatusRequest,
+    GetSyncStatusResponse,
+    ListWinLeadPlusSyncLogsRequest,
+    ListWinLeadPlusSyncLogsResponse,
+    TestConnectionRequest,
+    GetWinLeadPlusConfigRequest,
+    HasWinLeadPlusConfigResponse,
+    WinLeadPlusConfig,
+    UpdateWinLeadPlusConfigRequest,
+  };
+  export type { WinLeadPlusTestConnectionResponse as TestConnectionResponse };

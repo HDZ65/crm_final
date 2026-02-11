@@ -23,6 +23,9 @@ import { usePspAccounts, PspType } from "@/hooks/use-psp-accounts"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { useSocietes } from "@/hooks/clients"
 import { RolesPermissionsSettings } from "@/components/settings/roles-permissions-settings"
+import { toast } from "sonner"
+import { getWinLeadPlusConfig, saveWinLeadPlusConfig, testWinLeadPlusConnection } from "@/actions/winleadplus"
+import type { WinLeadPlusConfig } from "@/proto/winleadplus/winleadplus"
 
 import {
   Breadcrumb,
@@ -651,13 +654,196 @@ function TypesActivitesSettings({ onOpenChange }: { onOpenChange: (open: boolean
 }
 
 function IntegrationsSettings({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+  const { activeOrganisation, isOwner } = useOrganisation()
+
+  const [config, setConfig] = React.useState<WinLeadPlusConfig | null>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [isSaving, setIsSaving] = React.useState(false)
+  const [isTesting, setIsTesting] = React.useState(false)
+  const [testResult, setTestResult] = React.useState<{ success: boolean; message: string } | null>(null)
+  
+  const [apiEndpoint, setApiEndpoint] = React.useState("")
+  const [apiToken, setApiToken] = React.useState("")
+  const [enabled, setEnabled] = React.useState(false)
+  const [syncInterval, setSyncInterval] = React.useState(60)
+  const [showTokenInput, setShowTokenInput] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!activeOrganisation?.organisationId) return
+    
+    setIsLoading(true)
+    getWinLeadPlusConfig({ organisationId: activeOrganisation.organisationId })
+      .then(({ data, error }) => {
+        if (data) {
+          setConfig(data)
+          setApiEndpoint(data.api_endpoint || "")
+          setEnabled(data.enabled || false)
+          setSyncInterval(data.sync_interval_minutes || 60)
+          setShowTokenInput(!data.has_api_token)
+        }
+      })
+      .finally(() => setIsLoading(false))
+  }, [activeOrganisation?.organisationId])
+
+  if (!activeOrganisation) {
+    return (
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <AlertCircle className="h-4 w-4" />
+        <p>Sélectionnez une organisation pour configurer les intégrations</p>
+      </div>
+    )
+  }
+
+  if (!isOwner) {
+    return (
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Lock className="h-4 w-4" />
+        <p>Accès réservé aux administrateurs de l'organisation</p>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return <div>Chargement...</div>
+  }
+
+  const handleTestConnection = async () => {
+    if (!apiEndpoint) {
+      toast.error("Veuillez saisir l'URL de l'API")
+      return
+    }
+
+    setIsTesting(true)
+    setTestResult(null)
+
+    const { data, error } = await testWinLeadPlusConnection({
+      organisationId: activeOrganisation.organisationId,
+      apiEndpoint,
+    })
+
+    setIsTesting(false)
+
+    if (error) {
+      setTestResult({ success: false, message: error })
+      toast.error("Échec du test de connexion")
+    } else {
+      setTestResult({ success: true, message: "Connexion réussie" })
+      toast.success("Connexion réussie")
+    }
+  }
+
+  const handleSave = async () => {
+    if (!apiEndpoint) {
+      toast.error("Veuillez saisir l'URL de l'API")
+      return
+    }
+
+    setIsSaving(true)
+
+    const { data, error } = await saveWinLeadPlusConfig({
+      id: config?.id,
+      organisationId: activeOrganisation.organisationId,
+      apiEndpoint,
+      enabled,
+      syncIntervalMinutes: syncInterval,
+      apiToken: apiToken || undefined,
+    })
+
+    setIsSaving(false)
+
+    if (error) {
+      toast.error("Erreur lors de la sauvegarde")
+    } else {
+      setConfig(data)
+      setApiToken("")
+      setShowTokenInput(false)
+      toast.success("Configuration enregistrée")
+    }
+  }
+
   return (
-    <AdminSectionLink
-      title="Intégrations"
-      description="Gérez les intégrations externes."
-      path="/integrations/woocommerce"
-      onOpenChange={onOpenChange}
-    />
+    <div className="space-y-6">
+      <div className="rounded-lg border p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            <h3 className="font-semibold">
+              {config ? (enabled ? "WinLeadPlus ✓ Connecté" : "WinLeadPlus — Désactivé") : "WinLeadPlus"}
+            </h3>
+          </div>
+          {config && (
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="api-endpoint">URL de l'API</Label>
+          <Input
+            id="api-endpoint"
+            type="url"
+            placeholder="https://api.winleadplus.com"
+            value={apiEndpoint}
+            onChange={(e) => setApiEndpoint(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="api-token">Token API</Label>
+          {config?.has_api_token && !showTokenInput ? (
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">✓ Token configuré</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowTokenInput(true)}
+              >
+                Modifier
+              </Button>
+            </div>
+          ) : (
+            <Input
+              id="api-token"
+              type="password"
+              placeholder="Votre token API"
+              value={apiToken}
+              onChange={(e) => setApiToken(e.target.value)}
+            />
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="sync-interval">Intervalle de synchronisation (minutes)</Label>
+          <Input
+            id="sync-interval"
+            type="number"
+            min="1"
+            value={syncInterval}
+            onChange={(e) => setSyncInterval(parseInt(e.target.value) || 60)}
+          />
+        </div>
+
+        <Button
+          variant="outline"
+          onClick={handleTestConnection}
+          disabled={isTesting || !apiEndpoint}
+        >
+          {isTesting ? "Test en cours..." : "Tester la connexion"}
+        </Button>
+
+        {testResult && (
+          <div className={`text-sm ${testResult.success ? "text-green-600" : "text-red-600"}`}>
+            {testResult.message}
+          </div>
+        )}
+
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? "Enregistrement..." : config ? "Enregistrer" : "Activer WinLeadPlus"}
+        </Button>
+      </div>
+    </div>
   )
 }
 

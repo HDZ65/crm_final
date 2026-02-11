@@ -16,6 +16,7 @@ import { DashboardModule } from './dashboard.module';
 import { ProductsModule } from './products.module';
 import { SubscriptionsModule } from './subscriptions.module';
 import { WooCommerceModule } from './woocommerce.module';
+import { WinLeadPlusModule } from './winleadplus.module';
 import { CatalogueWebhookModule } from './catalogue-webhook.module';
 
 @Module({
@@ -66,6 +67,7 @@ import { CatalogueWebhookModule } from './catalogue-webhook.module';
     ProductsModule,
     SubscriptionsModule,
     WooCommerceModule,
+    WinLeadPlusModule,
     CatalogueWebhookModule,
   ],
   controllers: [],

@@ -7,6 +7,7 @@ import { ProduitEntity } from './domain/products/entities/produit.entity';
 
 // Domain services
 import { CatalogueWebhookMappingService } from './domain/catalogue-webhook/services/catalogue-webhook-mapping.service';
+import { CatalogueOutgoingWebhookService } from './domain/catalogue-webhook/services/catalogue-outgoing-webhook.service';
 
 // Infrastructure services (TypeORM repositories)
 import { CatalogueWebhookEventRepoService } from './infrastructure/persistence/typeorm/repositories/catalogue-webhook/catalogue-webhook-event.service';
@@ -29,8 +30,13 @@ import { ProductsModule } from './products.module';
   providers: [
     CatalogueWebhookEventRepoService,
     CatalogueWebhookMappingService,
+    CatalogueOutgoingWebhookService,
     CatalogueWebhookNatsWorker,
   ],
-  exports: [CatalogueWebhookEventRepoService, CatalogueWebhookMappingService],
+  exports: [
+    CatalogueWebhookEventRepoService,
+    CatalogueWebhookMappingService,
+    CatalogueOutgoingWebhookService,
+  ],
 })
 export class CatalogueWebhookModule {}

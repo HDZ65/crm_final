@@ -202,6 +202,11 @@ export class WinLeadPlusSyncService {
     return this.configRepository.save(created);
   }
 
+  async hasConfig(organisationId: string): Promise<boolean> {
+    const config = await this.configRepository.findByOrganisationId(organisationId);
+    return config !== null && config.enabled;
+  }
+
   async saveConfig(input: SaveWinLeadPlusConfigInput): Promise<WinLeadPlusConfigEntity> {
     let config: WinLeadPlusConfigEntity | null = null;
 

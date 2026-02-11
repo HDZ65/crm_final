@@ -39,6 +39,10 @@ export interface GetWinLeadPlusConfigRequest {
   organisationId: string;
 }
 
+export interface HasWinLeadPlusConfigResponse {
+  enabled: boolean;
+}
+
 export interface WinLeadPlusMapping {
   id: string;
   organisationId: string;
@@ -639,6 +643,64 @@ export const GetWinLeadPlusConfigRequest: MessageFns<GetWinLeadPlusConfigRequest
   fromPartial<I extends Exact<DeepPartial<GetWinLeadPlusConfigRequest>, I>>(object: I): GetWinLeadPlusConfigRequest {
     const message = createBaseGetWinLeadPlusConfigRequest();
     message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseHasWinLeadPlusConfigResponse(): HasWinLeadPlusConfigResponse {
+  return { enabled: false };
+}
+
+export const HasWinLeadPlusConfigResponse: MessageFns<HasWinLeadPlusConfigResponse> = {
+  encode(message: HasWinLeadPlusConfigResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.enabled !== false) {
+      writer.uint32(8).bool(message.enabled);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): HasWinLeadPlusConfigResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseHasWinLeadPlusConfigResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.enabled = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): HasWinLeadPlusConfigResponse {
+    return { enabled: isSet(object.enabled) ? globalThis.Boolean(object.enabled) : false };
+  },
+
+  toJSON(message: HasWinLeadPlusConfigResponse): unknown {
+    const obj: any = {};
+    if (message.enabled !== false) {
+      obj.enabled = message.enabled;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<HasWinLeadPlusConfigResponse>, I>>(base?: I): HasWinLeadPlusConfigResponse {
+    return HasWinLeadPlusConfigResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<HasWinLeadPlusConfigResponse>, I>>(object: I): HasWinLeadPlusConfigResponse {
+    const message = createBaseHasWinLeadPlusConfigResponse();
+    message.enabled = object.enabled ?? false;
     return message;
   },
 };
@@ -2303,6 +2365,17 @@ export const WinLeadPlusSyncServiceService = {
     responseSerialize: (value: WinLeadPlusConfig): Buffer => Buffer.from(WinLeadPlusConfig.encode(value).finish()),
     responseDeserialize: (value: Buffer): WinLeadPlusConfig => WinLeadPlusConfig.decode(value),
   },
+  hasConfig: {
+    path: "/winleadplus.WinLeadPlusSyncService/HasConfig",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetWinLeadPlusConfigRequest): Buffer =>
+      Buffer.from(GetWinLeadPlusConfigRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetWinLeadPlusConfigRequest => GetWinLeadPlusConfigRequest.decode(value),
+    responseSerialize: (value: HasWinLeadPlusConfigResponse): Buffer =>
+      Buffer.from(HasWinLeadPlusConfigResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): HasWinLeadPlusConfigResponse => HasWinLeadPlusConfigResponse.decode(value),
+  },
 } as const;
 
 export interface WinLeadPlusSyncServiceServer extends UntypedServiceImplementation {
@@ -2312,6 +2385,7 @@ export interface WinLeadPlusSyncServiceServer extends UntypedServiceImplementati
   testConnection: handleUnaryCall<TestConnectionRequest, TestConnectionResponse>;
   getConfig: handleUnaryCall<GetWinLeadPlusConfigRequest, WinLeadPlusConfig>;
   saveConfig: handleUnaryCall<UpdateWinLeadPlusConfigRequest, WinLeadPlusConfig>;
+  hasConfig: handleUnaryCall<GetWinLeadPlusConfigRequest, HasWinLeadPlusConfigResponse>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

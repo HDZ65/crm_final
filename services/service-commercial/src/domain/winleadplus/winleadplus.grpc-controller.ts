@@ -130,6 +130,19 @@ export class WinLeadPlusGrpcController {
     return this.mapConfig(config);
   }
 
+  @GrpcMethod('WinLeadPlusSyncService', 'HasConfig')
+  async hasConfig(data: GetWinLeadPlusConfigRequest) {
+    if (!data.organisation_id) {
+      throw new RpcException({
+        code: status.INVALID_ARGUMENT,
+        message: 'organisation_id is required',
+      });
+    }
+
+    const hasConfig = await this.syncService.hasConfig(data.organisation_id);
+    return { enabled: hasConfig };
+  }
+
   @GrpcMethod('WinLeadPlusSyncService', 'SaveConfig')
   async saveConfig(data: UpdateWinLeadPlusConfigRequest) {
     if (!data.id) {

@@ -33,6 +33,10 @@ message GetWinLeadPlusConfigRequest {
   string organisation_id = 1;
 }
 
+message HasWinLeadPlusConfigResponse {
+  bool enabled = 1;
+}
+
 // ===== WINLEADPLUS MAPPING =====
 
 message WinLeadPlusMapping {
@@ -142,4 +146,5 @@ service WinLeadPlusSyncService {
   rpc TestConnection(TestConnectionRequest) returns (TestConnectionResponse);
   rpc GetConfig(GetWinLeadPlusConfigRequest) returns (WinLeadPlusConfig);
   rpc SaveConfig(UpdateWinLeadPlusConfigRequest) returns (WinLeadPlusConfig);
+  rpc HasConfig(GetWinLeadPlusConfigRequest) returns (HasWinLeadPlusConfigResponse);
 }

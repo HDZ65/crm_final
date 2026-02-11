@@ -24,6 +24,7 @@ interface ListWinLeadPlusSyncLogsRequest {
 interface TestConnectionRequest {
   organisation_id: string;
   api_endpoint?: string;
+  api_token?: string;
 }
 
 interface GetWinLeadPlusConfigRequest {
@@ -31,10 +32,12 @@ interface GetWinLeadPlusConfigRequest {
 }
 
 interface UpdateWinLeadPlusConfigRequest {
-  id: string;
+  id?: string;
+  organisation_id?: string;
   api_endpoint?: string;
   enabled?: boolean;
   sync_interval_minutes?: number;
+  api_token?: string;
 }
 
 interface RpcMetadata {
@@ -110,7 +113,7 @@ export class WinLeadPlusGrpcController {
       });
     }
 
-    const token = this.extractBearerToken(metadata);
+    const token = data.api_token || this.extractBearerToken(metadata);
     return this.syncService.testConnection(data.organisation_id, {
       token,
       apiEndpoint: data.api_endpoint,
@@ -145,18 +148,20 @@ export class WinLeadPlusGrpcController {
 
   @GrpcMethod('WinLeadPlusSyncService', 'SaveConfig')
   async saveConfig(data: UpdateWinLeadPlusConfigRequest) {
-    if (!data.id) {
+    if (!data.id && !data.organisation_id) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
-        message: 'id is required',
+        message: 'id or organisation_id is required',
       });
     }
 
     const input: SaveWinLeadPlusConfigInput = {
       id: data.id,
+      organisationId: data.organisation_id,
       apiEndpoint: data.api_endpoint,
       enabled: data.enabled,
       syncIntervalMinutes: data.sync_interval_minutes,
+      apiToken: data.api_token,
     };
 
     const config = await this.syncService.saveConfig(input);
@@ -200,6 +205,7 @@ export class WinLeadPlusGrpcController {
     lastSyncAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
+    apiToken?: string | null;
   }) {
     return {
       id: config.id,
@@ -210,6 +216,7 @@ export class WinLeadPlusGrpcController {
       last_sync_at: config.lastSyncAt ? config.lastSyncAt.toISOString() : undefined,
       created_at: config.createdAt.toISOString(),
       updated_at: config.updatedAt.toISOString(),
+      has_api_token: !!(config.apiToken),
     };
   }
 

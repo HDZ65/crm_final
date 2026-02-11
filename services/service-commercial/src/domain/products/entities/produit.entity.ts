@@ -160,11 +160,37 @@ export class ProduitEntity {
   @Column({ name: 'config_tarification', type: 'jsonb', nullable: true })
   configTarification: Record<string, unknown> | null;
 
-   @Column({ type: 'jsonb', nullable: true })
-   metadata: Record<string, unknown> | null;
+    @Column({ type: 'jsonb', nullable: true })
+    metadata: Record<string, unknown> | null;
 
-   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
-   createdBy: string | null;
+    // --- Partner catalogue synchronization ---
+
+    @Column({ type: 'boolean', default: false })
+    popular: boolean;
+
+    @Column({ type: 'decimal', precision: 3, scale: 2, nullable: true })
+    rating: number | null;
+
+    @Column({ name: 'logo_url', type: 'text', nullable: true })
+    logoUrl: string | null;
+
+    @Column({ name: 'features_data', type: 'jsonb', nullable: true })
+    featuresData: Record<string, unknown> | null;
+
+    @Column({ name: 'formules_data', type: 'jsonb', nullable: true })
+    formulesData: Record<string, unknown> | null;
+
+    @Column({ name: 'categorie_partenaire', type: 'varchar', length: 100, nullable: true })
+    categoriePartenaire: string | null;
+
+    @Column({ name: 'source_derniere_modif', type: 'varchar', length: 50, nullable: true })
+    sourceDerniereModif: string | null;
+
+    @Column({ type: 'varchar', length: 200, nullable: true })
+    fournisseur: string | null;
+
+    @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+    createdBy: string | null;
 
    @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
    modifiedBy: string | null;

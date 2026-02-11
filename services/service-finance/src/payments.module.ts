@@ -93,6 +93,10 @@ import { CbUpdateSessionController } from './interfaces/http/controllers/payment
 import { PaymentQueryService } from './application/queries/payment-query.service';
 import { PaymentQueryController } from './interfaces/grpc/controllers/payments/payment-query.controller';
 import { InformationPaiementBancaireController } from './infrastructure/grpc/payments/information-paiement-bancaire.controller';
+import { RoutingController } from './interfaces/grpc/controllers/payments/routing.controller';
+import { RoutingEngineService } from './infrastructure/persistence/typeorm/repositories/payments/routing-engine.service';
+import { ProviderOverrideService } from './infrastructure/persistence/typeorm/repositories/payments/provider-override.service';
+import { ReassignmentJobService } from './infrastructure/persistence/typeorm/repositories/payments/reassignment-job.service';
 import { FacturesModule } from './factures.module';
 
 @Global()
@@ -151,6 +155,7 @@ import { FacturesModule } from './factures.module';
     CbUpdateSessionController,
     PaymentQueryController,
     InformationPaiementBancaireController,
+    RoutingController,
   ],
   providers: [
     SchedulesService,
@@ -180,6 +185,9 @@ import { FacturesModule } from './factures.module';
     DepanssurPaymentSucceededHandler,
     PaymentQueryService,
     InformationPaiementBancaireService,
+    RoutingEngineService,
+    ProviderOverrideService,
+    ReassignmentJobService,
     {
       provide: SMS_SERVICE_TOKEN,
       useClass: MockSmsService,

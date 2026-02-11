@@ -4,25 +4,32 @@ services:
       context: ../..
       dockerfile: services/service-core/Dockerfile
       target: development
-    container_name: dev-crm-service-core
+    container_name: alex-service-core # <--- Préfixe unique
+    labels:
+      - "traefik.enable=true"
+      # URL : http://alex-core.local:8081
+      - "traefik.http.routers.alex-core.rule=Host(`alex-core.local`)"
+      - "traefik.http.services.alex-core.loadbalancer.server.port=3052"
     ports:
-      - "50052:50052"
-      - "3052:3052"
+      - "50072:50052" # gRPC host:container (50072 libre sur TRX50)
+      - "3072:3052"   # HTTP host:container
     env_file:
       - ../../services/service-core/.env.development
     environment:
       - NODE_PATH=/app/services/service-core/node_modules
-    depends_on:
-      postgres-main:
-        condition: service_healthy
-    volumes:
-      - ../../services/service-core/src:/app/services/service-core/src
+      # On pointe vers la base spécifique 'alex_core' sur l'instance globale
+      - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_core
+      - MIGRATIONS_RUN=false
+    # depends_on supprimé : global_postgres gère son propre cycle de vie
     networks:
-      - crm-network
+      - shared_dev_net
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(3052, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
     restart: unless-stopped
+
+networks:
+  shared_dev_net:
+    external: true

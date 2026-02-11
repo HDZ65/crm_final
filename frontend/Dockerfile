@@ -28,8 +28,20 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy proto package for runtime
 COPY packages/proto /packages/proto
 
-# Copy package.json for scripts
+# Copy package.json and config files
 COPY frontend/package.json ./
+COPY frontend/tsconfig.json ./
+COPY frontend/next.config.ts ./
+COPY frontend/postcss.config.mjs ./
+COPY frontend/biome.json ./
+COPY frontend/components.json ./
+
+# Copy env files for development
+COPY frontend/.env.development ./.env.development
+
+# Copy source code (needed on remote server without volume mounts)
+COPY frontend/src ./src
+COPY frontend/public ./public
 
 # Environment
 ENV NODE_ENV=development

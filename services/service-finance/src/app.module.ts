@@ -44,7 +44,7 @@ import { CalendarModule } from './calendar.module';
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
         synchronize: configService.get('NODE_ENV') !== 'production',
-        migrationsRun: true,
+        migrationsRun: configService.get('MIGRATIONS_RUN', 'true') === 'true',
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get('NODE_ENV') === 'development',
         ssl:

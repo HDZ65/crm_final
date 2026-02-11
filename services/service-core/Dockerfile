@@ -7,6 +7,9 @@ RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
+# Copy monorepo tsconfig base (needed by all services)
+COPY tsconfig.base.json ./tsconfig.base.json
+
 # Copy shared packages (needed for file: references)
 COPY packages/proto/ ./packages/proto/
 COPY packages/shared-kernel/ ./packages/shared-kernel/

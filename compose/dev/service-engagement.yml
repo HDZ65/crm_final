@@ -4,25 +4,34 @@ services:
       context: ../..
       dockerfile: services/service-engagement/Dockerfile
       target: development
-    container_name: dev-crm-service-engagement
+    container_name: alex-service-engagement # <--- Identifiant unique
+    labels:
+      - "traefik.enable=true"
+      # URL pour tes tests HTTP : http://alex-engagement.local:8081
+      - "traefik.http.routers.alex-eng.rule=Host(`alex-engagement.local`)"
+      - "traefik.http.services.alex-eng.loadbalancer.server.port=3061"
     ports:
-      - "50051:50051"
-      - "3061:3061"
+      - "50071:50051" # gRPC host:container (50071 libre sur TRX50)
+      - "3071:3061"   # HTTP host:container
     env_file:
       - ../../services/service-engagement/.env.development
     environment:
       - NODE_PATH=/app/services/service-engagement/node_modules
-    depends_on:
-      postgres-main:
-        condition: service_healthy
-    volumes:
-      - ../../services/service-engagement/src:/app/services/service-engagement/src
+      # Connexion à la base dédiée créée précédemment
+      - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_engagement
+      - MIGRATIONS_RUN=false
+      # On force les hôtes pour pointer vers l'infra partagée et ton NATS perso
+      - NATS_URL=nats://alex-crm-nats:4222
+      - REDIS_HOST=global_redis
     networks:
-      - crm-network
+      - shared_dev_net
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(3061, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
     restart: unless-stopped
+
+networks:
+  shared_dev_net:
+    external: true

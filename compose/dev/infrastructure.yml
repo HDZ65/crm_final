@@ -1,86 +1,36 @@
 services:
+  # ============================================================================
+  # GLOBAL INFRASTRUCTURE (managed externally on TRX50)
+  # global_postgres, global_redis, global_router (Traefik) run as standalone
+  # containers on shared_dev_net — do NOT redefine them here.
+  # ============================================================================
+
+  # ============================================================================
+  # PER-DEVELOPER INFRASTRUCTURE (alex- prefixed)
+  # ============================================================================
+
+  # Consul - per-dev service discovery
   consul:
     image: hashicorp/consul:1.17
-    container_name: dev-crm-consul
+    container_name: alex-crm-consul
     command: agent -dev -client=0.0.0.0 -ui
-    ports:
-      - "8500:8500"
-    volumes:
-      - crm_consul_data:/consul/data
-    healthcheck:
-      test: ["CMD", "consul", "info"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alex-consul.rule=Host(`alex-consul.local`)"
+      - "traefik.http.services.alex-consul.loadbalancer.server.port=8500"
     networks:
-      - crm-network
+      - shared_dev_net
     restart: unless-stopped
 
-  redis:
-    image: redis:8.4-alpine
-    container_name: dev-crm-redis
-    ports:
-      - "6380:6379"
-    volumes:
-      - crm_redis_data:/data
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - crm-network
-    restart: unless-stopped
-
-  postgres-main:
-    image: postgres:16-alpine
-    container_name: dev-crm-postgres-main
-    environment:
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: crm_main
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
-    volumes:
-      - postgres_main_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - crm-network
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 3G
-        reservations:
-          memory: 512M
-
+  # NATS - per-dev event streaming
   nats:
     image: nats:2.10-alpine
-    container_name: dev-crm-nats
+    container_name: alex-crm-nats
     command: "-js -m 8222"
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8222/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
-      - crm-network
+      - shared_dev_net
     restart: unless-stopped
 
 networks:
-  crm-network:
-    driver: bridge
-
-volumes:
-  crm_consul_data:
-  crm_redis_data:
-  postgres_main_data:
+  shared_dev_net:
+    external: true

@@ -78,12 +78,6 @@ export interface Contrat {
   notes: string;
   createdAt: string;
   updatedAt: string;
-  /** Jour fixe de prélèvement (1-28) */
-  jourPrelevement?:
-    | number
-    | undefined;
-  /** Prochaine date de prélèvement calculée (ISO string) */
-  prochaineDatePrelevement?: string | undefined;
 }
 
 export interface ContratWithDetails {
@@ -111,8 +105,6 @@ export interface CreateContratRequest {
   commercialId: string;
   societeId: string;
   notes: string;
-  /** Jour fixe de prélèvement (1-28) */
-  jourPrelevement?: number | undefined;
 }
 
 export interface UpdateContratRequest {
@@ -134,8 +126,6 @@ export interface UpdateContratRequest {
   commercialId: string;
   societeId: string;
   notes: string;
-  /** Jour fixe de prélèvement (1-28) */
-  jourPrelevement?: number | undefined;
 }
 
 export interface GetContratRequest {
@@ -282,43 +272,6 @@ export interface GetOrchestrationHistoryRequest {
 export interface ListOrchestrationHistoryResponse {
   history: OrchestrationHistory[];
   pagination: PaginationResult | undefined;
-}
-
-export interface ImportFromExternalRequest {
-  organisationId: string;
-  sourceUrl: string;
-  apiKey: string;
-  dryRun: boolean;
-}
-
-export interface ImportFromExternalResponse {
-  importId: string;
-  totalRows: number;
-  createdCount: number;
-  updatedCount: number;
-  skippedCount: number;
-  errors: ImportError[];
-}
-
-export interface ImportError {
-  row: number;
-  reference: string;
-  errorMessage: string;
-}
-
-export interface GetImportStatusRequest {
-  importId: string;
-}
-
-export interface GetImportStatusResponse {
-  importId: string;
-  status: string;
-  totalRows: number;
-  processedRows: number;
-  createdCount: number;
-  updatedCount: number;
-  skippedCount: number;
-  errors: ImportError[];
 }
 
 /** ========== COMMON MESSAGES ========== */
@@ -1087,8 +1040,6 @@ function createBaseContrat(): Contrat {
     notes: "",
     createdAt: "",
     updatedAt: "",
-    jourPrelevement: undefined,
-    prochaineDatePrelevement: undefined,
   };
 }
 
@@ -1156,12 +1107,6 @@ export const Contrat: MessageFns<Contrat> = {
     }
     if (message.updatedAt !== "") {
       writer.uint32(170).string(message.updatedAt);
-    }
-    if (message.jourPrelevement !== undefined) {
-      writer.uint32(176).int32(message.jourPrelevement);
-    }
-    if (message.prochaineDatePrelevement !== undefined) {
-      writer.uint32(186).string(message.prochaineDatePrelevement);
     }
     return writer;
   },
@@ -1341,22 +1286,6 @@ export const Contrat: MessageFns<Contrat> = {
           message.updatedAt = reader.string();
           continue;
         }
-        case 22: {
-          if (tag !== 176) {
-            break;
-          }
-
-          message.jourPrelevement = reader.int32();
-          continue;
-        }
-        case 23: {
-          if (tag !== 186) {
-            break;
-          }
-
-          message.prochaineDatePrelevement = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1433,16 +1362,6 @@ export const Contrat: MessageFns<Contrat> = {
         : isSet(object.updated_at)
         ? globalThis.String(object.updated_at)
         : "",
-      jourPrelevement: isSet(object.jourPrelevement)
-        ? globalThis.Number(object.jourPrelevement)
-        : isSet(object.jour_prelevement)
-        ? globalThis.Number(object.jour_prelevement)
-        : undefined,
-      prochaineDatePrelevement: isSet(object.prochaineDatePrelevement)
-        ? globalThis.String(object.prochaineDatePrelevement)
-        : isSet(object.prochaine_date_prelevement)
-        ? globalThis.String(object.prochaine_date_prelevement)
-        : undefined,
     };
   },
 
@@ -1511,12 +1430,6 @@ export const Contrat: MessageFns<Contrat> = {
     if (message.updatedAt !== "") {
       obj.updatedAt = message.updatedAt;
     }
-    if (message.jourPrelevement !== undefined) {
-      obj.jourPrelevement = Math.round(message.jourPrelevement);
-    }
-    if (message.prochaineDatePrelevement !== undefined) {
-      obj.prochaineDatePrelevement = message.prochaineDatePrelevement;
-    }
     return obj;
   },
 
@@ -1546,8 +1459,6 @@ export const Contrat: MessageFns<Contrat> = {
     message.notes = object.notes ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
-    message.jourPrelevement = object.jourPrelevement ?? undefined;
-    message.prochaineDatePrelevement = object.prochaineDatePrelevement ?? undefined;
     return message;
   },
 };
@@ -1668,7 +1579,6 @@ function createBaseCreateContratRequest(): CreateContratRequest {
     commercialId: "",
     societeId: "",
     notes: "",
-    jourPrelevement: undefined,
   };
 }
 
@@ -1727,9 +1637,6 @@ export const CreateContratRequest: MessageFns<CreateContratRequest> = {
     }
     if (message.notes !== "") {
       writer.uint32(146).string(message.notes);
-    }
-    if (message.jourPrelevement !== undefined) {
-      writer.uint32(152).int32(message.jourPrelevement);
     }
     return writer;
   },
@@ -1885,14 +1792,6 @@ export const CreateContratRequest: MessageFns<CreateContratRequest> = {
           message.notes = reader.string();
           continue;
         }
-        case 19: {
-          if (tag !== 152) {
-            break;
-          }
-
-          message.jourPrelevement = reader.int32();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1958,11 +1857,6 @@ export const CreateContratRequest: MessageFns<CreateContratRequest> = {
         ? globalThis.String(object.societe_id)
         : "",
       notes: isSet(object.notes) ? globalThis.String(object.notes) : "",
-      jourPrelevement: isSet(object.jourPrelevement)
-        ? globalThis.Number(object.jourPrelevement)
-        : isSet(object.jour_prelevement)
-        ? globalThis.Number(object.jour_prelevement)
-        : undefined,
     };
   },
 
@@ -2022,9 +1916,6 @@ export const CreateContratRequest: MessageFns<CreateContratRequest> = {
     if (message.notes !== "") {
       obj.notes = message.notes;
     }
-    if (message.jourPrelevement !== undefined) {
-      obj.jourPrelevement = Math.round(message.jourPrelevement);
-    }
     return obj;
   },
 
@@ -2051,7 +1942,6 @@ export const CreateContratRequest: MessageFns<CreateContratRequest> = {
     message.commercialId = object.commercialId ?? "";
     message.societeId = object.societeId ?? "";
     message.notes = object.notes ?? "";
-    message.jourPrelevement = object.jourPrelevement ?? undefined;
     return message;
   },
 };
@@ -2076,7 +1966,6 @@ function createBaseUpdateContratRequest(): UpdateContratRequest {
     commercialId: "",
     societeId: "",
     notes: "",
-    jourPrelevement: undefined,
   };
 }
 
@@ -2135,9 +2024,6 @@ export const UpdateContratRequest: MessageFns<UpdateContratRequest> = {
     }
     if (message.notes !== "") {
       writer.uint32(146).string(message.notes);
-    }
-    if (message.jourPrelevement !== undefined) {
-      writer.uint32(152).int32(message.jourPrelevement);
     }
     return writer;
   },
@@ -2293,14 +2179,6 @@ export const UpdateContratRequest: MessageFns<UpdateContratRequest> = {
           message.notes = reader.string();
           continue;
         }
-        case 19: {
-          if (tag !== 152) {
-            break;
-          }
-
-          message.jourPrelevement = reader.int32();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2362,11 +2240,6 @@ export const UpdateContratRequest: MessageFns<UpdateContratRequest> = {
         ? globalThis.String(object.societe_id)
         : "",
       notes: isSet(object.notes) ? globalThis.String(object.notes) : "",
-      jourPrelevement: isSet(object.jourPrelevement)
-        ? globalThis.Number(object.jourPrelevement)
-        : isSet(object.jour_prelevement)
-        ? globalThis.Number(object.jour_prelevement)
-        : undefined,
     };
   },
 
@@ -2426,9 +2299,6 @@ export const UpdateContratRequest: MessageFns<UpdateContratRequest> = {
     if (message.notes !== "") {
       obj.notes = message.notes;
     }
-    if (message.jourPrelevement !== undefined) {
-      obj.jourPrelevement = Math.round(message.jourPrelevement);
-    }
     return obj;
   },
 
@@ -2455,7 +2325,6 @@ export const UpdateContratRequest: MessageFns<UpdateContratRequest> = {
     message.commercialId = object.commercialId ?? "";
     message.societeId = object.societeId ?? "";
     message.notes = object.notes ?? "";
-    message.jourPrelevement = object.jourPrelevement ?? undefined;
     return message;
   },
 };
@@ -4936,659 +4805,6 @@ export const ListOrchestrationHistoryResponse: MessageFns<ListOrchestrationHisto
   },
 };
 
-function createBaseImportFromExternalRequest(): ImportFromExternalRequest {
-  return { organisationId: "", sourceUrl: "", apiKey: "", dryRun: false };
-}
-
-export const ImportFromExternalRequest: MessageFns<ImportFromExternalRequest> = {
-  encode(message: ImportFromExternalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.organisationId !== "") {
-      writer.uint32(10).string(message.organisationId);
-    }
-    if (message.sourceUrl !== "") {
-      writer.uint32(18).string(message.sourceUrl);
-    }
-    if (message.apiKey !== "") {
-      writer.uint32(26).string(message.apiKey);
-    }
-    if (message.dryRun !== false) {
-      writer.uint32(32).bool(message.dryRun);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ImportFromExternalRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseImportFromExternalRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.organisationId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.sourceUrl = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.apiKey = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
-
-          message.dryRun = reader.bool();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ImportFromExternalRequest {
-    return {
-      organisationId: isSet(object.organisationId)
-        ? globalThis.String(object.organisationId)
-        : isSet(object.organisation_id)
-        ? globalThis.String(object.organisation_id)
-        : "",
-      sourceUrl: isSet(object.sourceUrl)
-        ? globalThis.String(object.sourceUrl)
-        : isSet(object.source_url)
-        ? globalThis.String(object.source_url)
-        : "",
-      apiKey: isSet(object.apiKey)
-        ? globalThis.String(object.apiKey)
-        : isSet(object.api_key)
-        ? globalThis.String(object.api_key)
-        : "",
-      dryRun: isSet(object.dryRun)
-        ? globalThis.Boolean(object.dryRun)
-        : isSet(object.dry_run)
-        ? globalThis.Boolean(object.dry_run)
-        : false,
-    };
-  },
-
-  toJSON(message: ImportFromExternalRequest): unknown {
-    const obj: any = {};
-    if (message.organisationId !== "") {
-      obj.organisationId = message.organisationId;
-    }
-    if (message.sourceUrl !== "") {
-      obj.sourceUrl = message.sourceUrl;
-    }
-    if (message.apiKey !== "") {
-      obj.apiKey = message.apiKey;
-    }
-    if (message.dryRun !== false) {
-      obj.dryRun = message.dryRun;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ImportFromExternalRequest>, I>>(base?: I): ImportFromExternalRequest {
-    return ImportFromExternalRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ImportFromExternalRequest>, I>>(object: I): ImportFromExternalRequest {
-    const message = createBaseImportFromExternalRequest();
-    message.organisationId = object.organisationId ?? "";
-    message.sourceUrl = object.sourceUrl ?? "";
-    message.apiKey = object.apiKey ?? "";
-    message.dryRun = object.dryRun ?? false;
-    return message;
-  },
-};
-
-function createBaseImportFromExternalResponse(): ImportFromExternalResponse {
-  return { importId: "", totalRows: 0, createdCount: 0, updatedCount: 0, skippedCount: 0, errors: [] };
-}
-
-export const ImportFromExternalResponse: MessageFns<ImportFromExternalResponse> = {
-  encode(message: ImportFromExternalResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.importId !== "") {
-      writer.uint32(10).string(message.importId);
-    }
-    if (message.totalRows !== 0) {
-      writer.uint32(16).int32(message.totalRows);
-    }
-    if (message.createdCount !== 0) {
-      writer.uint32(24).int32(message.createdCount);
-    }
-    if (message.updatedCount !== 0) {
-      writer.uint32(32).int32(message.updatedCount);
-    }
-    if (message.skippedCount !== 0) {
-      writer.uint32(40).int32(message.skippedCount);
-    }
-    for (const v of message.errors) {
-      ImportError.encode(v!, writer.uint32(50).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ImportFromExternalResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseImportFromExternalResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.importId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 16) {
-            break;
-          }
-
-          message.totalRows = reader.int32();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
-
-          message.createdCount = reader.int32();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
-
-          message.updatedCount = reader.int32();
-          continue;
-        }
-        case 5: {
-          if (tag !== 40) {
-            break;
-          }
-
-          message.skippedCount = reader.int32();
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-
-          message.errors.push(ImportError.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ImportFromExternalResponse {
-    return {
-      importId: isSet(object.importId)
-        ? globalThis.String(object.importId)
-        : isSet(object.import_id)
-        ? globalThis.String(object.import_id)
-        : "",
-      totalRows: isSet(object.totalRows)
-        ? globalThis.Number(object.totalRows)
-        : isSet(object.total_rows)
-        ? globalThis.Number(object.total_rows)
-        : 0,
-      createdCount: isSet(object.createdCount)
-        ? globalThis.Number(object.createdCount)
-        : isSet(object.created_count)
-        ? globalThis.Number(object.created_count)
-        : 0,
-      updatedCount: isSet(object.updatedCount)
-        ? globalThis.Number(object.updatedCount)
-        : isSet(object.updated_count)
-        ? globalThis.Number(object.updated_count)
-        : 0,
-      skippedCount: isSet(object.skippedCount)
-        ? globalThis.Number(object.skippedCount)
-        : isSet(object.skipped_count)
-        ? globalThis.Number(object.skipped_count)
-        : 0,
-      errors: globalThis.Array.isArray(object?.errors)
-        ? object.errors.map((e: any) => ImportError.fromJSON(e))
-        : [],
-    };
-  },
-
-  toJSON(message: ImportFromExternalResponse): unknown {
-    const obj: any = {};
-    if (message.importId !== "") {
-      obj.importId = message.importId;
-    }
-    if (message.totalRows !== 0) {
-      obj.totalRows = Math.round(message.totalRows);
-    }
-    if (message.createdCount !== 0) {
-      obj.createdCount = Math.round(message.createdCount);
-    }
-    if (message.updatedCount !== 0) {
-      obj.updatedCount = Math.round(message.updatedCount);
-    }
-    if (message.skippedCount !== 0) {
-      obj.skippedCount = Math.round(message.skippedCount);
-    }
-    if (message.errors?.length) {
-      obj.errors = message.errors.map((e) => ImportError.toJSON(e));
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ImportFromExternalResponse>, I>>(base?: I): ImportFromExternalResponse {
-    return ImportFromExternalResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ImportFromExternalResponse>, I>>(object: I): ImportFromExternalResponse {
-    const message = createBaseImportFromExternalResponse();
-    message.importId = object.importId ?? "";
-    message.totalRows = object.totalRows ?? 0;
-    message.createdCount = object.createdCount ?? 0;
-    message.updatedCount = object.updatedCount ?? 0;
-    message.skippedCount = object.skippedCount ?? 0;
-    message.errors = object.errors?.map((e) => ImportError.fromPartial(e)) || [];
-    return message;
-  },
-};
-
-function createBaseImportError(): ImportError {
-  return { row: 0, reference: "", errorMessage: "" };
-}
-
-export const ImportError: MessageFns<ImportError> = {
-  encode(message: ImportError, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.row !== 0) {
-      writer.uint32(8).int32(message.row);
-    }
-    if (message.reference !== "") {
-      writer.uint32(18).string(message.reference);
-    }
-    if (message.errorMessage !== "") {
-      writer.uint32(26).string(message.errorMessage);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ImportError {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseImportError();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
-          }
-
-          message.row = reader.int32();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.reference = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.errorMessage = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ImportError {
-    return {
-      row: isSet(object.row) ? globalThis.Number(object.row) : 0,
-      reference: isSet(object.reference) ? globalThis.String(object.reference) : "",
-      errorMessage: isSet(object.errorMessage)
-        ? globalThis.String(object.errorMessage)
-        : isSet(object.error_message)
-        ? globalThis.String(object.error_message)
-        : "",
-    };
-  },
-
-  toJSON(message: ImportError): unknown {
-    const obj: any = {};
-    if (message.row !== 0) {
-      obj.row = Math.round(message.row);
-    }
-    if (message.reference !== "") {
-      obj.reference = message.reference;
-    }
-    if (message.errorMessage !== "") {
-      obj.errorMessage = message.errorMessage;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ImportError>, I>>(base?: I): ImportError {
-    return ImportError.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ImportError>, I>>(object: I): ImportError {
-    const message = createBaseImportError();
-    message.row = object.row ?? 0;
-    message.reference = object.reference ?? "";
-    message.errorMessage = object.errorMessage ?? "";
-    return message;
-  },
-};
-
-function createBaseGetImportStatusRequest(): GetImportStatusRequest {
-  return { importId: "" };
-}
-
-export const GetImportStatusRequest: MessageFns<GetImportStatusRequest> = {
-  encode(message: GetImportStatusRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.importId !== "") {
-      writer.uint32(10).string(message.importId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GetImportStatusRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetImportStatusRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.importId = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetImportStatusRequest {
-    return {
-      importId: isSet(object.importId)
-        ? globalThis.String(object.importId)
-        : isSet(object.import_id)
-        ? globalThis.String(object.import_id)
-        : "",
-    };
-  },
-
-  toJSON(message: GetImportStatusRequest): unknown {
-    const obj: any = {};
-    if (message.importId !== "") {
-      obj.importId = message.importId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetImportStatusRequest>, I>>(base?: I): GetImportStatusRequest {
-    return GetImportStatusRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetImportStatusRequest>, I>>(object: I): GetImportStatusRequest {
-    const message = createBaseGetImportStatusRequest();
-    message.importId = object.importId ?? "";
-    return message;
-  },
-};
-
-function createBaseGetImportStatusResponse(): GetImportStatusResponse {
-  return {
-    importId: "",
-    status: "",
-    totalRows: 0,
-    processedRows: 0,
-    createdCount: 0,
-    updatedCount: 0,
-    skippedCount: 0,
-    errors: [],
-  };
-}
-
-export const GetImportStatusResponse: MessageFns<GetImportStatusResponse> = {
-  encode(message: GetImportStatusResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.importId !== "") {
-      writer.uint32(10).string(message.importId);
-    }
-    if (message.status !== "") {
-      writer.uint32(18).string(message.status);
-    }
-    if (message.totalRows !== 0) {
-      writer.uint32(24).int32(message.totalRows);
-    }
-    if (message.processedRows !== 0) {
-      writer.uint32(32).int32(message.processedRows);
-    }
-    if (message.createdCount !== 0) {
-      writer.uint32(40).int32(message.createdCount);
-    }
-    if (message.updatedCount !== 0) {
-      writer.uint32(48).int32(message.updatedCount);
-    }
-    if (message.skippedCount !== 0) {
-      writer.uint32(56).int32(message.skippedCount);
-    }
-    for (const v of message.errors) {
-      ImportError.encode(v!, writer.uint32(66).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GetImportStatusResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetImportStatusResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.importId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.status = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
-
-          message.totalRows = reader.int32();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
-
-          message.processedRows = reader.int32();
-          continue;
-        }
-        case 5: {
-          if (tag !== 40) {
-            break;
-          }
-
-          message.createdCount = reader.int32();
-          continue;
-        }
-        case 6: {
-          if (tag !== 48) {
-            break;
-          }
-
-          message.updatedCount = reader.int32();
-          continue;
-        }
-        case 7: {
-          if (tag !== 56) {
-            break;
-          }
-
-          message.skippedCount = reader.int32();
-          continue;
-        }
-        case 8: {
-          if (tag !== 66) {
-            break;
-          }
-
-          message.errors.push(ImportError.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetImportStatusResponse {
-    return {
-      importId: isSet(object.importId)
-        ? globalThis.String(object.importId)
-        : isSet(object.import_id)
-        ? globalThis.String(object.import_id)
-        : "",
-      status: isSet(object.status) ? globalThis.String(object.status) : "",
-      totalRows: isSet(object.totalRows)
-        ? globalThis.Number(object.totalRows)
-        : isSet(object.total_rows)
-        ? globalThis.Number(object.total_rows)
-        : 0,
-      processedRows: isSet(object.processedRows)
-        ? globalThis.Number(object.processedRows)
-        : isSet(object.processed_rows)
-        ? globalThis.Number(object.processed_rows)
-        : 0,
-      createdCount: isSet(object.createdCount)
-        ? globalThis.Number(object.createdCount)
-        : isSet(object.created_count)
-        ? globalThis.Number(object.created_count)
-        : 0,
-      updatedCount: isSet(object.updatedCount)
-        ? globalThis.Number(object.updatedCount)
-        : isSet(object.updated_count)
-        ? globalThis.Number(object.updated_count)
-        : 0,
-      skippedCount: isSet(object.skippedCount)
-        ? globalThis.Number(object.skippedCount)
-        : isSet(object.skipped_count)
-        ? globalThis.Number(object.skipped_count)
-        : 0,
-      errors: globalThis.Array.isArray(object?.errors)
-        ? object.errors.map((e: any) => ImportError.fromJSON(e))
-        : [],
-    };
-  },
-
-  toJSON(message: GetImportStatusResponse): unknown {
-    const obj: any = {};
-    if (message.importId !== "") {
-      obj.importId = message.importId;
-    }
-    if (message.status !== "") {
-      obj.status = message.status;
-    }
-    if (message.totalRows !== 0) {
-      obj.totalRows = Math.round(message.totalRows);
-    }
-    if (message.processedRows !== 0) {
-      obj.processedRows = Math.round(message.processedRows);
-    }
-    if (message.createdCount !== 0) {
-      obj.createdCount = Math.round(message.createdCount);
-    }
-    if (message.updatedCount !== 0) {
-      obj.updatedCount = Math.round(message.updatedCount);
-    }
-    if (message.skippedCount !== 0) {
-      obj.skippedCount = Math.round(message.skippedCount);
-    }
-    if (message.errors?.length) {
-      obj.errors = message.errors.map((e) => ImportError.toJSON(e));
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetImportStatusResponse>, I>>(base?: I): GetImportStatusResponse {
-    return GetImportStatusResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetImportStatusResponse>, I>>(object: I): GetImportStatusResponse {
-    const message = createBaseGetImportStatusResponse();
-    message.importId = object.importId ?? "";
-    message.status = object.status ?? "";
-    message.totalRows = object.totalRows ?? 0;
-    message.processedRows = object.processedRows ?? 0;
-    message.createdCount = object.createdCount ?? 0;
-    message.updatedCount = object.updatedCount ?? 0;
-    message.skippedCount = object.skippedCount ?? 0;
-    message.errors = object.errors?.map((e) => ImportError.fromPartial(e)) || [];
-    return message;
-  },
-};
-
 function createBasePagination(): Pagination {
   return { page: 0, limit: 0, sortBy: "", sortOrder: "" };
 }
@@ -6216,38 +5432,6 @@ export interface ContractOrchestrationServiceServer extends UntypedServiceImplem
   terminate: handleUnaryCall<OrchestrationRequest, OrchestrationResponse>;
   portIn: handleUnaryCall<OrchestrationRequest, OrchestrationResponse>;
   getHistory: handleUnaryCall<GetOrchestrationHistoryRequest, ListOrchestrationHistoryResponse>;
-}
-
-/** ========== CONTRAT IMPORT SERVICE ========== */
-export type ContratImportServiceService = typeof ContratImportServiceService;
-export const ContratImportServiceService = {
-  importFromExternal: {
-    path: "/contrats.ContratImportService/ImportFromExternal",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ImportFromExternalRequest): Buffer =>
-      Buffer.from(ImportFromExternalRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ImportFromExternalRequest => ImportFromExternalRequest.decode(value),
-    responseSerialize: (value: ImportFromExternalResponse): Buffer =>
-      Buffer.from(ImportFromExternalResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ImportFromExternalResponse => ImportFromExternalResponse.decode(value),
-  },
-  getImportStatus: {
-    path: "/contrats.ContratImportService/GetImportStatus",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetImportStatusRequest): Buffer =>
-      Buffer.from(GetImportStatusRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetImportStatusRequest => GetImportStatusRequest.decode(value),
-    responseSerialize: (value: GetImportStatusResponse): Buffer =>
-      Buffer.from(GetImportStatusResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): GetImportStatusResponse => GetImportStatusResponse.decode(value),
-  },
-} as const;
-
-export interface ContratImportServiceServer extends UntypedServiceImplementation {
-  importFromExternal: handleUnaryCall<ImportFromExternalRequest, ImportFromExternalResponse>;
-  getImportStatus: handleUnaryCall<GetImportStatusRequest, GetImportStatusResponse>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

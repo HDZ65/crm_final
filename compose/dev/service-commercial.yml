@@ -4,25 +4,32 @@ services:
       context: ../..
       dockerfile: services/service-commercial/Dockerfile
       target: development
-    container_name: dev-crm-service-commercial
+    container_name: alex-service-commercial # <--- Unique par dev
+    labels:
+      - "traefik.enable=true"
+      # URL : http://alex-commercial.local:8081
+      - "traefik.http.routers.alex-comm.rule=Host(`alex-commercial.local`)"
+      - "traefik.http.services.alex-comm.loadbalancer.server.port=3053"
     ports:
-      - "50053:50053"
-      - "3053:3053"
+      - "50073:50053" # gRPC host:container (50073 libre sur TRX50)
+      - "3073:3053"   # HTTP host:container
     env_file:
       - ../../services/service-commercial/.env.development
     environment:
       - NODE_PATH=/app/services/service-commercial/node_modules
-    depends_on:
-      postgres-main:
-        condition: service_healthy
-    volumes:
-      - ../../services/service-commercial/src:/app/services/service-commercial/src
+      # On surcharge l'accès DB pour pointer le container global
+      - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_commercial
+      - MIGRATIONS_RUN=false
+    # depends_on retiré car global_postgres est externe
     networks:
-      - crm-network
+      - shared_dev_net
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(3053, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
     restart: unless-stopped
+
+networks:
+  shared_dev_net:
+    external: true

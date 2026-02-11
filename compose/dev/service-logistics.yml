@@ -4,24 +4,34 @@ services:
       context: ../..
       dockerfile: services/service-logistics/Dockerfile
       target: development
-    container_name: dev-crm-service-logistics
+    container_name: alex-service-logistics # <--- Identifiant unique
+    labels:
+      - "traefik.enable=true"
+      # Configuration pour gRPC (si tu veux utiliser alex-logistics.local)
+      - "traefik.http.routers.alex-log.rule=Host(`alex-logistics.local`)"
+      - "traefik.http.routers.alex-log.entrypoints=web"
+      - "traefik.http.services.alex-log.loadbalancer.server.port=50060"
+      # Indique à Traefik que c'est du h2c (gRPC sans TLS)
+      - "traefik.http.services.alex-log.loadbalancer.server.scheme=h2c"
     ports:
-      - "50060:50060"
+      - "50075:50060" # gRPC host:container (50075 libre sur TRX50)
     env_file:
       - ../../services/service-logistics/.env.development
     environment:
       - NODE_PATH=/app/services/service-logistics/node_modules
-    depends_on:
-      postgres-main:
-        condition: service_healthy
-    volumes:
-      - ../../services/service-logistics/src:/app/services/service-logistics/src
+      - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_logistics
+      - MIGRATIONS_RUN=false
+      - REDIS_HOST=global_redis
     networks:
-      - crm-network
+      - shared_dev_net
     healthcheck:
+      # Test de connexion TCP sur le port gRPC
       test: ["CMD", "node", "-e", "require('net').connect(50060, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
     restart: unless-stopped
+
+networks:
+  shared_dev_net:
+    external: true

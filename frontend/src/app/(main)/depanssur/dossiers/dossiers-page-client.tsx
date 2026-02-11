@@ -16,8 +16,8 @@ import Link from 'next/link';
 
 export function DossiersPageClient() {
   const [search, setSearch] = useState('');
-  const [statutFilter, setStatutFilter] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [statutFilter, setStatutFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   const { data: dossiers, isLoading } = useQuery({
     queryKey: ['dossiers-depanssur', search, statutFilter, typeFilter],
@@ -25,8 +25,8 @@ export function DossiersPageClient() {
       const result = await listDossiersAction({
         organisationId: 'org-id', // TODO: Get from context
         search,
-        statut: statutFilter ? (statutFilter as any) : undefined,
-        type: typeFilter ? (typeFilter as any) : undefined,
+statut: statutFilter && statutFilter !== 'all' ? (statutFilter as any) : undefined,
+          type: typeFilter && typeFilter !== 'all' ? (typeFilter as any) : undefined,
         pagination: { page: 1, limit: 50, sortBy: "", sortOrder: "" },
       });
       if (result.error) throw new Error(result.error);
@@ -164,7 +164,7 @@ export function DossiersPageClient() {
                 <SelectValue placeholder="Tous les statuts" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les statuts</SelectItem>
+                <SelectItem value="all">Tous les statuts</SelectItem>
                 <SelectItem value="ENREGISTRE">Enregistré</SelectItem>
                 <SelectItem value="EN_ANALYSE">En analyse</SelectItem>
                 <SelectItem value="ACCEPTE">Accepté</SelectItem>
@@ -178,7 +178,7 @@ export function DossiersPageClient() {
                 <SelectValue placeholder="Tous les types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les types</SelectItem>
+                <SelectItem value="all">Tous les types</SelectItem>
                 <SelectItem value="ELECTRICITE">⚡ Électricité</SelectItem>
                 <SelectItem value="PLOMBERIE">🚰 Plomberie</SelectItem>
                 <SelectItem value="ELECTROMENAGER">🔌 Électroménager</SelectItem>

@@ -102,6 +102,12 @@ export const SERVICE_REGISTRY: Record<string, ServiceConfig> = {
     defaultPort: 50063,
     serviceName: 'PaymentService',
   },
+  'payment-info': {
+    package: 'payment_info',
+    protoFile: 'payments/payment-info.proto',
+    defaultPort: 50063,
+    serviceName: 'InformationPaiementBancaireService',
+  },
   products: {
     package: 'products',
     protoFile: 'products/products.proto',

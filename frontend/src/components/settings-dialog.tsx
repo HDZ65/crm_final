@@ -492,7 +492,7 @@ function PaiementsSettings() {
       <div className="grid gap-2">
         <Label htmlFor="societe-select">Société</Label>
         <Select
-          value={selectedSocieteId || ""}
+          value={selectedSocieteId || undefined}
           onValueChange={(value) => setSelectedSocieteId(value)}
         >
           <SelectTrigger id="societe-select">

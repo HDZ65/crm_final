@@ -49,7 +49,7 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
 
-    /* Path Aliases */
+    /* Path Aliases - Très important pour tes imports @crm */
     "baseUrl": ".",
     "paths": {
       "@crm/shared-kernel": ["packages/shared-kernel/src"],

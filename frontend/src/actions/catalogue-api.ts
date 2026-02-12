@@ -6,6 +6,7 @@ import {
   getGammesByOrganisation,
   createGamme,
   getProduitsByOrganisation,
+  updateProduit,
 } from "@/actions/catalogue";
 import {
   TypeProduit,
@@ -48,6 +49,7 @@ export interface CatalogueApiTestResult {
 export interface CatalogueApiImportResult {
   imported: number;
   skipped: number;
+  updated: number;
   errors: Array<{
     productId: string | number;
     nom: string;
@@ -264,20 +266,21 @@ export async function importCatalogueFromApi(params: {
       };
     }
 
-    // Build set of existing codeExterne values
-    const existingCodes = new Set<string>();
-    if (produitsResult.data?.produits) {
-      produitsResult.data.produits.forEach((p) => {
-        if (p.codeExterne) {
-          existingCodes.add(p.codeExterne);
-        }
-      });
-    }
+     // Build map of existing products: codeExterne -> productId
+     const existingProducts = new Map<string, string>();
+     if (produitsResult.data?.produits) {
+       produitsResult.data.produits.forEach((p) => {
+         if (p.codeExterne && p.id) {
+           existingProducts.set(p.codeExterne, p.id);
+         }
+       });
+     }
 
-    // Import products
-    let imported = 0;
-    let skipped = 0;
-    let gammesCreated = 0;
+     // Import products
+     let imported = 0;
+     let skipped = 0;
+     let updated = 0;
+     let gammesCreated = 0;
     const errors: Array<{
       productId: string | number;
       nom: string;
@@ -289,11 +292,88 @@ export async function importCatalogueFromApi(params: {
         const codeExterne = `EXT-${externalProduct.id}`;
         const sku = `EXT-${externalProduct.id}`;
 
-        // Skip if already imported
-        if (existingCodes.has(codeExterne)) {
-          skipped++;
-          continue;
-        }
+         // Check if product already exists
+         const existingProductId = existingProducts.get(codeExterne);
+         
+         if (existingProductId) {
+           // Product exists — UPDATE it instead of skipping
+           // Find or create gamme first (same logic as create flow)
+           let gammeId: string | null = null;
+           
+           if (externalProduct.categorie) {
+             const categorieLower = externalProduct.categorie.toLowerCase();
+             gammeId = gammeMap.get(categorieLower) || null;
+             
+             // Create gamme if it doesn't exist (allows category changes)
+             if (!gammeId) {
+               const createGammeResult = await createGamme({
+                 organisationId: params.organisationId,
+                 nom: externalProduct.categorie,
+                 description: `Imported from external catalogue API`,
+               });
+               
+               if (createGammeResult.error) {
+                 errors.push({
+                   productId: externalProduct.id,
+                   nom: externalProduct.nom,
+                   error: `Failed to create gamme during update: ${createGammeResult.error}`,
+                 });
+                 continue;
+               }
+               
+               gammeId = createGammeResult.data?.id || null;
+               if (gammeId) {
+                 gammeMap.set(categorieLower, gammeId);
+                 gammesCreated++;
+               }
+             }
+           }
+           
+           // Skip update if no gamme available
+           if (!gammeId) {
+             errors.push({
+               productId: externalProduct.id,
+               nom: externalProduct.nom,
+               error: "No gamme available for update and could not create one",
+             });
+             continue;
+           }
+           
+           // Build metadata JSON (same as create)
+           const metadata = JSON.stringify({
+             source: "catalogue-rest-api",
+             externalId: externalProduct.id,
+             fournisseur: externalProduct.fournisseur || null,
+             categorieOrigine: externalProduct.categorie || null,
+             popular: externalProduct.popular || false,
+             rating: externalProduct.rating || 0,
+             features: externalProduct.features || null,
+             formules: externalProduct.formules || null,
+           });
+           
+           // Call updateProduit with existing product ID
+           const updateResult = await updateProduit({
+             id: existingProductId,
+             gammeId,
+             nom: externalProduct.nom,
+             description: externalProduct.description || "",
+             prix: externalProduct.prix_base || 0,
+             imageUrl: externalProduct.logo_url || "",
+             metadata,
+           });
+           
+           if (updateResult.error) {
+             errors.push({
+               productId: externalProduct.id,
+               nom: externalProduct.nom,
+               error: `Update failed: ${updateResult.error}`,
+             });
+             continue;
+           }
+           
+           updated++;
+           continue;  // Skip to next product
+         }
 
         // Find or create gamme from categorie
         let gammeId: string | null = null;
@@ -378,8 +458,8 @@ export async function importCatalogueFromApi(params: {
           continue;
         }
 
-        imported++;
-        existingCodes.add(codeExterne);
+         imported++;
+         existingProducts.set(codeExterne, createResult.data?.id || "");
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : "Unknown error";
@@ -391,15 +471,16 @@ export async function importCatalogueFromApi(params: {
       }
     }
 
-    return {
-      data: {
-        imported,
-        skipped,
-        errors,
-        gammesCreated,
-      },
-      error: null,
-    };
+     return {
+       data: {
+         imported,
+         skipped,
+         updated,
+         errors,
+         gammesCreated,
+       },
+       error: null,
+     };
   } catch (err) {
     const errorMessage =
       err instanceof Error ? err.message : "Unknown error during import";

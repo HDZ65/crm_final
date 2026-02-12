@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import {
   getGammesByOrganisation,
   createGamme as createGammeAction,
+  updateGamme as updateGammeAction,
   getProduitsByOrganisation,
   createProduit as createProduitAction,
   updateProduit as updateProduitAction,
@@ -156,6 +157,16 @@ export function CataloguePageClient({
     description: "",
   })
 
+  // Edit Gamme state
+  const [isEditGammeDialogOpen, setIsEditGammeDialogOpen] = React.useState(false)
+  const [gammeToEdit, setGammeToEdit] = React.useState<Gamme | null>(null)
+  const [editGammeForm, setEditGammeForm] = React.useState({
+    societeId: "",
+    nom: "",
+    description: "",
+  })
+  const [updateGammeLoading, setUpdateGammeLoading] = React.useState(false)
+
   // Fetch societes
   const fetchSocietes = React.useCallback(async () => {
     if (!activeOrganisation?.organisationId) return
@@ -259,19 +270,31 @@ export function CataloguePageClient({
   const canCreateGamme = true
   const canCreateProduct = selectedGammeId && selectedGammeId !== "all"
 
-   // Reset selections and refetch when société changes
-   React.useEffect(() => {
-     setSelectedGammeId("all")
-     setGammeSearchQuery("")
-     setProductSearchQuery("")
-     fetchGammes()
-   // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [activeSocieteId])
+    // Reset selections and refetch when société changes
+    React.useEffect(() => {
+      setSelectedGammeId("all")
+      setGammeSearchQuery("")
+      setProductSearchQuery("")
+      fetchGammes()
+      fetchProduits()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeSocieteId])
 
-  // Reset product search when gamme changes
-  React.useEffect(() => {
-    setProductSearchQuery("")
-  }, [selectedGammeId])
+   // Reset product search when gamme changes
+   React.useEffect(() => {
+     setProductSearchQuery("")
+   }, [selectedGammeId])
+
+   // Refetch products when gamme selection changes (skip initial render)
+   const isInitialGammeSelection = React.useRef(true)
+   React.useEffect(() => {
+     if (isInitialGammeSelection.current) {
+       isInitialGammeSelection.current = false
+       return
+     }
+     fetchProduits()
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [selectedGammeId])
 
   // Handlers
   const handleCreateProduct = async (data: CreateProduitRequest) => {
@@ -352,10 +375,47 @@ export function CataloguePageClient({
     }
   }
 
-  const isCreateGammeFormValid =
-    newGammeForm.nom.trim() !== "" && activeOrganisation?.organisationId
+   const handleOpenEditGamme = (gamme: Gamme) => {
+     setGammeToEdit(gamme)
+     setEditGammeForm({
+       societeId: gamme.societeId || "",
+       nom: gamme.nom,
+       description: gamme.description || "",
+     })
+     setIsEditGammeDialogOpen(true)
+   }
 
-  const loading = produitsLoading || gammesLoading
+   const handleUpdateGamme = async () => {
+     if (!gammeToEdit || !activeOrganisation?.organisationId) return
+     const { nom, description, societeId } = editGammeForm
+     if (!nom.trim()) return
+
+     setUpdateGammeLoading(true)
+
+     const societeIdValue = societeId && societeId !== "none" ? societeId : undefined
+     const result = await updateGammeAction({
+       id: gammeToEdit.id,
+       societeId: societeIdValue,
+       nom: nom.trim(),
+       description: description.trim() || undefined,
+     })
+
+     setUpdateGammeLoading(false)
+
+     if (result.error) {
+       toast.error(result.error)
+     } else if (result.data) {
+       toast.success("Gamme mise à jour avec succès")
+       setIsEditGammeDialogOpen(false)
+       setGammeToEdit(null)
+       await refetchGammes()
+     }
+   }
+
+   const isCreateGammeFormValid =
+     newGammeForm.nom.trim() !== "" && activeOrganisation?.organisationId
+
+   const loading = produitsLoading || gammesLoading
 
   return (
     <main className="flex flex-1 flex-col min-h-0 gap-4">
@@ -426,38 +486,52 @@ export function CataloguePageClient({
                 ) : (
                   <div className="space-y-1">
                     {/* Option "Toutes les gammes" */}
-                    <button
-                      onClick={() => setSelectedGammeId("all")}
-                      className={cn(
-                        "w-full flex items-center justify-between px-3 py-2 rounded-md text-left transition-colors text-sm",
-                        selectedGammeId === "all"
-                          ? "bg-muted font-medium text-foreground"
-                          : "hover:bg-muted/50 text-muted-foreground"
-                      )}
-                    >
-                      <span>Toutes les gammes</span>
-                      {selectedGammeId === "all" && (
-                        <ChevronRight className="h-4 w-4 shrink-0" />
-                      )}
-                    </button>
+                     <button
+                       type="button"
+                       onClick={() => setSelectedGammeId("all")}
+                       className={cn(
+                         "w-full flex items-center justify-between px-3 py-2 rounded-md text-left transition-colors text-sm",
+                         selectedGammeId === "all"
+                           ? "bg-muted font-medium text-foreground"
+                           : "hover:bg-muted/50 text-muted-foreground"
+                       )}
+                     >
+                       <span>Toutes les gammes</span>
+                       {selectedGammeId === "all" && (
+                         <ChevronRight className="h-4 w-4 shrink-0" />
+                       )}
+                     </button>
                     <Separator className="my-1" />
                     {filteredGammes.map((gamme) => (
-                      <button
-                        key={gamme.id}
-                        onClick={() => setSelectedGammeId(gamme.id)}
-                        className={cn(
-                          "w-full flex items-center justify-between px-3 py-2 rounded-md text-left transition-colors text-sm",
-                          selectedGammeId === gamme.id
-                            ? "bg-muted font-medium text-foreground"
-                            : "hover:bg-muted/50"
-                        )}
-                      >
-                        <span className="truncate capitalize">{gamme.nom.toLowerCase()}</span>
-                        {selectedGammeId === gamme.id && (
-                          <ChevronRight className="h-4 w-4 shrink-0" />
-                        )}
-                      </button>
-                    ))}
+                       <button
+                         key={gamme.id}
+                         type="button"
+                         onClick={() => setSelectedGammeId(gamme.id)}
+                         className={cn(
+                           "w-full flex items-center justify-between px-3 py-2 rounded-md text-left transition-colors text-sm group",
+                           selectedGammeId === gamme.id
+                             ? "bg-muted font-medium text-foreground"
+                             : "hover:bg-muted/50"
+                         )}
+                       >
+                         <span className="truncate capitalize">{gamme.nom.toLowerCase()}</span>
+                         <div className="flex items-center gap-1 shrink-0">
+                           <button
+                             type="button"
+                             onClick={(e) => {
+                               e.stopPropagation()
+                               handleOpenEditGamme(gamme)
+                             }}
+                             className="h-6 w-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity"
+                           >
+                             <Edit className="h-3 w-3" />
+                           </button>
+                           {selectedGammeId === gamme.id && (
+                             <ChevronRight className="h-4 w-4" />
+                           )}
+                         </div>
+                       </button>
+                     ))}
                   </div>
                 )}
               </div>
@@ -605,47 +679,121 @@ export function CataloguePageClient({
         loading={updateLoading}
       />
 
-      {/* Create Gamme Dialog */}
-      <Dialog open={isCreateGammeDialogOpen} onOpenChange={setIsCreateGammeDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Créer une gamme</DialogTitle>
-            <DialogDescription>
-              Ajoutez une nouvelle gamme de produits.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="gamme-nom">Nom de la gamme *</Label>
-              <Input
-                id="gamme-nom"
-                placeholder="Ex: Santé, Obsèque, Dépendance..."
-                value={newGammeForm.nom}
-                onChange={(e) =>
-                  setNewGammeForm((prev) => ({ ...prev, nom: e.target.value }))
-                }
-              />
-            </div>
+       {/* Create Gamme Dialog */}
+       <Dialog open={isCreateGammeDialogOpen} onOpenChange={setIsCreateGammeDialogOpen}>
+         <DialogContent className="sm:max-w-md">
+           <DialogHeader>
+             <DialogTitle>Créer une gamme</DialogTitle>
+             <DialogDescription>
+               Ajoutez une nouvelle gamme de produits.
+             </DialogDescription>
+           </DialogHeader>
+           <div className="space-y-4 py-4">
              <div className="space-y-2">
-               <Label htmlFor="gamme-description">Description</Label>
+               <Label htmlFor="gamme-nom">Nom de la gamme *</Label>
                <Input
-                 id="gamme-description"
-                 placeholder="Description de la gamme (optionnel)"
-                 value={newGammeForm.description}
+                 id="gamme-nom"
+                 placeholder="Ex: Santé, Obsèque, Dépendance..."
+                 value={newGammeForm.nom}
                  onChange={(e) =>
-                   setNewGammeForm((prev) => ({ ...prev, description: e.target.value }))
+                   setNewGammeForm((prev) => ({ ...prev, nom: e.target.value }))
+                 }
+               />
+             </div>
+              <div className="space-y-2">
+                <Label htmlFor="gamme-description">Description</Label>
+                <Input
+                  id="gamme-description"
+                  placeholder="Description de la gamme (optionnel)"
+                  value={newGammeForm.description}
+                  onChange={(e) =>
+                    setNewGammeForm((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gamme-societe">Société</Label>
+                <Select
+                  value={newGammeForm.societeId}
+                  onValueChange={(value) =>
+                    setNewGammeForm((prev) => ({ ...prev, societeId: value }))
+                  }
+                >
+                  <SelectTrigger id="gamme-societe">
+                    <SelectValue placeholder="Aucune société" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucune société</SelectItem>
+                    {societes.map((societe) => (
+                      <SelectItem key={societe.id} value={societe.id}>
+                        {societe.raisonSociale}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+             <Button
+               variant="outline"
+               onClick={() => {
+                 setIsCreateGammeDialogOpen(false)
+                 setNewGammeForm({ societeId: "", nom: "", description: "" })
+               }}
+             >
+               Annuler
+             </Button>
+             <Button
+               onClick={handleCreateGamme}
+               disabled={!isCreateGammeFormValid || createGammeLoading}
+             >
+               {createGammeLoading ? "Création..." : "Créer"}
+             </Button>
+           </DialogFooter>
+         </DialogContent>
+       </Dialog>
+
+       {/* Edit Gamme Dialog */}
+       <Dialog open={isEditGammeDialogOpen} onOpenChange={setIsEditGammeDialogOpen}>
+         <DialogContent className="sm:max-w-md">
+           <DialogHeader>
+             <DialogTitle>Modifier la gamme</DialogTitle>
+             <DialogDescription>
+               Modifiez les informations de la gamme.
+             </DialogDescription>
+           </DialogHeader>
+           <div className="space-y-4 py-4">
+             <div className="space-y-2">
+               <Label htmlFor="edit-gamme-nom">Nom de la gamme *</Label>
+               <Input
+                 id="edit-gamme-nom"
+                 placeholder="Ex: Santé, Obsèque, Dépendance..."
+                 value={editGammeForm.nom}
+                 onChange={(e) =>
+                   setEditGammeForm((prev) => ({ ...prev, nom: e.target.value }))
                  }
                />
              </div>
              <div className="space-y-2">
-               <Label htmlFor="gamme-societe">Société</Label>
+               <Label htmlFor="edit-gamme-description">Description</Label>
+               <Input
+                 id="edit-gamme-description"
+                 placeholder="Description de la gamme (optionnel)"
+                 value={editGammeForm.description}
+                 onChange={(e) =>
+                   setEditGammeForm((prev) => ({ ...prev, description: e.target.value }))
+                 }
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="edit-gamme-societe">Société</Label>
                <Select
-                 value={newGammeForm.societeId}
+                 value={editGammeForm.societeId || "none"}
                  onValueChange={(value) =>
-                   setNewGammeForm((prev) => ({ ...prev, societeId: value }))
+                   setEditGammeForm((prev) => ({ ...prev, societeId: value }))
                  }
                >
-                 <SelectTrigger id="gamme-societe">
+                 <SelectTrigger id="edit-gamme-societe">
                    <SelectValue placeholder="Aucune société" />
                  </SelectTrigger>
                  <SelectContent>
@@ -660,25 +808,25 @@ export function CataloguePageClient({
              </div>
            </div>
            <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsCreateGammeDialogOpen(false)
-                setNewGammeForm({ societeId: "", nom: "", description: "" })
-              }}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleCreateGamme}
-              disabled={!isCreateGammeFormValid || createGammeLoading}
-            >
-              {createGammeLoading ? "Création..." : "Créer"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </main>
+             <Button
+               variant="outline"
+               onClick={() => {
+                 setIsEditGammeDialogOpen(false)
+                 setGammeToEdit(null)
+               }}
+             >
+               Annuler
+             </Button>
+             <Button
+               onClick={handleUpdateGamme}
+               disabled={!editGammeForm.nom.trim() || updateGammeLoading}
+             >
+               {updateGammeLoading ? "Enregistrement..." : "Enregistrer"}
+             </Button>
+           </DialogFooter>
+         </DialogContent>
+       </Dialog>
+     </main>
   )
 }
 

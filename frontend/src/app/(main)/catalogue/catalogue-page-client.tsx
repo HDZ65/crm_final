@@ -513,35 +513,42 @@ export function CataloguePageClient({
                      </button>
                     <Separator className="my-1" />
                     {filteredGammes.map((gamme) => (
-                       <button
-                         key={gamme.id}
-                         type="button"
-                         onClick={() => setSelectedGammeId(gamme.id)}
-                         className={cn(
-                           "w-full flex items-center justify-between px-3 py-2 rounded-md text-left transition-colors text-sm group",
-                           selectedGammeId === gamme.id
-                             ? "bg-muted font-medium text-foreground"
-                             : "hover:bg-muted/50"
-                         )}
-                       >
-                         <span className="truncate capitalize">{gamme.nom.toLowerCase()}</span>
-                         <div className="flex items-center gap-1 shrink-0">
-                           <button
-                             type="button"
-                             onClick={(e) => {
-                               e.stopPropagation()
-                               handleOpenEditGamme(gamme)
-                             }}
-                             className="h-6 w-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity"
-                           >
-                             <Edit className="h-3 w-3" />
-                           </button>
-                           {selectedGammeId === gamme.id && (
-                             <ChevronRight className="h-4 w-4" />
-                           )}
-                         </div>
-                       </button>
-                     ))}
+                        <div
+                          key={gamme.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setSelectedGammeId(gamme.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault()
+                              setSelectedGammeId(gamme.id)
+                            }
+                          }}
+                          className={cn(
+                            "w-full flex items-center justify-between px-3 py-2 rounded-md text-left transition-colors text-sm group cursor-pointer",
+                            selectedGammeId === gamme.id
+                              ? "bg-muted font-medium text-foreground"
+                              : "hover:bg-muted/50"
+                          )}
+                        >
+                          <span className="truncate capitalize">{gamme.nom.toLowerCase()}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleOpenEditGamme(gamme)
+                              }}
+                              className="h-6 w-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-accent transition-opacity"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </button>
+                            {selectedGammeId === gamme.id && (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 )}
               </div>

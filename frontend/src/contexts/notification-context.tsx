@@ -23,8 +23,8 @@ import {
 import type { Notification } from '@proto/notifications/notifications';
 import type { NotificationEvents } from '@/lib/ui/display-types/notification';
 
-// WebSocket URL for notifications service (port 3001 by default)
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
+// WebSocket URL for notifications service (port 3071 = service-engagement Docker host mapping)
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3071';
 
 interface NotificationContextType {
   notifications: Notification[];

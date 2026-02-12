@@ -11,6 +11,7 @@ import type { Gamme, CreateGammeRequest, UpdateGammeRequest } from "@proto/produ
 
 export interface UseGammeFilters {
   organisationId?: string
+  societeId?: string
   actif?: boolean
 }
 
@@ -33,6 +34,7 @@ export function useGammes(filters?: UseGammeFilters) {
     try {
       const result = await getGammesByOrganisation({
         organisationId: filters.organisationId,
+        societeId: filters.societeId,
         actif: filters.actif,
       })
 
@@ -46,7 +48,7 @@ export function useGammes(filters?: UseGammeFilters) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors du chargement des gammes")
     }
-  }, [filters?.organisationId, filters?.actif])
+  }, [filters?.organisationId, filters?.societeId, filters?.actif])
 
   useEffect(() => {
     fetchGammes()

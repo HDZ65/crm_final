@@ -32,11 +32,13 @@ import type { ActionResult } from "@/lib/types/common";
  */
 export async function getGammesByOrganisation(params: {
   organisationId: string;
+  societeId?: string;
   actif?: boolean;
 }): Promise<ActionResult<ListGammesResponse>> {
   try {
     const data = await gammes.list({
       organisationId: params.organisationId,
+      societeId: params.societeId,
       actif: params.actif,
       pagination: undefined,
     });
@@ -55,6 +57,7 @@ export async function getGammesByOrganisation(params: {
  */
 export async function createGamme(input: {
   organisationId: string;
+  societeId?: string;
   nom: string;
   description?: string;
   code?: string;
@@ -74,6 +77,7 @@ export async function createGamme(input: {
 
     const data = await gammes.create({
       organisationId: input.organisationId,
+      societeId: input.societeId,
       nom: input.nom,
       description: input.description || "",
       code,
@@ -96,6 +100,7 @@ export async function createGamme(input: {
  */
 export async function updateGamme(input: {
   id: string;
+  societeId?: string;
   nom?: string;
   description?: string;
   code?: string;
@@ -106,6 +111,7 @@ export async function updateGamme(input: {
   try {
     const data = await gammes.update({
       id: input.id,
+      societeId: input.societeId,
       nom: input.nom,
       description: input.description,
       code: input.code,

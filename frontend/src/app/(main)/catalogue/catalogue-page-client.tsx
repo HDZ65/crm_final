@@ -247,10 +247,20 @@ export function CataloguePageClient({
     )
   }, [gammes, gammeSearchQuery])
 
-  // Filter products by search
+  // Filter products by search + société scope
   const filteredProducts = React.useMemo(() => {
     if (!selectedGammeId) return []
     let result = produits
+
+    // When a société is active and viewing "all" gammes,
+    // only show products belonging to gammes of that société
+    if (activeSocieteId && selectedGammeId === "all" && gammes.length > 0) {
+      const visibleGammeIds = new Set(gammes.map((g) => g.id))
+      result = result.filter((p) => visibleGammeIds.has(p.gammeId))
+    } else if (activeSocieteId && selectedGammeId === "all" && gammes.length === 0) {
+      // Société selected but no gammes → no products to show
+      return []
+    }
 
     if (productSearchQuery) {
       const query = productSearchQuery.toLowerCase()
@@ -263,7 +273,7 @@ export function CataloguePageClient({
     }
 
     return result
-  }, [produits, selectedGammeId, productSearchQuery])
+  }, [produits, selectedGammeId, productSearchQuery, activeSocieteId, gammes])
 
   // Check if we can create (need a specific selection for products)
   // Peut créer une gamme si une société spécifique est sélectionnée, ou si "toutes" on choisira dans la modale

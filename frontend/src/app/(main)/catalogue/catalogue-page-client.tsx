@@ -53,6 +53,13 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 // Icons
 import {
   Plus,
@@ -158,18 +165,19 @@ export function CataloguePageClient({
     }
   }, [activeOrganisation?.organisationId])
 
-  // Fetch gammes
-  const fetchGammes = React.useCallback(async () => {
-    if (!activeOrganisation?.organisationId) return
-    setGammesLoading(true)
-    const result = await getGammesByOrganisation({
-      organisationId: activeOrganisation.organisationId,
-    })
-    if (result.data?.gammes) {
-      setGammes(result.data.gammes)
-    }
-    setGammesLoading(false)
-  }, [activeOrganisation?.organisationId])
+   // Fetch gammes
+   const fetchGammes = React.useCallback(async () => {
+     if (!activeOrganisation?.organisationId) return
+     setGammesLoading(true)
+     const result = await getGammesByOrganisation({
+       organisationId: activeOrganisation.organisationId,
+       societeId: activeSocieteId || undefined,
+     })
+     if (result.data?.gammes) {
+       setGammes(result.data.gammes)
+     }
+     setGammesLoading(false)
+   }, [activeOrganisation?.organisationId, activeSocieteId])
 
   // Fetch produits
   const fetchProduits = React.useCallback(async () => {
@@ -251,12 +259,14 @@ export function CataloguePageClient({
   const canCreateGamme = true
   const canCreateProduct = selectedGammeId && selectedGammeId !== "all"
 
-  // Reset selections and search when société changes - select "all" by default
-  React.useEffect(() => {
-    setSelectedGammeId("all")
-    setGammeSearchQuery("")
-    setProductSearchQuery("")
-  }, [activeSocieteId])
+   // Reset selections and refetch when société changes
+   React.useEffect(() => {
+     setSelectedGammeId("all")
+     setGammeSearchQuery("")
+     setProductSearchQuery("")
+     fetchGammes()
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [activeSocieteId])
 
   // Reset product search when gamme changes
   React.useEffect(() => {
@@ -314,18 +324,20 @@ export function CataloguePageClient({
     setIsEditDialogOpen(true)
   }
 
-  const handleCreateGamme = async () => {
-    if (!activeOrganisation?.organisationId) return
-    const { nom, description } = newGammeForm
-    if (!nom.trim()) return
+   const handleCreateGamme = async () => {
+     if (!activeOrganisation?.organisationId) return
+     const { nom, description } = newGammeForm
+     if (!nom.trim()) return
 
-    setCreateGammeLoading(true)
+     setCreateGammeLoading(true)
 
-    const result = await createGammeAction({
-      organisationId: activeOrganisation.organisationId,
-      nom: nom.trim(),
-      description: description.trim() || undefined,
-    })
+     const societeIdValue = newGammeForm.societeId && newGammeForm.societeId !== "none" ? newGammeForm.societeId : undefined
+     const result = await createGammeAction({
+       organisationId: activeOrganisation.organisationId,
+       societeId: societeIdValue,
+       nom: nom.trim(),
+       description: description.trim() || undefined,
+     })
 
     setCreateGammeLoading(false)
 
@@ -364,13 +376,16 @@ export function CataloguePageClient({
                     </Badge>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1"
-                  onClick={() => setIsCreateGammeDialogOpen(true)}
-                  disabled={!canCreateGamme}
-                >
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   className="h-7 gap-1"
+                   onClick={() => {
+                     setNewGammeForm({ societeId: activeSocieteId || "", nom: "", description: "" })
+                     setIsCreateGammeDialogOpen(true)
+                   }}
+                   disabled={!canCreateGamme}
+                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span className="text-xs">Nouvelle</span>
                 </Button>
@@ -611,19 +626,40 @@ export function CataloguePageClient({
                 }
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="gamme-description">Description</Label>
-              <Input
-                id="gamme-description"
-                placeholder="Description de la gamme (optionnel)"
-                value={newGammeForm.description}
-                onChange={(e) =>
-                  setNewGammeForm((prev) => ({ ...prev, description: e.target.value }))
-                }
-              />
-            </div>
-          </div>
-          <DialogFooter>
+             <div className="space-y-2">
+               <Label htmlFor="gamme-description">Description</Label>
+               <Input
+                 id="gamme-description"
+                 placeholder="Description de la gamme (optionnel)"
+                 value={newGammeForm.description}
+                 onChange={(e) =>
+                   setNewGammeForm((prev) => ({ ...prev, description: e.target.value }))
+                 }
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="gamme-societe">Société</Label>
+               <Select
+                 value={newGammeForm.societeId}
+                 onValueChange={(value) =>
+                   setNewGammeForm((prev) => ({ ...prev, societeId: value }))
+                 }
+               >
+                 <SelectTrigger id="gamme-societe">
+                   <SelectValue placeholder="Aucune société" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="none">Aucune société</SelectItem>
+                   {societes.map((societe) => (
+                     <SelectItem key={societe.id} value={societe.id}>
+                       {societe.raisonSociale}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             </div>
+           </div>
+           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {

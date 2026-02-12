@@ -35,9 +35,13 @@ export class GammeService {
     return gamme || null;
   }
 
-  async findByOrganisation(organisationId: string): Promise<GammeEntity[]> {
+  async findByOrganisation(organisationId: string, societeId?: string): Promise<GammeEntity[]> {
+    const where: any = { organisationId };
+    if (societeId) {
+      where.societeId = societeId;
+    }
     return this.gammeRepository.find({
-      where: { organisationId },
+      where,
       relations: ['parent', 'children'],
       order: { ordre: 'ASC' },
     });

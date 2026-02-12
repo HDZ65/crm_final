@@ -21,6 +21,10 @@ export class GammeEntity {
   @Index()
   organisationId: string;
 
+  @Column({ name: 'societe_id', type: 'uuid', nullable: true })
+  @Index()
+  societeId: string | null;
+
   @Column({ length: 100 })
   nom: string;
 

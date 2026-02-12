@@ -21,6 +21,7 @@ export class GammeController {
         parentId: data.parent_id || null,
         typeGamme: data.type_gamme || TypeGamme.FAMILLE,
         niveau: data.niveau || 0,
+        societeId: data.societe_id || null,
       });
 
       return this.mapToProto(gamme);
@@ -71,6 +72,7 @@ export class GammeController {
         ordre: data.ordre !== undefined ? data.ordre : gamme.ordre,
         actif: data.actif !== undefined ? data.actif : gamme.actif,
         parentId: data.parent_id !== undefined ? data.parent_id : gamme.parentId,
+        societeId: data.societe_id !== undefined ? (data.societe_id === '' ? null : data.societe_id) : gamme.societeId,
       });
 
       return this.mapToProto(updated);
@@ -106,7 +108,7 @@ export class GammeController {
   @GrpcMethod('GammeService', 'List')
   async list(data: any): Promise<any> {
     try {
-      const gammes = await this.gammeService.findByOrganisation(data.organisation_id);
+      const gammes = await this.gammeService.findByOrganisation(data.organisation_id, data.societe_id);
       return {
         gammes: gammes.map((g) => this.mapToProto(g)),
         pagination: {
@@ -163,6 +165,7 @@ export class GammeController {
       parent_id: gamme.parentId || '',
       niveau: gamme.niveau,
       type_gamme: gamme.typeGamme,
+      societe_id: gamme.societeId || '',
       created_at: gamme.createdAt?.toISOString() || '',
       updated_at: gamme.updatedAt?.toISOString() || '',
     };

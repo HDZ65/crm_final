@@ -1167,26 +1167,27 @@ function IntegrationsSettings({ onOpenChange }: { onOpenChange: (open: boolean) 
                />
              </div>
 
-             <div className="space-y-2">
-               <Label htmlFor="catalogue-api-token">Token d&apos;authentification (optionnel)</Label>
-               <div className="relative">
-                 <Input
-                   id="catalogue-api-token"
-                   type={showCatalogueToken ? "text" : "password"}
-                   placeholder="eyJhbGciOiJSUzI1NiIs..."
-                   value={catalogueApiToken}
-                   onChange={(e) => setCatalogueApiToken(e.target.value)}
-                   className="pr-10"
-                 />
-                 <button
-                   type="button"
-                   onClick={() => setShowCatalogueToken(!showCatalogueToken)}
-                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                 >
-                   {showCatalogueToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                 </button>
-               </div>
-             </div>
+              <div className="space-y-2">
+                <Label htmlFor="catalogue-api-token">Token d&apos;authentification (optionnel — auto si vide)</Label>
+                <div className="relative">
+                  <Input
+                    id="catalogue-api-token"
+                    type={showCatalogueToken ? "text" : "password"}
+                    placeholder="eyJhbGciOiJSUzI1NiIs..."
+                    value={catalogueApiToken}
+                    onChange={(e) => setCatalogueApiToken(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCatalogueToken(!showCatalogueToken)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showCatalogueToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Laissez vide pour utiliser le token de votre session Keycloak</p>
+              </div>
 
              <div className="flex items-center gap-2">
               <Button

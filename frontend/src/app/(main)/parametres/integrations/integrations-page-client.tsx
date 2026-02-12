@@ -751,7 +751,7 @@ export function IntegrationsPageClient({
                 </div>
 
                 <div>
-                  <Label htmlFor="catalogue-token">Token d&apos;authentification (optionnel)</Label>
+                  <Label htmlFor="catalogue-token">Token d&apos;authentification (optionnel — auto si vide)</Label>
                   <div className="relative mt-1.5">
                     <Input
                       id="catalogue-token"
@@ -775,6 +775,7 @@ export function IntegrationsPageClient({
                       )}
                     </button>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">Laissez vide pour utiliser le token de votre session Keycloak</p>
                 </div>
 
                 <div>

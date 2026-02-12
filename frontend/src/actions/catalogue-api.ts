@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@/lib/auth/auth.server";
 import {
   createProduit,
   getGammesByOrganisation,
@@ -56,6 +57,29 @@ export interface CatalogueApiImportResult {
 }
 
 /**
+ * Resolve Bearer token: manual override > session token > none
+ */
+async function resolveAuthToken(manualToken?: string): Promise<string | undefined> {
+  // 1. If a manual token is provided, use it (override)
+  if (manualToken?.trim()) {
+    return manualToken.trim();
+  }
+
+  // 2. Otherwise, try to get the Keycloak token from the current session
+  try {
+    const session = await auth();
+    if (session?.accessToken) {
+      return session.accessToken;
+    }
+  } catch (err) {
+    console.warn("[resolveAuthToken] Could not retrieve session token:", err);
+  }
+
+  // 3. No token available — call will be made without auth
+  return undefined;
+}
+
+/**
  * Test connection to external catalogue API
  * Validates JSON structure and returns product count
  */
@@ -67,9 +91,10 @@ export async function testCatalogueApiConnection(
      const controller = new AbortController();
      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
+     const token = await resolveAuthToken(authToken);
      const headers: HeadersInit = {};
-     if (authToken?.trim()) {
-       headers["Authorization"] = `Bearer ${authToken.trim()}`;
+     if (token) {
+       headers["Authorization"] = `Bearer ${token}`;
      }
 
      const response = await fetch(apiUrl, {
@@ -159,9 +184,10 @@ export async function importCatalogueFromApi(params: {
      const controller = new AbortController();
      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
+     const token = await resolveAuthToken(params.authToken);
      const headers: HeadersInit = {};
-     if (params.authToken?.trim()) {
-       headers["Authorization"] = `Bearer ${params.authToken.trim()}`;
+     if (token) {
+       headers["Authorization"] = `Bearer ${token}`;
      }
 
      const response = await fetch(params.apiUrl, {

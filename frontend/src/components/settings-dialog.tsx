@@ -18,6 +18,13 @@ import {
   CalendarDays,
   ListTree,
   Zap,
+  ShoppingCart,
+  Package,
+  Wifi,
+  WifiOff,
+  Info,
+  Loader2,
+  ExternalLink,
 } from "lucide-react"
 import { usePspAccounts, PspType } from "@/hooks/use-psp-accounts"
 import { useOrganisation } from "@/contexts/organisation-context"
@@ -25,7 +32,11 @@ import { useSocietes } from "@/hooks/clients"
 import { RolesPermissionsSettings } from "@/components/settings/roles-permissions-settings"
 import { toast } from "sonner"
 import { getWinLeadPlusConfig, saveWinLeadPlusConfig, testWinLeadPlusConnection } from "@/actions/winleadplus"
+import { testWooCommerceConnection, getWooCommerceConfigByOrganisation } from "@/actions/woocommerce"
+import { testCatalogueApiConnection, importCatalogueFromApi } from "@/actions/catalogue-api"
 import type { WinLeadPlusConfig } from "@/proto/winleadplus/winleadplus"
+import type { WooCommerceConfig } from "@/proto/woocommerce/woocommerce"
+import type { CatalogueApiTestResult, CatalogueApiImportResult } from "@/actions/catalogue-api"
 
 import {
   Breadcrumb,
@@ -55,6 +66,14 @@ import {
 } from "@/components/ui/sidebar"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import {
   Select,
   SelectContent,
@@ -653,33 +672,64 @@ function TypesActivitesSettings({ onOpenChange }: { onOpenChange: (open: boolean
   )
 }
 
+const WIN_LEAD_PLUS_JSON_EXAMPLE = `{
+  "api_endpoint": "https://api.winleadplus.com/v1",
+  "api_token": "wlp_xxxxxxxxxxxx"
+}`
+
 function IntegrationsSettings({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+  const router = useRouter()
   const { activeOrganisation, isOwner } = useOrganisation()
 
-  const [config, setConfig] = React.useState<WinLeadPlusConfig | null>(null)
+  // WinLeadPlus state
+  const [wlpConfig, setWlpConfig] = React.useState<WinLeadPlusConfig | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [isSaving, setIsSaving] = React.useState(false)
-  const [isTesting, setIsTesting] = React.useState(false)
-  const [testResult, setTestResult] = React.useState<{ success: boolean; message: string } | null>(null)
-  
+  const [wlpTestStatus, setWlpTestStatus] = React.useState<"idle" | "loading" | "success" | "error">("idle")
+  const [wlpTestMessage, setWlpTestMessage] = React.useState("")
+
   const [apiEndpoint, setApiEndpoint] = React.useState("")
   const [apiToken, setApiToken] = React.useState("")
+  const [showApiToken, setShowApiToken] = React.useState(false)
   const [enabled, setEnabled] = React.useState(false)
   const [syncInterval, setSyncInterval] = React.useState(60)
   const [showTokenInput, setShowTokenInput] = React.useState(false)
 
+  // WooCommerce state
+  const [wooConfig, setWooConfig] = React.useState<WooCommerceConfig | null>(null)
+  const [wooTestStatus, setWooTestStatus] = React.useState<"idle" | "loading" | "success" | "error">("idle")
+  const [wooTestMessage, setWooTestMessage] = React.useState("")
+
+   // Catalogue REST API state
+   const [catalogueApiUrl, setCatalogueApiUrl] = React.useState("")
+   const [catalogueApiToken, setCatalogueApiToken] = React.useState("")
+   const [showCatalogueToken, setShowCatalogueToken] = React.useState(false)
+   const [catalogueTestStatus, setCatalogueTestStatus] = React.useState<"idle" | "loading" | "success" | "error">("idle")
+   const [catalogueTestMessage, setCatalogueTestMessage] = React.useState("")
+   const [catalogueTestDetails, setCatalogueTestDetails] = React.useState<{ productCount: number; sampleCategories: string[] }>({ productCount: 0, sampleCategories: [] })
+   const [catalogueImportStatus, setCatalogueImportStatus] = React.useState<"idle" | "loading" | "success" | "error">("idle")
+   const [catalogueImportMessage, setCatalogueImportMessage] = React.useState("")
+   const [catalogueImportDetails, setCatalogueImportDetails] = React.useState<{ imported: number; skipped: number; errors: Array<{ productId: string | number; nom: string; error: string }>; gammesCreated: number }>({ imported: 0, skipped: 0, errors: [], gammesCreated: 0 })
+
+  // Load configs
   React.useEffect(() => {
     if (!activeOrganisation?.organisationId) return
-    
+
     setIsLoading(true)
-    getWinLeadPlusConfig({ organisationId: activeOrganisation.organisationId })
-      .then(({ data, error }) => {
-        if (data) {
-          setConfig(data)
-          setApiEndpoint(data.api_endpoint || "")
-          setEnabled(data.enabled || false)
-          setSyncInterval(data.sync_interval_minutes || 60)
-          setShowTokenInput(!data.has_api_token)
+    Promise.all([
+      getWinLeadPlusConfig({ organisationId: activeOrganisation.organisationId }),
+      getWooCommerceConfigByOrganisation(activeOrganisation.organisationId),
+    ])
+      .then(([wlpResult, wooResult]) => {
+        if (wlpResult.data) {
+          setWlpConfig(wlpResult.data)
+          setApiEndpoint(wlpResult.data.api_endpoint || "")
+          setEnabled(wlpResult.data.enabled || false)
+          setSyncInterval(wlpResult.data.sync_interval_minutes || 60)
+          setShowTokenInput(!wlpResult.data.has_api_token)
+        }
+        if (wooResult.data) {
+          setWooConfig(wooResult.data)
         }
       })
       .finally(() => setIsLoading(false))
@@ -698,152 +748,534 @@ function IntegrationsSettings({ onOpenChange }: { onOpenChange: (open: boolean) 
     return (
       <div className="flex items-center gap-2 text-muted-foreground">
         <Lock className="h-4 w-4" />
-        <p>Accès réservé aux administrateurs de l'organisation</p>
+        <p>Accès réservé aux administrateurs de l&apos;organisation</p>
       </div>
     )
   }
 
   if (isLoading) {
-    return <div>Chargement...</div>
+    return (
+      <div className="flex items-center gap-2 text-muted-foreground py-8">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <p>Chargement des intégrations…</p>
+      </div>
+    )
   }
 
-  const handleTestConnection = async () => {
+  // ---------------------------------------------------------------------------
+  // WinLeadPlus handlers
+  // ---------------------------------------------------------------------------
+
+  const handleTestWlp = async () => {
     if (!apiEndpoint) {
       toast.error("Veuillez saisir l'URL de l'API")
       return
     }
-
-    setIsTesting(true)
-    setTestResult(null)
-
+    setWlpTestStatus("loading")
     const { data, error } = await testWinLeadPlusConnection({
       organisationId: activeOrganisation.organisationId,
       apiEndpoint,
     })
-
-    setIsTesting(false)
-
-    if (error) {
-      setTestResult({ success: false, message: error })
-      toast.error("Échec du test de connexion")
+    if (error || !data?.success) {
+      setWlpTestStatus("error")
+      setWlpTestMessage(error || data?.message || "Échec de la connexion")
     } else {
-      setTestResult({ success: true, message: "Connexion réussie" })
-      toast.success("Connexion réussie")
+      setWlpTestStatus("success")
+      setWlpTestMessage(data.message || "Connexion réussie")
     }
   }
 
-  const handleSave = async () => {
+  const handleSaveWlp = async () => {
     if (!apiEndpoint) {
       toast.error("Veuillez saisir l'URL de l'API")
       return
     }
-
     setIsSaving(true)
-
     const { data, error } = await saveWinLeadPlusConfig({
-      id: config?.id,
+      id: wlpConfig?.id,
       organisationId: activeOrganisation.organisationId,
       apiEndpoint,
       enabled,
       syncIntervalMinutes: syncInterval,
       apiToken: apiToken || undefined,
     })
-
     setIsSaving(false)
-
     if (error) {
       toast.error("Erreur lors de la sauvegarde")
     } else {
-      setConfig(data)
+      setWlpConfig(data)
       setApiToken("")
       setShowTokenInput(false)
+      setShowApiToken(false)
       toast.success("Configuration enregistrée")
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // WooCommerce handlers
+  // ---------------------------------------------------------------------------
+
+  const handleTestWoo = async () => {
+    setWooTestStatus("loading")
+    const { data, error } = await testWooCommerceConnection(activeOrganisation.organisationId)
+    if (error || !data?.success) {
+      setWooTestStatus("error")
+      setWooTestMessage(error || data?.message || "Échec de la connexion")
+    } else {
+      setWooTestStatus("success")
+      setWooTestMessage(data.message || "Connexion réussie")
+    }
+  }
+
+  const handleGoToWooCommerce = () => {
+    router.push("/integrations/woocommerce")
+    onOpenChange(false)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Catalogue REST API handlers
+  // ---------------------------------------------------------------------------
+
+   const handleTestCatalogueApi = async () => {
+     if (!catalogueApiUrl) {
+       toast.error("Veuillez saisir l'URL de l'API")
+       return
+     }
+     setCatalogueTestStatus("loading")
+     const { data, error } = await testCatalogueApiConnection(catalogueApiUrl, catalogueApiToken || undefined)
+     if (error || !data?.success) {
+       setCatalogueTestStatus("error")
+       setCatalogueTestMessage(error || data?.message || "Échec de la connexion")
+     } else {
+       setCatalogueTestStatus("success")
+       setCatalogueTestMessage(data.message || "Connexion réussie")
+       setCatalogueTestDetails({
+         productCount: data.productCount,
+         sampleCategories: data.sampleCategories,
+       })
+     }
+   }
+
+   const handleImportCatalogue = async () => {
+     if (!catalogueApiUrl) {
+       toast.error("Veuillez saisir l'URL de l'API")
+       return
+     }
+     setCatalogueImportStatus("loading")
+     const { data, error } = await importCatalogueFromApi({
+       organisationId: activeOrganisation.organisationId,
+       apiUrl: catalogueApiUrl,
+       authToken: catalogueApiToken || undefined,
+     })
+     if (error || !data) {
+       setCatalogueImportStatus("error")
+       setCatalogueImportMessage(error || "Échec de l'import")
+     } else {
+       setCatalogueImportStatus("success")
+       setCatalogueImportMessage(`${data.imported} produit(s) importé(s)`)
+       setCatalogueImportDetails({
+         imported: data.imported,
+         skipped: data.skipped,
+         errors: data.errors,
+         gammesCreated: data.gammesCreated,
+       })
+     }
+   }
+
+  // ---------------------------------------------------------------------------
+  // Render helper — test result badge
+  // ---------------------------------------------------------------------------
+
+  const renderTestResult = (status: "idle" | "loading" | "success" | "error", message: string) => {
+    if (status === "loading") {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Loader2 className="size-3.5 animate-spin" />
+          Test en cours…
+        </span>
+      )
+    }
+    if (status === "success") {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+          <Check className="size-3.5" />
+          {message}
+        </span>
+      )
+    }
+    if (status === "error") {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+          <X className="size-3.5" />
+          {message}
+        </span>
+      )
+    }
+    return null
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            <h3 className="font-semibold">
-              {config ? (enabled ? "WinLeadPlus ✓ Connecté" : "WinLeadPlus — Désactivé") : "WinLeadPlus"}
-            </h3>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-medium">Intégrations Externes</h3>
+          <p className="text-sm text-muted-foreground">
+            Configurez les accès aux catalogues de produits et services externes.
+          </p>
+        </div>
+
+        {/* ================================================================ */}
+        {/* WinLeadPlus */}
+        {/* ================================================================ */}
+        <div className="rounded-lg border p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+                <Zap className="size-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">WinLeadPlus</span>
+                  {wlpConfig?.enabled ? (
+                    <Badge variant="default" className="gap-1 text-xs">
+                      <Wifi className="size-3" />
+                      Connecté
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1 text-xs">
+                      <WifiOff className="size-3" />
+                      Déconnecté
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">Synchronisation de prospects et leads</p>
+              </div>
+            </div>
+            {wlpConfig && (
+              <Switch checked={enabled} onCheckedChange={setEnabled} />
+            )}
           </div>
-          {config && (
-            <Switch checked={enabled} onCheckedChange={setEnabled} />
-          )}
-        </div>
-      </div>
 
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="api-endpoint">URL de l'API</Label>
-          <Input
-            id="api-endpoint"
-            type="url"
-            placeholder="https://api.winleadplus.com"
-            value={apiEndpoint}
-            onChange={(e) => setApiEndpoint(e.target.value)}
-            required
-          />
-        </div>
+          <Separator />
 
-        <div className="space-y-2">
-          <Label htmlFor="api-token">Token API</Label>
-          {config?.has_api_token && !showTokenInput ? (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="wlp-api-endpoint">URL de l&apos;API *</Label>
+              <Input
+                id="wlp-api-endpoint"
+                type="url"
+                placeholder="https://api.winleadplus.com/v1"
+                value={apiEndpoint}
+                onChange={(e) => setApiEndpoint(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="wlp-api-token">Clé API</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Info className="size-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p className="text-xs font-medium mb-1">Format JSON attendu :</p>
+                    <pre className="text-xs font-mono whitespace-pre bg-muted p-2 rounded">
+                      {WIN_LEAD_PLUS_JSON_EXAMPLE}
+                    </pre>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              {wlpConfig?.has_api_token && !showTokenInput ? (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">Token configuré</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowTokenInput(true)}
+                  >
+                    Modifier
+                  </Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Input
+                    id="wlp-api-token"
+                    type={showApiToken ? "text" : "password"}
+                    placeholder="wlp_xxxxxxxxxxxx"
+                    value={apiToken}
+                    onChange={(e) => setApiToken(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiToken(!showApiToken)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showApiToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="wlp-sync-interval">Intervalle de synchronisation (minutes)</Label>
+              <Input
+                id="wlp-sync-interval"
+                type="number"
+                min={5}
+                max={1440}
+                value={syncInterval}
+                onChange={(e) => setSyncInterval(parseInt(e.target.value, 10) || 60)}
+              />
+            </div>
+
             <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">✓ Token configuré</p>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={() => setShowTokenInput(true)}
+                onClick={handleTestWlp}
+                disabled={wlpTestStatus === "loading" || !apiEndpoint}
               >
-                Modifier
+                {wlpTestStatus === "loading" ? (
+                  <Loader2 className="size-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Wifi className="size-4 mr-1.5" />
+                )}
+                Tester la connexion
+              </Button>
+              <Button size="sm" onClick={handleSaveWlp} disabled={isSaving}>
+                {isSaving && <Loader2 className="size-4 mr-1.5 animate-spin" />}
+                {wlpConfig ? "Enregistrer" : "Activer WinLeadPlus"}
               </Button>
             </div>
-          ) : (
-            <Input
-              id="api-token"
-              type="password"
-              placeholder="Votre token API"
-              value={apiToken}
-              onChange={(e) => setApiToken(e.target.value)}
-            />
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="sync-interval">Intervalle de synchronisation (minutes)</Label>
-          <Input
-            id="sync-interval"
-            type="number"
-            min="1"
-            value={syncInterval}
-            onChange={(e) => setSyncInterval(parseInt(e.target.value) || 60)}
-          />
-        </div>
-
-        <Button
-          variant="outline"
-          onClick={handleTestConnection}
-          disabled={isTesting || !apiEndpoint}
-        >
-          {isTesting ? "Test en cours..." : "Tester la connexion"}
-        </Button>
-
-        {testResult && (
-          <div className={`text-sm ${testResult.success ? "text-green-600" : "text-red-600"}`}>
-            {testResult.message}
+            {renderTestResult(wlpTestStatus, wlpTestMessage)}
           </div>
-        )}
+        </div>
 
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? "Enregistrement..." : config ? "Enregistrer" : "Activer WinLeadPlus"}
-        </Button>
+        {/* ================================================================ */}
+        {/* WooCommerce */}
+        {/* ================================================================ */}
+        <div className="rounded-lg border p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400">
+                <ShoppingCart className="size-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">WooCommerce</span>
+                  {wooConfig?.active ? (
+                    <Badge variant="default" className="gap-1 text-xs">
+                      <Wifi className="size-3" />
+                      Connecté
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1 text-xs">
+                      <WifiOff className="size-3" />
+                      Déconnecté
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">Synchronisation e-commerce et produits</p>
+              </div>
+            </div>
+          </div>
+
+          {wooConfig && (
+            <>
+              <Separator />
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">URL Boutique</span>
+                  <span className="font-mono text-xs truncate max-w-[200px]">{wooConfig.storeUrl || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Consumer Key</span>
+                  <span className="font-mono text-xs">
+                    {wooConfig.consumerKey ? wooConfig.consumerKey.substring(0, 8) + "••••" : "—"}
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={handleGoToWooCommerce}>
+              <ExternalLink className="size-4 mr-1.5" />
+              {wooConfig ? "Gérer WooCommerce" : "Configurer"}
+            </Button>
+            {wooConfig && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestWoo}
+                disabled={wooTestStatus === "loading"}
+              >
+                {wooTestStatus === "loading" ? (
+                  <Loader2 className="size-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Wifi className="size-4 mr-1.5" />
+                )}
+                Tester
+              </Button>
+            )}
+          </div>
+          {renderTestResult(wooTestStatus, wooTestMessage)}
+        </div>
+
+        {/* ================================================================ */}
+        {/* Catalogue REST API */}
+        {/* ================================================================ */}
+        <div className="rounded-lg border p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400">
+                <Package className="size-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Catalogue REST API</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Connecteur API REST pour importer des offres externes
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+           <div className="space-y-4">
+             <div className="space-y-2">
+               <Label htmlFor="catalogue-api-url">URL de l&apos;API *</Label>
+               <Input
+                 id="catalogue-api-url"
+                 type="url"
+                 placeholder="https://api.example.com/products"
+                 value={catalogueApiUrl}
+                 onChange={(e) => setCatalogueApiUrl(e.target.value)}
+               />
+             </div>
+
+             <div className="space-y-2">
+               <Label htmlFor="catalogue-api-token">Token d&apos;authentification (optionnel)</Label>
+               <div className="relative">
+                 <Input
+                   id="catalogue-api-token"
+                   type={showCatalogueToken ? "text" : "password"}
+                   placeholder="eyJhbGciOiJSUzI1NiIs..."
+                   value={catalogueApiToken}
+                   onChange={(e) => setCatalogueApiToken(e.target.value)}
+                   className="pr-10"
+                 />
+                 <button
+                   type="button"
+                   onClick={() => setShowCatalogueToken(!showCatalogueToken)}
+                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                 >
+                   {showCatalogueToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                 </button>
+               </div>
+             </div>
+
+             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestCatalogueApi}
+                disabled={catalogueTestStatus === "loading" || !catalogueApiUrl}
+              >
+                {catalogueTestStatus === "loading" ? (
+                  <Loader2 className="size-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Wifi className="size-4 mr-1.5" />
+                )}
+                Tester la connexion
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleImportCatalogue}
+                disabled={catalogueImportStatus === "loading" || catalogueTestStatus !== "success" || !catalogueApiUrl}
+              >
+                {catalogueImportStatus === "loading" ? (
+                  <Loader2 className="size-4 mr-1.5 animate-spin" />
+                ) : null}
+                Importer les produits
+              </Button>
+            </div>
+
+            {catalogueTestStatus !== "idle" && (
+              <div className="space-y-2">
+                {renderTestResult(catalogueTestStatus, catalogueTestMessage)}
+                {catalogueTestStatus === "success" && catalogueTestDetails.productCount > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-sm text-muted-foreground">
+                      {catalogueTestDetails.productCount} produits trouvés
+                    </span>
+                    {catalogueTestDetails.sampleCategories.map((cat) => (
+                      <Badge key={cat} variant="secondary" className="text-xs">
+                        {cat}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {catalogueImportStatus !== "idle" && (
+              <div className="space-y-2">
+                {renderTestResult(catalogueImportStatus, catalogueImportMessage)}
+                {catalogueImportStatus === "success" && (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Importés</span>
+                      <span className="font-semibold">{catalogueImportDetails.imported}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Ignorés</span>
+                      <span className="font-semibold">{catalogueImportDetails.skipped}</span>
+                    </div>
+                    {catalogueImportDetails.gammesCreated > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Gammes créées</span>
+                        <span className="font-semibold">{catalogueImportDetails.gammesCreated}</span>
+                      </div>
+                    )}
+                    {catalogueImportDetails.errors.length > 0 && (
+                      <div className="mt-2 p-2 bg-red-50 dark:bg-red-950 rounded text-xs">
+                        <p className="font-semibold text-red-700 dark:text-red-300 mb-1">Erreurs ({catalogueImportDetails.errors.length})</p>
+                        <ul className="space-y-1">
+                          {catalogueImportDetails.errors.slice(0, 3).map((err) => (
+                            <li key={`${err.productId}-${err.nom}`} className="text-red-600 dark:text-red-400">
+                              {err.nom}: {err.error}
+                            </li>
+                          ))}
+                          {catalogueImportDetails.errors.length > 3 && (
+                            <li className="text-red-600 dark:text-red-400">
+                              +{catalogueImportDetails.errors.length - 3} autres erreurs
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   )
 }
 

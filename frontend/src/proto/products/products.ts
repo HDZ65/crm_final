@@ -551,6 +551,7 @@ export interface Gamme {
   typeGamme: TypeGamme;
   createdAt: string;
   updatedAt: string;
+  societeId?: string | undefined;
 }
 
 export interface CreateGammeRequest {
@@ -560,6 +561,7 @@ export interface CreateGammeRequest {
   icone: string;
   code: string;
   ordre: number;
+  societeId?: string | undefined;
 }
 
 export interface UpdateGammeRequest {
@@ -570,6 +572,7 @@ export interface UpdateGammeRequest {
   code?: string | undefined;
   ordre?: number | undefined;
   actif?: boolean | undefined;
+  societeId?: string | undefined;
 }
 
 export interface GetGammeRequest {
@@ -580,6 +583,7 @@ export interface ListGammesRequest {
   organisationId: string;
   actif?: boolean | undefined;
   pagination: PaginationRequest | undefined;
+  societeId?: string | undefined;
 }
 
 export interface ListGammesResponse {
@@ -1456,6 +1460,7 @@ function createBaseGamme(): Gamme {
     typeGamme: 0,
     createdAt: "",
     updatedAt: "",
+    societeId: undefined,
   };
 }
 
@@ -1499,6 +1504,9 @@ export const Gamme: MessageFns<Gamme> = {
     }
     if (message.updatedAt !== "") {
       writer.uint32(106).string(message.updatedAt);
+    }
+    if (message.societeId !== undefined) {
+      writer.uint32(114).string(message.societeId);
     }
     return writer;
   },
@@ -1614,6 +1622,14 @@ export const Gamme: MessageFns<Gamme> = {
           message.updatedAt = reader.string();
           continue;
         }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1658,6 +1674,11 @@ export const Gamme: MessageFns<Gamme> = {
         : isSet(object.updated_at)
         ? globalThis.String(object.updated_at)
         : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : undefined,
     };
   },
 
@@ -1702,6 +1723,9 @@ export const Gamme: MessageFns<Gamme> = {
     if (message.updatedAt !== "") {
       obj.updatedAt = message.updatedAt;
     }
+    if (message.societeId !== undefined) {
+      obj.societeId = message.societeId;
+    }
     return obj;
   },
 
@@ -1723,12 +1747,13 @@ export const Gamme: MessageFns<Gamme> = {
     message.typeGamme = object.typeGamme ?? 0;
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
+    message.societeId = object.societeId ?? undefined;
     return message;
   },
 };
 
 function createBaseCreateGammeRequest(): CreateGammeRequest {
-  return { organisationId: "", nom: "", description: "", icone: "", code: "", ordre: 0 };
+  return { organisationId: "", nom: "", description: "", icone: "", code: "", ordre: 0, societeId: undefined };
 }
 
 export const CreateGammeRequest: MessageFns<CreateGammeRequest> = {
@@ -1750,6 +1775,9 @@ export const CreateGammeRequest: MessageFns<CreateGammeRequest> = {
     }
     if (message.ordre !== 0) {
       writer.uint32(48).int32(message.ordre);
+    }
+    if (message.societeId !== undefined) {
+      writer.uint32(58).string(message.societeId);
     }
     return writer;
   },
@@ -1809,6 +1837,14 @@ export const CreateGammeRequest: MessageFns<CreateGammeRequest> = {
           message.ordre = reader.int32();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1830,6 +1866,11 @@ export const CreateGammeRequest: MessageFns<CreateGammeRequest> = {
       icone: isSet(object.icone) ? globalThis.String(object.icone) : "",
       code: isSet(object.code) ? globalThis.String(object.code) : "",
       ordre: isSet(object.ordre) ? globalThis.Number(object.ordre) : 0,
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : undefined,
     };
   },
 
@@ -1853,6 +1894,9 @@ export const CreateGammeRequest: MessageFns<CreateGammeRequest> = {
     if (message.ordre !== 0) {
       obj.ordre = Math.round(message.ordre);
     }
+    if (message.societeId !== undefined) {
+      obj.societeId = message.societeId;
+    }
     return obj;
   },
 
@@ -1867,6 +1911,7 @@ export const CreateGammeRequest: MessageFns<CreateGammeRequest> = {
     message.icone = object.icone ?? "";
     message.code = object.code ?? "";
     message.ordre = object.ordre ?? 0;
+    message.societeId = object.societeId ?? undefined;
     return message;
   },
 };
@@ -1880,6 +1925,7 @@ function createBaseUpdateGammeRequest(): UpdateGammeRequest {
     code: undefined,
     ordre: undefined,
     actif: undefined,
+    societeId: undefined,
   };
 }
 
@@ -1905,6 +1951,9 @@ export const UpdateGammeRequest: MessageFns<UpdateGammeRequest> = {
     }
     if (message.actif !== undefined) {
       writer.uint32(56).bool(message.actif);
+    }
+    if (message.societeId !== undefined) {
+      writer.uint32(66).string(message.societeId);
     }
     return writer;
   },
@@ -1972,6 +2021,14 @@ export const UpdateGammeRequest: MessageFns<UpdateGammeRequest> = {
           message.actif = reader.bool();
           continue;
         }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1990,6 +2047,11 @@ export const UpdateGammeRequest: MessageFns<UpdateGammeRequest> = {
       code: isSet(object.code) ? globalThis.String(object.code) : undefined,
       ordre: isSet(object.ordre) ? globalThis.Number(object.ordre) : undefined,
       actif: isSet(object.actif) ? globalThis.Boolean(object.actif) : undefined,
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : undefined,
     };
   },
 
@@ -2016,6 +2078,9 @@ export const UpdateGammeRequest: MessageFns<UpdateGammeRequest> = {
     if (message.actif !== undefined) {
       obj.actif = message.actif;
     }
+    if (message.societeId !== undefined) {
+      obj.societeId = message.societeId;
+    }
     return obj;
   },
 
@@ -2031,6 +2096,7 @@ export const UpdateGammeRequest: MessageFns<UpdateGammeRequest> = {
     message.code = object.code ?? undefined;
     message.ordre = object.ordre ?? undefined;
     message.actif = object.actif ?? undefined;
+    message.societeId = object.societeId ?? undefined;
     return message;
   },
 };
@@ -2094,7 +2160,7 @@ export const GetGammeRequest: MessageFns<GetGammeRequest> = {
 };
 
 function createBaseListGammesRequest(): ListGammesRequest {
-  return { organisationId: "", actif: undefined, pagination: undefined };
+  return { organisationId: "", actif: undefined, pagination: undefined, societeId: undefined };
 }
 
 export const ListGammesRequest: MessageFns<ListGammesRequest> = {
@@ -2107,6 +2173,9 @@ export const ListGammesRequest: MessageFns<ListGammesRequest> = {
     }
     if (message.pagination !== undefined) {
       PaginationRequest.encode(message.pagination, writer.uint32(26).fork()).join();
+    }
+    if (message.societeId !== undefined) {
+      writer.uint32(34).string(message.societeId);
     }
     return writer;
   },
@@ -2142,6 +2211,14 @@ export const ListGammesRequest: MessageFns<ListGammesRequest> = {
           message.pagination = PaginationRequest.decode(reader, reader.uint32());
           continue;
         }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2160,6 +2237,11 @@ export const ListGammesRequest: MessageFns<ListGammesRequest> = {
         : "",
       actif: isSet(object.actif) ? globalThis.Boolean(object.actif) : undefined,
       pagination: isSet(object.pagination) ? PaginationRequest.fromJSON(object.pagination) : undefined,
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : undefined,
     };
   },
 
@@ -2174,6 +2256,9 @@ export const ListGammesRequest: MessageFns<ListGammesRequest> = {
     if (message.pagination !== undefined) {
       obj.pagination = PaginationRequest.toJSON(message.pagination);
     }
+    if (message.societeId !== undefined) {
+      obj.societeId = message.societeId;
+    }
     return obj;
   },
 
@@ -2187,6 +2272,7 @@ export const ListGammesRequest: MessageFns<ListGammesRequest> = {
     message.pagination = (object.pagination !== undefined && object.pagination !== null)
       ? PaginationRequest.fromPartial(object.pagination)
       : undefined;
+    message.societeId = object.societeId ?? undefined;
     return message;
   },
 };

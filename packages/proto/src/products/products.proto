@@ -43,6 +43,7 @@ message Gamme {
   TypeGamme type_gamme = 11;
   string created_at = 12;
   string updated_at = 13;
+  optional string societe_id = 14;
 }
 
 message CreateGammeRequest {
@@ -52,6 +53,7 @@ message CreateGammeRequest {
   string icone = 4;
   string code = 5;
   int32 ordre = 6;
+  optional string societe_id = 7;
 }
 
 message UpdateGammeRequest {
@@ -62,6 +64,7 @@ message UpdateGammeRequest {
   optional string code = 5;
   optional int32 ordre = 6;
   optional bool actif = 7;
+  optional string societe_id = 8;
 }
 
 message GetGammeRequest {
@@ -72,6 +75,7 @@ message ListGammesRequest {
   string organisation_id = 1;
   optional bool actif = 2;
   PaginationRequest pagination = 3;
+  optional string societe_id = 4;
 }
 
 message ListGammesResponse {

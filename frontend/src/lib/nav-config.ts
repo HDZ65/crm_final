@@ -165,12 +165,30 @@ export const NAV_CATALOGUE_OPERATIONS_GROUP: NavGroup = {
 }
 
 /**
+ * Administration Group - Settings and integrations
+ */
+export const NAV_ADMIN_GROUP: NavGroup = {
+  id: "administration",
+  label: "Administration",
+  icon: Settings,
+  defaultOpen: false,
+  items: [
+    {
+      title: "Intégrations",
+      url: "/parametres/integrations",
+      icon: Zap,
+    },
+  ],
+}
+
+/**
  * All navigation groups in order
  */
 export const NAV_GROUPS: NavGroup[] = [
   NAV_CRM_GROUP,
   NAV_FINANCE_VENTES_GROUP,
   NAV_CATALOGUE_OPERATIONS_GROUP,
+  NAV_ADMIN_GROUP,
 ]
 
 /**
@@ -207,4 +225,8 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   "depanssur": "Dossiers SAV",
   "depanssur/dossiers": "Dossiers",
   "depanssur/reporting": "Reporting",
+
+  // Administration routes
+  "parametres": "Paramètres",
+  "parametres/integrations": "Intégrations",
 }

@@ -9,24 +9,34 @@ import {
 export default async function CataloguePage() {
   const activeOrgId = await getActiveOrgId()
 
-  // Fetch initial data server-side in parallel
-  const [societesResult, gammesResult, produitsResult] = await Promise.all([
+  // Fetch sociétés and gammes in parallel first
+  const [societesResult, gammesResult] = await Promise.all([
     activeOrgId
       ? getSocietesByOrganisation(activeOrgId)
       : Promise.resolve({ data: null, error: null }),
     activeOrgId
       ? getGammesByOrganisation({ organisationId: activeOrgId })
       : Promise.resolve({ data: null, error: null }),
-    activeOrgId
-      ? getProduitsByOrganisation({ organisationId: activeOrgId })
-      : Promise.resolve({ data: null, error: null }),
   ])
+
+  // Then fetch products per gamme in parallel (backend needs gammeId)
+  const gammesList = gammesResult.data?.gammes ?? []
+  const produitsResults = activeOrgId && gammesList.length > 0
+    ? await Promise.all(
+        gammesList.map(g =>
+          getProduitsByOrganisation({ organisationId: activeOrgId, gammeId: g.id })
+        )
+      )
+    : []
+  const initialProduits = produitsResults.flatMap((r, i) =>
+    (r.data?.produits ?? []).map(p => ({ ...p, gammeId: p.gammeId || gammesList[i].id }))
+  )
 
   return (
     <CataloguePageClient
       initialSocietes={societesResult.data?.societes}
-      initialGammes={gammesResult.data?.gammes}
-      initialProduits={produitsResult.data?.produits}
+      initialGammes={gammesList}
+      initialProduits={initialProduits}
     />
   )
 }

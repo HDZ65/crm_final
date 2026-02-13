@@ -16,7 +16,6 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button";
 
@@ -78,29 +77,6 @@ export function ActivityFeed() {
     .slice(0, 5)
     .map((notification) => formatNotificationMessage(notification))
     .join(" | ") || "Aucune notification recente"}.`;
-
-  if (isLoading) {
-    return (
-      <Card className="h-full">
-        <CardHeader className="pb-3">
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   if (error) {
     return (

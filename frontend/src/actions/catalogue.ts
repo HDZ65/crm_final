@@ -164,7 +164,12 @@ export async function getProduitsByOrganisation(params: {
       organisationId: params.organisationId,
       gammeId: params.gammeId,
       actif: params.actif,
-      pagination: undefined,
+      pagination: {
+        page: 1,
+        limit: params.gammeId ? 50 : 500,
+        sortBy: "nom",
+        sortOrder: "ASC",
+      },
     });
     return { data, error: null };
   } catch (err) {

@@ -673,8 +673,8 @@ function TypesActivitesSettings({ onOpenChange }: { onOpenChange: (open: boolean
 }
 
 const WIN_LEAD_PLUS_JSON_EXAMPLE = `{
-  "api_endpoint": "https://api.winleadplus.com/v1",
-  "api_token": "wlp_xxxxxxxxxxxx"
+  "apiEndpoint": "https://api.winleadplus.com/v1",
+  "apiToken": "wlp_xxxxxxxxxxxx"
 }`
 
 function IntegrationsSettings({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
@@ -723,10 +723,10 @@ function IntegrationsSettings({ onOpenChange }: { onOpenChange: (open: boolean) 
       .then(([wlpResult, wooResult]) => {
         if (wlpResult.data) {
           setWlpConfig(wlpResult.data)
-          setApiEndpoint(wlpResult.data.api_endpoint || "")
+          setApiEndpoint(wlpResult.data.apiEndpoint || "")
           setEnabled(wlpResult.data.enabled || false)
-          setSyncInterval(wlpResult.data.sync_interval_minutes || 60)
-          setShowTokenInput(!wlpResult.data.has_api_token)
+          setSyncInterval(wlpResult.data.syncIntervalMinutes || 60)
+          setShowTokenInput(!wlpResult.data.hasApiToken)
         }
         if (wooResult.data) {
           setWooConfig(wooResult.data)
@@ -995,7 +995,7 @@ function IntegrationsSettings({ onOpenChange }: { onOpenChange: (open: boolean) 
                   </TooltipContent>
                 </Tooltip>
               </div>
-              {wlpConfig?.has_api_token && !showTokenInput ? (
+              {wlpConfig?.hasApiToken && !showTokenInput ? (
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-muted-foreground">Token configuré</p>
                   <Button

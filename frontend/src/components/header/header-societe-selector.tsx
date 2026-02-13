@@ -35,18 +35,20 @@ export function HeaderSocieteSelector() {
   const setActiveSociete = useSocieteStore((state) => state.setActiveSociete);
   const [createSocieteOpen, setCreateSocieteOpen] = useState(false);
   const [noSocietePromptOpen, setNoSocietePromptOpen] = useState(false);
+  const [fetchDone, setFetchDone] = React.useState(false);
 
   // Fetch societes
   React.useEffect(() => {
     if (!activeOrganisation?.organisationId) {
       setSocietes([]);
+      setFetchDone(false);
       return;
     }
     setSocietesLoading(true);
+    setFetchDone(false);
     listSocietesByOrganisation(activeOrganisation.organisationId).then((result) => {
-      if (result.data) {
-        setSocietes(result.data);
-      }
+      setSocietes(result.data ?? []);
+      setFetchDone(true);
       setSocietesLoading(false);
     });
   }, [activeOrganisation?.organisationId]);
@@ -56,12 +58,12 @@ export function HeaderSocieteSelector() {
     return societes.find((s) => s.id === activeSocieteId) || null;
   }, [activeSocieteId, societes]);
 
-  // Auto-open prompt when no société exists
+  // Auto-open prompt when no société exists (only once after successful fetch)
   React.useEffect(() => {
-    if (!societesLoading && societes.length === 0 && activeOrganisation?.organisationId) {
+    if (fetchDone && !societesLoading && societes.length === 0 && activeOrganisation?.organisationId) {
       setNoSocietePromptOpen(true);
     }
-  }, [societesLoading, societes.length, activeOrganisation?.organisationId]);
+  }, [fetchDone, societesLoading, societes.length, activeOrganisation?.organisationId]);
 
   if (!activeOrganisation) return null;
 

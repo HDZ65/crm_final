@@ -14,7 +14,7 @@ export type TacheType =
   | 'SUIVI'
   | 'AUTRE';
 
-export type TachePriorite = 'HAUTE' | 'MOYENNE' | 'BASSE';
+export type TachePriorite = 'HAUTE' | 'MOYENNE' | 'BASSE' | 'URGENTE';
 
 export type TacheStatut = 'A_FAIRE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE';
 
@@ -53,6 +53,7 @@ export const TACHE_TYPE_LABELS: Record<TacheType, string> = {
 };
 
 export const TACHE_PRIORITE_LABELS: Record<TachePriorite, string> = {
+  URGENTE: 'Urgente',
   HAUTE: 'Haute',
   MOYENNE: 'Moyenne',
   BASSE: 'Basse',
@@ -67,6 +68,7 @@ export const TACHE_STATUT_LABELS: Record<TacheStatut, string> = {
 
 // Couleurs pour les badges
 export const TACHE_PRIORITE_COLORS: Record<TachePriorite, string> = {
+  URGENTE: 'destructive',
   HAUTE: 'destructive',
   MOYENNE: 'default',
   BASSE: 'secondary',

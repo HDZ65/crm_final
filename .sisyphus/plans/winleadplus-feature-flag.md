@@ -110,7 +110,7 @@ Task 2: Frontend — gRPC client + server action + conditionnel UI
 
 ## TODOs
 
-- [ ] 1. Backend: Add `HasConfig` RPC method to WinLeadPlus gRPC controller
+- [x] 1. Backend: Add `HasConfig` RPC method to WinLeadPlus gRPC controller
 
   **What to do**:
   - Add new method `hasConfig` to `WinLeadPlusSyncService` in `services/service-commercial/src/domain/winleadplus/services/winleadplus-sync.service.ts`:
@@ -208,7 +208,7 @@ Task 2: Frontend — gRPC client + server action + conditionnel UI
 
 ---
 
-- [ ] 2. Frontend: Conditional WinLeadPlus UI based on org config
+- [x] 2. Frontend: Conditional WinLeadPlus UI based on org config
 
   **What to do**:
   - **Add `hasConfig` to gRPC client** (`frontend/src/lib/grpc/clients/winleadplus.ts`):
@@ -356,12 +356,12 @@ cd frontend && npm run build  # Expected: exit code 0
 ```
 
 ### Final Checklist
-- [ ] HasConfig RPC exists and uses findByOrganisationId (no auto-create)
-- [ ] Frontend hasConfig gRPC method works
-- [ ] Server action returns false on error (fail closed)
-- [ ] Sync WLP button wrapped in `{hasWinLeadPlus && ...}`
-- [ ] WinLeadPlus SelectItem wrapped in `{hasWinLeadPlus && ...}`
-- [ ] Badge in columns.tsx NOT touched (already data-conditional)
-- [ ] No React context/provider/hook created
-- [ ] No loading states added
-- [ ] Client detail page NOT modified
+- [x] HasConfig RPC exists and uses findByOrganisationId (no auto-create)
+- [x] Frontend hasConfig gRPC method works
+- [x] Server action returns false on error (fail closed)
+- [x] Sync WLP button wrapped in `{hasWinLeadPlus && ...}`
+- [x] WinLeadPlus SelectItem wrapped in `{hasWinLeadPlus && ...}`
+- [x] Badge in columns.tsx NOT touched (already data-conditional)
+- [x] No React context/provider/hook created
+- [x] No loading states added
+- [x] Client detail page NOT modified

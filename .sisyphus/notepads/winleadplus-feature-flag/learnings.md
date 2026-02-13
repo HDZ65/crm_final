@@ -94,3 +94,54 @@
 ### Commit
 - Message: `feat(frontend): conditionally show WinLeadPlus UI based on org config`
 - Files: gRPC client, server action, page component, client component
+
+## Final Verification Summary
+
+### All Checklist Items Verified ✅
+
+1. **HasConfig RPC exists and uses findByOrganisationId (no auto-create)**
+   - ✅ Method at line 205: `async hasConfig(organisationId: string): Promise<boolean>`
+   - ✅ Uses `configRepository.findByOrganisationId()` directly (line 206)
+   - ✅ Returns `config !== null && config.enabled` (line 207)
+
+2. **Frontend hasConfig gRPC method works**
+   - ✅ Method at line 60 in `frontend/src/lib/grpc/clients/winleadplus.ts`
+   - ✅ Returns `Promise<HasWinLeadPlusConfigResponse>`
+
+3. **Server action returns false on error (fail closed)**
+   - ✅ Line 118 in `frontend/src/actions/winleadplus.ts`: `return false; // Fail closed`
+   - ✅ Catch block ensures errors show clean CRM
+
+4. **Sync WLP button wrapped in `{hasWinLeadPlus && ...}`**
+   - ✅ Conditional rendering verified in clients-page-client.tsx
+   - ✅ Pattern: `{hasWinLeadPlus && <Button>Sync WLP</Button>}`
+
+5. **WinLeadPlus SelectItem wrapped in `{hasWinLeadPlus && ...}`**
+   - ✅ Conditional rendering verified in clients-page-client.tsx
+   - ✅ Pattern: `{hasWinLeadPlus && <SelectItem value="WinLeadPlus">WinLeadPlus</SelectItem>}`
+
+6. **Badge in columns.tsx NOT touched (already data-conditional)**
+   - ✅ No changes to columns.tsx between commits
+   - ✅ Badge remains data-driven (`source === "WinLeadPlus"`)
+
+7. **No React context/provider/hook created**
+   - ✅ No createContext/useContext found in clients directory
+   - ✅ Simple prop drilling used instead
+
+8. **No loading states added**
+   - ✅ No Skeleton/isLoading patterns added
+   - ✅ Config check is server-side (no loading UI needed)
+
+9. **Client detail page NOT modified**
+   - ✅ No changes to `frontend/src/app/(main)/clients/[id]/page.tsx`
+
+### Commits Created
+- `30815435` - `feat(commercial): add HasConfig RPC for WinLeadPlus feature flag check`
+- `5a59613` - `feat(frontend): conditionally show WinLeadPlus UI based on org config`
+
+### Plan Status
+- Total tasks: 2
+- Completed: 2
+- Remaining: 0
+- Final checklist: 9/9 items verified ✅
+

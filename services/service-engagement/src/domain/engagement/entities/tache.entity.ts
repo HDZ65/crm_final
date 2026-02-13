@@ -5,27 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TacheType, TachePriorite, TacheStatut } from '@crm/shared-kernel';
 
-export enum TacheType {
-  RELANCE = 'relance',
-  RAPPEL = 'rappel',
-  SUIVI = 'suivi',
-  AUTRE = 'autre',
-}
-
-export enum TachePriorite {
-  BASSE = 'basse',
-  NORMALE = 'normale',
-  HAUTE = 'haute',
-  URGENTE = 'urgente',
-}
-
-export enum TacheStatut {
-  A_FAIRE = 'a_faire',
-  EN_COURS = 'en_cours',
-  TERMINEE = 'terminee',
-  ANNULEE = 'annulee',
-}
+// Re-export for convenience (consumers importing from entities still work)
+export { TacheType, TachePriorite, TacheStatut };
 
 @Entity('tache')
 export class TacheEntity {
@@ -51,7 +34,7 @@ export class TacheEntity {
   @Column({
     type: 'enum',
     enum: TachePriorite,
-    default: TachePriorite.NORMALE,
+    default: TachePriorite.MOYENNE,
   })
   priorite: TachePriorite;
 

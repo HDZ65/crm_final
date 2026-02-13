@@ -78,8 +78,8 @@ interface ConnectionTestResult {
 // ---------------------------------------------------------------------------
 
 const WIN_LEAD_PLUS_JSON_EXAMPLE = `{
-  "api_endpoint": "https://api.winleadplus.com/v1",
-  "api_token": "wlp_xxxxxxxxxxxx"
+  "apiEndpoint": "https://api.winleadplus.com/v1",
+  "apiToken": "wlp_xxxxxxxxxxxx"
 }`
 
 // ---------------------------------------------------------------------------
@@ -131,10 +131,10 @@ export function IntegrationsPageClient({
 
   const openWinLeadPlusDialog = () => {
     setWinleadplusForm({
-      apiEndpoint: winleadplusConfig?.api_endpoint ?? "",
+      apiEndpoint: winleadplusConfig?.apiEndpoint ?? "",
       apiToken: "",
       enabled: winleadplusConfig?.enabled ?? true,
-      syncIntervalMinutes: winleadplusConfig?.sync_interval_minutes ?? 30,
+      syncIntervalMinutes: winleadplusConfig?.syncIntervalMinutes ?? 30,
     })
     setWinleadplusTestResult({ status: "idle" })
     setShowApiToken(false)
@@ -362,28 +362,28 @@ export function IntegrationsPageClient({
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">API Endpoint</span>
                       <span className="font-mono text-xs truncate max-w-[200px]">
-                        {winleadplusConfig.api_endpoint || "—"}
+                        {winleadplusConfig.apiEndpoint || "—"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Clé API</span>
                       <span className="font-mono text-xs">
-                        {winleadplusConfig.has_api_token ? "••••••••" : "Non configurée"}
+                        {winleadplusConfig.hasApiToken ? "••••••••" : "Non configurée"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">
                         Intervalle de sync
                       </span>
-                      <span>{winleadplusConfig.sync_interval_minutes} min</span>
+                      <span>{winleadplusConfig.syncIntervalMinutes} min</span>
                     </div>
-                    {winleadplusConfig.last_sync_at && (
+                    {winleadplusConfig.lastSyncAt && (
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">
                           Dernière sync
                         </span>
                         <span>
-                          {new Date(winleadplusConfig.last_sync_at).toLocaleString(
+                          {new Date(winleadplusConfig.lastSyncAt).toLocaleString(
                             "fr-FR"
                           )}
                         </span>
@@ -624,7 +624,7 @@ export function IntegrationsPageClient({
                       })
                     }
                     placeholder={
-                      winleadplusConfig?.has_api_token
+                      winleadplusConfig?.hasApiToken
                         ? "Laisser vide pour conserver l'actuel"
                         : "wlp_xxxxxxxxxxxx"
                     }

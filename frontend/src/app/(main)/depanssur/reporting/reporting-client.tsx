@@ -1,34 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { listAbonnementsAction, listDossiersAction } from '@/actions/depanssur';
 import { TrendingUp, TrendingDown, Users, FileText, Euro, AlertCircle, Percent } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import type { ListAbonnementsResponse, ListDossiersResponse } from '@proto/depanssur/depanssur';
 
-export function DepanssurReportingClient() {
+interface DepanssurReportingClientProps {
+  initialAbonnements?: ListAbonnementsResponse | null;
+  initialDossiers?: ListDossiersResponse | null;
+  activeOrgId?: string | null;
+}
+
+export function DepanssurReportingClient({
+  initialAbonnements,
+  initialDossiers,
+  activeOrgId,
+}: DepanssurReportingClientProps) {
   const [period, setPeriod] = useState('month');
-
-  const { data: abonnements } = useQuery({
-    queryKey: ['abonnements-all', 'org-id'],
-    queryFn: async () => {
-      const result = await listAbonnementsAction({ organisationId: 'org-id', pagination: { page: 1, limit: 1000, sortBy: "", sortOrder: "" } });
-      if (result.error) throw new Error(result.error);
-      return result.data;
-    },
-  });
-
-  const { data: dossiers } = useQuery({
-    queryKey: ['dossiers-all', 'org-id'],
-    queryFn: async () => {
-      const result = await listDossiersAction({ organisationId: 'org-id', pagination: { page: 1, limit: 1000, sortBy: "", sortOrder: "" } });
-      if (result.error) throw new Error(result.error);
-      return result.data;
-    },
-  });
+  const [abonnements] = useState(initialAbonnements ?? { abonnements: [] });
+  const [dossiers] = useState(initialDossiers ?? { dossiers: [] });
 
   // Calculs KPIs
   const totalAbonnements = abonnements?.abonnements?.length || 0;

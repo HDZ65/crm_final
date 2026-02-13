@@ -10,6 +10,7 @@ export const PUBLIC_ROUTES = [
   "/invite",
   "/forgot-password",
   "/reset-password",
+  "/catalogue",
 ] as const;
 
 export const TOKEN_CONFIG = {

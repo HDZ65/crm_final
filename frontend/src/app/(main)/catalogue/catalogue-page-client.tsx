@@ -172,7 +172,9 @@ export function CataloguePageClient({
           getProduitsByOrganisation({ organisationId: orgId, gammeId: g.id })
         )
       )
-      newProduits = results.flatMap(r => r.data?.produits ?? [])
+      newProduits = results.flatMap((r, i) =>
+        (r.data?.produits ?? []).map(p => ({ ...p, gammeId: p.gammeId || newGammes[i].id }))
+      )
     }
 
     return { gammes: newGammes, produits: newProduits }
@@ -185,10 +187,12 @@ export function CataloguePageClient({
     const orgId = activeOrganisation?.organisationId
     if (!orgId) return
 
-    // First render: SSR already provided data, skip fetch
+    // First render: SSR loaded data WITHOUT société filter.
+    // Only skip if client also has no société selected — otherwise
+    // we must reload with the correct société scope.
     if (isFirstRender.current) {
       isFirstRender.current = false
-      if (initialGammes && initialProduits) return
+      if (initialGammes && initialProduits && !activeSocieteId) return
     }
 
     let cancelled = false
@@ -922,9 +926,9 @@ function ProductDetail({
   const handleCopyInfo = async () => {
     const info = `${product.nom}
 Référence: ${product.sku}
-Prix HT: ${product.prix.toFixed(2)} \u20ac
+Prix HT: ${product.prix.toFixed(2)} €
 TVA: ${product.tauxTva}%
-Prix TTC: ${prixTTC.toFixed(2)} \u20ac
+Prix TTC: ${prixTTC.toFixed(2)} €
 Type: ${TYPE_PRODUIT_LABELS[product.type]}
 Catégorie: ${CATEGORIE_PRODUIT_LABELS[product.categorie]}
 ${product.description ? `Description: ${product.description}` : ""}`
@@ -987,17 +991,17 @@ ${product.description ? `Description: ${product.description}` : ""}`
               <span className="text-muted-foreground">Prix HT</span>
               {product.promotionActive && product.prixPromotion ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground line-through">{product.prix.toFixed(2)} \u20ac</span>
-                  <span className="font-medium text-green-600">{product.prixPromotion.toFixed(2)} \u20ac</span>
+                  <span className="text-muted-foreground line-through">{product.prix.toFixed(2)} €</span>
+                  <span className="font-medium text-green-600">{product.prixPromotion.toFixed(2)} €</span>
                 </div>
               ) : (
-                <span className="font-medium">{product.prix.toFixed(2)} \u20ac</span>
+                <span className="font-medium">{product.prix.toFixed(2)} €</span>
               )}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">TVA ({product.tauxTva}%)</span>
               <span className="font-medium">
-                {((product.promotionActive && product.prixPromotion ? product.prixPromotion : product.prix) * product.tauxTva / 100).toFixed(2)} \u20ac
+                {((product.promotionActive && product.prixPromotion ? product.prixPromotion : product.prix) * product.tauxTva / 100).toFixed(2)} €
               </span>
             </div>
             <Separator />
@@ -1005,14 +1009,14 @@ ${product.description ? `Description: ${product.description}` : ""}`
               <span className="font-medium">Prix TTC / mois</span>
               {product.promotionActive && prixPromoTTC ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground line-through">{prixTTC.toFixed(2)} \u20ac</span>
+                  <span className="text-muted-foreground line-through">{prixTTC.toFixed(2)} €</span>
                   <span className="text-xl font-bold text-green-600">
-                    {prixPromoTTC.toFixed(2)} \u20ac
+                    {prixPromoTTC.toFixed(2)} €
                   </span>
                 </div>
               ) : (
                 <span className="text-xl font-bold text-primary">
-                  {prixTTC.toFixed(2)} \u20ac
+                  {prixTTC.toFixed(2)} €
                 </span>
               )}
             </div>

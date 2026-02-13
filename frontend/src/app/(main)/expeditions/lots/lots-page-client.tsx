@@ -229,14 +229,26 @@ const defaultCarrierFormData = {
   isActive: true,
 }
 
-export function LotsPageClient() {
+interface LotsPageClientProps {
+  activeOrgId?: string | null
+  initialBatches?: AnyEntity[]
+  initialCutoff?: AnyEntity
+  initialCarriers?: AnyEntity[]
+}
+
+export function LotsPageClient({
+  activeOrgId,
+  initialBatches,
+  initialCutoff,
+  initialCarriers,
+}: LotsPageClientProps = {}) {
   const { activeOrganisation } = useOrganisation()
   const organisationId = activeOrganisation?.organisationId || ""
 
   const [activeTab, setActiveTab] = React.useState("lots")
 
-  const [batches, setBatches] = React.useState<AnyEntity[]>([])
-  const [batchLoading, setBatchLoading] = React.useState(false)
+  const [batches, setBatches] = React.useState<AnyEntity[]>(initialBatches ?? [])
+  const [batchLoading, setBatchLoading] = React.useState(!initialBatches)
   const [batchSubmitting, setBatchSubmitting] = React.useState(false)
   const [batchActionKey, setBatchActionKey] = React.useState<string | null>(null)
   const [batchDialogOpen, setBatchDialogOpen] = React.useState(false)
@@ -247,16 +259,16 @@ export function LotsPageClient() {
     cutoffDate: "",
   })
 
-  const [cutoffs, setCutoffs] = React.useState<AnyEntity[]>([])
-  const [cutoffLoading, setCutoffLoading] = React.useState(false)
+  const [cutoffs, setCutoffs] = React.useState<AnyEntity[]>(initialCutoff ? [initialCutoff] : [])
+  const [cutoffLoading, setCutoffLoading] = React.useState(!initialCutoff)
   const [cutoffSubmitting, setCutoffSubmitting] = React.useState(false)
   const [cutoffDialogOpen, setCutoffDialogOpen] = React.useState(false)
   const [cutoffDeleteDialogOpen, setCutoffDeleteDialogOpen] = React.useState(false)
   const [selectedCutoff, setSelectedCutoff] = React.useState<AnyEntity | null>(null)
   const [cutoffFormData, setCutoffFormData] = React.useState(defaultCutoffFormData)
 
-  const [carriers, setCarriers] = React.useState<AnyEntity[]>([])
-  const [carrierLoading, setCarrierLoading] = React.useState(false)
+  const [carriers, setCarriers] = React.useState<AnyEntity[]>(initialCarriers ?? [])
+  const [carrierLoading, setCarrierLoading] = React.useState(!initialCarriers)
   const [carrierSubmitting, setCarrierSubmitting] = React.useState(false)
   const [carrierDialogOpen, setCarrierDialogOpen] = React.useState(false)
   const [carrierDeleteDialogOpen, setCarrierDeleteDialogOpen] = React.useState(false)
@@ -338,6 +350,8 @@ export function LotsPageClient() {
     setCarrierLoading(false)
   }, [organisationId])
 
+  const isFirstRender = React.useRef(true)
+
   React.useEffect(() => {
     if (!organisationId) {
       setBatches([])
@@ -346,10 +360,18 @@ export function LotsPageClient() {
       return
     }
 
+    // Skip initial fetch if SSR data provided
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      if (initialBatches && initialCarriers) {
+        return
+      }
+    }
+
     void fetchBatches()
     void fetchCutoffs()
     void fetchCarriers()
-  }, [organisationId, fetchBatches, fetchCutoffs, fetchCarriers])
+  }, [organisationId, fetchBatches, fetchCutoffs, fetchCarriers, initialBatches, initialCarriers])
 
   const handleRefreshAll = async () => {
     await Promise.all([fetchBatches(), fetchCutoffs(), fetchCarriers()])

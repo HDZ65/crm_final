@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { listDossiersAction } from '@/actions/depanssur';
 import { DataTable } from '@/components/data-table-basic';
 import { Button } from '@/components/ui/button';
@@ -118,29 +117,18 @@ const columns: ColumnDef<any>[] = [
   },
 ];
 
-export function DossiersPageClient() {
+interface DossiersPageClientProps {
+  initialDossiers?: any[];
+  activeOrgId?: string;
+}
+
+export function DossiersPageClient({ initialDossiers = [], activeOrgId }: DossiersPageClientProps) {
   const [search, setSearch] = React.useState('');
   const [statutFilter, setStatutFilter] = React.useState<string>('all');
   const [typeFilter, setTypeFilter] = React.useState<string>('all');
   const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
-
-  const { data: dossiers, refetch } = useQuery({
-    queryKey: ['dossiers-depanssur', statutFilter, typeFilter],
-    queryFn: async () => {
-      const result = await listDossiersAction({
-        organisationId: 'org-id',
-        search: '',
-        statut: statutFilter && statutFilter !== 'all' ? (statutFilter as any) : undefined,
-        type: typeFilter && typeFilter !== 'all' ? (typeFilter as any) : undefined,
-        pagination: { page: 1, limit: 50, sortBy: '', sortOrder: '' },
-      });
-      if (result.error) throw new Error(result.error);
-      return result.data;
-    },
-  });
-
-  const allDossiers = dossiers?.dossiers || [];
+  const [allDossiers, setAllDossiers] = React.useState(initialDossiers);
 
   // Filtrage local par recherche
   const filteredDossiers = React.useMemo(() => {
@@ -162,11 +150,26 @@ export function DossiersPageClient() {
   const isAdvancedFiltersOpen = showAdvancedFilters || activeFiltersCount > 0;
 
   const handleRefresh = React.useCallback(async () => {
+    if (!activeOrgId) {
+      toast.error('Organisation non trouvée');
+      return;
+    }
     setIsRefreshing(true);
-    await refetch();
+    const result = await listDossiersAction({
+      organisationId: activeOrgId,
+      search: '',
+      statut: statutFilter && statutFilter !== 'all' ? (statutFilter as any) : undefined,
+      type: typeFilter && typeFilter !== 'all' ? (typeFilter as any) : undefined,
+      pagination: { page: 1, limit: 50, sortBy: '', sortOrder: '' },
+    });
+    if (result.error) {
+      toast.error('Erreur lors de l\'actualisation');
+    } else {
+      setAllDossiers(result.data?.dossiers || []);
+      toast.success('Liste actualisée');
+    }
     setIsRefreshing(false);
-    toast.success('Liste actualisée');
-  }, [refetch]);
+  }, [activeOrgId, statutFilter, typeFilter]);
 
   const handleResetFilters = React.useCallback(() => {
     setStatutFilter('all');

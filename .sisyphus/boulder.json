@@ -1,9 +1,9 @@
 {
-  "active_plan": "C:\\Users\\Dev\\Desktop\\crm_final\\.sisyphus\\plans\\winleadplus-feature-flag.md",
-  "started_at": "2026-02-11T16:18:54.662Z",
+  "active_plan": "C:\\Users\\Dev\\Desktop\\crm_final\\.sisyphus\\plans\\ssr-rendering-fix.md",
+  "started_at": "2026-02-13T12:35:05.187Z",
   "session_ids": [
-    "ses_3b3af02b2ffeZoy4kFS6ZAM41h"
+    "ses_3a9df9142ffeYHn6aA4cNkVLa7"
   ],
-  "plan_name": "winleadplus-feature-flag",
+  "plan_name": "ssr-rendering-fix",
   "agent": "atlas"
 }

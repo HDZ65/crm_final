@@ -88,3 +88,30 @@ export enum ActivityType {
   TASK = 'TASK',
   NOTE = 'NOTE',
 }
+
+// ========== TACHE (Task) ENUMS ==========
+
+export enum TacheType {
+  APPEL = 'APPEL',
+  EMAIL = 'EMAIL',
+  RDV = 'RDV',
+  RELANCE_IMPAYE = 'RELANCE_IMPAYE',
+  RELANCE_CONTRAT = 'RELANCE_CONTRAT',
+  RENOUVELLEMENT = 'RENOUVELLEMENT',
+  SUIVI = 'SUIVI',
+  AUTRE = 'AUTRE',
+}
+
+export enum TachePriorite {
+  BASSE = 'BASSE',
+  MOYENNE = 'MOYENNE',
+  HAUTE = 'HAUTE',
+  URGENTE = 'URGENTE',
+}
+
+export enum TacheStatut {
+  A_FAIRE = 'A_FAIRE',
+  EN_COURS = 'EN_COURS',
+  TERMINEE = 'TERMINEE',
+  ANNULEE = 'ANNULEE',
+}

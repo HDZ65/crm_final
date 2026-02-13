@@ -6,7 +6,6 @@ import {
   ProductDistribution,
   ActivityFeed,
 } from "@/components/dashboard"
-import { DashboardContratsParCommercial } from "@/components/dashboard-contrats-par-commercial"
 import { getServerDashboardData, getActiveOrgId } from "@/lib/server/data"
 
 export default async function Page() {
@@ -42,15 +41,12 @@ export default async function Page() {
           <ChartAreaInteractive initialData={dashboardData.evolutionCa?.donnees} />
         </section>
 
-        {/* Répartition par produit */}
-        <ProductDistribution initialData={dashboardData.repartitionProduits} />
+         {/* Répartition par produit */}
+         <ProductDistribution initialData={dashboardData.repartitionProduits} />
 
-        {/* Contrats par société (conservé) */}
-        <ContratsCard initialData={dashboardData.statsSocietes?.societes} />
-
-        {/* Contrats par commercial */}
-        <DashboardContratsParCommercial />
-      </section>
+         {/* Contrats par société (conservé) */}
+         <ContratsCard initialData={dashboardData.statsSocietes?.societes} />
+       </section>
 
       {/* Zone 3: Activity Feed */}
       <section data-testid="zone-activity">

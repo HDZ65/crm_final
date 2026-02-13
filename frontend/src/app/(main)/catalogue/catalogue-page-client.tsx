@@ -116,33 +116,14 @@ export function CataloguePageClient({
   initialProduits,
 }: CataloguePageClientProps) {
   const { activeOrganisation } = useOrganisation()
-
-  // Société active depuis le store global (sélection via sidebar)
   const activeSocieteId = useSocieteStore((state) => state.activeSocieteId)
 
-  // Refs to track initial fetch
-  const hasFetchedSocietes = React.useRef(!!initialSocietes)
-  const hasFetchedGammes = React.useRef(!!initialGammes)
-  const hasFetchedProduits = React.useRef(!!initialProduits)
+  // ─── Data State (initialised from SSR) ─────────────────────
+  const [societes, setSocietes] = React.useState<Societe[]>(initialSocietes ?? [])
+  const [gammes, setGammes] = React.useState<Gamme[]>(initialGammes ?? [])
+  const [produits, setProduits] = React.useState<Produit[]>(initialProduits ?? [])
 
-  // Data state - initialize with SSR data if available
-  const [societes, setSocietes] = React.useState<Societe[]>(
-    initialSocietes ?? []
-  )
-  const [gammes, setGammes] = React.useState<Gamme[]>(
-    initialGammes ?? []
-  )
-  const [produits, setProduits] = React.useState<Produit[]>(
-    initialProduits ?? []
-  )
-  const [gammesLoading, setGammesLoading] = React.useState(!initialGammes)
-  const [produitsLoading, setProduitsLoading] = React.useState(!initialProduits)
-  const [createLoading, setCreateLoading] = React.useState(false)
-  const [updateLoading, setUpdateLoading] = React.useState(false)
-  const [createGammeLoading, setCreateGammeLoading] = React.useState(false)
-  const [isSyncing, setIsSyncing] = React.useState(false)
-
-  // State - "all" selected by default for gammes to show all products
+  // ─── UI State ──────────────────────────────────────────────
   const [selectedGammeId, setSelectedGammeId] = React.useState<string | null>("all")
   const [gammeSearchQuery, setGammeSearchQuery] = React.useState("")
   const [productSearchQuery, setProductSearchQuery] = React.useState("")
@@ -156,8 +137,6 @@ export function CataloguePageClient({
     nom: "",
     description: "",
   })
-
-  // Edit Gamme state
   const [isEditGammeDialogOpen, setIsEditGammeDialogOpen] = React.useState(false)
   const [gammeToEdit, setGammeToEdit] = React.useState<Gamme | null>(null)
   const [editGammeForm, setEditGammeForm] = React.useState({
@@ -165,146 +144,132 @@ export function CataloguePageClient({
     nom: "",
     description: "",
   })
-  const [updateGammeLoading, setUpdateGammeLoading] = React.useState(false)
 
-  // Fetch societes
-  const fetchSocietes = React.useCallback(async () => {
-    if (!activeOrganisation?.organisationId) return
-    const result = await getSocietesByOrganisation(activeOrganisation.organisationId)
-    if (result.data?.societes) {
-      setSocietes(result.data.societes)
+  // ─── Mutation Loading State (only for buttons) ─────────────
+  const [createLoading, setCreateLoading] = React.useState(false)
+  const [updateLoading, setUpdateLoading] = React.useState(false)
+  const [createGammeLoading, setCreateGammeLoading] = React.useState(false)
+  const [updateGammeLoading, setUpdateGammeLoading] = React.useState(false)
+  const [isSyncing, setIsSyncing] = React.useState(false)
+
+  // ─── Core Data Loader ──────────────────────────────────────
+  // Fetches gammes, then ALL products for those gammes in parallel.
+  // Returns data directly — zero dependency on component state.
+  const loadGammesAndProduits = React.useCallback(async (
+    orgId: string,
+    societeId?: string,
+  ) => {
+    const gammesResult = await getGammesByOrganisation({
+      organisationId: orgId,
+      societeId,
+    })
+    const newGammes = gammesResult.data?.gammes ?? []
+
+    let newProduits: Produit[] = []
+    if (newGammes.length > 0) {
+      const results = await Promise.all(
+        newGammes.map(g =>
+          getProduitsByOrganisation({ organisationId: orgId, gammeId: g.id })
+        )
+      )
+      newProduits = results.flatMap(r => r.data?.produits ?? [])
     }
+
+    return { gammes: newGammes, produits: newProduits }
+  }, [])
+
+  // ─── Single Effect: reload on société / org change ─────────
+  const isFirstRender = React.useRef(true)
+
+  React.useEffect(() => {
+    const orgId = activeOrganisation?.organisationId
+    if (!orgId) return
+
+    // First render: SSR already provided data, skip fetch
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      if (initialGammes && initialProduits) return
+    }
+
+    let cancelled = false
+    setSelectedGammeId("all")
+    setGammeSearchQuery("")
+    setProductSearchQuery("")
+
+    loadGammesAndProduits(orgId, activeSocieteId || undefined).then(data => {
+      if (cancelled) return
+      setGammes(data.gammes)
+      setProduits(data.produits)
+    })
+
+    return () => { cancelled = true }
+  }, [activeSocieteId, activeOrganisation?.organisationId, loadGammesAndProduits, initialGammes, initialProduits])
+
+  // Fetch societes on org change
+  React.useEffect(() => {
+    if (!activeOrganisation?.organisationId) return
+    getSocietesByOrganisation(activeOrganisation.organisationId).then(result => {
+      if (result.data?.societes) setSocietes(result.data.societes)
+    })
   }, [activeOrganisation?.organisationId])
 
-   // Fetch gammes
-   const fetchGammes = React.useCallback(async () => {
-     if (!activeOrganisation?.organisationId) return
-     setGammesLoading(true)
-     const result = await getGammesByOrganisation({
-       organisationId: activeOrganisation.organisationId,
-       societeId: activeSocieteId || undefined,
-     })
-     if (result.data?.gammes) {
-       setGammes(result.data.gammes)
-     }
-     setGammesLoading(false)
-   }, [activeOrganisation?.organisationId, activeSocieteId])
+  // ─── Refetch (after mutations) ─────────────────────────────
+  const refetch = React.useCallback(async () => {
+    const orgId = activeOrganisation?.organisationId
+    if (!orgId) return
+    const data = await loadGammesAndProduits(orgId, activeSocieteId || undefined)
+    setGammes(data.gammes)
+    setProduits(data.produits)
+  }, [activeOrganisation?.organisationId, activeSocieteId, loadGammesAndProduits])
 
-  // Fetch produits
-  const fetchProduits = React.useCallback(async () => {
-    if (!activeOrganisation?.organisationId) return
-    setProduitsLoading(true)
-    const result = await getProduitsByOrganisation({
-      organisationId: activeOrganisation.organisationId,
-      gammeId: selectedGammeId && selectedGammeId !== "all" ? selectedGammeId : undefined,
-    })
-    if (result.data?.produits) {
-      setProduits(result.data.produits)
-    }
-    setProduitsLoading(false)
-  }, [activeOrganisation?.organisationId, selectedGammeId])
+  const refetchGammes = refetch
 
-  // Refetch functions (for use after mutations)
-  const refetchGammes = React.useCallback(() => {
-    fetchGammes()
-  }, [fetchGammes])
+  // ─── Gamme Selection (instant, pure client-side) ───────────
+  const handleGammeSelect = React.useCallback((gammeId: string) => {
+    setSelectedGammeId(gammeId)
+    setProductSearchQuery("")
+  }, [])
 
-  const refetch = React.useCallback(() => {
-    fetchProduits()
-  }, [fetchProduits])
+  // ─── Derived Data (useMemo — synchronous, zero flash) ──────
+  const selectedGamme = React.useMemo(
+    () => gammes.find((g) => g.id === selectedGammeId) ?? null,
+    [gammes, selectedGammeId],
+  )
 
-  // Initial data fetching - skip if SSR data provided
-  React.useEffect(() => {
-    if (hasFetchedSocietes.current) return
-    hasFetchedSocietes.current = true
-    fetchSocietes()
-  }, [fetchSocietes])
-
-  React.useEffect(() => {
-    if (hasFetchedGammes.current) return
-    hasFetchedGammes.current = true
-    fetchGammes()
-  }, [fetchGammes])
-
-  React.useEffect(() => {
-    if (hasFetchedProduits.current) return
-    hasFetchedProduits.current = true
-    fetchProduits()
-  }, [fetchProduits])
-
-  // Get selected gamme info
-  const selectedGamme = React.useMemo(() => {
-    return gammes.find((g) => g.id === selectedGammeId) || null
-  }, [gammes, selectedGammeId])
-
-  // Filter gammes by search
   const filteredGammes = React.useMemo(() => {
     if (!gammeSearchQuery) return gammes
-    const query = gammeSearchQuery.toLowerCase()
+    const q = gammeSearchQuery.toLowerCase()
     return gammes.filter((g) =>
-      g.nom.toLowerCase().includes(query) ||
-      g.description?.toLowerCase().includes(query)
+      g.nom.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q)
     )
   }, [gammes, gammeSearchQuery])
 
-  // Filter products by search + société scope
   const filteredProducts = React.useMemo(() => {
     if (!selectedGammeId) return []
     let result = produits
 
-    // When a société is active and viewing "all" gammes,
-    // only show products belonging to gammes of that société
-    if (activeSocieteId && selectedGammeId === "all" && gammes.length > 0) {
-      const visibleGammeIds = new Set(gammes.map((g) => g.id))
-      result = result.filter((p) => visibleGammeIds.has(p.gammeId))
-    } else if (activeSocieteId && selectedGammeId === "all" && gammes.length === 0) {
-      // Société selected but no gammes → no products to show
-      return []
+    if (selectedGammeId === "all") {
+      if (activeSocieteId && gammes.length > 0) {
+        const ids = new Set(gammes.map((g) => g.id))
+        result = result.filter((p) => ids.has(p.gammeId))
+      }
+    } else {
+      result = result.filter((p) => p.gammeId === selectedGammeId)
     }
 
     if (productSearchQuery) {
-      const query = productSearchQuery.toLowerCase()
-      result = result.filter(
-        (p) =>
-          p.nom.toLowerCase().includes(query) ||
-          p.sku.toLowerCase().includes(query) ||
-          p.description?.toLowerCase().includes(query)
+      const q = productSearchQuery.toLowerCase()
+      result = result.filter((p) =>
+        p.nom.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q)
       )
     }
-
     return result
   }, [produits, selectedGammeId, productSearchQuery, activeSocieteId, gammes])
 
-  // Check if we can create (need a specific selection for products)
-  // Peut créer une gamme si une société spécifique est sélectionnée, ou si "toutes" on choisira dans la modale
   const canCreateGamme = true
   const canCreateProduct = selectedGammeId && selectedGammeId !== "all"
-
-    // Reset selections and refetch when société changes
-    React.useEffect(() => {
-      setSelectedGammeId("all")
-      setGammeSearchQuery("")
-      setProductSearchQuery("")
-      fetchGammes()
-      fetchProduits()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeSocieteId])
-
-   // Reset product search when gamme changes
-   React.useEffect(() => {
-     setProductSearchQuery("")
-   }, [selectedGammeId])
-
-   // Refetch products when gamme selection changes (skip initial render)
-   const isInitialGammeSelection = React.useRef(true)
-   React.useEffect(() => {
-     if (isInitialGammeSelection.current) {
-       isInitialGammeSelection.current = false
-       return
-     }
-     fetchProduits()
-   // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [selectedGammeId])
 
   // Handlers
   const handleCreateProduct = async (data: CreateProduitRequest) => {
@@ -425,8 +390,6 @@ export function CataloguePageClient({
    const isCreateGammeFormValid =
      newGammeForm.nom.trim() !== "" && activeOrganisation?.organisationId
 
-   const loading = produitsLoading || gammesLoading
-
   return (
     <main className="flex flex-1 flex-col min-h-0 gap-4">
 
@@ -498,7 +461,7 @@ export function CataloguePageClient({
                     {/* Option "Toutes les gammes" */}
                      <button
                        type="button"
-                       onClick={() => setSelectedGammeId("all")}
+                       onClick={() => handleGammeSelect("all")}
                        className={cn(
                          "w-full flex items-center justify-between px-3 py-2 rounded-md text-left transition-colors text-sm",
                          selectedGammeId === "all"
@@ -517,11 +480,11 @@ export function CataloguePageClient({
                           key={gamme.id}
                           role="button"
                           tabIndex={0}
-                          onClick={() => setSelectedGammeId(gamme.id)}
+                          onClick={() => handleGammeSelect(gamme.id)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault()
-                              setSelectedGammeId(gamme.id)
+                              handleGammeSelect(gamme.id)
                             }
                           }}
                           className={cn(

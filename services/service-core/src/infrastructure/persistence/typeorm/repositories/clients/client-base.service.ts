@@ -42,6 +42,18 @@ export class ClientBaseService {
       statut: input.statut || 'ACTIF',
       societeId: input.societe_id,
       source: input.source,
+      canalAcquisition: input.canal_acquisition ?? null,
+      civilite: input.civilite ?? null,
+      iban: input.iban ?? null,
+      bic: input.bic ?? null,
+      mandatSepa: input.mandat_sepa ?? null,
+      csp: input.csp ?? null,
+      regimeSocial: input.regime_social ?? null,
+      lieuNaissance: input.lieu_naissance ?? null,
+      paysNaissance: input.pays_naissance ?? null,
+      etapeCourante: input.etape_courante ?? null,
+      isPoliticallyExposed: input.is_politically_exposed ?? null,
+      numss: input.numss ?? null,
     });
 
     return this.repository.save(entity);
@@ -61,6 +73,18 @@ export class ClientBaseService {
     if (input.statut !== undefined) entity.statut = input.statut;
     if (input.societe_id !== undefined) entity.societeId = input.societe_id;
     if (input.source !== undefined) entity.source = input.source;
+    if (input.canal_acquisition !== undefined) entity.canalAcquisition = input.canal_acquisition;
+    if (input.civilite !== undefined) entity.civilite = input.civilite;
+    if (input.iban !== undefined) entity.iban = input.iban;
+    if (input.bic !== undefined) entity.bic = input.bic;
+    if (input.mandat_sepa !== undefined) entity.mandatSepa = input.mandat_sepa;
+    if (input.csp !== undefined) entity.csp = input.csp;
+    if (input.regime_social !== undefined) entity.regimeSocial = input.regime_social;
+    if (input.lieu_naissance !== undefined) entity.lieuNaissance = input.lieu_naissance;
+    if (input.pays_naissance !== undefined) entity.paysNaissance = input.pays_naissance;
+    if (input.etape_courante !== undefined) entity.etapeCourante = input.etape_courante;
+    if (input.is_politically_exposed !== undefined) entity.isPoliticallyExposed = input.is_politically_exposed;
+    if (input.numss !== undefined) entity.numss = input.numss;
 
     return this.repository.save(entity);
   }

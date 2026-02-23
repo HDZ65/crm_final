@@ -20,8 +20,11 @@ import {
   WinLeadPlusMapperService,
   type WinLeadPlusAbonnement,
   type WinLeadPlusMappedClient,
+  type WinLeadPlusMappedLigneContrat,
   type WinLeadPlusProspect,
 } from './winleadplus-mapper.service';
+import { ApporteurService } from '../../../infrastructure/persistence/typeorm/repositories/commercial/apporteur.service';
+import { WinLeadPlusCoreGrpcClient } from './winleadplus-core-grpc-client';
 
 interface SyncOptions {
   token?: string;
@@ -56,6 +59,7 @@ const DEFAULT_UUID = '00000000-0000-0000-0000-000000000000';
 export class WinLeadPlusSyncService {
   private readonly logger = new Logger(WinLeadPlusSyncService.name);
   private isScheduledSyncRunning = false;
+  private readonly grpcClient: WinLeadPlusCoreGrpcClient;
 
   constructor(
     private readonly mapper: WinLeadPlusMapperService,
@@ -65,8 +69,106 @@ export class WinLeadPlusSyncService {
     private readonly contratService: ContratService,
     @InjectRepository(LigneContratEntity)
     private readonly ligneContratRepository: Repository<LigneContratEntity>,
+    private readonly apporteurService: ApporteurService,
     @Optional() private readonly natsService?: NatsService,
-  ) {}
+  ) {
+    this.grpcClient = new WinLeadPlusCoreGrpcClient();
+  }
+
+  private async findOrCreateApporteur(
+    organisationId: string,
+    commercial: { id?: string; nom?: string; prenom?: string; email?: string; telephone?: string } | null | undefined,
+    fallbackCommercialId?: string,
+  ): Promise<string> {
+    if (!commercial && !fallbackCommercialId) {
+      return DEFAULT_UUID;
+    }
+
+    // Try to find by email first
+    if (commercial?.email) {
+      try {
+        const result = await this.apporteurService.findAll(
+          { search: commercial.email },
+          { page: 1, limit: 10 },
+        );
+        const byEmail = result.data.find(
+          (a) => a.email?.toLowerCase() === commercial.email!.toLowerCase(),
+        );
+        if (byEmail) return byEmail.id;
+      } catch {
+        // not found
+      }
+    }
+
+    // Try to find by nom + prenom
+    if (commercial?.nom) {
+      try {
+        const result = await this.apporteurService.findAll(
+          { search: commercial.nom },
+          { page: 1, limit: 20 },
+        );
+        const byName = result.data.find(
+          (a) =>
+            a.nom?.toLowerCase() === commercial.nom!.toLowerCase() &&
+            a.prenom?.toLowerCase() === (commercial.prenom || '').toLowerCase(),
+        );
+        if (byName) return byName.id;
+      } catch {
+        // not found
+      }
+    }
+
+    // Try to create
+    if (commercial?.nom) {
+      try {
+        const created = await this.apporteurService.create({
+          organisationId,
+          nom: commercial.nom,
+          prenom: commercial.prenom ?? '',
+          email: commercial.email ?? null,
+          telephone: commercial.telephone ?? null,
+          typeApporteur: 'COMMERCIAL',
+          actif: true,
+        });
+        return created.id;
+      } catch (err: unknown) {
+        const rpcErr = err as { code?: number };
+        if (rpcErr?.code === status.ALREADY_EXISTS) {
+          if (commercial?.email) {
+            try {
+              const retry = await this.apporteurService.findAll(
+                { search: commercial.email },
+                { page: 1, limit: 10 },
+              );
+              const found = retry.data.find(
+                (a) => a.email?.toLowerCase() === commercial.email!.toLowerCase(),
+              );
+              if (found) return found.id;
+            } catch {
+              // ignore
+            }
+          }
+          if (commercial?.nom) {
+            try {
+              const retry = await this.apporteurService.findAll(
+                { search: commercial.nom },
+                { page: 1, limit: 20 },
+              );
+              const found = retry.data.find(
+                (a) => a.nom?.toLowerCase() === commercial.nom!.toLowerCase(),
+              );
+              if (found) return found.id;
+            } catch {
+              // ignore
+            }
+          }
+        }
+        this.logger.warn(`findOrCreateApporteur failed: ${(err as Error).message}`);
+      }
+    }
+
+    return fallbackCommercialId || DEFAULT_UUID;
+  }
 
   async syncProspects(
     organisationId: string,
@@ -141,11 +243,29 @@ export class WinLeadPlusSyncService {
           let crmClientId: string;
           if (existingMapping) {
             crmClientId = existingMapping.crmClientId;
-            await this.publishClientUpdate(organisationId, crmClientId, mappedClient);
+            await this.updateClientViaGrpc(crmClientId, mappedClient);
             syncLog.updated += 1;
           } else {
-            crmClientId = await this.publishClientCreate(organisationId, mappedClient);
+            crmClientId = await this.createOrFindClientViaGrpc(organisationId, mappedClient);
             syncLog.created += 1;
+          }
+
+          if (mappedClient.adresse) {
+            try {
+              await this.grpcClient.createAdresse({
+                client_base_id: crmClientId,
+                ligne1: mappedClient.adresse.ligne1,
+                ligne2: mappedClient.adresse.ligne2 || undefined,
+                code_postal: mappedClient.adresse.code_postal || undefined,
+                ville: mappedClient.adresse.ville || undefined,
+                pays: mappedClient.adresse.pays || undefined,
+                type: 'PRINCIPALE',
+              });
+            } catch (adresseErr) {
+              this.logger.warn(
+                `Address creation skipped for client ${crmClientId}: ${adresseErr instanceof Error ? adresseErr.message : String(adresseErr)}`,
+              );
+            }
           }
 
           const contratIds = await this.syncProspectContrats(
@@ -430,6 +550,75 @@ export class WinLeadPlusSyncService {
     return null;
   }
 
+  private async createOrFindClientViaGrpc(
+    organisationId: string,
+    client: WinLeadPlusMappedClient,
+  ): Promise<string> {
+    const searchResult = await this.grpcClient.search({
+      organisation_id: organisationId,
+      telephone: client.telephone,
+      nom: client.nom,
+    });
+
+    if (searchResult.found && searchResult.client?.id) {
+      await this.grpcClient.update({
+        id: searchResult.client.id,
+        ...this.buildEnrichedClientPayload(client),
+      });
+      return searchResult.client.id;
+    }
+
+    const created = await this.grpcClient.create({
+      organisation_id: organisationId,
+      type_client: client.type_client,
+      nom: client.nom,
+      prenom: client.prenom,
+      compte_code: client.compte_code,
+      partenaire_id: client.partenaire_id || DEFAULT_UUID,
+      telephone: client.telephone,
+      email: client.email || undefined,
+      statut: client.statut,
+      canal_acquisition: client.canal_acquisition || undefined,
+      source: client.source,
+      ...this.buildEnrichedClientPayload(client),
+    });
+
+    return created.id;
+  }
+
+  private async updateClientViaGrpc(clientId: string, client: WinLeadPlusMappedClient): Promise<void> {
+    await this.grpcClient.update({
+      id: clientId,
+      nom: client.nom,
+      prenom: client.prenom,
+      telephone: client.telephone,
+      email: client.email || undefined,
+      canal_acquisition: client.canal_acquisition || undefined,
+      source: client.source,
+      ...this.buildEnrichedClientPayload(client),
+    });
+  }
+
+  private buildEnrichedClientPayload(client: WinLeadPlusMappedClient) {
+    return {
+      date_naissance: client.date_naissance || undefined,
+      iban: client.iban || undefined,
+      bic: client.bic || undefined,
+      mandat_sepa: client.mandat_sepa,
+      civilite: client.civilite || undefined,
+      csp: client.csp || undefined,
+      regime_social: client.regime_social || undefined,
+      lieu_naissance: client.lieu_naissance || undefined,
+      pays_naissance: client.pays_naissance || undefined,
+      etape_courante: client.etape_courante || undefined,
+      is_politically_exposed: client.is_politically_exposed,
+      numss: client.numss || undefined,
+    };
+  }
+
+  /**
+   * @deprecated Use createOrFindClientViaGrpc instead.
+   */
   private async publishClientCreate(
     organisationId: string,
     client: WinLeadPlusMappedClient,
@@ -471,6 +660,9 @@ export class WinLeadPlusSyncService {
     return clientId;
   }
 
+  /**
+   * @deprecated Use updateClientViaGrpc instead.
+   */
   private async publishClientUpdate(
     organisationId: string,
     clientId: string,
@@ -515,61 +707,110 @@ export class WinLeadPlusSyncService {
     clientId: string,
     fallbackCommercialId?: string,
   ): Promise<string[]> {
-    const contrats = Array.isArray(prospect.contrats) ? prospect.contrats : [];
-    const abonnementItems = Array.isArray(prospect.abonnements) ? prospect.abonnements : [];
+    const souscriptions = Array.isArray(prospect.Souscription) ? prospect.Souscription : [];
     const contratIds: string[] = [];
 
-    for (const contrat of contrats) {
-      const mapped = this.mapper.mapContratToContrat(contrat, clientId);
-      const commercialId = mapped.commercialId || fallbackCommercialId || DEFAULT_UUID;
+    const apporteurId = await this.findOrCreateApporteur(
+      organisationId,
+      prospect.commercial ?? null,
+      fallbackCommercialId,
+    );
 
-      const existing = await this.findContratByReference(organisationId, mapped.reference);
-      const notes = this.composeContractNotes(mapped.notes);
+    for (const souscription of souscriptions) {
+      const contrats = Array.isArray(souscription.contrats) ? souscription.contrats : [];
 
-      let contratId: string;
-      if (existing) {
-        const updated = await this.contratService.update({
-          id: existing.id,
-          reference: mapped.reference,
-          titre: mapped.titre,
-          statut: mapped.statut,
-          dateDebut: mapped.dateDebut,
-          dateSignature: mapped.dateSignature,
-          montant: mapped.montant,
-          devise: mapped.devise,
-          frequenceFacturation: mapped.frequenceFacturation,
-          fournisseur: mapped.fournisseur,
+      for (const contrat of contrats) {
+        const mapped = this.mapper.mapSouscriptionContratToContrat(
+          contrat,
+          souscription,
           clientId,
-          commercialId,
-          notes,
-        });
-        contratId = updated.id;
-      } else {
-        const created = await this.contratService.create({
-          organisationId,
-          reference: mapped.reference,
-          titre: mapped.titre,
-          statut: mapped.statut,
-          dateDebut: mapped.dateDebut,
-          dateSignature: mapped.dateSignature,
-          montant: mapped.montant,
-          devise: mapped.devise,
-          frequenceFacturation: mapped.frequenceFacturation,
-          fournisseur: mapped.fournisseur,
-          clientId,
-          commercialId,
-          notes,
-        });
-        contratId = created.id;
+          apporteurId,
+        );
+        const commercialId = mapped.commercialId || apporteurId || DEFAULT_UUID;
+
+        const existing = await this.findContratByReference(organisationId, mapped.reference);
+        const notes = this.composeContractNotes(mapped.notes);
+
+        let contratId: string;
+        if (existing) {
+          const updated = await this.contratService.update({
+            id: existing.id,
+            reference: mapped.reference,
+            titre: mapped.titre,
+            statut: mapped.statut,
+            dateDebut: mapped.dateDebut,
+            dateSignature: mapped.dateSignature,
+            montant: mapped.montant,
+            devise: mapped.devise,
+            frequenceFacturation: mapped.frequenceFacturation,
+            fournisseur: mapped.fournisseur,
+            clientId,
+            commercialId,
+            notes,
+          });
+          contratId = updated.id;
+        } else {
+          const created = await this.contratService.create({
+            organisationId,
+            reference: mapped.reference,
+            titre: mapped.titre,
+            statut: mapped.statut,
+            dateDebut: mapped.dateDebut,
+            dateSignature: mapped.dateSignature,
+            montant: mapped.montant,
+            devise: mapped.devise,
+            frequenceFacturation: mapped.frequenceFacturation,
+            fournisseur: mapped.fournisseur,
+            clientId,
+            commercialId,
+            notes,
+          });
+          contratId = created.id;
+        }
+
+        contratIds.push(contratId);
+
+        if (souscription.offre) {
+          const mappedLigne = this.mapper.mapSouscriptionOffreToLigneContrat(
+            souscription.offre,
+            contratId,
+          );
+          if (mappedLigne) {
+            await this.syncContratLignesFromOffre(contratId, mappedLigne);
+          }
+        }
       }
-
-      contratIds.push(contratId);
-      await this.syncContratLignes(contratId, abonnementItems);
     }
 
     return contratIds;
   }
 
+  private async syncContratLignesFromOffre(
+    contratId: string,
+    mappedLigne: WinLeadPlusMappedLigneContrat,
+  ): Promise<void> {
+    await this.ligneContratRepository.delete({ contratId });
+
+    const ligne = this.ligneContratRepository.create({
+      contratId,
+      produitId: this.toPseudoUuid(mappedLigne.metadata.offre_id || mappedLigne.nom),
+      periodeFacturationId: DEFAULT_UUID,
+      quantite: mappedLigne.quantite,
+      prixUnitaire: mappedLigne.prix_unitaire,
+      canalVente: JSON.stringify({
+        source: mappedLigne.metadata.source,
+        nom: mappedLigne.nom,
+        categorie: mappedLigne.metadata.categorie,
+        offre_id: mappedLigne.metadata.offre_id,
+      }),
+    });
+
+    await this.ligneContratRepository.save(ligne);
+  }
+
+  /**
+   * @deprecated Use syncContratLignesFromOffre instead.
+   */
   private async syncContratLignes(
     contratId: string,
     abonnements: WinLeadPlusAbonnement[],

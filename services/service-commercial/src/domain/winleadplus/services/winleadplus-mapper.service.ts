@@ -4,6 +4,8 @@ import { createHash } from 'crypto';
 export interface WinLeadPlusPaymentInfo {
   iban?: string;
   IBAN?: string;
+  BIC?: string;
+  bic?: string;
   mandatSepa?: boolean;
   mandat_sepa?: boolean;
 }
@@ -31,6 +33,21 @@ export interface WinLeadPlusContrat {
   notes?: string;
 }
 
+export interface WinLeadPlusSouscription {
+  idSouscription?: number | string;
+  offreId?: number | string;
+  totalAmount?: number | string;
+  dateSouscription?: string;
+  offre?: WinLeadPlusAbonnement & {
+    fournisseur?: string;
+    logo_url?: string;
+    nom?: string;
+    categorie?: string;
+    prix_base?: number | string;
+  };
+  contrats?: WinLeadPlusContrat[];
+}
+
 export interface WinLeadPlusProspect {
   idProspect?: number | string;
   nom?: string;
@@ -44,6 +61,33 @@ export interface WinLeadPlusProspect {
   code_postal?: string;
   pays?: string;
   date_naissance?: string;
+  dateNaissance?: string;
+  adressePostaleLigne1?: string;
+  adressePostaleLigne2?: string;
+  streetnumber?: string;
+  civilite?: string;
+  csp?: string;
+  regimeSocial?: string;
+  etapeCourante?: string;
+  statutProspect?: string;
+  lieuNaissance?: string;
+  paysNaissance?: string;
+  codePostalNaissance?: string;
+  numss?: string;
+  numorganisme?: string;
+  is_politically_exposed?: boolean;
+  consentementRGPDTraitementDonnees?: boolean;
+  consentementRGPDCommunicationsCommerciales?: boolean;
+  Souscription?: WinLeadPlusSouscription[];
+  commercial?: {
+    id?: string;
+    nom?: string;
+    prenom?: string;
+    email?: string;
+    telephone?: string;
+  };
+  parentProspectId?: number | string;
+  createdAt?: string;
   commercialId?: string;
   contrats?: WinLeadPlusContrat[];
   abonnements?: WinLeadPlusAbonnement[];
@@ -73,6 +117,15 @@ export interface WinLeadPlusMappedClient {
     pays: string;
     type: string;
   };
+  civilite?: string;
+  bic?: string;
+  csp?: string;
+  regime_social?: string;
+  lieu_naissance?: string;
+  pays_naissance?: string;
+  etape_courante?: string;
+  is_politically_exposed?: boolean;
+  numss?: string;
 }
 
 export interface WinLeadPlusMappedContrat {
@@ -114,8 +167,9 @@ export class WinLeadPlusMapperService {
       : undefined;
 
     const iban = this.toText(payment?.iban || payment?.IBAN);
+    const bic = this.toText(payment?.BIC || payment?.bic);
     const mandatSepaValue = payment?.mandatSepa ?? payment?.mandat_sepa;
-    const adresse = this.toText(prospect.adresse || prospect.adresse1);
+    const adresse = this.toText(prospect.adressePostaleLigne1 || prospect.adresse1 || prospect.adresse);
     const codePostal = this.toText(prospect.codePostal || prospect.code_postal);
     const ville = this.toText(prospect.ville);
     const pays = this.toText(prospect.pays) || 'FR';
@@ -124,7 +178,7 @@ export class WinLeadPlusMapperService {
       type_client: 'PARTICULIER',
       nom: this.toText(prospect.nom) || 'INCONNU',
       prenom: this.toText(prospect.prenom) || 'INCONNU',
-      date_naissance: this.toText(prospect.date_naissance),
+      date_naissance: this.toText(prospect.dateNaissance || prospect.date_naissance),
       compte_code: `WLP-${prospectId}`,
       partenaire_id: '',
       telephone: this.toText(prospect.telephone),
@@ -132,14 +186,23 @@ export class WinLeadPlusMapperService {
       statut: 'ACTIF',
       canal_acquisition: `winleadplus:${prospectId}`,
       source: WINLEADPLUS_SOURCE,
-      commercial_id: this.toText(prospect.commercialId),
+      commercial_id: this.toText(prospect.commercialId || prospect.commercial?.id),
       iban: iban || undefined,
       mandat_sepa: typeof mandatSepaValue === 'boolean' ? mandatSepaValue : undefined,
+      civilite: this.toText(prospect.civilite) || undefined,
+      bic: bic || undefined,
+      csp: this.toText(prospect.csp) || undefined,
+      regime_social: this.toText(prospect.regimeSocial) || undefined,
+      lieu_naissance: this.toText(prospect.lieuNaissance) || undefined,
+      pays_naissance: this.toText(prospect.paysNaissance) || undefined,
+      etape_courante: this.toText(prospect.etapeCourante) || undefined,
+      is_politically_exposed: typeof prospect.is_politically_exposed === 'boolean' ? prospect.is_politically_exposed : undefined,
+      numss: this.toText(prospect.numss) || undefined,
       adresse:
         adresse || codePostal || ville
           ? {
               ligne1: adresse,
-              ligne2: '',
+              ligne2: prospect.adressePostaleLigne2 || '',
               code_postal: codePostal,
               ville,
               pays,
@@ -184,6 +247,56 @@ export class WinLeadPlusMapperService {
       metadata: {
         source: WINLEADPLUS_SOURCE,
         categorie: this.toText(abonnement.categorie),
+        offre_id: offreId,
+      },
+    };
+  }
+
+  mapSouscriptionContratToContrat(
+    contrat: WinLeadPlusContrat,
+    souscription: WinLeadPlusSouscription,
+    clientId: string,
+    commercialId?: string,
+  ): WinLeadPlusMappedContrat {
+    const externalId = this.toText(contrat.idContrat ?? contrat.id) || `missing-${Date.now()}`;
+    const offre = souscription.offre;
+    const fournisseur = this.toText(offre?.fournisseur) || WINLEADPLUS_SOURCE;
+
+    return {
+      reference: `WLP-CONTRAT-${externalId}`,
+      titre: this.toText(contrat.titre) || `Contrat ${externalId}`,
+      statut: this.toText(contrat.statut) || 'ACTIF',
+      montant: this.toNumber(souscription.totalAmount ?? contrat.montant),
+      dateSignature: this.toText(contrat.dateSignature || contrat.date_signature) || undefined,
+      dateDebut:
+        this.toText(contrat.dateSignature || contrat.date_signature) || new Date().toISOString(),
+      devise: this.toText(contrat.devise) || 'EUR',
+      frequenceFacturation:
+        this.toText(contrat.frequenceFacturation || contrat.frequence_facturation) || undefined,
+      fournisseur,
+      clientId,
+      commercialId: commercialId || this.toText(contrat.commercialId) || '',
+      notes: this.toText(contrat.notes) || undefined,
+      source: WINLEADPLUS_SOURCE,
+    };
+  }
+
+  mapSouscriptionOffreToLigneContrat(
+    offre: WinLeadPlusSouscription['offre'],
+    contratId: string,
+  ): WinLeadPlusMappedLigneContrat | null {
+    if (!offre) return null;
+
+    const offreId = this.toText(offre.offreId) || 'unknown';
+
+    return {
+      contratId,
+      nom: this.toText(offre.nom) || `Offre ${offreId}`,
+      prix_unitaire: this.toNumber(offre.prix_base ?? offre.prixBase),
+      quantite: 1,
+      metadata: {
+        source: WINLEADPLUS_SOURCE,
+        categorie: this.toText(offre.categorie),
         offre_id: offreId,
       },
     };

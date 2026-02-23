@@ -159,6 +159,15 @@ message ClientBase {
    optional string date_premiere_souscription = 29;
    optional string canal_acquisition = 30;
    optional string source = 31;
+   optional string civilite = 32;
+   optional string bic = 33;
+   optional string csp = 34;
+   optional string regime_social = 35;
+   optional string lieu_naissance = 36;
+   optional string pays_naissance = 37;
+   optional string etape_courante = 38;
+   optional bool is_politically_exposed = 39;
+   optional string numss = 40;
 }
 
 message CreateClientBaseRequest {
@@ -181,6 +190,17 @@ message CreateClientBaseRequest {
    optional string date_premiere_souscription = 17;
    optional string canal_acquisition = 18;
    optional string source = 19;
+   optional string iban = 20;
+   optional bool mandat_sepa = 21;
+   optional string civilite = 22;
+   optional string bic = 23;
+   optional string csp = 24;
+   optional string regime_social = 25;
+   optional string lieu_naissance = 26;
+   optional string pays_naissance = 27;
+   optional string etape_courante = 28;
+   optional bool is_politically_exposed = 29;
+   optional string numss = 30;
 }
 
 message UpdateClientBaseRequest {
@@ -203,6 +223,17 @@ message UpdateClientBaseRequest {
    optional string date_premiere_souscription = 17;
    optional string canal_acquisition = 18;
    optional string source = 19;
+   optional string iban = 20;
+   optional bool mandat_sepa = 21;
+   optional string civilite = 22;
+   optional string bic = 23;
+   optional string csp = 24;
+   optional string regime_social = 25;
+   optional string lieu_naissance = 26;
+   optional string pays_naissance = 27;
+   optional string etape_courante = 28;
+   optional bool is_politically_exposed = 29;
+   optional string numss = 30;
 }
 
 message GetClientBaseRequest {

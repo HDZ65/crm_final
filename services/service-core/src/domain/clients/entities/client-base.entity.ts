@@ -76,6 +76,36 @@ export class ClientBaseEntity {
     @Column({ type: 'varchar', length: 50, nullable: true })
     civilite: string | null;
 
+    @Column({ name: 'iban', type: 'varchar', length: 34, nullable: true })
+    iban: string | null;
+
+    @Column({ name: 'bic', type: 'varchar', length: 11, nullable: true })
+    bic: string | null;
+
+    @Column({ name: 'mandat_sepa', type: 'boolean', nullable: true })
+    mandatSepa: boolean | null;
+
+    @Column({ name: 'csp', type: 'varchar', length: 100, nullable: true })
+    csp: string | null;
+
+    @Column({ name: 'regime_social', type: 'varchar', length: 100, nullable: true })
+    regimeSocial: string | null;
+
+    @Column({ name: 'lieu_naissance', type: 'varchar', length: 100, nullable: true })
+    lieuNaissance: string | null;
+
+    @Column({ name: 'pays_naissance', type: 'varchar', length: 100, nullable: true })
+    paysNaissance: string | null;
+
+    @Column({ name: 'etape_courante', type: 'varchar', length: 100, nullable: true })
+    etapeCourante: string | null;
+
+    @Column({ name: 'is_politically_exposed', type: 'boolean', nullable: true })
+    isPoliticallyExposed: boolean | null;
+
+    @Column({ name: 'numss', type: 'varchar', length: 20, nullable: true })
+    numss: string | null;
+
     @OneToMany('AdresseEntity', 'client')
     adresses: AdresseEntity[];
 

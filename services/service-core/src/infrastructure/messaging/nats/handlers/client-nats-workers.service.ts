@@ -1,3 +1,10 @@
+/**
+ * @deprecated Since WinLeadPlus sync now uses gRPC directly.
+ * These NATS consumers are kept for backward compatibility but are no longer
+ * the primary path for WinLeadPlus client creation/update.
+ * See: WinLeadPlusSyncService (service-commercial) for the active flow.
+ */
+
 import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { NatsService } from '@crm/shared-kernel';
 import { ClientBaseService } from '../../../persistence/typeorm/repositories/clients';

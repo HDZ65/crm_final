@@ -1,6 +1,7 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ContratsModule } from './contrats.module';
+import { CommercialModule } from './commercial.module';
 import { LigneContratEntity } from './domain/contrats/entities/ligne-contrat.entity';
 import { WinLeadPlusGrpcController } from './domain/winleadplus/winleadplus.grpc-controller';
 import { WinLeadPlusMapperService } from './domain/winleadplus/services/winleadplus-mapper.service';
@@ -29,6 +30,7 @@ import {
       LigneContratEntity,
     ]),
     ContratsModule,
+    CommercialModule,
   ],
   controllers: [WinLeadPlusGrpcController],
   providers: [

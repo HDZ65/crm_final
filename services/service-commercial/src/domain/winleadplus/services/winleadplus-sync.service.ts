@@ -3,7 +3,7 @@ import { NatsService } from '@crm/shared-kernel';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
-import { Cron } from '@nestjs/schedule';
+
 import { Repository } from 'typeorm';
 import { ContratService } from '../../../infrastructure/persistence/typeorm/repositories/contrats';
 import { WinLeadPlusConfigService } from '../../../infrastructure/persistence/typeorm/repositories/winleadplus/winleadplus-config.service';
@@ -58,7 +58,7 @@ const DEFAULT_UUID = '00000000-0000-0000-0000-000000000000';
 @Injectable()
 export class WinLeadPlusSyncService {
   private readonly logger = new Logger(WinLeadPlusSyncService.name);
-  private isScheduledSyncRunning = false;
+
   private readonly grpcClient: WinLeadPlusCoreGrpcClient;
 
   constructor(
@@ -443,45 +443,6 @@ export class WinLeadPlusSyncService {
       return logs;
     }
     return logs.slice(0, limit);
-  }
-
-  @Cron('0 * * * *', {
-    name: 'winleadplus-hourly-sync',
-    timeZone: 'Europe/Paris',
-  })
-  async handleHourlySync(): Promise<void> {
-    if (this.isScheduledSyncRunning) {
-      this.logger.warn('Hourly WinLeadPlus sync is already running, skipping');
-      return;
-    }
-
-    this.isScheduledSyncRunning = true;
-
-    try {
-      const configs = await this.configRepository.findAllEnabled();
-      if (configs.length === 0) {
-        this.logger.log('No enabled WinLeadPlus config found for hourly sync');
-        return;
-      }
-
-      for (const config of configs) {
-        try {
-          const log = await this.syncProspects(config.organisationId, false, {
-            token: config.apiToken || undefined,
-            apiEndpoint: config.apiEndpoint,
-          });
-          this.logger.log(
-            `Hourly WinLeadPlus sync completed for ${config.organisationId} (status=${log.status}, created=${log.created}, updated=${log.updated}, skipped=${log.skipped})`,
-          );
-        } catch (error) {
-          this.logger.error(
-            `Hourly WinLeadPlus sync failed for ${config.organisationId}: ${error instanceof Error ? error.message : String(error)}`,
-          );
-        }
-      }
-    } finally {
-      this.isScheduledSyncRunning = false;
-    }
   }
 
   private resolveApiEndpoint(endpoint?: string | null): string {

@@ -42,7 +42,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import {
-  getWooCommerceConfigByOrganisation,
+  listWooCommerceConfigsByOrganisation,
   createWooCommerceConfig,
   updateWooCommerceConfig,
   deleteWooCommerceConfig,
@@ -127,9 +127,9 @@ export function WooCommercePageClient({
   const fetchConfigs = React.useCallback(async () => {
     if (!activeOrgId) return
     setLoading(true)
-    const result = await getWooCommerceConfigByOrganisation(activeOrgId)
+    const result = await listWooCommerceConfigsByOrganisation(activeOrgId)
     if (result.data) {
-      setConfigs([result.data])
+      setConfigs(result.data.configs || [])
     } else if (result.error) {
       toast.error(result.error)
     }

@@ -1,7 +1,7 @@
 import { WooCommercePageClient } from "./woocommerce-page-client"
 import { getActiveOrgId } from "@/lib/server/data"
 import {
-  getWooCommerceConfigByOrganisation,
+  listWooCommerceConfigsByOrganisation,
   listWooCommerceMappings,
   listWooCommerceWebhookEvents,
 } from "@/actions/woocommerce"
@@ -11,7 +11,7 @@ export default async function WooCommercePage() {
 
   const [configsResult, mappingsResult, webhooksResult] = await Promise.all([
     activeOrgId
-      ? getWooCommerceConfigByOrganisation(activeOrgId)
+      ? listWooCommerceConfigsByOrganisation(activeOrgId)
       : Promise.resolve({ data: null, error: null }),
     activeOrgId
       ? listWooCommerceMappings({ organisationId: activeOrgId })
@@ -24,7 +24,7 @@ export default async function WooCommercePage() {
   return (
     <WooCommercePageClient
       activeOrgId={activeOrgId}
-      initialConfigs={configsResult.data ? [configsResult.data] : null}
+      initialConfigs={configsResult.data?.configs ?? null}
       initialMappings={mappingsResult.data?.mappings}
       initialWebhooks={webhooksResult.data?.events}
     />

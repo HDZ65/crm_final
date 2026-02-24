@@ -1,6 +1,5 @@
 import { status } from '@grpc/grpc-js';
-import { NatsService } from '@crm/shared-kernel';
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
 
@@ -18,23 +17,16 @@ import {
 } from '../entities/winleadplus-sync-log.entity';
 import {
   WinLeadPlusMapperService,
-  type WinLeadPlusAbonnement,
   type WinLeadPlusMappedClient,
   type WinLeadPlusMappedLigneContrat,
   type WinLeadPlusProspect,
+  type WinLeadPlusSouscription,
 } from './winleadplus-mapper.service';
-import { ApporteurService } from '../../../infrastructure/persistence/typeorm/repositories/commercial/apporteur.service';
 import { WinLeadPlusCoreGrpcClient } from './winleadplus-core-grpc-client';
 
 interface SyncOptions {
   token?: string;
   apiEndpoint?: string;
-}
-
-interface ClientCreateResponse {
-  id?: string;
-  client_id?: string;
-  clientId?: string;
 }
 
 export interface WinLeadPlusSyncStatusView {
@@ -69,106 +61,25 @@ export class WinLeadPlusSyncService {
     private readonly contratService: ContratService,
     @InjectRepository(LigneContratEntity)
     private readonly ligneContratRepository: Repository<LigneContratEntity>,
-    private readonly apporteurService: ApporteurService,
-    @Optional() private readonly natsService?: NatsService,
   ) {
     this.grpcClient = new WinLeadPlusCoreGrpcClient();
   }
 
-  private async findOrCreateApporteur(
-    organisationId: string,
-    commercial: { id?: string; nom?: string; prenom?: string; email?: string; telephone?: string } | null | undefined,
-    fallbackCommercialId?: string,
-  ): Promise<string> {
-    if (!commercial && !fallbackCommercialId) {
-      return DEFAULT_UUID;
-    }
+  // ============================================================================
+  // COMMERCIAL ID RESOLUTION (no apporteur creation)
+  // ============================================================================
 
-    // Try to find by email first
-    if (commercial?.email) {
-      try {
-        const result = await this.apporteurService.findAll(
-          { search: commercial.email },
-          { page: 1, limit: 10 },
-        );
-        const byEmail = result.data.find(
-          (a) => a.email?.toLowerCase() === commercial.email!.toLowerCase(),
-        );
-        if (byEmail) return byEmail.id;
-      } catch {
-        // not found
-      }
-    }
-
-    // Try to find by nom + prenom
-    if (commercial?.nom) {
-      try {
-        const result = await this.apporteurService.findAll(
-          { search: commercial.nom },
-          { page: 1, limit: 20 },
-        );
-        const byName = result.data.find(
-          (a) =>
-            a.nom?.toLowerCase() === commercial.nom!.toLowerCase() &&
-            a.prenom?.toLowerCase() === (commercial.prenom || '').toLowerCase(),
-        );
-        if (byName) return byName.id;
-      } catch {
-        // not found
-      }
-    }
-
-    // Try to create
-    if (commercial?.nom) {
-      try {
-        const created = await this.apporteurService.create({
-          organisationId,
-          nom: commercial.nom,
-          prenom: commercial.prenom ?? '',
-          email: commercial.email ?? null,
-          telephone: commercial.telephone ?? null,
-          typeApporteur: 'COMMERCIAL',
-          actif: true,
-        });
-        return created.id;
-      } catch (err: unknown) {
-        const rpcErr = err as { code?: number };
-        if (rpcErr?.code === status.ALREADY_EXISTS) {
-          if (commercial?.email) {
-            try {
-              const retry = await this.apporteurService.findAll(
-                { search: commercial.email },
-                { page: 1, limit: 10 },
-              );
-              const found = retry.data.find(
-                (a) => a.email?.toLowerCase() === commercial.email!.toLowerCase(),
-              );
-              if (found) return found.id;
-            } catch {
-              // ignore
-            }
-          }
-          if (commercial?.nom) {
-            try {
-              const retry = await this.apporteurService.findAll(
-                { search: commercial.nom },
-                { page: 1, limit: 20 },
-              );
-              const found = retry.data.find(
-                (a) => a.nom?.toLowerCase() === commercial.nom!.toLowerCase(),
-              );
-              if (found) return found.id;
-            } catch {
-              // ignore
-            }
-          }
-        }
-        this.logger.warn(`findOrCreateApporteur failed: ${(err as Error).message}`);
-      }
-    }
-
-    return fallbackCommercialId || DEFAULT_UUID;
+  private resolveCommercialId(prospect: WinLeadPlusProspect): string {
+    const id =
+      this.toText(prospect.commercialId) ||
+      this.toText(prospect.commercial?.id) ||
+      this.toText((prospect as Record<string, unknown>)['commercial_id']);
+    return id || DEFAULT_UUID;
   }
+
+  // ============================================================================
+  // MAIN SYNC
+  // ============================================================================
 
   async syncProspects(
     organisationId: string,
@@ -210,6 +121,10 @@ export class WinLeadPlusSyncService {
       const prospects = await this.fetchProspects(apiEndpoint, token);
       syncLog.totalProspects = prospects.length;
 
+      // Track all prospect IDs returned by the API for delete detection
+      const returnedProspectIds = new Set<number>();
+
+      // === UPSERT PHASE ===
       for (const prospect of prospects) {
         const prospectId = this.resolveProspectId(prospect);
         if (prospectId === null) {
@@ -217,6 +132,8 @@ export class WinLeadPlusSyncService {
           this.pushSyncError(syncLog, 'unknown', 'Missing or invalid idProspect');
           continue;
         }
+
+        returnedProspectIds.add(prospectId);
 
         try {
           const existingMapping = await this.mappingRepository.findByProspectId(
@@ -231,6 +148,8 @@ export class WinLeadPlusSyncService {
           }
 
           const mappedClient = this.mapper.mapProspectToClient(prospect);
+          const commercialId = this.resolveCommercialId(prospect);
+
           if (dryRun) {
             if (existingMapping) {
               syncLog.updated += 1;
@@ -272,7 +191,7 @@ export class WinLeadPlusSyncService {
             organisationId,
             prospect,
             crmClientId,
-            mappedClient.commercial_id,
+            commercialId,
           );
 
           await this.saveMapping(
@@ -293,6 +212,9 @@ export class WinLeadPlusSyncService {
         }
       }
 
+      // === DELETE PHASE ===
+      await this.deletePhase(organisationId, returnedProspectIds, dryRun, syncLog);
+
       syncLog.markSuccess();
       config.lastSyncAt = new Date();
       await this.configRepository.save(config);
@@ -305,6 +227,210 @@ export class WinLeadPlusSyncService {
       return this.syncLogRepository.save(syncLog);
     }
   }
+
+  // ============================================================================
+  // DELETE PHASE
+  // ============================================================================
+
+  private async deletePhase(
+    organisationId: string,
+    returnedProspectIds: Set<number>,
+    dryRun: boolean,
+    syncLog: WinLeadPlusSyncLogEntity,
+  ): Promise<void> {
+    const allMappings = await this.mappingRepository.findAll({ organisationId });
+
+    for (const mapping of allMappings) {
+      if (returnedProspectIds.has(mapping.winleadplusProspectId)) {
+        continue; // Still in the API, keep it
+      }
+
+      if (dryRun) {
+        syncLog.deleted += 1;
+        continue;
+      }
+
+      try {
+        // 1. Delete contrats + their lignes (local DB)
+        for (const contratId of mapping.crmContratIds || []) {
+          await this.deleteContratWithDependencies(contratId);
+        }
+
+        // 2. Delete client via gRPC (service-core)
+        try {
+          await this.grpcClient.deleteClient({ id: mapping.crmClientId });
+        } catch (deleteErr) {
+          // Client may already be deleted — log and continue
+          this.logger.warn(
+            `Client delete skipped for ${mapping.crmClientId}: ${deleteErr instanceof Error ? deleteErr.message : String(deleteErr)}`,
+          );
+        }
+
+        // 3. Delete the mapping
+        await this.mappingRepository.delete(mapping.id);
+
+        syncLog.deleted += 1;
+        this.logger.log(
+          `Deleted stale prospect ${mapping.winleadplusProspectId} → client ${mapping.crmClientId}`,
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.pushSyncError(
+          syncLog,
+          String(mapping.winleadplusProspectId),
+          `Delete failed: ${message}`,
+        );
+        this.logger.error(
+          `Failed to delete stale prospect ${mapping.winleadplusProspectId}: ${message}`,
+        );
+      }
+    }
+  }
+
+  private async deleteContratWithDependencies(contratId: string): Promise<void> {
+    // Delete lignes first (child records)
+    await this.ligneContratRepository.delete({ contratId });
+
+    // Delete contrat
+    try {
+      await this.contratService.delete(contratId);
+    } catch (err) {
+      // Contrat may already be deleted
+      const rpcErr = err as { code?: number };
+      if (rpcErr?.code !== status.NOT_FOUND) {
+        throw err;
+      }
+    }
+  }
+
+  // ============================================================================
+  // CONTRAT SYNC
+  // ============================================================================
+
+  private async syncProspectContrats(
+    organisationId: string,
+    prospect: WinLeadPlusProspect,
+    clientId: string,
+    commercialId: string,
+  ): Promise<string[]> {
+    const souscriptions = this.normalizeSouscriptions(prospect);
+    const contratIds: string[] = [];
+
+    for (const souscription of souscriptions) {
+      const contrats = this.normalizeContrats(souscription);
+
+      for (const contrat of contrats) {
+        try {
+          const mapped = this.mapper.mapSouscriptionContratToContrat(
+            contrat,
+            souscription,
+            clientId,
+            commercialId,
+          );
+          const resolvedCommercialId = mapped.commercialId || commercialId || DEFAULT_UUID;
+
+          const existing = await this.findContratByReference(organisationId, mapped.reference);
+          const notes = this.composeContractNotes(mapped.notes);
+
+          let contratId: string;
+          if (existing) {
+            const updated = await this.contratService.update({
+              id: existing.id,
+              reference: mapped.reference,
+              titre: mapped.titre,
+              statut: mapped.statut,
+              dateDebut: mapped.dateDebut,
+              dateSignature: mapped.dateSignature,
+              montant: mapped.montant,
+              devise: mapped.devise,
+              frequenceFacturation: mapped.frequenceFacturation,
+              fournisseur: mapped.fournisseur,
+              clientId,
+              commercialId: resolvedCommercialId,
+              notes,
+            });
+            contratId = updated.id;
+          } else {
+            const created = await this.contratService.create({
+              organisationId,
+              reference: mapped.reference,
+              titre: mapped.titre,
+              statut: mapped.statut,
+              dateDebut: mapped.dateDebut,
+              dateSignature: mapped.dateSignature,
+              montant: mapped.montant,
+              devise: mapped.devise,
+              frequenceFacturation: mapped.frequenceFacturation,
+              fournisseur: mapped.fournisseur,
+              clientId,
+              commercialId: resolvedCommercialId,
+              notes,
+            });
+            contratId = created.id;
+          }
+
+          contratIds.push(contratId);
+
+          if (souscription.offre) {
+            const mappedLigne = this.mapper.mapSouscriptionOffreToLigneContrat(
+              souscription.offre,
+              contratId,
+            );
+            if (mappedLigne) {
+              await this.syncContratLignesFromOffre(contratId, mappedLigne);
+            }
+          }
+        } catch (contratErr) {
+          this.logger.error(
+            `Contrat sync failed for contrat ${(contrat as any).id ?? (contrat as any).idContrat ?? 'unknown'}: ${contratErr instanceof Error ? contratErr.message : String(contratErr)}`,
+          );
+          // Continue with next contrat — don't fail the whole prospect
+        }
+      }
+    }
+
+    return contratIds;
+  }
+
+  // ============================================================================
+  // SOUSCRIPTION / CONTRAT NORMALIZATION
+  // ============================================================================
+
+  private normalizeSouscriptions(prospect: WinLeadPlusProspect): WinLeadPlusSouscription[] {
+    const raw = prospect as Record<string, unknown>;
+    const candidates = [
+      prospect.Souscription,
+      raw['souscription'],
+      raw['souscriptions'],
+      raw['Souscriptions'],
+    ];
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate) && candidate.length > 0) {
+        return candidate;
+      }
+    }
+    return [];
+  }
+
+  private normalizeContrats(souscription: WinLeadPlusSouscription): any[] {
+    const raw = souscription as Record<string, unknown>;
+    const candidates = [
+      souscription.contrats,
+      raw['Contrats'],
+      raw['contrat'],
+      raw['Contrat'],
+    ];
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate) && candidate.length > 0) {
+        return candidate;
+      }
+    }
+    return [];
+  }
+
+  // ============================================================================
+  // CONFIG / STATUS / LOGS
+  // ============================================================================
 
   async getConfig(organisationId: string): Promise<WinLeadPlusConfigEntity> {
     const existing = await this.configRepository.findByOrganisationId(organisationId);
@@ -445,6 +571,10 @@ export class WinLeadPlusSyncService {
     return logs.slice(0, limit);
   }
 
+  // ============================================================================
+  // PRIVATE HELPERS
+  // ============================================================================
+
   private resolveApiEndpoint(endpoint?: string | null): string {
     const raw = String(endpoint || '').trim();
     if (!raw) {
@@ -529,22 +659,47 @@ export class WinLeadPlusSyncService {
       return searchResult.client.id;
     }
 
-    const created = await this.grpcClient.create({
-      organisation_id: organisationId,
-      type_client: client.type_client,
-      nom: client.nom,
-      prenom: client.prenom,
-      compte_code: client.compte_code,
-      partenaire_id: client.partenaire_id || DEFAULT_UUID,
-      telephone: client.telephone,
-      email: client.email || undefined,
-      statut: client.statut,
-      canal_acquisition: client.canal_acquisition || undefined,
-      source: client.source,
-      ...this.buildEnrichedClientPayload(client),
-    });
+    try {
+      const created = await this.grpcClient.create({
+        organisation_id: organisationId,
+        type_client: client.type_client,
+        nom: client.nom,
+        prenom: client.prenom,
+        compte_code: client.compte_code,
+        partenaire_id: client.partenaire_id || DEFAULT_UUID,
+        telephone: client.telephone,
+        email: client.email || undefined,
+        statut: client.statut,
+        canal_acquisition: client.canal_acquisition || undefined,
+        source: client.source,
+        ...this.buildEnrichedClientPayload(client),
+      });
 
-    return created.id;
+      return created.id;
+    } catch (createErr: unknown) {
+      const rpcErr = createErr as { code?: number; details?: string };
+      if (rpcErr?.code === status.ALREADY_EXISTS) {
+        for (const searchNom of [client.nom, '']) {
+          try {
+            const retrySearch = await this.grpcClient.search({
+              organisation_id: organisationId,
+              telephone: client.telephone,
+              nom: searchNom,
+            });
+            if (retrySearch.found && retrySearch.client?.id) {
+              await this.grpcClient.update({
+                id: retrySearch.client.id,
+                ...this.buildEnrichedClientPayload(client),
+              });
+              return retrySearch.client.id;
+            }
+          } catch {
+            // search variant failed, try next
+          }
+        }
+      }
+      throw createErr;
+    }
   }
 
   private async updateClientViaGrpc(clientId: string, client: WinLeadPlusMappedClient): Promise<void> {
@@ -577,175 +732,6 @@ export class WinLeadPlusSyncService {
     };
   }
 
-  /**
-   * @deprecated Use createOrFindClientViaGrpc instead.
-   */
-  private async publishClientCreate(
-    organisationId: string,
-    client: WinLeadPlusMappedClient,
-  ): Promise<string> {
-    if (!this.natsService || !this.natsService.isConnected()) {
-      throw new Error('NATS is not connected for WinLeadPlus client creation');
-    }
-
-    const payload = {
-      organisation_id: organisationId,
-      type_client: client.type_client,
-      nom: client.nom,
-      prenom: client.prenom,
-      date_naissance: client.date_naissance,
-      compte_code: client.compte_code,
-      partenaire_id: client.partenaire_id,
-      telephone: client.telephone,
-      email: client.email,
-      statut: client.statut,
-      canal_acquisition: client.canal_acquisition,
-      source: client.source,
-      iban: client.iban,
-      mandat_sepa: client.mandat_sepa,
-      commercial_id: client.commercial_id,
-      adresse: client.adresse,
-    };
-
-    const response = await this.natsService.request<typeof payload, ClientCreateResponse>(
-      'client.create.from-winleadplus',
-      payload,
-      10000,
-    );
-
-    const clientId = this.extractClientId(response);
-    if (!clientId) {
-      throw new Error('client.create.from-winleadplus did not return a client id');
-    }
-
-    return clientId;
-  }
-
-  /**
-   * @deprecated Use updateClientViaGrpc instead.
-   */
-  private async publishClientUpdate(
-    organisationId: string,
-    clientId: string,
-    client: WinLeadPlusMappedClient,
-  ): Promise<void> {
-    if (!this.natsService || !this.natsService.isConnected()) {
-      throw new Error('NATS is not connected for WinLeadPlus client update');
-    }
-
-    await this.natsService.publish('client.update.from-winleadplus', {
-      organisation_id: organisationId,
-      client_id: clientId,
-      fields: {
-        nom: client.nom,
-        prenom: client.prenom,
-        date_naissance: client.date_naissance,
-        telephone: client.telephone,
-        email: client.email,
-        iban: client.iban,
-        mandat_sepa: client.mandat_sepa,
-        canal_acquisition: client.canal_acquisition,
-        source: client.source,
-        commercial_id: client.commercial_id,
-        adresse: client.adresse,
-      },
-    });
-  }
-
-  private extractClientId(response: ClientCreateResponse | null | undefined): string {
-    const candidate =
-      response?.id ||
-      response?.client_id ||
-      response?.clientId ||
-      (response as unknown as Record<string, unknown> | null)?.['crm_client_id'];
-
-    return typeof candidate === 'string' ? candidate : '';
-  }
-
-  private async syncProspectContrats(
-    organisationId: string,
-    prospect: WinLeadPlusProspect,
-    clientId: string,
-    fallbackCommercialId?: string,
-  ): Promise<string[]> {
-    const souscriptions = Array.isArray(prospect.Souscription) ? prospect.Souscription : [];
-    const contratIds: string[] = [];
-
-    const apporteurId = await this.findOrCreateApporteur(
-      organisationId,
-      prospect.commercial ?? null,
-      fallbackCommercialId,
-    );
-
-    for (const souscription of souscriptions) {
-      const contrats = Array.isArray(souscription.contrats) ? souscription.contrats : [];
-
-      for (const contrat of contrats) {
-        const mapped = this.mapper.mapSouscriptionContratToContrat(
-          contrat,
-          souscription,
-          clientId,
-          apporteurId,
-        );
-        const commercialId = mapped.commercialId || apporteurId || DEFAULT_UUID;
-
-        const existing = await this.findContratByReference(organisationId, mapped.reference);
-        const notes = this.composeContractNotes(mapped.notes);
-
-        let contratId: string;
-        if (existing) {
-          const updated = await this.contratService.update({
-            id: existing.id,
-            reference: mapped.reference,
-            titre: mapped.titre,
-            statut: mapped.statut,
-            dateDebut: mapped.dateDebut,
-            dateSignature: mapped.dateSignature,
-            montant: mapped.montant,
-            devise: mapped.devise,
-            frequenceFacturation: mapped.frequenceFacturation,
-            fournisseur: mapped.fournisseur,
-            clientId,
-            commercialId,
-            notes,
-          });
-          contratId = updated.id;
-        } else {
-          const created = await this.contratService.create({
-            organisationId,
-            reference: mapped.reference,
-            titre: mapped.titre,
-            statut: mapped.statut,
-            dateDebut: mapped.dateDebut,
-            dateSignature: mapped.dateSignature,
-            montant: mapped.montant,
-            devise: mapped.devise,
-            frequenceFacturation: mapped.frequenceFacturation,
-            fournisseur: mapped.fournisseur,
-            clientId,
-            commercialId,
-            notes,
-          });
-          contratId = created.id;
-        }
-
-        contratIds.push(contratId);
-
-        if (souscription.offre) {
-          const mappedLigne = this.mapper.mapSouscriptionOffreToLigneContrat(
-            souscription.offre,
-            contratId,
-          );
-          if (mappedLigne) {
-            await this.syncContratLignesFromOffre(contratId, mappedLigne);
-          }
-        }
-      }
-    }
-
-    return contratIds;
-  }
-
   private async syncContratLignesFromOffre(
     contratId: string,
     mappedLigne: WinLeadPlusMappedLigneContrat,
@@ -767,36 +753,6 @@ export class WinLeadPlusSyncService {
     });
 
     await this.ligneContratRepository.save(ligne);
-  }
-
-  /**
-   * @deprecated Use syncContratLignesFromOffre instead.
-   */
-  private async syncContratLignes(
-    contratId: string,
-    abonnements: WinLeadPlusAbonnement[],
-  ): Promise<void> {
-    await this.ligneContratRepository.delete({ contratId });
-
-    for (const abonnement of abonnements) {
-      const mappedLigne = this.mapper.mapAbonnementToLigneContrat(abonnement, contratId);
-
-      const ligne = this.ligneContratRepository.create({
-        contratId,
-        produitId: this.toPseudoUuid(mappedLigne.metadata.offre_id || mappedLigne.nom),
-        periodeFacturationId: DEFAULT_UUID,
-        quantite: mappedLigne.quantite,
-        prixUnitaire: mappedLigne.prix_unitaire,
-        canalVente: JSON.stringify({
-          source: mappedLigne.metadata.source,
-          nom: mappedLigne.nom,
-          categorie: mappedLigne.metadata.categorie,
-          offre_id: mappedLigne.metadata.offre_id,
-        }),
-      });
-
-      await this.ligneContratRepository.save(ligne);
-    }
   }
 
   private async findContratByReference(
@@ -870,5 +826,11 @@ export class WinLeadPlusSyncService {
       .slice(0, 32);
 
     return `${base.slice(0, 8)}-${base.slice(8, 12)}-${base.slice(12, 16)}-${base.slice(16, 20)}-${base.slice(20, 32)}`;
+  }
+
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value.trim();
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+    return '';
   }
 }

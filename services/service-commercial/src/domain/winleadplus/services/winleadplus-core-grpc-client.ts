@@ -84,6 +84,14 @@ interface AdresseResponse {
   id: string;
 }
 
+interface DeleteClientRequest {
+  id: string;
+}
+
+interface DeleteResponse {
+  success: boolean;
+}
+
 interface ClientBaseServiceGrpcContract {
   Search(
     request: SearchClientRequest,
@@ -96,6 +104,10 @@ interface ClientBaseServiceGrpcContract {
   Update(
     request: UpdateClientRequest,
     callback: (error: ServiceError | null, response?: ClientBaseResponse) => void,
+  ): void;
+  Delete(
+    request: DeleteClientRequest,
+    callback: (error: ServiceError | null, response?: DeleteResponse) => void,
   ): void;
 }
 
@@ -188,6 +200,18 @@ export class WinLeadPlusCoreGrpcClient {
           return;
         }
         resolve(response);
+      });
+    });
+  }
+
+  async deleteClient(request: DeleteClientRequest): Promise<DeleteResponse> {
+    return new Promise<DeleteResponse>((resolve, reject) => {
+      this.clientBaseService.Delete(request, (error, response) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(response || { success: false });
       });
     });
   }

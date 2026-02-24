@@ -178,6 +178,7 @@ export class WinLeadPlusGrpcController {
     created: number;
     updated: number;
     skipped: number;
+    deleted: number;
     errors: Record<string, unknown>[];
   }) {
     return {
@@ -190,6 +191,7 @@ export class WinLeadPlusGrpcController {
       created: log.created,
       updated: log.updated,
       skipped: log.skipped,
+      deleted: log.deleted,
       errors: (Array.isArray(log.errors) ? log.errors : []).map((entry) =>
         typeof entry.message === 'string' ? entry.message : JSON.stringify(entry),
       ),

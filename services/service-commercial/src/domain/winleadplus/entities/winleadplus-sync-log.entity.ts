@@ -48,6 +48,9 @@ export class WinLeadPlusSyncLogEntity {
   @Column({ type: 'int', default: 0 })
   skipped: number;
 
+  @Column({ type: 'int', default: 0 })
+  deleted: number;
+
   @Column({ type: 'jsonb', default: '[]' })
   errors: Record<string, any>[];
 

@@ -20,7 +20,9 @@ export class ClientBaseService {
   ) {}
 
   async create(input: CreateClientBaseRequest): Promise<ClientBaseEntity> {
-    const existing = await this.findByPhoneAndName(input.telephone, input.nom);
+    const inputData = input as any;
+    const organisationId = inputData.organisationId || input.organisation_id;
+    const existing = await this.findByPhoneAndName(input.telephone, input.nom, organisationId);
     if (existing) {
       throw new RpcException({
         code: status.ALREADY_EXISTS,
@@ -29,30 +31,30 @@ export class ClientBaseService {
     }
 
     const entity = this.repository.create({
-      organisationId: input.organisation_id,
-      typeClient: input.type_client,
+      organisationId,
+      typeClient: inputData.typeClient || input.type_client,
       nom: ClientBaseEntity.capitalizeName(input.nom),
       prenom: ClientBaseEntity.capitalizeName(input.prenom),
-      dateNaissance: input.date_naissance ? new Date(input.date_naissance) : null,
-      compteCode: input.compte_code,
-      partenaireId: input.partenaire_id,
+      dateNaissance: (inputData.dateNaissance || input.date_naissance) ? new Date(inputData.dateNaissance || input.date_naissance) : null,
+      compteCode: inputData.compteCode || input.compte_code,
+      partenaireId: inputData.partenaireId || input.partenaire_id,
       dateCreation: new Date(),
       telephone: input.telephone,
       email: input.email,
       statut: input.statut || 'ACTIF',
-      societeId: input.societe_id,
+      societeId: inputData.societeId || input.societe_id,
       source: input.source,
-      canalAcquisition: input.canal_acquisition ?? null,
+      canalAcquisition: inputData.canalAcquisition ?? input.canal_acquisition ?? null,
       civilite: input.civilite ?? null,
       iban: input.iban ?? null,
       bic: input.bic ?? null,
-      mandatSepa: input.mandat_sepa ?? null,
+      mandatSepa: inputData.mandatSepa ?? input.mandat_sepa ?? null,
       csp: input.csp ?? null,
-      regimeSocial: input.regime_social ?? null,
-      lieuNaissance: input.lieu_naissance ?? null,
-      paysNaissance: input.pays_naissance ?? null,
-      etapeCourante: input.etape_courante ?? null,
-      isPoliticallyExposed: input.is_politically_exposed ?? null,
+      regimeSocial: inputData.regimeSocial ?? input.regime_social ?? null,
+      lieuNaissance: inputData.lieuNaissance ?? input.lieu_naissance ?? null,
+      paysNaissance: inputData.paysNaissance ?? input.pays_naissance ?? null,
+      etapeCourante: inputData.etapeCourante ?? input.etape_courante ?? null,
+      isPoliticallyExposed: inputData.isPoliticallyExposed ?? input.is_politically_exposed ?? null,
       numss: input.numss ?? null,
     });
 
@@ -60,30 +62,43 @@ export class ClientBaseService {
   }
 
   async update(input: UpdateClientBaseRequest): Promise<ClientBaseEntity> {
+    const inputData = input as any;
     const entity = await this.findById(input.id);
 
-    if (input.type_client !== undefined) entity.typeClient = input.type_client;
+    const typeClient = inputData.typeClient ?? input.type_client;
+    if (typeClient !== undefined) entity.typeClient = typeClient;
     if (input.nom !== undefined) entity.nom = ClientBaseEntity.capitalizeName(input.nom);
     if (input.prenom !== undefined) entity.prenom = ClientBaseEntity.capitalizeName(input.prenom);
-    if (input.date_naissance !== undefined) entity.dateNaissance = input.date_naissance ? new Date(input.date_naissance) : null;
-    if (input.compte_code !== undefined) entity.compteCode = input.compte_code;
-    if (input.partenaire_id !== undefined) entity.partenaireId = input.partenaire_id;
+    const dateNaissance = inputData.dateNaissance ?? input.date_naissance;
+    if (dateNaissance !== undefined) entity.dateNaissance = dateNaissance ? new Date(dateNaissance) : null;
+    const compteCode = inputData.compteCode ?? input.compte_code;
+    if (compteCode !== undefined) entity.compteCode = compteCode;
+    const partenaireId = inputData.partenaireId ?? input.partenaire_id;
+    if (partenaireId !== undefined) entity.partenaireId = partenaireId;
     if (input.telephone !== undefined) entity.telephone = input.telephone;
     if (input.email !== undefined) entity.email = input.email;
     if (input.statut !== undefined) entity.statut = input.statut;
-    if (input.societe_id !== undefined) entity.societeId = input.societe_id;
+    const societeId = inputData.societeId ?? input.societe_id;
+    if (societeId !== undefined) entity.societeId = societeId;
     if (input.source !== undefined) entity.source = input.source;
-    if (input.canal_acquisition !== undefined) entity.canalAcquisition = input.canal_acquisition;
+    const canalAcquisition = inputData.canalAcquisition ?? input.canal_acquisition;
+    if (canalAcquisition !== undefined) entity.canalAcquisition = canalAcquisition;
     if (input.civilite !== undefined) entity.civilite = input.civilite;
     if (input.iban !== undefined) entity.iban = input.iban;
     if (input.bic !== undefined) entity.bic = input.bic;
-    if (input.mandat_sepa !== undefined) entity.mandatSepa = input.mandat_sepa;
+    const mandatSepa = inputData.mandatSepa ?? input.mandat_sepa;
+    if (mandatSepa !== undefined) entity.mandatSepa = mandatSepa;
     if (input.csp !== undefined) entity.csp = input.csp;
-    if (input.regime_social !== undefined) entity.regimeSocial = input.regime_social;
-    if (input.lieu_naissance !== undefined) entity.lieuNaissance = input.lieu_naissance;
-    if (input.pays_naissance !== undefined) entity.paysNaissance = input.pays_naissance;
-    if (input.etape_courante !== undefined) entity.etapeCourante = input.etape_courante;
-    if (input.is_politically_exposed !== undefined) entity.isPoliticallyExposed = input.is_politically_exposed;
+    const regimeSocial = inputData.regimeSocial ?? input.regime_social;
+    if (regimeSocial !== undefined) entity.regimeSocial = regimeSocial;
+    const lieuNaissance = inputData.lieuNaissance ?? input.lieu_naissance;
+    if (lieuNaissance !== undefined) entity.lieuNaissance = lieuNaissance;
+    const paysNaissance = inputData.paysNaissance ?? input.pays_naissance;
+    if (paysNaissance !== undefined) entity.paysNaissance = paysNaissance;
+    const etapeCourante = inputData.etapeCourante ?? input.etape_courante;
+    if (etapeCourante !== undefined) entity.etapeCourante = etapeCourante;
+    const isPoliticallyExposed = inputData.isPoliticallyExposed ?? input.is_politically_exposed;
+    if (isPoliticallyExposed !== undefined) entity.isPoliticallyExposed = isPoliticallyExposed;
     if (input.numss !== undefined) entity.numss = input.numss;
 
     return this.repository.save(entity);
@@ -100,10 +115,12 @@ export class ClientBaseService {
     return entity;
   }
 
-  async findByPhoneAndName(telephone: string, nom: string): Promise<ClientBaseEntity | null> {
-    return this.repository.findOne({
-      where: { telephone, nom: ClientBaseEntity.capitalizeName(nom) },
-    });
+  async findByPhoneAndName(telephone: string, nom: string, organisationId?: string): Promise<ClientBaseEntity | null> {
+    const where: Record<string, unknown> = { telephone, nom: ClientBaseEntity.capitalizeName(nom) };
+    if (organisationId) {
+      where.organisationId = organisationId;
+    }
+    return this.repository.findOne({ where: where as any });
   }
 
   async findAll(
@@ -112,22 +129,26 @@ export class ClientBaseService {
     clients: ClientBaseEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }> {
+    const requestData = request as any;
     const page = request.pagination?.page ?? 1;
     const limit = request.pagination?.limit ?? 20;
-    const sortBy = request.pagination?.sort_by || 'createdAt';
-    const sortOrder = (request.pagination?.sort_order?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
+    const sortBy = (request.pagination as any)?.sortBy || request.pagination?.sort_by || 'createdAt';
+    const sortOrder = (((request.pagination as any)?.sortOrder || request.pagination?.sort_order)?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
+    const orgId = requestData.organisationId || request.organisation_id;
+    const statutId = requestData.statutId || request.statut_id;
+    const societeId = requestData.societeId || request.societe_id;
 
     const qb = this.repository
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.adresses', 'adresses')
-      .where('c.organisationId = :orgId', { orgId: request.organisation_id });
+      .where('c.organisationId = :orgId', { orgId });
 
-    if (request.statut_id) {
-      qb.andWhere('c.statut = :statut', { statut: request.statut_id });
+    if (statutId) {
+      qb.andWhere('c.statut = :statut', { statut: statutId });
     }
 
-    if (request.societe_id) {
-      qb.andWhere('c.societeId = :societeId', { societeId: request.societe_id });
+    if (societeId) {
+      qb.andWhere('c.societeId = :societeId', { societeId });
     }
 
     if (request.source) {
@@ -156,12 +177,15 @@ export class ClientBaseService {
   }
 
   async search(organisation_id: string, telephone: string, nom: string): Promise<{ found: boolean; client: ClientBaseEntity | null }> {
+    const where: Record<string, unknown> = {
+      organisationId: organisation_id,
+      telephone,
+    };
+    if (nom && nom.trim()) {
+      where.nom = ClientBaseEntity.capitalizeName(nom);
+    }
     const client = await this.repository.findOne({
-      where: {
-        organisationId: organisation_id,
-        telephone,
-        nom: ClientBaseEntity.capitalizeName(nom),
-      },
+      where: where as any,
       relations: ['adresses'],
     });
     return { found: !!client, client };

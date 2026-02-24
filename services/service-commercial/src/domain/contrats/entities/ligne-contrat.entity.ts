@@ -29,7 +29,7 @@ export class LigneContratEntity {
    @Column({ name: 'prix_unitaire', type: 'decimal', precision: 15, scale: 2 })
     prixUnitaire: number;
 
-    @Column({ name: 'canal_vente', type: 'varchar', length: 50, nullable: true })
+    @Column({ name: 'canal_vente', type: 'text', nullable: true })
     canalVente: string | null;
 
     @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })

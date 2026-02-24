@@ -85,7 +85,22 @@ export class ClientBaseController {
 
   @GrpcMethod('ClientBaseService', 'List')
   async listClientsBase(data: ListClientsBaseRequest) {
-    const result = await this.clientBaseService.findAll(data);
+    const payload = data as any;
+    const normalizedRequest: ListClientsBaseRequest = {
+      ...data,
+      organisation_id: payload.organisationId || data.organisation_id,
+      statut_id: payload.statutId || data.statut_id,
+      societe_id: payload.societeId || data.societe_id,
+      pagination: data.pagination
+        ? {
+            ...data.pagination,
+            sort_by: (data.pagination as any).sortBy || data.pagination.sort_by,
+            sort_order: (data.pagination as any).sortOrder || data.pagination.sort_order,
+          }
+        : data.pagination,
+    };
+
+    const result = await this.clientBaseService.findAll(normalizedRequest);
     return {
       clients: result.clients.map(clientBaseToProto),
       pagination: result.pagination,

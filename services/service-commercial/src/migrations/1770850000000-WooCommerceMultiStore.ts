@@ -10,11 +10,14 @@ export class WooCommerceMultiStore1770850000000 implements MigrationInterface {
         DROP CONSTRAINT IF EXISTS "UQ_93617bf86e0a20ea2803a0fd3a2"
     `);
 
-    // Add societe_id column (nullable to avoid breaking existing rows)
+    // Add societe_id column (nullable first to allow data seeding, then set NOT NULL)
     await queryRunner.query(`
       ALTER TABLE "woocommerce_configs"
         ADD COLUMN "societe_id" UUID NULL
     `);
+
+    // NOTE: After seeding societe_id values, run:
+    // ALTER TABLE "woocommerce_configs" ALTER COLUMN "societe_id" SET NOT NULL;
 
     // Create index on societe_id
     await queryRunner.query(`

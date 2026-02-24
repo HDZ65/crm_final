@@ -37,9 +37,9 @@ export class WooCommerceConfigEntity {
   @Column({ name: 'sync_error', type: 'text', nullable: true })
   syncError: string | null;
 
-  @Column({ name: 'societe_id', type: 'uuid', nullable: true })
+  @Column({ name: 'societe_id', type: 'uuid', nullable: false })
   @Index()
-  societeId: string | null;
+  societeId: string;
 
   @Column({ name: 'label', type: 'varchar', length: 100, default: '' })
   label: string;

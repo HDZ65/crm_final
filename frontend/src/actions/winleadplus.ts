@@ -24,8 +24,8 @@ export async function syncWinLeadPlusProspects(params: {
 }): Promise<ActionResult<SyncProspectsResponse>> {
   try {
     const data = await winleadplus.syncProspects({
-      organisationId: params.organisationId,
-      dryRun: params.dryRun || false,
+      organisation_id: params.organisationId,
+      dry_run: params.dryRun || false,
     });
     if (!params.dryRun) {
       revalidatePath("/clients");
@@ -48,7 +48,7 @@ export async function getWinLeadPlusSyncStatus(params: {
 }): Promise<ActionResult<GetSyncStatusResponse>> {
   try {
     const data = await winleadplus.getSyncStatus({
-      organisationId: params.organisationId,
+      organisation_id: params.organisationId,
     });
     return { data, error: null };
   } catch (err) {
@@ -69,7 +69,7 @@ export async function getWinLeadPlusSyncLogs(params: {
 }): Promise<ActionResult<ListWinLeadPlusSyncLogsResponse>> {
   try {
     const data = await winleadplus.getSyncLogs({
-      organisationId: params.organisationId,
+      organisation_id: params.organisationId,
       limit: params.limit || 10,
     });
     return { data, error: null };
@@ -91,8 +91,8 @@ export async function testWinLeadPlusConnection(params: {
  }): Promise<ActionResult<TestConnectionResponse>> {
    try {
      const data = await winleadplus.testConnection({
-       organisationId: params.organisationId,
-       apiEndpoint: params.apiEndpoint,
+       organisation_id: params.organisationId,
+       api_endpoint: params.apiEndpoint,
      });
      return { data, error: null };
    } catch (err) {
@@ -112,7 +112,7 @@ export async function hasWinLeadPlusConfig(params: {
    }): Promise<boolean> {
      try {
        const data = await winleadplus.hasConfig({
-         organisationId: params.organisationId,
+         organisation_id: params.organisationId,
        });
        return data.enabled ?? false;
      } catch {
@@ -128,7 +128,7 @@ export async function getWinLeadPlusConfig(params: {
 }): Promise<ActionResult<WinLeadPlusConfig>> {
   try {
     const data = await winleadplus.getConfig({
-      organisationId: params.organisationId,
+      organisation_id: params.organisationId,
     });
     return { data, error: null };
   } catch (err) {
@@ -154,11 +154,11 @@ export async function saveWinLeadPlusConfig(params: {
   try {
     const data = await winleadplus.saveConfig({
       id: params.id || "",
-      organisationId: params.organisationId,
-      apiEndpoint: params.apiEndpoint,
+      organisation_id: params.organisationId,
+      api_endpoint: params.apiEndpoint,
       enabled: params.enabled,
-      syncIntervalMinutes: params.syncIntervalMinutes,
-      apiToken: params.apiToken,
+      sync_interval_minutes: params.syncIntervalMinutes,
+      api_token: params.apiToken,
     });
     return { data, error: null };
   } catch (err) {

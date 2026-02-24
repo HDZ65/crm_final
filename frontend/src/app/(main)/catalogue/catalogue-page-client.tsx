@@ -24,6 +24,7 @@ import {
   getSocietesByOrganisation,
   syncCatalogue,
 } from "@/actions/catalogue"
+import { importFromWooCommerce } from "@/actions/catalogue-api"
 import type { Societe } from "@proto/organisations/organisations"
 
 interface CataloguePageClientProps {
@@ -216,6 +217,15 @@ export function CataloguePageClient({
       if (result.data?.societes) setSocietes(result.data.societes)
     })
   }, [activeOrganisation?.organisationId])
+
+  // ─── Auto-import WooCommerce products on page load ────────
+  React.useEffect(() => {
+    const orgId = activeOrganisation?.organisationId
+    if (!orgId) return
+    importFromWooCommerce(orgId)
+      .then(() => refetch())
+      .catch(console.error)
+  }, [activeOrganisation?.organisationId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Refetch (after mutations) ─────────────────────────────
   const refetch = React.useCallback(async () => {

@@ -12,7 +12,7 @@ export class WooCommerceConfigEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'organisation_id', type: 'uuid', unique: true })
+  @Column({ name: 'organisation_id', type: 'uuid' })
   @Index()
   organisationId: string;
 
@@ -36,6 +36,13 @@ export class WooCommerceConfigEntity {
 
   @Column({ name: 'sync_error', type: 'text', nullable: true })
   syncError: string | null;
+
+  @Column({ name: 'societe_id', type: 'uuid', nullable: true })
+  @Index()
+  societeId: string | null;
+
+  @Column({ name: 'label', type: 'varchar', length: 100, default: '' })
+  label: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

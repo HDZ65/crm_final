@@ -16,8 +16,8 @@ export class WooCommerceConfigController {
       id: entity.id,
       organisation_id: entity.organisationId,
       store_url: entity.storeUrl,
-      consumer_key: '', // hashed, don't expose
-      consumer_secret: '', // hashed, don't expose
+      consumer_key: entity.consumerKeyHash,
+      consumer_secret: entity.consumerSecretHash,
       webhook_secret: entity.webhookSecret,
       sync_products: false, // not in entity yet
       sync_orders: false,
@@ -26,6 +26,8 @@ export class WooCommerceConfigController {
       last_sync_at: entity.lastSyncAt?.toISOString() ?? '',
       created_at: entity.createdAt?.toISOString() ?? '',
       updated_at: entity.updatedAt?.toISOString() ?? '',
+      societe_id: entity.societeId ?? '',
+      label: entity.label ?? '',
     };
   }
 
@@ -107,6 +109,12 @@ export class WooCommerceConfigController {
   async delete(data: { id: string }) {
     await this.configService.delete(data.id);
     return { success: true };
+  }
+
+  @GrpcMethod('WooCommerceConfigService', 'ListByOrganisation')
+  async listByOrganisation(data: { organisation_id: string }) {
+    const configs = await this.configService.findAllByOrganisation(data.organisation_id);
+    return { configs: configs.map((c) => this.toProto(c)) };
   }
 
   @GrpcMethod('WooCommerceConfigService', 'TestConnection')

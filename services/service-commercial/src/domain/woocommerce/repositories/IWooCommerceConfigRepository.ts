@@ -5,6 +5,7 @@ export interface IWooCommerceConfigRepository {
   findByOrganisationId(organisationId: string): Promise<WooCommerceConfigEntity | null>;
   findByOrganisation(organisationId: string): Promise<WooCommerceConfigEntity | null>;
   findAllActive(): Promise<WooCommerceConfigEntity[]>;
+  findAllByOrganisation(organisationId: string): Promise<WooCommerceConfigEntity[]>;
   save(entity: WooCommerceConfigEntity): Promise<WooCommerceConfigEntity>;
   delete(id: string): Promise<void>;
 }

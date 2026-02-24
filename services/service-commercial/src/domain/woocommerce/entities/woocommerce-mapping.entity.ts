@@ -12,6 +12,7 @@ export enum WooCommerceEntityType {
   SUBSCRIPTION = 'SUBSCRIPTION',
   ORDER = 'ORDER',
   PAYMENT = 'PAYMENT',
+  PRODUCT = 'PRODUCT',
 }
 
 @Entity('woocommerce_mappings')
@@ -35,6 +36,10 @@ export class WooCommerceMappingEntity {
 
   @Column({ name: 'last_synced_at', type: 'timestamptz', nullable: true })
   lastSyncedAt: Date | null;
+
+  @Column({ name: 'config_id', type: 'uuid', nullable: true })
+  @Index()
+  configId: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

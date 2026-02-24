@@ -49,6 +49,16 @@ export class WooCommerceMappingService implements IWooCommerceMappingRepository 
     return this.repository.save(entity);
   }
 
+  async findByConfigId(configId: string, entityType: WooCommerceEntityType): Promise<WooCommerceMappingEntity[]> {
+    return this.repository.find({
+      where: { configId, entityType },
+    });
+  }
+
+  async deleteByConfigId(configId: string, entityType: WooCommerceEntityType): Promise<void> {
+    await this.repository.delete({ configId, entityType });
+  }
+
   async delete(id: string): Promise<void> {
     await this.repository.delete(id);
   }

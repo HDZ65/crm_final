@@ -29,6 +29,13 @@ export class WooCommerceConfigService implements IWooCommerceConfigRepository {
     return this.repository.find({ where: { active: true } });
   }
 
+  async findAllByOrganisation(organisationId: string): Promise<WooCommerceConfigEntity[]> {
+    return this.repository.find({
+      where: { organisationId },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
   async save(entity: WooCommerceConfigEntity): Promise<WooCommerceConfigEntity> {
     return this.repository.save(entity);
   }

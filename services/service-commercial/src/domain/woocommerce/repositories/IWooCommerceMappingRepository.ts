@@ -9,5 +9,7 @@ export interface IWooCommerceMappingRepository {
     entityType?: WooCommerceEntityType;
   }): Promise<WooCommerceMappingEntity[]>;
   save(entity: WooCommerceMappingEntity): Promise<WooCommerceMappingEntity>;
+  findByConfigId(configId: string, entityType: WooCommerceEntityType): Promise<WooCommerceMappingEntity[]>;
+  deleteByConfigId(configId: string, entityType: WooCommerceEntityType): Promise<void>;
   delete(id: string): Promise<void>;
 }

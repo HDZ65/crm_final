@@ -14,6 +14,7 @@ import type {
   WooCommerceMapping,
   ListWooCommerceMappingResponse,
   WooCommerceConfig,
+  ListByOrganisationConfigResponse,
   TestWooCommerceConnectionResponse,
   DeleteResponse,
 } from "@proto/woocommerce/woocommerce";
@@ -136,6 +137,7 @@ export async function createWooCommerceMapping(input: {
   externalId: string;
   internalId: string;
   externalData: string;
+  configId?: string;
 }): Promise<ActionResult<WooCommerceMapping>> {
   try {
     const data = await woocommerceMappings.create(input);
@@ -198,6 +200,16 @@ export async function getWooCommerceConfigByOrganisation(organisationId: string)
   }
 }
 
+export async function listWooCommerceConfigsByOrganisation(organisationId: string): Promise<ActionResult<ListByOrganisationConfigResponse>> {
+  try {
+    const data = await woocommerceConfig.listByOrganisation({ organisationId });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[listWooCommerceConfigsByOrganisation] gRPC error:", err);
+    return { data: null, error: err instanceof Error ? err.message : "Erreur lors du chargement des configurations WooCommerce" };
+  }
+}
+
 export async function createWooCommerceConfig(input: {
   organisationId: string;
   storeUrl: string;
@@ -207,9 +219,14 @@ export async function createWooCommerceConfig(input: {
   syncProducts: boolean;
   syncOrders: boolean;
   syncCustomers: boolean;
+  societeId?: string;
+  label?: string;
 }): Promise<ActionResult<WooCommerceConfig>> {
   try {
-    const data = await woocommerceConfig.create(input);
+    const data = await woocommerceConfig.create({
+      ...input,
+      label: input.label || "",
+    });
     revalidatePath("/woocommerce");
     return { data, error: null };
   } catch (err) {
@@ -228,9 +245,14 @@ export async function updateWooCommerceConfig(input: {
   syncOrders: boolean;
   syncCustomers: boolean;
   active: boolean;
+  societeId?: string;
+  label?: string;
 }): Promise<ActionResult<WooCommerceConfig>> {
   try {
-    const data = await woocommerceConfig.update(input);
+    const data = await woocommerceConfig.update({
+      ...input,
+      label: input.label || "",
+    });
     revalidatePath("/woocommerce");
     return { data, error: null };
   } catch (err) {

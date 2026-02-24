@@ -7,7 +7,16 @@ import {
   createGamme,
   getProduitsByOrganisation,
   updateProduit,
+  deleteProduit,
 } from "@/actions/catalogue";
+import {
+  createWooCommerceMapping,
+  deleteWooCommerceMapping,
+  listWooCommerceConfigsByOrganisation,
+  listWooCommerceMappings,
+  updateWooCommerceConfig,
+  updateWooCommerceMapping,
+} from "@/actions/woocommerce";
 import {
   TypeProduit,
   CategorieProduit,
@@ -490,5 +499,251 @@ export async function importCatalogueFromApi(params: {
       data: null,
       error: errorMessage,
     };
+  }
+}
+
+interface WooCommerceProduct {
+  id: number;
+  name: string;
+  description?: string;
+  price?: string;
+  images?: Array<{ src?: string }>;
+}
+
+export async function importFromWooCommerce(organisationId: string): Promise<void> {
+  const configsResult = await listWooCommerceConfigsByOrganisation(organisationId);
+  if (configsResult.error) {
+    console.error("[importFromWooCommerce] Failed to list configs:", configsResult.error);
+    return;
+  }
+
+  const activeConfigs = (configsResult.data?.configs || []).filter((config) => config.active);
+  if (activeConfigs.length === 0) {
+    return;
+  }
+
+  const [gammesResult, produitsResult, mappingsResult] = await Promise.all([
+    getGammesByOrganisation({ organisationId }),
+    getProduitsByOrganisation({ organisationId }),
+    listWooCommerceMappings({ organisationId, entityType: "PRODUCT" }),
+  ]);
+
+  const gammeByName = new Map(
+    (gammesResult.data?.gammes || []).map((gamme) => [gamme.nom.trim().toLowerCase(), gamme])
+  );
+  const productById = new Map((produitsResult.data?.produits || []).map((produit) => [produit.id, produit]));
+  const productBySku = new Map((produitsResult.data?.produits || []).map((produit) => [produit.sku, produit]));
+  const productMappings = mappingsResult.data?.mappings || [];
+
+  for (const config of activeConfigs) {
+    try {
+      if (config.lastSyncAt) {
+        const lastSyncTimestamp = new Date(config.lastSyncAt).getTime();
+        if (!Number.isNaN(lastSyncTimestamp) && Date.now() - lastSyncTimestamp < 60_000) {
+          continue;
+        }
+      }
+
+      const gammeName = (config.label || `WooCommerce ${config.id.slice(0, 8)}`).trim();
+      let gamme = gammeByName.get(gammeName.toLowerCase());
+
+      if (!gamme) {
+        const createdGamme = await createGamme({
+          organisationId,
+          nom: gammeName,
+          description: "Imported from WooCommerce",
+          societeId: config.societeId,
+        });
+
+        if (createdGamme.error || !createdGamme.data) {
+          console.error(`[importFromWooCommerce] Failed to create gamme for config ${config.id}:`, createdGamme.error);
+          continue;
+        }
+
+        gamme = createdGamme.data;
+        gammeByName.set(gammeName.toLowerCase(), gamme);
+      }
+
+      const authHeader = `Basic ${btoa(`${config.consumerKey}:${config.consumerSecret}`)}`;
+      const endpointBase = `${config.storeUrl.replace(/\/$/, "")}/wp-json/wc/v3/products?per_page=100&status=publish`;
+      const wcProducts: WooCommerceProduct[] = [];
+
+      for (let page = 1; ; page++) {
+        const response = await fetch(`${endpointBase}&page=${page}`, {
+          headers: {
+            Authorization: authHeader,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`WooCommerce API error ${response.status}`);
+        }
+
+        const pageProducts = (await response.json()) as WooCommerceProduct[];
+        if (!Array.isArray(pageProducts) || pageProducts.length === 0) {
+          break;
+        }
+
+        wcProducts.push(...pageProducts);
+
+        if (pageProducts.length < 100) {
+          break;
+        }
+      }
+
+      const configMappings = productMappings.filter((mapping) => mapping.configId === config.id);
+      const mappingByWooId = new Map(configMappings.map((mapping) => [mapping.externalId, mapping]));
+      const seenWooIds = new Set<string>();
+
+      for (const wcProduct of wcProducts) {
+        const wooId = wcProduct.id.toString();
+        seenWooIds.add(wooId);
+
+        const sku = `WC-${config.id.slice(0, 8)}-${wcProduct.id}`;
+        const prix = Number.parseFloat(wcProduct.price || "0");
+        const imageUrl = wcProduct.images?.[0]?.src || "";
+        const metadata = JSON.stringify({
+          source: "woocommerce",
+          wooId,
+          configId: config.id,
+          storeUrl: config.storeUrl,
+        });
+
+        const mapping = mappingByWooId.get(wooId);
+        const mappedProduct = mapping?.internalId ? productById.get(mapping.internalId) : undefined;
+        const skuProduct = productBySku.get(sku);
+        const existingProduct = mappedProduct || skuProduct;
+
+        let produitId = existingProduct?.id;
+        if (existingProduct?.id) {
+          const updated = await updateProduit({
+            id: existingProduct.id,
+            gammeId: gamme.id,
+            nom: wcProduct.name || `WooCommerce Product ${wooId}`,
+            sku,
+            description: wcProduct.description || "",
+            type: TypeProduit.PARTENAIRE,
+            categorie: CategorieProduit.SERVICE,
+            prix: Number.isNaN(prix) ? 0 : prix,
+            imageUrl,
+            metadata,
+            codeExterne: wooId,
+          });
+
+          if (updated.error || !updated.data) {
+            console.error(`[importFromWooCommerce] Failed to update product ${wooId} (config ${config.id}):`, updated.error);
+            continue;
+          }
+
+          produitId = updated.data.id;
+          productById.set(updated.data.id, updated.data);
+          productBySku.set(updated.data.sku, updated.data);
+        } else {
+          const created = await createProduit({
+            organisationId,
+            gammeId: gamme.id,
+            nom: wcProduct.name || `WooCommerce Product ${wooId}`,
+            sku,
+            description: wcProduct.description || "",
+            type: TypeProduit.PARTENAIRE,
+            categorie: CategorieProduit.SERVICE,
+            prix: Number.isNaN(prix) ? 0 : prix,
+            tauxTva: 20,
+            devise: "EUR",
+            imageUrl,
+            codeExterne: wooId,
+            metadata,
+            statutCycle: StatutCycleProduit.STATUT_CYCLE_PRODUIT_ACTIF,
+          });
+
+          if (created.error || !created.data) {
+            console.error(`[importFromWooCommerce] Failed to create product ${wooId} (config ${config.id}):`, created.error);
+            continue;
+          }
+
+          produitId = created.data.id;
+          productById.set(created.data.id, created.data);
+          productBySku.set(created.data.sku, created.data);
+        }
+
+        if (!produitId) {
+          continue;
+        }
+
+        const externalData = JSON.stringify({
+          id: wcProduct.id,
+          name: wcProduct.name,
+          price: wcProduct.price || "",
+          image: imageUrl,
+        });
+
+        if (mapping) {
+          const needsUpdate = mapping.internalId !== produitId || mapping.externalData !== externalData;
+          if (needsUpdate) {
+            const updatedMapping = await updateWooCommerceMapping({
+              id: mapping.id,
+              internalId: produitId,
+              externalData,
+              syncStatus: "SYNCED",
+            });
+
+            if (!updatedMapping.error && updatedMapping.data) {
+              mappingByWooId.set(wooId, updatedMapping.data);
+            }
+          }
+        } else {
+          const createdMapping = await createWooCommerceMapping({
+            organisationId,
+            entityType: "PRODUCT",
+            externalId: wooId,
+            internalId: produitId,
+            externalData,
+            configId: config.id,
+          });
+
+          if (!createdMapping.error && createdMapping.data) {
+            mappingByWooId.set(wooId, createdMapping.data);
+          }
+        }
+      }
+
+      for (const mapping of configMappings) {
+        if (seenWooIds.has(mapping.externalId)) {
+          continue;
+        }
+
+        if (mapping.internalId) {
+          const deletedProduct = await deleteProduit(mapping.internalId);
+          if (deletedProduct.error) {
+            console.error(`[importFromWooCommerce] Failed to delete orphan product ${mapping.internalId}:`, deletedProduct.error);
+          }
+        }
+
+        const deletedMapping = await deleteWooCommerceMapping(mapping.id);
+        if (deletedMapping.error) {
+          console.error(`[importFromWooCommerce] Failed to delete orphan mapping ${mapping.id}:`, deletedMapping.error);
+        }
+      }
+
+      const updateConfigResult = await updateWooCommerceConfig({
+        id: config.id,
+        storeUrl: config.storeUrl,
+        consumerKey: config.consumerKey,
+        consumerSecret: config.consumerSecret,
+        webhookSecret: config.webhookSecret,
+        syncProducts: config.syncProducts,
+        syncOrders: config.syncOrders,
+        syncCustomers: config.syncCustomers,
+        active: config.active,
+        societeId: config.societeId,
+        label: config.label,
+      });
+
+      if (updateConfigResult.error) {
+        console.error(`[importFromWooCommerce] Failed to update config sync timestamp ${config.id}:`, updateConfigResult.error);
+      }
+    } catch (error) {
+      console.error(`[importFromWooCommerce] Sync failed for config ${config.id}:`, error);
+    }
   }
 }

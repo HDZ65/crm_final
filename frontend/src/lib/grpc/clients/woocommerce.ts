@@ -29,6 +29,8 @@ import {
   type UpdateWooCommerceConfigRequest,
   type GetWooCommerceConfigRequest,
   type GetWooCommerceConfigByOrganisationRequest,
+  type ListByOrganisationConfigRequest,
+  type ListByOrganisationConfigResponse,
   type DeleteWooCommerceConfigRequest,
   type TestWooCommerceConnectionRequest,
   type TestWooCommerceConnectionResponse,
@@ -167,6 +169,12 @@ export const woocommerceConfig = {
     promisify<GetWooCommerceConfigByOrganisationRequest, WooCommerceConfig>(
       getConfigClient(),
       "getByOrganisation"
+    )(request),
+
+  listByOrganisation: (request: ListByOrganisationConfigRequest): Promise<ListByOrganisationConfigResponse> =>
+    promisify<ListByOrganisationConfigRequest, ListByOrganisationConfigResponse>(
+      getConfigClient(),
+      "listByOrganisation"
     )(request),
 
   delete: (request: DeleteWooCommerceConfigRequest): Promise<WooCommerceDeleteResponse> =>

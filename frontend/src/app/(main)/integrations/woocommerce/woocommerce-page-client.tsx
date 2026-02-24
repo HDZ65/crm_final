@@ -52,6 +52,8 @@ import {
   deleteWooCommerceMapping,
   listWooCommerceWebhookEvents,
 } from "@/actions/woocommerce"
+import { listSocietesByOrganisation } from "@/actions/societes"
+import type { SocieteDto } from "@/actions/societes"
 import type {
   WooCommerceConfig,
   WooCommerceMapping,
@@ -85,6 +87,8 @@ export function WooCommercePageClient({
     syncOrders: true,
     syncCustomers: true,
     active: true,
+    label: "",
+    societeId: "",
   })
   const [deleteConfigDialogOpen, setDeleteConfigDialogOpen] = React.useState(false)
 
@@ -106,6 +110,18 @@ export function WooCommercePageClient({
 
   const [loading, setLoading] = React.useState(false)
   const [search, setSearch] = React.useState("")
+  // Societes state
+  const [societes, setSocietes] = React.useState<SocieteDto[]>([])
+
+  // Fetch societes on mount
+  React.useEffect(() => {
+    if (!activeOrgId) return
+    listSocietesByOrganisation(activeOrgId).then((result) => {
+      if (result.data) {
+        setSocietes(result.data)
+      }
+    })
+  }, [activeOrgId])
 
   // Fetch functions
   const fetchConfigs = React.useCallback(async () => {
@@ -156,6 +172,8 @@ export function WooCommercePageClient({
       syncOrders: true,
       syncCustomers: true,
       active: true,
+      label: "",
+      societeId: "",
     })
     setConfigDialogOpen(true)
   }
@@ -171,6 +189,8 @@ export function WooCommercePageClient({
       syncOrders: config.syncOrders,
       syncCustomers: config.syncCustomers,
       active: config.active,
+      label: config.label || "",
+      societeId: config.societeId || "",
     })
     setConfigDialogOpen(true)
   }
@@ -179,6 +199,14 @@ export function WooCommercePageClient({
     e.preventDefault()
     if (!configFormData.storeUrl || !configFormData.consumerKey || !configFormData.consumerSecret) {
       toast.error("URL boutique, Consumer Key et Consumer Secret sont obligatoires")
+      return
+    }
+    if (!configFormData.label) {
+      toast.error("Le libellé est obligatoire")
+      return
+    }
+    if (!configFormData.societeId) {
+      toast.error("La société est obligatoire")
       return
     }
 
@@ -383,7 +411,8 @@ export function WooCommercePageClient({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
+                  <TableHead>Label</TableHead>
+                  <TableHead>Société</TableHead>
                   <TableHead>URL Boutique</TableHead>
                   <TableHead>Consumer Key</TableHead>
                   <TableHead>Actif</TableHead>
@@ -393,7 +422,8 @@ export function WooCommercePageClient({
               <TableBody>
                  {filteredConfigs.map((config) => (
                    <TableRow key={config.id}>
-                     <TableCell className="font-medium">{config.id}</TableCell>
+                     <TableCell className="font-medium">{config.label || config.id}</TableCell>
+                     <TableCell>{societes.find((s) => s.id === config.societeId)?.raisonSociale || "-"}</TableCell>
                      <TableCell>{config.storeUrl}</TableCell>
                      <TableCell className="font-mono text-xs">
                        {config.consumerKey ? config.consumerKey.substring(0, 20) + "..." : "-"}
@@ -566,6 +596,38 @@ export function WooCommercePageClient({
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmitConfig} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="label">Libellé *</Label>
+              <Input
+                id="label"
+                value={configFormData.label}
+                onChange={(e) =>
+                  setConfigFormData({ ...configFormData, label: e.target.value })
+                }
+                placeholder="Ex: France Telephone"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="societeId">Société *</Label>
+              <Select
+                value={configFormData.societeId}
+                onValueChange={(value) =>
+                  setConfigFormData({ ...configFormData, societeId: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une société" />
+                </SelectTrigger>
+                <SelectContent>
+                  {societes.map((societe) => (
+                    <SelectItem key={societe.id} value={societe.id}>
+                      {societe.raisonSociale}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="storeUrl">URL Boutique *</Label>
               <Input

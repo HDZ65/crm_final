@@ -72,6 +72,7 @@ export interface WooCommerceMapping {
   lastSyncedAt: string;
   createdAt: string;
   updatedAt: string;
+  configId?: string | undefined;
 }
 
 export interface CreateWooCommerceMappingRequest {
@@ -80,6 +81,7 @@ export interface CreateWooCommerceMappingRequest {
   externalId: string;
   internalId: string;
   externalData: string;
+  configId?: string | undefined;
 }
 
 export interface UpdateWooCommerceMappingRequest {
@@ -130,6 +132,8 @@ export interface WooCommerceConfig {
   lastSyncAt: string;
   createdAt: string;
   updatedAt: string;
+  societeId?: string | undefined;
+  label: string;
 }
 
 export interface CreateWooCommerceConfigRequest {
@@ -141,6 +145,8 @@ export interface CreateWooCommerceConfigRequest {
   syncProducts: boolean;
   syncOrders: boolean;
   syncCustomers: boolean;
+  societeId?: string | undefined;
+  label: string;
 }
 
 export interface UpdateWooCommerceConfigRequest {
@@ -153,6 +159,8 @@ export interface UpdateWooCommerceConfigRequest {
   syncOrders: boolean;
   syncCustomers: boolean;
   active: boolean;
+  societeId?: string | undefined;
+  label: string;
 }
 
 export interface GetWooCommerceConfigRequest {
@@ -161,6 +169,14 @@ export interface GetWooCommerceConfigRequest {
 
 export interface GetWooCommerceConfigByOrganisationRequest {
   organisationId: string;
+}
+
+export interface ListByOrganisationConfigRequest {
+  organisationId: string;
+}
+
+export interface ListByOrganisationConfigResponse {
+  configs: WooCommerceConfig[];
 }
 
 export interface DeleteWooCommerceConfigRequest {
@@ -1055,6 +1071,7 @@ function createBaseWooCommerceMapping(): WooCommerceMapping {
     lastSyncedAt: "",
     createdAt: "",
     updatedAt: "",
+    configId: undefined,
   };
 }
 
@@ -1089,6 +1106,9 @@ export const WooCommerceMapping: MessageFns<WooCommerceMapping> = {
     }
     if (message.updatedAt !== "") {
       writer.uint32(82).string(message.updatedAt);
+    }
+    if (message.configId !== undefined) {
+      writer.uint32(90).string(message.configId);
     }
     return writer;
   },
@@ -1180,6 +1200,14 @@ export const WooCommerceMapping: MessageFns<WooCommerceMapping> = {
           message.updatedAt = reader.string();
           continue;
         }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.configId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1237,6 +1265,11 @@ export const WooCommerceMapping: MessageFns<WooCommerceMapping> = {
         : isSet(object.updated_at)
         ? globalThis.String(object.updated_at)
         : "",
+      configId: isSet(object.configId)
+        ? globalThis.String(object.configId)
+        : isSet(object.config_id)
+        ? globalThis.String(object.config_id)
+        : undefined,
     };
   },
 
@@ -1272,6 +1305,9 @@ export const WooCommerceMapping: MessageFns<WooCommerceMapping> = {
     if (message.updatedAt !== "") {
       obj.updatedAt = message.updatedAt;
     }
+    if (message.configId !== undefined) {
+      obj.configId = message.configId;
+    }
     return obj;
   },
 
@@ -1290,12 +1326,13 @@ export const WooCommerceMapping: MessageFns<WooCommerceMapping> = {
     message.lastSyncedAt = object.lastSyncedAt ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
+    message.configId = object.configId ?? undefined;
     return message;
   },
 };
 
 function createBaseCreateWooCommerceMappingRequest(): CreateWooCommerceMappingRequest {
-  return { organisationId: "", entityType: "", externalId: "", internalId: "", externalData: "" };
+  return { organisationId: "", entityType: "", externalId: "", internalId: "", externalData: "", configId: undefined };
 }
 
 export const CreateWooCommerceMappingRequest: MessageFns<CreateWooCommerceMappingRequest> = {
@@ -1314,6 +1351,9 @@ export const CreateWooCommerceMappingRequest: MessageFns<CreateWooCommerceMappin
     }
     if (message.externalData !== "") {
       writer.uint32(42).string(message.externalData);
+    }
+    if (message.configId !== undefined) {
+      writer.uint32(50).string(message.configId);
     }
     return writer;
   },
@@ -1365,6 +1405,14 @@ export const CreateWooCommerceMappingRequest: MessageFns<CreateWooCommerceMappin
           message.externalData = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.configId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1401,6 +1449,11 @@ export const CreateWooCommerceMappingRequest: MessageFns<CreateWooCommerceMappin
         : isSet(object.external_data)
         ? globalThis.String(object.external_data)
         : "",
+      configId: isSet(object.configId)
+        ? globalThis.String(object.configId)
+        : isSet(object.config_id)
+        ? globalThis.String(object.config_id)
+        : undefined,
     };
   },
 
@@ -1421,6 +1474,9 @@ export const CreateWooCommerceMappingRequest: MessageFns<CreateWooCommerceMappin
     if (message.externalData !== "") {
       obj.externalData = message.externalData;
     }
+    if (message.configId !== undefined) {
+      obj.configId = message.configId;
+    }
     return obj;
   },
 
@@ -1436,6 +1492,7 @@ export const CreateWooCommerceMappingRequest: MessageFns<CreateWooCommerceMappin
     message.externalId = object.externalId ?? "";
     message.internalId = object.internalId ?? "";
     message.externalData = object.externalData ?? "";
+    message.configId = object.configId ?? undefined;
     return message;
   },
 };
@@ -2025,6 +2082,8 @@ function createBaseWooCommerceConfig(): WooCommerceConfig {
     lastSyncAt: "",
     createdAt: "",
     updatedAt: "",
+    societeId: undefined,
+    label: "",
   };
 }
 
@@ -2068,6 +2127,12 @@ export const WooCommerceConfig: MessageFns<WooCommerceConfig> = {
     }
     if (message.updatedAt !== "") {
       writer.uint32(106).string(message.updatedAt);
+    }
+    if (message.societeId !== undefined) {
+      writer.uint32(114).string(message.societeId);
+    }
+    if (message.label !== "") {
+      writer.uint32(122).string(message.label);
     }
     return writer;
   },
@@ -2183,6 +2248,22 @@ export const WooCommerceConfig: MessageFns<WooCommerceConfig> = {
           message.updatedAt = reader.string();
           continue;
         }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2251,6 +2332,12 @@ export const WooCommerceConfig: MessageFns<WooCommerceConfig> = {
         : isSet(object.updated_at)
         ? globalThis.String(object.updated_at)
         : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : undefined,
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
     };
   },
 
@@ -2295,6 +2382,12 @@ export const WooCommerceConfig: MessageFns<WooCommerceConfig> = {
     if (message.updatedAt !== "") {
       obj.updatedAt = message.updatedAt;
     }
+    if (message.societeId !== undefined) {
+      obj.societeId = message.societeId;
+    }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
     return obj;
   },
 
@@ -2316,6 +2409,8 @@ export const WooCommerceConfig: MessageFns<WooCommerceConfig> = {
     message.lastSyncAt = object.lastSyncAt ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
+    message.societeId = object.societeId ?? undefined;
+    message.label = object.label ?? "";
     return message;
   },
 };
@@ -2330,6 +2425,8 @@ function createBaseCreateWooCommerceConfigRequest(): CreateWooCommerceConfigRequ
     syncProducts: false,
     syncOrders: false,
     syncCustomers: false,
+    societeId: undefined,
+    label: "",
   };
 }
 
@@ -2358,6 +2455,12 @@ export const CreateWooCommerceConfigRequest: MessageFns<CreateWooCommerceConfigR
     }
     if (message.syncCustomers !== false) {
       writer.uint32(64).bool(message.syncCustomers);
+    }
+    if (message.societeId !== undefined) {
+      writer.uint32(74).string(message.societeId);
+    }
+    if (message.label !== "") {
+      writer.uint32(82).string(message.label);
     }
     return writer;
   },
@@ -2433,6 +2536,22 @@ export const CreateWooCommerceConfigRequest: MessageFns<CreateWooCommerceConfigR
           message.syncCustomers = reader.bool();
           continue;
         }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2484,6 +2603,12 @@ export const CreateWooCommerceConfigRequest: MessageFns<CreateWooCommerceConfigR
         : isSet(object.sync_customers)
         ? globalThis.Boolean(object.sync_customers)
         : false,
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : undefined,
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
     };
   },
 
@@ -2513,6 +2638,12 @@ export const CreateWooCommerceConfigRequest: MessageFns<CreateWooCommerceConfigR
     if (message.syncCustomers !== false) {
       obj.syncCustomers = message.syncCustomers;
     }
+    if (message.societeId !== undefined) {
+      obj.societeId = message.societeId;
+    }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
     return obj;
   },
 
@@ -2531,6 +2662,8 @@ export const CreateWooCommerceConfigRequest: MessageFns<CreateWooCommerceConfigR
     message.syncProducts = object.syncProducts ?? false;
     message.syncOrders = object.syncOrders ?? false;
     message.syncCustomers = object.syncCustomers ?? false;
+    message.societeId = object.societeId ?? undefined;
+    message.label = object.label ?? "";
     return message;
   },
 };
@@ -2546,6 +2679,8 @@ function createBaseUpdateWooCommerceConfigRequest(): UpdateWooCommerceConfigRequ
     syncOrders: false,
     syncCustomers: false,
     active: false,
+    societeId: undefined,
+    label: "",
   };
 }
 
@@ -2577,6 +2712,12 @@ export const UpdateWooCommerceConfigRequest: MessageFns<UpdateWooCommerceConfigR
     }
     if (message.active !== false) {
       writer.uint32(72).bool(message.active);
+    }
+    if (message.societeId !== undefined) {
+      writer.uint32(82).string(message.societeId);
+    }
+    if (message.label !== "") {
+      writer.uint32(90).string(message.label);
     }
     return writer;
   },
@@ -2660,6 +2801,22 @@ export const UpdateWooCommerceConfigRequest: MessageFns<UpdateWooCommerceConfigR
           message.active = reader.bool();
           continue;
         }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2708,6 +2865,12 @@ export const UpdateWooCommerceConfigRequest: MessageFns<UpdateWooCommerceConfigR
         ? globalThis.Boolean(object.sync_customers)
         : false,
       active: isSet(object.active) ? globalThis.Boolean(object.active) : false,
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : undefined,
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
     };
   },
 
@@ -2740,6 +2903,12 @@ export const UpdateWooCommerceConfigRequest: MessageFns<UpdateWooCommerceConfigR
     if (message.active !== false) {
       obj.active = message.active;
     }
+    if (message.societeId !== undefined) {
+      obj.societeId = message.societeId;
+    }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
     return obj;
   },
 
@@ -2759,6 +2928,8 @@ export const UpdateWooCommerceConfigRequest: MessageFns<UpdateWooCommerceConfigR
     message.syncOrders = object.syncOrders ?? false;
     message.syncCustomers = object.syncCustomers ?? false;
     message.active = object.active ?? false;
+    message.societeId = object.societeId ?? undefined;
+    message.label = object.label ?? "";
     return message;
   },
 };
@@ -2885,6 +3056,138 @@ export const GetWooCommerceConfigByOrganisationRequest: MessageFns<GetWooCommerc
   ): GetWooCommerceConfigByOrganisationRequest {
     const message = createBaseGetWooCommerceConfigByOrganisationRequest();
     message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseListByOrganisationConfigRequest(): ListByOrganisationConfigRequest {
+  return { organisationId: "" };
+}
+
+export const ListByOrganisationConfigRequest: MessageFns<ListByOrganisationConfigRequest> = {
+  encode(message: ListByOrganisationConfigRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListByOrganisationConfigRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListByOrganisationConfigRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListByOrganisationConfigRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: ListByOrganisationConfigRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListByOrganisationConfigRequest>, I>>(base?: I): ListByOrganisationConfigRequest {
+    return ListByOrganisationConfigRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListByOrganisationConfigRequest>, I>>(
+    object: I,
+  ): ListByOrganisationConfigRequest {
+    const message = createBaseListByOrganisationConfigRequest();
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseListByOrganisationConfigResponse(): ListByOrganisationConfigResponse {
+  return { configs: [] };
+}
+
+export const ListByOrganisationConfigResponse: MessageFns<ListByOrganisationConfigResponse> = {
+  encode(message: ListByOrganisationConfigResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.configs) {
+      WooCommerceConfig.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListByOrganisationConfigResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListByOrganisationConfigResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.configs.push(WooCommerceConfig.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListByOrganisationConfigResponse {
+    return {
+      configs: globalThis.Array.isArray(object?.configs)
+        ? object.configs.map((e: any) => WooCommerceConfig.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ListByOrganisationConfigResponse): unknown {
+    const obj: any = {};
+    if (message.configs?.length) {
+      obj.configs = message.configs.map((e) => WooCommerceConfig.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListByOrganisationConfigResponse>, I>>(
+    base?: I,
+  ): ListByOrganisationConfigResponse {
+    return ListByOrganisationConfigResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListByOrganisationConfigResponse>, I>>(
+    object: I,
+  ): ListByOrganisationConfigResponse {
+    const message = createBaseListByOrganisationConfigResponse();
+    message.configs = object.configs?.map((e) => WooCommerceConfig.fromPartial(e)) || [];
     return message;
   },
 };
@@ -3623,6 +3926,19 @@ export const WooCommerceConfigServiceService = {
     responseDeserialize: (value: Buffer): TestWooCommerceConnectionResponse =>
       TestWooCommerceConnectionResponse.decode(value),
   },
+  listByOrganisation: {
+    path: "/woocommerce.WooCommerceConfigService/ListByOrganisation",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListByOrganisationConfigRequest): Buffer =>
+      Buffer.from(ListByOrganisationConfigRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListByOrganisationConfigRequest =>
+      ListByOrganisationConfigRequest.decode(value),
+    responseSerialize: (value: ListByOrganisationConfigResponse): Buffer =>
+      Buffer.from(ListByOrganisationConfigResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListByOrganisationConfigResponse =>
+      ListByOrganisationConfigResponse.decode(value),
+  },
 } as const;
 
 export interface WooCommerceConfigServiceServer extends UntypedServiceImplementation {
@@ -3632,6 +3948,7 @@ export interface WooCommerceConfigServiceServer extends UntypedServiceImplementa
   getByOrganisation: handleUnaryCall<GetWooCommerceConfigByOrganisationRequest, WooCommerceConfig>;
   delete: handleUnaryCall<DeleteWooCommerceConfigRequest, DeleteResponse>;
   testConnection: handleUnaryCall<TestWooCommerceConnectionRequest, TestWooCommerceConnectionResponse>;
+  listByOrganisation: handleUnaryCall<ListByOrganisationConfigRequest, ListByOrganisationConfigResponse>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

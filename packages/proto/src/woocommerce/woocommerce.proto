@@ -37,6 +37,7 @@ service WooCommerceConfigService {
   rpc GetByOrganisation(GetWooCommerceConfigByOrganisationRequest) returns (WooCommerceConfig);
   rpc Delete(DeleteWooCommerceConfigRequest) returns (DeleteResponse);
   rpc TestConnection(TestWooCommerceConnectionRequest) returns (TestWooCommerceConnectionResponse);
+  rpc ListByOrganisation(ListByOrganisationConfigRequest) returns (ListByOrganisationConfigResponse);
 }
 
 // ============================================================================
@@ -109,6 +110,7 @@ message WooCommerceMapping {
   string last_synced_at = 8;
   string created_at = 9;
   string updated_at = 10;
+  optional string config_id = 11;
 }
 
 message CreateWooCommerceMappingRequest {
@@ -117,6 +119,7 @@ message CreateWooCommerceMappingRequest {
   string external_id = 3;
   string internal_id = 4;
   string external_data = 5;
+  optional string config_id = 6;
 }
 
 message UpdateWooCommerceMappingRequest {
@@ -171,6 +174,8 @@ message WooCommerceConfig {
   string last_sync_at = 11;
   string created_at = 12;
   string updated_at = 13;
+  optional string societe_id = 14;
+  string label = 15;
 }
 
 message CreateWooCommerceConfigRequest {
@@ -182,6 +187,8 @@ message CreateWooCommerceConfigRequest {
   bool sync_products = 6;
   bool sync_orders = 7;
   bool sync_customers = 8;
+  optional string societe_id = 9;
+  string label = 10;
 }
 
 message UpdateWooCommerceConfigRequest {
@@ -194,6 +201,8 @@ message UpdateWooCommerceConfigRequest {
   bool sync_orders = 7;
   bool sync_customers = 8;
   bool active = 9;
+  optional string societe_id = 10;
+  string label = 11;
 }
 
 message GetWooCommerceConfigRequest {
@@ -202,6 +211,14 @@ message GetWooCommerceConfigRequest {
 
 message GetWooCommerceConfigByOrganisationRequest {
   string organisation_id = 1;
+}
+
+message ListByOrganisationConfigRequest {
+  string organisation_id = 1;
+}
+
+message ListByOrganisationConfigResponse {
+  repeated WooCommerceConfig configs = 1;
 }
 
 message DeleteWooCommerceConfigRequest {

@@ -3,7 +3,7 @@ import { getActiveOrgId } from "@/lib/server/data"
 import { getServerUserProfile } from "@/lib/auth/auth.server"
 import { ClientsPageClient } from "./clients-page-client"
 import { STATUTS_CLIENT } from "@/constants/statuts-client"
-import { hasWinLeadPlusConfig } from "@/actions/winleadplus"
+import { hasWinLeadPlusConfig, syncWinLeadPlusProspects } from "@/actions/winleadplus"
 
 export default async function ClientsPage() {
    const [activeOrgIdFromCookie, userProfile] = await Promise.all([
@@ -12,6 +12,15 @@ export default async function ClientsPage() {
    ])
 
    const activeOrgId = activeOrgIdFromCookie || userProfile?.organisations?.[0]?.organisationId
+
+   // Trigger WinLeadPlus sync (blocking) before loading data
+   if (activeOrgId) {
+     try {
+       await syncWinLeadPlusProspects({ organisationId: activeOrgId });
+     } catch {
+       // Sync failure must not prevent page render
+     }
+   }
 
    const [clientsResult, hasWinLeadPlus] = await Promise.all([
      activeOrgId

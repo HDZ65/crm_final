@@ -7,7 +7,7 @@ export class WooCommerceMultiStore1770850000000 implements MigrationInterface {
     // Remove unique constraint on organisation_id in woocommerce_configs
     await queryRunner.query(`
       ALTER TABLE "woocommerce_configs"
-        DROP CONSTRAINT IF EXISTS "woocommerce_configs_organisation_id_key"
+        DROP CONSTRAINT IF EXISTS "UQ_93617bf86e0a20ea2803a0fd3a2"
     `);
 
     // Add societe_id column (nullable to avoid breaking existing rows)
@@ -40,7 +40,7 @@ export class WooCommerceMultiStore1770850000000 implements MigrationInterface {
 
     // Add PRODUCT to woocommerce_entity_type_enum
     await queryRunner.query(`
-      ALTER TYPE "woocommerce_entity_type_enum" ADD VALUE IF NOT EXISTS 'PRODUCT'
+      ALTER TYPE "woocommerce_mappings_entity_type_enum" ADD VALUE IF NOT EXISTS 'PRODUCT'
     `);
   }
 

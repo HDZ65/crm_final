@@ -745,7 +745,7 @@ export function WooCommercePageClient({
                   setConfigFormData({ ...configFormData, active: checked === true })
                 }
               />
-              <Label htmlFor="active">Actif</Label>
+              <Label htmlFor="active">Activer l'import automatique</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox

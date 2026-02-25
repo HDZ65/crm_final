@@ -89,6 +89,8 @@ export function WooCommercePageClient({
     active: true,
     label: "",
     societeId: "",
+    siren: "",
+    numeroTva: "",
   })
   const [deleteConfigDialogOpen, setDeleteConfigDialogOpen] = React.useState(false)
 
@@ -174,6 +176,8 @@ export function WooCommercePageClient({
       active: true,
       label: "",
       societeId: "",
+      siren: "",
+      numeroTva: "",
     })
     setConfigDialogOpen(true)
   }
@@ -191,6 +195,8 @@ export function WooCommercePageClient({
       active: config.active,
       label: config.label || "",
       societeId: config.societeId || "",
+      siren: "",
+      numeroTva: "",
     })
     setConfigDialogOpen(true)
   }
@@ -220,8 +226,8 @@ export function WooCommercePageClient({
       const societeResult = await createSociete({
         organisationId: activeOrgId,
         raisonSociale: configFormData.label,
-        siren: "",
-        numeroTva: "",
+        siren: configFormData.siren,
+        numeroTva: configFormData.numeroTva,
       })
       if (societeResult.error || !societeResult.data) {
         toast.error(societeResult.error || "Erreur lors de la création de la société")
@@ -659,6 +665,32 @@ export function WooCommercePageClient({
                 </p>
               )}
             </div>
+            {!configFormData.societeId && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="siren">SIREN</Label>
+                  <Input
+                    id="siren"
+                    value={configFormData.siren}
+                    onChange={(e) =>
+                      setConfigFormData({ ...configFormData, siren: e.target.value })
+                    }
+                    placeholder="Ex: 123 456 789"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numeroTva">N° TVA intracommunautaire</Label>
+                  <Input
+                    id="numeroTva"
+                    value={configFormData.numeroTva}
+                    onChange={(e) =>
+                      setConfigFormData({ ...configFormData, numeroTva: e.target.value })
+                    }
+                    placeholder="Ex: FR12345678901"
+                  />
+                </div>
+              </>
+            )}
             <div className="space-y-2">
               <Label htmlFor="storeUrl">URL Boutique *</Label>
               <Input

@@ -187,9 +187,9 @@ export const SERVICE_REGISTRY: Record<string, ServiceConfig> = {
      serviceName: 'SubscriptionPreferenceSchemaService',
    },
    woocommerce: {
-     package: 'subscriptions',
-     protoFile: 'subscriptions/subscriptions.proto',
-     defaultPort: 50074,
+     package: 'woocommerce',
+     protoFile: 'woocommerce/woocommerce.proto',
+     defaultPort: 50053,
      serviceName: 'WooCommerceService',
    },
    partenaires: {

@@ -31,6 +31,7 @@ import { ImsWebhookController } from './infrastructure/http/mondial-tv/ims-webho
 // gRPC controllers
 import { WooCommerceController } from './infrastructure/grpc/subscriptions/woocommerce.controller';
 import { WooCommerceConfigController } from './infrastructure/grpc/subscriptions/woocommerce-config.controller';
+import { WooCommerceMappingController } from './infrastructure/grpc/subscriptions/woocommerce-mapping.controller';
 
 // Cross-module dependency — SubscriptionService for sync
 import { SubscriptionsModule } from './subscriptions.module';
@@ -46,7 +47,7 @@ import { SubscriptionService } from './infrastructure/persistence/typeorm/reposi
     ]),
     forwardRef(() => SubscriptionsModule),
   ],
-  controllers: [WooCommerceWebhookController, ImsWebhookController, WooCommerceController, WooCommerceConfigController],
+  controllers: [WooCommerceWebhookController, ImsWebhookController, WooCommerceController, WooCommerceConfigController, WooCommerceMappingController],
   providers: [
     // TypeORM repository services
     WooCommerceWebhookEventService,

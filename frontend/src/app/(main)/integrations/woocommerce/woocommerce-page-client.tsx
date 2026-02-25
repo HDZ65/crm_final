@@ -52,7 +52,7 @@ import {
   deleteWooCommerceMapping,
   listWooCommerceWebhookEvents,
 } from "@/actions/woocommerce"
-import { listSocietesByOrganisation } from "@/actions/societes"
+import { listSocietesByOrganisation, createSociete } from "@/actions/societes"
 import type { SocieteDto } from "@/actions/societes"
 import type {
   WooCommerceConfig,
@@ -205,17 +205,41 @@ export function WooCommercePageClient({
       toast.error("Le libellé est obligatoire")
       return
     }
-    if (!configFormData.societeId) {
-      toast.error("La société est obligatoire")
-      return
-    }
 
     setLoading(true)
+
+    // Resolve societeId: use selected or auto-create
+    let societeId = configFormData.societeId
+    if (!societeId) {
+      // Auto-create société using the config label
+      if (!activeOrgId) {
+        toast.error("Organisation non trouvée")
+        setLoading(false)
+        return
+      }
+      const societeResult = await createSociete({
+        organisationId: activeOrgId,
+        raisonSociale: configFormData.label,
+        siren: "",
+        numeroTva: "",
+      })
+      if (societeResult.error || !societeResult.data) {
+        toast.error(societeResult.error || "Erreur lors de la création de la société")
+        setLoading(false)
+        return
+      }
+      societeId = societeResult.data.id
+      // Refresh societes list
+      const freshSocietes = await listSocietesByOrganisation(activeOrgId)
+      if (freshSocietes.data) setSocietes(freshSocietes.data)
+      toast.info(`Société "${configFormData.label}" créée automatiquement`)
+    }
 
     if (selectedConfig) {
       const result = await updateWooCommerceConfig({
         id: selectedConfig.id,
         ...configFormData,
+        societeId,
       })
       if (result.error) {
         toast.error(result.error)
@@ -233,6 +257,7 @@ export function WooCommercePageClient({
       const result = await createWooCommerceConfig({
         organisationId: activeOrgId,
         ...configFormData,
+        societeId,
       })
       if (result.error) {
         toast.error(result.error)
@@ -609,24 +634,30 @@ export function WooCommercePageClient({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="societeId">Société *</Label>
-              <Select
-                value={configFormData.societeId}
-                onValueChange={(value) =>
-                  setConfigFormData({ ...configFormData, societeId: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une société" />
-                </SelectTrigger>
-                <SelectContent>
-                  {societes.map((societe) => (
-                    <SelectItem key={societe.id} value={societe.id}>
-                      {societe.raisonSociale}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="societeId">Société</Label>
+              {societes.length > 0 ? (
+                <Select
+                  value={configFormData.societeId}
+                  onValueChange={(value) =>
+                    setConfigFormData({ ...configFormData, societeId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une société" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {societes.map((societe) => (
+                      <SelectItem key={societe.id} value={societe.id}>
+                        {societe.raisonSociale}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Aucune société existante — une sera créée automatiquement avec le libellé.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="storeUrl">URL Boutique *</Label>

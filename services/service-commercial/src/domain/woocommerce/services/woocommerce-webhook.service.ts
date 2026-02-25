@@ -3,7 +3,7 @@ import { createHmac } from 'crypto';
 import { NatsService } from '@crm/shared-kernel';
 import type { IWooCommerceWebhookEventRepository } from '../repositories/IWooCommerceWebhookEventRepository';
 import type { IWooCommerceConfigRepository } from '../repositories/IWooCommerceConfigRepository';
-import { WebhookEventStatus } from '../entities/woocommerce-webhook-event.entity';
+import { WebhookEventStatus, WooCommerceWebhookEventEntity } from '../entities/woocommerce-webhook-event.entity';
 
 export interface WebhookRequest {
   organisationId: string;
@@ -186,6 +186,17 @@ export class WooCommerceWebhookService {
    */
   async markFailed(eventId: string, errorMessage: string): Promise<void> {
     await this.webhookEventRepository.markFailed(eventId, errorMessage);
+  }
+
+  /**
+   * Lists webhook events with optional filters.
+   */
+  async listEvents(filters?: {
+    organisationId?: string;
+    eventType?: string;
+    status?: WebhookEventStatus;
+  }): Promise<WooCommerceWebhookEventEntity[]> {
+    return this.webhookEventRepository.findAll(filters);
   }
 
   resolveNatsSubject(topic: string): string | null {

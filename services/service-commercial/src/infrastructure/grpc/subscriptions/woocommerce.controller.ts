@@ -28,4 +28,34 @@ export class WooCommerceController {
       event_id: result.eventId || '',
     };
   }
+
+  @GrpcMethod('WooCommerceWebhookService', 'ListWebhookEvents')
+  async listWebhookEvents(data: {
+    organisation_id: string;
+    event_type?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    const events = await this.webhookService.listEvents({
+      organisationId: data.organisation_id,
+      eventType: data.event_type || undefined,
+    });
+    return {
+      events: events.map((e) => ({
+        id: e.id,
+        organisation_id: e.organisationId,
+        source: e.source,
+        external_event_id: e.externalEventId || '',
+        topic: e.eventType,
+        payload: typeof e.rawPayload === 'object' ? JSON.stringify(e.rawPayload) : String(e.rawPayload || ''),
+        status: e.status,
+        created_at: e.createdAt?.toISOString() ?? '',
+        processed_at: e.processedAt?.toISOString() ?? '',
+        retry_count: e.retryCount || 0,
+        error_message: e.errorMessage || '',
+      })),
+      total: events.length,
+    };
+  }
 }

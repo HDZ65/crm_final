@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Plus, RefreshCw, Download, FileText, Calendar, User, FileX, Search, SlidersHorizontal, ChevronDown, X, Filter } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -9,9 +10,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import { DataTable } from "@/components/data-table-basic"
-import { columns } from "./columns"
+import { getColumns } from "./columns"
 import { toast } from "sonner"
 import { getFacturesByOrganisation } from "@/actions/factures"
+import { getCfastConfig, importCfastInvoices } from "@/actions/cfast"
 import { useOrganisation } from "@/contexts/organisation-context"
 import type { Facture, StatutFacture } from "@proto/factures/factures"
 import { cn } from "@/lib/utils"
@@ -38,6 +40,9 @@ function mapFacture(f: Facture): Facture {
     typeDocument: f.typeDocument || "",
     factureOrigineId: f.factureOrigineId || "",
     motifAvoir: f.motifAvoir || "",
+    sourceSystem: f.sourceSystem,
+    externalId: f.externalId,
+    importedAt: f.importedAt,
     client: f.client ? { id: f.client.id, nom: f.client.nom, prenom: f.client.prenom } : undefined,
     statut: f.statut ? {
       id: f.statut.id,
@@ -58,9 +63,12 @@ interface FacturationPageClientProps {
 
 export function FacturationPageClient({ initialFactures, statuts }: FacturationPageClientProps) {
    const { activeOrganisation } = useOrganisation()
+   const router = useRouter()
    const [isRefreshing, setIsRefreshing] = React.useState(false)
    const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false)
    const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
+   const [importingCfast, setImportingCfast] = React.useState(false)
+   const [cfastConfigActive, setCfastConfigActive] = React.useState(false)
 
   // Ref to track initial fetch
   const hasFetched = React.useRef(!!initialFactures)
@@ -92,9 +100,13 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
     numero: "",
     client: "",
     statutId: "",
+    sourceSystem: "all",
     dateDebut: "",
     dateFin: "",
   })
+
+  const sourceSystemFilter =
+    filters.sourceSystem === "all" ? undefined : filters.sourceSystem
 
   // Fetch des factures
   const fetchData = React.useCallback(async () => {
@@ -105,6 +117,7 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
 
     const result = await getFacturesByOrganisation({
       organisationId: activeOrganisation.organisationId,
+      sourceSystem: sourceSystemFilter,
     })
 
     if (result.error) {
@@ -114,14 +127,39 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
     }
 
     setLoading(false)
-  }, [activeOrganisation])
+  }, [activeOrganisation, sourceSystemFilter])
 
   // Initial load when organisation becomes available - skip if SSR data provided
   React.useEffect(() => {
-    if (!activeOrganisation || hasFetched.current) return
+    if (!activeOrganisation) return
+
+    const isInitialLoad = !hasFetched.current
     hasFetched.current = true
+
+    if (isInitialLoad && initialFactures && filters.sourceSystem === "all") {
+      return
+    }
+
     fetchData()
-  }, [activeOrganisation, fetchData])
+  }, [activeOrganisation, fetchData, filters.sourceSystem, initialFactures])
+
+  React.useEffect(() => {
+    if (!activeOrganisation) return
+    let active = true
+
+    const loadCfastState = async () => {
+      const configResult = await getCfastConfig(activeOrganisation.organisationId)
+      if (active) {
+        setCfastConfigActive(!!configResult.data?.active)
+      }
+    }
+
+    loadCfastState()
+
+    return () => {
+      active = false
+    }
+  }, [activeOrganisation])
 
   const refetch = fetchData
 
@@ -146,6 +184,7 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
       numero: "",
       client: "",
       statutId: "",
+      sourceSystem: "all",
       dateDebut: "",
       dateFin: "",
     })
@@ -158,15 +197,23 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
       if (filters.globalSearch) {
         const search = filters.globalSearch.toLowerCase()
         const clientName = facture.client ? `${facture.client.prenom} ${facture.client.nom}`.toLowerCase() : ""
+        const numero = facture.numero?.toLowerCase() || ""
         const matchesGlobal =
-          facture.numero.toLowerCase().includes(search) ||
+          numero.includes(search) ||
           clientName.includes(search)
         if (!matchesGlobal) return false
       }
 
       // Filtres avancés
       if (filters.numero) {
-        if (!facture.numero.toLowerCase().includes(filters.numero.toLowerCase())) {
+        const numero = facture.numero?.toLowerCase() || ""
+        if (!numero.includes(filters.numero.toLowerCase())) {
+          return false
+        }
+      }
+
+      if (filters.sourceSystem && filters.sourceSystem !== "all") {
+        if (facture.sourceSystem !== filters.sourceSystem) {
           return false
         }
       }
@@ -236,7 +283,7 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
 
     const headers = ["Numéro", "Client", "Date", "Montant HT", "Montant TTC", "Statut"]
     const rows = filteredFactures.map((f) => [
-      f.numero,
+      f.numero || (f.sourceSystem === "CFAST" ? "Import CFAST" : "-"),
       f.client ? `${f.client.prenom} ${f.client.nom}` : "",
       new Date(f.dateEmission).toLocaleDateString("fr-FR"),
       f.montantHt?.toFixed(2) || "0.00",
@@ -259,6 +306,26 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
     toast.success("Export CSV téléchargé")
   }, [filteredFactures])
 
+  const handleImportCfast = React.useCallback(async () => {
+    if (!activeOrganisation) {
+      toast.error("Organisation introuvable")
+      return
+    }
+
+    setImportingCfast(true)
+    const result = await importCfastInvoices(activeOrganisation.organisationId)
+    setImportingCfast(false)
+
+    if (result.error || !result.data) {
+      toast.error(result.error || "Erreur lors de l'import CFAST")
+      return
+    }
+
+    toast.success(`${result.data.importedCount} factures importées, ${result.data.skippedCount} ignorées`)
+    router.refresh()
+    await fetchData()
+  }, [activeOrganisation, fetchData, router])
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
@@ -280,6 +347,22 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
               onChange={handleFilterChange("globalSearch")}
             />
           </div>
+
+          <Select
+            value={filters.sourceSystem}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, sourceSystem: value }))
+            }
+          >
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Toutes les sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les sources</SelectItem>
+              <SelectItem value="INTERNAL">Interne</SelectItem>
+              <SelectItem value="CFAST">CFAST</SelectItem>
+            </SelectContent>
+          </Select>
 
            <Button
              variant="outline"
@@ -312,6 +395,12 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
           <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
             <RefreshCw className="size-4" />
           </Button>
+          {cfastConfigActive && (
+            <Button variant="outline" size="sm" onClick={handleImportCfast} disabled={importingCfast}>
+              <RefreshCw className={cn("mr-2 size-4", importingCfast && "animate-spin")} />
+              Importer depuis CFAST
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="mr-2 size-4" />
             Exporter
@@ -438,7 +527,7 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
                 </div>
               ) : (
                 <DataTable
-                  columns={columns}
+                  columns={getColumns(activeOrganisation?.organisationId)}
                   data={filteredFactures}
                   headerClassName="bg-sidebar hover:bg-sidebar"
                 />

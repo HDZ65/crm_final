@@ -202,6 +202,11 @@ export interface Facture {
   typeDocument: string;
   factureOrigineId: string;
   motifAvoir: string;
+  sourceSystem?: string | undefined;
+  externalId?: string | undefined;
+  importedAt?:
+    | string
+    | undefined;
   /** Relations */
   statut: StatutFacture | undefined;
   client: ClientInfo | undefined;
@@ -252,6 +257,7 @@ export interface ListFacturesRequest {
   statutId?: string | undefined;
   dateFrom?: string | undefined;
   dateTo?: string | undefined;
+  sourceSystem?: string | undefined;
   pagination: PaginationRequest | undefined;
 }
 
@@ -3254,6 +3260,9 @@ function createBaseFacture(): Facture {
     typeDocument: "",
     factureOrigineId: "",
     motifAvoir: "",
+    sourceSystem: undefined,
+    externalId: undefined,
+    importedAt: undefined,
     statut: undefined,
     client: undefined,
     lignes: [],
@@ -3313,14 +3322,23 @@ export const Facture: MessageFns<Facture> = {
     if (message.motifAvoir !== "") {
       writer.uint32(138).string(message.motifAvoir);
     }
+    if (message.sourceSystem !== undefined) {
+      writer.uint32(146).string(message.sourceSystem);
+    }
+    if (message.externalId !== undefined) {
+      writer.uint32(154).string(message.externalId);
+    }
+    if (message.importedAt !== undefined) {
+      writer.uint32(162).string(message.importedAt);
+    }
     if (message.statut !== undefined) {
-      StatutFacture.encode(message.statut, writer.uint32(146).fork()).join();
+      StatutFacture.encode(message.statut, writer.uint32(170).fork()).join();
     }
     if (message.client !== undefined) {
-      ClientInfo.encode(message.client, writer.uint32(154).fork()).join();
+      ClientInfo.encode(message.client, writer.uint32(178).fork()).join();
     }
     for (const v of message.lignes) {
-      LigneFacture.encode(v!, writer.uint32(162).fork()).join();
+      LigneFacture.encode(v!, writer.uint32(186).fork()).join();
     }
     return writer;
   },
@@ -3473,7 +3491,7 @@ export const Facture: MessageFns<Facture> = {
             break;
           }
 
-          message.statut = StatutFacture.decode(reader, reader.uint32());
+          message.sourceSystem = reader.string();
           continue;
         }
         case 19: {
@@ -3481,11 +3499,35 @@ export const Facture: MessageFns<Facture> = {
             break;
           }
 
-          message.client = ClientInfo.decode(reader, reader.uint32());
+          message.externalId = reader.string();
           continue;
         }
         case 20: {
           if (tag !== 162) {
+            break;
+          }
+
+          message.importedAt = reader.string();
+          continue;
+        }
+        case 21: {
+          if (tag !== 170) {
+            break;
+          }
+
+          message.statut = StatutFacture.decode(reader, reader.uint32());
+          continue;
+        }
+        case 22: {
+          if (tag !== 178) {
+            break;
+          }
+
+          message.client = ClientInfo.decode(reader, reader.uint32());
+          continue;
+        }
+        case 23: {
+          if (tag !== 186) {
             break;
           }
 
@@ -3580,6 +3622,21 @@ export const Facture: MessageFns<Facture> = {
         : isSet(object.motif_avoir)
         ? globalThis.String(object.motif_avoir)
         : "",
+      sourceSystem: isSet(object.sourceSystem)
+        ? globalThis.String(object.sourceSystem)
+        : isSet(object.source_system)
+        ? globalThis.String(object.source_system)
+        : undefined,
+      externalId: isSet(object.externalId)
+        ? globalThis.String(object.externalId)
+        : isSet(object.external_id)
+        ? globalThis.String(object.external_id)
+        : undefined,
+      importedAt: isSet(object.importedAt)
+        ? globalThis.String(object.importedAt)
+        : isSet(object.imported_at)
+        ? globalThis.String(object.imported_at)
+        : undefined,
       statut: isSet(object.statut) ? StatutFacture.fromJSON(object.statut) : undefined,
       client: isSet(object.client) ? ClientInfo.fromJSON(object.client) : undefined,
       lignes: globalThis.Array.isArray(object?.lignes)
@@ -3641,6 +3698,15 @@ export const Facture: MessageFns<Facture> = {
     if (message.motifAvoir !== "") {
       obj.motifAvoir = message.motifAvoir;
     }
+    if (message.sourceSystem !== undefined) {
+      obj.sourceSystem = message.sourceSystem;
+    }
+    if (message.externalId !== undefined) {
+      obj.externalId = message.externalId;
+    }
+    if (message.importedAt !== undefined) {
+      obj.importedAt = message.importedAt;
+    }
     if (message.statut !== undefined) {
       obj.statut = StatutFacture.toJSON(message.statut);
     }
@@ -3675,6 +3741,9 @@ export const Facture: MessageFns<Facture> = {
     message.typeDocument = object.typeDocument ?? "";
     message.factureOrigineId = object.factureOrigineId ?? "";
     message.motifAvoir = object.motifAvoir ?? "";
+    message.sourceSystem = object.sourceSystem ?? undefined;
+    message.externalId = object.externalId ?? undefined;
+    message.importedAt = object.importedAt ?? undefined;
     message.statut = (object.statut !== undefined && object.statut !== null)
       ? StatutFacture.fromPartial(object.statut)
       : undefined;
@@ -4346,6 +4415,7 @@ function createBaseListFacturesRequest(): ListFacturesRequest {
     statutId: undefined,
     dateFrom: undefined,
     dateTo: undefined,
+    sourceSystem: undefined,
     pagination: undefined,
   };
 }
@@ -4370,8 +4440,11 @@ export const ListFacturesRequest: MessageFns<ListFacturesRequest> = {
     if (message.dateTo !== undefined) {
       writer.uint32(50).string(message.dateTo);
     }
+    if (message.sourceSystem !== undefined) {
+      writer.uint32(58).string(message.sourceSystem);
+    }
     if (message.pagination !== undefined) {
-      PaginationRequest.encode(message.pagination, writer.uint32(58).fork()).join();
+      PaginationRequest.encode(message.pagination, writer.uint32(66).fork()).join();
     }
     return writer;
   },
@@ -4436,6 +4509,14 @@ export const ListFacturesRequest: MessageFns<ListFacturesRequest> = {
             break;
           }
 
+          message.sourceSystem = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
           message.pagination = PaginationRequest.decode(reader, reader.uint32());
           continue;
         }
@@ -4480,6 +4561,11 @@ export const ListFacturesRequest: MessageFns<ListFacturesRequest> = {
         : isSet(object.date_to)
         ? globalThis.String(object.date_to)
         : undefined,
+      sourceSystem: isSet(object.sourceSystem)
+        ? globalThis.String(object.sourceSystem)
+        : isSet(object.source_system)
+        ? globalThis.String(object.source_system)
+        : undefined,
       pagination: isSet(object.pagination) ? PaginationRequest.fromJSON(object.pagination) : undefined,
     };
   },
@@ -4504,6 +4590,9 @@ export const ListFacturesRequest: MessageFns<ListFacturesRequest> = {
     if (message.dateTo !== undefined) {
       obj.dateTo = message.dateTo;
     }
+    if (message.sourceSystem !== undefined) {
+      obj.sourceSystem = message.sourceSystem;
+    }
     if (message.pagination !== undefined) {
       obj.pagination = PaginationRequest.toJSON(message.pagination);
     }
@@ -4521,6 +4610,7 @@ export const ListFacturesRequest: MessageFns<ListFacturesRequest> = {
     message.statutId = object.statutId ?? undefined;
     message.dateFrom = object.dateFrom ?? undefined;
     message.dateTo = object.dateTo ?? undefined;
+    message.sourceSystem = object.sourceSystem ?? undefined;
     message.pagination = (object.pagination !== undefined && object.pagination !== null)
       ? PaginationRequest.fromPartial(object.pagination)
       : undefined;

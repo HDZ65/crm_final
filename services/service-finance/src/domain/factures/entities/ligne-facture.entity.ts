@@ -19,7 +19,7 @@ export class LigneFactureEntity {
   @Column({ type: 'uuid' })
   factureId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   produitId: string;
 
   @Column({ type: 'int' })

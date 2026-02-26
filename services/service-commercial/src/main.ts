@@ -10,7 +10,7 @@ async function bootstrap() {
   });
 
   const grpcPort = process.env.GRPC_PORT || 50053;
-  const grpcOptions = getMultiGrpcOptions(['commerciaux', 'contrats', 'products', 'commission', 'dashboard', 'bundle', 'subscriptions', 'subscription-plans', 'subscription-preferences', 'subscription-preference-schemas', 'woocommerce', 'partenaires'], {
+  const grpcOptions = getMultiGrpcOptions(['commerciaux', 'contrats', 'products', 'commission', 'dashboard', 'bundle', 'subscriptions', 'subscription-plans', 'subscription-preferences', 'subscription-preference-schemas', 'woocommerce', 'partenaires', 'cfast'], {
     url: `0.0.0.0:${grpcPort}`,
   });
   grpcOptions.package = [...grpcOptions.package, 'winleadplus'];
@@ -32,7 +32,7 @@ async function bootstrap() {
   console.log('SERVICE-COMMERCIAL STARTED');
   console.log('========================================');
   console.log(`HTTP Server: http://0.0.0.0:${httpPort}`);
-  console.log(`gRPC [commerciaux, contrats, products, commission, dashboard, bundle, subscriptions, subscription-plans, woocommerce, winleadplus]: 0.0.0.0:${grpcPort}`);
+  console.log(`gRPC [commerciaux, contrats, products, commission, dashboard, bundle, subscriptions, subscription-plans, woocommerce, cfast, winleadplus]: 0.0.0.0:${grpcPort}`);
   console.log('========================================');
 }
 

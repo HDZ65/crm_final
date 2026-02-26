@@ -20,6 +20,7 @@ export * from "./wincash";
 export * from "./depanssur";
 export * from "./subscriptions";
 export * from "./woocommerce";
+export * from "./cfast";
 export * from "./permissions";
 export * from "./documents";
 export * from "./engagement";

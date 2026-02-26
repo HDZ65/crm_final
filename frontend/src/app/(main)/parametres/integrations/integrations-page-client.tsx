@@ -30,6 +30,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { toast } from "sonner"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import {
   testWinLeadPlusConnection,
   saveWinLeadPlusConfig,
@@ -40,12 +43,27 @@ import {
   testCatalogueApiConnection,
   importCatalogueFromApi,
 } from "@/actions/catalogue-api"
+import {
+  getCfastConfig,
+  saveCfastConfig,
+  testCfastConnection,
+} from "@/actions/cfast"
 import type { WinLeadPlusConfig } from "@proto/winleadplus/winleadplus"
 import type { WooCommerceConfig } from "@proto/woocommerce/woocommerce"
+import type { CfastConfig } from "@proto/cfast/cfast"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import {
   Zap,
   ShoppingCart,
   Package,
+  Phone,
   Settings,
   Info,
   Check,
@@ -66,6 +84,7 @@ interface IntegrationsPageClientProps {
   activeOrgId?: string | null
   initialWinLeadPlusConfig: WinLeadPlusConfig | null
   initialWooCommerceConfig: WooCommerceConfig | null
+  initialCfastConfig: CfastConfig | null
 }
 
 interface ConnectionTestResult {
@@ -82,6 +101,17 @@ const WIN_LEAD_PLUS_JSON_EXAMPLE = `{
   "apiToken": "wlp_xxxxxxxxxxxx"
 }`
 
+const cfastSchema = z.object({
+  baseUrl: z.string().url("URL invalide"),
+  clientId: z.string().min(1, "Client ID obligatoire"),
+  clientSecret: z.string().min(1, "Client Secret obligatoire"),
+  username: z.string().min(1, "Nom d'utilisateur obligatoire"),
+  password: z.string().min(1, "Mot de passe obligatoire"),
+  scopes: z.string().optional(),
+})
+
+type CfastFormValues = z.infer<typeof cfastSchema>
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -90,6 +120,7 @@ export function IntegrationsPageClient({
   activeOrgId,
   initialWinLeadPlusConfig,
   initialWooCommerceConfig,
+  initialCfastConfig,
 }: IntegrationsPageClientProps) {
   // WinLeadPlus state
   const [winleadplusConfig, setWinleadplusConfig] =
@@ -124,6 +155,48 @@ export function IntegrationsPageClient({
     React.useState<ConnectionTestResult>({ status: "idle" })
   const [catalogueImporting, setCatalogueImporting] = React.useState(false)
   const [showCatalogueToken, setShowCatalogueToken] = React.useState(false)
+
+  // CFAST state
+  const [cfastConfig, setCfastConfig] =
+    React.useState<CfastConfig | null>(initialCfastConfig)
+  const [cfastDialogOpen, setCfastDialogOpen] = React.useState(false)
+  const cfastForm = useForm<CfastFormValues>({
+    resolver: zodResolver(cfastSchema),
+    defaultValues: {
+      baseUrl: "",
+      clientId: "",
+      clientSecret: "",
+      username: "",
+      password: "",
+      scopes: "openid identity bill",
+    },
+  })
+  const [showCfastSecret, setShowCfastSecret] = React.useState(false)
+  const [showCfastPassword, setShowCfastPassword] = React.useState(false)
+  const [cfastTestResult, setCfastTestResult] =
+    React.useState<ConnectionTestResult>({ status: "idle" })
+  const [cfastSaving, setCfastSaving] = React.useState(false)
+  const cfastImportedCount =
+    (cfastConfig as (CfastConfig & { lastImportedCount?: number }) | null)
+      ?.lastImportedCount ?? 0
+
+  React.useEffect(() => {
+    if (!activeOrgId) return
+    let active = true
+
+    const loadCfastConfig = async () => {
+      const result = await getCfastConfig(activeOrgId)
+      if (result.data && active) {
+        setCfastConfig(result.data)
+      }
+    }
+
+    loadCfastConfig()
+
+    return () => {
+      active = false
+    }
+  }, [activeOrgId])
 
   // ---------------------------------------------------------------------------
   // WinLeadPlus handlers
@@ -272,6 +345,75 @@ export function IntegrationsPageClient({
       setCatalogueDialogOpen(false)
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // CFAST handlers
+  // ---------------------------------------------------------------------------
+
+  const openCfastDialog = () => {
+    cfastForm.reset({
+      baseUrl: cfastConfig?.baseUrl ?? "",
+      clientId: "",
+      clientSecret: "",
+      username: "",
+      password: "",
+      scopes: cfastConfig?.scopes ?? "openid identity bill",
+    })
+    setCfastTestResult({ status: "idle" })
+    setShowCfastSecret(false)
+    setShowCfastPassword(false)
+    setCfastDialogOpen(true)
+  }
+
+  const handleTestCfast = async () => {
+    if (!activeOrgId) return
+    setCfastTestResult({ status: "loading" })
+    const result = await testCfastConnection(activeOrgId)
+    if (result.data?.success) {
+      toast.success(result.data.message || "Connexion CFAST réussie")
+      setCfastTestResult({
+        status: "success",
+        message: result.data.message || "Connexion réussie",
+      })
+    } else {
+      toast.error(result.error || result.data?.message || "Échec de la connexion CFAST")
+      setCfastTestResult({
+        status: "error",
+        message: result.error || result.data?.message || "Échec de la connexion",
+      })
+    }
+  }
+
+  const handleSaveCfast = cfastForm.handleSubmit(async (values) => {
+    if (!activeOrgId) {
+      toast.error("Organisation non trouvée")
+      return
+    }
+
+    setCfastSaving(true)
+    const result = await saveCfastConfig({
+      organisationId: activeOrgId,
+      baseUrl: values.baseUrl,
+      clientId: values.clientId,
+      clientSecret: values.clientSecret,
+      username: values.username,
+      password: values.password,
+      scopes: values.scopes || undefined,
+    })
+
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      toast.success(
+        cfastConfig ? "Configuration CFAST mise à jour" : "Configuration CFAST créée"
+      )
+      setCfastDialogOpen(false)
+      // Refresh config
+      const refreshed = await getCfastConfig(activeOrgId)
+      if (refreshed.data) setCfastConfig(refreshed.data)
+    }
+    setCfastSaving(false)
+  })
 
   // ---------------------------------------------------------------------------
   // Render helpers
@@ -548,6 +690,95 @@ export function IntegrationsPageClient({
               </div>
             </CardContent>
           </Card>
+
+          {/* ================================================================ */}
+          {/* CFAST Card */}
+          {/* ================================================================ */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400">
+                    <Phone className="size-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">CFAST</CardTitle>
+                    <CardDescription>
+                      Import de factures télécom
+                    </CardDescription>
+                  </div>
+                </div>
+                {cfastConfig?.active ? (
+                  <Badge variant="default" className="gap-1">
+                    <Wifi className="size-3" />
+                    Connecté
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="gap-1">
+                    <WifiOff className="size-3" />
+                    Non connecté
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {cfastConfig ? (
+                <>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Base URL</span>
+                      <span className="font-mono text-xs truncate max-w-[200px]">
+                        {cfastConfig.baseUrl || "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Client ID</span>
+                      <span className="font-mono text-xs">••••••••</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Factures importées</span>
+                      <span>{cfastImportedCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Dernière sync</span>
+                      <span>
+                        {cfastConfig.lastSyncAt
+                          ? new Date(cfastConfig.lastSyncAt).toLocaleString("fr-FR")
+                          : "-"}
+                      </span>
+                    </div>
+                  </div>
+                  <Separator />
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Aucune configuration. Cliquez sur Configurer pour commencer.
+                </p>
+              )}
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={openCfastDialog}>
+                  <Settings className="size-4 mr-1.5" />
+                  Configurer
+                </Button>
+                {cfastConfig && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleTestCfast}
+                    disabled={cfastTestResult.status === "loading"}
+                  >
+                    {cfastTestResult.status === "loading" ? (
+                      <Loader2 className="size-4 mr-1.5 animate-spin" />
+                    ) : (
+                      <Wifi className="size-4 mr-1.5" />
+                    )}
+                    Tester la connexion
+                  </Button>
+                )}
+              </div>
+              {renderTestBadge(cfastTestResult)}
+            </CardContent>
+          </Card>
         </div>
 
         {/* ================================================================== */}
@@ -822,6 +1053,169 @@ export function IntegrationsPageClient({
              </DialogFooter>
            </DialogContent>
          </Dialog>
+
+         {/* ================================================================== */}
+         {/* CFAST Config Dialog */}
+         {/* ================================================================== */}
+         <Dialog open={cfastDialogOpen} onOpenChange={setCfastDialogOpen}>
+           <DialogContent className="sm:max-w-md">
+             <DialogHeader>
+               <DialogTitle>
+                 {cfastConfig
+                   ? "Modifier la configuration CFAST"
+                   : "Configuration CFAST"}
+               </DialogTitle>
+               <DialogDescription>
+                 Saisissez les paramètres de connexion à l&apos;API CFAST.
+               </DialogDescription>
+             </DialogHeader>
+            <Form {...cfastForm}>
+              <form onSubmit={handleSaveCfast} className="space-y-4">
+              {/* Base URL */}
+                <FormField
+                  control={cfastForm.control}
+                  name="baseUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Base URL *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://v2.cfast.fr" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              {/* Client ID */}
+                <FormField
+                  control={cfastForm.control}
+                  name="clientId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client ID *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Votre Client ID" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              {/* Client Secret */}
+                <FormField
+                  control={cfastForm.control}
+                  name="clientSecret"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Secret *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showCfastSecret ? "text" : "password"}
+                            placeholder="Votre Client Secret"
+                            className="pr-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCfastSecret(!showCfastSecret)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showCfastSecret ? (
+                              <EyeOff className="size-4" />
+                            ) : (
+                              <Eye className="size-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              {/* Username */}
+                <FormField
+                  control={cfastForm.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom d&apos;utilisateur *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Votre username" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              {/* Password */}
+                <FormField
+                  control={cfastForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mot de passe *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showCfastPassword ? "text" : "password"}
+                            placeholder="Votre mot de passe"
+                            className="pr-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCfastPassword(!showCfastPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showCfastPassword ? (
+                              <EyeOff className="size-4" />
+                            ) : (
+                              <Eye className="size-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              {/* Scopes */}
+                <FormField
+                  control={cfastForm.control}
+                  name="scopes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Scopes (optionnel)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="openid identity bill" {...field} value={field.value ?? ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+              <Separator />
+
+               <DialogFooter>
+                 <Button
+                   type="button"
+                   variant="outline"
+                   onClick={() => setCfastDialogOpen(false)}
+                 >
+                   Annuler
+                 </Button>
+                <Button type="submit" disabled={cfastSaving}>
+                  {cfastSaving && <Loader2 className="size-4 mr-1.5 animate-spin" />}
+                  Enregistrer
+                </Button>
+              </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
        </main>
      </TooltipProvider>
    )

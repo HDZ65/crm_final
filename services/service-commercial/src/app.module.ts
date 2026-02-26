@@ -18,6 +18,7 @@ import { SubscriptionsModule } from './subscriptions.module';
 import { WooCommerceModule } from './woocommerce.module';
 import { WinLeadPlusModule } from './winleadplus.module';
 import { CatalogueWebhookModule } from './catalogue-webhook.module';
+import { CfastModule } from './cfast.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { CatalogueWebhookModule } from './catalogue-webhook.module';
     WooCommerceModule,
     WinLeadPlusModule,
     CatalogueWebhookModule,
+    CfastModule,
   ],
   controllers: [],
   providers: [

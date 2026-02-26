@@ -40,7 +40,7 @@ export class FactureEntity {
   @Column({ type: 'uuid' })
   statutId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   emissionFactureId: string;
 
   @Column({ type: 'uuid' })
@@ -49,10 +49,10 @@ export class FactureEntity {
   @Column({ type: 'uuid', nullable: true })
   contratId: string | null;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   clientPartenaireId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   adresseFacturationId: string;
 
   @Column({ type: 'varchar', length: 20, default: 'FACTURE' })
@@ -63,6 +63,15 @@ export class FactureEntity {
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   motifAvoir: string | null;
+
+  @Column({ type: 'varchar', length: 50, default: 'INTERNAL' })
+  sourceSystem: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  externalId: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  importedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

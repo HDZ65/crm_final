@@ -27,6 +27,9 @@ export interface CreateFactureInput {
   typeDocument?: string;
   factureOrigineId?: string;
   motifAvoir?: string;
+  sourceSystem?: string;
+  externalId?: string;
+  importedAt?: Date;
 }
 
 export interface CreateAvoirInput {
@@ -105,6 +108,9 @@ export class FactureService {
       typeDocument: input.typeDocument || 'FACTURE',
       factureOrigineId: input.factureOrigineId || null,
       motifAvoir: input.motifAvoir || null,
+      sourceSystem: input.sourceSystem || 'INTERNAL',
+      externalId: input.externalId || null,
+      importedAt: input.importedAt || null,
     });
 
     const saved = await this.repository.save(facture);
@@ -133,6 +139,7 @@ export class FactureService {
   async findByOrganisation(
     organisationId: string,
     pagination?: { page?: number; limit?: number },
+    sourceSystem?: string,
   ): Promise<{
     factures: FactureEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
@@ -144,8 +151,13 @@ export class FactureService {
       return { factures: [], pagination: { total: 0, page, limit, totalPages: 0 } };
     }
 
+    const where: any = { organisationId };
+    if (sourceSystem) {
+      where.sourceSystem = sourceSystem;
+    }
+
     const [factures, total] = await this.repository.findAndCount({
-      where: { organisationId },
+      where,
       relations: ['statut'],
       order: { dateEmission: 'DESC' },
       skip: (page - 1) * limit,

@@ -48,6 +48,7 @@ export class FactureController {
         page: data.pagination?.page,
         limit: data.pagination?.limit,
       },
+      data.source_system,
     );
     return result;
   }

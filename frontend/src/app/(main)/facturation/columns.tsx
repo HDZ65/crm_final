@@ -36,13 +36,24 @@ const STATUT_LABELS: Record<string, string> = {
   annulee: "Annulée",
 }
 
-export const columns: ColumnDef<Facture>[] = [
+export const getColumns = (organisationId?: string): ColumnDef<Facture>[] => [
   {
     accessorKey: "numero",
     header: "N° Facture",
-    cell: ({ row }) => (
-      <span className="font-medium">{row.getValue("numero")}</span>
-    ),
+    cell: ({ row }) => {
+      const facture = row.original
+      const numero = facture.numero
+      const numeroDisplay = numero || (facture.sourceSystem === "CFAST" ? "Import CFAST" : "-")
+
+      return (
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{numeroDisplay}</span>
+          {facture.sourceSystem === "CFAST" && (
+            <Badge variant="outline">CFAST</Badge>
+          )}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "dateEmission",
@@ -102,6 +113,21 @@ export const columns: ColumnDef<Facture>[] = [
     id: "actions",
     cell: ({ row }) => {
       const facture = row.original
+      const isCfast = facture.sourceSystem === "CFAST"
+      const canDownloadCfastPdf =
+        isCfast && !!facture.externalId && !!organisationId
+
+      const handleDownloadCfastPdf = () => {
+        if (!canDownloadCfastPdf) {
+          return
+        }
+
+        window.open(
+          `/api/cfast/invoices/${facture.externalId}/pdf?organisationId=${organisationId}`,
+          "_blank",
+          "noopener,noreferrer"
+        )
+      }
 
       return (
         <DropdownMenu>
@@ -113,7 +139,7 @@ export const columns: ColumnDef<Facture>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(facture.numero)}>
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(facture.numero || facture.externalId || "") }>
               Copier le numéro
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -121,19 +147,25 @@ export const columns: ColumnDef<Facture>[] = [
               <Eye className="mr-2 h-4 w-4" />
               Voir les détails
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Download className="mr-2 h-4 w-4" />
-              Télécharger PDF
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Send className="mr-2 h-4 w-4" />
-              Envoyer par email
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              <Ban className="mr-2 h-4 w-4" />
-              Annuler
-            </DropdownMenuItem>
+            {canDownloadCfastPdf && (
+              <DropdownMenuItem onClick={handleDownloadCfastPdf}>
+                <Download className="mr-2 h-4 w-4" />
+                Télécharger PDF
+              </DropdownMenuItem>
+            )}
+            {!isCfast && (
+              <>
+                <DropdownMenuItem>
+                  <Send className="mr-2 h-4 w-4" />
+                  Envoyer par email
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive">
+                  <Ban className="mr-2 h-4 w-4" />
+                  Annuler
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )

@@ -22,6 +22,7 @@ export async function getFacturesByOrganisation(params: {
   statutId?: string;
   dateFrom?: string;
   dateTo?: string;
+  sourceSystem?: string;
 }): Promise<ActionResult<ListFacturesResponse>> {
   try {
     const data = await factures.list({
@@ -31,6 +32,7 @@ export async function getFacturesByOrganisation(params: {
       statutId: params.statutId,
       dateFrom: params.dateFrom,
       dateTo: params.dateTo,
+      sourceSystem: params.sourceSystem,
       pagination: undefined,
     });
     return { data, error: null };

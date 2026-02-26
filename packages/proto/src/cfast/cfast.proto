@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package cfast;
+
+// ============================================================================
+// CFAST CONFIG SERVICE
+// ============================================================================
+
+service CfastConfigService {
+  rpc Create(CreateCfastConfigRequest) returns (CfastConfig);
+  rpc Update(UpdateCfastConfigRequest) returns (CfastConfig);
+  rpc Get(GetCfastConfigRequest) returns (CfastConfig);
+  rpc GetByOrganisation(GetCfastConfigByOrganisationRequest) returns (CfastConfig);
+  rpc Delete(DeleteCfastConfigRequest) returns (DeleteResponse);
+  rpc TestConnection(TestCfastConnectionRequest) returns (TestCfastConnectionResponse);
+}
+
+// ============================================================================
+// CFAST IMPORT SERVICE
+// ============================================================================
+
+service CfastImportService {
+  rpc ImportInvoices(ImportInvoicesRequest) returns (ImportInvoicesResponse);
+  rpc GetImportStatus(GetImportStatusRequest) returns (GetImportStatusResponse);
+}
+
+// ============================================================================
+// CONFIG MESSAGES
+// ============================================================================
+
+message CfastConfig {
+  string id = 1;
+  string organisation_id = 2;
+  string base_url = 3;
+  string client_id_encrypted = 4;
+  string client_secret_encrypted = 5;
+  string username_encrypted = 6;
+  string password_encrypted = 7;
+  string scopes = 8;
+  bool active = 9;
+  string last_sync_at = 10;
+  string sync_error = 11;
+  string created_at = 12;
+  string updated_at = 13;
+}
+
+message CreateCfastConfigRequest {
+  string organisation_id = 1;
+  string base_url = 2;
+  string client_id_encrypted = 3;
+  string client_secret_encrypted = 4;
+  string username_encrypted = 5;
+  string password_encrypted = 6;
+  string scopes = 7;
+}
+
+message UpdateCfastConfigRequest {
+  string id = 1;
+  string base_url = 2;
+  string client_id_encrypted = 3;
+  string client_secret_encrypted = 4;
+  string username_encrypted = 5;
+  string password_encrypted = 6;
+  string scopes = 7;
+  bool active = 8;
+}
+
+message GetCfastConfigRequest {
+  string id = 1;
+}
+
+message GetCfastConfigByOrganisationRequest {
+  string organisation_id = 1;
+}
+
+message DeleteCfastConfigRequest {
+  string id = 1;
+}
+
+message TestCfastConnectionRequest {
+  string organisation_id = 1;
+}
+
+message TestCfastConnectionResponse {
+  bool success = 1;
+  string message = 2;
+  string api_version = 3;
+}
+
+// ============================================================================
+// IMPORT MESSAGES
+// ============================================================================
+
+message ImportInvoicesRequest {
+  string organisation_id = 1;
+}
+
+message ImportInvoicesResponse {
+  int32 imported_count = 1;
+  int32 skipped_count = 2;
+  repeated string errors = 3;
+}
+
+message GetImportStatusRequest {
+  string organisation_id = 1;
+}
+
+message GetImportStatusResponse {
+  string status = 1;
+  int32 imported_count = 2;
+  int32 skipped_count = 3;
+  repeated string errors = 4;
+  string last_sync_at = 5;
+}
+
+// ============================================================================
+// COMMON MESSAGES
+// ============================================================================
+
+message DeleteResponse {
+  bool success = 1;
+}

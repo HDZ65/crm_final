@@ -203,10 +203,13 @@ message Facture {
   string type_document = 15;
   string facture_origine_id = 16;
   string motif_avoir = 17;
+  optional string source_system = 18;
+  optional string external_id = 19;
+  optional string imported_at = 20;
   // Relations
-  StatutFacture statut = 18;
-  ClientInfo client = 19;
-  repeated LigneFacture lignes = 20;
+  StatutFacture statut = 21;
+  ClientInfo client = 22;
+  repeated LigneFacture lignes = 23;
 }
 
 message CreateFactureRequest {
@@ -253,7 +256,8 @@ message ListFacturesRequest {
   optional string statut_id = 4;
   optional string date_from = 5;
   optional string date_to = 6;
-  PaginationRequest pagination = 7;
+  optional string source_system = 7;
+  PaginationRequest pagination = 8;
 }
 
 message ListFacturesResponse {

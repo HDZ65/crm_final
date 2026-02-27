@@ -6,6 +6,23 @@ import {
   CfastInvoiceDetail,
   CfastOAuthTokenResponse,
   CfastPaginatedResponse,
+  CfastCreateCustomerDto,
+  CfastCreateCustomerResponse,
+  CfastAddressDto,
+  CfastAddressResponse,
+  CfastContactDto,
+  CfastContactResponse,
+  CfastCreateContractDto,
+  CfastCreateContractResponse,
+  CfastUploadFileResponse,
+  CfastCreateBillingPointDto,
+  CfastCreateBillingPointResponse,
+  CfastCreateSiteDto,
+  CfastCreateSiteResponse,
+  CfastCreateServiceDto,
+  CfastCreateServiceResponse,
+  CfastMarkPaidDto,
+  CfastMarkPaidResponse,
 } from '../../../domain/cfast/types/cfast-api.types';
 import { EncryptionService } from '../../security/encryption.service';
 
@@ -123,6 +140,148 @@ export class CfastApiClient {
     return Buffer.from(file);
   }
 
+  // ─── Core API Write Methods ───
+
+  async createCustomer(
+    token: string,
+    data: CfastCreateCustomerDto,
+  ): Promise<CfastCreateCustomerResponse> {
+    const response = await this.fetchBillingApi(token, {
+      method: 'POST',
+      path: '/api/core/customers',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return (await response.json()) as CfastCreateCustomerResponse;
+  }
+
+  async createCustomerAddress(
+    token: string,
+    customerId: string,
+    data: CfastAddressDto,
+  ): Promise<CfastAddressResponse> {
+    const response = await this.fetchBillingApi(token, {
+      method: 'POST',
+      path: `/api/core/customers/${encodeURIComponent(customerId)}/addresses`,
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return (await response.json()) as CfastAddressResponse;
+  }
+
+  async createCustomerContact(
+    token: string,
+    customerId: string,
+    data: CfastContactDto,
+  ): Promise<CfastContactResponse> {
+    const response = await this.fetchBillingApi(token, {
+      method: 'POST',
+      path: `/api/core/customers/${encodeURIComponent(customerId)}/contacts`,
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return (await response.json()) as CfastContactResponse;
+  }
+
+  async createContract(
+    token: string,
+    customerId: string,
+    data: CfastCreateContractDto,
+  ): Promise<CfastCreateContractResponse> {
+    const response = await this.fetchBillingApi(token, {
+      method: 'POST',
+      path: `/api/core/customers/${encodeURIComponent(customerId)}/contracts`,
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return (await response.json()) as CfastCreateContractResponse;
+  }
+
+  async uploadContractFile(
+    token: string,
+    contractId: string,
+    pdfBuffer: Buffer,
+    fileName: string,
+  ): Promise<CfastUploadFileResponse> {
+    const formData = new FormData();
+    const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' });
+    formData.append('file', blob, fileName);
+
+    const response = await this.fetchBillingApi(token, {
+      method: 'POST',
+      path: `/api/core/contracts/${encodeURIComponent(contractId)}/files`,
+      formData,
+    });
+    return (await response.json()) as CfastUploadFileResponse;
+  }
+
+  async createBillingPoint(
+    token: string,
+    customerId: string,
+    data: CfastCreateBillingPointDto,
+  ): Promise<CfastCreateBillingPointResponse> {
+    const response = await this.fetchBillingApi(token, {
+      method: 'POST',
+      path: `/api/core/customers/${encodeURIComponent(customerId)}/billing-points`,
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return (await response.json()) as CfastCreateBillingPointResponse;
+  }
+
+  async createSite(
+    token: string,
+    billingPointId: string,
+    data: CfastCreateSiteDto,
+  ): Promise<CfastCreateSiteResponse> {
+    const response = await this.fetchBillingApi(token, {
+      method: 'POST',
+      path: `/api/core/billing-points/${encodeURIComponent(billingPointId)}/sites`,
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return (await response.json()) as CfastCreateSiteResponse;
+  }
+
+  async createService(
+    token: string,
+    siteId: string,
+    data: CfastCreateServiceDto,
+  ): Promise<CfastCreateServiceResponse> {
+    const response = await this.fetchBillingApi(token, {
+      method: 'POST',
+      path: `/api/core/sites/${encodeURIComponent(siteId)}/services`,
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return (await response.json()) as CfastCreateServiceResponse;
+  }
+
+  async markBillAsPaid(
+    token: string,
+    billId: string,
+    data: CfastMarkPaidDto,
+  ): Promise<CfastMarkPaidResponse> {
+    try {
+      const response = await this.fetchBillingApi(token, {
+        method: 'PATCH',
+        path: `/api/billing/bills/${encodeURIComponent(billId)}`,
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return (await response.json()) as CfastMarkPaidResponse;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('404')) {
+        this.logger.warn(
+          `markBillAsPaid: PATCH /api/billing/bills/${billId} returned 404 — endpoint may not exist`,
+        );
+        return {};
+      }
+      throw error;
+    }
+  }
+
   private async fetchBillingApi(
     token: string,
     options: {
@@ -130,6 +289,7 @@ export class CfastApiClient {
       path: string;
       body?: string;
       headers?: Record<string, string>;
+      formData?: FormData;
     },
   ): Promise<Response> {
     let currentToken = token;
@@ -145,7 +305,7 @@ export class CfastApiClient {
           Accept: 'application/json',
           ...options.headers,
         },
-        body: options.body,
+        body: options.formData ?? options.body,
       });
 
       if (response.ok) {

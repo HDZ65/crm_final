@@ -30,13 +30,14 @@ import { EncryptionService } from './infrastructure/security/encryption.service'
 // gRPC controllers
 import { CfastConfigController } from './infrastructure/grpc/subscriptions/cfast-config.controller';
 import { CfastImportController } from './infrastructure/grpc/subscriptions/cfast-import.controller';
+import { CfastPushController } from './infrastructure/grpc/subscriptions/cfast-push.controller';
 
 // HTTP controllers
 import { CfastPdfController } from './infrastructure/http/cfast/cfast-pdf.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CfastConfigEntity, CfastEntityMappingEntity, ContratEntity])],
-  controllers: [CfastConfigController, CfastImportController, CfastPdfController],
+  controllers: [CfastConfigController, CfastImportController, CfastPushController, CfastPdfController],
   providers: [
     // TypeORM repository services
     CfastConfigService,

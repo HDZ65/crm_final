@@ -120,3 +120,89 @@ message GetImportStatusResponse {
 message DeleteResponse {
   bool success = 1;
 }
+
+// ============================================================================
+// CFAST PUSH SERVICE (V2 — CRM → CFAST sync)
+// ============================================================================
+
+service CfastPushService {
+  rpc PushClientToCfast(PushClientRequest) returns (PushClientResponse);
+  rpc PushContractToCfast(PushContractRequest) returns (PushContractResponse);
+  rpc AssignSubscriptionInCfast(AssignSubscriptionRequest) returns (AssignSubscriptionResponse);
+  rpc SyncUnpaidInvoices(SyncUnpaidInvoicesRequest) returns (SyncUnpaidInvoicesResponse);
+  rpc GetCfastSyncStatus(GetSyncStatusRequest) returns (GetSyncStatusResponse);
+  rpc GetCfastEntityMappings(GetEntityMappingsRequest) returns (GetEntityMappingsResponse);
+}
+
+// ============================================================================
+// PUSH MESSAGES
+// ============================================================================
+
+message PushClientRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+}
+
+message PushClientResponse {
+  string cfast_customer_id = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message PushContractRequest {
+  string organisation_id = 1;
+  string contrat_id = 2;
+}
+
+message PushContractResponse {
+  string cfast_contract_id = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message AssignSubscriptionRequest {
+  string organisation_id = 1;
+  string contrat_id = 2;
+}
+
+message AssignSubscriptionResponse {
+  string cfast_service_id = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message SyncUnpaidInvoicesRequest {
+  string organisation_id = 1;
+}
+
+message SyncUnpaidInvoicesResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetSyncStatusRequest {
+  string organisation_id = 1;
+}
+
+message GetSyncStatusResponse {
+  string last_sync_at = 1;
+  int32 last_imported_count = 2;
+  string sync_error = 3;
+  bool is_connected = 4;
+}
+
+message GetEntityMappingsRequest {
+  string organisation_id = 1;
+}
+
+message GetEntityMappingsResponse {
+  repeated EntityMapping mappings = 1;
+}
+
+message EntityMapping {
+  string crm_entity_type = 1;
+  string crm_entity_id = 2;
+  string cfast_entity_type = 3;
+  string cfast_entity_id = 4;
+  string metadata_json = 5;
+}

@@ -95,6 +95,75 @@ export interface DeleteResponse {
   success: boolean;
 }
 
+export interface PushClientRequest {
+  organisationId: string;
+  clientId: string;
+}
+
+export interface PushClientResponse {
+  cfastCustomerId: string;
+  success: boolean;
+  errorMessage: string;
+}
+
+export interface PushContractRequest {
+  organisationId: string;
+  contratId: string;
+}
+
+export interface PushContractResponse {
+  cfastContractId: string;
+  success: boolean;
+  errorMessage: string;
+}
+
+export interface AssignSubscriptionRequest {
+  organisationId: string;
+  contratId: string;
+}
+
+export interface AssignSubscriptionResponse {
+  cfastServiceId: string;
+  success: boolean;
+  errorMessage: string;
+}
+
+export interface SyncUnpaidInvoicesRequest {
+  organisationId: string;
+}
+
+export interface SyncUnpaidInvoicesResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface GetSyncStatusRequest {
+  organisationId: string;
+}
+
+export interface GetSyncStatusResponse {
+  lastSyncAt: string;
+  lastImportedCount: number;
+  syncError: string;
+  isConnected: boolean;
+}
+
+export interface GetEntityMappingsRequest {
+  organisationId: string;
+}
+
+export interface GetEntityMappingsResponse {
+  mappings: EntityMapping[];
+}
+
+export interface EntityMapping {
+  crmEntityType: string;
+  crmEntityId: string;
+  cfastEntityType: string;
+  cfastEntityId: string;
+  metadataJson: string;
+}
+
 function createBaseCfastConfig(): CfastConfig {
   return {
     id: "",
@@ -1556,6 +1625,1156 @@ export const DeleteResponse: MessageFns<DeleteResponse> = {
   },
 };
 
+function createBasePushClientRequest(): PushClientRequest {
+  return { organisationId: "", clientId: "" };
+}
+
+export const PushClientRequest: MessageFns<PushClientRequest> = {
+  encode(message: PushClientRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PushClientRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePushClientRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PushClientRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+    };
+  },
+
+  toJSON(message: PushClientRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PushClientRequest>, I>>(base?: I): PushClientRequest {
+    return PushClientRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PushClientRequest>, I>>(object: I): PushClientRequest {
+    const message = createBasePushClientRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.clientId = object.clientId ?? "";
+    return message;
+  },
+};
+
+function createBasePushClientResponse(): PushClientResponse {
+  return { cfastCustomerId: "", success: false, errorMessage: "" };
+}
+
+export const PushClientResponse: MessageFns<PushClientResponse> = {
+  encode(message: PushClientResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.cfastCustomerId !== "") {
+      writer.uint32(10).string(message.cfastCustomerId);
+    }
+    if (message.success !== false) {
+      writer.uint32(16).bool(message.success);
+    }
+    if (message.errorMessage !== "") {
+      writer.uint32(26).string(message.errorMessage);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PushClientResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePushClientResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.cfastCustomerId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.errorMessage = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PushClientResponse {
+    return {
+      cfastCustomerId: isSet(object.cfastCustomerId)
+        ? globalThis.String(object.cfastCustomerId)
+        : isSet(object.cfast_customer_id)
+        ? globalThis.String(object.cfast_customer_id)
+        : "",
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      errorMessage: isSet(object.errorMessage)
+        ? globalThis.String(object.errorMessage)
+        : isSet(object.error_message)
+        ? globalThis.String(object.error_message)
+        : "",
+    };
+  },
+
+  toJSON(message: PushClientResponse): unknown {
+    const obj: any = {};
+    if (message.cfastCustomerId !== "") {
+      obj.cfastCustomerId = message.cfastCustomerId;
+    }
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.errorMessage !== "") {
+      obj.errorMessage = message.errorMessage;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PushClientResponse>, I>>(base?: I): PushClientResponse {
+    return PushClientResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PushClientResponse>, I>>(object: I): PushClientResponse {
+    const message = createBasePushClientResponse();
+    message.cfastCustomerId = object.cfastCustomerId ?? "";
+    message.success = object.success ?? false;
+    message.errorMessage = object.errorMessage ?? "";
+    return message;
+  },
+};
+
+function createBasePushContractRequest(): PushContractRequest {
+  return { organisationId: "", contratId: "" };
+}
+
+export const PushContractRequest: MessageFns<PushContractRequest> = {
+  encode(message: PushContractRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(18).string(message.contratId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PushContractRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePushContractRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PushContractRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+    };
+  },
+
+  toJSON(message: PushContractRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PushContractRequest>, I>>(base?: I): PushContractRequest {
+    return PushContractRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PushContractRequest>, I>>(object: I): PushContractRequest {
+    const message = createBasePushContractRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.contratId = object.contratId ?? "";
+    return message;
+  },
+};
+
+function createBasePushContractResponse(): PushContractResponse {
+  return { cfastContractId: "", success: false, errorMessage: "" };
+}
+
+export const PushContractResponse: MessageFns<PushContractResponse> = {
+  encode(message: PushContractResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.cfastContractId !== "") {
+      writer.uint32(10).string(message.cfastContractId);
+    }
+    if (message.success !== false) {
+      writer.uint32(16).bool(message.success);
+    }
+    if (message.errorMessage !== "") {
+      writer.uint32(26).string(message.errorMessage);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PushContractResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePushContractResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.cfastContractId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.errorMessage = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PushContractResponse {
+    return {
+      cfastContractId: isSet(object.cfastContractId)
+        ? globalThis.String(object.cfastContractId)
+        : isSet(object.cfast_contract_id)
+        ? globalThis.String(object.cfast_contract_id)
+        : "",
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      errorMessage: isSet(object.errorMessage)
+        ? globalThis.String(object.errorMessage)
+        : isSet(object.error_message)
+        ? globalThis.String(object.error_message)
+        : "",
+    };
+  },
+
+  toJSON(message: PushContractResponse): unknown {
+    const obj: any = {};
+    if (message.cfastContractId !== "") {
+      obj.cfastContractId = message.cfastContractId;
+    }
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.errorMessage !== "") {
+      obj.errorMessage = message.errorMessage;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PushContractResponse>, I>>(base?: I): PushContractResponse {
+    return PushContractResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PushContractResponse>, I>>(object: I): PushContractResponse {
+    const message = createBasePushContractResponse();
+    message.cfastContractId = object.cfastContractId ?? "";
+    message.success = object.success ?? false;
+    message.errorMessage = object.errorMessage ?? "";
+    return message;
+  },
+};
+
+function createBaseAssignSubscriptionRequest(): AssignSubscriptionRequest {
+  return { organisationId: "", contratId: "" };
+}
+
+export const AssignSubscriptionRequest: MessageFns<AssignSubscriptionRequest> = {
+  encode(message: AssignSubscriptionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(18).string(message.contratId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AssignSubscriptionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAssignSubscriptionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AssignSubscriptionRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+    };
+  },
+
+  toJSON(message: AssignSubscriptionRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AssignSubscriptionRequest>, I>>(base?: I): AssignSubscriptionRequest {
+    return AssignSubscriptionRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AssignSubscriptionRequest>, I>>(object: I): AssignSubscriptionRequest {
+    const message = createBaseAssignSubscriptionRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.contratId = object.contratId ?? "";
+    return message;
+  },
+};
+
+function createBaseAssignSubscriptionResponse(): AssignSubscriptionResponse {
+  return { cfastServiceId: "", success: false, errorMessage: "" };
+}
+
+export const AssignSubscriptionResponse: MessageFns<AssignSubscriptionResponse> = {
+  encode(message: AssignSubscriptionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.cfastServiceId !== "") {
+      writer.uint32(10).string(message.cfastServiceId);
+    }
+    if (message.success !== false) {
+      writer.uint32(16).bool(message.success);
+    }
+    if (message.errorMessage !== "") {
+      writer.uint32(26).string(message.errorMessage);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AssignSubscriptionResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAssignSubscriptionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.cfastServiceId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.errorMessage = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AssignSubscriptionResponse {
+    return {
+      cfastServiceId: isSet(object.cfastServiceId)
+        ? globalThis.String(object.cfastServiceId)
+        : isSet(object.cfast_service_id)
+        ? globalThis.String(object.cfast_service_id)
+        : "",
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      errorMessage: isSet(object.errorMessage)
+        ? globalThis.String(object.errorMessage)
+        : isSet(object.error_message)
+        ? globalThis.String(object.error_message)
+        : "",
+    };
+  },
+
+  toJSON(message: AssignSubscriptionResponse): unknown {
+    const obj: any = {};
+    if (message.cfastServiceId !== "") {
+      obj.cfastServiceId = message.cfastServiceId;
+    }
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.errorMessage !== "") {
+      obj.errorMessage = message.errorMessage;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AssignSubscriptionResponse>, I>>(base?: I): AssignSubscriptionResponse {
+    return AssignSubscriptionResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AssignSubscriptionResponse>, I>>(object: I): AssignSubscriptionResponse {
+    const message = createBaseAssignSubscriptionResponse();
+    message.cfastServiceId = object.cfastServiceId ?? "";
+    message.success = object.success ?? false;
+    message.errorMessage = object.errorMessage ?? "";
+    return message;
+  },
+};
+
+function createBaseSyncUnpaidInvoicesRequest(): SyncUnpaidInvoicesRequest {
+  return { organisationId: "" };
+}
+
+export const SyncUnpaidInvoicesRequest: MessageFns<SyncUnpaidInvoicesRequest> = {
+  encode(message: SyncUnpaidInvoicesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SyncUnpaidInvoicesRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSyncUnpaidInvoicesRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SyncUnpaidInvoicesRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: SyncUnpaidInvoicesRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SyncUnpaidInvoicesRequest>, I>>(base?: I): SyncUnpaidInvoicesRequest {
+    return SyncUnpaidInvoicesRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SyncUnpaidInvoicesRequest>, I>>(object: I): SyncUnpaidInvoicesRequest {
+    const message = createBaseSyncUnpaidInvoicesRequest();
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseSyncUnpaidInvoicesResponse(): SyncUnpaidInvoicesResponse {
+  return { success: false, message: "" };
+}
+
+export const SyncUnpaidInvoicesResponse: MessageFns<SyncUnpaidInvoicesResponse> = {
+  encode(message: SyncUnpaidInvoicesResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SyncUnpaidInvoicesResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSyncUnpaidInvoicesResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SyncUnpaidInvoicesResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: SyncUnpaidInvoicesResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SyncUnpaidInvoicesResponse>, I>>(base?: I): SyncUnpaidInvoicesResponse {
+    return SyncUnpaidInvoicesResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SyncUnpaidInvoicesResponse>, I>>(object: I): SyncUnpaidInvoicesResponse {
+    const message = createBaseSyncUnpaidInvoicesResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseGetSyncStatusRequest(): GetSyncStatusRequest {
+  return { organisationId: "" };
+}
+
+export const GetSyncStatusRequest: MessageFns<GetSyncStatusRequest> = {
+  encode(message: GetSyncStatusRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetSyncStatusRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSyncStatusRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSyncStatusRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetSyncStatusRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSyncStatusRequest>, I>>(base?: I): GetSyncStatusRequest {
+    return GetSyncStatusRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetSyncStatusRequest>, I>>(object: I): GetSyncStatusRequest {
+    const message = createBaseGetSyncStatusRequest();
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetSyncStatusResponse(): GetSyncStatusResponse {
+  return { lastSyncAt: "", lastImportedCount: 0, syncError: "", isConnected: false };
+}
+
+export const GetSyncStatusResponse: MessageFns<GetSyncStatusResponse> = {
+  encode(message: GetSyncStatusResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.lastSyncAt !== "") {
+      writer.uint32(10).string(message.lastSyncAt);
+    }
+    if (message.lastImportedCount !== 0) {
+      writer.uint32(16).int32(message.lastImportedCount);
+    }
+    if (message.syncError !== "") {
+      writer.uint32(26).string(message.syncError);
+    }
+    if (message.isConnected !== false) {
+      writer.uint32(32).bool(message.isConnected);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetSyncStatusResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetSyncStatusResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.lastSyncAt = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.lastImportedCount = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.syncError = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.isConnected = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSyncStatusResponse {
+    return {
+      lastSyncAt: isSet(object.lastSyncAt)
+        ? globalThis.String(object.lastSyncAt)
+        : isSet(object.last_sync_at)
+        ? globalThis.String(object.last_sync_at)
+        : "",
+      lastImportedCount: isSet(object.lastImportedCount)
+        ? globalThis.Number(object.lastImportedCount)
+        : isSet(object.last_imported_count)
+        ? globalThis.Number(object.last_imported_count)
+        : 0,
+      syncError: isSet(object.syncError)
+        ? globalThis.String(object.syncError)
+        : isSet(object.sync_error)
+        ? globalThis.String(object.sync_error)
+        : "",
+      isConnected: isSet(object.isConnected)
+        ? globalThis.Boolean(object.isConnected)
+        : isSet(object.is_connected)
+        ? globalThis.Boolean(object.is_connected)
+        : false,
+    };
+  },
+
+  toJSON(message: GetSyncStatusResponse): unknown {
+    const obj: any = {};
+    if (message.lastSyncAt !== "") {
+      obj.lastSyncAt = message.lastSyncAt;
+    }
+    if (message.lastImportedCount !== 0) {
+      obj.lastImportedCount = Math.round(message.lastImportedCount);
+    }
+    if (message.syncError !== "") {
+      obj.syncError = message.syncError;
+    }
+    if (message.isConnected !== false) {
+      obj.isConnected = message.isConnected;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSyncStatusResponse>, I>>(base?: I): GetSyncStatusResponse {
+    return GetSyncStatusResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetSyncStatusResponse>, I>>(object: I): GetSyncStatusResponse {
+    const message = createBaseGetSyncStatusResponse();
+    message.lastSyncAt = object.lastSyncAt ?? "";
+    message.lastImportedCount = object.lastImportedCount ?? 0;
+    message.syncError = object.syncError ?? "";
+    message.isConnected = object.isConnected ?? false;
+    return message;
+  },
+};
+
+function createBaseGetEntityMappingsRequest(): GetEntityMappingsRequest {
+  return { organisationId: "" };
+}
+
+export const GetEntityMappingsRequest: MessageFns<GetEntityMappingsRequest> = {
+  encode(message: GetEntityMappingsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetEntityMappingsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetEntityMappingsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetEntityMappingsRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetEntityMappingsRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetEntityMappingsRequest>, I>>(base?: I): GetEntityMappingsRequest {
+    return GetEntityMappingsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetEntityMappingsRequest>, I>>(object: I): GetEntityMappingsRequest {
+    const message = createBaseGetEntityMappingsRequest();
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseGetEntityMappingsResponse(): GetEntityMappingsResponse {
+  return { mappings: [] };
+}
+
+export const GetEntityMappingsResponse: MessageFns<GetEntityMappingsResponse> = {
+  encode(message: GetEntityMappingsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.mappings) {
+      EntityMapping.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetEntityMappingsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetEntityMappingsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mappings.push(EntityMapping.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetEntityMappingsResponse {
+    return {
+      mappings: globalThis.Array.isArray(object?.mappings)
+        ? object.mappings.map((e: any) => EntityMapping.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetEntityMappingsResponse): unknown {
+    const obj: any = {};
+    if (message.mappings?.length) {
+      obj.mappings = message.mappings.map((e) => EntityMapping.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetEntityMappingsResponse>, I>>(base?: I): GetEntityMappingsResponse {
+    return GetEntityMappingsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetEntityMappingsResponse>, I>>(object: I): GetEntityMappingsResponse {
+    const message = createBaseGetEntityMappingsResponse();
+    message.mappings = object.mappings?.map((e) => EntityMapping.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseEntityMapping(): EntityMapping {
+  return { crmEntityType: "", crmEntityId: "", cfastEntityType: "", cfastEntityId: "", metadataJson: "" };
+}
+
+export const EntityMapping: MessageFns<EntityMapping> = {
+  encode(message: EntityMapping, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.crmEntityType !== "") {
+      writer.uint32(10).string(message.crmEntityType);
+    }
+    if (message.crmEntityId !== "") {
+      writer.uint32(18).string(message.crmEntityId);
+    }
+    if (message.cfastEntityType !== "") {
+      writer.uint32(26).string(message.cfastEntityType);
+    }
+    if (message.cfastEntityId !== "") {
+      writer.uint32(34).string(message.cfastEntityId);
+    }
+    if (message.metadataJson !== "") {
+      writer.uint32(42).string(message.metadataJson);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): EntityMapping {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseEntityMapping();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.crmEntityType = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.crmEntityId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.cfastEntityType = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.cfastEntityId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.metadataJson = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EntityMapping {
+    return {
+      crmEntityType: isSet(object.crmEntityType)
+        ? globalThis.String(object.crmEntityType)
+        : isSet(object.crm_entity_type)
+        ? globalThis.String(object.crm_entity_type)
+        : "",
+      crmEntityId: isSet(object.crmEntityId)
+        ? globalThis.String(object.crmEntityId)
+        : isSet(object.crm_entity_id)
+        ? globalThis.String(object.crm_entity_id)
+        : "",
+      cfastEntityType: isSet(object.cfastEntityType)
+        ? globalThis.String(object.cfastEntityType)
+        : isSet(object.cfast_entity_type)
+        ? globalThis.String(object.cfast_entity_type)
+        : "",
+      cfastEntityId: isSet(object.cfastEntityId)
+        ? globalThis.String(object.cfastEntityId)
+        : isSet(object.cfast_entity_id)
+        ? globalThis.String(object.cfast_entity_id)
+        : "",
+      metadataJson: isSet(object.metadataJson)
+        ? globalThis.String(object.metadataJson)
+        : isSet(object.metadata_json)
+        ? globalThis.String(object.metadata_json)
+        : "",
+    };
+  },
+
+  toJSON(message: EntityMapping): unknown {
+    const obj: any = {};
+    if (message.crmEntityType !== "") {
+      obj.crmEntityType = message.crmEntityType;
+    }
+    if (message.crmEntityId !== "") {
+      obj.crmEntityId = message.crmEntityId;
+    }
+    if (message.cfastEntityType !== "") {
+      obj.cfastEntityType = message.cfastEntityType;
+    }
+    if (message.cfastEntityId !== "") {
+      obj.cfastEntityId = message.cfastEntityId;
+    }
+    if (message.metadataJson !== "") {
+      obj.metadataJson = message.metadataJson;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<EntityMapping>, I>>(base?: I): EntityMapping {
+    return EntityMapping.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<EntityMapping>, I>>(object: I): EntityMapping {
+    const message = createBaseEntityMapping();
+    message.crmEntityType = object.crmEntityType ?? "";
+    message.crmEntityId = object.crmEntityId ?? "";
+    message.cfastEntityType = object.cfastEntityType ?? "";
+    message.cfastEntityId = object.cfastEntityId ?? "";
+    message.metadataJson = object.metadataJson ?? "";
+    return message;
+  },
+};
+
 export type CfastConfigServiceService = typeof CfastConfigServiceService;
 export const CfastConfigServiceService = {
   create: {
@@ -1660,6 +2879,81 @@ export const CfastImportServiceService = {
 export interface CfastImportServiceServer extends UntypedServiceImplementation {
   importInvoices: handleUnaryCall<ImportInvoicesRequest, ImportInvoicesResponse>;
   getImportStatus: handleUnaryCall<GetImportStatusRequest, GetImportStatusResponse>;
+}
+
+export type CfastPushServiceService = typeof CfastPushServiceService;
+export const CfastPushServiceService = {
+  pushClientToCfast: {
+    path: "/cfast.CfastPushService/PushClientToCfast",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: PushClientRequest): Buffer => Buffer.from(PushClientRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): PushClientRequest => PushClientRequest.decode(value),
+    responseSerialize: (value: PushClientResponse): Buffer => Buffer.from(PushClientResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): PushClientResponse => PushClientResponse.decode(value),
+  },
+  pushContractToCfast: {
+    path: "/cfast.CfastPushService/PushContractToCfast",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: PushContractRequest): Buffer => Buffer.from(PushContractRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): PushContractRequest => PushContractRequest.decode(value),
+    responseSerialize: (value: PushContractResponse): Buffer =>
+      Buffer.from(PushContractResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): PushContractResponse => PushContractResponse.decode(value),
+  },
+  assignSubscriptionInCfast: {
+    path: "/cfast.CfastPushService/AssignSubscriptionInCfast",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: AssignSubscriptionRequest): Buffer =>
+      Buffer.from(AssignSubscriptionRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): AssignSubscriptionRequest => AssignSubscriptionRequest.decode(value),
+    responseSerialize: (value: AssignSubscriptionResponse): Buffer =>
+      Buffer.from(AssignSubscriptionResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): AssignSubscriptionResponse => AssignSubscriptionResponse.decode(value),
+  },
+  syncUnpaidInvoices: {
+    path: "/cfast.CfastPushService/SyncUnpaidInvoices",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: SyncUnpaidInvoicesRequest): Buffer =>
+      Buffer.from(SyncUnpaidInvoicesRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): SyncUnpaidInvoicesRequest => SyncUnpaidInvoicesRequest.decode(value),
+    responseSerialize: (value: SyncUnpaidInvoicesResponse): Buffer =>
+      Buffer.from(SyncUnpaidInvoicesResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SyncUnpaidInvoicesResponse => SyncUnpaidInvoicesResponse.decode(value),
+  },
+  getCfastSyncStatus: {
+    path: "/cfast.CfastPushService/GetCfastSyncStatus",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetSyncStatusRequest): Buffer => Buffer.from(GetSyncStatusRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetSyncStatusRequest => GetSyncStatusRequest.decode(value),
+    responseSerialize: (value: GetSyncStatusResponse): Buffer =>
+      Buffer.from(GetSyncStatusResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetSyncStatusResponse => GetSyncStatusResponse.decode(value),
+  },
+  getCfastEntityMappings: {
+    path: "/cfast.CfastPushService/GetCfastEntityMappings",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetEntityMappingsRequest): Buffer =>
+      Buffer.from(GetEntityMappingsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetEntityMappingsRequest => GetEntityMappingsRequest.decode(value),
+    responseSerialize: (value: GetEntityMappingsResponse): Buffer =>
+      Buffer.from(GetEntityMappingsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetEntityMappingsResponse => GetEntityMappingsResponse.decode(value),
+  },
+} as const;
+
+export interface CfastPushServiceServer extends UntypedServiceImplementation {
+  pushClientToCfast: handleUnaryCall<PushClientRequest, PushClientResponse>;
+  pushContractToCfast: handleUnaryCall<PushContractRequest, PushContractResponse>;
+  assignSubscriptionInCfast: handleUnaryCall<AssignSubscriptionRequest, AssignSubscriptionResponse>;
+  syncUnpaidInvoices: handleUnaryCall<SyncUnpaidInvoicesRequest, SyncUnpaidInvoicesResponse>;
+  getCfastSyncStatus: handleUnaryCall<GetSyncStatusRequest, GetSyncStatusResponse>;
+  getCfastEntityMappings: handleUnaryCall<GetEntityMappingsRequest, GetEntityMappingsResponse>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

@@ -1,13 +1,20 @@
 "use server";
 
-import { cfastConfig, cfastImport } from "@/lib/grpc";
+import { cfastConfig, cfastImport, cfastPush } from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types/common";
 import type {
   CfastConfig,
   TestCfastConnectionResponse,
   ImportInvoicesResponse,
+  PushClientResponse,
+  PushContractResponse,
+  AssignSubscriptionResponse,
+  SyncUnpaidInvoicesResponse,
+  GetEntityMappingsResponse,
+  EntityMapping,
 } from "@proto/cfast/cfast";
+import type { GetSyncStatusResponse as CfastSyncStatusResponse } from "@proto/cfast/cfast";
 
 /**
  * Get CFAST configuration by organisation ID
@@ -155,6 +162,163 @@ export async function importCfastInvoices(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors de l'import des factures CFAST",
+    };
+  }
+}
+
+/**
+ * Push a CRM client to CFAST (create customer + billing point + site)
+ */
+export async function pushClientToCfast(
+  organisationId: string,
+  clientId: string
+): Promise<ActionResult<{ cfastCustomerId: string }>> {
+  try {
+    const result = await cfastPush.pushClientToCfast({
+      organisationId,
+      clientId,
+    });
+    if (!result.success) {
+      return { data: null, error: result.errorMessage || "Erreur lors du push client vers CFAST" };
+    }
+    return { data: { cfastCustomerId: result.cfastCustomerId }, error: null };
+  } catch (err) {
+    console.error("[pushClientToCfast] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du push client vers CFAST",
+    };
+  }
+}
+
+/**
+ * Push a CRM contract to CFAST (create contract + upload PDF)
+ */
+export async function pushContractToCfast(
+  organisationId: string,
+  contratId: string
+): Promise<ActionResult<{ cfastContractId: string }>> {
+  try {
+    const result = await cfastPush.pushContractToCfast({
+      organisationId,
+      contratId,
+    });
+    if (!result.success) {
+      return { data: null, error: result.errorMessage || "Erreur lors du push contrat vers CFAST" };
+    }
+    return { data: { cfastContractId: result.cfastContractId }, error: null };
+  } catch (err) {
+    console.error("[pushContractToCfast] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du push contrat vers CFAST",
+    };
+  }
+}
+
+/**
+ * Assign a CRM contract as a subscription/service in CFAST
+ */
+export async function assignSubscriptionInCfast(
+  organisationId: string,
+  contratId: string
+): Promise<ActionResult<{ cfastServiceId: string }>> {
+  try {
+    const result = await cfastPush.assignSubscriptionInCfast({
+      organisationId,
+      contratId,
+    });
+    if (!result.success) {
+      return { data: null, error: result.errorMessage || "Erreur lors de l'assignation d'abonnement CFAST" };
+    }
+    return { data: { cfastServiceId: result.cfastServiceId }, error: null };
+  } catch (err) {
+    console.error("[assignSubscriptionInCfast] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de l'assignation d'abonnement CFAST",
+    };
+  }
+}
+
+/**
+ * Trigger unpaid invoice sync from CFAST for a given organisation
+ */
+export async function syncUnpaidInvoices(
+  organisationId: string
+): Promise<ActionResult<{ success: boolean; message: string }>> {
+  try {
+    const result = await cfastPush.syncUnpaidInvoices({
+      organisationId,
+    });
+    return {
+      data: { success: result.success, message: result.message },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[syncUnpaidInvoices] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la synchronisation des factures impayées",
+    };
+  }
+}
+
+/**
+ * Get CFAST sync status for an organisation
+ */
+export async function getCfastSyncStatus(
+  organisationId: string
+): Promise<ActionResult<{ lastSyncAt: string; lastImportedCount: number; syncError: string; isConnected: boolean }>> {
+  try {
+    const result = await cfastPush.getCfastSyncStatus({
+      organisationId,
+    });
+    return {
+      data: {
+        lastSyncAt: result.lastSyncAt,
+        lastImportedCount: result.lastImportedCount,
+        syncError: result.syncError,
+        isConnected: result.isConnected,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[getCfastSyncStatus] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la récupération du statut de synchronisation",
+    };
+  }
+}
+
+/**
+ * Get all CFAST entity mappings for an organisation
+ */
+export async function getCfastEntityMappings(
+  organisationId: string
+): Promise<ActionResult<{ mappings: Array<{ crmEntityType: string; crmEntityId: string; cfastEntityType: string; cfastEntityId: string; metadataJson: string }> }>> {
+  try {
+    const result = await cfastPush.getCfastEntityMappings({
+      organisationId,
+    });
+    return {
+      data: {
+        mappings: (result.mappings || []).map((m) => ({
+          crmEntityType: m.crmEntityType,
+          crmEntityId: m.crmEntityId,
+          cfastEntityType: m.cfastEntityType,
+          cfastEntityId: m.cfastEntityId,
+          metadataJson: m.metadataJson,
+        })),
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[getCfastEntityMappings] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la récupération des mappings d'entités CFAST",
     };
   }
 }

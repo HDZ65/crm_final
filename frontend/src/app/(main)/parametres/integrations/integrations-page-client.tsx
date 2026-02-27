@@ -48,6 +48,7 @@ import {
   saveCfastConfig,
   testCfastConnection,
 } from "@/actions/cfast"
+import { CfastIntegrationSection } from "./components/CfastIntegrationSection"
 import type { WinLeadPlusConfig } from "@proto/winleadplus/winleadplus"
 import type { WooCommerceConfig } from "@proto/woocommerce/woocommerce"
 import type { CfastConfig } from "@proto/cfast/cfast"
@@ -692,93 +693,15 @@ export function IntegrationsPageClient({
           </Card>
 
           {/* ================================================================ */}
-          {/* CFAST Card */}
+          {/* CFAST Integration Section (full dashboard) */}
           {/* ================================================================ */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400">
-                    <Phone className="size-5" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">CFAST</CardTitle>
-                    <CardDescription>
-                      Import de factures télécom
-                    </CardDescription>
-                  </div>
-                </div>
-                {cfastConfig?.active ? (
-                  <Badge variant="default" className="gap-1">
-                    <Wifi className="size-3" />
-                    Connecté
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="gap-1">
-                    <WifiOff className="size-3" />
-                    Non connecté
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {cfastConfig ? (
-                <>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Base URL</span>
-                      <span className="font-mono text-xs truncate max-w-[200px]">
-                        {cfastConfig.baseUrl || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Client ID</span>
-                      <span className="font-mono text-xs">••••••••</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Factures importées</span>
-                      <span>{cfastImportedCount}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Dernière sync</span>
-                      <span>
-                        {cfastConfig.lastSyncAt
-                          ? new Date(cfastConfig.lastSyncAt).toLocaleString("fr-FR")
-                          : "-"}
-                      </span>
-                    </div>
-                  </div>
-                  <Separator />
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Aucune configuration. Cliquez sur Configurer pour commencer.
-                </p>
-              )}
-              <div className="flex items-center gap-2">
-                <Button size="sm" onClick={openCfastDialog}>
-                  <Settings className="size-4 mr-1.5" />
-                  Configurer
-                </Button>
-                {cfastConfig && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleTestCfast}
-                    disabled={cfastTestResult.status === "loading"}
-                  >
-                    {cfastTestResult.status === "loading" ? (
-                      <Loader2 className="size-4 mr-1.5 animate-spin" />
-                    ) : (
-                      <Wifi className="size-4 mr-1.5" />
-                    )}
-                    Tester la connexion
-                  </Button>
-                )}
-              </div>
-              {renderTestBadge(cfastTestResult)}
-            </CardContent>
-          </Card>
+          <CfastIntegrationSection
+            activeOrgId={activeOrgId}
+            cfastConfig={cfastConfig}
+            onOpenConfigDialog={openCfastDialog}
+            onTestConnection={handleTestCfast}
+            testResultStatus={cfastTestResult.status}
+          />
         </div>
 
         {/* ================================================================== */}

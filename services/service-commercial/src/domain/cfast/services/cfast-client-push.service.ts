@@ -97,26 +97,33 @@ export class CfastClientPushService {
    * Push a CRM client to CFAST by creating the full hierarchy:
    * Customer → BillingPoint → Site
    *
-   * Idempotent: if a CLIENT→CUSTOMER mapping already exists, returns the existing CFAST ID.
+   * Idempotent: checks all 3 mappings (CUSTOMER, BILLING_POINT, SITE).
+   * If all exist, returns immediately. If partially complete (e.g. CUSTOMER exists
+   * but SITE does not), resumes from the last successful step.
    * On partial failure, partial mappings are kept and error is thrown with step indicator.
    */
   async pushClient(
     organisationId: string,
     clientId: string,
   ): Promise<{ cfastCustomerId: string }> {
-    // ── Step 0: Idempotency — return existing mapping if already pushed ──
-    const existingMapping = await this.cfastEntityMappingService.findMapping(
-      organisationId,
-      CRM_ENTITY_TYPE,
-      clientId,
-      CFAST_TYPE_CUSTOMER,
-    );
+    // ── Step 0: Idempotency — check if full hierarchy already exists ──
+    const [existingCustomer, existingBillingPoint, existingSite] = await Promise.all([
+      this.cfastEntityMappingService.findMapping(organisationId, CRM_ENTITY_TYPE, clientId, CFAST_TYPE_CUSTOMER),
+      this.cfastEntityMappingService.findMapping(organisationId, CRM_ENTITY_TYPE, clientId, CFAST_TYPE_BILLING_POINT),
+      this.cfastEntityMappingService.findMapping(organisationId, CRM_ENTITY_TYPE, clientId, CFAST_TYPE_SITE),
+    ]);
 
-    if (existingMapping) {
+    if (existingCustomer && existingBillingPoint && existingSite) {
       this.logger.log(
-        `Client ${clientId} already pushed to CFAST (customerId=${existingMapping.cfastEntityId})`,
+        `Client ${clientId} already fully pushed to CFAST (customerId=${existingCustomer.cfastEntityId})`,
       );
-      return { cfastCustomerId: existingMapping.cfastEntityId };
+      return { cfastCustomerId: existingCustomer.cfastEntityId };
+    }
+
+    if (existingCustomer) {
+      this.logger.log(
+        `Client ${clientId} partially pushed — resuming from ${existingBillingPoint ? 'SITE' : 'BILLING_POINT'}`,
+      );
     }
 
     // ── Step 1: Load CFAST config & authenticate ──
@@ -131,94 +138,106 @@ export class CfastClientPushService {
     const crmClient = await this.clientsGrpc.get({ id: clientId });
     const displayName = `${crmClient.prenom || ''} ${crmClient.nom || ''}`.trim() || clientId;
 
-    // ── Step 3: Create CFAST Customer ──
+    // ── Step 3: Create CFAST Customer (skip if already exists) ──
     let cfastCustomerId: string;
-    try {
-      const customerResponse = await this.cfastApiClient.createCustomer(token, {
-        firstName: crmClient.prenom || undefined,
-        lastName: crmClient.nom || undefined,
-        name: displayName,
-        email: crmClient.email || undefined,
-        phone: crmClient.telephone || undefined,
-      });
-      cfastCustomerId = customerResponse.id;
-    } catch (error) {
-      throw new Error(
-        `CFAST push failed at step CUSTOMER for client ${clientId}: ${this.errorMessage(error)}`,
-      );
-    }
-
-    // Store CLIENT→CUSTOMER mapping immediately (partial progress preserved)
-    await this.cfastEntityMappingService.upsertMapping({
-      organisationId,
-      crmEntityType: CRM_ENTITY_TYPE,
-      crmEntityId: clientId,
-      cfastEntityType: CFAST_TYPE_CUSTOMER,
-      cfastEntityId: cfastCustomerId,
-    });
-
-    // ── Step 3b: Create CFAST Customer Address (best-effort, non-blocking) ──
-    const primaryAddress = crmClient.adresses?.[0];
-    if (primaryAddress) {
+    if (existingCustomer) {
+      cfastCustomerId = existingCustomer.cfastEntityId;
+    } else {
       try {
-        await this.cfastApiClient.createCustomerAddress(token, cfastCustomerId, {
-          street:
-            [primaryAddress.ligne1, primaryAddress.ligne2].filter(Boolean).join(', ') || undefined,
-          city: primaryAddress.ville || undefined,
-          postalCode: primaryAddress.code_postal || undefined,
-          country: primaryAddress.pays || 'FR',
+        const customerResponse = await this.cfastApiClient.createCustomer(token, {
+          firstName: crmClient.prenom || undefined,
+          lastName: crmClient.nom || undefined,
+          name: displayName,
+          email: crmClient.email || undefined,
+          phone: crmClient.telephone || undefined,
         });
+        cfastCustomerId = customerResponse.id;
       } catch (error) {
-        this.logger.warn(
-          `CFAST push: address creation failed for customer ${cfastCustomerId}: ${this.errorMessage(error)}`,
+        throw new Error(
+          `CFAST push failed at step CUSTOMER for client ${clientId}: ${this.errorMessage(error)}`,
         );
-        // Non-blocking — continue with billing point creation
+      }
+
+      // Store CLIENT→CUSTOMER mapping immediately (partial progress preserved)
+      await this.cfastEntityMappingService.upsertMapping({
+        organisationId,
+        crmEntityType: CRM_ENTITY_TYPE,
+        crmEntityId: clientId,
+        cfastEntityType: CFAST_TYPE_CUSTOMER,
+        cfastEntityId: cfastCustomerId,
+      });
+
+      // ── Step 3b: Create CFAST Customer Address (best-effort, non-blocking, only on first push) ──
+      const primaryAddress = crmClient.adresses?.[0];
+      if (primaryAddress) {
+        try {
+          await this.cfastApiClient.createCustomerAddress(token, cfastCustomerId, {
+            street:
+              [primaryAddress.ligne1, primaryAddress.ligne2].filter(Boolean).join(', ') || undefined,
+            city: primaryAddress.ville || undefined,
+            postalCode: primaryAddress.code_postal || undefined,
+            country: primaryAddress.pays || 'FR',
+          });
+        } catch (error) {
+          this.logger.warn(
+            `CFAST push: address creation failed for customer ${cfastCustomerId}: ${this.errorMessage(error)}`,
+          );
+          // Non-blocking — continue with billing point creation
+        }
       }
     }
 
-    // ── Step 4: Create CFAST BillingPoint ──
+    // ── Step 4: Create CFAST BillingPoint (skip if already exists) ──
     let cfastBillingPointId: string;
-    try {
-      const bpResponse = await this.cfastApiClient.createBillingPoint(token, cfastCustomerId, {
-        name: displayName,
+    if (existingBillingPoint) {
+      cfastBillingPointId = existingBillingPoint.cfastEntityId;
+    } else {
+      try {
+        const bpResponse = await this.cfastApiClient.createBillingPoint(token, cfastCustomerId, {
+          name: displayName,
+        });
+        cfastBillingPointId = bpResponse.id;
+      } catch (error) {
+        throw new Error(
+          `CFAST push failed at step BILLING_POINT (customer=${cfastCustomerId}) for client ${clientId}: ${this.errorMessage(error)}`,
+        );
+      }
+
+      // Store CLIENT→BILLING_POINT mapping immediately
+      await this.cfastEntityMappingService.upsertMapping({
+        organisationId,
+        crmEntityType: CRM_ENTITY_TYPE,
+        crmEntityId: clientId,
+        cfastEntityType: CFAST_TYPE_BILLING_POINT,
+        cfastEntityId: cfastBillingPointId,
       });
-      cfastBillingPointId = bpResponse.id;
-    } catch (error) {
-      throw new Error(
-        `CFAST push failed at step BILLING_POINT (customer=${cfastCustomerId}) for client ${clientId}: ${this.errorMessage(error)}`,
-      );
     }
 
-    // Store CLIENT→BILLING_POINT mapping immediately
-    await this.cfastEntityMappingService.upsertMapping({
-      organisationId,
-      crmEntityType: CRM_ENTITY_TYPE,
-      crmEntityId: clientId,
-      cfastEntityType: CFAST_TYPE_BILLING_POINT,
-      cfastEntityId: cfastBillingPointId,
-    });
-
-    // ── Step 5: Create CFAST Site ──
+    // ── Step 5: Create CFAST Site (skip if already exists) ──
     let cfastSiteId: string;
-    try {
-      const siteResponse = await this.cfastApiClient.createSite(token, cfastBillingPointId, {
-        name: displayName,
-      });
-      cfastSiteId = siteResponse.id;
-    } catch (error) {
-      throw new Error(
-        `CFAST push failed at step SITE (billingPoint=${cfastBillingPointId}) for client ${clientId}: ${this.errorMessage(error)}`,
-      );
-    }
+    if (existingSite) {
+      cfastSiteId = existingSite.cfastEntityId;
+    } else {
+      try {
+        const siteResponse = await this.cfastApiClient.createSite(token, cfastBillingPointId, {
+          name: displayName,
+        });
+        cfastSiteId = siteResponse.id;
+      } catch (error) {
+        throw new Error(
+          `CFAST push failed at step SITE (billingPoint=${cfastBillingPointId}) for client ${clientId}: ${this.errorMessage(error)}`,
+        );
+      }
 
-    // Store CLIENT→SITE mapping immediately
-    await this.cfastEntityMappingService.upsertMapping({
-      organisationId,
-      crmEntityType: CRM_ENTITY_TYPE,
-      crmEntityId: clientId,
-      cfastEntityType: CFAST_TYPE_SITE,
-      cfastEntityId: cfastSiteId,
-    });
+      // Store CLIENT→SITE mapping immediately
+      await this.cfastEntityMappingService.upsertMapping({
+        organisationId,
+        crmEntityType: CRM_ENTITY_TYPE,
+        crmEntityId: clientId,
+        cfastEntityType: CFAST_TYPE_SITE,
+        cfastEntityId: cfastSiteId,
+      });
+    }
 
     this.logger.log(
       `Client ${clientId} pushed to CFAST: customer=${cfastCustomerId}, billingPoint=${cfastBillingPointId}, site=${cfastSiteId}`,

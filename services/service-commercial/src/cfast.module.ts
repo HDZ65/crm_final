@@ -19,6 +19,10 @@ import { ContractPdfGeneratorService } from './domain/cfast/services/contract-pd
 import { CfastClientPushService } from './domain/cfast/services/cfast-client-push.service';
 import { CfastContractPushService } from './domain/cfast/services/cfast-contract-push.service';
 import { CfastSubscriptionPushService } from './domain/cfast/services/cfast-subscription-push.service';
+import { CfastInvoiceSyncSchedulerService } from './infrastructure/scheduling/cfast-invoice-sync-scheduler.service';
+
+// NATS handlers
+import { CfastPaymentBridgeHandler } from './infrastructure/messaging/nats/handlers/cfast-payment-bridge.handler';
 
 // Security
 import { EncryptionService } from './infrastructure/security/encryption.service';
@@ -45,6 +49,9 @@ import { CfastPdfController } from './infrastructure/http/cfast/cfast-pdf.contro
     ContractPdfGeneratorService,
     CfastContractPushService,
     CfastSubscriptionPushService,
+    CfastInvoiceSyncSchedulerService,
+    // NATS handlers
+    CfastPaymentBridgeHandler,
     // Security
     EncryptionService,
   ],

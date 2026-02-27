@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
+import { NatsService } from '@crm/shared-kernel';
 
 import {
   PSPEventInboxEntity,
@@ -13,6 +14,8 @@ import {
   PaymentEventType,
 } from '../../../domain/payments/entities/payment-event.entity';
 import { PaymentProvider } from '../../../domain/payments/entities/schedule.entity';
+import { PaymentIntentEntity } from '../../../domain/payments/entities/payment-intent.entity';
+import { FactureService } from '../../persistence/typeorm/repositories/factures';
 import {
   GoCardlessAccountEntity,
 } from '../../../domain/payments/entities/gocardless-account.entity';
@@ -62,6 +65,10 @@ export class GoCardlessWebhookHandler {
     private readonly paymentEventRepo: Repository<PaymentEventEntity>,
     @InjectRepository(GoCardlessAccountEntity)
     private readonly gcAccountRepo: Repository<GoCardlessAccountEntity>,
+    @InjectRepository(PaymentIntentEntity)
+    private readonly paymentIntentRepo: Repository<PaymentIntentEntity>,
+    private readonly factureService: FactureService,
+    @Optional() private readonly natsService?: NatsService,
   ) {}
 
   // -----------------------------------------------------------------------
@@ -227,6 +234,15 @@ export class GoCardlessWebhookHandler {
 
     await this.paymentEventRepo.save(paymentEvent);
 
+    // Fire-and-forget NATS publish for payment succeeded (non-blocking)
+    if (paymentEventType === PaymentEventType.PAYMENT_SUCCEEDED) {
+      this.publishPaymentSucceeded(event).catch((err) => {
+        this.logger.warn(
+          `Failed to publish payment.gocardless.succeeded NATS event: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      });
+    }
+
     return {
       inboxId: inbox.id,
       status: WebhookEventStatus.PROCESSED,
@@ -298,5 +314,61 @@ export class GoCardlessWebhookHandler {
       default:
         return PaymentEventType.WEBHOOK_RECEIVED;
     }
+  }
+
+  // -----------------------------------------------------------------------
+  // NATS publish — payment.gocardless.succeeded (fire-and-forget)
+  // -----------------------------------------------------------------------
+
+  private async publishPaymentSucceeded(event: GoCardlessWebhookEvent): Promise<void> {
+    if (!this.natsService || !this.natsService.isConnected()) {
+      this.logger.debug('NatsService not available, skipping payment.gocardless.succeeded publish');
+      return;
+    }
+
+    const goCardlessPaymentId = event.links?.payment;
+    if (!goCardlessPaymentId) {
+      this.logger.debug('No payment link in GoCardless event, skipping NATS publish');
+      return;
+    }
+
+    // Look up PaymentIntent to find factureId
+    const paymentIntent = await this.paymentIntentRepo.findOne({
+      where: { providerPaymentId: goCardlessPaymentId },
+    });
+
+    if (!paymentIntent?.factureId) {
+      this.logger.debug(
+        `No facture linked to GoCardless payment ${goCardlessPaymentId}, skipping NATS publish`,
+      );
+      return;
+    }
+
+    // Enrich with CFAST metadata if applicable
+    const metadata: Record<string, unknown> = {};
+
+    try {
+      const facture = await this.factureService.findById(paymentIntent.factureId);
+      if (facture.sourceSystem === 'CFAST' && facture.externalId) {
+        metadata.cfastInvoiceId = facture.externalId;
+        metadata.organisationId = facture.organisationId;
+      }
+    } catch {
+      // Facture not found or lookup error — publish without CFAST metadata
+      this.logger.debug(`Could not look up facture ${paymentIntent.factureId} for CFAST metadata`);
+    }
+
+    await this.natsService.publish('payment.gocardless.succeeded', {
+      factureId: paymentIntent.factureId,
+      amount: Number(paymentIntent.amount) || 0,
+      currency: paymentIntent.currency || 'EUR',
+      provider: 'GOCARDLESS',
+      goCardlessPaymentId,
+      metadata,
+    });
+
+    this.logger.log(
+      `Published payment.gocardless.succeeded for facture=${paymentIntent.factureId}`,
+    );
   }
 }

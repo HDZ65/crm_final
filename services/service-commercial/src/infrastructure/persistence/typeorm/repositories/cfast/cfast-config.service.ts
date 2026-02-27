@@ -21,6 +21,13 @@ export class CfastConfigService implements ICfastConfigRepository {
     return this.repository.findOne({ where: { organisationId } });
   }
 
+  async findAllActive(): Promise<CfastConfigEntity[]> {
+    return this.repository.find({
+      where: { active: true },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
   async save(entity: CfastConfigEntity): Promise<CfastConfigEntity> {
     return this.repository.save(entity);
   }

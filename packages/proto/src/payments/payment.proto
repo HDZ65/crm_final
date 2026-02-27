@@ -44,6 +44,7 @@ service PaymentService {
   rpc CreateGoCardlessPayment(CreateGoCardlessPaymentRequest) returns (GoCardlessPaymentResponse);
   rpc CreateGoCardlessSubscription(CreateGoCardlessSubscriptionRequest) returns (GoCardlessSubscriptionResponse);
   rpc CancelGoCardlessSubscription(CancelGoCardlessSubscriptionRequest) returns (GoCardlessSubscriptionResponse);
+  rpc ListGoCardlessMandates(ListGoCardlessMandatesRequest) returns (ListGoCardlessMandatesResponse);
 
   // ==================== SCHEDULES ====================
   rpc CreateSchedule(CreateScheduleRequest) returns (ScheduleResponse);
@@ -481,6 +482,23 @@ message GoCardlessSubscriptionResponse {
 message CancelGoCardlessSubscriptionRequest {
   string subscription_id = 1;
   string societe_id = 2;
+}
+
+message ListGoCardlessMandatesRequest {
+  string organisation_id = 1;
+}
+
+message GoCardlessMandateSummary {
+  string id = 1;
+  string status = 2;
+  string client_id = 3;
+}
+
+message ListGoCardlessMandatesResponse {
+  repeated GoCardlessMandateSummary mandates = 1;
+  int32 total = 2;
+  int32 active_count = 3;
+  int32 pending_count = 4;
 }
 
 // ==================== SCHEDULE MESSAGES ====================

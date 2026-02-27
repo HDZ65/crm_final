@@ -1,6 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
 import { GoCardlessApiService } from '../../../../infrastructure/psp/gocardless/gocardless-api.service';
+import { GoCardlessMandateEntity, MandateStatus } from '../../../../domain/payments/entities/gocardless-mandate.entity';
 import type {
   SetupGoCardlessMandateRequest,
   GoCardlessMandateResponse,
@@ -10,11 +13,17 @@ import type {
   CreateGoCardlessSubscriptionRequest,
   GoCardlessSubscriptionResponse,
   CancelGoCardlessSubscriptionRequest,
+  ListGoCardlessMandatesRequest,
+  ListGoCardlessMandatesResponse,
 } from '@proto/payment';
 
 @Controller()
 export class GoCardlessController {
-  constructor(private readonly gcApi: GoCardlessApiService) {}
+  constructor(
+    private readonly gcApi: GoCardlessApiService,
+    @InjectRepository(GoCardlessMandateEntity)
+    private readonly mandateRepo: Repository<GoCardlessMandateEntity>,
+  ) {}
 
   // -----------------------------------------------------------------------
   // Mandate RPCs
@@ -77,6 +86,33 @@ export class GoCardlessController {
       account_holder_name: result.accountHolderName,
       account_number_ending: result.accountNumberEnding,
       redirect_url: undefined,
+    };
+  }
+
+  @GrpcMethod('PaymentService', 'ListGoCardlessMandates')
+  async listGoCardlessMandates(data: ListGoCardlessMandatesRequest): Promise<ListGoCardlessMandatesResponse> {
+    const PENDING_STATUSES = [
+      MandateStatus.PENDING_SUBMISSION,
+      MandateStatus.PENDING_CUSTOMER_APPROVAL,
+      MandateStatus.SUBMITTED,
+    ];
+
+    const mandates = await this.mandateRepo.find({
+      where: { societeId: data.organisation_id },
+    });
+
+    const activeCount = mandates.filter(m => m.status === MandateStatus.ACTIVE).length;
+    const pendingCount = mandates.filter(m => PENDING_STATUSES.includes(m.status)).length;
+
+    return {
+      mandates: mandates.map(m => ({
+        id: m.id,
+        status: m.status,
+        client_id: m.clientId,
+      })),
+      total: mandates.length,
+      active_count: activeCount,
+      pending_count: pendingCount,
     };
   }
 

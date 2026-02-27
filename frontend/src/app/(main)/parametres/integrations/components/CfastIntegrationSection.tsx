@@ -47,6 +47,7 @@ import {
   syncUnpaidInvoices,
   getCfastSyncStatus,
   getCfastEntityMappings,
+  getCfastGoCardlessMandateStatus,
 } from "@/actions/cfast"
 import { getClientsByOrganisation } from "@/actions/clients"
 import { getContratsByOrganisation } from "@/actions/contrats"
@@ -111,6 +112,7 @@ export function CfastIntegrationSection({
     customers: 0,
   })
   const [loadingStatus, setLoadingStatus] = React.useState(false)
+  const [mandateStatus, setMandateStatus] = React.useState<{ total: number; activeCount: number; pendingCount: number } | null>(null)
 
   // ---------------------------------------------------------------------------
   // Load clients + contrats when Actions tab is used
@@ -139,9 +141,10 @@ export function CfastIntegrationSection({
     if (!activeOrgId) return
     setLoadingStatus(true)
     try {
-      const [statusResult, mappingsResult] = await Promise.all([
+      const [statusResult, mappingsResult, mandateResult] = await Promise.all([
         getCfastSyncStatus(activeOrgId),
         getCfastEntityMappings(activeOrgId),
+        getCfastGoCardlessMandateStatus(activeOrgId),
       ])
 
       if (statusResult.data) {
@@ -156,6 +159,10 @@ export function CfastIntegrationSection({
           services: mappings.filter((m) => m.crmEntityType === "CONTRAT" && m.cfastEntityType === "SERVICE").length,
           customers: mappings.filter((m) => m.cfastEntityType === "CUSTOMER").length,
         })
+      }
+
+      if (mandateResult.data) {
+        setMandateStatus(mandateResult.data)
       }
     } catch {
       toast.error("Erreur lors du chargement du statut")
@@ -576,18 +583,26 @@ export function CfastIntegrationSection({
                 </div>
 
                 {/* GoCardless mandate status */}
-                <div className="rounded-lg border p-4 space-y-2">
+                <div className="rounded-lg border p-4 space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <CreditCard className="size-4 text-muted-foreground" />
-                    GoCardless
+                    Mandats GoCardless
                   </div>
-                  <div className="pl-6 space-y-1">
-                    <p className="text-sm">
-                      Clients CFAST avec mandat potentiel :
-                      <span className="font-semibold ml-1">{entityCounts.customers}</span>
-                    </p>
+                  <div className="pl-6 space-y-2">
+                    <div className="flex items-center gap-4 text-sm">
+                      <span>Total mandats :</span>
+                      <span className="font-semibold">{mandateStatus?.total ?? 0}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="border-green-300 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+                        Actifs : {mandateStatus?.activeCount ?? 0}
+                      </Badge>
+                      <Badge variant="outline" className="border-yellow-300 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-400">
+                        En attente : {mandateStatus?.pendingCount ?? 0}
+                      </Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Les mandats sont vérifiés automatiquement lors de la synchronisation des factures impayées.
+                      Les mandats actifs sont utilisés pour le prélèvement automatique des factures CFAST
                     </p>
                   </div>
                 </div>

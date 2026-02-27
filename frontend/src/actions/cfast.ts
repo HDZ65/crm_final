@@ -1,6 +1,6 @@
 "use server";
 
-import { cfastConfig, cfastImport, cfastPush } from "@/lib/grpc";
+import { cfastConfig, cfastImport, cfastPush, payments } from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/types/common";
 import type {
@@ -319,6 +319,33 @@ export async function getCfastEntityMappings(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors de la récupération des mappings d'entités CFAST",
+    };
+  }
+}
+
+/**
+ * Get GoCardless mandate status for an organisation (counts)
+ */
+export async function getCfastGoCardlessMandateStatus(
+  organisationId: string
+): Promise<ActionResult<{ total: number; activeCount: number; pendingCount: number }>> {
+  try {
+    const result = await payments.listGoCardlessMandates({
+      organisationId,
+    });
+    return {
+      data: {
+        total: result.total,
+        activeCount: result.activeCount,
+        pendingCount: result.pendingCount,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[getCfastGoCardlessMandateStatus] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la récupération du statut des mandats GoCardless",
     };
   }
 }

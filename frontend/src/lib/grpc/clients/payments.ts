@@ -92,6 +92,9 @@ import {
   type CreateRejectionReasonRequest,
   type RejectionReasonResponse,
   type UpdateRejectionReasonRequest,
+  // GoCardless Mandates List
+  type ListGoCardlessMandatesRequest,
+  type ListGoCardlessMandatesResponse,
 } from "@proto/payments/payment";
 
 let paymentInstance: GrpcClient | null = null;
@@ -244,6 +247,14 @@ export const payments = {
     promisify<CancelGoCardlessSubscriptionRequest, GoCardlessSubscriptionResponse>(
       getPaymentClient(),
       "cancelGoCardlessSubscription"
+    )(request),
+
+  listGoCardlessMandates: (
+    request: ListGoCardlessMandatesRequest
+  ): Promise<ListGoCardlessMandatesResponse> =>
+    promisify<ListGoCardlessMandatesRequest, ListGoCardlessMandatesResponse>(
+      getPaymentClient(),
+      "listGoCardlessMandates"
     )(request),
 
   // ==================== SCHEDULES ====================

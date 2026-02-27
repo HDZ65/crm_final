@@ -1076,6 +1076,23 @@ export interface CancelGoCardlessSubscriptionRequest {
   societeId: string;
 }
 
+export interface ListGoCardlessMandatesRequest {
+  organisationId: string;
+}
+
+export interface GoCardlessMandateSummary {
+  id: string;
+  status: string;
+  clientId: string;
+}
+
+export interface ListGoCardlessMandatesResponse {
+  mandates: GoCardlessMandateSummary[];
+  total: number;
+  activeCount: number;
+  pendingCount: number;
+}
+
 export interface CreateScheduleRequest {
   organisationId: string;
   societeId: string;
@@ -8257,6 +8274,288 @@ export const CancelGoCardlessSubscriptionRequest: MessageFns<CancelGoCardlessSub
     const message = createBaseCancelGoCardlessSubscriptionRequest();
     message.subscriptionId = object.subscriptionId ?? "";
     message.societeId = object.societeId ?? "";
+    return message;
+  },
+};
+
+function createBaseListGoCardlessMandatesRequest(): ListGoCardlessMandatesRequest {
+  return { organisationId: "" };
+}
+
+export const ListGoCardlessMandatesRequest: MessageFns<ListGoCardlessMandatesRequest> = {
+  encode(message: ListGoCardlessMandatesRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListGoCardlessMandatesRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListGoCardlessMandatesRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListGoCardlessMandatesRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: ListGoCardlessMandatesRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListGoCardlessMandatesRequest>, I>>(base?: I): ListGoCardlessMandatesRequest {
+    return ListGoCardlessMandatesRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListGoCardlessMandatesRequest>, I>>(
+    object: I,
+  ): ListGoCardlessMandatesRequest {
+    const message = createBaseListGoCardlessMandatesRequest();
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseGoCardlessMandateSummary(): GoCardlessMandateSummary {
+  return { id: "", status: "", clientId: "" };
+}
+
+export const GoCardlessMandateSummary: MessageFns<GoCardlessMandateSummary> = {
+  encode(message: GoCardlessMandateSummary, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(26).string(message.clientId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GoCardlessMandateSummary {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGoCardlessMandateSummary();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GoCardlessMandateSummary {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GoCardlessMandateSummary): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GoCardlessMandateSummary>, I>>(base?: I): GoCardlessMandateSummary {
+    return GoCardlessMandateSummary.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GoCardlessMandateSummary>, I>>(object: I): GoCardlessMandateSummary {
+    const message = createBaseGoCardlessMandateSummary();
+    message.id = object.id ?? "";
+    message.status = object.status ?? "";
+    message.clientId = object.clientId ?? "";
+    return message;
+  },
+};
+
+function createBaseListGoCardlessMandatesResponse(): ListGoCardlessMandatesResponse {
+  return { mandates: [], total: 0, activeCount: 0, pendingCount: 0 };
+}
+
+export const ListGoCardlessMandatesResponse: MessageFns<ListGoCardlessMandatesResponse> = {
+  encode(message: ListGoCardlessMandatesResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.mandates) {
+      GoCardlessMandateSummary.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int32(message.total);
+    }
+    if (message.activeCount !== 0) {
+      writer.uint32(24).int32(message.activeCount);
+    }
+    if (message.pendingCount !== 0) {
+      writer.uint32(32).int32(message.pendingCount);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListGoCardlessMandatesResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListGoCardlessMandatesResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.mandates.push(GoCardlessMandateSummary.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.activeCount = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.pendingCount = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListGoCardlessMandatesResponse {
+    return {
+      mandates: globalThis.Array.isArray(object?.mandates)
+        ? object.mandates.map((e: any) => GoCardlessMandateSummary.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      activeCount: isSet(object.activeCount)
+        ? globalThis.Number(object.activeCount)
+        : isSet(object.active_count)
+        ? globalThis.Number(object.active_count)
+        : 0,
+      pendingCount: isSet(object.pendingCount)
+        ? globalThis.Number(object.pendingCount)
+        : isSet(object.pending_count)
+        ? globalThis.Number(object.pending_count)
+        : 0,
+    };
+  },
+
+  toJSON(message: ListGoCardlessMandatesResponse): unknown {
+    const obj: any = {};
+    if (message.mandates?.length) {
+      obj.mandates = message.mandates.map((e) => GoCardlessMandateSummary.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    if (message.activeCount !== 0) {
+      obj.activeCount = Math.round(message.activeCount);
+    }
+    if (message.pendingCount !== 0) {
+      obj.pendingCount = Math.round(message.pendingCount);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListGoCardlessMandatesResponse>, I>>(base?: I): ListGoCardlessMandatesResponse {
+    return ListGoCardlessMandatesResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListGoCardlessMandatesResponse>, I>>(
+    object: I,
+  ): ListGoCardlessMandatesResponse {
+    const message = createBaseListGoCardlessMandatesResponse();
+    message.mandates = object.mandates?.map((e) => GoCardlessMandateSummary.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    message.activeCount = object.activeCount ?? 0;
+    message.pendingCount = object.pendingCount ?? 0;
     return message;
   },
 };
@@ -29860,6 +30159,18 @@ export const PaymentServiceService = {
     responseDeserialize: (value: Buffer): GoCardlessSubscriptionResponse =>
       GoCardlessSubscriptionResponse.decode(value),
   },
+  listGoCardlessMandates: {
+    path: "/payment.PaymentService/ListGoCardlessMandates",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListGoCardlessMandatesRequest): Buffer =>
+      Buffer.from(ListGoCardlessMandatesRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListGoCardlessMandatesRequest => ListGoCardlessMandatesRequest.decode(value),
+    responseSerialize: (value: ListGoCardlessMandatesResponse): Buffer =>
+      Buffer.from(ListGoCardlessMandatesResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListGoCardlessMandatesResponse =>
+      ListGoCardlessMandatesResponse.decode(value),
+  },
   /** ==================== SCHEDULES ==================== */
   createSchedule: {
     path: "/payment.PaymentService/CreateSchedule",
@@ -30558,6 +30869,7 @@ export interface PaymentServiceServer extends UntypedServiceImplementation {
   createGoCardlessPayment: handleUnaryCall<CreateGoCardlessPaymentRequest, GoCardlessPaymentResponse>;
   createGoCardlessSubscription: handleUnaryCall<CreateGoCardlessSubscriptionRequest, GoCardlessSubscriptionResponse>;
   cancelGoCardlessSubscription: handleUnaryCall<CancelGoCardlessSubscriptionRequest, GoCardlessSubscriptionResponse>;
+  listGoCardlessMandates: handleUnaryCall<ListGoCardlessMandatesRequest, ListGoCardlessMandatesResponse>;
   /** ==================== SCHEDULES ==================== */
   createSchedule: handleUnaryCall<CreateScheduleRequest, ScheduleResponse>;
   getSchedule: handleUnaryCall<GetByIdRequest, ScheduleResponse>;

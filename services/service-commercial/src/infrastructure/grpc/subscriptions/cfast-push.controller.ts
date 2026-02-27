@@ -9,8 +9,9 @@ import { CfastConfigService } from '../../persistence/typeorm/repositories/cfast
 import { CfastEntityMappingService } from '../../persistence/typeorm/repositories/cfast/cfast-entity-mapping.service';
 
 // Helper: read proto fields in both camelCase and snake_case (keepCase:true sends snake_case)
-function f(data: Record<string, any>, camel: string, snake: string): any {
-  return data[camel] ?? data[snake];
+function readProtoField(data: Record<string, unknown>, camel: string, snake: string): string | undefined {
+  const val = data[camel] ?? data[snake];
+  return typeof val === 'string' ? val : undefined;
 }
 
 @Controller()
@@ -27,9 +28,9 @@ export class CfastPushController {
   ) {}
 
   @GrpcMethod('CfastPushService', 'PushClientToCfast')
-  async pushClientToCfast(data: Record<string, any>) {
-    const organisationId = f(data, 'organisationId', 'organisation_id');
-    const clientId = f(data, 'clientId', 'client_id');
+  async pushClientToCfast(data: Record<string, unknown>) {
+    const organisationId = readProtoField(data, 'organisationId', 'organisation_id');
+    const clientId = readProtoField(data, 'clientId', 'client_id');
     if (!organisationId || !clientId) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
@@ -38,7 +39,7 @@ export class CfastPushController {
     }
 
     try {
-      const result = await this.cfastClientPushService.pushClient(organisationId, clientId);
+      const result = await this.cfastClientPushService.pushClient(organisationId as string, clientId as string);
       return {
         cfast_customer_id: result.cfastCustomerId,
         success: true,
@@ -56,9 +57,9 @@ export class CfastPushController {
   }
 
   @GrpcMethod('CfastPushService', 'PushContractToCfast')
-  async pushContractToCfast(data: Record<string, any>) {
-    const organisationId = f(data, 'organisationId', 'organisation_id');
-    const contratId = f(data, 'contratId', 'contrat_id');
+  async pushContractToCfast(data: Record<string, unknown>) {
+    const organisationId = readProtoField(data, 'organisationId', 'organisation_id');
+    const contratId = readProtoField(data, 'contratId', 'contrat_id');
     if (!organisationId || !contratId) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
@@ -67,7 +68,7 @@ export class CfastPushController {
     }
 
     try {
-      const result = await this.cfastContractPushService.pushContract(organisationId, contratId);
+      const result = await this.cfastContractPushService.pushContract(organisationId as string, contratId as string);
       return {
         cfast_contract_id: result.cfastContractId,
         success: true,
@@ -85,9 +86,9 @@ export class CfastPushController {
   }
 
   @GrpcMethod('CfastPushService', 'AssignSubscriptionInCfast')
-  async assignSubscriptionInCfast(data: Record<string, any>) {
-    const organisationId = f(data, 'organisationId', 'organisation_id');
-    const contratId = f(data, 'contratId', 'contrat_id');
+  async assignSubscriptionInCfast(data: Record<string, unknown>) {
+    const organisationId = readProtoField(data, 'organisationId', 'organisation_id');
+    const contratId = readProtoField(data, 'contratId', 'contrat_id');
     if (!organisationId || !contratId) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
@@ -96,7 +97,7 @@ export class CfastPushController {
     }
 
     try {
-      const result = await this.cfastSubscriptionPushService.assignSubscription(organisationId, contratId);
+      const result = await this.cfastSubscriptionPushService.assignSubscription(organisationId as string, contratId as string);
       return {
         cfast_service_id: result.cfastServiceId,
         success: true,
@@ -114,8 +115,8 @@ export class CfastPushController {
   }
 
   @GrpcMethod('CfastPushService', 'SyncUnpaidInvoices')
-  async syncUnpaidInvoices(data: Record<string, any>) {
-    const organisationId = f(data, 'organisationId', 'organisation_id');
+  async syncUnpaidInvoices(data: Record<string, unknown>) {
+    const organisationId = readProtoField(data, 'organisationId', 'organisation_id');
     if (!organisationId) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
@@ -124,7 +125,7 @@ export class CfastPushController {
     }
 
     try {
-      await this.cfastInvoiceSyncSchedulerService.syncOrganisation(organisationId);
+      await this.cfastInvoiceSyncSchedulerService.syncOrganisation(organisationId as string);
       return {
         success: true,
         message: 'Unpaid invoice sync completed successfully',
@@ -140,8 +141,8 @@ export class CfastPushController {
   }
 
   @GrpcMethod('CfastPushService', 'GetCfastSyncStatus')
-  async getCfastSyncStatus(data: Record<string, any>) {
-    const organisationId = f(data, 'organisationId', 'organisation_id');
+  async getCfastSyncStatus(data: Record<string, unknown>) {
+    const organisationId = readProtoField(data, 'organisationId', 'organisation_id');
     if (!organisationId) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
@@ -150,7 +151,7 @@ export class CfastPushController {
     }
 
     try {
-      const config = await this.cfastConfigService.findByOrganisationId(organisationId);
+      const config = await this.cfastConfigService.findByOrganisationId(organisationId as string);
       if (!config) {
         return {
           last_sync_at: '',
@@ -174,8 +175,8 @@ export class CfastPushController {
   }
 
   @GrpcMethod('CfastPushService', 'GetCfastEntityMappings')
-  async getCfastEntityMappings(data: Record<string, any>) {
-    const organisationId = f(data, 'organisationId', 'organisation_id');
+  async getCfastEntityMappings(data: Record<string, unknown>) {
+    const organisationId = readProtoField(data, 'organisationId', 'organisation_id');
     if (!organisationId) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
@@ -184,7 +185,7 @@ export class CfastPushController {
     }
 
     try {
-      const mappings = await this.cfastEntityMappingService.findAllByOrg(organisationId);
+      const mappings = await this.cfastEntityMappingService.findAllByOrg(organisationId as string);
       return {
         mappings: mappings.map((m) => ({
           crm_entity_type: m.crmEntityType,

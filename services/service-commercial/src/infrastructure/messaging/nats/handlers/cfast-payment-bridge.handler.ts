@@ -68,8 +68,9 @@ class FinanceGrpcHelper {
   constructor() {
     const grpcPackage = loadGrpcPackage('factures');
 
-    const FactureServiceCtor = (grpcPackage as any)?.factures?.FactureService;
-    const StatutCtor = (grpcPackage as any)?.factures?.StatutFactureService;
+    const grpcPkg = grpcPackage as Record<string, Record<string, new (...args: unknown[]) => unknown>>;
+    const FactureServiceCtor = grpcPkg?.factures?.FactureService as (new (url: string, creds: ReturnType<typeof credentials.createInsecure>) => FactureServiceGrpc) | undefined;
+    const StatutCtor = grpcPkg?.factures?.StatutFactureService as (new (url: string, creds: ReturnType<typeof credentials.createInsecure>) => StatutFactureServiceGrpc) | undefined;
 
     if (!FactureServiceCtor) {
       throw new Error('FactureService gRPC constructor not found in factures proto package');

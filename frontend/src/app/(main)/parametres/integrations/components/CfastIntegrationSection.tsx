@@ -173,14 +173,19 @@ export function CfastIntegrationSection({
       return
     }
     setPushingClient(true)
-    const result = await pushClientToCfast(activeOrgId, selectedClientId)
-    if (result.error) {
-      toast.error(result.error)
-    } else {
-      toast.success(`Client envoyé vers CFAST (ID: ${result.data?.cfastCustomerId})`)
-      setSelectedClientId("")
+    try {
+      const result = await pushClientToCfast(activeOrgId, selectedClientId)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success(`Client envoyé vers CFAST (ID: ${result.data?.cfastCustomerId})`)
+        setSelectedClientId("")
+      }
+    } catch {
+      toast.error("Erreur inattendue lors de l'envoi du client")
+    } finally {
+      setPushingClient(false)
     }
-    setPushingClient(false)
   }
 
   const handlePushContrat = async () => {
@@ -189,14 +194,19 @@ export function CfastIntegrationSection({
       return
     }
     setPushingContrat(true)
-    const result = await pushContractToCfast(activeOrgId, selectedContratId)
-    if (result.error) {
-      toast.error(result.error)
-    } else {
-      toast.success(`Contrat envoyé vers CFAST (ID: ${result.data?.cfastContractId})`)
-      setSelectedContratId("")
+    try {
+      const result = await pushContractToCfast(activeOrgId, selectedContratId)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success(`Contrat envoyé vers CFAST (ID: ${result.data?.cfastContractId})`)
+        setSelectedContratId("")
+      }
+    } catch {
+      toast.error("Erreur inattendue lors de l'envoi du contrat")
+    } finally {
+      setPushingContrat(false)
     }
-    setPushingContrat(false)
   }
 
   const handleAssignSubscription = async () => {
@@ -205,26 +215,36 @@ export function CfastIntegrationSection({
       return
     }
     setAssigningSubscription(true)
-    const result = await assignSubscriptionInCfast(activeOrgId, selectedAssignContratId)
-    if (result.error) {
-      toast.error(result.error)
-    } else {
-      toast.success(`Forfait assigné dans CFAST (ID: ${result.data?.cfastServiceId})`)
-      setSelectedAssignContratId("")
+    try {
+      const result = await assignSubscriptionInCfast(activeOrgId, selectedAssignContratId)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success(`Forfait assigné dans CFAST (ID: ${result.data?.cfastServiceId})`)
+        setSelectedAssignContratId("")
+      }
+    } catch {
+      toast.error("Erreur inattendue lors de l'assignation du forfait")
+    } finally {
+      setAssigningSubscription(false)
     }
-    setAssigningSubscription(false)
   }
 
   const handleSyncInvoices = async () => {
     if (!activeOrgId) return
     setSyncingInvoices(true)
-    const result = await syncUnpaidInvoices(activeOrgId)
-    if (result.error) {
-      toast.error(result.error)
-    } else {
-      toast.success(result.data?.message || "Synchronisation des factures lancée")
+    try {
+      const result = await syncUnpaidInvoices(activeOrgId)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success(result.data?.message || "Synchronisation des factures lancée")
+      }
+    } catch {
+      toast.error("Erreur inattendue lors de la synchronisation")
+    } finally {
+      setSyncingInvoices(false)
     }
-    setSyncingInvoices(false)
   }
 
   // ---------------------------------------------------------------------------

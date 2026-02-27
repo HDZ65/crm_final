@@ -47,9 +47,26 @@ export class ContractPdfGeneratorService {
         doc.moveDown();
       }
 
-      // Notes
+      // Totals section
+      if (contrat.montant) {
+        doc.moveDown();
+        doc.fontSize(11).text('─'.repeat(40));
+        const sousTotal = contrat.montant;
+        const tva = sousTotal * 0.2;
+        const totalTTC = sousTotal * 1.2;
+        doc.fontSize(10);
+        doc.text(`Sous-total HT: ${sousTotal} ${contrat.devise || 'EUR'}`, { align: 'right' });
+        doc.text(`TVA (20%): ${tva.toFixed(2)} ${contrat.devise || 'EUR'}`, { align: 'right' });
+        doc.fontSize(12).text(`Total TTC: ${totalTTC.toFixed(2)} ${contrat.devise || 'EUR'}`, { align: 'right' });
+        doc.moveDown();
+      }
+
+      // Footer section
+      doc.fontSize(10).text('─'.repeat(40));
+      doc.fontSize(9).text('Conditions générales: Ce contrat est soumis aux conditions générales de vente en vigueur.');
       if (contrat.notes) {
-        doc.fontSize(10).text(`Notes: ${contrat.notes}`);
+        doc.moveDown(0.3);
+        doc.text(`Notes: ${contrat.notes}`);
       }
 
       doc.end();

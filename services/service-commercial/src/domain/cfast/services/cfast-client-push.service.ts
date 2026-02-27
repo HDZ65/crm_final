@@ -185,6 +185,20 @@ export class CfastClientPushService {
           // Non-blocking — continue with billing point creation
         }
       }
+
+      // ── Step 3c: Create CFAST Customer Contact (best-effort, non-blocking, only on first push) ──
+      try {
+        await this.cfastApiClient.createCustomerContact(token, cfastCustomerId, {
+          name: displayName,
+          email: crmClient.email || undefined,
+          phone: crmClient.telephone || undefined,
+        });
+      } catch (error) {
+        this.logger.warn(
+          `CFAST push: contact creation failed for customer ${cfastCustomerId}: ${this.errorMessage(error)}`,
+        );
+        // Non-blocking — continue with billing point creation
+      }
     }
 
     // ── Step 4: Create CFAST BillingPoint (skip if already exists) ──

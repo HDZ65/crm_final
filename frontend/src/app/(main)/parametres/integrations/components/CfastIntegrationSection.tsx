@@ -575,6 +575,23 @@ export function CfastIntegrationSection({
                   </div>
                 </div>
 
+                {/* GoCardless mandate status */}
+                <div className="rounded-lg border p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <CreditCard className="size-4 text-muted-foreground" />
+                    GoCardless
+                  </div>
+                  <div className="pl-6 space-y-1">
+                    <p className="text-sm">
+                      Clients CFAST avec mandat potentiel :
+                      <span className="font-semibold ml-1">{entityCounts.customers}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Les mandats sont vérifiés automatiquement lors de la synchronisation des factures impayées.
+                    </p>
+                  </div>
+                </div>
+
                 {/* Errors */}
                 {syncStatus?.syncError && (
                   <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950">

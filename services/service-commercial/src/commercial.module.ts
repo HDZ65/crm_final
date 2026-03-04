@@ -38,7 +38,16 @@ import {
 } from './infrastructure/persistence/typeorm/repositories/commercial';
 
 // Interface controllers
-import { ApporteurController, CommissionController, PartenaireCommercialController } from './infrastructure/grpc/commercial';
+import {
+  ApporteurController,
+  CommissionCrudController,
+  CommissionBordereauController,
+  CommissionCalculationController,
+  CommissionContestationController,
+  CommissionValidationController,
+  CommissionDashboardController,
+  PartenaireCommercialController,
+} from './infrastructure/grpc/commercial';
 
 // Cross-context dependencies
 import { ContratsModule } from './contrats.module';
@@ -76,7 +85,12 @@ import { DepanssurEventsHandler } from './infrastructure/messaging/nats/handlers
   ],
   controllers: [
     ApporteurController,
-    CommissionController,
+    CommissionCrudController,
+    CommissionBordereauController,
+    CommissionCalculationController,
+    CommissionContestationController,
+    CommissionValidationController,
+    CommissionDashboardController,
     PartenaireCommercialController,
   ],
   providers: [

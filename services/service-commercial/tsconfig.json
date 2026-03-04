@@ -21,6 +21,9 @@
       "@crm/shared-kernel/*": [
         "packages/shared-kernel/dist/*"
       ],
+      "@proto/commission/*": [
+        "services/service-commercial/proto/generated/commission-*"
+      ],
       "@proto/*": [
         "services/service-commercial/proto/generated/*"
       ]

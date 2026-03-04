@@ -1,5 +1,11 @@
 import { createAuthChannelCredentials } from "@/lib/grpc/auth";
 import { credentials, SERVICES, promisify, makeClient, type GrpcClient } from "./config";
+import { CommissionCrudServiceService } from "@proto/commission/commission-crud";
+import { CommissionBordereauServiceService } from "@proto/commission/commission-bordereau";
+import { CommissionCalculationServiceService } from "@proto/commission/commission-calculation";
+import { CommissionContestationServiceService } from "@proto/commission/commission-contestation";
+import { CommissionValidationServiceService } from "@proto/commission/commission-validation";
+import { CommissionDashboardServiceService } from "@proto/commission/commission-dashboard";
 import {
   CommissionServiceService,
   type GetByIdRequest as CommissionGetByIdRequest,
@@ -61,7 +67,34 @@ import {
   type ValiderBordereauFinalResponse,
   type GetLignesForValidationRequest,
   type GetLignesForValidationResponse,
+  // Additional types for split clients
+  type GetByApporteurRequest,
+  type GetByPeriodeRequest,
+  type CreateStatutRequest,
+  type UpdateStatutRequest,
+  type StatutResponse,
+  type GetStatutByCodeRequest,
+  type CreateLigneBordereauRequest,
+  type UpdateLigneBordereauRequest,
+  type LigneBordereauResponse,
+  type LigneBordereauListResponse,
+  type ValidateLigneRequest,
+  type GetByBordereauRequest,
+  type ExportBordereauRequest,
+  type GetBordereauByApporteurPeriodeRequest,
+  type GetDashboardKpiRequest,
+  type GetDashboardKpiResponse,
+  type GenererSnapshotKpiRequest,
+  type GenererSnapshotKpiResponse,
+  type GetComparatifsRequest,
+  type GetComparatifsResponse,
+  type ExportAnalytiqueRequest,
+  type ExportAnalytiqueResponse,
 } from "@proto/commission/commission";
+
+// ============================================
+// MONOLITH CLIENT (backward compat)
+// ============================================
 
 let commissionInstance: GrpcClient | null = null;
 
@@ -362,6 +395,248 @@ export const paliers = {
       "deletePalier"
     )(request),
 };
+
+// ============================================
+// SPLIT CLIENTS (route to specific services)
+// ============================================
+
+// ----- CommissionCrud -----
+let crudInstance: GrpcClient | null = null;
+function getCrudClient(): GrpcClient {
+  if (!crudInstance) {
+    crudInstance = makeClient(
+      CommissionCrudServiceService,
+      "CommissionCrudService",
+      SERVICES.commission,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return crudInstance;
+}
+
+export const commissionCrud = {
+  createCommission: (request: CreateCommissionRequest) =>
+    promisify<CreateCommissionRequest, CommissionResponse>(getCrudClient(), "createCommission")(request),
+  getCommission: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, CommissionResponse>(getCrudClient(), "getCommission")(request),
+  getCommissions: (request: GetCommissionsRequest) =>
+    promisify<GetCommissionsRequest, CommissionListResponse>(getCrudClient(), "getCommissions")(request),
+  getCommissionsByApporteur: (request: GetByApporteurRequest) =>
+    promisify<GetByApporteurRequest, CommissionListResponse>(getCrudClient(), "getCommissionsByApporteur")(request),
+  getCommissionsByPeriode: (request: GetByPeriodeRequest) =>
+    promisify<GetByPeriodeRequest, CommissionListResponse>(getCrudClient(), "getCommissionsByPeriode")(request),
+  updateCommission: (request: UpdateCommissionRequest) =>
+    promisify<UpdateCommissionRequest, CommissionResponse>(getCrudClient(), "updateCommission")(request),
+  deleteCommission: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, CommissionDeleteResponse>(getCrudClient(), "deleteCommission")(request),
+  createBareme: (request: CreateBaremeRequest) =>
+    promisify<CreateBaremeRequest, BaremeResponse>(getCrudClient(), "createBareme")(request),
+  getBareme: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, BaremeResponse>(getCrudClient(), "getBareme")(request),
+  getBaremes: (request: GetBaremesRequest) =>
+    promisify<GetBaremesRequest, BaremeListResponse>(getCrudClient(), "getBaremes")(request),
+  getBaremeApplicable: (request: GetBaremeApplicableRequest) =>
+    promisify<GetBaremeApplicableRequest, BaremeResponse>(getCrudClient(), "getBaremeApplicable")(request),
+  updateBareme: (request: UpdateBaremeRequest) =>
+    promisify<UpdateBaremeRequest, BaremeResponse>(getCrudClient(), "updateBareme")(request),
+  deleteBareme: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, CommissionDeleteResponse>(getCrudClient(), "deleteBareme")(request),
+  createPalier: (request: CreatePalierRequest) =>
+    promisify<CreatePalierRequest, PalierResponse>(getCrudClient(), "createPalier")(request),
+  getPalier: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, PalierResponse>(getCrudClient(), "getPalier")(request),
+  getPaliersByBareme: (request: GetByBaremeRequest) =>
+    promisify<GetByBaremeRequest, PalierListResponse>(getCrudClient(), "getPaliersByBareme")(request),
+  updatePalier: (request: UpdatePalierRequest) =>
+    promisify<UpdatePalierRequest, PalierResponse>(getCrudClient(), "updatePalier")(request),
+  deletePalier: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, CommissionDeleteResponse>(getCrudClient(), "deletePalier")(request),
+  createStatut: (request: CreateStatutRequest) =>
+    promisify<CreateStatutRequest, StatutResponse>(getCrudClient(), "createStatut")(request),
+  getStatut: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, StatutResponse>(getCrudClient(), "getStatut")(request),
+  getStatuts: (request: GetStatutsCommissionRequest) =>
+    promisify<GetStatutsCommissionRequest, StatutCommissionListResponse>(getCrudClient(), "getStatuts")(request),
+  getStatutByCode: (request: GetStatutByCodeRequest) =>
+    promisify<GetStatutByCodeRequest, StatutResponse>(getCrudClient(), "getStatutByCode")(request),
+  updateStatut: (request: UpdateStatutRequest) =>
+    promisify<UpdateStatutRequest, StatutResponse>(getCrudClient(), "updateStatut")(request),
+  deleteStatut: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, CommissionDeleteResponse>(getCrudClient(), "deleteStatut")(request),
+};
+
+// ----- CommissionBordereau -----
+let bordereauInstance: GrpcClient | null = null;
+function getBordereauClient(): GrpcClient {
+  if (!bordereauInstance) {
+    bordereauInstance = makeClient(
+      CommissionBordereauServiceService,
+      "CommissionBordereauService",
+      SERVICES.commission,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return bordereauInstance;
+}
+
+export const commissionBordereau = {
+  createBordereau: (request: CreateBordereauRequest) =>
+    promisify<CreateBordereauRequest, BordereauResponse>(getBordereauClient(), "createBordereau")(request),
+  getBordereau: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, BordereauResponse>(getBordereauClient(), "getBordereau")(request),
+  getBordereaux: (request: GetBordereauxRequest) =>
+    promisify<GetBordereauxRequest, BordereauListResponse>(getBordereauClient(), "getBordereaux")(request),
+  getBordereauByApporteurPeriode: (request: GetBordereauByApporteurPeriodeRequest) =>
+    promisify<GetBordereauByApporteurPeriodeRequest, BordereauResponse>(getBordereauClient(), "getBordereauByApporteurPeriode")(request),
+  updateBordereau: (request: UpdateBordereauRequest) =>
+    promisify<UpdateBordereauRequest, BordereauResponse>(getBordereauClient(), "updateBordereau")(request),
+  validateBordereau: (request: ValidateBordereauRequest) =>
+    promisify<ValidateBordereauRequest, BordereauResponse>(getBordereauClient(), "validateBordereau")(request),
+  exportBordereau: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, ExportBordereauResponse>(getBordereauClient(), "exportBordereau")(request),
+  exportBordereauFiles: (request: ExportBordereauRequest) =>
+    promisify<ExportBordereauRequest, ExportBordereauResponse>(getBordereauClient(), "exportBordereauFiles")(request),
+  deleteBordereau: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, CommissionDeleteResponse>(getBordereauClient(), "deleteBordereau")(request),
+  createLigneBordereau: (request: CreateLigneBordereauRequest) =>
+    promisify<CreateLigneBordereauRequest, LigneBordereauResponse>(getBordereauClient(), "createLigneBordereau")(request),
+  getLigneBordereau: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, LigneBordereauResponse>(getBordereauClient(), "getLigneBordereau")(request),
+  getLignesByBordereau: (request: GetByBordereauRequest) =>
+    promisify<GetByBordereauRequest, LigneBordereauListResponse>(getBordereauClient(), "getLignesByBordereau")(request),
+  updateLigneBordereau: (request: UpdateLigneBordereauRequest) =>
+    promisify<UpdateLigneBordereauRequest, LigneBordereauResponse>(getBordereauClient(), "updateLigneBordereau")(request),
+  validateLigne: (request: ValidateLigneRequest) =>
+    promisify<ValidateLigneRequest, LigneBordereauResponse>(getBordereauClient(), "validateLigne")(request),
+  deleteLigneBordereau: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, CommissionDeleteResponse>(getBordereauClient(), "deleteLigneBordereau")(request),
+};
+
+// ----- CommissionCalculation -----
+let calculationInstance: GrpcClient | null = null;
+function getCalculationClient(): GrpcClient {
+  if (!calculationInstance) {
+    calculationInstance = makeClient(
+      CommissionCalculationServiceService,
+      "CommissionCalculationService",
+      SERVICES.commission,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return calculationInstance;
+}
+
+export const commissionCalculation = {
+  calculerCommission: (request: CalculerCommissionRequest) =>
+    promisify<CalculerCommissionRequest, CalculerCommissionResponse>(getCalculationClient(), "calculerCommission")(request),
+  genererBordereau: (request: GenererBordereauRequest) =>
+    promisify<GenererBordereauRequest, GenererBordereauResponse>(getCalculationClient(), "genererBordereau")(request),
+  declencherReprise: (request: DeclencherRepriseRequest) =>
+    promisify<DeclencherRepriseRequest, RepriseResponse>(getCalculationClient(), "declencherReprise")(request),
+  getAuditLogs: (request: CommissionGetAuditLogsRequest) =>
+    promisify<CommissionGetAuditLogsRequest, CommissionAuditLogListResponse>(getCalculationClient(), "getAuditLogs")(request),
+  getAuditLogsByRef: (request: CommissionGetAuditLogsByRefRequest) =>
+    promisify<CommissionGetAuditLogsByRefRequest, CommissionAuditLogListResponse>(getCalculationClient(), "getAuditLogsByRef")(request),
+  getAuditLogsByCommission: (request: CommissionGetByCommissionRequest) =>
+    promisify<CommissionGetByCommissionRequest, CommissionAuditLogListResponse>(getCalculationClient(), "getAuditLogsByCommission")(request),
+  getRecurrences: (request: CommissionGetRecurrencesRequest) =>
+    promisify<CommissionGetRecurrencesRequest, CommissionRecurrenceListResponse>(getCalculationClient(), "getRecurrences")(request),
+  getRecurrencesByContrat: (request: CommissionGetRecurrencesByContratRequest) =>
+    promisify<CommissionGetRecurrencesByContratRequest, CommissionRecurrenceListResponse>(getCalculationClient(), "getRecurrencesByContrat")(request),
+};
+
+// ----- CommissionContestation -----
+let contestationInstance: GrpcClient | null = null;
+function getContestationClient(): GrpcClient {
+  if (!contestationInstance) {
+    contestationInstance = makeClient(
+      CommissionContestationServiceService,
+      "CommissionContestationService",
+      SERVICES.commission,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return contestationInstance;
+}
+
+export const commissionContestation = {
+  createReprise: (request: CreateRepriseRequest) =>
+    promisify<CreateRepriseRequest, RepriseResponse>(getContestationClient(), "createReprise")(request),
+  getReprise: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, RepriseResponse>(getContestationClient(), "getReprise")(request),
+  getReprises: (request: GetReprisesRequest) =>
+    promisify<GetReprisesRequest, RepriseListResponse>(getContestationClient(), "getReprises")(request),
+  getReprisesByCommission: (request: CommissionGetByCommissionRequest) =>
+    promisify<CommissionGetByCommissionRequest, RepriseListResponse>(getContestationClient(), "getReprisesByCommission")(request),
+  applyReprise: (request: ApplyRepriseRequest) =>
+    promisify<ApplyRepriseRequest, RepriseResponse>(getContestationClient(), "applyReprise")(request),
+  cancelReprise: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, RepriseResponse>(getContestationClient(), "cancelReprise")(request),
+  deleteReprise: (request: CommissionGetByIdRequest) =>
+    promisify<CommissionGetByIdRequest, CommissionDeleteResponse>(getContestationClient(), "deleteReprise")(request),
+  creerContestation: (request: CreerContestationRequest) =>
+    promisify<CreerContestationRequest, ContestationResponse>(getContestationClient(), "creerContestation")(request),
+  getContestations: (request: GetContestationsRequest) =>
+    promisify<GetContestationsRequest, GetContestationsResponse>(getContestationClient(), "getContestations")(request),
+  resoudreContestation: (request: ResoudreContestationRequest) =>
+    promisify<ResoudreContestationRequest, ContestationResponse>(getContestationClient(), "resoudreContestation")(request),
+};
+
+// ----- CommissionValidation -----
+let validationInstance: GrpcClient | null = null;
+function getValidationClient(): GrpcClient {
+  if (!validationInstance) {
+    validationInstance = makeClient(
+      CommissionValidationServiceService,
+      "CommissionValidationService",
+      SERVICES.commission,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return validationInstance;
+}
+
+export const commissionValidation = {
+  getReportsNegatifs: (request: CommissionGetReportsNegatifsRequest) =>
+    promisify<CommissionGetReportsNegatifsRequest, CommissionReportNegatifListResponse>(getValidationClient(), "getReportsNegatifs")(request),
+  preselectionnerLignes: (request: PreselectionRequest) =>
+    promisify<PreselectionRequest, PreselectionResponse>(getValidationClient(), "preselectionnerLignes")(request),
+  recalculerTotauxBordereau: (request: RecalculerTotauxRequest) =>
+    promisify<RecalculerTotauxRequest, TotauxResponse>(getValidationClient(), "recalculerTotauxBordereau")(request),
+  validerBordereauFinal: (request: ValiderBordereauFinalRequest) =>
+    promisify<ValiderBordereauFinalRequest, ValiderBordereauFinalResponse>(getValidationClient(), "validerBordereauFinal")(request),
+  getLignesForValidation: (request: GetLignesForValidationRequest) =>
+    promisify<GetLignesForValidationRequest, GetLignesForValidationResponse>(getValidationClient(), "getLignesForValidation")(request),
+};
+
+// ----- CommissionDashboard -----
+let dashboardInstance: GrpcClient | null = null;
+function getDashboardClient(): GrpcClient {
+  if (!dashboardInstance) {
+    dashboardInstance = makeClient(
+      CommissionDashboardServiceService,
+      "CommissionDashboardService",
+      SERVICES.commission,
+      createAuthChannelCredentials(credentials.createInsecure())
+    );
+  }
+  return dashboardInstance;
+}
+
+export const commissionDashboard = {
+  getDashboardKpi: (request: GetDashboardKpiRequest) =>
+    promisify<GetDashboardKpiRequest, GetDashboardKpiResponse>(getDashboardClient(), "getDashboardKpi")(request),
+  genererSnapshotKpi: (request: GenererSnapshotKpiRequest) =>
+    promisify<GenererSnapshotKpiRequest, GenererSnapshotKpiResponse>(getDashboardClient(), "genererSnapshotKpi")(request),
+  getComparatifs: (request: GetComparatifsRequest) =>
+    promisify<GetComparatifsRequest, GetComparatifsResponse>(getDashboardClient(), "getComparatifs")(request),
+  exportAnalytique: (request: ExportAnalytiqueRequest) =>
+    promisify<ExportAnalytiqueRequest, ExportAnalytiqueResponse>(getDashboardClient(), "exportAnalytique")(request),
+};
+
+// ============================================
+// TYPE RE-EXPORTS
+// ============================================
 
 export type {
   CommissionResponse,

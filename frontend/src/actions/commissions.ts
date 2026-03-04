@@ -1,6 +1,12 @@
 "use server";
 
-import { commissions, bordereaux, reprises, baremes, paliers } from "@/lib/grpc";
+import {
+  commissionCrud,
+  commissionBordereau,
+  commissionCalculation,
+  commissionContestation,
+  commissionValidation,
+} from "@/lib/grpc";
 import { revalidatePath } from "next/cache";
 import type {
   CommissionResponse,
@@ -49,7 +55,7 @@ export async function getCommissionsByOrganisation(params: {
   statutId?: string;
 }): Promise<ActionResult<CommissionListResponse>> {
   try {
-    const data = await commissions.list({
+    const data = await commissionCrud.getCommissions({
       organisationId: params.organisationId,
       apporteurId: params.apporteurId,
       periode: params.periode,
@@ -70,7 +76,7 @@ export async function getCommissionsByOrganisation(params: {
  */
 export async function getCommission(id: string): Promise<ActionResult<CommissionResponse>> {
   try {
-    const data = await commissions.get({ id });
+    const data = await commissionCrud.getCommission({ id });
     return { data, error: null };
   } catch (err) {
     console.error("[getCommission] gRPC error:", err);
@@ -88,7 +94,7 @@ export async function getStatutsCommission(): Promise<
   ActionResult<{ statuts: Array<{ id: string; code: string; nom: string }> }>
 > {
   try {
-    const data = await commissions.getStatuts({});
+    const data = await commissionCrud.getStatuts({});
     return { data, error: null };
   } catch (err) {
     console.error("[getStatutsCommission] gRPC error:", err);
@@ -107,7 +113,7 @@ export async function deselectionnerCommission(
   statutId: string
 ): Promise<ActionResult<CommissionResponse>> {
   try {
-    const data = await commissions.update({
+    const data = await commissionCrud.updateCommission({
       id: commissionId,
       statutId: statutId,
     });
@@ -136,7 +142,7 @@ export async function getBordereauxByOrganisation(params: {
   statut?: string;
 }): Promise<ActionResult<BordereauListResponse>> {
   try {
-    const data = await bordereaux.list({
+    const data = await commissionBordereau.getBordereaux({
       organisationId: params.organisationId,
       apporteurId: params.apporteurId,
       periode: params.periode,
@@ -162,7 +168,7 @@ export async function genererBordereau(params: {
   creePar?: string;
 }): Promise<ActionResult<GenererBordereauResponse>> {
   try {
-    const data = await commissions.genererBordereau({
+    const data = await commissionCalculation.genererBordereau({
       organisationId: params.organisationId,
       apporteurId: params.apporteurId,
       periode: params.periode,
@@ -187,7 +193,7 @@ export async function validerBordereau(
   validateurId: string
 ): Promise<ActionResult<BordereauResponse>> {
   try {
-    const data = await bordereaux.validate({ id: bordereauId, validateurId });
+    const data = await commissionBordereau.validateBordereau({ id: bordereauId, validateurId });
     revalidatePath("/commissions");
     return { data, error: null };
   } catch (err) {
@@ -204,7 +210,7 @@ export async function preselectionnerLignes(
   organisationId: string
 ): Promise<ActionResult<PreselectionResponse>> {
   try {
-    const data = await commissions.preselectionnerLignes({
+    const data = await commissionValidation.preselectionnerLignes({
       bordereauId,
       organisationId,
     });
@@ -223,7 +229,7 @@ export async function recalculerTotaux(
   ligneIds: string[]
 ): Promise<ActionResult<TotauxResponse>> {
   try {
-    const data = await commissions.recalculerTotauxBordereau({
+    const data = await commissionValidation.recalculerTotauxBordereau({
       bordereauId,
       ligneIdsSelectionnees: ligneIds,
     });
@@ -243,7 +249,7 @@ export async function validerBordereauFinal(
   ligneIds: string[]
 ): Promise<ActionResult<ValiderBordereauFinalResponse>> {
   try {
-    const data = await commissions.validerBordereauFinal({
+    const data = await commissionValidation.validerBordereauFinal({
       bordereauId,
       validateurId,
       ligneIdsValidees: ligneIds,
@@ -265,7 +271,7 @@ export async function getLignesForValidation(
   organisationId: string
 ): Promise<ActionResult<GetLignesForValidationResponse>> {
   try {
-    const data = await commissions.getLignesForValidation({
+    const data = await commissionValidation.getLignesForValidation({
       bordereauId,
       organisationId,
     });
@@ -284,7 +290,7 @@ export async function getLignesForValidation(
  */
 export async function exportBordereau(bordereauId: string): Promise<ActionResult<ExportBordereauResponse>> {
   try {
-    const data = await bordereaux.export({ id: bordereauId });
+    const data = await commissionBordereau.exportBordereau({ id: bordereauId });
     return { data, error: null };
   } catch (err) {
     console.error("[exportBordereau] gRPC error:", err);
@@ -308,7 +314,7 @@ export async function getReprisesByOrganisation(params: {
   statut?: string;
 }): Promise<ActionResult<RepriseListResponse>> {
   try {
-    const data = await reprises.list({
+    const data = await commissionContestation.getReprises({
       organisationId: params.organisationId,
       apporteurId: params.apporteurId,
       statut: params.statut ? statutRepriseFromJSON(params.statut) : undefined,
@@ -328,7 +334,7 @@ export async function getReprisesByOrganisation(params: {
  */
 export async function annulerReprise(repriseId: string): Promise<ActionResult<RepriseResponse>> {
   try {
-    const data = await reprises.cancel({ id: repriseId });
+    const data = await commissionContestation.cancelReprise({ id: repriseId });
     revalidatePath("/commissions");
     return { data, error: null };
   } catch (err) {
@@ -350,7 +356,7 @@ export async function declencherReprise(params: {
   motif?: string;
 }): Promise<ActionResult<RepriseResponse>> {
   try {
-    const data = await commissions.declencherReprise({
+    const data = await commissionCalculation.declencherReprise({
       commissionId: params.commissionId,
       typeReprise: typeRepriseFromJSON(params.typeReprise),
       dateEvenement: params.dateEvenement,
@@ -379,7 +385,7 @@ export async function getContestationsByOrganisation(params: {
   statut?: string;
 }): Promise<ActionResult<GetContestationsResponse>> {
   try {
-    const data = await commissions.getContestations({
+    const data = await commissionContestation.getContestations({
       organisationId: params.organisationId,
       commissionId: params.commissionId,
       bordereauId: params.bordereauId,
@@ -404,7 +410,7 @@ export async function creerContestation(params: {
   motif: string;
 }): Promise<ActionResult<ContestationResponse>> {
   try {
-    const data = await commissions.creerContestation({
+    const data = await commissionContestation.creerContestation({
       organisationId: params.organisationId,
       commissionId: params.commissionId,
       bordereauId: params.bordereauId,
@@ -429,7 +435,7 @@ export async function resoudreContestation(params: {
   resoluPar: string;
 }): Promise<ActionResult<ContestationResponse>> {
   try {
-    const data = await commissions.resoudreContestation({
+    const data = await commissionContestation.resoudreContestation({
       id: params.id,
       acceptee: params.acceptee,
       commentaire: params.commentaire,
@@ -466,7 +472,7 @@ export async function getAuditLogs(params: {
   offset?: number;
 }): Promise<ActionResult<AuditLogListResponse>> {
   try {
-    const data = await commissions.getAuditLogs({
+    const data = await commissionCalculation.getAuditLogs({
       organisationId: params.organisationId,
       scope: params.scope,
       action: params.action,
@@ -495,7 +501,7 @@ export async function getAuditLogsByCommission(params: {
   commissionId: string;
 }): Promise<ActionResult<AuditLogListResponse>> {
   try {
-    const data = await commissions.getAuditLogsByCommission({
+    const data = await commissionCalculation.getAuditLogsByCommission({
       commissionId: params.commissionId,
     });
     return { data, error: null };
@@ -521,7 +527,7 @@ export async function getRecurrencesByOrganisation(params: {
   offset?: number;
 }): Promise<ActionResult<RecurrenceListResponse>> {
   try {
-    const data = await commissions.getRecurrences({
+    const data = await commissionCalculation.getRecurrences({
       organisationId: params.organisationId,
       apporteurId: params.apporteurId,
       periode: params.periode,
@@ -544,7 +550,7 @@ export async function getRecurrencesByContrat(params: {
   contratId: string;
 }): Promise<ActionResult<RecurrenceListResponse>> {
   try {
-    const data = await commissions.getRecurrencesByContrat({
+    const data = await commissionCalculation.getRecurrencesByContrat({
       organisationId: params.organisationId,
       contratId: params.contratId,
     });
@@ -570,7 +576,7 @@ export async function getReportsNegatifsByOrganisation(params: {
   offset?: number;
 }): Promise<ActionResult<ReportNegatifListResponse>> {
   try {
-    const data = await commissions.getReportsNegatifs({
+    const data = await commissionValidation.getReportsNegatifs({
       organisationId: params.organisationId,
       apporteurId: params.apporteurId,
       statut: params.statut,
@@ -607,7 +613,7 @@ export async function calculerCommission(params: {
   canalVente?: string;
 }): Promise<ActionResult<CalculerCommissionResponse>> {
   try {
-    const data = await commissions.calculer({
+    const data = await commissionCalculation.calculerCommission({
       organisationId: params.organisationId,
       apporteurId: params.apporteurId,
       contratId: params.contratId,
@@ -642,7 +648,7 @@ export async function getBaremesByOrganisation(params: {
   actifOnly?: boolean;
 }): Promise<ActionResult<{ baremes: unknown[] }>> {
   try {
-    const data = await baremes.list({
+    const data = await commissionCrud.getBaremes({
       organisationId: params.organisationId,
       typeProduit: params.typeProduit,
       actifOnly: params.actifOnly,
@@ -688,7 +694,7 @@ export async function createBareme(params: {
   try {
     const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto/commission/commission");
 
-    const data = await baremes.create({
+    const data = await commissionCrud.createBareme({
       organisationId: params.organisationId,
       code: params.code,
       nom: params.nom,
@@ -746,7 +752,7 @@ export async function updateBareme(params: {
   try {
     const { typeCalculFromJSON, baseCalculFromJSON } = await import("@proto/commission/commission");
 
-    const data = await baremes.update({
+    const data = await commissionCrud.updateBareme({
       id: params.id,
       nom: params.nom,
       description: params.description,
@@ -778,7 +784,7 @@ export async function updateBareme(params: {
  */
 export async function deleteBareme(id: string): Promise<ActionResult<{ success: boolean }>> {
   try {
-    await baremes.delete({ id });
+    await commissionCrud.deleteBareme({ id });
     revalidatePath("/commissions");
     return { data: { success: true }, error: null };
   } catch (err) {
@@ -795,7 +801,7 @@ export async function deleteBareme(id: string): Promise<ActionResult<{ success: 
  */
 export async function toggleBaremeActif(id: string, actif: boolean): Promise<ActionResult<unknown>> {
   try {
-    const data = await baremes.update({
+    const data = await commissionCrud.updateBareme({
       id,
       actif,
     });
@@ -821,7 +827,7 @@ export async function getPaliersByBareme(
   baremeId: string
 ): Promise<ActionResult<{ paliers: unknown[] }>> {
   try {
-    const data = await paliers.listByBareme({ baremeId });
+    const data = await commissionCrud.getPaliersByBareme({ baremeId });
     return { data, error: null };
   } catch (err) {
     console.error("[getPaliersByBareme] gRPC error:", err);
@@ -854,7 +860,7 @@ export async function createPalier(params: {
   try {
     const { typePalierFromJSON } = await import("@proto/commission/commission");
 
-    const data = await paliers.create({
+    const data = await commissionCrud.createPalier({
       organisationId: params.organisationId,
       baremeId: params.baremeId,
       code: params.code,
@@ -898,7 +904,7 @@ export async function updatePalier(params: {
   actif?: boolean;
 }): Promise<ActionResult<unknown>> {
   try {
-    const data = await paliers.update({
+    const data = await commissionCrud.updatePalier({
       id: params.id,
       nom: params.nom,
       description: params.description,
@@ -927,7 +933,7 @@ export async function updatePalier(params: {
  */
 export async function deletePalier(id: string): Promise<ActionResult<{ success: boolean }>> {
   try {
-    await paliers.delete({ id });
+    await commissionCrud.deletePalier({ id });
     revalidatePath("/commissions");
     return { data: { success: true }, error: null };
   } catch (err) {

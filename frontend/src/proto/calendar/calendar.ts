@@ -919,6 +919,114 @@ export interface DeleteResponse {
   message: string;
 }
 
+export interface GetRejectionTrendsRequest {
+  organisationId: string;
+  societeId: string;
+  monthsBack: number;
+}
+
+export interface RejectionTrendEntry {
+  month: number;
+  year: number;
+  totalCount: number;
+  rejectedCount: number;
+  rejectionRate: number;
+}
+
+export interface GetRejectionTrendsResponse {
+  entries: RejectionTrendEntry[];
+}
+
+export interface GetDayHeatmapRequest {
+  organisationId: string;
+  societeId: string;
+  monthsBack: number;
+}
+
+export interface DayHeatmapEntry {
+  dayOfMonth: number;
+  totalCount: number;
+  rejectedCount: number;
+  rejectionRate: number;
+}
+
+export interface GetDayHeatmapResponse {
+  entries: DayHeatmapEntry[];
+}
+
+export interface GetClientScoresRequest {
+  organisationId: string;
+  societeId: string;
+  limit: number;
+  sortBy: string;
+}
+
+export interface ClientScoreEntry {
+  clientId: string;
+  clientName: string;
+  totalPayments: number;
+  rejectedCount: number;
+  successRate: number;
+  riskTier: string;
+  trend: string;
+}
+
+export interface GetClientScoresResponse {
+  entries: ClientScoreEntry[];
+}
+
+export interface GetForecastVsActualRequest {
+  organisationId: string;
+  societeId: string;
+  monthsBack: number;
+}
+
+export interface ForecastVsActualEntry {
+  month: number;
+  year: number;
+  expectedCount: number;
+  actualCount: number;
+  expectedAmount: number;
+  actualAmount: number;
+}
+
+export interface GetForecastVsActualResponse {
+  entries: ForecastVsActualEntry[];
+}
+
+export interface OptimizationSuggestion {
+  clientId: string;
+  clientName: string;
+  currentLotId: string;
+  currentLotName: string;
+  suggestedLotId: string;
+  suggestedLotName: string;
+  reason: string;
+  confidence: number;
+  estimatedImpact: string;
+}
+
+export interface GetOptimizationSuggestionsRequest {
+  organisationId: string;
+  societeId: string;
+  analysisMonths: number;
+}
+
+export interface GetOptimizationSuggestionsResponse {
+  suggestions: OptimizationSuggestion[];
+}
+
+export interface ApplyOptimizationSuggestionRequest {
+  organisationId: string;
+  clientId: string;
+  suggestedLotId: string;
+}
+
+export interface ApplyOptimizationSuggestionResponse {
+  success: boolean;
+  updatedConfig: ClientDebitConfiguration | undefined;
+}
+
 /** System Config */
 export interface GetSystemConfigRequest {
   organisationId: string;
@@ -1210,6 +1318,65 @@ export interface GetAuditLogsRequest {
 export interface GetAuditLogsResponse {
   logs: CalendarAuditLog[];
   pagination: PaginationResult | undefined;
+}
+
+export interface DebitLotMessage {
+  id: string;
+  organisationId: string;
+  societeId: string;
+  name: string;
+  startDay: number;
+  endDay: number;
+  description: string;
+  isActive: boolean;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateLotRequest {
+  organisationId: string;
+  societeId: string;
+  name: string;
+  startDay: number;
+  endDay: number;
+  description: string;
+  displayOrder: number;
+}
+
+export interface GetLotRequest {
+  id: string;
+  organisationId: string;
+}
+
+export interface ListLotsRequest {
+  organisationId: string;
+  societeId: string;
+  includeInactive: boolean;
+}
+
+export interface ListLotsResponse {
+  lots: DebitLotMessage[];
+}
+
+export interface UpdateLotRequest {
+  id: string;
+  organisationId: string;
+  name: string;
+  startDay: number;
+  endDay: number;
+  description: string;
+  displayOrder: number;
+}
+
+export interface DeactivateLotRequest {
+  id: string;
+  organisationId: string;
+}
+
+export interface ReactivateLotRequest {
+  id: string;
+  organisationId: string;
 }
 
 function createBaseHolidayZone(): HolidayZone {
@@ -8858,6 +9025,1876 @@ export const DeleteResponse: MessageFns<DeleteResponse> = {
   },
 };
 
+function createBaseGetRejectionTrendsRequest(): GetRejectionTrendsRequest {
+  return { organisationId: "", societeId: "", monthsBack: 0 };
+}
+
+export const GetRejectionTrendsRequest: MessageFns<GetRejectionTrendsRequest> = {
+  encode(message: GetRejectionTrendsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.monthsBack !== 0) {
+      writer.uint32(24).int32(message.monthsBack);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetRejectionTrendsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetRejectionTrendsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.monthsBack = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetRejectionTrendsRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      monthsBack: isSet(object.monthsBack)
+        ? globalThis.Number(object.monthsBack)
+        : isSet(object.months_back)
+        ? globalThis.Number(object.months_back)
+        : 0,
+    };
+  },
+
+  toJSON(message: GetRejectionTrendsRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.monthsBack !== 0) {
+      obj.monthsBack = Math.round(message.monthsBack);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetRejectionTrendsRequest>, I>>(base?: I): GetRejectionTrendsRequest {
+    return GetRejectionTrendsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetRejectionTrendsRequest>, I>>(object: I): GetRejectionTrendsRequest {
+    const message = createBaseGetRejectionTrendsRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.monthsBack = object.monthsBack ?? 0;
+    return message;
+  },
+};
+
+function createBaseRejectionTrendEntry(): RejectionTrendEntry {
+  return { month: 0, year: 0, totalCount: 0, rejectedCount: 0, rejectionRate: 0 };
+}
+
+export const RejectionTrendEntry: MessageFns<RejectionTrendEntry> = {
+  encode(message: RejectionTrendEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.month !== 0) {
+      writer.uint32(8).int32(message.month);
+    }
+    if (message.year !== 0) {
+      writer.uint32(16).int32(message.year);
+    }
+    if (message.totalCount !== 0) {
+      writer.uint32(24).int32(message.totalCount);
+    }
+    if (message.rejectedCount !== 0) {
+      writer.uint32(32).int32(message.rejectedCount);
+    }
+    if (message.rejectionRate !== 0) {
+      writer.uint32(41).double(message.rejectionRate);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RejectionTrendEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRejectionTrendEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.month = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.year = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.totalCount = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.rejectedCount = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 41) {
+            break;
+          }
+
+          message.rejectionRate = reader.double();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RejectionTrendEntry {
+    return {
+      month: isSet(object.month) ? globalThis.Number(object.month) : 0,
+      year: isSet(object.year) ? globalThis.Number(object.year) : 0,
+      totalCount: isSet(object.totalCount)
+        ? globalThis.Number(object.totalCount)
+        : isSet(object.total_count)
+        ? globalThis.Number(object.total_count)
+        : 0,
+      rejectedCount: isSet(object.rejectedCount)
+        ? globalThis.Number(object.rejectedCount)
+        : isSet(object.rejected_count)
+        ? globalThis.Number(object.rejected_count)
+        : 0,
+      rejectionRate: isSet(object.rejectionRate)
+        ? globalThis.Number(object.rejectionRate)
+        : isSet(object.rejection_rate)
+        ? globalThis.Number(object.rejection_rate)
+        : 0,
+    };
+  },
+
+  toJSON(message: RejectionTrendEntry): unknown {
+    const obj: any = {};
+    if (message.month !== 0) {
+      obj.month = Math.round(message.month);
+    }
+    if (message.year !== 0) {
+      obj.year = Math.round(message.year);
+    }
+    if (message.totalCount !== 0) {
+      obj.totalCount = Math.round(message.totalCount);
+    }
+    if (message.rejectedCount !== 0) {
+      obj.rejectedCount = Math.round(message.rejectedCount);
+    }
+    if (message.rejectionRate !== 0) {
+      obj.rejectionRate = message.rejectionRate;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RejectionTrendEntry>, I>>(base?: I): RejectionTrendEntry {
+    return RejectionTrendEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RejectionTrendEntry>, I>>(object: I): RejectionTrendEntry {
+    const message = createBaseRejectionTrendEntry();
+    message.month = object.month ?? 0;
+    message.year = object.year ?? 0;
+    message.totalCount = object.totalCount ?? 0;
+    message.rejectedCount = object.rejectedCount ?? 0;
+    message.rejectionRate = object.rejectionRate ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetRejectionTrendsResponse(): GetRejectionTrendsResponse {
+  return { entries: [] };
+}
+
+export const GetRejectionTrendsResponse: MessageFns<GetRejectionTrendsResponse> = {
+  encode(message: GetRejectionTrendsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.entries) {
+      RejectionTrendEntry.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetRejectionTrendsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetRejectionTrendsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.entries.push(RejectionTrendEntry.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetRejectionTrendsResponse {
+    return {
+      entries: globalThis.Array.isArray(object?.entries)
+        ? object.entries.map((e: any) => RejectionTrendEntry.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetRejectionTrendsResponse): unknown {
+    const obj: any = {};
+    if (message.entries?.length) {
+      obj.entries = message.entries.map((e) => RejectionTrendEntry.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetRejectionTrendsResponse>, I>>(base?: I): GetRejectionTrendsResponse {
+    return GetRejectionTrendsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetRejectionTrendsResponse>, I>>(object: I): GetRejectionTrendsResponse {
+    const message = createBaseGetRejectionTrendsResponse();
+    message.entries = object.entries?.map((e) => RejectionTrendEntry.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseGetDayHeatmapRequest(): GetDayHeatmapRequest {
+  return { organisationId: "", societeId: "", monthsBack: 0 };
+}
+
+export const GetDayHeatmapRequest: MessageFns<GetDayHeatmapRequest> = {
+  encode(message: GetDayHeatmapRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.monthsBack !== 0) {
+      writer.uint32(24).int32(message.monthsBack);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetDayHeatmapRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetDayHeatmapRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.monthsBack = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetDayHeatmapRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      monthsBack: isSet(object.monthsBack)
+        ? globalThis.Number(object.monthsBack)
+        : isSet(object.months_back)
+        ? globalThis.Number(object.months_back)
+        : 0,
+    };
+  },
+
+  toJSON(message: GetDayHeatmapRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.monthsBack !== 0) {
+      obj.monthsBack = Math.round(message.monthsBack);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetDayHeatmapRequest>, I>>(base?: I): GetDayHeatmapRequest {
+    return GetDayHeatmapRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetDayHeatmapRequest>, I>>(object: I): GetDayHeatmapRequest {
+    const message = createBaseGetDayHeatmapRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.monthsBack = object.monthsBack ?? 0;
+    return message;
+  },
+};
+
+function createBaseDayHeatmapEntry(): DayHeatmapEntry {
+  return { dayOfMonth: 0, totalCount: 0, rejectedCount: 0, rejectionRate: 0 };
+}
+
+export const DayHeatmapEntry: MessageFns<DayHeatmapEntry> = {
+  encode(message: DayHeatmapEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.dayOfMonth !== 0) {
+      writer.uint32(8).int32(message.dayOfMonth);
+    }
+    if (message.totalCount !== 0) {
+      writer.uint32(16).int32(message.totalCount);
+    }
+    if (message.rejectedCount !== 0) {
+      writer.uint32(24).int32(message.rejectedCount);
+    }
+    if (message.rejectionRate !== 0) {
+      writer.uint32(33).double(message.rejectionRate);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DayHeatmapEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDayHeatmapEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.dayOfMonth = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.totalCount = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.rejectedCount = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 33) {
+            break;
+          }
+
+          message.rejectionRate = reader.double();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DayHeatmapEntry {
+    return {
+      dayOfMonth: isSet(object.dayOfMonth)
+        ? globalThis.Number(object.dayOfMonth)
+        : isSet(object.day_of_month)
+        ? globalThis.Number(object.day_of_month)
+        : 0,
+      totalCount: isSet(object.totalCount)
+        ? globalThis.Number(object.totalCount)
+        : isSet(object.total_count)
+        ? globalThis.Number(object.total_count)
+        : 0,
+      rejectedCount: isSet(object.rejectedCount)
+        ? globalThis.Number(object.rejectedCount)
+        : isSet(object.rejected_count)
+        ? globalThis.Number(object.rejected_count)
+        : 0,
+      rejectionRate: isSet(object.rejectionRate)
+        ? globalThis.Number(object.rejectionRate)
+        : isSet(object.rejection_rate)
+        ? globalThis.Number(object.rejection_rate)
+        : 0,
+    };
+  },
+
+  toJSON(message: DayHeatmapEntry): unknown {
+    const obj: any = {};
+    if (message.dayOfMonth !== 0) {
+      obj.dayOfMonth = Math.round(message.dayOfMonth);
+    }
+    if (message.totalCount !== 0) {
+      obj.totalCount = Math.round(message.totalCount);
+    }
+    if (message.rejectedCount !== 0) {
+      obj.rejectedCount = Math.round(message.rejectedCount);
+    }
+    if (message.rejectionRate !== 0) {
+      obj.rejectionRate = message.rejectionRate;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DayHeatmapEntry>, I>>(base?: I): DayHeatmapEntry {
+    return DayHeatmapEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DayHeatmapEntry>, I>>(object: I): DayHeatmapEntry {
+    const message = createBaseDayHeatmapEntry();
+    message.dayOfMonth = object.dayOfMonth ?? 0;
+    message.totalCount = object.totalCount ?? 0;
+    message.rejectedCount = object.rejectedCount ?? 0;
+    message.rejectionRate = object.rejectionRate ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetDayHeatmapResponse(): GetDayHeatmapResponse {
+  return { entries: [] };
+}
+
+export const GetDayHeatmapResponse: MessageFns<GetDayHeatmapResponse> = {
+  encode(message: GetDayHeatmapResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.entries) {
+      DayHeatmapEntry.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetDayHeatmapResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetDayHeatmapResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.entries.push(DayHeatmapEntry.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetDayHeatmapResponse {
+    return {
+      entries: globalThis.Array.isArray(object?.entries)
+        ? object.entries.map((e: any) => DayHeatmapEntry.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetDayHeatmapResponse): unknown {
+    const obj: any = {};
+    if (message.entries?.length) {
+      obj.entries = message.entries.map((e) => DayHeatmapEntry.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetDayHeatmapResponse>, I>>(base?: I): GetDayHeatmapResponse {
+    return GetDayHeatmapResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetDayHeatmapResponse>, I>>(object: I): GetDayHeatmapResponse {
+    const message = createBaseGetDayHeatmapResponse();
+    message.entries = object.entries?.map((e) => DayHeatmapEntry.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseGetClientScoresRequest(): GetClientScoresRequest {
+  return { organisationId: "", societeId: "", limit: 0, sortBy: "" };
+}
+
+export const GetClientScoresRequest: MessageFns<GetClientScoresRequest> = {
+  encode(message: GetClientScoresRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.limit !== 0) {
+      writer.uint32(24).int32(message.limit);
+    }
+    if (message.sortBy !== "") {
+      writer.uint32(34).string(message.sortBy);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetClientScoresRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetClientScoresRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.sortBy = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetClientScoresRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : 0,
+      sortBy: isSet(object.sortBy)
+        ? globalThis.String(object.sortBy)
+        : isSet(object.sort_by)
+        ? globalThis.String(object.sort_by)
+        : "",
+    };
+  },
+
+  toJSON(message: GetClientScoresRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.limit !== 0) {
+      obj.limit = Math.round(message.limit);
+    }
+    if (message.sortBy !== "") {
+      obj.sortBy = message.sortBy;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetClientScoresRequest>, I>>(base?: I): GetClientScoresRequest {
+    return GetClientScoresRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetClientScoresRequest>, I>>(object: I): GetClientScoresRequest {
+    const message = createBaseGetClientScoresRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.limit = object.limit ?? 0;
+    message.sortBy = object.sortBy ?? "";
+    return message;
+  },
+};
+
+function createBaseClientScoreEntry(): ClientScoreEntry {
+  return { clientId: "", clientName: "", totalPayments: 0, rejectedCount: 0, successRate: 0, riskTier: "", trend: "" };
+}
+
+export const ClientScoreEntry: MessageFns<ClientScoreEntry> = {
+  encode(message: ClientScoreEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.clientId !== "") {
+      writer.uint32(10).string(message.clientId);
+    }
+    if (message.clientName !== "") {
+      writer.uint32(18).string(message.clientName);
+    }
+    if (message.totalPayments !== 0) {
+      writer.uint32(24).int32(message.totalPayments);
+    }
+    if (message.rejectedCount !== 0) {
+      writer.uint32(32).int32(message.rejectedCount);
+    }
+    if (message.successRate !== 0) {
+      writer.uint32(41).double(message.successRate);
+    }
+    if (message.riskTier !== "") {
+      writer.uint32(50).string(message.riskTier);
+    }
+    if (message.trend !== "") {
+      writer.uint32(58).string(message.trend);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ClientScoreEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseClientScoreEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.totalPayments = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.rejectedCount = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 41) {
+            break;
+          }
+
+          message.successRate = reader.double();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.riskTier = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.trend = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ClientScoreEntry {
+    return {
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      clientName: isSet(object.clientName)
+        ? globalThis.String(object.clientName)
+        : isSet(object.client_name)
+        ? globalThis.String(object.client_name)
+        : "",
+      totalPayments: isSet(object.totalPayments)
+        ? globalThis.Number(object.totalPayments)
+        : isSet(object.total_payments)
+        ? globalThis.Number(object.total_payments)
+        : 0,
+      rejectedCount: isSet(object.rejectedCount)
+        ? globalThis.Number(object.rejectedCount)
+        : isSet(object.rejected_count)
+        ? globalThis.Number(object.rejected_count)
+        : 0,
+      successRate: isSet(object.successRate)
+        ? globalThis.Number(object.successRate)
+        : isSet(object.success_rate)
+        ? globalThis.Number(object.success_rate)
+        : 0,
+      riskTier: isSet(object.riskTier)
+        ? globalThis.String(object.riskTier)
+        : isSet(object.risk_tier)
+        ? globalThis.String(object.risk_tier)
+        : "",
+      trend: isSet(object.trend) ? globalThis.String(object.trend) : "",
+    };
+  },
+
+  toJSON(message: ClientScoreEntry): unknown {
+    const obj: any = {};
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.clientName !== "") {
+      obj.clientName = message.clientName;
+    }
+    if (message.totalPayments !== 0) {
+      obj.totalPayments = Math.round(message.totalPayments);
+    }
+    if (message.rejectedCount !== 0) {
+      obj.rejectedCount = Math.round(message.rejectedCount);
+    }
+    if (message.successRate !== 0) {
+      obj.successRate = message.successRate;
+    }
+    if (message.riskTier !== "") {
+      obj.riskTier = message.riskTier;
+    }
+    if (message.trend !== "") {
+      obj.trend = message.trend;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ClientScoreEntry>, I>>(base?: I): ClientScoreEntry {
+    return ClientScoreEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ClientScoreEntry>, I>>(object: I): ClientScoreEntry {
+    const message = createBaseClientScoreEntry();
+    message.clientId = object.clientId ?? "";
+    message.clientName = object.clientName ?? "";
+    message.totalPayments = object.totalPayments ?? 0;
+    message.rejectedCount = object.rejectedCount ?? 0;
+    message.successRate = object.successRate ?? 0;
+    message.riskTier = object.riskTier ?? "";
+    message.trend = object.trend ?? "";
+    return message;
+  },
+};
+
+function createBaseGetClientScoresResponse(): GetClientScoresResponse {
+  return { entries: [] };
+}
+
+export const GetClientScoresResponse: MessageFns<GetClientScoresResponse> = {
+  encode(message: GetClientScoresResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.entries) {
+      ClientScoreEntry.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetClientScoresResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetClientScoresResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.entries.push(ClientScoreEntry.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetClientScoresResponse {
+    return {
+      entries: globalThis.Array.isArray(object?.entries)
+        ? object.entries.map((e: any) => ClientScoreEntry.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetClientScoresResponse): unknown {
+    const obj: any = {};
+    if (message.entries?.length) {
+      obj.entries = message.entries.map((e) => ClientScoreEntry.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetClientScoresResponse>, I>>(base?: I): GetClientScoresResponse {
+    return GetClientScoresResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetClientScoresResponse>, I>>(object: I): GetClientScoresResponse {
+    const message = createBaseGetClientScoresResponse();
+    message.entries = object.entries?.map((e) => ClientScoreEntry.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseGetForecastVsActualRequest(): GetForecastVsActualRequest {
+  return { organisationId: "", societeId: "", monthsBack: 0 };
+}
+
+export const GetForecastVsActualRequest: MessageFns<GetForecastVsActualRequest> = {
+  encode(message: GetForecastVsActualRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.monthsBack !== 0) {
+      writer.uint32(24).int32(message.monthsBack);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetForecastVsActualRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetForecastVsActualRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.monthsBack = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetForecastVsActualRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      monthsBack: isSet(object.monthsBack)
+        ? globalThis.Number(object.monthsBack)
+        : isSet(object.months_back)
+        ? globalThis.Number(object.months_back)
+        : 0,
+    };
+  },
+
+  toJSON(message: GetForecastVsActualRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.monthsBack !== 0) {
+      obj.monthsBack = Math.round(message.monthsBack);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetForecastVsActualRequest>, I>>(base?: I): GetForecastVsActualRequest {
+    return GetForecastVsActualRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetForecastVsActualRequest>, I>>(object: I): GetForecastVsActualRequest {
+    const message = createBaseGetForecastVsActualRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.monthsBack = object.monthsBack ?? 0;
+    return message;
+  },
+};
+
+function createBaseForecastVsActualEntry(): ForecastVsActualEntry {
+  return { month: 0, year: 0, expectedCount: 0, actualCount: 0, expectedAmount: 0, actualAmount: 0 };
+}
+
+export const ForecastVsActualEntry: MessageFns<ForecastVsActualEntry> = {
+  encode(message: ForecastVsActualEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.month !== 0) {
+      writer.uint32(8).int32(message.month);
+    }
+    if (message.year !== 0) {
+      writer.uint32(16).int32(message.year);
+    }
+    if (message.expectedCount !== 0) {
+      writer.uint32(24).int32(message.expectedCount);
+    }
+    if (message.actualCount !== 0) {
+      writer.uint32(32).int32(message.actualCount);
+    }
+    if (message.expectedAmount !== 0) {
+      writer.uint32(40).int64(message.expectedAmount);
+    }
+    if (message.actualAmount !== 0) {
+      writer.uint32(48).int64(message.actualAmount);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ForecastVsActualEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseForecastVsActualEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.month = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.year = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.expectedCount = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.actualCount = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.expectedAmount = longToNumber(reader.int64());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.actualAmount = longToNumber(reader.int64());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ForecastVsActualEntry {
+    return {
+      month: isSet(object.month) ? globalThis.Number(object.month) : 0,
+      year: isSet(object.year) ? globalThis.Number(object.year) : 0,
+      expectedCount: isSet(object.expectedCount)
+        ? globalThis.Number(object.expectedCount)
+        : isSet(object.expected_count)
+        ? globalThis.Number(object.expected_count)
+        : 0,
+      actualCount: isSet(object.actualCount)
+        ? globalThis.Number(object.actualCount)
+        : isSet(object.actual_count)
+        ? globalThis.Number(object.actual_count)
+        : 0,
+      expectedAmount: isSet(object.expectedAmount)
+        ? globalThis.Number(object.expectedAmount)
+        : isSet(object.expected_amount)
+        ? globalThis.Number(object.expected_amount)
+        : 0,
+      actualAmount: isSet(object.actualAmount)
+        ? globalThis.Number(object.actualAmount)
+        : isSet(object.actual_amount)
+        ? globalThis.Number(object.actual_amount)
+        : 0,
+    };
+  },
+
+  toJSON(message: ForecastVsActualEntry): unknown {
+    const obj: any = {};
+    if (message.month !== 0) {
+      obj.month = Math.round(message.month);
+    }
+    if (message.year !== 0) {
+      obj.year = Math.round(message.year);
+    }
+    if (message.expectedCount !== 0) {
+      obj.expectedCount = Math.round(message.expectedCount);
+    }
+    if (message.actualCount !== 0) {
+      obj.actualCount = Math.round(message.actualCount);
+    }
+    if (message.expectedAmount !== 0) {
+      obj.expectedAmount = Math.round(message.expectedAmount);
+    }
+    if (message.actualAmount !== 0) {
+      obj.actualAmount = Math.round(message.actualAmount);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ForecastVsActualEntry>, I>>(base?: I): ForecastVsActualEntry {
+    return ForecastVsActualEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ForecastVsActualEntry>, I>>(object: I): ForecastVsActualEntry {
+    const message = createBaseForecastVsActualEntry();
+    message.month = object.month ?? 0;
+    message.year = object.year ?? 0;
+    message.expectedCount = object.expectedCount ?? 0;
+    message.actualCount = object.actualCount ?? 0;
+    message.expectedAmount = object.expectedAmount ?? 0;
+    message.actualAmount = object.actualAmount ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetForecastVsActualResponse(): GetForecastVsActualResponse {
+  return { entries: [] };
+}
+
+export const GetForecastVsActualResponse: MessageFns<GetForecastVsActualResponse> = {
+  encode(message: GetForecastVsActualResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.entries) {
+      ForecastVsActualEntry.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetForecastVsActualResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetForecastVsActualResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.entries.push(ForecastVsActualEntry.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetForecastVsActualResponse {
+    return {
+      entries: globalThis.Array.isArray(object?.entries)
+        ? object.entries.map((e: any) => ForecastVsActualEntry.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetForecastVsActualResponse): unknown {
+    const obj: any = {};
+    if (message.entries?.length) {
+      obj.entries = message.entries.map((e) => ForecastVsActualEntry.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetForecastVsActualResponse>, I>>(base?: I): GetForecastVsActualResponse {
+    return GetForecastVsActualResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetForecastVsActualResponse>, I>>(object: I): GetForecastVsActualResponse {
+    const message = createBaseGetForecastVsActualResponse();
+    message.entries = object.entries?.map((e) => ForecastVsActualEntry.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseOptimizationSuggestion(): OptimizationSuggestion {
+  return {
+    clientId: "",
+    clientName: "",
+    currentLotId: "",
+    currentLotName: "",
+    suggestedLotId: "",
+    suggestedLotName: "",
+    reason: "",
+    confidence: 0,
+    estimatedImpact: "",
+  };
+}
+
+export const OptimizationSuggestion: MessageFns<OptimizationSuggestion> = {
+  encode(message: OptimizationSuggestion, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.clientId !== "") {
+      writer.uint32(10).string(message.clientId);
+    }
+    if (message.clientName !== "") {
+      writer.uint32(18).string(message.clientName);
+    }
+    if (message.currentLotId !== "") {
+      writer.uint32(26).string(message.currentLotId);
+    }
+    if (message.currentLotName !== "") {
+      writer.uint32(34).string(message.currentLotName);
+    }
+    if (message.suggestedLotId !== "") {
+      writer.uint32(42).string(message.suggestedLotId);
+    }
+    if (message.suggestedLotName !== "") {
+      writer.uint32(50).string(message.suggestedLotName);
+    }
+    if (message.reason !== "") {
+      writer.uint32(58).string(message.reason);
+    }
+    if (message.confidence !== 0) {
+      writer.uint32(65).double(message.confidence);
+    }
+    if (message.estimatedImpact !== "") {
+      writer.uint32(74).string(message.estimatedImpact);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): OptimizationSuggestion {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseOptimizationSuggestion();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientName = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.currentLotId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.currentLotName = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.suggestedLotId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.suggestedLotName = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 65) {
+            break;
+          }
+
+          message.confidence = reader.double();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.estimatedImpact = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): OptimizationSuggestion {
+    return {
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      clientName: isSet(object.clientName)
+        ? globalThis.String(object.clientName)
+        : isSet(object.client_name)
+        ? globalThis.String(object.client_name)
+        : "",
+      currentLotId: isSet(object.currentLotId)
+        ? globalThis.String(object.currentLotId)
+        : isSet(object.current_lot_id)
+        ? globalThis.String(object.current_lot_id)
+        : "",
+      currentLotName: isSet(object.currentLotName)
+        ? globalThis.String(object.currentLotName)
+        : isSet(object.current_lot_name)
+        ? globalThis.String(object.current_lot_name)
+        : "",
+      suggestedLotId: isSet(object.suggestedLotId)
+        ? globalThis.String(object.suggestedLotId)
+        : isSet(object.suggested_lot_id)
+        ? globalThis.String(object.suggested_lot_id)
+        : "",
+      suggestedLotName: isSet(object.suggestedLotName)
+        ? globalThis.String(object.suggestedLotName)
+        : isSet(object.suggested_lot_name)
+        ? globalThis.String(object.suggested_lot_name)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      confidence: isSet(object.confidence) ? globalThis.Number(object.confidence) : 0,
+      estimatedImpact: isSet(object.estimatedImpact)
+        ? globalThis.String(object.estimatedImpact)
+        : isSet(object.estimated_impact)
+        ? globalThis.String(object.estimated_impact)
+        : "",
+    };
+  },
+
+  toJSON(message: OptimizationSuggestion): unknown {
+    const obj: any = {};
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.clientName !== "") {
+      obj.clientName = message.clientName;
+    }
+    if (message.currentLotId !== "") {
+      obj.currentLotId = message.currentLotId;
+    }
+    if (message.currentLotName !== "") {
+      obj.currentLotName = message.currentLotName;
+    }
+    if (message.suggestedLotId !== "") {
+      obj.suggestedLotId = message.suggestedLotId;
+    }
+    if (message.suggestedLotName !== "") {
+      obj.suggestedLotName = message.suggestedLotName;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.confidence !== 0) {
+      obj.confidence = message.confidence;
+    }
+    if (message.estimatedImpact !== "") {
+      obj.estimatedImpact = message.estimatedImpact;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<OptimizationSuggestion>, I>>(base?: I): OptimizationSuggestion {
+    return OptimizationSuggestion.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<OptimizationSuggestion>, I>>(object: I): OptimizationSuggestion {
+    const message = createBaseOptimizationSuggestion();
+    message.clientId = object.clientId ?? "";
+    message.clientName = object.clientName ?? "";
+    message.currentLotId = object.currentLotId ?? "";
+    message.currentLotName = object.currentLotName ?? "";
+    message.suggestedLotId = object.suggestedLotId ?? "";
+    message.suggestedLotName = object.suggestedLotName ?? "";
+    message.reason = object.reason ?? "";
+    message.confidence = object.confidence ?? 0;
+    message.estimatedImpact = object.estimatedImpact ?? "";
+    return message;
+  },
+};
+
+function createBaseGetOptimizationSuggestionsRequest(): GetOptimizationSuggestionsRequest {
+  return { organisationId: "", societeId: "", analysisMonths: 0 };
+}
+
+export const GetOptimizationSuggestionsRequest: MessageFns<GetOptimizationSuggestionsRequest> = {
+  encode(message: GetOptimizationSuggestionsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.analysisMonths !== 0) {
+      writer.uint32(24).int32(message.analysisMonths);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetOptimizationSuggestionsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetOptimizationSuggestionsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.analysisMonths = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetOptimizationSuggestionsRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      analysisMonths: isSet(object.analysisMonths)
+        ? globalThis.Number(object.analysisMonths)
+        : isSet(object.analysis_months)
+        ? globalThis.Number(object.analysis_months)
+        : 0,
+    };
+  },
+
+  toJSON(message: GetOptimizationSuggestionsRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.analysisMonths !== 0) {
+      obj.analysisMonths = Math.round(message.analysisMonths);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetOptimizationSuggestionsRequest>, I>>(
+    base?: I,
+  ): GetOptimizationSuggestionsRequest {
+    return GetOptimizationSuggestionsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetOptimizationSuggestionsRequest>, I>>(
+    object: I,
+  ): GetOptimizationSuggestionsRequest {
+    const message = createBaseGetOptimizationSuggestionsRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.analysisMonths = object.analysisMonths ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetOptimizationSuggestionsResponse(): GetOptimizationSuggestionsResponse {
+  return { suggestions: [] };
+}
+
+export const GetOptimizationSuggestionsResponse: MessageFns<GetOptimizationSuggestionsResponse> = {
+  encode(message: GetOptimizationSuggestionsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.suggestions) {
+      OptimizationSuggestion.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetOptimizationSuggestionsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetOptimizationSuggestionsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.suggestions.push(OptimizationSuggestion.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetOptimizationSuggestionsResponse {
+    return {
+      suggestions: globalThis.Array.isArray(object?.suggestions)
+        ? object.suggestions.map((e: any) => OptimizationSuggestion.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetOptimizationSuggestionsResponse): unknown {
+    const obj: any = {};
+    if (message.suggestions?.length) {
+      obj.suggestions = message.suggestions.map((e) => OptimizationSuggestion.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetOptimizationSuggestionsResponse>, I>>(
+    base?: I,
+  ): GetOptimizationSuggestionsResponse {
+    return GetOptimizationSuggestionsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetOptimizationSuggestionsResponse>, I>>(
+    object: I,
+  ): GetOptimizationSuggestionsResponse {
+    const message = createBaseGetOptimizationSuggestionsResponse();
+    message.suggestions = object.suggestions?.map((e) => OptimizationSuggestion.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseApplyOptimizationSuggestionRequest(): ApplyOptimizationSuggestionRequest {
+  return { organisationId: "", clientId: "", suggestedLotId: "" };
+}
+
+export const ApplyOptimizationSuggestionRequest: MessageFns<ApplyOptimizationSuggestionRequest> = {
+  encode(message: ApplyOptimizationSuggestionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.suggestedLotId !== "") {
+      writer.uint32(26).string(message.suggestedLotId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ApplyOptimizationSuggestionRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseApplyOptimizationSuggestionRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.suggestedLotId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ApplyOptimizationSuggestionRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      suggestedLotId: isSet(object.suggestedLotId)
+        ? globalThis.String(object.suggestedLotId)
+        : isSet(object.suggested_lot_id)
+        ? globalThis.String(object.suggested_lot_id)
+        : "",
+    };
+  },
+
+  toJSON(message: ApplyOptimizationSuggestionRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.suggestedLotId !== "") {
+      obj.suggestedLotId = message.suggestedLotId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ApplyOptimizationSuggestionRequest>, I>>(
+    base?: I,
+  ): ApplyOptimizationSuggestionRequest {
+    return ApplyOptimizationSuggestionRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ApplyOptimizationSuggestionRequest>, I>>(
+    object: I,
+  ): ApplyOptimizationSuggestionRequest {
+    const message = createBaseApplyOptimizationSuggestionRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.suggestedLotId = object.suggestedLotId ?? "";
+    return message;
+  },
+};
+
+function createBaseApplyOptimizationSuggestionResponse(): ApplyOptimizationSuggestionResponse {
+  return { success: false, updatedConfig: undefined };
+}
+
+export const ApplyOptimizationSuggestionResponse: MessageFns<ApplyOptimizationSuggestionResponse> = {
+  encode(message: ApplyOptimizationSuggestionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.updatedConfig !== undefined) {
+      ClientDebitConfiguration.encode(message.updatedConfig, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ApplyOptimizationSuggestionResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseApplyOptimizationSuggestionResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.updatedConfig = ClientDebitConfiguration.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ApplyOptimizationSuggestionResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      updatedConfig: isSet(object.updatedConfig)
+        ? ClientDebitConfiguration.fromJSON(object.updatedConfig)
+        : isSet(object.updated_config)
+        ? ClientDebitConfiguration.fromJSON(object.updated_config)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ApplyOptimizationSuggestionResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.updatedConfig !== undefined) {
+      obj.updatedConfig = ClientDebitConfiguration.toJSON(message.updatedConfig);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ApplyOptimizationSuggestionResponse>, I>>(
+    base?: I,
+  ): ApplyOptimizationSuggestionResponse {
+    return ApplyOptimizationSuggestionResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ApplyOptimizationSuggestionResponse>, I>>(
+    object: I,
+  ): ApplyOptimizationSuggestionResponse {
+    const message = createBaseApplyOptimizationSuggestionResponse();
+    message.success = object.success ?? false;
+    message.updatedConfig = (object.updatedConfig !== undefined && object.updatedConfig !== null)
+      ? ClientDebitConfiguration.fromPartial(object.updatedConfig)
+      : undefined;
+    return message;
+  },
+};
+
 function createBaseGetSystemConfigRequest(): GetSystemConfigRequest {
   return { organisationId: "" };
 }
@@ -13674,6 +15711,1022 @@ export const GetAuditLogsResponse: MessageFns<GetAuditLogsResponse> = {
   },
 };
 
+function createBaseDebitLotMessage(): DebitLotMessage {
+  return {
+    id: "",
+    organisationId: "",
+    societeId: "",
+    name: "",
+    startDay: 0,
+    endDay: 0,
+    description: "",
+    isActive: false,
+    displayOrder: 0,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const DebitLotMessage: MessageFns<DebitLotMessage> = {
+  encode(message: DebitLotMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(26).string(message.societeId);
+    }
+    if (message.name !== "") {
+      writer.uint32(34).string(message.name);
+    }
+    if (message.startDay !== 0) {
+      writer.uint32(40).int32(message.startDay);
+    }
+    if (message.endDay !== 0) {
+      writer.uint32(48).int32(message.endDay);
+    }
+    if (message.description !== "") {
+      writer.uint32(58).string(message.description);
+    }
+    if (message.isActive !== false) {
+      writer.uint32(64).bool(message.isActive);
+    }
+    if (message.displayOrder !== 0) {
+      writer.uint32(72).int32(message.displayOrder);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(82).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(90).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DebitLotMessage {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDebitLotMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.startDay = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.endDay = reader.int32();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.isActive = reader.bool();
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.displayOrder = reader.int32();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DebitLotMessage {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      startDay: isSet(object.startDay)
+        ? globalThis.Number(object.startDay)
+        : isSet(object.start_day)
+        ? globalThis.Number(object.start_day)
+        : 0,
+      endDay: isSet(object.endDay)
+        ? globalThis.Number(object.endDay)
+        : isSet(object.end_day)
+        ? globalThis.Number(object.end_day)
+        : 0,
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      isActive: isSet(object.isActive)
+        ? globalThis.Boolean(object.isActive)
+        : isSet(object.is_active)
+        ? globalThis.Boolean(object.is_active)
+        : false,
+      displayOrder: isSet(object.displayOrder)
+        ? globalThis.Number(object.displayOrder)
+        : isSet(object.display_order)
+        ? globalThis.Number(object.display_order)
+        : 0,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: DebitLotMessage): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.startDay !== 0) {
+      obj.startDay = Math.round(message.startDay);
+    }
+    if (message.endDay !== 0) {
+      obj.endDay = Math.round(message.endDay);
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.isActive !== false) {
+      obj.isActive = message.isActive;
+    }
+    if (message.displayOrder !== 0) {
+      obj.displayOrder = Math.round(message.displayOrder);
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DebitLotMessage>, I>>(base?: I): DebitLotMessage {
+    return DebitLotMessage.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DebitLotMessage>, I>>(object: I): DebitLotMessage {
+    const message = createBaseDebitLotMessage();
+    message.id = object.id ?? "";
+    message.organisationId = object.organisationId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.name = object.name ?? "";
+    message.startDay = object.startDay ?? 0;
+    message.endDay = object.endDay ?? 0;
+    message.description = object.description ?? "";
+    message.isActive = object.isActive ?? false;
+    message.displayOrder = object.displayOrder ?? 0;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateLotRequest(): CreateLotRequest {
+  return { organisationId: "", societeId: "", name: "", startDay: 0, endDay: 0, description: "", displayOrder: 0 };
+}
+
+export const CreateLotRequest: MessageFns<CreateLotRequest> = {
+  encode(message: CreateLotRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.name !== "") {
+      writer.uint32(26).string(message.name);
+    }
+    if (message.startDay !== 0) {
+      writer.uint32(32).int32(message.startDay);
+    }
+    if (message.endDay !== 0) {
+      writer.uint32(40).int32(message.endDay);
+    }
+    if (message.description !== "") {
+      writer.uint32(50).string(message.description);
+    }
+    if (message.displayOrder !== 0) {
+      writer.uint32(56).int32(message.displayOrder);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateLotRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateLotRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.startDay = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.endDay = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.displayOrder = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateLotRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      startDay: isSet(object.startDay)
+        ? globalThis.Number(object.startDay)
+        : isSet(object.start_day)
+        ? globalThis.Number(object.start_day)
+        : 0,
+      endDay: isSet(object.endDay)
+        ? globalThis.Number(object.endDay)
+        : isSet(object.end_day)
+        ? globalThis.Number(object.end_day)
+        : 0,
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      displayOrder: isSet(object.displayOrder)
+        ? globalThis.Number(object.displayOrder)
+        : isSet(object.display_order)
+        ? globalThis.Number(object.display_order)
+        : 0,
+    };
+  },
+
+  toJSON(message: CreateLotRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.startDay !== 0) {
+      obj.startDay = Math.round(message.startDay);
+    }
+    if (message.endDay !== 0) {
+      obj.endDay = Math.round(message.endDay);
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.displayOrder !== 0) {
+      obj.displayOrder = Math.round(message.displayOrder);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateLotRequest>, I>>(base?: I): CreateLotRequest {
+    return CreateLotRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateLotRequest>, I>>(object: I): CreateLotRequest {
+    const message = createBaseCreateLotRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.name = object.name ?? "";
+    message.startDay = object.startDay ?? 0;
+    message.endDay = object.endDay ?? 0;
+    message.description = object.description ?? "";
+    message.displayOrder = object.displayOrder ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetLotRequest(): GetLotRequest {
+  return { id: "", organisationId: "" };
+}
+
+export const GetLotRequest: MessageFns<GetLotRequest> = {
+  encode(message: GetLotRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetLotRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetLotRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetLotRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetLotRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetLotRequest>, I>>(base?: I): GetLotRequest {
+    return GetLotRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetLotRequest>, I>>(object: I): GetLotRequest {
+    const message = createBaseGetLotRequest();
+    message.id = object.id ?? "";
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseListLotsRequest(): ListLotsRequest {
+  return { organisationId: "", societeId: "", includeInactive: false };
+}
+
+export const ListLotsRequest: MessageFns<ListLotsRequest> = {
+  encode(message: ListLotsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.includeInactive !== false) {
+      writer.uint32(24).bool(message.includeInactive);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListLotsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListLotsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.includeInactive = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListLotsRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      includeInactive: isSet(object.includeInactive)
+        ? globalThis.Boolean(object.includeInactive)
+        : isSet(object.include_inactive)
+        ? globalThis.Boolean(object.include_inactive)
+        : false,
+    };
+  },
+
+  toJSON(message: ListLotsRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.includeInactive !== false) {
+      obj.includeInactive = message.includeInactive;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListLotsRequest>, I>>(base?: I): ListLotsRequest {
+    return ListLotsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListLotsRequest>, I>>(object: I): ListLotsRequest {
+    const message = createBaseListLotsRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.societeId = object.societeId ?? "";
+    message.includeInactive = object.includeInactive ?? false;
+    return message;
+  },
+};
+
+function createBaseListLotsResponse(): ListLotsResponse {
+  return { lots: [] };
+}
+
+export const ListLotsResponse: MessageFns<ListLotsResponse> = {
+  encode(message: ListLotsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.lots) {
+      DebitLotMessage.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListLotsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListLotsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.lots.push(DebitLotMessage.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListLotsResponse {
+    return {
+      lots: globalThis.Array.isArray(object?.lots) ? object.lots.map((e: any) => DebitLotMessage.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: ListLotsResponse): unknown {
+    const obj: any = {};
+    if (message.lots?.length) {
+      obj.lots = message.lots.map((e) => DebitLotMessage.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListLotsResponse>, I>>(base?: I): ListLotsResponse {
+    return ListLotsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListLotsResponse>, I>>(object: I): ListLotsResponse {
+    const message = createBaseListLotsResponse();
+    message.lots = object.lots?.map((e) => DebitLotMessage.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseUpdateLotRequest(): UpdateLotRequest {
+  return { id: "", organisationId: "", name: "", startDay: 0, endDay: 0, description: "", displayOrder: 0 };
+}
+
+export const UpdateLotRequest: MessageFns<UpdateLotRequest> = {
+  encode(message: UpdateLotRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    if (message.name !== "") {
+      writer.uint32(26).string(message.name);
+    }
+    if (message.startDay !== 0) {
+      writer.uint32(32).int32(message.startDay);
+    }
+    if (message.endDay !== 0) {
+      writer.uint32(40).int32(message.endDay);
+    }
+    if (message.description !== "") {
+      writer.uint32(50).string(message.description);
+    }
+    if (message.displayOrder !== 0) {
+      writer.uint32(56).int32(message.displayOrder);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateLotRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateLotRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.startDay = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.endDay = reader.int32();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.displayOrder = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateLotRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      startDay: isSet(object.startDay)
+        ? globalThis.Number(object.startDay)
+        : isSet(object.start_day)
+        ? globalThis.Number(object.start_day)
+        : 0,
+      endDay: isSet(object.endDay)
+        ? globalThis.Number(object.endDay)
+        : isSet(object.end_day)
+        ? globalThis.Number(object.end_day)
+        : 0,
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      displayOrder: isSet(object.displayOrder)
+        ? globalThis.Number(object.displayOrder)
+        : isSet(object.display_order)
+        ? globalThis.Number(object.display_order)
+        : 0,
+    };
+  },
+
+  toJSON(message: UpdateLotRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.startDay !== 0) {
+      obj.startDay = Math.round(message.startDay);
+    }
+    if (message.endDay !== 0) {
+      obj.endDay = Math.round(message.endDay);
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.displayOrder !== 0) {
+      obj.displayOrder = Math.round(message.displayOrder);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateLotRequest>, I>>(base?: I): UpdateLotRequest {
+    return UpdateLotRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateLotRequest>, I>>(object: I): UpdateLotRequest {
+    const message = createBaseUpdateLotRequest();
+    message.id = object.id ?? "";
+    message.organisationId = object.organisationId ?? "";
+    message.name = object.name ?? "";
+    message.startDay = object.startDay ?? 0;
+    message.endDay = object.endDay ?? 0;
+    message.description = object.description ?? "";
+    message.displayOrder = object.displayOrder ?? 0;
+    return message;
+  },
+};
+
+function createBaseDeactivateLotRequest(): DeactivateLotRequest {
+  return { id: "", organisationId: "" };
+}
+
+export const DeactivateLotRequest: MessageFns<DeactivateLotRequest> = {
+  encode(message: DeactivateLotRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeactivateLotRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeactivateLotRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeactivateLotRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: DeactivateLotRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeactivateLotRequest>, I>>(base?: I): DeactivateLotRequest {
+    return DeactivateLotRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeactivateLotRequest>, I>>(object: I): DeactivateLotRequest {
+    const message = createBaseDeactivateLotRequest();
+    message.id = object.id ?? "";
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
+function createBaseReactivateLotRequest(): ReactivateLotRequest {
+  return { id: "", organisationId: "" };
+}
+
+export const ReactivateLotRequest: MessageFns<ReactivateLotRequest> = {
+  encode(message: ReactivateLotRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ReactivateLotRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReactivateLotRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ReactivateLotRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: ReactivateLotRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ReactivateLotRequest>, I>>(base?: I): ReactivateLotRequest {
+    return ReactivateLotRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ReactivateLotRequest>, I>>(object: I): ReactivateLotRequest {
+    const message = createBaseReactivateLotRequest();
+    message.id = object.id ?? "";
+    message.organisationId = object.organisationId ?? "";
+    return message;
+  },
+};
+
 /** Service de calcul du Calendar Engine */
 export type CalendarEngineServiceService = typeof CalendarEngineServiceService;
 export const CalendarEngineServiceService = {
@@ -13957,140 +17010,6 @@ export interface DebitConfigurationServiceServer extends UntypedServiceImplement
   resolveConfiguration: handleUnaryCall<ResolveConfigurationRequest, ResolvedDebitConfiguration>;
 }
 
-/** Service de gestion des jours fériés */
-export type HolidayServiceService = typeof HolidayServiceService;
-export const HolidayServiceService = {
-  /** Zones */
-  createHolidayZone: {
-    path: "/calendar.HolidayService/CreateHolidayZone",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CreateHolidayZoneRequest): Buffer =>
-      Buffer.from(CreateHolidayZoneRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CreateHolidayZoneRequest => CreateHolidayZoneRequest.decode(value),
-    responseSerialize: (value: HolidayZone): Buffer => Buffer.from(HolidayZone.encode(value).finish()),
-    responseDeserialize: (value: Buffer): HolidayZone => HolidayZone.decode(value),
-  },
-  updateHolidayZone: {
-    path: "/calendar.HolidayService/UpdateHolidayZone",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: UpdateHolidayZoneRequest): Buffer =>
-      Buffer.from(UpdateHolidayZoneRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UpdateHolidayZoneRequest => UpdateHolidayZoneRequest.decode(value),
-    responseSerialize: (value: HolidayZone): Buffer => Buffer.from(HolidayZone.encode(value).finish()),
-    responseDeserialize: (value: Buffer): HolidayZone => HolidayZone.decode(value),
-  },
-  getHolidayZone: {
-    path: "/calendar.HolidayService/GetHolidayZone",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetHolidayZoneRequest): Buffer =>
-      Buffer.from(GetHolidayZoneRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetHolidayZoneRequest => GetHolidayZoneRequest.decode(value),
-    responseSerialize: (value: HolidayZone): Buffer => Buffer.from(HolidayZone.encode(value).finish()),
-    responseDeserialize: (value: Buffer): HolidayZone => HolidayZone.decode(value),
-  },
-  listHolidayZones: {
-    path: "/calendar.HolidayService/ListHolidayZones",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ListHolidayZonesRequest): Buffer =>
-      Buffer.from(ListHolidayZonesRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ListHolidayZonesRequest => ListHolidayZonesRequest.decode(value),
-    responseSerialize: (value: ListHolidayZonesResponse): Buffer =>
-      Buffer.from(ListHolidayZonesResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ListHolidayZonesResponse => ListHolidayZonesResponse.decode(value),
-  },
-  deleteHolidayZone: {
-    path: "/calendar.HolidayService/DeleteHolidayZone",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: DeleteHolidayZoneRequest): Buffer =>
-      Buffer.from(DeleteHolidayZoneRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): DeleteHolidayZoneRequest => DeleteHolidayZoneRequest.decode(value),
-    responseSerialize: (value: DeleteResponse): Buffer => Buffer.from(DeleteResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): DeleteResponse => DeleteResponse.decode(value),
-  },
-  /** Jours fériés */
-  createHoliday: {
-    path: "/calendar.HolidayService/CreateHoliday",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CreateHolidayRequest): Buffer => Buffer.from(CreateHolidayRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CreateHolidayRequest => CreateHolidayRequest.decode(value),
-    responseSerialize: (value: Holiday): Buffer => Buffer.from(Holiday.encode(value).finish()),
-    responseDeserialize: (value: Buffer): Holiday => Holiday.decode(value),
-  },
-  updateHoliday: {
-    path: "/calendar.HolidayService/UpdateHoliday",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: UpdateHolidayRequest): Buffer => Buffer.from(UpdateHolidayRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UpdateHolidayRequest => UpdateHolidayRequest.decode(value),
-    responseSerialize: (value: Holiday): Buffer => Buffer.from(Holiday.encode(value).finish()),
-    responseDeserialize: (value: Buffer): Holiday => Holiday.decode(value),
-  },
-  getHoliday: {
-    path: "/calendar.HolidayService/GetHoliday",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetHolidayRequest): Buffer => Buffer.from(GetHolidayRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetHolidayRequest => GetHolidayRequest.decode(value),
-    responseSerialize: (value: Holiday): Buffer => Buffer.from(Holiday.encode(value).finish()),
-    responseDeserialize: (value: Buffer): Holiday => Holiday.decode(value),
-  },
-  listHolidays: {
-    path: "/calendar.HolidayService/ListHolidays",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ListHolidaysRequest): Buffer => Buffer.from(ListHolidaysRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ListHolidaysRequest => ListHolidaysRequest.decode(value),
-    responseSerialize: (value: ListHolidaysResponse): Buffer =>
-      Buffer.from(ListHolidaysResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ListHolidaysResponse => ListHolidaysResponse.decode(value),
-  },
-  deleteHoliday: {
-    path: "/calendar.HolidayService/DeleteHoliday",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: DeleteHolidayRequest): Buffer => Buffer.from(DeleteHolidayRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): DeleteHolidayRequest => DeleteHolidayRequest.decode(value),
-    responseSerialize: (value: DeleteResponse): Buffer => Buffer.from(DeleteResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): DeleteResponse => DeleteResponse.decode(value),
-  },
-  /** Import jours fériés par pays */
-  importHolidaysByCountry: {
-    path: "/calendar.HolidayService/ImportHolidaysByCountry",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ImportHolidaysByCountryRequest): Buffer =>
-      Buffer.from(ImportHolidaysByCountryRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ImportHolidaysByCountryRequest => ImportHolidaysByCountryRequest.decode(value),
-    responseSerialize: (value: ImportHolidaysByCountryResponse): Buffer =>
-      Buffer.from(ImportHolidaysByCountryResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ImportHolidaysByCountryResponse =>
-      ImportHolidaysByCountryResponse.decode(value),
-  },
-} as const;
-
-export interface HolidayServiceServer extends UntypedServiceImplementation {
-  /** Zones */
-  createHolidayZone: handleUnaryCall<CreateHolidayZoneRequest, HolidayZone>;
-  updateHolidayZone: handleUnaryCall<UpdateHolidayZoneRequest, HolidayZone>;
-  getHolidayZone: handleUnaryCall<GetHolidayZoneRequest, HolidayZone>;
-  listHolidayZones: handleUnaryCall<ListHolidayZonesRequest, ListHolidayZonesResponse>;
-  deleteHolidayZone: handleUnaryCall<DeleteHolidayZoneRequest, DeleteResponse>;
-  /** Jours fériés */
-  createHoliday: handleUnaryCall<CreateHolidayRequest, Holiday>;
-  updateHoliday: handleUnaryCall<UpdateHolidayRequest, Holiday>;
-  getHoliday: handleUnaryCall<GetHolidayRequest, Holiday>;
-  listHolidays: handleUnaryCall<ListHolidaysRequest, ListHolidaysResponse>;
-  deleteHoliday: handleUnaryCall<DeleteHolidayRequest, DeleteResponse>;
-  /** Import jours fériés par pays */
-  importHolidaysByCountry: handleUnaryCall<ImportHolidaysByCountryRequest, ImportHolidaysByCountryResponse>;
-}
-
 /** Service Admin UI */
 export type CalendarAdminServiceService = typeof CalendarAdminServiceService;
 export const CalendarAdminServiceService = {
@@ -14244,6 +17163,162 @@ export interface CalendarAdminServiceServer extends UntypedServiceImplementation
   deleteVolumeThreshold: handleUnaryCall<DeleteVolumeThresholdRequest, DeleteResponse>;
   /** Audit */
   getAuditLogs: handleUnaryCall<GetAuditLogsRequest, GetAuditLogsResponse>;
+}
+
+export type CalendarAnalyticsServiceService = typeof CalendarAnalyticsServiceService;
+export const CalendarAnalyticsServiceService = {
+  getRejectionTrends: {
+    path: "/calendar.CalendarAnalyticsService/GetRejectionTrends",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetRejectionTrendsRequest): Buffer =>
+      Buffer.from(GetRejectionTrendsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetRejectionTrendsRequest => GetRejectionTrendsRequest.decode(value),
+    responseSerialize: (value: GetRejectionTrendsResponse): Buffer =>
+      Buffer.from(GetRejectionTrendsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetRejectionTrendsResponse => GetRejectionTrendsResponse.decode(value),
+  },
+  getDayHeatmap: {
+    path: "/calendar.CalendarAnalyticsService/GetDayHeatmap",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetDayHeatmapRequest): Buffer => Buffer.from(GetDayHeatmapRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetDayHeatmapRequest => GetDayHeatmapRequest.decode(value),
+    responseSerialize: (value: GetDayHeatmapResponse): Buffer =>
+      Buffer.from(GetDayHeatmapResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetDayHeatmapResponse => GetDayHeatmapResponse.decode(value),
+  },
+  getClientScores: {
+    path: "/calendar.CalendarAnalyticsService/GetClientScores",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetClientScoresRequest): Buffer =>
+      Buffer.from(GetClientScoresRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetClientScoresRequest => GetClientScoresRequest.decode(value),
+    responseSerialize: (value: GetClientScoresResponse): Buffer =>
+      Buffer.from(GetClientScoresResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetClientScoresResponse => GetClientScoresResponse.decode(value),
+  },
+  getForecastVsActual: {
+    path: "/calendar.CalendarAnalyticsService/GetForecastVsActual",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetForecastVsActualRequest): Buffer =>
+      Buffer.from(GetForecastVsActualRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetForecastVsActualRequest => GetForecastVsActualRequest.decode(value),
+    responseSerialize: (value: GetForecastVsActualResponse): Buffer =>
+      Buffer.from(GetForecastVsActualResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetForecastVsActualResponse => GetForecastVsActualResponse.decode(value),
+  },
+} as const;
+
+export interface CalendarAnalyticsServiceServer extends UntypedServiceImplementation {
+  getRejectionTrends: handleUnaryCall<GetRejectionTrendsRequest, GetRejectionTrendsResponse>;
+  getDayHeatmap: handleUnaryCall<GetDayHeatmapRequest, GetDayHeatmapResponse>;
+  getClientScores: handleUnaryCall<GetClientScoresRequest, GetClientScoresResponse>;
+  getForecastVsActual: handleUnaryCall<GetForecastVsActualRequest, GetForecastVsActualResponse>;
+}
+
+export type OptimizationSuggestionServiceService = typeof OptimizationSuggestionServiceService;
+export const OptimizationSuggestionServiceService = {
+  getOptimizationSuggestions: {
+    path: "/calendar.OptimizationSuggestionService/GetOptimizationSuggestions",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetOptimizationSuggestionsRequest): Buffer =>
+      Buffer.from(GetOptimizationSuggestionsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetOptimizationSuggestionsRequest =>
+      GetOptimizationSuggestionsRequest.decode(value),
+    responseSerialize: (value: GetOptimizationSuggestionsResponse): Buffer =>
+      Buffer.from(GetOptimizationSuggestionsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GetOptimizationSuggestionsResponse =>
+      GetOptimizationSuggestionsResponse.decode(value),
+  },
+  applyOptimizationSuggestion: {
+    path: "/calendar.OptimizationSuggestionService/ApplyOptimizationSuggestion",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ApplyOptimizationSuggestionRequest): Buffer =>
+      Buffer.from(ApplyOptimizationSuggestionRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ApplyOptimizationSuggestionRequest =>
+      ApplyOptimizationSuggestionRequest.decode(value),
+    responseSerialize: (value: ApplyOptimizationSuggestionResponse): Buffer =>
+      Buffer.from(ApplyOptimizationSuggestionResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ApplyOptimizationSuggestionResponse =>
+      ApplyOptimizationSuggestionResponse.decode(value),
+  },
+} as const;
+
+export interface OptimizationSuggestionServiceServer extends UntypedServiceImplementation {
+  getOptimizationSuggestions: handleUnaryCall<GetOptimizationSuggestionsRequest, GetOptimizationSuggestionsResponse>;
+  applyOptimizationSuggestion: handleUnaryCall<ApplyOptimizationSuggestionRequest, ApplyOptimizationSuggestionResponse>;
+}
+
+export type DebitLotServiceService = typeof DebitLotServiceService;
+export const DebitLotServiceService = {
+  createLot: {
+    path: "/calendar.DebitLotService/CreateLot",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateLotRequest): Buffer => Buffer.from(CreateLotRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateLotRequest => CreateLotRequest.decode(value),
+    responseSerialize: (value: DebitLotMessage): Buffer => Buffer.from(DebitLotMessage.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DebitLotMessage => DebitLotMessage.decode(value),
+  },
+  getLot: {
+    path: "/calendar.DebitLotService/GetLot",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetLotRequest): Buffer => Buffer.from(GetLotRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetLotRequest => GetLotRequest.decode(value),
+    responseSerialize: (value: DebitLotMessage): Buffer => Buffer.from(DebitLotMessage.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DebitLotMessage => DebitLotMessage.decode(value),
+  },
+  listLots: {
+    path: "/calendar.DebitLotService/ListLots",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListLotsRequest): Buffer => Buffer.from(ListLotsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListLotsRequest => ListLotsRequest.decode(value),
+    responseSerialize: (value: ListLotsResponse): Buffer => Buffer.from(ListLotsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListLotsResponse => ListLotsResponse.decode(value),
+  },
+  updateLot: {
+    path: "/calendar.DebitLotService/UpdateLot",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateLotRequest): Buffer => Buffer.from(UpdateLotRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateLotRequest => UpdateLotRequest.decode(value),
+    responseSerialize: (value: DebitLotMessage): Buffer => Buffer.from(DebitLotMessage.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DebitLotMessage => DebitLotMessage.decode(value),
+  },
+  deactivateLot: {
+    path: "/calendar.DebitLotService/DeactivateLot",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: DeactivateLotRequest): Buffer => Buffer.from(DeactivateLotRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): DeactivateLotRequest => DeactivateLotRequest.decode(value),
+    responseSerialize: (value: DebitLotMessage): Buffer => Buffer.from(DebitLotMessage.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DebitLotMessage => DebitLotMessage.decode(value),
+  },
+  reactivateLot: {
+    path: "/calendar.DebitLotService/ReactivateLot",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ReactivateLotRequest): Buffer => Buffer.from(ReactivateLotRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ReactivateLotRequest => ReactivateLotRequest.decode(value),
+    responseSerialize: (value: DebitLotMessage): Buffer => Buffer.from(DebitLotMessage.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DebitLotMessage => DebitLotMessage.decode(value),
+  },
+} as const;
+
+export interface DebitLotServiceServer extends UntypedServiceImplementation {
+  createLot: handleUnaryCall<CreateLotRequest, DebitLotMessage>;
+  getLot: handleUnaryCall<GetLotRequest, DebitLotMessage>;
+  listLots: handleUnaryCall<ListLotsRequest, ListLotsResponse>;
+  updateLot: handleUnaryCall<UpdateLotRequest, DebitLotMessage>;
+  deactivateLot: handleUnaryCall<DeactivateLotRequest, DebitLotMessage>;
+  reactivateLot: handleUnaryCall<ReactivateLotRequest, DebitLotMessage>;
 }
 
 function bytesFromBase64(b64: string): Uint8Array {

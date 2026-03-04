@@ -160,6 +160,15 @@ export interface ClientBase {
   datePremiereSouscription?: string | undefined;
   canalAcquisition?: string | undefined;
   source?: string | undefined;
+  civilite?: string | undefined;
+  bic?: string | undefined;
+  csp?: string | undefined;
+  regimeSocial?: string | undefined;
+  lieuNaissance?: string | undefined;
+  paysNaissance?: string | undefined;
+  etapeCourante?: string | undefined;
+  isPoliticallyExposed?: boolean | undefined;
+  numss?: string | undefined;
 }
 
 export interface CreateClientBaseRequest {
@@ -182,6 +191,17 @@ export interface CreateClientBaseRequest {
   datePremiereSouscription?: string | undefined;
   canalAcquisition?: string | undefined;
   source?: string | undefined;
+  iban?: string | undefined;
+  mandatSepa?: boolean | undefined;
+  civilite?: string | undefined;
+  bic?: string | undefined;
+  csp?: string | undefined;
+  regimeSocial?: string | undefined;
+  lieuNaissance?: string | undefined;
+  paysNaissance?: string | undefined;
+  etapeCourante?: string | undefined;
+  isPoliticallyExposed?: boolean | undefined;
+  numss?: string | undefined;
 }
 
 export interface UpdateClientBaseRequest {
@@ -204,6 +224,17 @@ export interface UpdateClientBaseRequest {
   datePremiereSouscription?: string | undefined;
   canalAcquisition?: string | undefined;
   source?: string | undefined;
+  iban?: string | undefined;
+  mandatSepa?: boolean | undefined;
+  civilite?: string | undefined;
+  bic?: string | undefined;
+  csp?: string | undefined;
+  regimeSocial?: string | undefined;
+  lieuNaissance?: string | undefined;
+  paysNaissance?: string | undefined;
+  etapeCourante?: string | undefined;
+  isPoliticallyExposed?: boolean | undefined;
+  numss?: string | undefined;
 }
 
 export interface GetClientBaseRequest {
@@ -2247,6 +2278,15 @@ function createBaseClientBase(): ClientBase {
     datePremiereSouscription: undefined,
     canalAcquisition: undefined,
     source: undefined,
+    civilite: undefined,
+    bic: undefined,
+    csp: undefined,
+    regimeSocial: undefined,
+    lieuNaissance: undefined,
+    paysNaissance: undefined,
+    etapeCourante: undefined,
+    isPoliticallyExposed: undefined,
+    numss: undefined,
   };
 }
 
@@ -2344,6 +2384,33 @@ export const ClientBase: MessageFns<ClientBase> = {
     }
     if (message.source !== undefined) {
       writer.uint32(250).string(message.source);
+    }
+    if (message.civilite !== undefined) {
+      writer.uint32(258).string(message.civilite);
+    }
+    if (message.bic !== undefined) {
+      writer.uint32(266).string(message.bic);
+    }
+    if (message.csp !== undefined) {
+      writer.uint32(274).string(message.csp);
+    }
+    if (message.regimeSocial !== undefined) {
+      writer.uint32(282).string(message.regimeSocial);
+    }
+    if (message.lieuNaissance !== undefined) {
+      writer.uint32(290).string(message.lieuNaissance);
+    }
+    if (message.paysNaissance !== undefined) {
+      writer.uint32(298).string(message.paysNaissance);
+    }
+    if (message.etapeCourante !== undefined) {
+      writer.uint32(306).string(message.etapeCourante);
+    }
+    if (message.isPoliticallyExposed !== undefined) {
+      writer.uint32(312).bool(message.isPoliticallyExposed);
+    }
+    if (message.numss !== undefined) {
+      writer.uint32(322).string(message.numss);
     }
     return writer;
   },
@@ -2603,6 +2670,78 @@ export const ClientBase: MessageFns<ClientBase> = {
           message.source = reader.string();
           continue;
         }
+        case 32: {
+          if (tag !== 258) {
+            break;
+          }
+
+          message.civilite = reader.string();
+          continue;
+        }
+        case 33: {
+          if (tag !== 266) {
+            break;
+          }
+
+          message.bic = reader.string();
+          continue;
+        }
+        case 34: {
+          if (tag !== 274) {
+            break;
+          }
+
+          message.csp = reader.string();
+          continue;
+        }
+        case 35: {
+          if (tag !== 282) {
+            break;
+          }
+
+          message.regimeSocial = reader.string();
+          continue;
+        }
+        case 36: {
+          if (tag !== 290) {
+            break;
+          }
+
+          message.lieuNaissance = reader.string();
+          continue;
+        }
+        case 37: {
+          if (tag !== 298) {
+            break;
+          }
+
+          message.paysNaissance = reader.string();
+          continue;
+        }
+        case 38: {
+          if (tag !== 306) {
+            break;
+          }
+
+          message.etapeCourante = reader.string();
+          continue;
+        }
+        case 39: {
+          if (tag !== 312) {
+            break;
+          }
+
+          message.isPoliticallyExposed = reader.bool();
+          continue;
+        }
+        case 40: {
+          if (tag !== 322) {
+            break;
+          }
+
+          message.numss = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -2727,6 +2866,35 @@ export const ClientBase: MessageFns<ClientBase> = {
         ? globalThis.String(object.canal_acquisition)
         : undefined,
       source: isSet(object.source) ? globalThis.String(object.source) : undefined,
+      civilite: isSet(object.civilite) ? globalThis.String(object.civilite) : undefined,
+      bic: isSet(object.bic) ? globalThis.String(object.bic) : undefined,
+      csp: isSet(object.csp) ? globalThis.String(object.csp) : undefined,
+      regimeSocial: isSet(object.regimeSocial)
+        ? globalThis.String(object.regimeSocial)
+        : isSet(object.regime_social)
+        ? globalThis.String(object.regime_social)
+        : undefined,
+      lieuNaissance: isSet(object.lieuNaissance)
+        ? globalThis.String(object.lieuNaissance)
+        : isSet(object.lieu_naissance)
+        ? globalThis.String(object.lieu_naissance)
+        : undefined,
+      paysNaissance: isSet(object.paysNaissance)
+        ? globalThis.String(object.paysNaissance)
+        : isSet(object.pays_naissance)
+        ? globalThis.String(object.pays_naissance)
+        : undefined,
+      etapeCourante: isSet(object.etapeCourante)
+        ? globalThis.String(object.etapeCourante)
+        : isSet(object.etape_courante)
+        ? globalThis.String(object.etape_courante)
+        : undefined,
+      isPoliticallyExposed: isSet(object.isPoliticallyExposed)
+        ? globalThis.Boolean(object.isPoliticallyExposed)
+        : isSet(object.is_politically_exposed)
+        ? globalThis.Boolean(object.is_politically_exposed)
+        : undefined,
+      numss: isSet(object.numss) ? globalThis.String(object.numss) : undefined,
     };
   },
 
@@ -2825,6 +2993,33 @@ export const ClientBase: MessageFns<ClientBase> = {
     if (message.source !== undefined) {
       obj.source = message.source;
     }
+    if (message.civilite !== undefined) {
+      obj.civilite = message.civilite;
+    }
+    if (message.bic !== undefined) {
+      obj.bic = message.bic;
+    }
+    if (message.csp !== undefined) {
+      obj.csp = message.csp;
+    }
+    if (message.regimeSocial !== undefined) {
+      obj.regimeSocial = message.regimeSocial;
+    }
+    if (message.lieuNaissance !== undefined) {
+      obj.lieuNaissance = message.lieuNaissance;
+    }
+    if (message.paysNaissance !== undefined) {
+      obj.paysNaissance = message.paysNaissance;
+    }
+    if (message.etapeCourante !== undefined) {
+      obj.etapeCourante = message.etapeCourante;
+    }
+    if (message.isPoliticallyExposed !== undefined) {
+      obj.isPoliticallyExposed = message.isPoliticallyExposed;
+    }
+    if (message.numss !== undefined) {
+      obj.numss = message.numss;
+    }
     return obj;
   },
 
@@ -2864,6 +3059,15 @@ export const ClientBase: MessageFns<ClientBase> = {
     message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
     message.canalAcquisition = object.canalAcquisition ?? undefined;
     message.source = object.source ?? undefined;
+    message.civilite = object.civilite ?? undefined;
+    message.bic = object.bic ?? undefined;
+    message.csp = object.csp ?? undefined;
+    message.regimeSocial = object.regimeSocial ?? undefined;
+    message.lieuNaissance = object.lieuNaissance ?? undefined;
+    message.paysNaissance = object.paysNaissance ?? undefined;
+    message.etapeCourante = object.etapeCourante ?? undefined;
+    message.isPoliticallyExposed = object.isPoliticallyExposed ?? undefined;
+    message.numss = object.numss ?? undefined;
     return message;
   },
 };
@@ -2889,6 +3093,17 @@ function createBaseCreateClientBaseRequest(): CreateClientBaseRequest {
     datePremiereSouscription: undefined,
     canalAcquisition: undefined,
     source: undefined,
+    iban: undefined,
+    mandatSepa: undefined,
+    civilite: undefined,
+    bic: undefined,
+    csp: undefined,
+    regimeSocial: undefined,
+    lieuNaissance: undefined,
+    paysNaissance: undefined,
+    etapeCourante: undefined,
+    isPoliticallyExposed: undefined,
+    numss: undefined,
   };
 }
 
@@ -2950,6 +3165,39 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     }
     if (message.source !== undefined) {
       writer.uint32(154).string(message.source);
+    }
+    if (message.iban !== undefined) {
+      writer.uint32(162).string(message.iban);
+    }
+    if (message.mandatSepa !== undefined) {
+      writer.uint32(168).bool(message.mandatSepa);
+    }
+    if (message.civilite !== undefined) {
+      writer.uint32(178).string(message.civilite);
+    }
+    if (message.bic !== undefined) {
+      writer.uint32(186).string(message.bic);
+    }
+    if (message.csp !== undefined) {
+      writer.uint32(194).string(message.csp);
+    }
+    if (message.regimeSocial !== undefined) {
+      writer.uint32(202).string(message.regimeSocial);
+    }
+    if (message.lieuNaissance !== undefined) {
+      writer.uint32(210).string(message.lieuNaissance);
+    }
+    if (message.paysNaissance !== undefined) {
+      writer.uint32(218).string(message.paysNaissance);
+    }
+    if (message.etapeCourante !== undefined) {
+      writer.uint32(226).string(message.etapeCourante);
+    }
+    if (message.isPoliticallyExposed !== undefined) {
+      writer.uint32(232).bool(message.isPoliticallyExposed);
+    }
+    if (message.numss !== undefined) {
+      writer.uint32(242).string(message.numss);
     }
     return writer;
   },
@@ -3113,6 +3361,94 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
           message.source = reader.string();
           continue;
         }
+        case 20: {
+          if (tag !== 162) {
+            break;
+          }
+
+          message.iban = reader.string();
+          continue;
+        }
+        case 21: {
+          if (tag !== 168) {
+            break;
+          }
+
+          message.mandatSepa = reader.bool();
+          continue;
+        }
+        case 22: {
+          if (tag !== 178) {
+            break;
+          }
+
+          message.civilite = reader.string();
+          continue;
+        }
+        case 23: {
+          if (tag !== 186) {
+            break;
+          }
+
+          message.bic = reader.string();
+          continue;
+        }
+        case 24: {
+          if (tag !== 194) {
+            break;
+          }
+
+          message.csp = reader.string();
+          continue;
+        }
+        case 25: {
+          if (tag !== 202) {
+            break;
+          }
+
+          message.regimeSocial = reader.string();
+          continue;
+        }
+        case 26: {
+          if (tag !== 210) {
+            break;
+          }
+
+          message.lieuNaissance = reader.string();
+          continue;
+        }
+        case 27: {
+          if (tag !== 218) {
+            break;
+          }
+
+          message.paysNaissance = reader.string();
+          continue;
+        }
+        case 28: {
+          if (tag !== 226) {
+            break;
+          }
+
+          message.etapeCourante = reader.string();
+          continue;
+        }
+        case 29: {
+          if (tag !== 232) {
+            break;
+          }
+
+          message.isPoliticallyExposed = reader.bool();
+          continue;
+        }
+        case 30: {
+          if (tag !== 242) {
+            break;
+          }
+
+          message.numss = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3195,6 +3531,41 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
         ? globalThis.String(object.canal_acquisition)
         : undefined,
       source: isSet(object.source) ? globalThis.String(object.source) : undefined,
+      iban: isSet(object.iban) ? globalThis.String(object.iban) : undefined,
+      mandatSepa: isSet(object.mandatSepa)
+        ? globalThis.Boolean(object.mandatSepa)
+        : isSet(object.mandat_sepa)
+        ? globalThis.Boolean(object.mandat_sepa)
+        : undefined,
+      civilite: isSet(object.civilite) ? globalThis.String(object.civilite) : undefined,
+      bic: isSet(object.bic) ? globalThis.String(object.bic) : undefined,
+      csp: isSet(object.csp) ? globalThis.String(object.csp) : undefined,
+      regimeSocial: isSet(object.regimeSocial)
+        ? globalThis.String(object.regimeSocial)
+        : isSet(object.regime_social)
+        ? globalThis.String(object.regime_social)
+        : undefined,
+      lieuNaissance: isSet(object.lieuNaissance)
+        ? globalThis.String(object.lieuNaissance)
+        : isSet(object.lieu_naissance)
+        ? globalThis.String(object.lieu_naissance)
+        : undefined,
+      paysNaissance: isSet(object.paysNaissance)
+        ? globalThis.String(object.paysNaissance)
+        : isSet(object.pays_naissance)
+        ? globalThis.String(object.pays_naissance)
+        : undefined,
+      etapeCourante: isSet(object.etapeCourante)
+        ? globalThis.String(object.etapeCourante)
+        : isSet(object.etape_courante)
+        ? globalThis.String(object.etape_courante)
+        : undefined,
+      isPoliticallyExposed: isSet(object.isPoliticallyExposed)
+        ? globalThis.Boolean(object.isPoliticallyExposed)
+        : isSet(object.is_politically_exposed)
+        ? globalThis.Boolean(object.is_politically_exposed)
+        : undefined,
+      numss: isSet(object.numss) ? globalThis.String(object.numss) : undefined,
     };
   },
 
@@ -3257,6 +3628,39 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     if (message.source !== undefined) {
       obj.source = message.source;
     }
+    if (message.iban !== undefined) {
+      obj.iban = message.iban;
+    }
+    if (message.mandatSepa !== undefined) {
+      obj.mandatSepa = message.mandatSepa;
+    }
+    if (message.civilite !== undefined) {
+      obj.civilite = message.civilite;
+    }
+    if (message.bic !== undefined) {
+      obj.bic = message.bic;
+    }
+    if (message.csp !== undefined) {
+      obj.csp = message.csp;
+    }
+    if (message.regimeSocial !== undefined) {
+      obj.regimeSocial = message.regimeSocial;
+    }
+    if (message.lieuNaissance !== undefined) {
+      obj.lieuNaissance = message.lieuNaissance;
+    }
+    if (message.paysNaissance !== undefined) {
+      obj.paysNaissance = message.paysNaissance;
+    }
+    if (message.etapeCourante !== undefined) {
+      obj.etapeCourante = message.etapeCourante;
+    }
+    if (message.isPoliticallyExposed !== undefined) {
+      obj.isPoliticallyExposed = message.isPoliticallyExposed;
+    }
+    if (message.numss !== undefined) {
+      obj.numss = message.numss;
+    }
     return obj;
   },
 
@@ -3284,6 +3688,17 @@ export const CreateClientBaseRequest: MessageFns<CreateClientBaseRequest> = {
     message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
     message.canalAcquisition = object.canalAcquisition ?? undefined;
     message.source = object.source ?? undefined;
+    message.iban = object.iban ?? undefined;
+    message.mandatSepa = object.mandatSepa ?? undefined;
+    message.civilite = object.civilite ?? undefined;
+    message.bic = object.bic ?? undefined;
+    message.csp = object.csp ?? undefined;
+    message.regimeSocial = object.regimeSocial ?? undefined;
+    message.lieuNaissance = object.lieuNaissance ?? undefined;
+    message.paysNaissance = object.paysNaissance ?? undefined;
+    message.etapeCourante = object.etapeCourante ?? undefined;
+    message.isPoliticallyExposed = object.isPoliticallyExposed ?? undefined;
+    message.numss = object.numss ?? undefined;
     return message;
   },
 };
@@ -3309,6 +3724,17 @@ function createBaseUpdateClientBaseRequest(): UpdateClientBaseRequest {
     datePremiereSouscription: undefined,
     canalAcquisition: undefined,
     source: undefined,
+    iban: undefined,
+    mandatSepa: undefined,
+    civilite: undefined,
+    bic: undefined,
+    csp: undefined,
+    regimeSocial: undefined,
+    lieuNaissance: undefined,
+    paysNaissance: undefined,
+    etapeCourante: undefined,
+    isPoliticallyExposed: undefined,
+    numss: undefined,
   };
 }
 
@@ -3370,6 +3796,39 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     }
     if (message.source !== undefined) {
       writer.uint32(154).string(message.source);
+    }
+    if (message.iban !== undefined) {
+      writer.uint32(162).string(message.iban);
+    }
+    if (message.mandatSepa !== undefined) {
+      writer.uint32(168).bool(message.mandatSepa);
+    }
+    if (message.civilite !== undefined) {
+      writer.uint32(178).string(message.civilite);
+    }
+    if (message.bic !== undefined) {
+      writer.uint32(186).string(message.bic);
+    }
+    if (message.csp !== undefined) {
+      writer.uint32(194).string(message.csp);
+    }
+    if (message.regimeSocial !== undefined) {
+      writer.uint32(202).string(message.regimeSocial);
+    }
+    if (message.lieuNaissance !== undefined) {
+      writer.uint32(210).string(message.lieuNaissance);
+    }
+    if (message.paysNaissance !== undefined) {
+      writer.uint32(218).string(message.paysNaissance);
+    }
+    if (message.etapeCourante !== undefined) {
+      writer.uint32(226).string(message.etapeCourante);
+    }
+    if (message.isPoliticallyExposed !== undefined) {
+      writer.uint32(232).bool(message.isPoliticallyExposed);
+    }
+    if (message.numss !== undefined) {
+      writer.uint32(242).string(message.numss);
     }
     return writer;
   },
@@ -3533,6 +3992,94 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
           message.source = reader.string();
           continue;
         }
+        case 20: {
+          if (tag !== 162) {
+            break;
+          }
+
+          message.iban = reader.string();
+          continue;
+        }
+        case 21: {
+          if (tag !== 168) {
+            break;
+          }
+
+          message.mandatSepa = reader.bool();
+          continue;
+        }
+        case 22: {
+          if (tag !== 178) {
+            break;
+          }
+
+          message.civilite = reader.string();
+          continue;
+        }
+        case 23: {
+          if (tag !== 186) {
+            break;
+          }
+
+          message.bic = reader.string();
+          continue;
+        }
+        case 24: {
+          if (tag !== 194) {
+            break;
+          }
+
+          message.csp = reader.string();
+          continue;
+        }
+        case 25: {
+          if (tag !== 202) {
+            break;
+          }
+
+          message.regimeSocial = reader.string();
+          continue;
+        }
+        case 26: {
+          if (tag !== 210) {
+            break;
+          }
+
+          message.lieuNaissance = reader.string();
+          continue;
+        }
+        case 27: {
+          if (tag !== 218) {
+            break;
+          }
+
+          message.paysNaissance = reader.string();
+          continue;
+        }
+        case 28: {
+          if (tag !== 226) {
+            break;
+          }
+
+          message.etapeCourante = reader.string();
+          continue;
+        }
+        case 29: {
+          if (tag !== 232) {
+            break;
+          }
+
+          message.isPoliticallyExposed = reader.bool();
+          continue;
+        }
+        case 30: {
+          if (tag !== 242) {
+            break;
+          }
+
+          message.numss = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3611,6 +4158,41 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
         ? globalThis.String(object.canal_acquisition)
         : undefined,
       source: isSet(object.source) ? globalThis.String(object.source) : undefined,
+      iban: isSet(object.iban) ? globalThis.String(object.iban) : undefined,
+      mandatSepa: isSet(object.mandatSepa)
+        ? globalThis.Boolean(object.mandatSepa)
+        : isSet(object.mandat_sepa)
+        ? globalThis.Boolean(object.mandat_sepa)
+        : undefined,
+      civilite: isSet(object.civilite) ? globalThis.String(object.civilite) : undefined,
+      bic: isSet(object.bic) ? globalThis.String(object.bic) : undefined,
+      csp: isSet(object.csp) ? globalThis.String(object.csp) : undefined,
+      regimeSocial: isSet(object.regimeSocial)
+        ? globalThis.String(object.regimeSocial)
+        : isSet(object.regime_social)
+        ? globalThis.String(object.regime_social)
+        : undefined,
+      lieuNaissance: isSet(object.lieuNaissance)
+        ? globalThis.String(object.lieuNaissance)
+        : isSet(object.lieu_naissance)
+        ? globalThis.String(object.lieu_naissance)
+        : undefined,
+      paysNaissance: isSet(object.paysNaissance)
+        ? globalThis.String(object.paysNaissance)
+        : isSet(object.pays_naissance)
+        ? globalThis.String(object.pays_naissance)
+        : undefined,
+      etapeCourante: isSet(object.etapeCourante)
+        ? globalThis.String(object.etapeCourante)
+        : isSet(object.etape_courante)
+        ? globalThis.String(object.etape_courante)
+        : undefined,
+      isPoliticallyExposed: isSet(object.isPoliticallyExposed)
+        ? globalThis.Boolean(object.isPoliticallyExposed)
+        : isSet(object.is_politically_exposed)
+        ? globalThis.Boolean(object.is_politically_exposed)
+        : undefined,
+      numss: isSet(object.numss) ? globalThis.String(object.numss) : undefined,
     };
   },
 
@@ -3673,6 +4255,39 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     if (message.source !== undefined) {
       obj.source = message.source;
     }
+    if (message.iban !== undefined) {
+      obj.iban = message.iban;
+    }
+    if (message.mandatSepa !== undefined) {
+      obj.mandatSepa = message.mandatSepa;
+    }
+    if (message.civilite !== undefined) {
+      obj.civilite = message.civilite;
+    }
+    if (message.bic !== undefined) {
+      obj.bic = message.bic;
+    }
+    if (message.csp !== undefined) {
+      obj.csp = message.csp;
+    }
+    if (message.regimeSocial !== undefined) {
+      obj.regimeSocial = message.regimeSocial;
+    }
+    if (message.lieuNaissance !== undefined) {
+      obj.lieuNaissance = message.lieuNaissance;
+    }
+    if (message.paysNaissance !== undefined) {
+      obj.paysNaissance = message.paysNaissance;
+    }
+    if (message.etapeCourante !== undefined) {
+      obj.etapeCourante = message.etapeCourante;
+    }
+    if (message.isPoliticallyExposed !== undefined) {
+      obj.isPoliticallyExposed = message.isPoliticallyExposed;
+    }
+    if (message.numss !== undefined) {
+      obj.numss = message.numss;
+    }
     return obj;
   },
 
@@ -3700,6 +4315,17 @@ export const UpdateClientBaseRequest: MessageFns<UpdateClientBaseRequest> = {
     message.datePremiereSouscription = object.datePremiereSouscription ?? undefined;
     message.canalAcquisition = object.canalAcquisition ?? undefined;
     message.source = object.source ?? undefined;
+    message.iban = object.iban ?? undefined;
+    message.mandatSepa = object.mandatSepa ?? undefined;
+    message.civilite = object.civilite ?? undefined;
+    message.bic = object.bic ?? undefined;
+    message.csp = object.csp ?? undefined;
+    message.regimeSocial = object.regimeSocial ?? undefined;
+    message.lieuNaissance = object.lieuNaissance ?? undefined;
+    message.paysNaissance = object.paysNaissance ?? undefined;
+    message.etapeCourante = object.etapeCourante ?? undefined;
+    message.isPoliticallyExposed = object.isPoliticallyExposed ?? undefined;
+    message.numss = object.numss ?? undefined;
     return message;
   },
 };

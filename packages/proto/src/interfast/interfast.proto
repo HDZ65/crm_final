@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package interfast;
+
+// ============================================================================
+// INTERFAST CONFIG SERVICE
+// Manages InterFast API integration configuration per organisation,
+// including which API routes are enabled.
+// ============================================================================
+
+service InterfastConfigService {
+  rpc Create(CreateInterfastConfigRequest) returns (InterfastConfig);
+  rpc Update(UpdateInterfastConfigRequest) returns (InterfastConfig);
+  rpc Get(GetInterfastConfigRequest) returns (InterfastConfig);
+  rpc GetByOrganisation(GetInterfastConfigByOrganisationRequest) returns (InterfastConfig);
+  rpc Delete(DeleteInterfastConfigRequest) returns (DeleteInterfastResponse);
+  rpc TestConnection(TestInterfastConnectionRequest) returns (TestInterfastConnectionResponse);
+
+  // Route enablement
+  rpc SaveEnabledRoutes(SaveEnabledRoutesRequest) returns (SaveEnabledRoutesResponse);
+  rpc GetEnabledRoutes(GetEnabledRoutesRequest) returns (GetEnabledRoutesResponse);
+}
+
+// ============================================================================
+// CONFIG MESSAGES
+// ============================================================================
+
+message InterfastConfig {
+  string id = 1;
+  string organisation_id = 2;
+  string api_url = 3;
+  string api_key_encrypted = 4;
+  string username = 5;
+  string password_encrypted = 6;
+  bool active = 7;
+  repeated string enabled_routes = 8;    // list of operationIds
+  string last_sync_at = 9;
+  string sync_error = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+message CreateInterfastConfigRequest {
+  string organisation_id = 1;
+  string api_url = 2;
+  string api_key = 3;
+  string username = 4;
+  string password = 5;
+}
+
+message UpdateInterfastConfigRequest {
+  string id = 1;
+  string api_url = 2;
+  string api_key = 3;
+  string username = 4;
+  string password = 5;
+}
+
+message GetInterfastConfigRequest {
+  string id = 1;
+}
+
+message GetInterfastConfigByOrganisationRequest {
+  string organisation_id = 1;
+}
+
+message DeleteInterfastConfigRequest {
+  string id = 1;
+}
+
+message DeleteInterfastResponse {
+  bool success = 1;
+}
+
+message TestInterfastConnectionRequest {
+  string organisation_id = 1;
+}
+
+message TestInterfastConnectionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ============================================================================
+// ROUTE ENABLEMENT MESSAGES
+// ============================================================================
+
+message SaveEnabledRoutesRequest {
+  string organisation_id = 1;
+  repeated string enabled_routes = 2;    // list of operationIds to enable
+}
+
+message SaveEnabledRoutesResponse {
+  bool success = 1;
+  int32 count = 2;                       // number of routes enabled
+  string message = 3;
+}
+
+message GetEnabledRoutesRequest {
+  string organisation_id = 1;
+}
+
+message GetEnabledRoutesResponse {
+  repeated string enabled_routes = 1;    // list of enabled operationIds
+}

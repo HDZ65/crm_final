@@ -2,16 +2,6 @@ syntax = "proto3";
 
 package contrats;
 
-// ========== STATUT CONTRAT SERVICE ==========
-service StatutContratService {
-  rpc Create(CreateStatutContratRequest) returns (StatutContrat);
-  rpc Update(UpdateStatutContratRequest) returns (StatutContrat);
-  rpc Get(GetStatutContratRequest) returns (StatutContrat);
-  rpc GetByCode(GetStatutContratByCodeRequest) returns (StatutContrat);
-  rpc List(ListStatutContratRequest) returns (ListStatutContratResponse);
-  rpc Delete(DeleteStatutContratRequest) returns (DeleteResponse);
-}
-
 message StatutContrat {
   string id = 1;
   string code = 2;
@@ -20,42 +10,6 @@ message StatutContrat {
   int32 ordre_affichage = 5;
   string created_at = 6;
   string updated_at = 7;
-}
-
-message CreateStatutContratRequest {
-  string code = 1;
-  string nom = 2;
-  string description = 3;
-  int32 ordre_affichage = 4;
-}
-
-message UpdateStatutContratRequest {
-  string id = 1;
-  string code = 2;
-  string nom = 3;
-  string description = 4;
-  int32 ordre_affichage = 5;
-}
-
-message GetStatutContratRequest {
-  string id = 1;
-}
-
-message GetStatutContratByCodeRequest {
-  string code = 1;
-}
-
-message ListStatutContratRequest {
-  Pagination pagination = 1;
-}
-
-message ListStatutContratResponse {
-  repeated StatutContrat statuts = 1;
-  PaginationResult pagination = 2;
-}
-
-message DeleteStatutContratRequest {
-  string id = 1;
 }
 
 // ========== CONTRAT SERVICE ==========
@@ -173,15 +127,6 @@ message DeleteContratRequest {
   string id = 1;
 }
 
-// ========== LIGNE CONTRAT SERVICE ==========
-service LigneContratService {
-  rpc Create(CreateLigneContratRequest) returns (LigneContrat);
-  rpc Update(UpdateLigneContratRequest) returns (LigneContrat);
-  rpc Get(GetLigneContratRequest) returns (LigneContrat);
-  rpc ListByContrat(ListLigneContratByContratRequest) returns (ListLigneContratResponse);
-  rpc Delete(DeleteLigneContratRequest) returns (DeleteResponse);
-}
-
 message LigneContrat {
    string id = 1;
    string contrat_id = 2;
@@ -194,50 +139,6 @@ message LigneContrat {
    string updated_at = 9;
 }
 
-message CreateLigneContratRequest {
-   string contrat_id = 1;
-   string produit_id = 2;
-   string periode_facturation_id = 3;
-   int32 quantite = 4;
-   double prix_unitaire = 5;
-   optional string canal_vente = 6;
-}
-
-message UpdateLigneContratRequest {
-   string id = 1;
-   string produit_id = 2;
-   string periode_facturation_id = 3;
-   int32 quantite = 4;
-   double prix_unitaire = 5;
-   optional string canal_vente = 6;
-}
-
-message GetLigneContratRequest {
-  string id = 1;
-}
-
-message ListLigneContratByContratRequest {
-  string contrat_id = 1;
-  Pagination pagination = 2;
-}
-
-message ListLigneContratResponse {
-  repeated LigneContrat lignes = 1;
-  PaginationResult pagination = 2;
-}
-
-message DeleteLigneContratRequest {
-  string id = 1;
-}
-
-// ========== HISTORIQUE STATUT CONTRAT SERVICE ==========
-service HistoriqueStatutContratService {
-  rpc Create(CreateHistoriqueStatutContratRequest) returns (HistoriqueStatutContrat);
-  rpc Get(GetHistoriqueStatutContratRequest) returns (HistoriqueStatutContrat);
-  rpc ListByContrat(ListHistoriqueByContratRequest) returns (ListHistoriqueStatutContratResponse);
-  rpc Delete(DeleteHistoriqueStatutContratRequest) returns (DeleteResponse);
-}
-
 message HistoriqueStatutContrat {
   string id = 1;
   string contrat_id = 2;
@@ -246,31 +147,6 @@ message HistoriqueStatutContrat {
   string date_changement = 5;
   string created_at = 6;
   string updated_at = 7;
-}
-
-message CreateHistoriqueStatutContratRequest {
-  string contrat_id = 1;
-  string ancien_statut_id = 2;
-  string nouveau_statut_id = 3;
-  string date_changement = 4;
-}
-
-message GetHistoriqueStatutContratRequest {
-  string id = 1;
-}
-
-message ListHistoriqueByContratRequest {
-  string contrat_id = 1;
-  Pagination pagination = 2;
-}
-
-message ListHistoriqueStatutContratResponse {
-  repeated HistoriqueStatutContrat historique = 1;
-  PaginationResult pagination = 2;
-}
-
-message DeleteHistoriqueStatutContratRequest {
-  string id = 1;
 }
 
 // ========== CONTRACT ORCHESTRATION SERVICE ==========

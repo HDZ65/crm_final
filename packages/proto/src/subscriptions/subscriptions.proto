@@ -405,18 +405,6 @@ message PreferenceHistoryEntry {
   string created_at = 6;
 }
 
-// ========== WOOCOMMERCE SERVICE ==========
-service WooCommerceService {
-  rpc CreateMapping(CreateWooCommerceMappingRequest) returns (WooCommerceMapping);
-  rpc UpdateMapping(UpdateWooCommerceMappingRequest) returns (WooCommerceMapping);
-  rpc GetMapping(GetByIdRequest) returns (WooCommerceMapping);
-  rpc ListMappings(ListWooCommerceMappingRequest) returns (ListWooCommerceMappingResponse);
-  rpc DeleteMapping(DeleteByIdRequest) returns (DeleteResponse);
-  rpc ProcessWebhook(ProcessWooCommerceWebhookRequest) returns (WooCommerceWebhookResponse);
-  rpc GetConfig(GetWooCommerceConfigRequest) returns (WooCommerceConfig);
-  rpc UpdateConfig(UpdateWooCommerceConfigRequest) returns (WooCommerceConfig);
-}
-
 message WooCommerceMapping {
   string id = 1;
   string organisation_id = 2;
@@ -427,28 +415,6 @@ message WooCommerceMapping {
   bool is_active = 7;
   string created_at = 8;
   string updated_at = 9;
-}
-
-message CreateWooCommerceMappingRequest {
-  string organisation_id = 1;
-  string woocommerce_store_id = 2;
-  string subscription_plan_id = 3;
-  string woocommerce_product_id = 4;
-}
-
-message UpdateWooCommerceMappingRequest {
-  string id = 1;
-  optional string woocommerce_product_id = 2;
-  optional bool is_active = 3;
-}
-
-message ListWooCommerceMappingRequest {
-  Pagination pagination = 1;
-}
-
-message ListWooCommerceMappingResponse {
-  repeated WooCommerceMapping mappings = 1;
-  PaginationResult pagination = 2;
 }
 
 message WooCommerceWebhookEvent {
@@ -463,18 +429,6 @@ message WooCommerceWebhookEvent {
   optional string error_message = 9;
 }
 
-message ProcessWooCommerceWebhookRequest {
-  string organisation_id = 1;
-  string event_type = 2;
-  string raw_payload = 3;  // JSON string
-}
-
-message WooCommerceWebhookResponse {
-  bool success = 1;
-  optional string message = 2;
-  optional string subscription_id = 3;
-}
-
 message WooCommerceConfig {
   string id = 1;
   string organisation_id = 2;
@@ -485,19 +439,6 @@ message WooCommerceConfig {
   bool is_active = 7;
   string created_at = 8;
   string updated_at = 9;
-}
-
-message GetWooCommerceConfigRequest {
-  string organisation_id = 1;
-  string woocommerce_store_id = 2;
-}
-
-message UpdateWooCommerceConfigRequest {
-  string id = 1;
-  optional string api_key = 2;
-  optional string api_secret = 3;
-  optional string webhook_url = 4;
-  optional bool is_active = 5;
 }
 
 // ========== COMMON MESSAGES ==========

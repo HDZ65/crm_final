@@ -468,58 +468,6 @@ message GrilleTarifaire {
   repeated PrixProduit prix_produits = 11;
 }
 
-message CreateGrilleTarifaireRequest {
-  string organisation_id = 1;
-  string nom = 2;
-  string description = 3;
-  string date_debut = 4;
-  string date_fin = 5;
-  bool est_par_defaut = 6;
-}
-
-message UpdateGrilleTarifaireRequest {
-  string id = 1;
-  optional string nom = 2;
-  optional string description = 3;
-  optional string date_debut = 4;
-  optional string date_fin = 5;
-  optional bool est_par_defaut = 6;
-  optional bool actif = 7;
-}
-
-message GetGrilleTarifaireRequest {
-  string id = 1;
-}
-
-message GetGrilleTarifaireActiveRequest {
-  string organisation_id = 1;
-  string date = 2;
-}
-
-message ListGrillesTarifairesRequest {
-  string organisation_id = 1;
-  optional bool actif = 2;
-  optional bool est_par_defaut = 3;
-  PaginationRequest pagination = 4;
-}
-
-message ListGrillesTarifairesResponse {
-  repeated GrilleTarifaire grilles = 1;
-  PaginationResponse pagination = 2;
-}
-
-message DeleteGrilleTarifaireRequest {
-  string id = 1;
-}
-
-message DeleteGrilleTarifaireResponse {
-  bool success = 1;
-}
-
-message SetGrilleParDefautRequest {
-  string id = 1;
-}
-
 // ===== PRIX PRODUIT (Product Price in Grid) =====
 
 message PrixProduit {
@@ -536,72 +484,6 @@ message PrixProduit {
   // Relations
   Produit produit = 11;
   GrilleTarifaire grille_tarifaire = 12;
-}
-
-message CreatePrixProduitRequest {
-  string grille_tarifaire_id = 1;
-  string produit_id = 2;
-  double prix_unitaire = 3;
-  double remise_pourcent = 4;
-  double prix_minimum = 5;
-  double prix_maximum = 6;
-}
-
-message UpdatePrixProduitRequest {
-  string id = 1;
-  optional double prix_unitaire = 2;
-  optional double remise_pourcent = 3;
-  optional double prix_minimum = 4;
-  optional double prix_maximum = 5;
-  optional bool actif = 6;
-}
-
-message GetPrixProduitRequest {
-  string id = 1;
-}
-
-message GetPrixForProduitRequest {
-  string grille_tarifaire_id = 1;
-  string produit_id = 2;
-}
-
-message ListPrixProduitsRequest {
-  string grille_tarifaire_id = 1;
-  optional string produit_id = 2;
-  optional bool actif = 3;
-  PaginationRequest pagination = 4;
-}
-
-message ListPrixProduitsResponse {
-  repeated PrixProduit prix_produits = 1;
-  PaginationResponse pagination = 2;
-}
-
-message DeletePrixProduitRequest {
-  string id = 1;
-}
-
-message DeletePrixProduitResponse {
-  bool success = 1;
-}
-
-// Bulk operations
-message BulkCreatePrixProduitsRequest {
-  string grille_tarifaire_id = 1;
-  repeated CreatePrixProduitItem items = 2;
-}
-
-message CreatePrixProduitItem {
-  string produit_id = 1;
-  double prix_unitaire = 2;
-  double remise_pourcent = 3;
-  double prix_minimum = 4;
-  double prix_maximum = 5;
-}
-
-message BulkCreatePrixProduitsResponse {
-  repeated PrixProduit created = 1;
-  int32 count = 2;
 }
 
 // ===== CATALOG SERVICE (Unified operations) =====
@@ -684,26 +566,6 @@ service ProduitPublicationService {
   rpc Get(GetProduitPublicationRequest) returns (ProduitPublication);
   rpc ListByVersion(ListProduitPublicationsByVersionRequest) returns (ListProduitPublicationsResponse);
   rpc ListBySociete(ListProduitPublicationsBySocieteRequest) returns (ListProduitPublicationsResponse);
-}
-
-service GrilleTarifaireService {
-  rpc Create(CreateGrilleTarifaireRequest) returns (GrilleTarifaire);
-  rpc Update(UpdateGrilleTarifaireRequest) returns (GrilleTarifaire);
-  rpc Get(GetGrilleTarifaireRequest) returns (GrilleTarifaire);
-  rpc GetActive(GetGrilleTarifaireActiveRequest) returns (GrilleTarifaire);
-  rpc List(ListGrillesTarifairesRequest) returns (ListGrillesTarifairesResponse);
-  rpc Delete(DeleteGrilleTarifaireRequest) returns (DeleteGrilleTarifaireResponse);
-  rpc SetParDefaut(SetGrilleParDefautRequest) returns (GrilleTarifaire);
-}
-
-service PrixProduitService {
-  rpc Create(CreatePrixProduitRequest) returns (PrixProduit);
-  rpc Update(UpdatePrixProduitRequest) returns (PrixProduit);
-  rpc Get(GetPrixProduitRequest) returns (PrixProduit);
-  rpc GetForProduit(GetPrixForProduitRequest) returns (PrixProduit);
-  rpc List(ListPrixProduitsRequest) returns (ListPrixProduitsResponse);
-  rpc Delete(DeletePrixProduitRequest) returns (DeletePrixProduitResponse);
-  rpc BulkCreate(BulkCreatePrixProduitsRequest) returns (BulkCreatePrixProduitsResponse);
 }
 
 service CatalogService {

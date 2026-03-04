@@ -36,7 +36,7 @@ export async function createSlimpayMandate(
 ): Promise<ActionResult<SlimpayMandateResponse>> {
   try {
     const data = await payments.createSlimpayMandate(request);
-    revalidatePath("/payments");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[createSlimpayMandate] gRPC error:", err);
@@ -74,7 +74,7 @@ export async function cancelSlimpayMandate(
 ): Promise<ActionResult<SlimpayMandateResponse>> {
   try {
     const data = await payments.cancelSlimpayMandate(request);
-    revalidatePath("/payments");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[cancelSlimpayMandate] gRPC error:", err);
@@ -93,7 +93,7 @@ export async function createSlimpayPayment(
 ): Promise<ActionResult<SlimpayPaymentResponse>> {
   try {
     const data = await payments.createSlimpayPayment(request);
-    revalidatePath("/payments");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[createSlimpayPayment] gRPC error:", err);
@@ -133,7 +133,7 @@ export async function createMultiSafepayTransaction(
 ): Promise<ActionResult<MultiSafepayTransactionResponse>> {
   try {
     const data = await payments.createMultiSafepayTransaction(request);
-    revalidatePath("/payments");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[createMultiSafepayTransaction] gRPC error:", err);
@@ -179,7 +179,7 @@ export async function refundMultiSafepayTransaction(params: {
       amountCents: params.amountCents,
       description: params.description,
     });
-    revalidatePath("/payments");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[refundMultiSafepayTransaction] gRPC error:", err);
@@ -218,7 +218,7 @@ export async function updateProviderStatusMapping(
 ): Promise<ActionResult<ProviderStatusMappingResponse>> {
   try {
     const data = await payments.updateProviderStatusMapping(request);
-    revalidatePath("/payments/status-mapping");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[updateProviderStatusMapping] gRPC error:", err);
@@ -257,7 +257,7 @@ export async function createRejectionReason(
 ): Promise<ActionResult<RejectionReasonResponse>> {
   try {
     const data = await payments.createRejectionReason(request);
-    revalidatePath("/payments/rejection-reasons");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[createRejectionReason] gRPC error:", err);
@@ -276,7 +276,7 @@ export async function updateRejectionReason(
 ): Promise<ActionResult<RejectionReasonResponse>> {
   try {
     const data = await payments.updateRejectionReason(request);
-    revalidatePath("/payments/rejection-reasons");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[updateRejectionReason] gRPC error:", err);

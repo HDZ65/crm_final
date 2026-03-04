@@ -50,8 +50,7 @@ export async function createPermissionAction(input: {
 }): Promise<ActionResult<Permission>> {
   try {
     const data = await permissions.create(input);
-    revalidatePath("/permissions");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/permissions");
     return { data, error: null };
   } catch (err) {
     console.error("[createPermission] gRPC error:", err);
@@ -66,8 +65,7 @@ export async function updatePermissionAction(input: {
 }): Promise<ActionResult<Permission>> {
   try {
     const data = await permissions.update(input);
-    revalidatePath("/permissions");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/permissions");
     return { data, error: null };
   } catch (err) {
     console.error("[updatePermission] gRPC error:", err);
@@ -78,8 +76,7 @@ export async function updatePermissionAction(input: {
 export async function deletePermissionAction(id: string): Promise<ActionResult<{ success: boolean }>> {
   try {
     await permissions.delete({ id });
-    revalidatePath("/permissions");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/permissions");
     return { data: { success: true }, error: null };
   } catch (err) {
     console.error("[deletePermission] gRPC error:", err);
@@ -117,8 +114,7 @@ export async function createRolePermissionAction(input: {
 }): Promise<ActionResult<RolePermission>> {
   try {
     const data = await rolePermissions.create(input);
-    revalidatePath("/permissions");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/permissions");
     return { data, error: null };
   } catch (err) {
     console.error("[createRolePermission] gRPC error:", err);
@@ -129,8 +125,7 @@ export async function createRolePermissionAction(input: {
 export async function deleteRolePermissionAction(id: string): Promise<ActionResult<{ success: boolean }>> {
   try {
     await rolePermissions.delete({ id });
-    revalidatePath("/permissions");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/permissions");
     return { data: { success: true }, error: null };
   } catch (err) {
     console.error("[deleteRolePermission] gRPC error:", err);

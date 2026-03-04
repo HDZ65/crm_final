@@ -52,8 +52,6 @@ export async function createMailbox(input: {
       signature: input.signature,
       isDefault: input.isDefault ?? false,
     });
-    revalidatePath("/mailbox");
-    revalidatePath("/settings");
     return { data: response.mailbox!, error: null };
   } catch (err) {
     console.error("[createMailbox] gRPC error:", err);
@@ -172,8 +170,6 @@ export async function updateMailbox(input: {
       isDefault: input.isDefault,
       isActive: input.isActive,
     });
-    revalidatePath("/mailbox");
-    revalidatePath("/settings");
     return { data: response.mailbox!, error: null };
   } catch (err) {
     console.error("[updateMailbox] gRPC error:", err);
@@ -192,8 +188,6 @@ export async function deleteMailbox(
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
     const response = await mailbox.delete({ id });
-    revalidatePath("/mailbox");
-    revalidatePath("/settings");
     return { data: { success: response.success }, error: null };
   } catch (err) {
     console.error("[deleteMailbox] gRPC error:", err);

@@ -70,7 +70,7 @@ export async function createSubscriptionPlan(input: {
 }): Promise<ActionResult<SubscriptionPlan>> {
   try {
     const data = await subscriptionPlans.create(input);
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[createSubscriptionPlan] gRPC error:", err);
@@ -93,7 +93,7 @@ export async function updateSubscriptionPlan(input: {
 }): Promise<ActionResult<SubscriptionPlan>> {
   try {
     const data = await subscriptionPlans.update(input);
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[updateSubscriptionPlan] gRPC error:", err);
@@ -104,7 +104,7 @@ export async function updateSubscriptionPlan(input: {
 export async function deleteSubscriptionPlan(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await subscriptionPlans.delete({ id });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[deleteSubscriptionPlan] gRPC error:", err);
@@ -187,7 +187,7 @@ export async function createSubscription(input: {
 }): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.create(input);
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[createSubscription] gRPC error:", err);
@@ -207,7 +207,7 @@ export async function updateSubscription(input: {
 }): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.update(input);
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[updateSubscription] gRPC error:", err);
@@ -218,7 +218,7 @@ export async function updateSubscription(input: {
 export async function deleteSubscription(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await subscriptions.delete({ id });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[deleteSubscription] gRPC error:", err);
@@ -229,7 +229,7 @@ export async function deleteSubscription(id: string): Promise<ActionResult<Delet
 export async function activateSubscription(id: string, triggeredBy: number): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.activate({ id, triggeredBy });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[activateSubscription] gRPC error:", err);
@@ -240,7 +240,7 @@ export async function activateSubscription(id: string, triggeredBy: number): Pro
 export async function pauseSubscription(id: string, triggeredBy: number, reason?: string): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.pause({ id, triggeredBy, reason });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[pauseSubscription] gRPC error:", err);
@@ -251,7 +251,7 @@ export async function pauseSubscription(id: string, triggeredBy: number, reason?
 export async function resumeSubscription(id: string, triggeredBy: number): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.resume({ id, triggeredBy });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[resumeSubscription] gRPC error:", err);
@@ -262,7 +262,7 @@ export async function resumeSubscription(id: string, triggeredBy: number): Promi
 export async function cancelSubscription(id: string, triggeredBy: number, reason?: string): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.cancel({ id, triggeredBy, reason });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[cancelSubscription] gRPC error:", err);
@@ -273,7 +273,7 @@ export async function cancelSubscription(id: string, triggeredBy: number, reason
 export async function suspendSubscription(id: string, triggeredBy: number, reason?: string): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.suspend({ id, triggeredBy, reason });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[suspendSubscription] gRPC error:", err);
@@ -284,7 +284,7 @@ export async function suspendSubscription(id: string, triggeredBy: number, reaso
 export async function reactivateSubscription(id: string, triggeredBy: number): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.reactivate({ id, triggeredBy });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[reactivateSubscription] gRPC error:", err);
@@ -295,7 +295,7 @@ export async function reactivateSubscription(id: string, triggeredBy: number): P
 export async function expireSubscription(id: string): Promise<ActionResult<Subscription>> {
   try {
     const data = await subscriptions.expire({ id });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[expireSubscription] gRPC error:", err);
@@ -355,7 +355,7 @@ export async function createPreferenceSchema(input: {
 }): Promise<ActionResult<PreferenceSchema>> {
   try {
     const data = await subscriptionPreferenceSchemas.create(input);
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[createPreferenceSchema] gRPC error:", err);
@@ -372,7 +372,7 @@ export async function updatePreferenceSchema(input: {
 }): Promise<ActionResult<PreferenceSchema>> {
   try {
     const data = await subscriptionPreferenceSchemas.update(input);
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[updatePreferenceSchema] gRPC error:", err);
@@ -383,7 +383,7 @@ export async function updatePreferenceSchema(input: {
 export async function deletePreferenceSchema(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await subscriptionPreferenceSchemas.delete({ id });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[deletePreferenceSchema] gRPC error:", err);
@@ -432,7 +432,7 @@ export async function createPreference(input: {
 }): Promise<ActionResult<Preference>> {
   try {
     const data = await subscriptionPreferences.create(input);
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[createPreference] gRPC error:", err);
@@ -446,7 +446,7 @@ export async function updatePreference(input: {
 }): Promise<ActionResult<Preference>> {
   try {
     const data = await subscriptionPreferences.update(input);
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[updatePreference] gRPC error:", err);
@@ -457,7 +457,7 @@ export async function updatePreference(input: {
 export async function deletePreference(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await subscriptionPreferences.delete({ id });
-    revalidatePath("/subscriptions");
+    revalidatePath("/abonnements");
     return { data, error: null };
   } catch (err) {
     console.error("[deletePreference] gRPC error:", err);

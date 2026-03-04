@@ -40,7 +40,7 @@ export async function acknowledgeAlert(
 ): Promise<ActionResult<AlertResponse>> {
   try {
     const data = await payments.acknowledgeAlert(request);
-    revalidatePath("/payments/alerts");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[acknowledgeAlert] gRPC error:", err);

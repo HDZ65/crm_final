@@ -31,7 +31,7 @@ export async function createRoutingRule(
 ): Promise<ActionResult<RoutingRuleResponse>> {
   try {
     const data = await payments.createRoutingRule(request);
-    revalidatePath("/payments/routing");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[createRoutingRule] gRPC error:", err);
@@ -50,7 +50,7 @@ export async function updateRoutingRule(
 ): Promise<ActionResult<RoutingRuleResponse>> {
   try {
     const data = await payments.updateRoutingRule(request);
-    revalidatePath("/payments/routing");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[updateRoutingRule] gRPC error:", err);
@@ -70,7 +70,7 @@ export async function deleteRoutingRule(
 ): Promise<ActionResult<DeleteRoutingRuleResponse>> {
   try {
     const data = await payments.deleteRoutingRule({ id, societeId });
-    revalidatePath("/payments/routing");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[deleteRoutingRule] gRPC error:", err);
@@ -127,7 +127,7 @@ export async function createProviderOverride(
 ): Promise<ActionResult<ProviderOverrideResponse>> {
   try {
     const data = await payments.createProviderOverride(request);
-    revalidatePath("/payments/routing");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[createProviderOverride] gRPC error:", err);
@@ -147,7 +147,7 @@ export async function deleteProviderOverride(
 ): Promise<ActionResult<DeleteProviderOverrideResponse>> {
   try {
     const data = await payments.deleteProviderOverride({ id, societeId });
-    revalidatePath("/payments/routing");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[deleteProviderOverride] gRPC error:", err);
@@ -186,7 +186,7 @@ export async function createReassignmentJob(
 ): Promise<ActionResult<ReassignmentJobResponse>> {
   try {
     const data = await payments.createReassignmentJob(request);
-    revalidatePath("/payments/routing");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[createReassignmentJob] gRPC error:", err);

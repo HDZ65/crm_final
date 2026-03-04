@@ -91,7 +91,7 @@ export async function importContratsFromExternal(
     })
 
     if (!input.dryRun) {
-      revalidatePath("/contrats")
+      revalidatePath("/clients")
     }
 
     return {

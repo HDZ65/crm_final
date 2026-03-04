@@ -126,7 +126,7 @@ export async function createContrat(input: {
       jourPrelevement: input.jourPrelevement ?? input.jour_prelevement ?? 0,
       notes: input.notes || "",
     });
-    revalidatePath("/contrats");
+    revalidatePath("/clients");
     return { data, error: null };
   } catch (err) {
     console.error("[createContrat] gRPC error:", err);
@@ -184,7 +184,7 @@ export async function updateContrat(input: {
       jourPrelevement: input.jourPrelevement ?? input.jour_prelevement ?? undefined,
       notes: input.notes || "",
     });
-    revalidatePath("/contrats");
+    revalidatePath("/clients");
     revalidatePath(`/contrats/${input.id}`);
     return { data, error: null };
   } catch (err) {
@@ -233,7 +233,7 @@ export async function updateContratJourPrelevement(input: {
       notes: contrat.notes,
     });
 
-    revalidatePath("/contrats");
+    revalidatePath("/clients");
     revalidatePath(`/contrats/${input.id}`);
 
     return { data, error: null };
@@ -257,7 +257,7 @@ export async function deleteContrat(
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
     await contrats.delete({ id });
-    revalidatePath("/contrats");
+    revalidatePath("/clients");
     return { data: { success: true }, error: null };
   } catch (err) {
     console.error("[deleteContrat] gRPC error:", err);
@@ -280,7 +280,7 @@ export async function activateContrat(
       contractId,
       payload: payload ? JSON.stringify(payload) : "",
     });
-    revalidatePath("/contrats");
+    revalidatePath("/clients");
     return {
       data: { success: response.success, message: response.message },
       error: null,
@@ -306,7 +306,7 @@ export async function suspendContrat(
       contractId,
       payload: payload ? JSON.stringify(payload) : "",
     });
-    revalidatePath("/contrats");
+    revalidatePath("/clients");
     return {
       data: { success: response.success, message: response.message },
       error: null,
@@ -332,7 +332,7 @@ export async function terminateContrat(
       contractId,
       payload: payload ? JSON.stringify(payload) : "",
     });
-    revalidatePath("/contrats");
+    revalidatePath("/clients");
     return {
       data: { success: response.success, message: response.message },
       error: null,
@@ -358,7 +358,7 @@ export async function portInContrat(
       contractId,
       payload: payload ? JSON.stringify(payload) : "",
     });
-    revalidatePath("/contrats");
+    revalidatePath("/clients");
     return {
       data: { success: response.success, message: response.message },
       error: null,

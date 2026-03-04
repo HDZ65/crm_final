@@ -50,8 +50,7 @@ export async function createCalendarEvent(input: {
       sourceUrl: input.sourceUrl ?? "",
       meetingId: input.meetingId ?? "",
     });
-    revalidatePath("/agenda");
-    revalidatePath("/calendar");
+    revalidatePath("/reunions");
     return { data, error: null };
   } catch (err) {
     console.error("[createCalendarEvent] gRPC error:", err);
@@ -108,8 +107,7 @@ export async function updateCalendarEvent(input: {
       sourceUrl: input.sourceUrl ?? "",
       meetingId: input.meetingId ?? "",
     });
-    revalidatePath("/agenda");
-    revalidatePath("/calendar");
+    revalidatePath("/reunions");
     return { data, error: null };
   } catch (err) {
     console.error("[updateCalendarEvent] gRPC error:", err);
@@ -128,8 +126,7 @@ export async function deleteCalendarEvent(
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
     const response = await calendarEvent.delete({ id });
-    revalidatePath("/agenda");
-    revalidatePath("/calendar");
+    revalidatePath("/reunions");
     return { data: { success: response.success }, error: null };
   } catch (err) {
     console.error("[deleteCalendarEvent] gRPC error:", err);
@@ -216,8 +213,7 @@ export async function syncCalendarFromProvider(
       oauthConnectionId: oauthConnectionId,
       syncFromDate: syncFromDate ?? "",
     });
-    revalidatePath("/agenda");
-    revalidatePath("/calendar");
+    revalidatePath("/reunions");
     return { data, error: null };
   } catch (err) {
     console.error("[syncCalendarFromProvider] gRPC error:", err);
@@ -264,8 +260,7 @@ export async function createMeeting(input: {
       transcriptUrl: input.transcriptUrl ?? "",
       calendarEventId: input.calendarEventId ?? "",
     });
-    revalidatePath("/agenda");
-    revalidatePath("/meetings");
+    revalidatePath("/reunions");
     return { data, error: null };
   } catch (err) {
     console.error("[createMeeting] gRPC error:", err);
@@ -364,8 +359,7 @@ export async function updateMeetingClientMatch(input: {
       clientId: input.clientId,
       matchType: input.matchType ?? 0,
     });
-    revalidatePath("/meetings");
-    revalidatePath("/agenda");
+    revalidatePath("/reunions");
     return { data, error: null };
   } catch (err) {
     console.error("[updateMeetingClientMatch] gRPC error:", err);
@@ -430,8 +424,7 @@ export async function regenerateCallSummary(
       meetingId: meetingId,
       aiModel: aiModel ?? "",
     });
-    revalidatePath("/meetings");
-    revalidatePath("/agenda");
+    revalidatePath("/reunions");
     return { data, error: null };
   } catch (err) {
     console.error("[regenerateCallSummary] gRPC error:", err);

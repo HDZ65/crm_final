@@ -148,7 +148,7 @@ export async function importCfastInvoices(
     const result = await cfastImport.importInvoices({
       organisationId: organisationId,
     });
-    revalidatePath("/factures");
+    revalidatePath("/facturation");
     return {
       data: {
         importedCount: result.importedCount,

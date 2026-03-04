@@ -70,7 +70,6 @@ export async function createPieceJointeAction(input: {
 }): Promise<ActionResult<PieceJointe>> {
   try {
     const data = await piecesJointes.create(input);
-    revalidatePath("/documents");
     revalidatePath("/clients");
     return { data, error: null };
   } catch (err) {
@@ -90,7 +89,6 @@ export async function updatePieceJointeAction(input: {
       nomFichier: input.nomFichier || "",
       url: input.url || "",
     });
-    revalidatePath("/documents");
     revalidatePath("/clients");
     return { data, error: null };
   } catch (err) {
@@ -102,7 +100,6 @@ export async function updatePieceJointeAction(input: {
 export async function deletePieceJointeAction(id: string): Promise<ActionResult<{ success: boolean }>> {
   try {
     await piecesJointes.delete({ id });
-    revalidatePath("/documents");
     revalidatePath("/clients");
     return { data: { success: true }, error: null };
   } catch (err) {
@@ -226,8 +223,6 @@ export async function createBoiteMailAction(input: {
       estParDefaut: input.estParDefaut || false,
       utilisateurId: input.utilisateurId,
     });
-    revalidatePath("/settings");
-    revalidatePath("/email");
     return { data, error: null };
   } catch (err) {
     console.error("[createBoiteMail] gRPC error:", err);
@@ -264,8 +259,6 @@ export async function updateBoiteMailAction(input: {
       signatureHtml: input.signatureHtml || "",
       signatureTexte: input.signatureTexte || "",
     });
-    revalidatePath("/settings");
-    revalidatePath("/email");
     return { data, error: null };
   } catch (err) {
     console.error("[updateBoiteMail] gRPC error:", err);
@@ -279,8 +272,6 @@ export async function setDefaultBoiteMailAction(input: {
 }): Promise<ActionResult<BoiteMail>> {
   try {
     const data = await boitesMail.setDefault(input);
-    revalidatePath("/settings");
-    revalidatePath("/email");
     return { data, error: null };
   } catch (err) {
     console.error("[setDefaultBoiteMail] gRPC error:", err);
@@ -291,8 +282,6 @@ export async function setDefaultBoiteMailAction(input: {
 export async function activerBoiteMailAction(id: string): Promise<ActionResult<BoiteMail>> {
   try {
     const data = await boitesMail.activer({ id });
-    revalidatePath("/settings");
-    revalidatePath("/email");
     return { data, error: null };
   } catch (err) {
     console.error("[activerBoiteMail] gRPC error:", err);
@@ -303,8 +292,6 @@ export async function activerBoiteMailAction(id: string): Promise<ActionResult<B
 export async function desactiverBoiteMailAction(id: string): Promise<ActionResult<BoiteMail>> {
   try {
     const data = await boitesMail.desactiver({ id });
-    revalidatePath("/settings");
-    revalidatePath("/email");
     return { data, error: null };
   } catch (err) {
     console.error("[desactiverBoiteMail] gRPC error:", err);
@@ -320,7 +307,6 @@ export async function updateOAuthTokensAction(input: {
 }): Promise<ActionResult<BoiteMail>> {
   try {
     const data = await boitesMail.updateOAuthTokens(input);
-    revalidatePath("/settings");
     return { data, error: null };
   } catch (err) {
     console.error("[updateOAuthTokens] gRPC error:", err);
@@ -343,8 +329,6 @@ export async function testBoiteMailConnectionAction(
 export async function deleteBoiteMailAction(id: string): Promise<ActionResult<{ success: boolean }>> {
   try {
     await boitesMail.delete({ id });
-    revalidatePath("/settings");
-    revalidatePath("/email");
     return { data: { success: true }, error: null };
   } catch (err) {
     console.error("[deleteBoiteMail] gRPC error:", err);

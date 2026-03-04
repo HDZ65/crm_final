@@ -55,8 +55,7 @@ export async function createPartenaireMarqueBlancheAction(input: {
 }): Promise<ActionResult<PartenaireMarqueBlanche>> {
   try {
     const data = await partenairesMarqueBlanche.create(input);
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data, error: null };
   } catch (err) {
     console.error("[createPartenaireMarqueBlanche] gRPC error:", err);
@@ -83,8 +82,7 @@ export async function updatePartenaireMarqueBlancheAction(input: {
       telephone: input.telephone || "",
       statutId: input.statutId || "",
     });
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data, error: null };
   } catch (err) {
     console.error("[updatePartenaireMarqueBlanche] gRPC error:", err);
@@ -97,8 +95,7 @@ export async function deletePartenaireMarqueBlancheAction(
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
     await partenairesMarqueBlanche.delete({ id });
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data: { success: true }, error: null };
   } catch (err) {
     console.error("[deletePartenaireMarqueBlanche] gRPC error:", err);
@@ -138,8 +135,7 @@ export async function createThemeMarqueAction(input: {
 }): Promise<ActionResult<ThemeMarque>> {
   try {
     const data = await themesMarque.create(input);
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data, error: null };
   } catch (err) {
     console.error("[createThemeMarque] gRPC error:", err);
@@ -162,8 +158,7 @@ export async function updateThemeMarqueAction(input: {
       couleurSecondaire: input.couleurSecondaire || "",
       faviconUrl: input.faviconUrl || "",
     });
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data, error: null };
   } catch (err) {
     console.error("[updateThemeMarque] gRPC error:", err);
@@ -174,8 +169,7 @@ export async function updateThemeMarqueAction(input: {
 export async function deleteThemeMarqueAction(id: string): Promise<ActionResult<{ success: boolean }>> {
   try {
     await themesMarque.delete({ id });
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data: { success: true }, error: null };
   } catch (err) {
     console.error("[deleteThemeMarque] gRPC error:", err);
@@ -224,8 +218,7 @@ export async function createStatutPartenaireAction(input: {
 }): Promise<ActionResult<StatutPartenaire>> {
   try {
     const data = await statutsPartenaire.create(input);
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data, error: null };
   } catch (err) {
     console.error("[createStatutPartenaire] gRPC error:", err);
@@ -246,8 +239,7 @@ export async function updateStatutPartenaireAction(input: {
       nom: input.nom || "",
       description: input.description || "",
     });
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data, error: null };
   } catch (err) {
     console.error("[updateStatutPartenaire] gRPC error:", err);
@@ -258,8 +250,7 @@ export async function updateStatutPartenaireAction(input: {
 export async function deleteStatutPartenaireAction(id: string): Promise<ActionResult<{ success: boolean }>> {
   try {
     await statutsPartenaire.delete({ id });
-    revalidatePath("/marque-blanche");
-    revalidatePath("/settings");
+    revalidatePath("/parametres/marque-blanche");
     return { data: { success: true }, error: null };
   } catch (err) {
     console.error("[deleteStatutPartenaire] gRPC error:", err);

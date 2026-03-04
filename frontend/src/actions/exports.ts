@@ -21,7 +21,7 @@ export async function createExportJob(
 ): Promise<ActionResult<ExportJobResponse>> {
   try {
     const data = await payments.createExportJob(request);
-    revalidatePath("/payments/exports");
+    revalidatePath("/paiements");
     return { data, error: null };
   } catch (err) {
     console.error("[createExportJob] gRPC error:", err);

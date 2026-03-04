@@ -74,7 +74,8 @@ export async function getWooCommerceWebhookEvent(id: string): Promise<ActionResu
 export async function retryWooCommerceWebhookEvent(id: string): Promise<ActionResult<ProcessWebhookResponse>> {
   try {
     const data = await woocommerceWebhooks.retryEvent({ id });
-    revalidatePath("/woocommerce");
+    revalidatePath("/integrations/woocommerce");
+    revalidatePath("/catalogue");
     return { data, error: null };
   } catch (err) {
     console.error("[retryWooCommerceWebhookEvent] gRPC error:", err);
@@ -141,7 +142,8 @@ export async function createWooCommerceMapping(input: {
 }): Promise<ActionResult<WooCommerceMapping>> {
   try {
     const data = await woocommerceMappings.create(input);
-    revalidatePath("/woocommerce");
+    revalidatePath("/integrations/woocommerce");
+    revalidatePath("/catalogue");
     return { data, error: null };
   } catch (err) {
     console.error("[createWooCommerceMapping] gRPC error:", err);
@@ -157,7 +159,8 @@ export async function updateWooCommerceMapping(input: {
 }): Promise<ActionResult<WooCommerceMapping>> {
   try {
     const data = await woocommerceMappings.update(input);
-    revalidatePath("/woocommerce");
+    revalidatePath("/integrations/woocommerce");
+    revalidatePath("/catalogue");
     return { data, error: null };
   } catch (err) {
     console.error("[updateWooCommerceMapping] gRPC error:", err);
@@ -168,7 +171,8 @@ export async function updateWooCommerceMapping(input: {
 export async function deleteWooCommerceMapping(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await woocommerceMappings.delete({ id });
-    revalidatePath("/woocommerce");
+    revalidatePath("/integrations/woocommerce");
+    revalidatePath("/catalogue");
     return { data, error: null };
   } catch (err) {
     console.error("[deleteWooCommerceMapping] gRPC error:", err);
@@ -195,7 +199,10 @@ export async function getWooCommerceConfigByOrganisation(organisationId: string)
     const data = await woocommerceConfig.getByOrganisation({ organisationId });
     return { data, error: null };
   } catch (err) {
-    console.error("[getWooCommerceConfigByOrganisation] gRPC error:", err);
+    const isNotFound = err instanceof Error && err.message.includes('NOT_FOUND');
+    if (!isNotFound) {
+      console.error("[getWooCommerceConfigByOrganisation] gRPC error:", err);
+    }
     return { data: null, error: err instanceof Error ? err.message : "Erreur lors du chargement de la configuration WooCommerce" };
   }
 }
@@ -227,7 +234,8 @@ export async function createWooCommerceConfig(input: {
       ...input,
       label: input.label || "",
     });
-    revalidatePath("/woocommerce");
+    revalidatePath("/integrations/woocommerce");
+    revalidatePath("/catalogue");
     return { data, error: null };
   } catch (err) {
     console.error("[createWooCommerceConfig] gRPC error:", err);
@@ -253,7 +261,8 @@ export async function updateWooCommerceConfig(input: {
       ...input,
       label: input.label || "",
     });
-    revalidatePath("/woocommerce");
+    revalidatePath("/integrations/woocommerce");
+    revalidatePath("/catalogue");
     return { data, error: null };
   } catch (err) {
     console.error("[updateWooCommerceConfig] gRPC error:", err);
@@ -264,7 +273,8 @@ export async function updateWooCommerceConfig(input: {
 export async function deleteWooCommerceConfig(id: string): Promise<ActionResult<DeleteResponse>> {
   try {
     const data = await woocommerceConfig.delete({ id });
-    revalidatePath("/woocommerce");
+    revalidatePath("/integrations/woocommerce");
+    revalidatePath("/catalogue");
     return { data, error: null };
   } catch (err) {
     console.error("[deleteWooCommerceConfig] gRPC error:", err);

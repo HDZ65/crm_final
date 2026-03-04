@@ -131,7 +131,7 @@ export async function createPartenaire(input: {
       metadata: input.metadata || "",
       createdBy: input.createdBy || "",
     });
-    revalidatePath("/partenaires");
+    revalidatePath("/commerciaux");
     return { data, error: null };
   } catch (err) {
     console.error("[createPartenaire] gRPC error:", err);
@@ -194,7 +194,7 @@ export async function updatePartenaire(input: {
       metadata: input.metadata || "",
       modifiedBy: input.modifiedBy || "",
     });
-    revalidatePath("/partenaires");
+    revalidatePath("/commerciaux");
     return { data, error: null };
   } catch (err) {
     console.error("[updatePartenaire] gRPC error:", err);
@@ -213,7 +213,7 @@ export async function activerPartenaire(
 ): Promise<ActionResult<PartenaireCommercial>> {
   try {
     const data = await partenaires.activer({ id });
-    revalidatePath("/partenaires");
+    revalidatePath("/commerciaux");
     return { data, error: null };
   } catch (err) {
     console.error("[activerPartenaire] gRPC error:", err);
@@ -232,7 +232,7 @@ export async function desactiverPartenaire(
 ): Promise<ActionResult<PartenaireCommercial>> {
   try {
     const data = await partenaires.desactiver({ id });
-    revalidatePath("/partenaires");
+    revalidatePath("/commerciaux");
     return { data, error: null };
   } catch (err) {
     console.error("[desactiverPartenaire] gRPC error:", err);
@@ -251,7 +251,7 @@ export async function deletePartenaire(
 ): Promise<ActionResult<{ success: boolean }>> {
   try {
     await partenaires.delete({ id });
-    revalidatePath("/partenaires");
+    revalidatePath("/commerciaux");
     return { data: { success: true }, error: null };
   } catch (err) {
     console.error("[deletePartenaire] gRPC error:", err);
@@ -271,7 +271,7 @@ export async function activerPartenairePourSociete(
 ): Promise<ActionResult<PartenaireCommercialSociete>> {
   try {
     const data = await partenaires.activerPourSociete({ partenaireId, societeId });
-    revalidatePath("/partenaires");
+    revalidatePath("/commerciaux");
     return { data, error: null };
   } catch (err) {
     console.error("[activerPartenairePourSociete] gRPC error:", err);
@@ -291,7 +291,7 @@ export async function desactiverPartenairePourSociete(
 ): Promise<ActionResult<PartenaireCommercialSociete>> {
   try {
     const data = await partenaires.desactiverPourSociete({ partenaireId, societeId });
-    revalidatePath("/partenaires");
+    revalidatePath("/commerciaux");
     return { data, error: null };
   } catch (err) {
     console.error("[desactiverPartenairePourSociete] gRPC error:", err);

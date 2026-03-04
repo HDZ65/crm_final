@@ -185,8 +185,8 @@ export function SignupForm({
 
       <FieldDescription className="px-6 text-center">
         En créant un compte, vous acceptez nos{" "}
-        <Link href="/terms">Conditions d&apos;utilisation</Link> et notre{" "}
-        <Link href="/privacy">Politique de confidentialité</Link>.
+        <Link href="#">Conditions d&apos;utilisation</Link> et notre{" "}
+        <Link href="#">Politique de confidentialité</Link>.
       </FieldDescription>
     </div>
   )

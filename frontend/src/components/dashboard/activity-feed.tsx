@@ -171,16 +171,6 @@ export function ActivityFeed() {
           </ScrollArea>
         )}
 
-        {notifications.length > 10 && (
-          <div className="mt-4 text-center">
-            <Link
-              href="/notifications"
-              className="text-sm text-muted-foreground hover:text-foreground underline"
-            >
-              Voir toutes les notifications
-            </Link>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

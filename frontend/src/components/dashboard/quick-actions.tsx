@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Plus, AlertTriangle, Mail, Download } from "lucide-react";
+import { AlertTriangle, Mail, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -80,12 +80,6 @@ export function QuickActions({ dashboardData }: QuickActionsProps = {}) {
   };
 
   const actions = [
-    {
-      label: "Nouveau contrat",
-      icon: Plus,
-      href: "/contrats/nouveau",
-      variant: "outline" as const,
-    },
     {
       label: "Voir impayés",
       icon: AlertTriangle,

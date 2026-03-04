@@ -80,13 +80,6 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               </a>
             </div>
             
-            {/* Support link */}
-            <p className="mt-6 text-center text-xs text-gray-500">
-              Si le probleme persiste,{" "}
-              <a href="/support" className="text-blue-600 hover:underline">
-                contactez le support
-              </a>
-            </p>
           </div>
         </div>
       </body>

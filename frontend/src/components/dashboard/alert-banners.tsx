@@ -90,16 +90,6 @@ export function AlertBanners({ initialAlertes }: AlertBannersProps) {
           </AlertDescription>
         </Alert>
       ))}
-      {hasMore && (
-        <div className="text-center">
-          <Link
-            href="/alertes"
-            className="text-sm text-muted-foreground hover:text-foreground underline"
-          >
-            Voir les {total} alertes
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

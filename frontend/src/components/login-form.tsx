@@ -149,8 +149,8 @@ export function LoginForm({
 
       <FieldDescription className="px-6 text-center">
         En vous connectant, vous acceptez nos{" "}
-        <Link href="/terms">Conditions d&apos;utilisation</Link> et notre{" "}
-        <Link href="/privacy">Politique de confidentialité</Link>.
+        <Link href="#">Conditions d&apos;utilisation</Link> et notre{" "}
+        <Link href="#">Politique de confidentialité</Link>.
       </FieldDescription>
     </div>
   )

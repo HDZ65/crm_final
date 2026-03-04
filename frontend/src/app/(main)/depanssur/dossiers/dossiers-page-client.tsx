@@ -14,7 +14,6 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 const getStatutColor = (statut: string) => {
   const colors: Record<string, string> = {
@@ -45,9 +44,7 @@ const columns: ColumnDef<any>[] = [
     accessorKey: 'referenceExterne',
     header: 'Référence',
     cell: ({ row }) => (
-      <Link href={`/depanssur/dossiers/${row.original.id}`} className="font-medium text-primary hover:underline">
-        {row.original.referenceExterne}
-      </Link>
+      <span className="font-medium text-primary">{row.original.referenceExterne}</span>
     ),
   },
   {
@@ -107,11 +104,9 @@ const columns: ColumnDef<any>[] = [
   {
     id: 'actions',
     cell: ({ row }) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link href={`/depanssur/dossiers/${row.original.id}`}>
-          <FileText className="h-4 w-4 mr-2" />
-          Détails
-        </Link>
+      <Button variant="ghost" size="sm" disabled>
+        <FileText className="h-4 w-4 mr-2" />
+        Détails
       </Button>
     ),
   },

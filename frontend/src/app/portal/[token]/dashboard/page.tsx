@@ -151,34 +151,8 @@ export default async function PortalDashboard({
       </div>
 
       {/* Actions rapides */}
+      {/* Actions rapides */}
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Mes factures</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link href={`/portal/${token}/invoices`}>
-                Consulter mes factures
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Mon profil</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full">
-              <Link href={`/portal/${token}/profile`}>
-                Modifier mes informations
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

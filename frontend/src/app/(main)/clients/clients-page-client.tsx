@@ -14,6 +14,7 @@ import { getClientsByOrganisation } from "@/actions/clients"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { Search, User, Mail, Phone, Building2, CreditCard, Globe, Shield, UserPlus, RefreshCw, Upload, Download, SlidersHorizontal, ChevronDown, X, Trash2 } from "lucide-react"
 import { CreateClientDialog } from "@/components/create-client-dialog"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { ImportClientDialog } from "@/components/clients/import-client-dialog"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
@@ -410,6 +411,22 @@ export function ClientsPageClient({ initialClients, statuts, hasWinLeadPlus = fa
      }
    }, [hasWinLeadPlus, filters.source, updateFilter])
 
+  // Construire le prompt IA dynamique
+  const statusCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {}
+    filteredClients.forEach((client) => {
+      counts[client.status] = (counts[client.status] || 0) + 1
+    })
+    return Object.entries(counts)
+      .map(([status, count]) => `${status}: ${count}`)
+      .join(", ")
+  }, [filteredClients])
+
+  const aiPrompt = React.useMemo(() => {
+    const topClients = filteredClients.slice(0, 5).map((c) => c.name).join(" | ")
+    return `Analyse la liste des clients (${filteredClients.length} clients au total). Répartition par statut: ${statusCounts}. Top clients: ${topClients}. Identifie les tendances et propose 3 actions commerciales.`
+  }, [filteredClients, statusCounts])
+
   return (
     <main className="flex flex-1 flex-col gap-4 min-h-0">
       <div className="flex flex-col gap-4 min-h-full">
@@ -579,6 +596,7 @@ export function ClientsPageClient({ initialClients, statuts, hasWinLeadPlus = fa
               <span className="text-sm text-muted-foreground">
                 {filteredClients.length} client{filteredClients.length > 1 ? "s" : ""}
               </span>
+              <AskAiCardButton prompt={aiPrompt} title="Analyser les clients avec l'Assistant IA" />
             </div>
 
             {error ? (

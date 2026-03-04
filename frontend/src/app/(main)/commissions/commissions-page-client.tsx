@@ -31,6 +31,7 @@ import { TriggerRepriseDialog } from "@/components/commissions/trigger-reprise-d
 import { CreerContestationDialog } from "@/components/commissions/creer-contestation-dialog"
 import { CommissionConfigDialog } from "@/components/commissions/commission-config-dialog"
 import { DataTable } from "@/components/data-table-basic"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { createColumns } from "./columns"
 import {
   getCommissionsByOrganisation,
@@ -1178,9 +1179,14 @@ export function CommissionsPageClient({
 
                 {/* Barre d'actions */}
                 <div className="flex items-center justify-between shrink-0">
-                  <div className="text-sm text-muted-foreground">
-                    {filteredCommissions.length} commission{filteredCommissions.length > 1 ? "s" : ""}
-                    {selectedCount > 0 && ` • ${selectedCount} sélectionnée${selectedCount > 1 ? "s" : ""}`}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>
+                      {filteredCommissions.length} commission{filteredCommissions.length > 1 ? "s" : ""}
+                      {selectedCount > 0 && ` • ${selectedCount} sélectionnée${selectedCount > 1 ? "s" : ""}`}
+                    </span>
+                    <AskAiCardButton
+                      prompt={`Analyse les commissions (${filteredCommissions.length} au total). Brut: ${formatCurrency(globalSummary.totalBrut)}, Reprises: ${formatCurrency(globalSummary.totalReprises)}, Net: ${formatCurrency(globalSummary.totalNet)}. Répartition par statut: ${statuts.map(s => `${s.nom}: ${filteredCommissions.filter(c => c.statut?.id === s.id).length}`).join(", ")}. Top montants: ${filteredCommissions.slice(0, 5).map(c => `${c.reference}: ${formatMontant(c.montantNetAPayer)}`).join(" | ")}. Identifie les anomalies et tendances.`}
+                    />
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <Button
@@ -1249,9 +1255,14 @@ export function CommissionsPageClient({
            <TabsContent value="bordereaux" className="flex-1 min-h-0 mt-4">
             <Card className="flex-1 min-h-0 flex flex-col h-full">
               <CardHeader className="shrink-0 pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FolderOpen className="size-4" />
-                  Bordereaux de commission
+                <CardTitle className="text-base flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <FolderOpen className="size-4" />
+                    Bordereaux de commission
+                  </span>
+                  <AskAiCardButton
+                    prompt={`Analyse les bordereaux de commission (${bordereaux.length} au total). Brouillons: ${bordereauxBrouillon}. Répartition: ${bordereaux.slice(0, 5).map(b => `${b.reference}: ${formatMontant(b.totalNetAPayer)} (${b.statutBordereau})`).join(" | ")}. Identifie les bordereaux en attente de validation et les anomalies de montants.`}
+                  />
                 </CardTitle>
               </CardHeader>
                <CardContent className="flex-1 min-h-0 flex flex-col">
@@ -1295,9 +1306,14 @@ export function CommissionsPageClient({
           <TabsContent value="reprises" className="flex-1 min-h-0 mt-4">
             <Card className="flex-1 min-h-0 flex flex-col h-full">
               <CardHeader className="shrink-0 pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <RotateCcw className="size-4" />
-                  Reprises de commission
+                <CardTitle className="text-base flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <RotateCcw className="size-4" />
+                    Reprises de commission
+                  </span>
+                  <AskAiCardButton
+                    prompt={`Analyse les reprises de commission (${reprises.length} au total). En attente: ${reprisesEnAttente}. Types: résiliation ${reprises.filter(r => r.typeReprise === "resiliation").length}, impayé ${reprises.filter(r => r.typeReprise === "impaye").length}, annulation ${reprises.filter(r => r.typeReprise === "annulation").length}. Dernières reprises: ${reprises.slice(0, 5).map(r => `${r.reference}: ${formatMontant(r.montantReprise)} (${r.typeReprise})`).join(" | ")}. Identifie les tendances et risques.`}
+                  />
                 </CardTitle>
               </CardHeader>
                <CardContent className="flex-1 min-h-0 flex flex-col">
@@ -1344,6 +1360,9 @@ export function CommissionsPageClient({
                     <ShieldAlert className="size-4" />
                     Contestations commissions
                   </span>
+                  <AskAiCardButton
+                    prompt={`Analyse les contestations de commission (${contestationsData.length} au total). En cours: ${contestationsEnCours}. Statuts: en cours ${contestationsData.filter(c => c.statut === "en_cours").length}, acceptées ${contestationsData.filter(c => c.statut === "acceptee").length}, rejetées ${contestationsData.filter(c => c.statut === "rejetee").length}. Dernières: ${contestationsData.slice(0, 5).map(c => `${c.motif?.slice(0, 30) ?? "N/A"} (${c.statut})`).join(" | ")}. Identifie les motifs récurrents et recommande des actions.`}
+                  />
                   <CreerContestationDialog
                     commissionId={filteredCommissions[0]?.id || ""}
                     bordereauId={bordereaux[0]?.id || ""}

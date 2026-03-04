@@ -18,6 +18,7 @@ import { useOrganisation } from "@/contexts/organisation-context"
 import type { Facture, StatutFacture } from "@proto/factures/factures"
 import { cn } from "@/lib/utils"
 import { CreateFactureDialog } from "@/components/create-facture-dialog"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 // Mapper la facture gRPC vers le type frontend
 function mapFacture(f: Facture): Facture {
@@ -501,6 +502,10 @@ export function FacturationPageClient({ initialFactures, statuts }: FacturationP
                   <span className="font-bold text-lg text-primary tabular-nums">{formatCurrency(totals.ttc)}</span>
                 </div>
               </div>
+              <AskAiCardButton
+                prompt={`Analyse les factures (${filteredFactures.length} au total). Répartition par statut: ${mappedStatuts.map(s => `${s.nom}: ${filteredFactures.filter(f => f.statutId === s.id).length}`).join(", ")}. Montant total TTC: ${formatCurrency(totals.ttc)}. Top 5 factures: ${filteredFactures.slice(0, 5).map(f => `${f.numero || "N/A"}: ${formatCurrency(f.montantTtc || 0)}`).join(" | ")}. Identifie les impayés prioritaires et les tendances.`}
+                title="Analyser les factures avec l'Assistant IA"
+              />
             </div>
 
             {/* Tableau */}

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { DeselectionReasonDialog } from "@/components/commissions/deselection-reason-dialog"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -211,8 +212,11 @@ export function ValidationPageClient({
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 pb-20">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Validation ADV</CardTitle>
+          <AskAiCardButton
+            aiPrompt={`Analyse les bordereaux en attente de validation (${bordereaux.length}). Montants: ${bordereaux.slice(0, 5).map(b => `${b.periode}: ${b.apporteurId}`).join(" | ")}. Identifie les priorités.`}
+          />
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="max-w-md">

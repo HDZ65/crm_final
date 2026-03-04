@@ -12,6 +12,7 @@ import { CommercialCommissions } from "@/components/commercial-detail/commercial
 import { CommercialContrats } from "@/components/commercial-detail/commercial-contrats"
 import { CommercialActivitesTaches } from "@/components/commercial-detail/commercial-activites-taches"
 import { CommercialDocuments } from "@/components/commercial-detail/commercial-documents"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, FileText, Users, Calendar } from "lucide-react"
@@ -59,11 +60,18 @@ export function CommercialDetailClient({
 
   return (
     <main className="flex flex-1 flex-col gap-6 min-h-0">
-      <CommercialHeader
-        commercial={commercial}
-        onUpdate={handleUpdate}
-        onDelete={handleDelete}
-      />
+      <div className="flex items-start gap-2">
+        <div className="flex-1">
+          <CommercialHeader
+            commercial={commercial}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+          />
+        </div>
+        <AskAiCardButton
+          prompt={`Commercial: ${commercial.nom} ${commercial.prenom}. Fiche commerciale: type=${commercial.typeApporteur}, email=${commercial.email}, téléphone=${commercial.telephone}, actif=${commercial.actif ? "Oui" : "Non"}, créé le ${commercial.createdAt}. Analyse ce profil commercial et donne des recommandations pour optimiser sa performance.`}
+        />
+      </div>
 
       <Tabs
         defaultValue="overview"
@@ -83,6 +91,12 @@ export function CommercialDetailClient({
         >
           {/* LEFT COLUMN: Stats + Recent Activity */}
           <div className="lg:col-span-8 flex flex-col gap-4 min-h-0 h-full">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-medium text-muted-foreground">Résumé</h3>
+              <AskAiCardButton
+                prompt={`Commercial: ${commercial.nom} ${commercial.prenom}. Statistiques résumées: ${initialCommissions?.length ?? 0} commissions, ${initialContrats?.length ?? 0} contrats. Analyse les indicateurs clés de performance de ce commercial et suggère des axes d'amélioration.`}
+              />
+            </div>
             {/* Stats Summary Cards */}
             <div className="grid grid-cols-2 gap-3">
               <Card>
@@ -146,6 +160,12 @@ export function CommercialDetailClient({
         </TabsContent>
 
         <TabsContent value="commissions" className="flex-1 flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-muted-foreground">Commissions du commercial</h3>
+            <AskAiCardButton
+              prompt={`Commercial: ${commercial.nom} ${commercial.prenom}. Commissions (${initialCommissions?.length ?? 0} total): ${(initialCommissions ?? []).slice(0, 5).map(c => `Réf: ${c.reference}, Montant brut: ${c.montantBrut}, Net: ${c.montantNetAPayer}, Période: ${c.periode}, Compagnie: ${c.compagnie}`).join(" | ")}. Analyse ces commissions et identifie les tendances.`}
+            />
+          </div>
           <CommercialCommissions
             commercialId={commercialId}
             organisationId={organisationId}
@@ -155,6 +175,12 @@ export function CommercialDetailClient({
         </TabsContent>
 
         <TabsContent value="contrats" className="flex-1 flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-muted-foreground">Contrats du commercial</h3>
+            <AskAiCardButton
+              prompt={`Commercial: ${commercial.nom} ${commercial.prenom}. Contrats (${initialContrats?.length ?? 0} total): ${(initialContrats ?? []).slice(0, 5).map(c => `Réf: ${c.reference}, Titre: ${c.titre}, Type: ${c.type}, Statut: ${c.statut}, Montant: ${c.montant}`).join(" | ")}. Analyse ces contrats et donne des insights sur le portefeuille.`}
+            />
+          </div>
           <CommercialContrats
             commercialId={commercialId}
             organisationId={organisationId}

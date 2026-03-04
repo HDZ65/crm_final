@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useOrganisation } from "@/contexts/organisation-context"
 import { getDashboardKpis } from "@/actions/dashboard"
-import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import type { KpisResponse } from "@proto/dashboard/dashboard"
 
 interface KPICard {

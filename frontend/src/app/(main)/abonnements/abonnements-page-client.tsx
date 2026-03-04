@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -508,6 +509,9 @@ export function AbonnementsPageClient({
                     <Plus className="mr-2 size-4" />
                     Nouvel abonnement
                   </Button>
+                  <AskAiCardButton
+                    prompt={`Analyse les abonnements actifs (${subscriptionsList.length}). MRR: ${subscriptionsList.reduce((sum, s) => sum + (Number(s.montant) || 0), 0)}€. Plans: ${subscriptionsList.slice(0, 5).map(a => `${a.planId}: ${a.montant || 0}€`).join(" | ")}. Identifie les risques de churn.`}
+                  />
                 </div>
               </div>
             </CardHeader>

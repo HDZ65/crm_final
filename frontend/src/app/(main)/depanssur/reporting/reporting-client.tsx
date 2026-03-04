@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Users, FileText, Euro, AlertCircle, Percent } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { ListAbonnementsResponse, ListDossiersResponse } from '@proto/depanssur/depanssur';
+import { AskAiCardButton } from '@/components/ask-ai-card-button';
 
 interface DepanssurReportingClientProps {
   initialAbonnements?: ListAbonnementsResponse | null;
@@ -79,6 +80,7 @@ export function DepanssurReportingClient({
           </SelectContent>
         </Select>
       </div>
+      <AskAiCardButton prompt="Analyse les métriques de reporting SAV : MRR, taux d'acceptation des dossiers, sinistralité par type, et churn rate. Fournis des insights sur les tendances et recommandations d'optimisation." />
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

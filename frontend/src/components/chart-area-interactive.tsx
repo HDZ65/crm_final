@@ -35,7 +35,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group"
-import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 export const description = "Graphique d'évolution du CA"
 

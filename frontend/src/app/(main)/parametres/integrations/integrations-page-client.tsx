@@ -76,6 +76,7 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -454,6 +455,7 @@ export function IntegrationsPageClient({
 
   return (
     <TooltipProvider>
+      <AskAiCardButton prompt="Analyse cette configuration d'intégrations et suggère des améliorations" />
       <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
         {/* Header */}
         <div>
@@ -1140,6 +1142,15 @@ export function IntegrationsPageClient({
           </DialogContent>
         </Dialog>
        </main>
-     </TooltipProvider>
-   )
- }
+    </TooltipProvider>
+  )
+}
+
+export function IntegrationsPageClientWrapper(props: IntegrationsPageClientProps) {
+  return (
+    <>
+      <AskAiCardButton prompt="Analyse cette configuration d'intégrations et suggère des améliorations" />
+      <IntegrationsPageClient {...props} />
+    </>
+  )
+}

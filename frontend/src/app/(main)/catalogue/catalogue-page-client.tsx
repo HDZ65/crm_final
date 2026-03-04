@@ -85,6 +85,7 @@ import {
 // Dialogs
 import { CreateProductDialog } from "@/components/catalogue/create-product-dialog"
 import { EditProductDialog } from "@/components/catalogue/edit-product-dialog"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   Disponible: { label: "Disponible", className: "bg-green-100 text-green-700" },
@@ -587,7 +588,10 @@ export function CataloguePageClient({
                     <span className="text-xs">Nouveau</span>
                   </Button>
                 </div>
-              </div>
+              <AskAiCardButton
+                prompt={`Analysez notre catalogue: ${filteredProducts.length} produits, ${gammes.length} gammes, ${Object.keys(CATEGORIE_PRODUIT_LABELS).length} catégories. Quelles optimisations recommandez-vous?`}
+              />
+            </div>
               {selectedGammeId && (
                 <div className="relative mt-2">
                   <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

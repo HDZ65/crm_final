@@ -9,7 +9,7 @@ import { Package, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrganisation } from "@/contexts/organisation-context";
 import { getRepartitionProduits } from "@/actions/dashboard";
-import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button";
+import { AskAiCardButton } from "@/components/ask-ai-card-button";
 import type { RepartitionProduitsResponse, RepartitionProduit } from "@proto/dashboard/dashboard";
 
 interface ProductDistributionProps {

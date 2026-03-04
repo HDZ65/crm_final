@@ -60,6 +60,7 @@ import type {
   WooCommerceWebhookEvent,
 } from "@proto/woocommerce/woocommerce"
 import { Plus, Pencil, Trash2, Loader2, ShoppingCart, Search, RefreshCw } from "lucide-react"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 interface WooCommercePageClientProps {
   activeOrgId?: string | null
@@ -404,6 +405,10 @@ export function WooCommercePageClient({
             Gérez les configurations, mappings produits et webhooks WooCommerce.
           </p>
         </div>
+        <AskAiCardButton
+          prompt="Analysez l'état de synchronisation WooCommerce : nombre de configurations actives, statut des mappings produits, événements webhook récents, et recommandations pour optimiser la synchronisation des données."
+          title="Analyser l'état de synchronisation WooCommerce"
+        />
       </div>
 
       {/* Configurations Section */}

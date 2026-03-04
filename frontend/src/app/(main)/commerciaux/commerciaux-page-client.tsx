@@ -19,6 +19,7 @@ import { useOrganisation } from "@/contexts/organisation-context"
 import { getCommercialFullName, TYPE_COMMERCIAL_LABELS } from "@/lib/ui/labels/commercial"
 import type { Apporteur } from "@proto/commerciaux/commerciaux"
 import { cn } from "@/lib/utils"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 interface CommerciauxPageClientProps {
   initialCommerciaux?: Apporteur[] | null
@@ -193,6 +194,28 @@ export function CommerciauxPageClient({ initialCommerciaux }: CommerciauxPageCli
     toast.success("Export CSV téléchargé")
   }, [filteredCommerciaux])
 
+  // Construire le prompt IA avec données dynamiques
+  const typeDistribution = React.useMemo(() => {
+    const counts: Record<string, number> = {}
+    filteredCommerciaux.forEach((c) => {
+      counts[c.typeApporteur] = (counts[c.typeApporteur] || 0) + 1
+    })
+    return Object.entries(counts)
+      .map(([type, count]) => `${TYPE_COMMERCIAL_LABELS[type as keyof typeof TYPE_COMMERCIAL_LABELS] || type}: ${count}`)
+      .join(", ")
+  }, [filteredCommerciaux])
+
+  const statusDistribution = React.useMemo(() => {
+    const actifs = filteredCommerciaux.filter((c) => c.actif).length
+    const inactifs = filteredCommerciaux.length - actifs
+    return `Actifs: ${actifs}, Inactifs: ${inactifs}`
+  }, [filteredCommerciaux])
+
+  const topPerformers = React.useMemo(() => {
+    return filteredCommerciaux.slice(0, 5).map((c) => getCommercialFullName(c)).join(" | ")
+  }, [filteredCommerciaux])
+
+  const aiPrompt = `Analyse la liste des commerciaux (${filteredCommerciaux.length} au total). Répartition par type: ${typeDistribution}. Statut: ${statusDistribution}. Top 5: ${topPerformers || "Aucun"}. Propose 3 actions pour améliorer les performances.`
   return (
     <main className="flex flex-1 flex-col gap-4 min-h-0">
       <div className="flex flex-col gap-4 min-h-full">
@@ -331,10 +354,11 @@ export function CommerciauxPageClient({ initialCommerciaux }: CommerciauxPageCli
         {/* Table des commerciaux */}
         <Card className="flex-1 min-h-0 bg-card border flex flex-col">
           <CardContent className="flex-1 min-h-0 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
               <span className="text-sm text-muted-foreground">
                 {filteredCommerciaux.length} {filteredCommerciaux.length > 1 ? "commerciaux" : "commercial"}
               </span>
+              <AskAiCardButton prompt={aiPrompt} />
             </div>
 
             <div className="flex-1 min-h-0">

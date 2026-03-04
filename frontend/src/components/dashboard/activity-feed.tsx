@@ -17,7 +17,7 @@ import { fr } from "date-fns/locale";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button";
+import { AskAiCardButton } from "@/components/ask-ai-card-button";
 
 // Icon mapping by notification type
 const getIconByType = (type: string | number | undefined) => {

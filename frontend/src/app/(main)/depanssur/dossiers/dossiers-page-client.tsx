@@ -14,6 +14,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { AskAiCardButton } from '@/components/ask-ai-card-button';
 
 const getStatutColor = (statut: string) => {
   const colors: Record<string, string> = {
@@ -222,6 +223,7 @@ export function DossiersPageClient({ initialDossiers = [], activeOrgId }: Dossie
             <Plus className="size-4" />
             Nouveau dossier
           </Button>
+          <AskAiCardButton prompt="Analyse les dossiers SAV en cours et fournis un résumé des statuts, montants demandés et acceptés, ainsi que les dossiers en attente d'information." />
         </div>
 
         {/* Filtres avancés (collapsible) */}

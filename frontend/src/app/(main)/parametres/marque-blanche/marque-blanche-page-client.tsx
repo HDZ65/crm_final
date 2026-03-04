@@ -62,6 +62,7 @@ import type {
 } from "@proto/organisations/organisations"
 import { Plus, Pencil, Trash2, Loader2, Palette, Search, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 interface MarqueBlanchePageClientProps {
   initialPartenaires?: PartenaireMarqueBlanche[] | null
@@ -969,6 +970,15 @@ export function MarqueBlanchePageClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+      </main>
+  )
+}
+
+export function MarqueBlanchePageClientWrapper(props: MarqueBlanchePageClientProps) {
+  return (
+    <>
+      <AskAiCardButton prompt="Analyse cette configuration marque blanche et suggère des améliorations" />
+      <MarqueBlanchePageClient {...props} />
+    </>
   )
 }

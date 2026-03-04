@@ -34,7 +34,7 @@ import { Pie, PieChart, Cell } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { ImportContratsDialog } from "@/components/import-contrats-dialog"
 
 // Calculer les dates de début/fin en fonction de la période

@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import { DataTable } from "@/components/data-table-basic"
 import { CreateShipmentDialog } from "@/components/shipments/create-shipment-dialog"
 import { ShipmentTrackingSheet } from "@/components/shipments/shipment-tracking-sheet"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { getExpeditionsByOrganisation } from "@/actions/expeditions"
 import type { ExpeditionResponse } from "@proto/logistics/logistics"
 import { useOrganisation } from "@/contexts/organisation-context"
@@ -520,6 +521,9 @@ export function ExpeditionsPageClient({ initialExpeditions }: ExpeditionsPageCli
               <span className="text-sm text-muted-foreground">
                 {filteredShipments.length} expédition{filteredShipments.length > 1 ? "s" : ""}
               </span>
+              <AskAiCardButton
+                prompt={`Analyse les ${totalShipments} expéditions de notre organisation. Statuts: ${totals.total} filtrées (${totals.inTransit} en cours, ${totals.delivered} livrées, ${totals.delayed} en retard). Produits: ${products.length} types différents. Quels sont les goulots d'étranglement logistiques et les recommandations d'optimisation?`}
+              />
             </div>
 
             {/* Tableau ou état vide */}

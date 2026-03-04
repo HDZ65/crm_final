@@ -14,6 +14,7 @@ import { useOrganisation } from "@/contexts/organisation-context"
 import { useAuth } from "@/hooks/auth"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -544,10 +545,15 @@ export function ReunionsPageClient({ initialOrgId }: ReunionsPageClientProps) {
                   <CardTitle>Réunions</CardTitle>
                   <CardDescription>{meetings.length} réunion(s) dans la période affichée</CardDescription>
                 </div>
-                <Button onClick={handleOpenCreateMeetingDialog} disabled={!hasContext}>
-                  <Plus className="mr-2 size-4" />
-                  Nouvelle réunion
-                </Button>
+                <div className="flex gap-2">
+                  <AskAiCardButton
+                    prompt={`Analyse les réunions à venir: ${meetings.slice(0, 5).map((r: any) => `${r.title || 'Sans titre'} le ${r.startTime ? new Date(r.startTime).toLocaleDateString('fr-FR') : 'date inconnue'}`).join(' | ')}. Identifie les priorités et prépare un résumé.`}
+                  />
+                  <Button onClick={handleOpenCreateMeetingDialog} disabled={!hasContext}>
+                    <Plus className="mr-2 size-4" />
+                    Nouvelle réunion
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

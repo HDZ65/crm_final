@@ -12,6 +12,7 @@ import { ChartProductDistribution } from "@/components/stats/chart-product-distr
 import { ChartCommercialRanking } from "@/components/stats/chart-commercial-ranking"
 import { AlertsPanel } from "@/components/stats/alerts-panel"
 import { CompanyStatsTable } from "@/components/stats/company-stats-table"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 // Server Actions
 import {
@@ -486,6 +487,10 @@ export function StatistiquesPageClient({
             {/* Vue Direction */}
             <TabsContent value="vue-direction" className="space-y-4">
               {/* KPIs principaux */}
+              {/* AI Analysis Button */}
+              <div className="flex justify-end mb-2">
+                <AskAiCardButton prompt={`Analyse les statistiques du CRM. KPIs: ${kpiCards.map(k => `${k.label}: ${k.value}`).join(" | ")}. Alertes actives: ${alertsList.length}. Identifie les tendances et propose 3 actions prioritaires.`} />
+              </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {isLoading ? (
                   // Loading skeleton for KPIs

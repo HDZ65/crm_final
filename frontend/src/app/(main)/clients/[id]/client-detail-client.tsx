@@ -27,6 +27,7 @@ import {
 import { getClientExpeditions } from "@/actions/expeditions";
 import { sendEmail } from "@/actions/mailbox";
 import { ClientActivites } from "@/components/activites/client-activites";
+import { AskAiCardButton } from "@/components/ask-ai-card-button";
 import { ClientContracts } from "@/components/client-detail/client-contracts";
 import { ClientDocuments } from "@/components/client-detail/client-documents";
 import { ClientHeader } from "@/components/client-detail/client-header";
@@ -795,21 +796,35 @@ Adresse: ${client.info.address}`;
     );
   }
 
+  // Prompts IA contextuels
+  const headerAiPrompt = `Client: ${client.name}. Statut: ${client.status}. Email: ${client.info.email}. Téléphone: ${client.info.phone}. Membre depuis: ${client.memberSince}. Analyse le profil de ce client et donne des recommandations.`;
+
+  const contratsAiPrompt = `Client: ${client.name}. Contrats: ${contracts.slice(0, 5).map(c => `${c.ref} (${c.status}): début ${c.start}`).join(" | ")}. Analyse les contrats et identifie les risques et opportunités.`;
+
+  const paiementsAiPrompt = `Client: ${client.name}. Solde: ${client.balance} (${client.balanceStatus}). Paiements: ${payments.slice(0, 5).map(p => `${p.label}: ${p.amount} le ${p.date} (${p.status})`).join(" | ")}. Analyse la situation financière et les risques d'impayé.`;
+
+  const activitesAiPrompt = `Client: ${client.name}. Analyse les activités récentes de ce client et identifie les tendances et points d'attention importants.`;
+
   return (
     <>
       <main className="flex flex-1 flex-col gap-4 min-h-0">
-        <ClientHeader
-          clientName={client.name}
-          status={`Client ${client.status.toLowerCase()}`}
-          location={client.location}
-          memberSince={client.memberSince}
-          allHistory={allHistory}
-          onEmailClick={() => setAccountSelectorOpen(true)}
-          onNewContractClick={() => setCreateContratOpen(true)}
-          onEditClick={handleEditClick}
-          onDeleteClick={() => setDeleteDialogOpen(true)}
-          onCopyClick={handleCopyClientInfo}
-        />
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <ClientHeader
+              clientName={client.name}
+              status={`Client ${client.status.toLowerCase()}`}
+              location={client.location}
+              memberSince={client.memberSince}
+              allHistory={allHistory}
+              onEmailClick={() => setAccountSelectorOpen(true)}
+              onNewContractClick={() => setCreateContratOpen(true)}
+              onEditClick={handleEditClick}
+              onDeleteClick={() => setDeleteDialogOpen(true)}
+              onCopyClick={handleCopyClientInfo}
+            />
+          </div>
+          <AskAiCardButton prompt={headerAiPrompt} title="Analyser ce client avec l'IA" />
+        </div>
 
         <Tabs
           defaultValue="overview"
@@ -830,6 +845,9 @@ Adresse: ${client.info.address}`;
             className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-start flex-1"
           >
             <div className="lg:col-span-8 flex flex-col gap-4 min-h-0 h-full">
+              <div className="flex justify-end">
+                <AskAiCardButton prompt={contratsAiPrompt} title="Analyser les contrats avec l'IA" />
+              </div>
               <ClientContracts
                 contracts={contracts}
                 selectedRef={selectedRef}
@@ -855,7 +873,10 @@ Adresse: ${client.info.address}`;
 
            <TabsContent value="activites-taches" className="flex-1 flex flex-col gap-6">
              <div className="space-y-4">
-               <h3 className="text-lg font-semibold">Activités</h3>
+               <div className="flex items-center justify-between">
+                 <h3 className="text-lg font-semibold">Activités</h3>
+                 <AskAiCardButton prompt={activitesAiPrompt} title="Analyser les activités avec l'IA" />
+               </div>
                <ClientActivites clientId={clientId} />
              </div>
              <div className="border-t pt-6 space-y-4">
@@ -866,7 +887,10 @@ Adresse: ${client.info.address}`;
 
            <TabsContent value="paiements-expeditions" className="flex-1 flex flex-col gap-6">
              <div className="space-y-4">
-               <h3 className="text-lg font-semibold">Paiements & Échéanciers</h3>
+               <div className="flex items-center justify-between">
+                 <h3 className="text-lg font-semibold">Paiements & Échéanciers</h3>
+                 <AskAiCardButton prompt={paiementsAiPrompt} title="Analyser les paiements avec l'IA" />
+               </div>
                <ClientPayments
                  payments={payments}
                  balance={client.balance}

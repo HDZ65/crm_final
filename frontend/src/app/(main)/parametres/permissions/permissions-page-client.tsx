@@ -42,6 +42,7 @@ import {
 } from "@/actions/permissions"
 import type { Permission } from "@proto/organisations/users"
 import { Plus, Pencil, Trash2, Loader2, Shield, Search } from "lucide-react"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 interface PermissionsPageClientProps {
   initialPermissions?: Permission[] | null
@@ -323,5 +324,14 @@ export function PermissionsPageClient({ initialPermissions }: PermissionsPageCli
         </AlertDialogContent>
       </AlertDialog>
     </main>
+  )
+}
+
+export function PermissionsPageClientWrapper(props: PermissionsPageClientProps) {
+  return (
+    <>
+      <AskAiCardButton prompt="Analyse cette configuration de permissions et suggère des améliorations" />
+      <PermissionsPageClient {...props} />
+    </>
   )
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart3, TrendingUp, TrendingDown, Download } from "lucide-react"
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 export function ReportingPageClient() {
   const [periode, setPeriode] = React.useState("2026-02")
@@ -72,8 +73,15 @@ export function ReportingPageClient() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Commission Brute</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <CardTitle className="text-sm font-medium">Commission Brute</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              <AskAiCardButton
+                aiPrompt={`Analyse les métriques de commissions: CA total ${kpis.brut}€, ${kpis.volume} commissions. Tendances et anomalies. Reprises: ${kpis.reprises}€ (${kpis.tauxReprise}%).`}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{kpis.brut.toLocaleString()} €</div>

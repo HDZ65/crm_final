@@ -42,6 +42,7 @@ import {
 } from "@/actions/type-activites"
 import type { TypeActiviteDto } from "@/actions/type-activites"
 import { Plus, Pencil, Trash2, Loader2, Tags, Search } from "lucide-react"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 
 interface TypesActivitesPageClientProps {
   initialTypes?: TypeActiviteDto[] | null
@@ -340,5 +341,14 @@ export function TypesActivitesPageClient({ initialTypes }: TypesActivitesPageCli
         </AlertDialogContent>
       </AlertDialog>
     </main>
+  )
+}
+
+export function TypesActivitesPageClientWrapper(props: TypesActivitesPageClientProps) {
+  return (
+    <>
+      <AskAiCardButton prompt="Analyse cette configuration de types d'activités et suggère des améliorations" />
+      <TypesActivitesPageClient {...props} />
+    </>
   )
 }

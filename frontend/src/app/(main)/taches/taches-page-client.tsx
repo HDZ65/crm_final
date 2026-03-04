@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/data-table-basic"
 import { getColumns } from "./columns"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { CreateTacheDialog } from "./create-tache-dialog"
 import { EditTacheDialog } from "./edit-tache-dialog"
 import { useOrganisation } from "@/contexts/organisation-context"
@@ -290,6 +291,7 @@ export function TachesPageClient({
 
   // Helper pour déterminer si une carte est active
   const isCardActive = (filter: FilterType) => activeFilter === filter
+  const aiPrompt = `Analyse les tâches (${taches.length} au total). À faire: ${stats?.aFaire ?? 0}, En cours: ${stats?.enCours ?? 0}, Terminées: ${stats?.terminee ?? 0}, En retard: ${stats?.enRetard ?? 0}. Tâches urgentes: ${taches.filter(t => t.priorite === 'HAUTE').slice(0, 5).map(t => t.titre).join(" | ") || "Aucune"}. Propose un plan d'action.`
 
   return (
     <main className="flex flex-1 flex-col gap-4 min-h-0">
@@ -301,7 +303,10 @@ export function TachesPageClient({
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <ListTodo className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <AskAiCardButton prompt={aiPrompt} />
+              <ListTodo className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.total ?? 0}</div>

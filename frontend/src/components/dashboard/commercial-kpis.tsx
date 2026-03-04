@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useOrganisation } from "@/contexts/organisation-context";
 import { getKpisCommerciaux } from "@/actions/dashboard";
-import { AskAiCardButton } from "@/components/dashboard/ask-ai-card-button";
+import { AskAiCardButton } from "@/components/ask-ai-card-button";
 import type { KpisCommerciauxResponse } from "@proto/dashboard/dashboard";
 
 interface KPICard {

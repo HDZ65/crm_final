@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package commission;
+
+import "commission/commission-common.proto";
+
+service CommissionCalculationService {
+  rpc CalculerCommission(CalculerCommissionRequest) returns (CalculerCommissionResponse);
+  rpc GenererBordereau(GenererBordereauRequest) returns (GenererBordereauResponse);
+  rpc DeclencherReprise(DeclencherRepriseRequest) returns (RepriseResponse);
+
+  rpc GetAuditLogs(GetAuditLogsRequest) returns (AuditLogListResponse);
+  rpc GetAuditLogsByRef(GetAuditLogsByRefRequest) returns (AuditLogListResponse);
+  rpc GetAuditLogsByCommission(GetByCommissionRequest) returns (AuditLogListResponse);
+
+  rpc GetRecurrences(GetRecurrencesRequest) returns (RecurrenceListResponse);
+  rpc GetRecurrencesByContrat(GetRecurrencesByContratRequest) returns (RecurrenceListResponse);
+}

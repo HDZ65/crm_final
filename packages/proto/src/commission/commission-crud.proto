@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package commission;
+
+import "commission/commission-common.proto";
+
+service CommissionCrudService {
+  rpc CreateCommission(CreateCommissionRequest) returns (CommissionResponse);
+  rpc GetCommission(GetByIdRequest) returns (CommissionResponse);
+  rpc GetCommissions(GetCommissionsRequest) returns (CommissionListResponse);
+  rpc GetCommissionsByApporteur(GetByApporteurRequest) returns (CommissionListResponse);
+  rpc GetCommissionsByPeriode(GetByPeriodeRequest) returns (CommissionListResponse);
+  rpc UpdateCommission(UpdateCommissionRequest) returns (CommissionResponse);
+  rpc DeleteCommission(GetByIdRequest) returns (DeleteResponse);
+
+  rpc CreateBareme(CreateBaremeRequest) returns (BaremeResponse);
+  rpc GetBareme(GetByIdRequest) returns (BaremeResponse);
+  rpc GetBaremes(GetBaremesRequest) returns (BaremeListResponse);
+  rpc GetBaremeApplicable(GetBaremeApplicableRequest) returns (BaremeResponse);
+  rpc UpdateBareme(UpdateBaremeRequest) returns (BaremeResponse);
+  rpc DeleteBareme(GetByIdRequest) returns (DeleteResponse);
+
+  rpc CreatePalier(CreatePalierRequest) returns (PalierResponse);
+  rpc GetPalier(GetByIdRequest) returns (PalierResponse);
+  rpc GetPaliersByBareme(GetByBaremeRequest) returns (PalierListResponse);
+  rpc UpdatePalier(UpdatePalierRequest) returns (PalierResponse);
+  rpc DeletePalier(GetByIdRequest) returns (DeleteResponse);
+
+  rpc CreateStatut(CreateStatutRequest) returns (StatutResponse);
+  rpc GetStatut(GetByIdRequest) returns (StatutResponse);
+  rpc GetStatuts(GetStatutsRequest) returns (StatutListResponse);
+  rpc GetStatutByCode(GetStatutByCodeRequest) returns (StatutResponse);
+  rpc UpdateStatut(UpdateStatutRequest) returns (StatutResponse);
+  rpc DeleteStatut(GetByIdRequest) returns (DeleteResponse);
+}

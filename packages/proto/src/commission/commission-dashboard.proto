@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package commission;
+
+import "commission/commission-common.proto";
+
+service CommissionDashboardService {
+  rpc GetDashboardKpi(GetDashboardKpiRequest) returns (GetDashboardKpiResponse);
+  rpc GenererSnapshotKpi(GenererSnapshotKpiRequest) returns (GenererSnapshotKpiResponse);
+  rpc GetComparatifs(GetComparatifsRequest) returns (GetComparatifsResponse);
+  rpc ExportAnalytique(ExportAnalytiqueRequest) returns (ExportAnalytiqueResponse);
+}

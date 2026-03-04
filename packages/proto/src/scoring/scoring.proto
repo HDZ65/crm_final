@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package scoring;
+
+option java_package = "com.crm.scoring";
+
+service ScoringService {
+  rpc PredictRisk(PredictRiskRequest) returns (PredictRiskResponse);
+}
+
+message PredictRiskRequest {
+  int32 prev_rejects = 1;
+  string channel = 2;
+  int32 contract_age_months = 3;
+  int32 payment_history_count = 4;
+  string lot_code = 5;
+  string provider = 6;
+  int32 amount_cents = 7;
+  int32 preferred_debit_day = 8;
+}
+
+message PredictRiskResponse {
+  int32 score = 1;
+  string risk_tier = 2;
+  map<string, double> factors = 3;
+}

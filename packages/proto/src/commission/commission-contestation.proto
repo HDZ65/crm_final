@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package commission;
+
+import "commission/commission-common.proto";
+
+service CommissionContestationService {
+  rpc CreateReprise(CreateRepriseRequest) returns (RepriseResponse);
+  rpc GetReprise(GetByIdRequest) returns (RepriseResponse);
+  rpc GetReprises(GetReprisesRequest) returns (RepriseListResponse);
+  rpc GetReprisesByCommission(GetByCommissionRequest) returns (RepriseListResponse);
+  rpc ApplyReprise(ApplyRepriseRequest) returns (RepriseResponse);
+  rpc CancelReprise(GetByIdRequest) returns (RepriseResponse);
+  rpc DeleteReprise(GetByIdRequest) returns (DeleteResponse);
+
+  rpc CreerContestation(CreerContestationRequest) returns (ContestationResponse);
+  rpc GetContestations(GetContestationsRequest) returns (GetContestationsResponse);
+  rpc ResoudreContestation(ResoudreContestationRequest) returns (ContestationResponse);
+}

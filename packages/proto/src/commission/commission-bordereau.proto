@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package commission;
+
+import "commission/commission-common.proto";
+
+service CommissionBordereauService {
+  rpc CreateBordereau(CreateBordereauRequest) returns (BordereauResponse);
+  rpc GetBordereau(GetByIdRequest) returns (BordereauResponse);
+  rpc GetBordereaux(GetBordereauxRequest) returns (BordereauListResponse);
+  rpc GetBordereauByApporteurPeriode(GetBordereauByApporteurPeriodeRequest) returns (BordereauResponse);
+  rpc UpdateBordereau(UpdateBordereauRequest) returns (BordereauResponse);
+  rpc ValidateBordereau(ValidateBordereauRequest) returns (BordereauResponse);
+  rpc ExportBordereau(GetByIdRequest) returns (ExportBordereauResponse);
+  rpc ExportBordereauFiles(ExportBordereauRequest) returns (ExportBordereauResponse);
+  rpc DeleteBordereau(GetByIdRequest) returns (DeleteResponse);
+
+  rpc CreateLigneBordereau(CreateLigneBordereauRequest) returns (LigneBordereauResponse);
+  rpc GetLigneBordereau(GetByIdRequest) returns (LigneBordereauResponse);
+  rpc GetLignesByBordereau(GetByBordereauRequest) returns (LigneBordereauListResponse);
+  rpc UpdateLigneBordereau(UpdateLigneBordereauRequest) returns (LigneBordereauResponse);
+  rpc ValidateLigne(ValidateLigneRequest) returns (LigneBordereauResponse);
+  rpc DeleteLigneBordereau(GetByIdRequest) returns (DeleteResponse);
+}

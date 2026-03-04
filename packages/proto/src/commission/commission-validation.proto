@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package commission;
+
+import "commission/commission-common.proto";
+
+service CommissionValidationService {
+  rpc GetReportsNegatifs(GetReportsNegatifsRequest) returns (ReportNegatifListResponse);
+  rpc PreselectionnerLignes(PreselectionRequest) returns (PreselectionResponse);
+  rpc RecalculerTotauxBordereau(RecalculerTotauxRequest) returns (TotauxResponse);
+  rpc ValiderBordereauFinal(ValiderBordereauFinalRequest) returns (ValiderBordereauFinalResponse);
+  rpc GetLignesForValidation(GetLignesForValidationRequest) returns (GetLignesForValidationResponse);
+}

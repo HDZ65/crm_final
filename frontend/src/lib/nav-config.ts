@@ -21,6 +21,7 @@ import {
   Shield,
   Palette,
   Zap,
+  BookOpen,
 } from "lucide-react"
 import { type LucideIcon } from "lucide-react"
 
@@ -34,6 +35,7 @@ export interface NavItem {
   parentUrl?: string
   requiredRole?: string
   description?: string
+  external?: boolean
   children?: NavItem[]
 }
 
@@ -178,6 +180,12 @@ export const NAV_ADMIN_GROUP: NavGroup = {
       url: "/parametres/integrations",
       icon: Zap,
     },
+    {
+      title: "Documentation",
+      url: "/docs",
+      icon: BookOpen,
+      external: true,
+    },
   ],
 }
 
@@ -205,7 +213,6 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   "commerciaux": "Commerciaux",
   "taches": "Tâches",
   "taches/configuration": "Configuration des tâches",
-  "calendrier": "Calendrier",
   "reunions": "Réunions",
 
   // Finance & Ventes routes
@@ -229,4 +236,5 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   // Administration routes
   "parametres": "Paramètres",
   "parametres/integrations": "Intégrations",
+  "docs": "Documentation",
 }

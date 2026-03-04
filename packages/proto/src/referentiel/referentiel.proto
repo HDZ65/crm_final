@@ -59,63 +59,6 @@ message ListConditionPaiementResponse {
   PaginationResult pagination = 2;
 }
 
-// ========== STATUT CLIENT SERVICE ==========
-service StatutClientService {
-  rpc Create(CreateStatutClientRequest) returns (StatutClient);
-  rpc Update(UpdateStatutClientRequest) returns (StatutClient);
-  rpc Get(GetStatutClientRequest) returns (StatutClient);
-  rpc GetByCode(GetStatutClientByCodeRequest) returns (StatutClient);
-  rpc List(ListStatutClientRequest) returns (ListStatutClientResponse);
-  rpc Delete(DeleteStatutClientRequest) returns (DeleteResponse);
-}
-
-message StatutClient {
-  string id = 1;
-  string code = 2;
-  string nom = 3;
-  string description = 4;
-  int32 ordre_affichage = 5;
-  string created_at = 6;
-  string updated_at = 7;
-}
-
-message CreateStatutClientRequest {
-  string code = 1;
-  string nom = 2;
-  string description = 3;
-  int32 ordre_affichage = 4;
-}
-
-message UpdateStatutClientRequest {
-  string id = 1;
-  string code = 2;
-  string nom = 3;
-  string description = 4;
-  int32 ordre_affichage = 5;
-}
-
-message GetStatutClientRequest {
-  string id = 1;
-}
-
-message GetStatutClientByCodeRequest {
-  string code = 1;
-}
-
-message ListStatutClientRequest {
-  string search = 1;
-  Pagination pagination = 2;
-}
-
-message DeleteStatutClientRequest {
-  string id = 1;
-}
-
-message ListStatutClientResponse {
-  repeated StatutClient statuts = 1;
-  PaginationResult pagination = 2;
-}
-
 // ========== FACTURATION PAR SERVICE ==========
 service FacturationParService {
   rpc Create(CreateFacturationParRequest) returns (FacturationPar);

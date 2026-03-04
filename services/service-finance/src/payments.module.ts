@@ -98,6 +98,7 @@ import { RoutingEngineService } from './infrastructure/persistence/typeorm/repos
 import { ProviderOverrideService } from './infrastructure/persistence/typeorm/repositories/payments/provider-override.service';
 import { ReassignmentJobService } from './infrastructure/persistence/typeorm/repositories/payments/reassignment-job.service';
 import { FacturesModule } from './factures.module';
+import { ScoringController } from './infrastructure/grpc/scoring/scoring.controller';
 
 @Global()
 @Module({
@@ -156,6 +157,7 @@ import { FacturesModule } from './factures.module';
     PaymentQueryController,
     InformationPaiementBancaireController,
     RoutingController,
+    ScoringController,
   ],
   providers: [
     SchedulesService,

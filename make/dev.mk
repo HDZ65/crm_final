@@ -74,7 +74,8 @@ db-init:
 	@echo "=== All databases ready ==="
 
 dev-up:
-	$(DEV_ALL) up --build -d
+	$(DEV_ALL) build --build-arg CACHE_BUST=$$(date +%s)
+	$(DEV_ALL) up -d
 	@echo ""
 	@echo "All services started! Access:"
 	@echo "  Frontend:      http://localhost:3000"
@@ -140,7 +141,8 @@ consul-status:
 # ============================================================================
 
 frontend-up:
-	$(DEV_FRONTEND) up -d --build
+	$(DEV_FRONTEND) build --build-arg CACHE_BUST=$$(date +%s) crm-frontend
+	$(DEV_FRONTEND) up -d
 
 frontend-down:
 	$(DEV_FRONTEND) stop crm-frontend

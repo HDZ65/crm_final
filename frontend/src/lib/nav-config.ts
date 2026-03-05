@@ -21,6 +21,7 @@ import {
   Shield,
   Palette,
   Zap,
+  Smartphone,
   BookOpen,
 } from "lucide-react"
 import { type LucideIcon } from "lucide-react"
@@ -163,6 +164,12 @@ export const NAV_CATALOGUE_OPERATIONS_GROUP: NavGroup = {
         },
       ],
     },
+
+    {
+      title: "Télécom",
+      url: "/telecom",
+      icon: Smartphone,
+    },
   ],
 }
 
@@ -232,6 +239,7 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   "depanssur": "Dossiers SAV",
   "depanssur/dossiers": "Dossiers",
   "depanssur/reporting": "Reporting",
+  "telecom": "Télécom",
 
   // Administration routes
   "parametres": "Paramètres",

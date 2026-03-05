@@ -42,7 +42,6 @@ COPY frontend/.env.development ./.env.development
 # Copy source code (needed on remote server without volume mounts)
 ARG CACHE_BUST=0
 COPY frontend/src ./src
-COPY frontend/src ./src
 COPY frontend/public ./public
 
 # Environment

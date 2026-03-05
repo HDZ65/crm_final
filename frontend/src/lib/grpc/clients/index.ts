@@ -24,3 +24,6 @@ export * from "./permissions";
 export * from "./documents";
 export * from "./engagement";
 export * from "./interfast";
+export * from "./winleadplus";
+export * from "./scoring";
+export * from "./telecom";

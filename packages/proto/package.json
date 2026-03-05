@@ -48,7 +48,8 @@
     "./fulfillment": "./gen/ts/fulfillment/fulfillment.ts",
     "./woocommerce": "./gen/ts/woocommerce/woocommerce.ts",
     "./depanssur": "./gen/ts/depanssur/depanssur.ts",
-    "./winleadplus": "./gen/ts/winleadplus/winleadplus.ts"
+    "./winleadplus": "./gen/ts/winleadplus/winleadplus.ts",
+    "./telecom": "./gen/ts/telecom/telecom.ts"
   },
   "files": [
     "src/**/*.proto",

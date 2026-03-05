@@ -210,6 +210,12 @@ export const SERVICE_REGISTRY: Record<string, ServiceConfig> = {
      defaultPort: 50076,
      serviceName: 'FulfillmentCutoffConfigService',
    },
+  telecom: {
+    package: 'telecom',
+    protoFile: 'telecom/telecom.proto',
+    defaultPort: 50077,
+    serviceName: 'TelecomProvisioningService',
+  },
 } as const;
 
 export type ServiceName = keyof typeof SERVICE_REGISTRY;

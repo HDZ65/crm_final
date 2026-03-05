@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package telecom;
+
+option java_package = "com.crm.telecom";
+
+service TelecomProvisioningService {
+  rpc ListProvisioningLifecycles(ListProvisioningLifecyclesRequest) returns (ListProvisioningLifecyclesResponse);
+  rpc GetProvisioningLifecycle(GetProvisioningLifecycleRequest) returns (GetProvisioningLifecycleResponse);
+  rpc GetProvisioningStats(GetProvisioningStatsRequest) returns (GetProvisioningStatsResponse);
+  rpc RetryTransatelActivation(RetryTransatelActivationRequest) returns (RetryTransatelActivationResponse);
+  rpc RetrySepaMandate(RetrySepaMandateRequest) returns (RetrySepaMandateResponse);
+  rpc ForceActive(ForceActiveRequest) returns (ForceActiveResponse);
+  rpc TriggerRetractionDeadline(TriggerRetractionDeadlineRequest) returns (TriggerRetractionDeadlineResponse);
+  rpc CancelProvisioning(CancelProvisioningRequest) returns (CancelProvisioningResponse);
+}
+
+message ProvisioningLifecycle {
+  string id = 1;
+  string organisation_id = 2;
+  string contrat_id = 3;
+  string client_id = 4;
+  string commercial_id = 5;
+  string date_signature = 6;
+  string date_fin_retractation = 7;
+  string abonnement_status = 8;
+  string provisioning_state = 9;
+  double montant_abonnement = 10;
+  string devise = 11;
+  string sepa_mandate_id = 12;
+  string gocardless_subscription_id = 13;
+  bool compensation_done = 14;
+  string last_error = 15;
+  string metadata = 16;
+  string created_at = 17;
+  string updated_at = 18;
+}
+
+message ListProvisioningLifecyclesRequest {
+  string organisation_id = 1;
+  string state_filter = 2;
+  string search = 3;
+  int32 page = 4;
+  int32 limit = 5;
+}
+
+message ListProvisioningLifecyclesResponse {
+  repeated ProvisioningLifecycle items = 1;
+  int32 total = 2;
+}
+
+message GetProvisioningLifecycleRequest {
+  string id = 1;
+}
+
+message GetProvisioningLifecycleResponse {
+  ProvisioningLifecycle lifecycle = 1;
+}
+
+message GetProvisioningStatsRequest {
+  string organisation_id = 1;
+}
+
+message GetProvisioningStatsResponse {
+  int32 total = 1;
+  int32 en_attente = 2;
+  int32 delai_ecoule = 3;
+  int32 en_cours = 4;
+  int32 active = 5;
+  int32 erreur = 6;
+}
+
+message RetryTransatelActivationRequest {
+  string id = 1;
+}
+
+message RetryTransatelActivationResponse {
+  ProvisioningLifecycle lifecycle = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message RetrySepaMandateRequest {
+  string id = 1;
+}
+
+message RetrySepaMandateResponse {
+  ProvisioningLifecycle lifecycle = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message ForceActiveRequest {
+  string id = 1;
+}
+
+message ForceActiveResponse {
+  ProvisioningLifecycle lifecycle = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message TriggerRetractionDeadlineRequest {
+  string id = 1;
+}
+
+message TriggerRetractionDeadlineResponse {
+  ProvisioningLifecycle lifecycle = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message CancelProvisioningRequest {
+  string id = 1;
+}
+
+message CancelProvisioningResponse {
+  ProvisioningLifecycle lifecycle = 1;
+  bool success = 2;
+  string message = 3;
+}

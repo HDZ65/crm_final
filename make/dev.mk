@@ -12,19 +12,23 @@
 	service-finance-up service-finance-down service-finance-logs service-finance-migrate service-finance-build service-finance-shell \
 	service-engagement-up service-engagement-down service-engagement-logs service-engagement-migrate service-engagement-build service-engagement-shell \
 	service-logistics-up service-logistics-down service-logistics-logs service-logistics-migrate service-logistics-build service-logistics-shell \
-	clean-core-db clean-commercial-db clean-finance-db clean-engagement-db clean-logistics-db clean-all-data clean-all-dbs \
+	service-telecom-up service-telecom-down service-telecom-logs service-telecom-migrate service-telecom-build service-telecom-shell \
+	clean-core-db clean-commercial-db clean-finance-db clean-engagement-db clean-logistics-db clean-telecom-db clean-all-data clean-all-dbs \
 	dev-local-frontend dev-local-service
 
 # ============================================================================
 # Compose File Definitions
 # ============================================================================
 
-DEV_INFRA = docker compose -p crmdev -f compose/dev/infrastructure.yml
+# Force Docker context to remote server (containers run there, not locally)
+DOCKER_CONTEXT ?= remote-server
+DEV_INFRA = docker --context $(DOCKER_CONTEXT) compose -p crmdev -f compose/dev/infrastructure.yml
 DEV_CORE = $(DEV_INFRA) -f compose/dev/service-core.yml
 DEV_COMMERCIAL = $(DEV_INFRA) -f compose/dev/service-commercial.yml
 DEV_FINANCE = $(DEV_INFRA) -f compose/dev/service-finance.yml
 DEV_ENGAGEMENT = $(DEV_INFRA) -f compose/dev/service-engagement.yml
 DEV_LOGISTICS = $(DEV_INFRA) -f compose/dev/service-logistics.yml
+DEV_TELECOM = $(DEV_INFRA) -f compose/dev/service-telecom.yml
 DEV_FRONTEND = $(DEV_INFRA) -f compose/dev/frontend.yml
 
 DEV_ALL = $(DEV_INFRA) \
@@ -32,6 +36,7 @@ DEV_ALL = $(DEV_INFRA) \
 	-f compose/dev/service-commercial.yml \
 	-f compose/dev/service-finance.yml \
 	-f compose/dev/service-engagement.yml \
+	-f compose/dev/service-telecom.yml \
 	-f compose/dev/service-logistics.yml \
 	-f compose/dev/frontend.yml
 
@@ -61,7 +66,7 @@ db-init:
 			exit 1; \
 		fi; \
 	done
-	@for db in alex_core alex_commercial alex_finance alex_engagement alex_logistics; do \
+	@for db in alex_core alex_commercial alex_finance alex_engagement alex_logistics alex_telecom; do \
 		echo "Creating database $$db (if not exists)..."; \
 		docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -tc \
 			"SELECT 1 FROM pg_database WHERE datname='$$db'" | grep -q 1 \
@@ -113,6 +118,8 @@ dev-build-sequential:
 	$(DEV_FINANCE) build
 	@echo ">>> Building service-engagement..."
 	$(DEV_ENGAGEMENT) build
+	@echo ">>> Building service-telecom..."
+	$(DEV_TELECOM) build
 	@echo ">>> Building service-logistics..."
 	$(DEV_LOGISTICS) build
 	@echo ">>> Building frontend..."
@@ -279,13 +286,35 @@ service-logistics-shell:
 	@docker exec -it alex-service-logistics sh
 
 # ============================================================================
+# Service Telecom Commands (3056 - provisioning saga)
+# ============================================================================
+
+service-telecom-up:
+	$(DEV_TELECOM) up -d --build alex-service-telecom
+
+service-telecom-down:
+	$(DEV_TELECOM) stop alex-service-telecom
+
+service-telecom-logs:
+	$(DEV_TELECOM) logs -f alex-service-telecom
+
+service-telecom-migrate:
+	docker exec alex-service-telecom bun run migration:run
+
+service-telecom-build:
+	cd services/service-telecom && bun run build
+
+service-telecom-shell:
+	@docker exec -it alex-service-telecom sh
+
+# ============================================================================
 # Dev Database Readiness
 # ============================================================================
 
 # Wait for all DEV databases to be ready (60s timeout per DB, 2s retry)
 dev-wait-for-dbs:
 	@echo "=== Waiting for DEV databases to be ready ==="
-	@for db in alex_core alex_commercial alex_finance alex_engagement alex_logistics; do \
+	@for db in alex_core alex_commercial alex_finance alex_engagement alex_logistics alex_telecom; do \
 		echo "Waiting for global_postgres ($$db)..."; \
 		timeout=60; elapsed=0; \
 		while ! docker exec global_postgres pg_isready -U postgres -d $$db -q 2>/dev/null; do \
@@ -314,6 +343,7 @@ dev-seed-migrations:
 		"alex-service-commercial:alex_commercial:service-commercial" \
 		"alex-service-finance:alex_finance:service-finance" \
 		"alex-service-engagement:alex_engagement:service-engagement" \
+		"alex-service-telecom:alex_telecom:service-telecom" \
 		"alex-service-logistics:alex_logistics:service-logistics"; do \
 		container=$$(echo $$entry | cut -d: -f1); \
 		db=$$(echo $$entry | cut -d: -f2); \
@@ -352,6 +382,7 @@ dev-migrate-all: dev-seed-migrations
 		"alex-service-commercial:service-commercial" \
 		"alex-service-finance:service-finance" \
 		"alex-service-engagement:service-engagement" \
+		"alex-service-telecom:service-telecom" \
 		"alex-service-logistics:service-logistics"; do \
 		container=$$(echo $$entry | cut -d: -f1); \
 		svc=$$(echo $$entry | cut -d: -f2); \
@@ -373,6 +404,7 @@ dev-verify-migrations:
 		"alex-service-commercial:service-commercial" \
 		"alex-service-finance:service-finance" \
 		"alex-service-engagement:service-engagement" \
+		"alex-service-telecom:service-telecom" \
 		"alex-service-logistics:service-logistics"; do \
 		container=$$(echo $$svc | cut -d: -f1); \
 		name=$$(echo $$svc | cut -d: -f2); \
@@ -413,6 +445,9 @@ dev-health-check:
 	@echo ""
 	@echo "Service Logistics (gRPC 50060):"
 	@grpcurl -plaintext localhost:50060 grpc.health.v1.Health/Check 2>/dev/null || echo "  Not available"
+	@echo ""
+	@echo "Service Telecom (HTTP 3056):"
+	@curl -s http://localhost:3056/health 2>/dev/null || echo "  Not available"
 	@echo ""
 	@echo "Frontend (3000):"
 	@curl -s http://localhost:3000/api/health || echo "  Not available"
@@ -471,7 +506,14 @@ clean-logistics-db:
 		2>/dev/null || echo "  Failed"
 	@echo "Done!"
 
-clean-all-data: clean-core-db clean-commercial-db clean-finance-db clean-engagement-db clean-logistics-db
+clean-telecom-db:
+	@echo "=== Cleaning alex_telecom ==="
+	@docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d alex_telecom -c \
+		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename != 'migrations') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;" \
+		2>/dev/null || echo "  Failed"
+	@echo "Done!"
+
+clean-all-data: clean-core-db clean-commercial-db clean-finance-db clean-engagement-db clean-logistics-db clean-telecom-db
 	@echo "=== All databases cleaned ==="
 
 clean-all-dbs:

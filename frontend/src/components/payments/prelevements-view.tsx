@@ -37,6 +37,10 @@ export function PrelevementsView({ societeId }: PrelevementsViewProps) {
   const [isLoading, setIsLoading] = React.useState(false)
   const [showFilters, setShowFilters] = React.useState(false)
 
+  const rejectionRate = stats ? Math.round(stats.reject_rate * 100) : 0
+  const totalAmount = stats ? stats.total_amount.toLocaleString('fr-FR') : '0'
+  const rejectedCount = stats ? stats.rejected_count : 0
+  const aiPrompt = `Analyse les prélèvements (${payments.length} au total). Taux de rejet: ${rejectionRate}%. Montant total: ${totalAmount}€. Prélèvements rejetés: ${rejectedCount}. Identifie les causes et propose des actions correctives.`
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
@@ -44,7 +48,7 @@ export function PrelevementsView({ societeId }: PrelevementsViewProps) {
 
       {/* Filter Toggle Button */}
       <div className="flex items-center gap-2">
-        <AskAiCardButton prompt={`Analyse les prélèvements (${payments.length} au total). Taux de rejet: ${stats ? Math.round(stats.reject_rate * 100) : 0}%. Montant total: ${stats ? stats.total_amount.toLocaleString('fr-FR') : 0}€. Prélèvements rejetés: ${stats ? stats.rejected_count : 0}. Identifie les causes et propose des actions correctives.`} />
+        <AskAiCardButton prompt={aiPrompt} />
         <Button
           variant="outline"
           size="sm"

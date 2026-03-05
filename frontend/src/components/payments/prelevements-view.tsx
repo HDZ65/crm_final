@@ -46,7 +46,6 @@ export function PrelevementsView({ societeId }: PrelevementsViewProps) {
       <div className="flex items-center gap-2">
         <AskAiCardButton prompt={`Analyse les prélèvements (${payments.length} au total). Taux de rejet: ${stats ? Math.round(stats.reject_rate * 100) : 0}%. Montant total: ${stats ? stats.total_amount.toLocaleString('fr-FR') : 0}€. Prélèvements rejetés: ${stats ? stats.rejected_count : 0}. Identifie les causes et propose des actions correctives.`} />
         <Button
-        <Button
           variant="outline"
           size="sm"
           onClick={() => setShowFilters(!showFilters)}

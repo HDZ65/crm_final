@@ -1,10 +1,22 @@
 "use client"
 
 import * as React from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CreditCard, Calendar, CheckCircle2, Wallet, TrendingUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { CreditCard, Calendar, CheckCircle2, Wallet, Settings2 } from "lucide-react"
+import { toast } from "sonner"
 import type { Payment } from "@/lib/ui/display-types/client"
+import type { DebitLot } from "@/lib/ui/display-types/payment"
 
 interface ClientPaymentsProps {
   payments: Payment[]
@@ -17,7 +29,89 @@ export function ClientPayments({
   balance,
   balanceStatus,
 }: ClientPaymentsProps) {
+  const [lots] = React.useState<DebitLot[]>([])
+  const [selectedLotId, setSelectedLotId] = React.useState("")
+  const [preferredDay, setPreferredDay] = React.useState<number | "">("")
+  const [shiftStrategy, setShiftStrategy] = React.useState("")
+  function handleSaveConfig() {
+    // Stub — no real gRPC call yet
+    toast.success("Configuration mise \u00e0 jour")
+  }
+
   return (
+    <div className="space-y-6">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Settings2 className="size-5" />
+          Configuration du pr\u00e9l\u00e8vement
+        </CardTitle>
+        <CardDescription>
+          Param\u00e8tres de pr\u00e9l\u00e8vement pour ce client.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label>Lot actuel</Label>
+            {lots.length > 0 ? (
+              <Select value={selectedLotId} onValueChange={setSelectedLotId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="S\u00e9lectionner un lot" />
+                </SelectTrigger>
+                <SelectContent>
+                  {lots.map((lot) => (
+                    <SelectItem key={lot.id} value={lot.id}>
+                      {lot.name} (J{lot.startDay}\u2013J{lot.endDay})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
+                Aucun lot configur\u00e9
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Jour pr\u00e9f\u00e9r\u00e9</Label>
+            <Input
+              type="number"
+              min={1}
+              max={28}
+              placeholder="1-28"
+              value={preferredDay}
+              onChange={(e) => {
+                const v = e.target.value
+                setPreferredDay(v === "" ? "" : Math.min(28, Math.max(1, Number(v))))
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Strat\u00e9gie de d\u00e9calage</Label>
+            <Select value={shiftStrategy} onValueChange={setShiftStrategy}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="S\u00e9lectionner" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NEXT_BUSINESS_DAY">Prochain jour ouvr\u00e9</SelectItem>
+                <SelectItem value="PREVIOUS_DAY">Jour pr\u00e9c\u00e9dent</SelectItem>
+                <SelectItem value="SAME_DAY">M\u00eame jour</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <Button size="sm" onClick={handleSaveConfig}>
+            Enregistrer
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+
     <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
       <CardHeader>
         <div>
@@ -68,5 +162,6 @@ export function ClientPayments({
         ))}
       </CardContent>
     </Card>
+    </div>
   )
 }

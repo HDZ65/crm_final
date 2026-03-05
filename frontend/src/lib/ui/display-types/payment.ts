@@ -19,7 +19,16 @@ export type PSPProvider =
   | "Emerchantpay"
   | "GoCardless"
 
-export type DebitLot = "L1" | "L2" | "L3" | "L4" // Lots hebdomadaires
+export interface DebitLot {
+  id: string
+  name: string
+  startDay: number
+  endDay: number
+  isActive: boolean
+  displayOrder: number
+}
+
+export type AnalyticsTimeRange = "1M" | "3M" | "6M" | "12M"
 
 export type RiskTier = "LOW" | "MEDIUM" | "HIGH" // Niveau de risque client
 
@@ -57,7 +66,7 @@ export interface Payment {
   planned_debit_date: string // Date planifiée de prélèvement
   actual_debit_date?: string // Date réelle de prélèvement
   preferred_debit_day?: number // Jour préféré (1-28)
-  debit_lot?: DebitLot // Lot hebdomadaire
+  debit_lot?: string // Lot ID
 
   // Scoring et risque
   risk_score?: number // Score de 0-100
@@ -100,7 +109,7 @@ export interface PaymentFilters {
   status?: string
   payment_method?: PaymentMethod
   psp_provider?: PSPProvider
-  debit_lot?: DebitLot
+  debit_lot_id?: string
   risk_tier?: RiskTier
   source_channel?: SourceChannel
   commercial_name?: string
@@ -142,12 +151,59 @@ export interface DebitCalendar {
 export interface DebitCalendarDay {
   date: string
   day_of_month: number
-  lot?: DebitLot
+  lotId?: string
   planned_count: number
   planned_amount: number
   actual_count?: number
   actual_amount?: number
   psp_distribution: Record<PSPProvider, number>
+}
+
+export interface RejectionTrend {
+  month: number
+  year: number
+  totalCount: number
+  rejectedCount: number
+  rejectionRate: number
+}
+
+export interface DayHeatmapEntry {
+  dayOfMonth: number
+  totalCount: number
+  rejectedCount: number
+  rejectionRate: number
+  intensity: "low" | "medium" | "high"
+}
+
+export interface ClientScore {
+  clientId: string
+  clientName: string
+  totalPayments: number
+  rejectedCount: number
+  successRate: number
+  riskTier: RiskTier
+  trend: "improving" | "stable" | "degrading"
+}
+
+export interface ForecastVsActual {
+  month: number
+  year: number
+  expectedCount: number
+  actualCount: number
+  expectedAmount: number
+  actualAmount: number
+}
+
+export interface OptimizationSuggestion {
+  clientId: string
+  clientName: string
+  currentLotId: string
+  currentLotName: string
+  suggestedLotId: string
+  suggestedLotName: string
+  reason: string
+  confidence: number
+  estimatedImpact: string
 }
 
 // Règles de routage PSP

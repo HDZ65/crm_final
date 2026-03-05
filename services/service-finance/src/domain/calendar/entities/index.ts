@@ -12,6 +12,7 @@ export * from './holiday-zone.entity';
 export * from './holiday.entity';
 
 // Engine entities
+export * from './debit-lot.entity';
 export * from './planned-debit.entity';
 export * from './volume-forecast.entity';
 export * from './volume-threshold.entity';

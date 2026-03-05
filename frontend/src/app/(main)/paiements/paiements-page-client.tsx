@@ -4,8 +4,13 @@ import * as React from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { RoutingPageClient } from "./routing/routing-page-client"
 import { ArchivesPageClient } from "./archives/archives-page-client"
-import { AlertesPageClient } from "./alertes/alertes-page-client"
 import { ExportsPageClient } from "./exports/exports-page-client"
+import { PrelevementsView } from "@/components/payments/prelevements-view"
+import { CalendrierView } from "@/components/payments/calendrier-view"
+import { AnalyticsDashboard } from "@/components/payments/analytics-dashboard"
+import { OptimizationPanel } from "@/components/payments/optimization-panel"
+import { LotManagement } from "@/components/payments/lot-management"
+import { Separator } from "@/components/ui/separator"
 
 interface PaiementsPageClientProps {
   societeId: string
@@ -26,53 +31,67 @@ export function PaiementsPageClient({
   initialAlertStats,
   initialExportJobs,
 }: PaiementsPageClientProps) {
-  const [activeTab, setActiveTab] = React.useState("routing")
+  const [activeTab, setActiveTab] = React.useState("prelevements")
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Paiements</h1>
         <p className="text-muted-foreground">
-          Gérez vos paiements, routage, archives, alertes et exports.
+          Gérez vos prélèvements, calendrier, analyses et configuration.
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="routing">Routage</TabsTrigger>
-          <TabsTrigger value="archives">Archives</TabsTrigger>
-          <TabsTrigger value="alertes">Alertes</TabsTrigger>
-          <TabsTrigger value="exports">Exports</TabsTrigger>
+          <TabsTrigger value="prelevements">Prélèvements</TabsTrigger>
+          <TabsTrigger value="calendrier">Calendrier</TabsTrigger>
+          <TabsTrigger value="analyse">Analyse</TabsTrigger>
+          <TabsTrigger value="configuration">Configuration</TabsTrigger>
+          <TabsTrigger value="archives-exports">Archives & Exports</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="routing" className="mt-4">
+        <TabsContent value="prelevements" className="mt-4">
+          <PrelevementsView societeId={societeId} />
+        </TabsContent>
+
+        <TabsContent value="calendrier" className="mt-4">
+          <CalendrierView societeId={societeId} />
+        </TabsContent>
+
+        <TabsContent value="analyse" className="mt-4">
+          <AnalyticsDashboard societeId={societeId} />
+          <OptimizationPanel societeId={societeId} />
+        </TabsContent>
+
+        <TabsContent value="configuration" className="mt-4">
+          <LotManagement societeId={societeId} />
+          <Separator className="my-6" />
           <RoutingPageClient
             initialRules={initialRules}
             initialSocieteId={societeId}
           />
         </TabsContent>
 
-        <TabsContent value="archives" className="mt-4">
-          <ArchivesPageClient
-            initialArchives={initialArchives}
-            initialSocieteId={societeId}
-          />
-        </TabsContent>
-
-        <TabsContent value="alertes" className="mt-4">
-          <AlertesPageClient
-            initialAlerts={initialAlerts}
-            initialStats={initialAlertStats}
-            initialSocieteId={societeId}
-            initialUserId={userId}
-          />
-        </TabsContent>
-
-        <TabsContent value="exports" className="mt-4">
-          <ExportsPageClient
-            initialJobs={initialExportJobs}
-            initialSocieteId={societeId}
-          />
+        <TabsContent value="archives-exports" className="mt-4">
+          <Tabs defaultValue="archives">
+            <TabsList>
+              <TabsTrigger value="archives">Archives</TabsTrigger>
+              <TabsTrigger value="exports">Exports</TabsTrigger>
+            </TabsList>
+            <TabsContent value="archives" className="mt-4">
+              <ArchivesPageClient
+                initialArchives={initialArchives}
+                initialSocieteId={societeId}
+              />
+            </TabsContent>
+            <TabsContent value="exports" className="mt-4">
+              <ExportsPageClient
+                initialJobs={initialExportJobs}
+                initialSocieteId={societeId}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </main>

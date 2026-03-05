@@ -112,7 +112,7 @@ export function PaymentDetailsDialog({
         channel: payment.source_channel || "INTERNET",
         contract_age_months: 12, // TODO: Calculate from contract creation date
         payment_history_count: 0, // TODO: Get from payment history
-        lot_code: payment.debit_lot || "L1",
+        lot_code: payment.debit_lot || "",
         provider: payment.psp_provider,
         amount_cents: Math.round(payment.amount * 100),
         preferred_debit_day: payment.preferred_debit_day || 15,

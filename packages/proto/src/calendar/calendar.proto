@@ -558,6 +558,119 @@ message DeleteResponse {
 }
 
 // ================================
+// MESSAGES - ANALYTICS
+// ================================
+
+message GetRejectionTrendsRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  int32 months_back = 3;
+}
+
+message RejectionTrendEntry {
+  int32 month = 1;
+  int32 year = 2;
+  int32 total_count = 3;
+  int32 rejected_count = 4;
+  double rejection_rate = 5;
+}
+
+message GetRejectionTrendsResponse {
+  repeated RejectionTrendEntry entries = 1;
+}
+
+message GetDayHeatmapRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  int32 months_back = 3;
+}
+
+message DayHeatmapEntry {
+  int32 day_of_month = 1;
+  int32 total_count = 2;
+  int32 rejected_count = 3;
+  double rejection_rate = 4;
+}
+
+message GetDayHeatmapResponse {
+  repeated DayHeatmapEntry entries = 1;
+}
+
+message GetClientScoresRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  int32 limit = 3;
+  string sort_by = 4;
+}
+
+message ClientScoreEntry {
+  string client_id = 1;
+  string client_name = 2;
+  int32 total_payments = 3;
+  int32 rejected_count = 4;
+  double success_rate = 5;
+  string risk_tier = 6;
+  string trend = 7;
+}
+
+message GetClientScoresResponse {
+  repeated ClientScoreEntry entries = 1;
+}
+
+message GetForecastVsActualRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  int32 months_back = 3;
+}
+
+message ForecastVsActualEntry {
+  int32 month = 1;
+  int32 year = 2;
+  int32 expected_count = 3;
+  int32 actual_count = 4;
+  int64 expected_amount = 5;
+  int64 actual_amount = 6;
+}
+
+message GetForecastVsActualResponse {
+  repeated ForecastVsActualEntry entries = 1;
+}
+
+message OptimizationSuggestion {
+  string client_id = 1;
+  string client_name = 2;
+  string current_lot_id = 3;
+  string current_lot_name = 4;
+  string suggested_lot_id = 5;
+  string suggested_lot_name = 6;
+  string reason = 7;
+  double confidence = 8;
+  string estimated_impact = 9;
+}
+
+message GetOptimizationSuggestionsRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  int32 analysis_months = 3;
+}
+
+message GetOptimizationSuggestionsResponse {
+  repeated OptimizationSuggestion suggestions = 1;
+}
+
+message ApplyOptimizationSuggestionRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string suggested_lot_id = 3;
+}
+
+message ApplyOptimizationSuggestionResponse {
+  bool success = 1;
+  ClientDebitConfiguration updated_config = 2;
+}
+
+
+// ================================
 // SERVICES gRPC
 // ================================
 
@@ -604,6 +717,7 @@ service DebitConfigurationService {
   rpc ResolveConfiguration(ResolveConfigurationRequest) returns (ResolvedDebitConfiguration);
 }
 
+
 // Service Admin UI
 service CalendarAdminService {
   // Vue calendrier
@@ -627,6 +741,18 @@ service CalendarAdminService {
   
   // Audit
   rpc GetAuditLogs(GetAuditLogsRequest) returns (GetAuditLogsResponse);
+}
+
+service CalendarAnalyticsService {
+  rpc GetRejectionTrends(GetRejectionTrendsRequest) returns (GetRejectionTrendsResponse);
+  rpc GetDayHeatmap(GetDayHeatmapRequest) returns (GetDayHeatmapResponse);
+  rpc GetClientScores(GetClientScoresRequest) returns (GetClientScoresResponse);
+  rpc GetForecastVsActual(GetForecastVsActualRequest) returns (GetForecastVsActualResponse);
+}
+
+service OptimizationSuggestionService {
+  rpc GetOptimizationSuggestions(GetOptimizationSuggestionsRequest) returns (GetOptimizationSuggestionsResponse);
+  rpc ApplyOptimizationSuggestion(ApplyOptimizationSuggestionRequest) returns (ApplyOptimizationSuggestionResponse);
 }
 
 // ================================
@@ -778,6 +904,97 @@ message ResolveConfigurationRequest {
   string societe_id = 4;
 }
 
+// Holiday Zone CRUD
+message CreateHolidayZoneRequest {
+  string organisation_id = 1;
+  string code = 2;
+  string name = 3;
+  string country_code = 4;
+  string region_code = 5;
+}
+
+message UpdateHolidayZoneRequest {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string country_code = 4;
+  string region_code = 5;
+  bool is_active = 6;
+}
+
+message GetHolidayZoneRequest {
+  string id = 1;
+}
+
+message ListHolidayZonesRequest {
+  string organisation_id = 1;
+  string country_code = 2;
+  Pagination pagination = 3;
+}
+
+message ListHolidayZonesResponse {
+  repeated HolidayZone zones = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteHolidayZoneRequest {
+  string id = 1;
+}
+
+// Holiday CRUD
+message CreateHolidayRequest {
+  string holiday_zone_id = 1;
+  string date = 2;
+  string name = 3;
+  HolidayType holiday_type = 4;
+  bool is_recurring = 5;
+  int32 recurring_month = 6;
+  int32 recurring_day = 7;
+}
+
+message UpdateHolidayRequest {
+  string id = 1;
+  string date = 2;
+  string name = 3;
+  HolidayType holiday_type = 4;
+  bool is_recurring = 5;
+  int32 recurring_month = 6;
+  int32 recurring_day = 7;
+  bool is_active = 8;
+}
+
+message GetHolidayRequest {
+  string id = 1;
+}
+
+message ListHolidaysRequest {
+  string holiday_zone_id = 1;
+  int32 year = 2;
+  Pagination pagination = 3;
+}
+
+message ListHolidaysResponse {
+  repeated Holiday holidays = 1;
+  PaginationResult pagination = 2;
+}
+
+message DeleteHolidayRequest {
+  string id = 1;
+}
+
+message ImportHolidaysByCountryRequest {
+  string organisation_id = 1;
+  string country_code = 2;
+  int32 year = 3;
+  bool include_regional = 4;
+}
+
+message ImportHolidaysByCountryResponse {
+  bool success = 1;
+  int32 imported_count = 2;
+  string holiday_zone_id = 3;
+}
+
 // Volume Threshold CRUD
 message CreateVolumeThresholdRequest {
   string organisation_id = 1;
@@ -833,4 +1050,76 @@ message GetAuditLogsRequest {
 message GetAuditLogsResponse {
   repeated CalendarAuditLog logs = 1;
   PaginationResult pagination = 2;
+}
+
+// ============================================================================
+// DEBIT LOT CRUD SERVICE
+// ============================================================================
+
+message DebitLotMessage {
+  string id = 1;
+  string organisation_id = 2;
+  string societe_id = 3;
+  string name = 4;
+  int32 start_day = 5;
+  int32 end_day = 6;
+  string description = 7;
+  bool is_active = 8;
+  int32 display_order = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+message CreateLotRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  string name = 3;
+  int32 start_day = 4;
+  int32 end_day = 5;
+  string description = 6;
+  int32 display_order = 7;
+}
+
+message GetLotRequest {
+  string id = 1;
+  string organisation_id = 2;
+}
+
+message ListLotsRequest {
+  string organisation_id = 1;
+  string societe_id = 2;
+  bool include_inactive = 3;
+}
+
+message ListLotsResponse {
+  repeated DebitLotMessage lots = 1;
+}
+
+message UpdateLotRequest {
+  string id = 1;
+  string organisation_id = 2;
+  string name = 3;
+  int32 start_day = 4;
+  int32 end_day = 5;
+  string description = 6;
+  int32 display_order = 7;
+}
+
+message DeactivateLotRequest {
+  string id = 1;
+  string organisation_id = 2;
+}
+
+message ReactivateLotRequest {
+  string id = 1;
+  string organisation_id = 2;
+}
+
+service DebitLotService {
+  rpc CreateLot(CreateLotRequest) returns (DebitLotMessage);
+  rpc GetLot(GetLotRequest) returns (DebitLotMessage);
+  rpc ListLots(ListLotsRequest) returns (ListLotsResponse);
+  rpc UpdateLot(UpdateLotRequest) returns (DebitLotMessage);
+  rpc DeactivateLot(DeactivateLotRequest) returns (DebitLotMessage);
+  rpc ReactivateLot(ReactivateLotRequest) returns (DebitLotMessage);
 }

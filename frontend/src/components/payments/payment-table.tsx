@@ -14,9 +14,10 @@ import {
   BanIcon,
   ArrowRight,
   MoreVertical,
+  Eye,
+  Settings2,
 } from "lucide-react"
 import type { Payment } from "@/lib/ui/display-types/payment"
-import type { PaymentStatus } from "@proto/payments/payment"
 import {
   Table,
   TableBody,
@@ -25,6 +26,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { ClientDebitConfigDialog } from "@/components/payments/client-debit-config-dialog"
+import { useDebitLots } from "@/hooks/use-debit-lots"
+import { useSocieteStore } from "@/stores/societe-store"
 
 interface PaymentTableProps {
   payments: Payment[]
@@ -102,6 +113,11 @@ const riskTierConfig = {
 }
 
 export function PaymentTable({ payments, onViewDetails }: PaymentTableProps) {
+  const [configDialogOpen, setConfigDialogOpen] = React.useState(false)
+  const [configPayment, setConfigPayment] = React.useState<Payment | null>(null)
+  const societeId = useSocieteStore((s) => s.activeSocieteId) ?? ""
+  const { lots } = useDebitLots(societeId)
+
   if (payments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg border-dashed">
@@ -117,6 +133,7 @@ export function PaymentTable({ payments, onViewDetails }: PaymentTableProps) {
   }
 
   return (
+    <>
     <div className="border rounded-lg">
       <ScrollArea className="h-[600px]">
         <Table>
@@ -187,7 +204,7 @@ export function PaymentTable({ payments, onViewDetails }: PaymentTableProps) {
                   <TableCell>
                     {payment.debit_lot && (
                       <Badge variant="outline" className="font-mono text-xs">
-                        {payment.debit_lot}
+                        {lots.find((l) => l.id === payment.debit_lot)?.name ?? payment.debit_lot}
                       </Badge>
                     )}
                   </TableCell>
@@ -215,17 +232,40 @@ export function PaymentTable({ payments, onViewDetails }: PaymentTableProps) {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onViewDetails(payment)
-                      }}
-                    >
-                      <MoreVertical className="size-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onViewDetails(payment)
+                          }}
+                        >
+                          <Eye className="size-4" />
+                          Voir les détails
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setConfigPayment(payment)
+                            setConfigDialogOpen(true)
+                          }}
+                        >
+                          <Settings2 className="size-4" />
+                          Configurer le prélèvement
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               )
@@ -234,5 +274,14 @@ export function PaymentTable({ payments, onViewDetails }: PaymentTableProps) {
         </Table>
       </ScrollArea>
     </div>
+
+    <ClientDebitConfigDialog
+      open={configDialogOpen}
+      onOpenChange={setConfigDialogOpen}
+      clientId={configPayment?.client_id ?? ""}
+      clientName={configPayment?.client_name ?? ""}
+      currentLotId={configPayment?.debit_lot}
+    />
+  </>
   )
 }

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { X, Filter } from "lucide-react"
-import type { PaymentFilters, PaymentMethod, PSPProvider, DebitLot, RiskTier, SourceChannel } from "@/lib/ui/display-types/payment"
+import type { PaymentFilters, PaymentMethod, PSPProvider, RiskTier, SourceChannel } from "@/lib/ui/display-types/payment"
 import type { PaymentStatus } from "@proto/payments/payment"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -20,6 +20,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { useDebitLots } from "@/hooks/use-debit-lots"
+import { useSocieteStore } from "@/stores/societe-store"
 
 interface PaymentFiltersComponentProps {
   filters: PaymentFilters
@@ -28,6 +30,8 @@ interface PaymentFiltersComponentProps {
 
 export function PaymentFiltersComponent({ filters, onFiltersChange }: PaymentFiltersComponentProps) {
   const [isOpen, setIsOpen] = React.useState(true)
+  const societeId = useSocieteStore((s) => s.activeSocieteId) ?? ""
+  const { lots } = useDebitLots(societeId)
 
   const handleFilterChange = (key: keyof PaymentFilters, value: string | number | undefined) => {
     onFiltersChange({
@@ -168,9 +172,9 @@ export function PaymentFiltersComponent({ filters, onFiltersChange }: PaymentFil
                   Lot
                 </Label>
                 <Select
-                  value={filters.debit_lot || "all"}
+                  value={filters.debit_lot_id || "all"}
                   onValueChange={(value) =>
-                    handleFilterChange("debit_lot", value === "all" ? undefined : (value as DebitLot))
+                    handleFilterChange("debit_lot_id", value === "all" ? undefined : value)
                   }
                 >
                   <SelectTrigger id="lot" className="h-9">
@@ -178,10 +182,17 @@ export function PaymentFiltersComponent({ filters, onFiltersChange }: PaymentFil
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les lots</SelectItem>
-                    <SelectItem value="L1">Lot 1 (L1)</SelectItem>
-                    <SelectItem value="L2">Lot 2 (L2)</SelectItem>
-                    <SelectItem value="L3">Lot 3 (L3)</SelectItem>
-                    <SelectItem value="L4">Lot 4 (L4)</SelectItem>
+                    {lots.length > 0 ? (
+                      lots.map((lot) => (
+                        <SelectItem key={lot.id} value={lot.id}>
+                          {lot.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="__none__" disabled>
+                        Aucun lot disponible
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

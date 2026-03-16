@@ -293,3 +293,10 @@
 - Repository pattern: @InjectRepository for both entities, CRUD + addHistory methods
 - Module registration: TypeOrmModule.forFeature + provider + export, then import in app.module.ts
 - Windows dist/ lock: rmdir /s /q dist before rebuild when EPERM errors occur
+
+## Task 13 — SUSPENDU + RESILIE states
+- provisioning_state column is varchar(60) not a Postgres enum → no migration needed for new values
+- 3 generated TS files need updating: frontend/src/proto, packages/proto/gen/ts, packages/proto/gen/ts-frontend
+- Backend gen uses snake_case (en_attente), frontend gen uses camelCase (enAttente)
+- GetProvisioningStats countByState() returns Record<string,number> from GROUP BY — new states auto-counted
+- Saga already had processSuspension/processTermination with correct state transitions

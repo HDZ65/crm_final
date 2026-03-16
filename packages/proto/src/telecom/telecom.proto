@@ -4,6 +4,19 @@ package telecom;
 
 option java_package = "com.crm.telecom";
 
+// ========== ENUMS ==========
+
+enum ProvisioningState {
+  PROVISIONING_STATE_UNSPECIFIED = 0;
+  EN_ATTENTE = 1;
+  DELAI_ECOULE = 2;
+  EN_COURS = 3;
+  ACTIVE = 4;
+  ERREUR = 5;
+  SUSPENDU = 6;
+  RESILIE = 7;
+}
+
 service TelecomProvisioningService {
   rpc ListProvisioningLifecycles(ListProvisioningLifecyclesRequest) returns (ListProvisioningLifecyclesResponse);
   rpc GetProvisioningLifecycle(GetProvisioningLifecycleRequest) returns (GetProvisioningLifecycleResponse);
@@ -13,6 +26,8 @@ service TelecomProvisioningService {
   rpc ForceActive(ForceActiveRequest) returns (ForceActiveResponse);
   rpc TriggerRetractionDeadline(TriggerRetractionDeadlineRequest) returns (TriggerRetractionDeadlineResponse);
   rpc CancelProvisioning(CancelProvisioningRequest) returns (CancelProvisioningResponse);
+  rpc SuspendLine(SuspendLineRequest) returns (SuspendLineResponse);
+  rpc TerminateLine(TerminateLineRequest) returns (TerminateLineResponse);
 }
 
 message ProvisioningLifecycle {
@@ -68,6 +83,8 @@ message GetProvisioningStatsResponse {
   int32 en_cours = 4;
   int32 active = 5;
   int32 erreur = 6;
+  int32 suspendu = 7;
+  int32 resilie = 8;
 }
 
 message RetryTransatelActivationRequest {
@@ -118,4 +135,29 @@ message CancelProvisioningResponse {
   ProvisioningLifecycle lifecycle = 1;
   bool success = 2;
   string message = 3;
+}
+
+message SuspendLineRequest {
+  string contrat_id = 1;
+  string client_id = 2;
+  string reason = 3;
+  string correlation_id = 4;
+}
+
+message SuspendLineResponse {
+  bool success = 1;
+  string suspension_id = 2;
+}
+
+message TerminateLineRequest {
+  string contrat_id = 1;
+  string client_id = 2;
+  string reason = 3;
+  string effective_date = 4;
+  string correlation_id = 5;
+}
+
+message TerminateLineResponse {
+  bool success = 1;
+  string termination_id = 2;
 }

@@ -6,11 +6,12 @@ import type {
   ProvisioningLifecycle,
   GetProvisioningStatsResponse,
 } from "@proto/telecom/telecom"
-import { ProvisioningStateBadge } from "@/components/telecom/provisioning-state-badge"
 import { MockIndicator } from "@/components/telecom/mock-indicator"
+import { DataTable } from "@/components/data-table-basic"
+import { columns } from "./columns"
 import { listProvisioningLifecycles } from "@/actions/telecom"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -20,38 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) return "—"
-  try {
-    return new Date(dateStr).toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  } catch {
-    return "—"
-  }
-}
-
-function formatMontant(montant: number, devise: string): string {
-  if (!montant && montant !== 0) return "—"
-  return `${montant.toFixed(2)} ${devise || "€"}`
-}
+import { Loader2, RefreshCw } from "lucide-react"
 
 // ---------------------------------------------------------------------------
 // State filter options
@@ -64,6 +35,8 @@ const STATE_FILTER_OPTIONS = [
   { value: "EN_COURS", label: "En Cours" },
   { value: "ACTIVE", label: "Actif" },
   { value: "ERREUR_TECHNIQUE", label: "Erreur Technique" },
+  { value: "SUSPENDU", label: "Suspendu" },
+  { value: "RESILIE", label: "Résilié" },
 ] as const
 
 // ---------------------------------------------------------------------------
@@ -97,8 +70,6 @@ export function TelecomPageClient({
   const [search, setSearch] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const totalPages = Math.ceil(total / 20) || 1
 
   // -------------------------------------------------------------------------
   // Data fetching
@@ -167,21 +138,27 @@ export function TelecomPageClient({
   // -------------------------------------------------------------------------
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto">
+    <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Provisioning Télécom</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Gestion des cycles de provisioning J+14
+          <h1 className="text-2xl font-bold tracking-tight">Activation Télécom</h1>
+          <p className="text-muted-foreground">
+            Gestion des cycles d’activation J+14
           </p>
         </div>
-        <MockIndicator />
+        <div className="flex items-center gap-2">
+          <MockIndicator />
+          <AskAiCardButton
+            prompt={`Analyse les cycles d'activation télécom. Stats: ${stats ? `Total: ${stats.total}, En Attente: ${stats.enAttente}, En Cours: ${stats.enCours}, Actif: ${stats.active}, Suspendu: ${stats.suspendu}, Résilié: ${stats.resilie}, Erreur: ${stats.erreur}` : "non disponibles"}. ${lifecycles.length} cycles affichés. Identifie les blocages, les erreurs récurrentes et propose des actions prioritaires.`}
+            title="Analyser les cycles avec l'IA"
+          />
+        </div>
       </div>
 
       {/* KPI Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">
@@ -235,6 +212,32 @@ export function TelecomPageClient({
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">
+                Suspendu
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-amber-600">
+                {stats.suspendu}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
+                Résilié
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-red-700">
+                {stats.resilie}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Erreur
               </CardTitle>
             </CardHeader>
@@ -247,13 +250,13 @@ export function TelecomPageClient({
 
       {/* Error alert */}
       {error && (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {/* Filters row */}
-      <div className="flex gap-3 mb-4 items-center flex-wrap">
+      <div className="flex gap-3 items-center flex-wrap">
         <Select
           value={stateFilter || "ALL"}
           onValueChange={handleStateFilterChange}
@@ -295,82 +298,19 @@ export function TelecomPageClient({
         <Loader2 className="animate-spin mx-auto my-8 h-8 w-8 text-muted-foreground" />
       ) : lifecycles.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <p className="text-lg font-medium">Aucun cycle de provisioning</p>
+          <p className="text-lg font-medium">Aucun cycle d’activation</p>
           <p className="text-sm mt-1">
             Aucun résultat pour les filtres sélectionnés
           </p>
         </div>
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contrat</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>État</TableHead>
-                <TableHead>Statut Abo</TableHead>
-                <TableHead>Montant</TableHead>
-                <TableHead>Date Signature</TableHead>
-                <TableHead>Date J+14</TableHead>
-                <TableHead>Dernière MàJ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {lifecycles.map((item) => (
-                <TableRow
-                  key={item.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => router.push(`/telecom/${item.id}`)}
-                >
-                  <TableCell className="font-medium">
-                    {item.contratId || "—"}
-                  </TableCell>
-                  <TableCell>{item.clientId || "—"}</TableCell>
-                  <TableCell>
-                    <ProvisioningStateBadge state={item.provisioningState} />
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{item.abonnementStatus || "—"}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {formatMontant(item.montantAbonnement, item.devise)}
-                  </TableCell>
-                  <TableCell>{formatDate(item.dateSignature)}</TableCell>
-                  <TableCell>{formatDate(item.dateFinRetractation)}</TableCell>
-                  <TableCell>{formatDate(item.updatedAt)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          columns={columns}
+          data={lifecycles}
+          headerClassName="bg-sidebar hover:bg-sidebar"
+          onRowClick={(row) => router.push(`/telecom/${row.id}`)}
+        />
       )}
-
-      {/* Pagination */}
-      {!isLoading && lifecycles.length > 0 && (
-        <div className="flex justify-between items-center mt-4">
-          <p className="text-sm text-muted-foreground">
-            Page {page} / {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+    </main>
   )
 }

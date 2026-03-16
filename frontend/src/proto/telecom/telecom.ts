@@ -10,6 +10,75 @@ import type { handleUnaryCall, UntypedServiceImplementation } from "@grpc/grpc-j
 
 export const protobufPackage = "telecom";
 
+export enum ProvisioningState {
+  PROVISIONING_STATE_UNSPECIFIED = 0,
+  EN_ATTENTE = 1,
+  DELAI_ECOULE = 2,
+  EN_COURS = 3,
+  ACTIVE = 4,
+  ERREUR = 5,
+  SUSPENDU = 6,
+  RESILIE = 7,
+  UNRECOGNIZED = -1,
+}
+
+export function provisioningStateFromJSON(object: any): ProvisioningState {
+  switch (object) {
+    case 0:
+    case "PROVISIONING_STATE_UNSPECIFIED":
+      return ProvisioningState.PROVISIONING_STATE_UNSPECIFIED;
+    case 1:
+    case "EN_ATTENTE":
+      return ProvisioningState.EN_ATTENTE;
+    case 2:
+    case "DELAI_ECOULE":
+      return ProvisioningState.DELAI_ECOULE;
+    case 3:
+    case "EN_COURS":
+      return ProvisioningState.EN_COURS;
+    case 4:
+    case "ACTIVE":
+      return ProvisioningState.ACTIVE;
+    case 5:
+    case "ERREUR":
+      return ProvisioningState.ERREUR;
+    case 6:
+    case "SUSPENDU":
+      return ProvisioningState.SUSPENDU;
+    case 7:
+    case "RESILIE":
+      return ProvisioningState.RESILIE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ProvisioningState.UNRECOGNIZED;
+  }
+}
+
+export function provisioningStateToJSON(object: ProvisioningState): string {
+  switch (object) {
+    case ProvisioningState.PROVISIONING_STATE_UNSPECIFIED:
+      return "PROVISIONING_STATE_UNSPECIFIED";
+    case ProvisioningState.EN_ATTENTE:
+      return "EN_ATTENTE";
+    case ProvisioningState.DELAI_ECOULE:
+      return "DELAI_ECOULE";
+    case ProvisioningState.EN_COURS:
+      return "EN_COURS";
+    case ProvisioningState.ACTIVE:
+      return "ACTIVE";
+    case ProvisioningState.ERREUR:
+      return "ERREUR";
+    case ProvisioningState.SUSPENDU:
+      return "SUSPENDU";
+    case ProvisioningState.RESILIE:
+      return "RESILIE";
+    case ProvisioningState.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export interface ProvisioningLifecycle {
   id: string;
   organisationId: string;
@@ -63,6 +132,8 @@ export interface GetProvisioningStatsResponse {
   enCours: number;
   active: number;
   erreur: number;
+  suspendu: number;
+  resilie: number;
 }
 
 export interface RetryTransatelActivationRequest {
@@ -113,6 +184,31 @@ export interface CancelProvisioningResponse {
   lifecycle: ProvisioningLifecycle | undefined;
   success: boolean;
   message: string;
+}
+
+export interface SuspendLineRequest {
+  contratId: string;
+  clientId: string;
+  reason: string;
+  correlationId: string;
+}
+
+export interface SuspendLineResponse {
+  success: boolean;
+  suspensionId: string;
+}
+
+export interface TerminateLineRequest {
+  contratId: string;
+  clientId: string;
+  reason: string;
+  effectiveDate: string;
+  correlationId: string;
+}
+
+export interface TerminateLineResponse {
+  success: boolean;
+  terminationId: string;
 }
 
 function createBaseProvisioningLifecycle(): ProvisioningLifecycle {
@@ -933,7 +1029,7 @@ export const GetProvisioningStatsRequest: MessageFns<GetProvisioningStatsRequest
 };
 
 function createBaseGetProvisioningStatsResponse(): GetProvisioningStatsResponse {
-  return { total: 0, enAttente: 0, delaiEcoule: 0, enCours: 0, active: 0, erreur: 0 };
+  return { total: 0, enAttente: 0, delaiEcoule: 0, enCours: 0, active: 0, erreur: 0, suspendu: 0, resilie: 0 };
 }
 
 export const GetProvisioningStatsResponse: MessageFns<GetProvisioningStatsResponse> = {
@@ -955,6 +1051,12 @@ export const GetProvisioningStatsResponse: MessageFns<GetProvisioningStatsRespon
     }
     if (message.erreur !== 0) {
       writer.uint32(48).int32(message.erreur);
+    }
+    if (message.suspendu !== 0) {
+      writer.uint32(56).int32(message.suspendu);
+    }
+    if (message.resilie !== 0) {
+      writer.uint32(64).int32(message.resilie);
     }
     return writer;
   },
@@ -1014,6 +1116,22 @@ export const GetProvisioningStatsResponse: MessageFns<GetProvisioningStatsRespon
           message.erreur = reader.int32();
           continue;
         }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.suspendu = reader.int32();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.resilie = reader.int32();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1043,6 +1161,8 @@ export const GetProvisioningStatsResponse: MessageFns<GetProvisioningStatsRespon
         : 0,
       active: isSet(object.active) ? globalThis.Number(object.active) : 0,
       erreur: isSet(object.erreur) ? globalThis.Number(object.erreur) : 0,
+      suspendu: isSet(object.suspendu) ? globalThis.Number(object.suspendu) : 0,
+      resilie: isSet(object.resilie) ? globalThis.Number(object.resilie) : 0,
     };
   },
 
@@ -1066,6 +1186,12 @@ export const GetProvisioningStatsResponse: MessageFns<GetProvisioningStatsRespon
     if (message.erreur !== 0) {
       obj.erreur = Math.round(message.erreur);
     }
+    if (message.suspendu !== 0) {
+      obj.suspendu = Math.round(message.suspendu);
+    }
+    if (message.resilie !== 0) {
+      obj.resilie = Math.round(message.resilie);
+    }
     return obj;
   },
 
@@ -1080,6 +1206,8 @@ export const GetProvisioningStatsResponse: MessageFns<GetProvisioningStatsRespon
     message.enCours = object.enCours ?? 0;
     message.active = object.active ?? 0;
     message.erreur = object.erreur ?? 0;
+    message.suspendu = object.suspendu ?? 0;
+    message.resilie = object.resilie ?? 0;
     return message;
   },
 };
@@ -1858,6 +1986,426 @@ export const CancelProvisioningResponse: MessageFns<CancelProvisioningResponse> 
   },
 };
 
+function createBaseSuspendLineRequest(): SuspendLineRequest {
+  return { contratId: "", clientId: "", reason: "", correlationId: "" };
+}
+
+export const SuspendLineRequest: MessageFns<SuspendLineRequest> = {
+  encode(message: SuspendLineRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.contratId !== "") {
+      writer.uint32(10).string(message.contratId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.reason !== "") {
+      writer.uint32(26).string(message.reason);
+    }
+    if (message.correlationId !== "") {
+      writer.uint32(34).string(message.correlationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SuspendLineRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuspendLineRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.correlationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SuspendLineRequest {
+    return {
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      correlationId: isSet(object.correlationId)
+        ? globalThis.String(object.correlationId)
+        : isSet(object.correlation_id)
+        ? globalThis.String(object.correlation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: SuspendLineRequest): unknown {
+    const obj: any = {};
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.correlationId !== "") {
+      obj.correlationId = message.correlationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SuspendLineRequest>, I>>(base?: I): SuspendLineRequest {
+    return SuspendLineRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SuspendLineRequest>, I>>(object: I): SuspendLineRequest {
+    const message = createBaseSuspendLineRequest();
+    message.contratId = object.contratId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.reason = object.reason ?? "";
+    message.correlationId = object.correlationId ?? "";
+    return message;
+  },
+};
+
+function createBaseSuspendLineResponse(): SuspendLineResponse {
+  return { success: false, suspensionId: "" };
+}
+
+export const SuspendLineResponse: MessageFns<SuspendLineResponse> = {
+  encode(message: SuspendLineResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.suspensionId !== "") {
+      writer.uint32(18).string(message.suspensionId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SuspendLineResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSuspendLineResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.suspensionId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SuspendLineResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      suspensionId: isSet(object.suspensionId)
+        ? globalThis.String(object.suspensionId)
+        : isSet(object.suspension_id)
+        ? globalThis.String(object.suspension_id)
+        : "",
+    };
+  },
+
+  toJSON(message: SuspendLineResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.suspensionId !== "") {
+      obj.suspensionId = message.suspensionId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SuspendLineResponse>, I>>(base?: I): SuspendLineResponse {
+    return SuspendLineResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SuspendLineResponse>, I>>(object: I): SuspendLineResponse {
+    const message = createBaseSuspendLineResponse();
+    message.success = object.success ?? false;
+    message.suspensionId = object.suspensionId ?? "";
+    return message;
+  },
+};
+
+function createBaseTerminateLineRequest(): TerminateLineRequest {
+  return { contratId: "", clientId: "", reason: "", effectiveDate: "", correlationId: "" };
+}
+
+export const TerminateLineRequest: MessageFns<TerminateLineRequest> = {
+  encode(message: TerminateLineRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.contratId !== "") {
+      writer.uint32(10).string(message.contratId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.reason !== "") {
+      writer.uint32(26).string(message.reason);
+    }
+    if (message.effectiveDate !== "") {
+      writer.uint32(34).string(message.effectiveDate);
+    }
+    if (message.correlationId !== "") {
+      writer.uint32(42).string(message.correlationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TerminateLineRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTerminateLineRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.effectiveDate = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.correlationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TerminateLineRequest {
+    return {
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      effectiveDate: isSet(object.effectiveDate)
+        ? globalThis.String(object.effectiveDate)
+        : isSet(object.effective_date)
+        ? globalThis.String(object.effective_date)
+        : "",
+      correlationId: isSet(object.correlationId)
+        ? globalThis.String(object.correlationId)
+        : isSet(object.correlation_id)
+        ? globalThis.String(object.correlation_id)
+        : "",
+    };
+  },
+
+  toJSON(message: TerminateLineRequest): unknown {
+    const obj: any = {};
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.effectiveDate !== "") {
+      obj.effectiveDate = message.effectiveDate;
+    }
+    if (message.correlationId !== "") {
+      obj.correlationId = message.correlationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TerminateLineRequest>, I>>(base?: I): TerminateLineRequest {
+    return TerminateLineRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TerminateLineRequest>, I>>(object: I): TerminateLineRequest {
+    const message = createBaseTerminateLineRequest();
+    message.contratId = object.contratId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.reason = object.reason ?? "";
+    message.effectiveDate = object.effectiveDate ?? "";
+    message.correlationId = object.correlationId ?? "";
+    return message;
+  },
+};
+
+function createBaseTerminateLineResponse(): TerminateLineResponse {
+  return { success: false, terminationId: "" };
+}
+
+export const TerminateLineResponse: MessageFns<TerminateLineResponse> = {
+  encode(message: TerminateLineResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.terminationId !== "") {
+      writer.uint32(18).string(message.terminationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TerminateLineResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTerminateLineResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.terminationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TerminateLineResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      terminationId: isSet(object.terminationId)
+        ? globalThis.String(object.terminationId)
+        : isSet(object.termination_id)
+        ? globalThis.String(object.termination_id)
+        : "",
+    };
+  },
+
+  toJSON(message: TerminateLineResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.terminationId !== "") {
+      obj.terminationId = message.terminationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TerminateLineResponse>, I>>(base?: I): TerminateLineResponse {
+    return TerminateLineResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TerminateLineResponse>, I>>(object: I): TerminateLineResponse {
+    const message = createBaseTerminateLineResponse();
+    message.success = object.success ?? false;
+    message.terminationId = object.terminationId ?? "";
+    return message;
+  },
+};
+
 export type TelecomProvisioningServiceService = typeof TelecomProvisioningServiceService;
 export const TelecomProvisioningServiceService = {
   listProvisioningLifecycles: {
@@ -1954,6 +2502,25 @@ export const TelecomProvisioningServiceService = {
       Buffer.from(CancelProvisioningResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): CancelProvisioningResponse => CancelProvisioningResponse.decode(value),
   },
+  suspendLine: {
+    path: "/telecom.TelecomProvisioningService/SuspendLine",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: SuspendLineRequest): Buffer => Buffer.from(SuspendLineRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): SuspendLineRequest => SuspendLineRequest.decode(value),
+    responseSerialize: (value: SuspendLineResponse): Buffer => Buffer.from(SuspendLineResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): SuspendLineResponse => SuspendLineResponse.decode(value),
+  },
+  terminateLine: {
+    path: "/telecom.TelecomProvisioningService/TerminateLine",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: TerminateLineRequest): Buffer => Buffer.from(TerminateLineRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): TerminateLineRequest => TerminateLineRequest.decode(value),
+    responseSerialize: (value: TerminateLineResponse): Buffer =>
+      Buffer.from(TerminateLineResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TerminateLineResponse => TerminateLineResponse.decode(value),
+  },
 } as const;
 
 export interface TelecomProvisioningServiceServer extends UntypedServiceImplementation {
@@ -1965,6 +2532,8 @@ export interface TelecomProvisioningServiceServer extends UntypedServiceImplemen
   forceActive: handleUnaryCall<ForceActiveRequest, ForceActiveResponse>;
   triggerRetractionDeadline: handleUnaryCall<TriggerRetractionDeadlineRequest, TriggerRetractionDeadlineResponse>;
   cancelProvisioning: handleUnaryCall<CancelProvisioningRequest, CancelProvisioningResponse>;
+  suspendLine: handleUnaryCall<SuspendLineRequest, SuspendLineResponse>;
+  terminateLine: handleUnaryCall<TerminateLineRequest, TerminateLineResponse>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

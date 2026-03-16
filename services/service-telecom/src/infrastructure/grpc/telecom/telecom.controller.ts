@@ -20,6 +20,10 @@ import type {
   TriggerRetractionDeadlineResponse,
   CancelProvisioningRequest,
   CancelProvisioningResponse,
+  SuspendLineRequest,
+  SuspendLineResponse,
+  TerminateLineRequest,
+  TerminateLineResponse,
   ProvisioningLifecycle,
 } from '../../../../../../packages/proto/gen/ts/telecom/telecom';
 
@@ -66,6 +70,8 @@ export class TelecomProvisioningController {
       en_cours: stats['EN_COURS'] || 0,
       active: stats['ACTIVE'] || 0,
       erreur: stats['ERREUR_TECHNIQUE'] || 0,
+      suspendu: stats['SUSPENDU'] || 0,
+      resilie: stats['RESILIE'] || 0,
     };
   }
 
@@ -146,6 +152,45 @@ export class TelecomProvisioningController {
       return { lifecycle: this.toProto(updated), success: true, message: '' };
     } catch (err: unknown) {
       return { lifecycle: undefined, success: false, message: (err as Error).message };
+    }
+  }
+
+  @GrpcMethod('TelecomProvisioningService', 'SuspendLine')
+  async suspendLine(
+    data: SuspendLineRequest,
+  ): Promise<SuspendLineResponse> {
+    try {
+      const updated = await this.sagaService.processSuspension(
+        data.contrat_id,
+        data.reason,
+        data.correlation_id || undefined,
+      );
+      const meta = (updated.metadata || {}) as Record<string, unknown>;
+      return {
+        success: true,
+        suspension_id: String(meta.suspensionId || ''),
+      };
+    } catch (err: unknown) {
+      return { success: false, suspension_id: '' };
+    }
+  }
+
+  @GrpcMethod('TelecomProvisioningService', 'TerminateLine')
+  async terminateLine(
+    data: TerminateLineRequest,
+  ): Promise<TerminateLineResponse> {
+    try {
+      const updated = await this.sagaService.processTermination(
+        data.contrat_id,
+        data.reason || 'UNKNOWN',
+      );
+      const meta = (updated.metadata || {}) as Record<string, unknown>;
+      return {
+        success: true,
+        termination_id: String(meta.terminationId || ''),
+      };
+    } catch (err: unknown) {
+      return { success: false, termination_id: '' };
     }
   }
 

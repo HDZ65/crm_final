@@ -18,6 +18,10 @@ import {
   type TriggerRetractionDeadlineResponse,
   type CancelProvisioningRequest,
   type CancelProvisioningResponse,
+  type SuspendLineRequest,
+  type SuspendLineResponse,
+  type TerminateLineRequest,
+  type TerminateLineResponse,
 } from "@proto/telecom/telecom";
 
 let telecomInstance: GrpcClient | null = null;
@@ -89,6 +93,20 @@ export const telecomProvisioning = {
       getTelecomClient(),
       "cancelProvisioning"
     )(request),
+  suspendLine: (
+    request: SuspendLineRequest
+  ): Promise<SuspendLineResponse> =>
+    promisify<SuspendLineRequest, SuspendLineResponse>(
+      getTelecomClient(),
+      "suspendLine"
+    )(request),
+  terminateLine: (
+    request: TerminateLineRequest
+  ): Promise<TerminateLineResponse> =>
+    promisify<TerminateLineRequest, TerminateLineResponse>(
+      getTelecomClient(),
+      "terminateLine"
+    )(request),
 };
 
 export type {
@@ -108,4 +126,8 @@ export type {
   TriggerRetractionDeadlineResponse,
   CancelProvisioningRequest,
   CancelProvisioningResponse,
+  SuspendLineRequest,
+  SuspendLineResponse,
+  TerminateLineRequest,
+  TerminateLineResponse,
 };

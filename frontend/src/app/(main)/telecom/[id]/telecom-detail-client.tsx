@@ -15,7 +15,10 @@ import {
   triggerRetractionDeadline,
   cancelProvisioning,
   getProvisioningLifecycle,
+  suspendLine,
+  terminateLine,
 } from "@/actions/telecom"
+import { AskAiCardButton } from "@/components/ask-ai-card-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -27,6 +30,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -41,6 +50,13 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  Package,
+  PackageCheck,
+  ExternalLink,
+  Copy,
+  Shield,
+  Wifi,
+  Banknote,
 } from "lucide-react"
 
 // ---------------------------------------------------------------------------
@@ -73,6 +89,16 @@ function formatDateShort(dateStr: string): string {
   } catch {
     return "—"
   }
+}
+
+/** Génère l'URL de suivi selon le transporteur */
+function getTrackingUrl(trackingNumber: string, carrier?: string): string {
+  const clean = trackingNumber.trim().toUpperCase()
+  if (carrier?.toLowerCase().includes("chronopost")) {
+    return `https://www.chronopost.fr/tracking-no-powerful/trackDetailByShipmentId/${clean}`
+  }
+  // Par défaut La Poste / Colissimo
+  return `https://www.laposte.fr/outils/suivre-vos-envois?code=${clean}`
 }
 
 // ---------------------------------------------------------------------------
@@ -130,13 +156,53 @@ function buildTimeline(lifecycle: ProvisioningLifecycle): TimelineEvent[] {
     })
   }
 
+  if (meta.finRetractationAt) {
+    events.push({
+      key: "finRetractation",
+      label: "Fin de rétractation (feu vert légal)",
+      date: meta.finRetractationAt,
+      icon: <Shield className="h-4 w-4" />,
+      color: "text-amber-600",
+    })
+  }
+
+  if (meta.simExpedieeAt) {
+    events.push({
+      key: "simExpediee",
+      label: `SIM expédiée${meta.simCarrier ? ` (${meta.simCarrier})` : ""}`,
+      date: meta.simExpedieeAt,
+      icon: <Package className="h-4 w-4" />,
+      color: "text-orange-500",
+    })
+  }
+
+  if (meta.simLivreeAt) {
+    events.push({
+      key: "simLivree",
+      label: "SIM livrée",
+      date: meta.simLivreeAt,
+      icon: <PackageCheck className="h-4 w-4" />,
+      color: "text-teal-500",
+    })
+  }
+
+  if (meta.premiereConnexionAt) {
+    events.push({
+      key: "premiereConnexion",
+      label: "Première connexion réseau",
+      date: meta.premiereConnexionAt,
+      icon: <Wifi className="h-4 w-4" />,
+      color: "text-emerald-600",
+    })
+  }
+
   if (meta.activatedAt) {
     events.push({
       key: "activated",
-      label: "Ligne activée",
+      label: "Ligne activée — facturation démarrée",
       date: meta.activatedAt,
       icon: <Zap className="h-4 w-4" />,
-      color: "text-green-500",
+      color: "text-green-600",
     })
   }
 
@@ -150,10 +216,20 @@ function buildTimeline(lifecycle: ProvisioningLifecycle): TimelineEvent[] {
     })
   }
 
+  if (meta.premierPrelevementAt) {
+    events.push({
+      key: "premierPrelevement",
+      label: "Premier prélèvement GoCardless",
+      date: meta.premierPrelevementAt,
+      icon: <Banknote className="h-4 w-4" />,
+      color: "text-green-700",
+    })
+  }
+
   if (meta.canceledAt) {
     events.push({
       key: "canceled",
-      label: "Provisioning annulé",
+      label: "Cycle annulé",
       date: meta.canceledAt,
       icon: <XCircle className="h-4 w-4" />,
       color: "text-red-500",
@@ -188,42 +264,58 @@ interface ActionConfig {
 const ACTIONS: ActionConfig[] = [
   {
     id: "retryTransatel",
-    label: "Retry Transatel",
-    description: "Relancer l'activation de la ligne Transatel. Disponible uniquement en état ERREUR_TECHNIQUE.",
+    label: "Relancer Transatel",
+    description: "Relancer l'activation de la ligne auprès de Transatel. Disponible uniquement lorsque le cycle est en erreur technique.",
     variant: "outline",
     enabledStates: ["ERREUR_TECHNIQUE"],
     icon: <RefreshCw className="h-4 w-4" />,
   },
   {
     id: "retrySepa",
-    label: "Retry SEPA",
-    description: "Relancer la création du mandat SEPA. Disponible uniquement si aucun mandat n'existe.",
+    label: "Relancer SEPA",
+    description: "Relancer la création du mandat SEPA. Disponible si aucun mandat n'a encore été créé.",
     variant: "outline",
     enabledStates: ["EN_ATTENTE_RETRACTATION", "DELAI_RETRACTATION_ECOULE", "EN_COURS", "ERREUR_TECHNIQUE"],
     icon: <CreditCard className="h-4 w-4" />,
   },
   {
     id: "forceActive",
-    label: "Forcer Activation",
-    description: "Forcer le passage à l'état ACTIVE. Disponible en EN_COURS ou ERREUR_TECHNIQUE.",
+    label: "Forcer l'activation",
+    description: "Forcer le passage à l'état « Ligne active ». Réservé aux cas où l'activation est bloquée.",
     variant: "default",
     enabledStates: ["EN_COURS", "ERREUR_TECHNIQUE"],
     icon: <Zap className="h-4 w-4" />,
   },
   {
     id: "triggerRetraction",
-    label: "Déclencher Rétractation",
-    description: "Déclencher manuellement le délai de rétractation. Disponible en EN_ATTENTE_RETRACTATION.",
+    label: "Clôturer la rétractation",
+    description: "Mettre fin manuellement au délai de rétractation de 14 jours.",
     variant: "outline",
     enabledStates: ["EN_ATTENTE_RETRACTATION"],
     icon: <Clock className="h-4 w-4" />,
   },
   {
     id: "cancel",
-    label: "Annuler",
-    description: "Annuler le provisioning. Cette action est irréversible.",
+    label: "Annuler le cycle",
+    description: "Annuler définitivement le cycle d'activation. Cette action est irréversible.",
     variant: "destructive",
     enabledStates: ["EN_ATTENTE_RETRACTATION", "DELAI_RETRACTATION_ECOULE", "EN_COURS", "ERREUR_TECHNIQUE", "ACTIVE"],
+    icon: <XCircle className="h-4 w-4" />,
+  },
+  {
+    id: "suspend",
+    label: "Suspendre la ligne",
+    description: "Suspendre la ligne télécom auprès du carrier. La ligne sera désactivée jusqu'à réactivation.",
+    variant: "outline",
+    enabledStates: ["ACTIVE"],
+    icon: <Wifi className="h-4 w-4 text-amber-500" />,
+  },
+  {
+    id: "terminate",
+    label: "Résilier la ligne",
+    description: "Résilier définitivement la ligne télécom. Cette action est irréversible.",
+    variant: "destructive",
+    enabledStates: ["ACTIVE", "SUSPENDU"],
     icon: <XCircle className="h-4 w-4" />,
   },
 ]
@@ -249,6 +341,15 @@ export function TelecomDetailClient({
   const [metaExpanded, setMetaExpanded] = React.useState(false)
 
   const timeline = buildTimeline(lifecycle)
+
+  // Parse metadata once for display
+  const meta = React.useMemo(() => {
+    try {
+      return lifecycle.metadata ? JSON.parse(lifecycle.metadata) : {}
+    } catch {
+      return {}
+    }
+  }, [lifecycle.metadata])
 
   // -------------------------------------------------------------------------
   // Refresh
@@ -276,7 +377,7 @@ export function TelecomDetailClient({
   async function executeAction(actionId: string) {
     setIsExecuting(true)
     try {
-      let result
+      let result: { data: unknown; error: string | null } | null = null
       switch (actionId) {
         case "retryTransatel":
           result = await retryTransatelActivation(lifecycleId)
@@ -293,6 +394,20 @@ export function TelecomDetailClient({
         case "cancel":
           result = await cancelProvisioning(lifecycleId)
           break
+        case "suspend":
+          result = await suspendLine(
+            lifecycle.contratId,
+            lifecycle.clientId,
+            "Suspension manuelle via CRM"
+          )
+          break
+        case "terminate":
+          result = await terminateLine(
+            lifecycle.contratId,
+            lifecycle.clientId,
+            "Résiliation manuelle via CRM"
+          )
+          break
         default:
           return
       }
@@ -304,7 +419,6 @@ export function TelecomDetailClient({
         if (result.data?.lifecycle) {
           setLifecycle(result.data.lifecycle)
         } else {
-          // Refresh to get latest state
           const refreshed = await getProvisioningLifecycle(lifecycleId)
           if (refreshed.data?.lifecycle) setLifecycle(refreshed.data.lifecycle)
         }
@@ -318,13 +432,23 @@ export function TelecomDetailClient({
   }
 
   // -------------------------------------------------------------------------
+  // Copy tracking number
+  // -------------------------------------------------------------------------
+
+  function copyTrackingNumber() {
+    if (!meta.simTrackingNumber) return
+    navigator.clipboard.writeText(meta.simTrackingNumber)
+    toast.success("Numéro de suivi copié")
+  }
+
+  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+      {/* En-tête */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/telecom">
@@ -335,23 +459,26 @@ export function TelecomDetailClient({
           <Separator orientation="vertical" className="h-6" />
           <div>
             <h1 className="text-xl font-bold">{lifecycle.contratId || lifecycleId}</h1>
-            <p className="text-muted-foreground text-sm">Client: {lifecycle.clientId || "—"}</p>
+            <p className="text-muted-foreground text-sm">Client : {lifecycle.clientId || "—"}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <MockIndicator />
           <ProvisioningStateBadge state={lifecycle.provisioningState} />
+          <AskAiCardButton
+            prompt={`Analyse ce cycle de provisioning télécom. Contrat: ${lifecycle.contratId}, Client: ${lifecycle.clientId}, État: ${lifecycle.provisioningState}, Statut abo: ${lifecycle.abonnementStatus}, Montant: ${lifecycle.montantAbonnement} ${lifecycle.devise}, SEPA: ${lifecycle.sepaMandateId || "non créé"}, GoCardless: ${lifecycle.gocardlessSubscriptionId || "non créé"}, Compensation: ${lifecycle.compensationDone ? "oui" : "non"}, Suivi SIM: ${meta.simTrackingNumber || "non expédié"}, Dernière erreur: ${lifecycle.lastError || "aucune"}. Diagnostic et actions recommandées ?`}
+            title="Analyser ce cycle avec l'IA"
+          />
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
             Actualiser
           </Button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column: Info + Timeline */}
+        {/* Colonne gauche : Infos + Expédition + Chronologie */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Info cards */}
+          {/* Informations */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Informations</CardTitle>
@@ -359,21 +486,27 @@ export function TelecomDetailClient({
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div>
-                  <dt className="text-muted-foreground">Contrat ID</dt>
+                  <dt className="text-muted-foreground">N° Contrat</dt>
                   <dd className="font-medium mt-0.5">{lifecycle.contratId || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Client ID</dt>
+                  <dt className="text-muted-foreground">Client</dt>
                   <dd className="font-medium mt-0.5">{lifecycle.clientId || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Commercial ID</dt>
+                  <dt className="text-muted-foreground">Commercial</dt>
                   <dd className="font-medium mt-0.5">{lifecycle.commercialId || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Statut Abonnement</dt>
+                  <dt className="text-muted-foreground">Statut abonnement</dt>
                   <dd className="mt-0.5">
-                    <Badge variant="outline">{lifecycle.abonnementStatus || "—"}</Badge>
+                    <Badge variant="outline">
+                      {lifecycle.abonnementStatus === "PENDING" ? "En attente"
+                        : lifecycle.abonnementStatus === "ACTIVE" ? "Actif"
+                        : lifecycle.abonnementStatus === "ERROR" ? "Erreur"
+                        : lifecycle.abonnementStatus === "CANCELLED" ? "Annulé"
+                        : lifecycle.abonnementStatus || "—"}
+                    </Badge>
                   </dd>
                 </div>
                 <div>
@@ -405,11 +538,11 @@ export function TelecomDetailClient({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Date Signature</dt>
+                  <dt className="text-muted-foreground">Date de signature</dt>
                   <dd className="font-medium mt-0.5">{formatDateShort(lifecycle.dateSignature)}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Date J+14 (fin rétractation)</dt>
+                  <dt className="text-muted-foreground">Fin de rétractation (J+14)</dt>
                   <dd className="font-medium mt-0.5">{formatDateShort(lifecycle.dateFinRetractation)}</dd>
                 </div>
                 <div>
@@ -424,22 +557,84 @@ export function TelecomDetailClient({
             </CardContent>
           </Card>
 
-          {/* Error panel */}
+          {/* Expédition SIM */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Package className="h-4 w-4 text-orange-500" />
+                Expédition SIM
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {meta.simTrackingNumber ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 rounded bg-muted px-3 py-2 font-mono text-sm">
+                      {meta.simTrackingNumber}
+                    </code>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button size="icon" variant="ghost" onClick={copyTrackingNumber}>
+                            <Copy className="size-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Copier le numéro de suivi</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button size="icon" variant="ghost" asChild>
+                            <a
+                              href={getTrackingUrl(meta.simTrackingNumber, meta.simCarrier)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="size-4" />
+                            </a>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Suivre sur {meta.simCarrier || "La Poste"}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div>
+                      <dt className="text-muted-foreground">Transporteur</dt>
+                      <dd className="font-medium mt-0.5">{meta.simCarrier || "La Poste / Colissimo"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Date d&apos;expédition</dt>
+                      <dd className="font-medium mt-0.5">{meta.simExpedieeAt ? formatDateShort(meta.simExpedieeAt) : "—"}</dd>
+                    </div>
+                  </dl>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <Package className="h-5 w-5" />
+                  <p>Aucune expédition de carte SIM enregistrée pour ce cycle.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Panneau d'erreur */}
           {lifecycle.lastError && (
             <ErrorPanel error={lifecycle.lastError} />
           )}
 
-          {/* Timeline */}
+          {/* Chronologie */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Timeline</CardTitle>
+              <CardTitle className="text-base">Chronologie</CardTitle>
             </CardHeader>
             <CardContent>
               {timeline.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Aucun événement enregistré</p>
               ) : (
                 <ol className="relative border-l border-border ml-3 space-y-6">
-                  {timeline.map((event, idx) => (
+                  {timeline.map((event) => (
                     <li key={event.key} className="ml-6">
                       <span
                         className={`absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-background border border-border ${event.color}`}
@@ -457,7 +652,7 @@ export function TelecomDetailClient({
             </CardContent>
           </Card>
 
-          {/* Metadata panel (collapsible) */}
+          {/* Métadonnées brutes (volet dépliable) */}
           {lifecycle.metadata && (
             <Card>
               <CardHeader
@@ -490,7 +685,7 @@ export function TelecomDetailClient({
           )}
         </div>
 
-        {/* Right column: Actions */}
+        {/* Colonne droite : Actions */}
         <div className="space-y-4">
           <Card>
             <CardHeader>
@@ -516,22 +711,22 @@ export function TelecomDetailClient({
             </CardContent>
           </Card>
 
-          {/* State info card */}
+          {/* Carte état actuel */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">État actuel</CardTitle>
+              <CardTitle className="text-base">État de la ligne</CardTitle>
             </CardHeader>
             <CardContent>
               <ProvisioningStateBadge state={lifecycle.provisioningState} className="text-sm" />
               <p className="text-xs text-muted-foreground mt-2">
-                Les actions disponibles dépendent de l&apos;état actuel du cycle.
+                Les actions disponibles dépendent de l&apos;état actuel du cycle d&apos;activation.
               </p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Confirmation Dialog */}
+      {/* Dialogue de confirmation */}
       {pendingAction && (() => {
         const action = ACTIONS.find((a) => a.id === pendingAction)
         if (!action) return null
@@ -546,7 +741,7 @@ export function TelecomDetailClient({
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Cette action peut être irréversible. Confirmez-vous ?
+                    Cette action est irréversible. Confirmez-vous ?
                   </AlertDescription>
                 </Alert>
               )}
@@ -573,6 +768,6 @@ export function TelecomDetailClient({
           </Dialog>
         )
       })()}
-    </div>
+    </main>
   )
 }

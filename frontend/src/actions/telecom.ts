@@ -12,6 +12,8 @@ import type {
   ForceActiveResponse,
   TriggerRetractionDeadlineResponse,
   CancelProvisioningResponse,
+  SuspendLineResponse,
+  TerminateLineResponse,
 } from "@proto/telecom/telecom";
 
 // ============================================================================
@@ -151,6 +153,53 @@ export async function cancelProvisioning(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors de l'annulation du provisioning",
+    };
+  }
+}
+
+export async function suspendLine(
+  contratId: string,
+  clientId: string,
+  reason: string
+): Promise<ActionResult<SuspendLineResponse>> {
+  try {
+    const data = await telecomProvisioning.suspendLine({
+      contratId,
+      clientId,
+      reason,
+      correlationId: `suspend-${Date.now()}`,
+    });
+    revalidatePath("/telecom");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[suspendLine] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la suspension de la ligne",
+    };
+  }
+}
+
+export async function terminateLine(
+  contratId: string,
+  clientId: string,
+  reason: string
+): Promise<ActionResult<TerminateLineResponse>> {
+  try {
+    const data = await telecomProvisioning.terminateLine({
+      contratId,
+      clientId,
+      reason,
+      effectiveDate: new Date().toISOString(),
+      correlationId: `terminate-${Date.now()}`,
+    });
+    revalidatePath("/telecom");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[terminateLine] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la résiliation de la ligne",
     };
   }
 }

@@ -32,6 +32,7 @@ import { CfastBillingCompensationService } from './infrastructure/external/billi
 import { TelecomProvisioningController } from './infrastructure/grpc/telecom';
 import { NetworthActivationMockService } from './infrastructure/external/telecom/networth/networth-activation-mock.service';
 import { StelogyActivationMockService } from './infrastructure/external/telecom/stelogy/stelogy-activation-mock.service';
+import { CarrierSelectorService } from './domain/provisioning/services/carrier-selector.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ProvisioningLifecycleEntity])],
@@ -73,6 +74,7 @@ import { StelogyActivationMockService } from './infrastructure/external/telecom/
       useClass: TransatelTerminationMockService,
     },
     ProvisioningSagaService,
+    CarrierSelectorService,
     ProvisioningJ14SchedulerService,
     ContractSignedHandler,
     RetractionDeadlineElapsedHandler,
@@ -83,6 +85,6 @@ import { StelogyActivationMockService } from './infrastructure/external/telecom/
     SuspensionRequestedHandler,
     TerminationRequestedHandler,
   ],
-  exports: [ProvisioningLifecycleService, ProvisioningSagaService],
+  exports: [ProvisioningLifecycleService, ProvisioningSagaService, CarrierSelectorService],
 })
 export class ProvisioningModule {}

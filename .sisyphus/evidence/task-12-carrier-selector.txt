@@ -1,0 +1,11 @@
+Task 12 - CarrierSelectorService build evidence
+Date: Mon, Mar 16, 2026  9:54:15 AM
+Command: bun run build (service-telecom)
+Result: SUCCESS (nest build completed with no errors)
+
+Files created:
+  - services/service-telecom/src/domain/provisioning/ports/telecom-carrier.port.ts
+  - services/service-telecom/src/domain/provisioning/services/carrier-selector.service.ts
+Files modified:
+  - services/service-telecom/src/domain/provisioning/ports/index.ts
+  - services/service-telecom/src/provisioning.module.ts

@@ -300,3 +300,12 @@
 - Backend gen uses snake_case (en_attente), frontend gen uses camelCase (enAttente)
 - GetProvisioningStats countByState() returns Record<string,number> from GROUP BY — new states auto-counted
 - Saga already had processSuspension/processTermination with correct state transitions
+
+## [2026-03-16] Task 12 — CarrierSelectorService
+
+### Multi-carrier strategy pattern
+- Transatel mocks use object-param interfaces (ProvisioningTransatelPort, ProvisioningSuspensionPort)
+- Networth/Stelogy mocks use flat-param interfaces matching TelecomCarrierPort directly
+- CarrierSelectorService bridges the gap with an inline adapter for Transatel (object->flat param mapping)
+- Carrier resolution: explicit param > TELECOM_DEFAULT_CARRIER env > 'transatel' default
+- All injection tokens defined in provisioning-saga.service.ts, re-exported via services/index.ts

@@ -397,3 +397,20 @@
 - `NotificationService.create()` takes `{ organisationId, utilisateurId, type, titre, message, metadata }`
 - `NotificationType.INFO` used for non-critical informational notifications
 - metadata should include `eventType` key for traceability (matching DepanssurEventsHandler pattern)
+
+## [2026-03-16] Task 30 — Integration Tests for NATS Event Chains
+
+### Test Patterns
+- bun:test uses `import { beforeEach, describe, expect, it, jest } from 'bun:test'` — jest-compatible
+- Mock NATS subscription pattern: capture handlers in `subscriptions` map, invoke manually
+- `jest.fn()` works natively in bun:test, no vitest needed
+- `(mock as ReturnType<typeof jest.fn>).mockResolvedValue()` for re-mocking per test
+- Handler tests: instantiate directly with mocked deps, call `onModuleInit()`, then invoke via subscription map
+- Service tests: instantiate directly, no NestJS TestingModule needed for unit/integration
+- ReducBox entity uses `new ReducBoxAccessEntity()` + `Object.assign()` for factory pattern
+
+### Pre-existing Test Failures in service-commercial
+- recurrence-generation.service.spec.ts: 6 failures (echeance reglee logic)
+- reprise-calculation.service.spec.ts: 3 failures (decimal calculations return 0)
+- tarification.engine.spec.ts: circular entity reference (ProduitEntity)
+- subscription-state-machine.spec.ts: missing SubscriptionStatus export

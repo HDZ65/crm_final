@@ -1,0 +1,36 @@
+Task 17 — Énergie: Create entities + TypeORM migration + repository
+====================================================================
+Date: 2026-03-16
+Build: PASS (bun run build in service-commercial)
+
+Files Created:
+  - services/service-commercial/src/domain/energie/entities/raccordement-energie.entity.ts
+  - services/service-commercial/src/domain/energie/entities/energie-status-history.entity.ts
+  - services/service-commercial/src/domain/energie/entities/index.ts
+  - services/service-commercial/src/migrations/1774500000000-CreateEnergieRaccordement.ts
+  - services/service-commercial/src/infrastructure/persistence/typeorm/repositories/energie/raccordement-energie.service.ts
+  - services/service-commercial/src/infrastructure/persistence/typeorm/repositories/energie/index.ts
+  - services/service-commercial/src/energie.module.ts
+
+Files Modified:
+  - services/service-commercial/src/app.module.ts (added EnergieModule import)
+
+Entities:
+  - RaccordementEnergieEntity (table: raccordement_energie)
+    - Enums: PartenaireEnergie (PLENITUDE, OHM), StatutRaccordement (7 values)
+    - Indexes: clientId, contratId
+    - Fields: id, clientId, contratId, partenaire, statutRaccordement, statutActivation, adresse, pdlPce, dateDemande, dateActivation, metadata, createdAt, updatedAt
+  - EnergieStatusHistoryEntity (table: energie_status_history)
+    - FK: raccordement_id -> raccordement_energie(id) ON DELETE CASCADE
+    - Fields: id, raccordementId, previousStatus, newStatus, source, changedAt
+
+Migration: 1774500000000-CreateEnergieRaccordement
+  - Creates partenaire_energie_enum and statut_raccordement_enum PostgreSQL types
+  - Creates raccordement_energie table with indexes
+  - Creates energie_status_history table with FK
+
+Repository: RaccordementEnergieRepositoryService
+  - Methods: findById, findByClientId, findByContratId, findByPartenaire, create, update, addHistory
+
+LSP Diagnostics: 0 errors on all new files
+Build Output: nest build — SUCCESS

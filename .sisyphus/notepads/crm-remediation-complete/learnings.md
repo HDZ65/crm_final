@@ -284,3 +284,12 @@
 - History entity uses ManyToOne string-based relation ('ReducBoxAccessEntity', 'history') matching OneToMany pattern
 - Repository service injects both access+history repos for addHistory method
 - autoLoadEntities:true means TypeOrmModule.forFeature() is sufficient for entity registration
+
+## Task 17 — Énergie Entities + Migration + Repository
+- Énergie bounded context follows ReducBox pattern: domain/energie/entities, infra repos, energie.module.ts
+- Migration timestamp 1774500000000 (ReducBox used 1774400000000) - must coordinate for parallel tasks
+- Entity enum pattern: TypeORM enum decorator with enum type auto-creates PostgreSQL enum; migration creates explicitly for safety
+- Status history entity uses ManyToOne string-based relation matching OneToMany pattern from parent
+- Repository pattern: @InjectRepository for both entities, CRUD + addHistory methods
+- Module registration: TypeOrmModule.forFeature + provider + export, then import in app.module.ts
+- Windows dist/ lock: rmdir /s /q dist before rebuild when EPERM errors occur

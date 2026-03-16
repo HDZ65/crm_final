@@ -23,6 +23,12 @@ import { RaccordementEnergieRepositoryService } from './infrastructure/persisten
 import { PlenitudeMockClient } from './infrastructure/external/energie/plenitude-mock.client';
 import { OhmMockClient } from './infrastructure/external/energie/ohm-mock.client';
 
+// Infrastructure — gRPC controller
+import { EnergieController } from './infrastructure/grpc/energie/energie.controller';
+
+// Infrastructure — NATS handler
+import { EnergieContractHandler } from './infrastructure/messaging/nats/handlers/energie-contract.handler';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -30,7 +36,7 @@ import { OhmMockClient } from './infrastructure/external/energie/ohm-mock.client
       EnergieStatusHistoryEntity,
     ]),
   ],
-  controllers: [],
+  controllers: [EnergieController],
   providers: [
     RaccordementEnergieRepositoryService,
     {
@@ -42,6 +48,7 @@ import { OhmMockClient } from './infrastructure/external/energie/ohm-mock.client
       useClass: OhmMockClient,
     },
     EnergieLifecycleService,
+    EnergieContractHandler,
   ],
   exports: [
     RaccordementEnergieRepositoryService,

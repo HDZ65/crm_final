@@ -14,6 +14,7 @@ import {
 import { ProvisioningLifecycleEntity } from './domain/provisioning/entities';
 import { ProvisioningLifecycleService } from './infrastructure/persistence/typeorm/repositories/provisioning';
 import {
+  AbonnementRestoredHandler,
   ActivationReelleHandler,
   ContractSignedHandler,
   FirstInvoicePaidHandler,
@@ -84,6 +85,7 @@ import { CarrierSelectorService } from './domain/provisioning/services/carrier-s
     ActivationReelleHandler,
     SuspensionRequestedHandler,
     TerminationRequestedHandler,
+    AbonnementRestoredHandler,
   ],
   exports: [ProvisioningLifecycleService, ProvisioningSagaService, CarrierSelectorService],
 })

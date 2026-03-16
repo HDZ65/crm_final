@@ -343,3 +343,57 @@
 - NATS subjects: crm.commercial.energie.{raccordement.created|status.changed|activated}
 - Metadata for external ID storage: entity.metadata = { externalId } (jsonb column)
 - Module wiring: two provide/useClass entries for two ports + lifecycle service class
+
+## [2026-03-16] Task 16: ReducBox gRPC Controller + NATS Handlers
+
+### Patterns
+- NATS subject convention: crm.contrat.{status} (e.g., crm.contrat.suspended, crm.contrat.activated)
+- NATS handlers: @Injectable() + OnModuleInit + natsService.subscribe(subject, handler.bind(this))
+- gRPC controllers: @Controller() + @GrpcMethod('ServiceName', 'MethodName')
+- Entity-to-proto mapping: manual inline mapping (camelCase to snake_case, Date to ISO string, enum to number)
+- Error handling: catch + check message.includes('not found') to throw RpcException with NOT_FOUND
+- Contract event payload: contrat_id or contratId (handle both for resilience)
+- NATS handlers registered as providers (not controllers) in module
+
+## [2026-03-16] Task 19 — Énergie gRPC Controller + NATS Handlers
+
+### Pattern: gRPC Controller for Énergie
+- Same pattern as ReducBox: `@GrpcMethod('EnergieService', 'RpcName')` decorator
+- Proto enums mapped bidirectionally with `mapXxxToProto`/`mapXxxFromProto` helpers
+- Invalid proto enum values throw `RpcException` with `INVALID_ARGUMENT`
+- Entity-to-proto mapping via private `toProto()` method handles null→empty string coercion
+
+### Pattern: NATS Event Handler for Énergie
+- `OnModuleInit` pattern — subscribe in `onModuleInit()`, bind handlers
+- `crm.contrat.signed` → filter by `contrat_type` containing "energie" before processing
+- `crm.contrat.suspended` → lookup by contratId, skip if already SUSPENDU
+- Always handle both `snake_case` and `camelCase` event field names for resilience
+
+### Key Implementation Notes
+- `energie.module.ts` lives at `src/energie.module.ts` (not in domain folder)
+- EnergieController registered in `controllers: []` array, handler in `providers: []`
+- Proto `PartenaireEnergie` enum: PLENITUDE=1, OHM=2 (0=UNSPECIFIED)
+- Proto `RaccordementStatus` enum: 1-7 mapping matches domain `StatutRaccordement`
+
+## [2026-03-16] Task 20 — RG3 Auto-Reactivation Downstream Handlers
+
+### Pattern: Cross-service event handlers for same NATS subject
+- Multiple services can subscribe to the same NATS subject (`abonnement.depanssur.restored`)
+- Each service handles its own responsibility: core (status update), telecom (line reactivation), engagement (notification)
+- Class naming must be unique across the project barrel exports: used `AbonnementRestoredEngagementHandler` in engagement to avoid collision with telecom's `AbonnementRestoredHandler`
+
+### Pattern: AbonnementService.update() auto-tracks history
+- The `update()` method in service-core's AbonnementService automatically:
+  1. Detects status changes and writes to `HistoriqueStatutAbonnementEntity`
+  2. Publishes `depanssur.abonnement.status_changed` event via NATS
+- No need to manually write history or publish events when using `update()`
+
+### Pattern: CarrierSelectorService usage
+- `selectCarrier()` with no args defaults to env var or 'transatel'
+- Returns `TelecomCarrierPort` with `activateLine(contratId, clientId, msisdn, iccid, correlationId)`
+- For reactivation (no SIM provisioning), pass empty strings for msisdn/iccid
+
+### Pattern: Engagement notification creation
+- `NotificationService.create()` takes `{ organisationId, utilisateurId, type, titre, message, metadata }`
+- `NotificationType.INFO` used for non-critical informational notifications
+- metadata should include `eventType` key for traceability (matching DepanssurEventsHandler pattern)

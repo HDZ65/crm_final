@@ -3,3 +3,7 @@ export * from './retraction-deadline-elapsed.handler';
 export * from './first-invoice-paid.handler';
 export * from './monthly-invoice-paid.handler';
 export * from './gocardless-payment-succeeded.handler';
+export * from './activation-reelle.handler';
+export * from './suspension-requested.handler';
+export * from './termination-requested.handler';
+export * from './abonnement-restored.handler';

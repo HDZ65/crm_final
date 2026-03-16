@@ -9,3 +9,4 @@ export * from './justi-case-handler';
 
 // Depanssur handlers
 export * from './depanssur-events.handler';
+export * from './abonnement-restored.handler';

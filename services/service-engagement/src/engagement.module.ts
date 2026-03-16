@@ -92,6 +92,7 @@ import {
 
 // NATS handlers (Depanssur)
 import { DepanssurEventsHandler } from './infrastructure/messaging/nats/handlers/depanssur-events.handler';
+import { AbonnementRestoredEngagementHandler } from './infrastructure/messaging/nats/handlers/abonnement-restored.handler';
 
 
 @Module({
@@ -163,6 +164,7 @@ import { DepanssurEventsHandler } from './infrastructure/messaging/nats/handlers
     JustiSubscriptionHandler,
     JustiCaseHandler,
     DepanssurEventsHandler,
+    AbonnementRestoredEngagementHandler,
   ],
   exports: [
     NotificationService,

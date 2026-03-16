@@ -1,0 +1,30 @@
+Task 15 — ReducBox: Create domain service + mock API client
+============================================================
+Date: 2026-03-16
+Status: PASS
+
+Files Created:
+- services/service-commercial/src/domain/reducbox/ports/reducbox.port.ts (ReducBoxPort interface + REDUCBOX_PORT token)
+- services/service-commercial/src/infrastructure/external/reducbox/reducbox-mock.client.ts (ReducBoxMockClient)
+- services/service-commercial/src/domain/reducbox/services/reducbox-lifecycle.service.ts (ReducBoxLifecycleService)
+
+Files Modified:
+- services/service-commercial/src/reducbox.module.ts (registered mock client via REDUCBOX_PORT, added ReducBoxLifecycleService)
+
+Build Output (service-commercial):
+$ bun run build
+$ bun run proto:clean && bun run proto:generate
+$ rimraf proto/generated
+$ node scripts/copy-proto.js
+Proto files copied successfully
+$ nest build
+(exit code 0 — SUCCESS)
+
+LSP Diagnostics: 0 errors on all 4 files
+
+Key Decisions:
+- ReducBoxPort follows same pattern as IImsClient (domain port interface)
+- ReducBoxMockClient follows MockImsClient pattern (recordCall, logger, counter-based IDs)
+- ReducBoxLifecycleService follows SubscriptionLifecycleService NATS pattern (@Optional NatsService, isConnected guard)
+- NATS subjects follow convention: crm.commercial.reducbox.access.{created|suspended|restored}
+- History entries recorded for all transitions

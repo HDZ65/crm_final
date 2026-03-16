@@ -309,3 +309,19 @@
 - CarrierSelectorService bridges the gap with an inline adapter for Transatel (object->flat param mapping)
 - Carrier resolution: explicit param > TELECOM_DEFAULT_CARRIER env > 'transatel' default
 - All injection tokens defined in provisioning-saga.service.ts, re-exported via services/index.ts
+
+## [2026-03-16] Task 15 — ReducBox Lifecycle Service + Mock API Client
+
+### Accomplishments
+- Created ReducBoxPort interface in domain/reducbox/ports/reducbox.port.ts
+- Created ReducBoxMockClient in infrastructure/external/reducbox/reducbox-mock.client.ts
+- Created ReducBoxLifecycleService in domain/reducbox/services/reducbox-lifecycle.service.ts
+- Registered mock client (via REDUCBOX_PORT token) and lifecycle service in reducbox.module.ts
+
+### Key Patterns
+- Port interface pattern: domain port with DI token constant (REDUCBOX_PORT = 'REDUCBOX_PORT')
+- Mock client pattern: follows MockImsClient — recordCall helper, Logger, counter-based IDs (reducbox-{clientId}-{counter})
+- Lifecycle service pattern: follows SubscriptionLifecycleService — @Optional NatsService, isConnected() guard before publish
+- NATS event subjects: crm.commercial.reducbox.access.{created|suspended|restored}
+- History tracking: every state transition creates a ReducBoxAccessHistoryEntity entry
+- Module wiring: provide/useClass for port injection, direct class for lifecycle service

@@ -20,6 +20,9 @@ import { WinLeadPlusModule } from './winleadplus.module';
 import { CatalogueWebhookModule } from './catalogue-webhook.module';
 import { CfastModule } from './cfast.module';
 
+import { QualiteModule } from './qualite.module';
+import { ReducBoxModule } from './reducbox.module';
+import { EnergieModule } from './energie.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -39,7 +42,7 @@ import { CfastModule } from './cfast.module';
         database: configService.get<string>('DB_DATABASE', 'commercial_db'),
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
-        synchronize: configService.get('NODE_ENV') !== 'production',
+        synchronize: configService.get<string>('DB_SYNCHRONIZE', 'false') === 'true',
         migrationsRun: configService.get('MIGRATIONS_RUN', 'true') === 'true',
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get<string>('NODE_ENV') === 'development',
@@ -71,6 +74,9 @@ import { CfastModule } from './cfast.module';
     WinLeadPlusModule,
     CatalogueWebhookModule,
     CfastModule,
+    QualiteModule,
+    ReducBoxModule,
+    EnergieModule,
   ],
   controllers: [],
   providers: [

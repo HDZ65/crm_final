@@ -259,3 +259,28 @@
 - ✅ No `as any` or `@ts-ignore`
 - ✅ Matches Networth port pattern exactly (Task 10 parallel)
 - ✅ JSDoc on port interface and mock service
+  
+## [2026-03-06] Task 8 — Suspension Port + Mock + Saga Integration  
+  
+### Patterns confirmed  
+- Port interfaces live in saga service file (alongside DI tokens), not separate ports/ dir  
+- ports/ directory exists but only re-exports from saga service (added suspension port to it)  
+- Mock services follow `transatel-activation-mock.service.ts` pattern: TELECOM_TRANSATEL_FORCE_*_FAILURE env var  
+- NATS handler pattern: @Injectable + OnModuleInit + subscribe() with snake_case/camelCase dual field support  
+- gRPC controller: SuspendLine uses contrat_id directly (not findById then contratId) since proto uses contrat_id  
+- Constructor order matters: all tests use positional args, adding suspensionPort requires updating ALL test constructors  
+  
+### Issues found  
+- cancelProvisioning had missing closing brace for if block (pre-existing from Task 7 termination changes) - fixed  
+- 3 activation reelle tests fail pre-existingly (dateFinRetractation guard vs current date)  
+- AST grep replace was essential for updating 9 constructor calls atomically  
+- Proto gen/ts/ directory doesn't exist on disk (generated at build time by buf) 
+
+## Task 14 — ReducBox Entities + Migration + Repository
+- New bounded context follows same pattern as mondial-tv: domain/reducbox/entities, repositories, infra repos
+- Each bounded context gets its own NestJS module (reducbox.module.ts) registered in app.module.ts
+- Migration timestamp 1774400000000 > latest 1774300000000
+- Entity enum pattern: create PostgreSQL enum type in migration, reference via TypeORM enum+enumName
+- History entity uses ManyToOne string-based relation ('ReducBoxAccessEntity', 'history') matching OneToMany pattern
+- Repository service injects both access+history repos for addHistory method
+- autoLoadEntities:true means TypeOrmModule.forFeature() is sufficient for entity registration

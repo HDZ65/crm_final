@@ -325,3 +325,21 @@
 - NATS event subjects: crm.commercial.reducbox.access.{created|suspended|restored}
 - History tracking: every state transition creates a ReducBoxAccessHistoryEntity entry
 - Module wiring: provide/useClass for port injection, direct class for lifecycle service
+
+## [2026-03-16] Task 18 — Énergie Lifecycle Service + Plénitude/OHM Mock Clients
+
+### Accomplishments
+- Created EnergiePartenairePort interface in domain/energie/ports/energie-partenaire.port.ts
+- Created PlenitudeMockClient in infrastructure/external/energie/plenitude-mock.client.ts
+- Created OhmMockClient in infrastructure/external/energie/ohm-mock.client.ts
+- Created EnergieLifecycleService in domain/energie/services/energie-lifecycle.service.ts
+- Updated energie.module.ts with port bindings and lifecycle service
+
+### Key Patterns
+- Multi-port pattern: two injection tokens (PLENITUDE_PORT, OHM_PORT) for two external providers
+- Port selection: selectPort(partenaire) switch based on PartenaireEnergie enum
+- Mock ID pattern: plenitude-{clientId} / ohm-{clientId} (deterministic, no counter needed)
+- Lifecycle methods: createRaccordement, updateStatus, activateSupply — each publishes NATS event
+- NATS subjects: crm.commercial.energie.{raccordement.created|status.changed|activated}
+- Metadata for external ID storage: entity.metadata = { externalId } (jsonb column)
+- Module wiring: two provide/useClass entries for two ports + lifecycle service class

@@ -7,8 +7,21 @@ import {
   EnergieStatusHistoryEntity,
 } from './domain/energie/entities';
 
-// Infrastructure services
+// Domain ports
+import {
+  PLENITUDE_PORT,
+  OHM_PORT,
+} from './domain/energie/ports/energie-partenaire.port';
+
+// Domain services
+import { EnergieLifecycleService } from './domain/energie/services/energie-lifecycle.service';
+
+// Infrastructure services (repositories)
 import { RaccordementEnergieRepositoryService } from './infrastructure/persistence/typeorm/repositories/energie';
+
+// Infrastructure adapters (external API clients)
+import { PlenitudeMockClient } from './infrastructure/external/energie/plenitude-mock.client';
+import { OhmMockClient } from './infrastructure/external/energie/ohm-mock.client';
 
 @Module({
   imports: [
@@ -18,7 +31,21 @@ import { RaccordementEnergieRepositoryService } from './infrastructure/persisten
     ]),
   ],
   controllers: [],
-  providers: [RaccordementEnergieRepositoryService],
-  exports: [RaccordementEnergieRepositoryService],
+  providers: [
+    RaccordementEnergieRepositoryService,
+    {
+      provide: PLENITUDE_PORT,
+      useClass: PlenitudeMockClient,
+    },
+    {
+      provide: OHM_PORT,
+      useClass: OhmMockClient,
+    },
+    EnergieLifecycleService,
+  ],
+  exports: [
+    RaccordementEnergieRepositoryService,
+    EnergieLifecycleService,
+  ],
 })
 export class EnergieModule {}

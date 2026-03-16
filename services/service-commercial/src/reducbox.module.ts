@@ -19,6 +19,12 @@ import { ReducBoxAccessRepositoryService } from './infrastructure/persistence/ty
 // Infrastructure adapters (external API clients) — ReducBox
 import { ReducBoxMockClient } from './infrastructure/external/reducbox/reducbox-mock.client';
 
+// Infrastructure — gRPC controller
+import { ReducBoxController } from './infrastructure/grpc/reducbox/reducbox.controller';
+
+// Infrastructure — NATS handler
+import { ReducBoxContractHandler } from './infrastructure/messaging/nats/handlers/reducbox-contract.handler';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -26,7 +32,7 @@ import { ReducBoxMockClient } from './infrastructure/external/reducbox/reducbox-
       ReducBoxAccessHistoryEntity,
     ]),
   ],
-  controllers: [],
+  controllers: [ReducBoxController],
   providers: [
     ReducBoxAccessRepositoryService,
     {
@@ -34,6 +40,7 @@ import { ReducBoxMockClient } from './infrastructure/external/reducbox/reducbox-
       useClass: ReducBoxMockClient,
     },
     ReducBoxLifecycleService,
+    ReducBoxContractHandler,
   ],
   exports: [
     ReducBoxAccessRepositoryService,

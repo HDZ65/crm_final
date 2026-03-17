@@ -172,13 +172,14 @@ export function PermissionsPageClient({ initialPermissions }: PermissionsPageCli
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <CardTitle>Liste des permissions</CardTitle>
               <CardDescription>
                 {permissions.length} permission{permissions.length > 1 ? "s" : ""}
               </CardDescription>
             </div>
+              <AskAiCardButton prompt="Analyse cette configuration de permissions et suggère des améliorations" />
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -328,10 +329,5 @@ export function PermissionsPageClient({ initialPermissions }: PermissionsPageCli
 }
 
 export function PermissionsPageClientWrapper(props: PermissionsPageClientProps) {
-  return (
-    <>
-      <AskAiCardButton prompt="Analyse cette configuration de permissions et suggère des améliorations" />
-      <PermissionsPageClient {...props} />
-    </>
-  )
+  return <PermissionsPageClient {...props} />
 }

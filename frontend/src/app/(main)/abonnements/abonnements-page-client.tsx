@@ -510,7 +510,7 @@ export function AbonnementsPageClient({
                     Nouvel abonnement
                   </Button>
                   <AskAiCardButton
-                    prompt={`Analyse les abonnements actifs (${subscriptionsList.length}). MRR: ${subscriptionsList.reduce((sum, s) => sum + (Number(s.montant) || 0), 0)}€. Plans: ${subscriptionsList.slice(0, 5).map(a => `${a.planId}: ${a.montant || 0}€`).join(" | ")}. Identifie les risques de churn.`}
+                    prompt={`Analyse les abonnements actifs (${subscriptionsList.length}). MRR: ${subscriptionsList.reduce((sum, s) => sum + (Number(s.amount) || 0), 0)}€. Plans: ${subscriptionsList.slice(0, 5).map(a => `${a.planId}: ${a.amount || 0}€`).join(" | ")}. Identifie les risques de churn.`}
                   />
                 </div>
               </div>

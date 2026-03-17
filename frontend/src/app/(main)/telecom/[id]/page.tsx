@@ -1,5 +1,6 @@
 import { getProvisioningLifecycle } from "@/actions/telecom"
 import { TelecomDetailClient } from "./telecom-detail-client"
+import { MOCK_LIFECYCLES } from "@/lib/mock-data/telecom"
 import Link from "next/link"
 
 interface TelecomDetailPageProps {
@@ -10,10 +11,13 @@ export default async function TelecomDetailPage({ params }: TelecomDetailPagePro
   const { id } = await params
   const result = await getProvisioningLifecycle(id)
 
-  if (result.error || !result.data?.lifecycle) {
+  // Données API si disponibles, sinon fallback mock
+  const lifecycle = result.data?.lifecycle || MOCK_LIFECYCLES.find((l) => l.id === id)
+
+  if (!lifecycle) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">Cycle de provisioning introuvable</p>
+        <p className="text-muted-foreground">Cycle d’activation introuvable</p>
         <Link href="/telecom" className="text-sm text-primary underline">
           Retour à la liste
         </Link>
@@ -24,7 +28,7 @@ export default async function TelecomDetailPage({ params }: TelecomDetailPagePro
   return (
     <TelecomDetailClient
       lifecycleId={id}
-      initialLifecycle={result.data.lifecycle}
+      initialLifecycle={lifecycle}
     />
   )
 }

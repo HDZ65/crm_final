@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+  <BkToCstmrStmt>
+    <GrpHdr>
+      <MsgId>MSG-2024-001</MsgId>
+      <CreDtTm>2024-01-31T10:30:00</CreDtTm>
+    </GrpHdr>
+    <Stmt>
+      <Id>STMT-2024-001</Id>
+      <ElctrncSeqNb>42</ElctrncSeqNb>
+      <CreDtTm>2024-01-31T10:30:00</CreDtTm>
+      <FrToDt>
+        <FrDtTm>2024-01-01T00:00:00</FrDtTm>
+        <ToDtTm>2024-01-31T23:59:59</ToDtTm>
+      </FrToDt>
+      <Acct>
+        <Id><IBAN>FR7630006000011234567890189</IBAN></Id>
+        <Ccy>EUR</Ccy>
+      </Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="EUR">10000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2024-01-01</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="EUR">10150.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2024-01-31</Dt></Dt>
+      </Bal>
+      <!-- Transaction 1: Incoming credit (CRDT) -->
+      <Ntry>
+        <Amt Ccy="EUR">250.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2024-01-10</Dt></BookgDt>
+        <ValDt><Dt>2024-01-10</Dt></ValDt>
+        <AcctSvcrRef>REF-CRDT-001</AcctSvcrRef>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <EndToEndId>E2E-INV-2024-001</EndToEndId>
+            </Refs>
+            <RltdPties>
+              <Dbtr><Nm>Acme Corporation</Nm></Dbtr>
+              <DbtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></DbtrAcct>
+            </RltdPties>
+            <RmtInf><Ustrd>Payment for invoice INV-2024-001</Ustrd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <!-- Transaction 2: Outgoing debit (DBIT) -->
+      <Ntry>
+        <Amt Ccy="EUR">100.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2024-01-15</Dt></BookgDt>
+        <ValDt><Dt>2024-01-15</Dt></ValDt>
+        <AcctSvcrRef>REF-DBIT-002</AcctSvcrRef>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <EndToEndId>E2E-PAY-2024-002</EndToEndId>
+            </Refs>
+            <RltdPties>
+              <Dbtr><Nm>Service Provider Ltd</Nm></Dbtr>
+              <DbtrAcct><Id><IBAN>GB29NWBK60161331926819</IBAN></Id></DbtrAcct>
+            </RltdPties>
+            <RmtInf><Ustrd>Monthly service fee January</Ustrd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

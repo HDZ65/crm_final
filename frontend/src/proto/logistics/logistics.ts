@@ -10,6 +10,51 @@ import type { handleUnaryCall, UntypedServiceImplementation } from "@grpc/grpc-j
 
 export const protobufPackage = "logistics";
 
+export enum KitType {
+  KIT_TYPE_UNSPECIFIED = 0,
+  SIM_ONLY = 1,
+  KIT_COMPLET = 2,
+  KIT_BIENVENUE = 3,
+  UNRECOGNIZED = -1,
+}
+
+export function kitTypeFromJSON(object: any): KitType {
+  switch (object) {
+    case 0:
+    case "KIT_TYPE_UNSPECIFIED":
+      return KitType.KIT_TYPE_UNSPECIFIED;
+    case 1:
+    case "SIM_ONLY":
+      return KitType.SIM_ONLY;
+    case 2:
+    case "KIT_COMPLET":
+      return KitType.KIT_COMPLET;
+    case 3:
+    case "KIT_BIENVENUE":
+      return KitType.KIT_BIENVENUE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return KitType.UNRECOGNIZED;
+  }
+}
+
+export function kitTypeToJSON(object: KitType): string {
+  switch (object) {
+    case KitType.KIT_TYPE_UNSPECIFIED:
+      return "KIT_TYPE_UNSPECIFIED";
+    case KitType.SIM_ONLY:
+      return "SIM_ONLY";
+    case KitType.KIT_COMPLET:
+      return "KIT_COMPLET";
+    case KitType.KIT_BIENVENUE:
+      return "KIT_BIENVENUE";
+    case KitType.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export interface Empty {
 }
 
@@ -262,6 +307,90 @@ export interface PricingResponse {
 export interface PricingBreakdown {
   label: string;
   amount: number;
+}
+
+/** ==================== RETURN LABEL MESSAGES ==================== */
+export interface CreateReturnLabelRequest {
+  expeditionId: string;
+  reason: string;
+  clientId: string;
+  organisationId?: string | undefined;
+}
+
+export interface UpdateReturnLabelStatusRequest {
+  id: string;
+  status: string;
+  trackingNumber?: string | undefined;
+}
+
+export interface ReturnLabelResponse {
+  id: string;
+  expeditionId: string;
+  reason: string;
+  status: string;
+  trackingNumber?: string | undefined;
+  labelUrl?: string | undefined;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** ==================== SHIPPING STATUS EVENT ==================== */
+export interface ShippingStatusChangedEvent {
+  expeditionId: string;
+  clientId: string;
+  oldStatus: string;
+  newStatus: string;
+  trackingNumber?: string | undefined;
+  carrier?: string | undefined;
+  changedAt: string;
+}
+
+export interface WelcomeKit {
+  id: string;
+  type: KitType;
+  contenu: string[];
+  statut: string;
+  labelUrl: string;
+}
+
+export interface DeliveryNotification {
+  expeditionId: string;
+  channel: string;
+  sentAt: string;
+  status: string;
+}
+
+export interface CreateWelcomeKitRequest {
+  kitType: KitType;
+  clientId: string;
+  contratId: string;
+  contenu: string[];
+}
+
+export interface CreateWelcomeKitResponse {
+  kit: WelcomeKit | undefined;
+}
+
+export interface GenerateWelcomeLabelRequest {
+  kitId: string;
+  format: string;
+}
+
+export interface GenerateWelcomeLabelResponse {
+  labelUrl: string;
+  success: boolean;
+}
+
+export interface NotifyDeliveryStatusRequest {
+  expeditionId: string;
+  clientId: string;
+  status: string;
+  notificationChannel: string;
+}
+
+export interface NotifyDeliveryStatusResponse {
+  success: boolean;
+  notification: DeliveryNotification | undefined;
 }
 
 function createBaseEmpty(): Empty {
@@ -4654,6 +4783,1393 @@ export const PricingBreakdown: MessageFns<PricingBreakdown> = {
   },
 };
 
+function createBaseCreateReturnLabelRequest(): CreateReturnLabelRequest {
+  return { expeditionId: "", reason: "", clientId: "", organisationId: undefined };
+}
+
+export const CreateReturnLabelRequest: MessageFns<CreateReturnLabelRequest> = {
+  encode(message: CreateReturnLabelRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.expeditionId !== "") {
+      writer.uint32(10).string(message.expeditionId);
+    }
+    if (message.reason !== "") {
+      writer.uint32(18).string(message.reason);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(26).string(message.clientId);
+    }
+    if (message.organisationId !== undefined) {
+      writer.uint32(34).string(message.organisationId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateReturnLabelRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateReturnLabelRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.expeditionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateReturnLabelRequest {
+    return {
+      expeditionId: isSet(object.expeditionId)
+        ? globalThis.String(object.expeditionId)
+        : isSet(object.expedition_id)
+        ? globalThis.String(object.expedition_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : undefined,
+    };
+  },
+
+  toJSON(message: CreateReturnLabelRequest): unknown {
+    const obj: any = {};
+    if (message.expeditionId !== "") {
+      obj.expeditionId = message.expeditionId;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.organisationId !== undefined) {
+      obj.organisationId = message.organisationId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateReturnLabelRequest>, I>>(base?: I): CreateReturnLabelRequest {
+    return CreateReturnLabelRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateReturnLabelRequest>, I>>(object: I): CreateReturnLabelRequest {
+    const message = createBaseCreateReturnLabelRequest();
+    message.expeditionId = object.expeditionId ?? "";
+    message.reason = object.reason ?? "";
+    message.clientId = object.clientId ?? "";
+    message.organisationId = object.organisationId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseUpdateReturnLabelStatusRequest(): UpdateReturnLabelStatusRequest {
+  return { id: "", status: "", trackingNumber: undefined };
+}
+
+export const UpdateReturnLabelStatusRequest: MessageFns<UpdateReturnLabelStatusRequest> = {
+  encode(message: UpdateReturnLabelStatusRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.status !== "") {
+      writer.uint32(18).string(message.status);
+    }
+    if (message.trackingNumber !== undefined) {
+      writer.uint32(26).string(message.trackingNumber);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateReturnLabelStatusRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateReturnLabelStatusRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.trackingNumber = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateReturnLabelStatusRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      trackingNumber: isSet(object.trackingNumber)
+        ? globalThis.String(object.trackingNumber)
+        : isSet(object.tracking_number)
+        ? globalThis.String(object.tracking_number)
+        : undefined,
+    };
+  },
+
+  toJSON(message: UpdateReturnLabelStatusRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.trackingNumber !== undefined) {
+      obj.trackingNumber = message.trackingNumber;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateReturnLabelStatusRequest>, I>>(base?: I): UpdateReturnLabelStatusRequest {
+    return UpdateReturnLabelStatusRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateReturnLabelStatusRequest>, I>>(
+    object: I,
+  ): UpdateReturnLabelStatusRequest {
+    const message = createBaseUpdateReturnLabelStatusRequest();
+    message.id = object.id ?? "";
+    message.status = object.status ?? "";
+    message.trackingNumber = object.trackingNumber ?? undefined;
+    return message;
+  },
+};
+
+function createBaseReturnLabelResponse(): ReturnLabelResponse {
+  return {
+    id: "",
+    expeditionId: "",
+    reason: "",
+    status: "",
+    trackingNumber: undefined,
+    labelUrl: undefined,
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const ReturnLabelResponse: MessageFns<ReturnLabelResponse> = {
+  encode(message: ReturnLabelResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.expeditionId !== "") {
+      writer.uint32(18).string(message.expeditionId);
+    }
+    if (message.reason !== "") {
+      writer.uint32(26).string(message.reason);
+    }
+    if (message.status !== "") {
+      writer.uint32(34).string(message.status);
+    }
+    if (message.trackingNumber !== undefined) {
+      writer.uint32(42).string(message.trackingNumber);
+    }
+    if (message.labelUrl !== undefined) {
+      writer.uint32(50).string(message.labelUrl);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(58).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(66).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ReturnLabelResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReturnLabelResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.expeditionId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.trackingNumber = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.labelUrl = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ReturnLabelResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      expeditionId: isSet(object.expeditionId)
+        ? globalThis.String(object.expeditionId)
+        : isSet(object.expedition_id)
+        ? globalThis.String(object.expedition_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      trackingNumber: isSet(object.trackingNumber)
+        ? globalThis.String(object.trackingNumber)
+        : isSet(object.tracking_number)
+        ? globalThis.String(object.tracking_number)
+        : undefined,
+      labelUrl: isSet(object.labelUrl)
+        ? globalThis.String(object.labelUrl)
+        : isSet(object.label_url)
+        ? globalThis.String(object.label_url)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: ReturnLabelResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.expeditionId !== "") {
+      obj.expeditionId = message.expeditionId;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.trackingNumber !== undefined) {
+      obj.trackingNumber = message.trackingNumber;
+    }
+    if (message.labelUrl !== undefined) {
+      obj.labelUrl = message.labelUrl;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ReturnLabelResponse>, I>>(base?: I): ReturnLabelResponse {
+    return ReturnLabelResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ReturnLabelResponse>, I>>(object: I): ReturnLabelResponse {
+    const message = createBaseReturnLabelResponse();
+    message.id = object.id ?? "";
+    message.expeditionId = object.expeditionId ?? "";
+    message.reason = object.reason ?? "";
+    message.status = object.status ?? "";
+    message.trackingNumber = object.trackingNumber ?? undefined;
+    message.labelUrl = object.labelUrl ?? undefined;
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseShippingStatusChangedEvent(): ShippingStatusChangedEvent {
+  return {
+    expeditionId: "",
+    clientId: "",
+    oldStatus: "",
+    newStatus: "",
+    trackingNumber: undefined,
+    carrier: undefined,
+    changedAt: "",
+  };
+}
+
+export const ShippingStatusChangedEvent: MessageFns<ShippingStatusChangedEvent> = {
+  encode(message: ShippingStatusChangedEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.expeditionId !== "") {
+      writer.uint32(10).string(message.expeditionId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.oldStatus !== "") {
+      writer.uint32(26).string(message.oldStatus);
+    }
+    if (message.newStatus !== "") {
+      writer.uint32(34).string(message.newStatus);
+    }
+    if (message.trackingNumber !== undefined) {
+      writer.uint32(42).string(message.trackingNumber);
+    }
+    if (message.carrier !== undefined) {
+      writer.uint32(50).string(message.carrier);
+    }
+    if (message.changedAt !== "") {
+      writer.uint32(58).string(message.changedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ShippingStatusChangedEvent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseShippingStatusChangedEvent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.expeditionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.oldStatus = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.newStatus = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.trackingNumber = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.carrier = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.changedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ShippingStatusChangedEvent {
+    return {
+      expeditionId: isSet(object.expeditionId)
+        ? globalThis.String(object.expeditionId)
+        : isSet(object.expedition_id)
+        ? globalThis.String(object.expedition_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      oldStatus: isSet(object.oldStatus)
+        ? globalThis.String(object.oldStatus)
+        : isSet(object.old_status)
+        ? globalThis.String(object.old_status)
+        : "",
+      newStatus: isSet(object.newStatus)
+        ? globalThis.String(object.newStatus)
+        : isSet(object.new_status)
+        ? globalThis.String(object.new_status)
+        : "",
+      trackingNumber: isSet(object.trackingNumber)
+        ? globalThis.String(object.trackingNumber)
+        : isSet(object.tracking_number)
+        ? globalThis.String(object.tracking_number)
+        : undefined,
+      carrier: isSet(object.carrier) ? globalThis.String(object.carrier) : undefined,
+      changedAt: isSet(object.changedAt)
+        ? globalThis.String(object.changedAt)
+        : isSet(object.changed_at)
+        ? globalThis.String(object.changed_at)
+        : "",
+    };
+  },
+
+  toJSON(message: ShippingStatusChangedEvent): unknown {
+    const obj: any = {};
+    if (message.expeditionId !== "") {
+      obj.expeditionId = message.expeditionId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.oldStatus !== "") {
+      obj.oldStatus = message.oldStatus;
+    }
+    if (message.newStatus !== "") {
+      obj.newStatus = message.newStatus;
+    }
+    if (message.trackingNumber !== undefined) {
+      obj.trackingNumber = message.trackingNumber;
+    }
+    if (message.carrier !== undefined) {
+      obj.carrier = message.carrier;
+    }
+    if (message.changedAt !== "") {
+      obj.changedAt = message.changedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ShippingStatusChangedEvent>, I>>(base?: I): ShippingStatusChangedEvent {
+    return ShippingStatusChangedEvent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShippingStatusChangedEvent>, I>>(object: I): ShippingStatusChangedEvent {
+    const message = createBaseShippingStatusChangedEvent();
+    message.expeditionId = object.expeditionId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.oldStatus = object.oldStatus ?? "";
+    message.newStatus = object.newStatus ?? "";
+    message.trackingNumber = object.trackingNumber ?? undefined;
+    message.carrier = object.carrier ?? undefined;
+    message.changedAt = object.changedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseWelcomeKit(): WelcomeKit {
+  return { id: "", type: 0, contenu: [], statut: "", labelUrl: "" };
+}
+
+export const WelcomeKit: MessageFns<WelcomeKit> = {
+  encode(message: WelcomeKit, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.type !== 0) {
+      writer.uint32(16).int32(message.type);
+    }
+    for (const v of message.contenu) {
+      writer.uint32(26).string(v!);
+    }
+    if (message.statut !== "") {
+      writer.uint32(34).string(message.statut);
+    }
+    if (message.labelUrl !== "") {
+      writer.uint32(42).string(message.labelUrl);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): WelcomeKit {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseWelcomeKit();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.type = reader.int32() as any;
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.contenu.push(reader.string());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.statut = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.labelUrl = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): WelcomeKit {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      type: isSet(object.type) ? kitTypeFromJSON(object.type) : 0,
+      contenu: globalThis.Array.isArray(object?.contenu) ? object.contenu.map((e: any) => globalThis.String(e)) : [],
+      statut: isSet(object.statut) ? globalThis.String(object.statut) : "",
+      labelUrl: isSet(object.labelUrl)
+        ? globalThis.String(object.labelUrl)
+        : isSet(object.label_url)
+        ? globalThis.String(object.label_url)
+        : "",
+    };
+  },
+
+  toJSON(message: WelcomeKit): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.type !== 0) {
+      obj.type = kitTypeToJSON(message.type);
+    }
+    if (message.contenu?.length) {
+      obj.contenu = message.contenu;
+    }
+    if (message.statut !== "") {
+      obj.statut = message.statut;
+    }
+    if (message.labelUrl !== "") {
+      obj.labelUrl = message.labelUrl;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<WelcomeKit>, I>>(base?: I): WelcomeKit {
+    return WelcomeKit.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<WelcomeKit>, I>>(object: I): WelcomeKit {
+    const message = createBaseWelcomeKit();
+    message.id = object.id ?? "";
+    message.type = object.type ?? 0;
+    message.contenu = object.contenu?.map((e) => e) || [];
+    message.statut = object.statut ?? "";
+    message.labelUrl = object.labelUrl ?? "";
+    return message;
+  },
+};
+
+function createBaseDeliveryNotification(): DeliveryNotification {
+  return { expeditionId: "", channel: "", sentAt: "", status: "" };
+}
+
+export const DeliveryNotification: MessageFns<DeliveryNotification> = {
+  encode(message: DeliveryNotification, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.expeditionId !== "") {
+      writer.uint32(10).string(message.expeditionId);
+    }
+    if (message.channel !== "") {
+      writer.uint32(18).string(message.channel);
+    }
+    if (message.sentAt !== "") {
+      writer.uint32(26).string(message.sentAt);
+    }
+    if (message.status !== "") {
+      writer.uint32(34).string(message.status);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DeliveryNotification {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDeliveryNotification();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.expeditionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.channel = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.sentAt = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeliveryNotification {
+    return {
+      expeditionId: isSet(object.expeditionId)
+        ? globalThis.String(object.expeditionId)
+        : isSet(object.expedition_id)
+        ? globalThis.String(object.expedition_id)
+        : "",
+      channel: isSet(object.channel) ? globalThis.String(object.channel) : "",
+      sentAt: isSet(object.sentAt)
+        ? globalThis.String(object.sentAt)
+        : isSet(object.sent_at)
+        ? globalThis.String(object.sent_at)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+    };
+  },
+
+  toJSON(message: DeliveryNotification): unknown {
+    const obj: any = {};
+    if (message.expeditionId !== "") {
+      obj.expeditionId = message.expeditionId;
+    }
+    if (message.channel !== "") {
+      obj.channel = message.channel;
+    }
+    if (message.sentAt !== "") {
+      obj.sentAt = message.sentAt;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeliveryNotification>, I>>(base?: I): DeliveryNotification {
+    return DeliveryNotification.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DeliveryNotification>, I>>(object: I): DeliveryNotification {
+    const message = createBaseDeliveryNotification();
+    message.expeditionId = object.expeditionId ?? "";
+    message.channel = object.channel ?? "";
+    message.sentAt = object.sentAt ?? "";
+    message.status = object.status ?? "";
+    return message;
+  },
+};
+
+function createBaseCreateWelcomeKitRequest(): CreateWelcomeKitRequest {
+  return { kitType: 0, clientId: "", contratId: "", contenu: [] };
+}
+
+export const CreateWelcomeKitRequest: MessageFns<CreateWelcomeKitRequest> = {
+  encode(message: CreateWelcomeKitRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.kitType !== 0) {
+      writer.uint32(8).int32(message.kitType);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(26).string(message.contratId);
+    }
+    for (const v of message.contenu) {
+      writer.uint32(34).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateWelcomeKitRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateWelcomeKitRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.kitType = reader.int32() as any;
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.contenu.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateWelcomeKitRequest {
+    return {
+      kitType: isSet(object.kitType)
+        ? kitTypeFromJSON(object.kitType)
+        : isSet(object.kit_type)
+        ? kitTypeFromJSON(object.kit_type)
+        : 0,
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      contenu: globalThis.Array.isArray(object?.contenu) ? object.contenu.map((e: any) => globalThis.String(e)) : [],
+    };
+  },
+
+  toJSON(message: CreateWelcomeKitRequest): unknown {
+    const obj: any = {};
+    if (message.kitType !== 0) {
+      obj.kitType = kitTypeToJSON(message.kitType);
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.contenu?.length) {
+      obj.contenu = message.contenu;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateWelcomeKitRequest>, I>>(base?: I): CreateWelcomeKitRequest {
+    return CreateWelcomeKitRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateWelcomeKitRequest>, I>>(object: I): CreateWelcomeKitRequest {
+    const message = createBaseCreateWelcomeKitRequest();
+    message.kitType = object.kitType ?? 0;
+    message.clientId = object.clientId ?? "";
+    message.contratId = object.contratId ?? "";
+    message.contenu = object.contenu?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseCreateWelcomeKitResponse(): CreateWelcomeKitResponse {
+  return { kit: undefined };
+}
+
+export const CreateWelcomeKitResponse: MessageFns<CreateWelcomeKitResponse> = {
+  encode(message: CreateWelcomeKitResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.kit !== undefined) {
+      WelcomeKit.encode(message.kit, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreateWelcomeKitResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateWelcomeKitResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.kit = WelcomeKit.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateWelcomeKitResponse {
+    return { kit: isSet(object.kit) ? WelcomeKit.fromJSON(object.kit) : undefined };
+  },
+
+  toJSON(message: CreateWelcomeKitResponse): unknown {
+    const obj: any = {};
+    if (message.kit !== undefined) {
+      obj.kit = WelcomeKit.toJSON(message.kit);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateWelcomeKitResponse>, I>>(base?: I): CreateWelcomeKitResponse {
+    return CreateWelcomeKitResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreateWelcomeKitResponse>, I>>(object: I): CreateWelcomeKitResponse {
+    const message = createBaseCreateWelcomeKitResponse();
+    message.kit = (object.kit !== undefined && object.kit !== null) ? WelcomeKit.fromPartial(object.kit) : undefined;
+    return message;
+  },
+};
+
+function createBaseGenerateWelcomeLabelRequest(): GenerateWelcomeLabelRequest {
+  return { kitId: "", format: "" };
+}
+
+export const GenerateWelcomeLabelRequest: MessageFns<GenerateWelcomeLabelRequest> = {
+  encode(message: GenerateWelcomeLabelRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.kitId !== "") {
+      writer.uint32(10).string(message.kitId);
+    }
+    if (message.format !== "") {
+      writer.uint32(18).string(message.format);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GenerateWelcomeLabelRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGenerateWelcomeLabelRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.kitId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.format = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GenerateWelcomeLabelRequest {
+    return {
+      kitId: isSet(object.kitId)
+        ? globalThis.String(object.kitId)
+        : isSet(object.kit_id)
+        ? globalThis.String(object.kit_id)
+        : "",
+      format: isSet(object.format) ? globalThis.String(object.format) : "",
+    };
+  },
+
+  toJSON(message: GenerateWelcomeLabelRequest): unknown {
+    const obj: any = {};
+    if (message.kitId !== "") {
+      obj.kitId = message.kitId;
+    }
+    if (message.format !== "") {
+      obj.format = message.format;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GenerateWelcomeLabelRequest>, I>>(base?: I): GenerateWelcomeLabelRequest {
+    return GenerateWelcomeLabelRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GenerateWelcomeLabelRequest>, I>>(object: I): GenerateWelcomeLabelRequest {
+    const message = createBaseGenerateWelcomeLabelRequest();
+    message.kitId = object.kitId ?? "";
+    message.format = object.format ?? "";
+    return message;
+  },
+};
+
+function createBaseGenerateWelcomeLabelResponse(): GenerateWelcomeLabelResponse {
+  return { labelUrl: "", success: false };
+}
+
+export const GenerateWelcomeLabelResponse: MessageFns<GenerateWelcomeLabelResponse> = {
+  encode(message: GenerateWelcomeLabelResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.labelUrl !== "") {
+      writer.uint32(10).string(message.labelUrl);
+    }
+    if (message.success !== false) {
+      writer.uint32(16).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GenerateWelcomeLabelResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGenerateWelcomeLabelResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.labelUrl = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GenerateWelcomeLabelResponse {
+    return {
+      labelUrl: isSet(object.labelUrl)
+        ? globalThis.String(object.labelUrl)
+        : isSet(object.label_url)
+        ? globalThis.String(object.label_url)
+        : "",
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+    };
+  },
+
+  toJSON(message: GenerateWelcomeLabelResponse): unknown {
+    const obj: any = {};
+    if (message.labelUrl !== "") {
+      obj.labelUrl = message.labelUrl;
+    }
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GenerateWelcomeLabelResponse>, I>>(base?: I): GenerateWelcomeLabelResponse {
+    return GenerateWelcomeLabelResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GenerateWelcomeLabelResponse>, I>>(object: I): GenerateWelcomeLabelResponse {
+    const message = createBaseGenerateWelcomeLabelResponse();
+    message.labelUrl = object.labelUrl ?? "";
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseNotifyDeliveryStatusRequest(): NotifyDeliveryStatusRequest {
+  return { expeditionId: "", clientId: "", status: "", notificationChannel: "" };
+}
+
+export const NotifyDeliveryStatusRequest: MessageFns<NotifyDeliveryStatusRequest> = {
+  encode(message: NotifyDeliveryStatusRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.expeditionId !== "") {
+      writer.uint32(10).string(message.expeditionId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.status !== "") {
+      writer.uint32(26).string(message.status);
+    }
+    if (message.notificationChannel !== "") {
+      writer.uint32(34).string(message.notificationChannel);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): NotifyDeliveryStatusRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNotifyDeliveryStatusRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.expeditionId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.notificationChannel = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): NotifyDeliveryStatusRequest {
+    return {
+      expeditionId: isSet(object.expeditionId)
+        ? globalThis.String(object.expeditionId)
+        : isSet(object.expedition_id)
+        ? globalThis.String(object.expedition_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      notificationChannel: isSet(object.notificationChannel)
+        ? globalThis.String(object.notificationChannel)
+        : isSet(object.notification_channel)
+        ? globalThis.String(object.notification_channel)
+        : "",
+    };
+  },
+
+  toJSON(message: NotifyDeliveryStatusRequest): unknown {
+    const obj: any = {};
+    if (message.expeditionId !== "") {
+      obj.expeditionId = message.expeditionId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.notificationChannel !== "") {
+      obj.notificationChannel = message.notificationChannel;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<NotifyDeliveryStatusRequest>, I>>(base?: I): NotifyDeliveryStatusRequest {
+    return NotifyDeliveryStatusRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<NotifyDeliveryStatusRequest>, I>>(object: I): NotifyDeliveryStatusRequest {
+    const message = createBaseNotifyDeliveryStatusRequest();
+    message.expeditionId = object.expeditionId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.status = object.status ?? "";
+    message.notificationChannel = object.notificationChannel ?? "";
+    return message;
+  },
+};
+
+function createBaseNotifyDeliveryStatusResponse(): NotifyDeliveryStatusResponse {
+  return { success: false, notification: undefined };
+}
+
+export const NotifyDeliveryStatusResponse: MessageFns<NotifyDeliveryStatusResponse> = {
+  encode(message: NotifyDeliveryStatusResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.notification !== undefined) {
+      DeliveryNotification.encode(message.notification, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): NotifyDeliveryStatusResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNotifyDeliveryStatusResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.notification = DeliveryNotification.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): NotifyDeliveryStatusResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      notification: isSet(object.notification) ? DeliveryNotification.fromJSON(object.notification) : undefined,
+    };
+  },
+
+  toJSON(message: NotifyDeliveryStatusResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.notification !== undefined) {
+      obj.notification = DeliveryNotification.toJSON(message.notification);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<NotifyDeliveryStatusResponse>, I>>(base?: I): NotifyDeliveryStatusResponse {
+    return NotifyDeliveryStatusResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<NotifyDeliveryStatusResponse>, I>>(object: I): NotifyDeliveryStatusResponse {
+    const message = createBaseNotifyDeliveryStatusResponse();
+    message.success = object.success ?? false;
+    message.notification = (object.notification !== undefined && object.notification !== null)
+      ? DeliveryNotification.fromPartial(object.notification)
+      : undefined;
+    return message;
+  },
+};
+
 export type LogisticsServiceService = typeof LogisticsServiceService;
 export const LogisticsServiceService = {
   /** ==================== EXPEDITIONS ==================== */
@@ -4892,6 +6408,70 @@ export const LogisticsServiceService = {
     responseSerialize: (value: PricingResponse): Buffer => Buffer.from(PricingResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): PricingResponse => PricingResponse.decode(value),
   },
+  /** ==================== RETURN LABELS ==================== */
+  createReturnLabel: {
+    path: "/logistics.LogisticsService/CreateReturnLabel",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateReturnLabelRequest): Buffer =>
+      Buffer.from(CreateReturnLabelRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateReturnLabelRequest => CreateReturnLabelRequest.decode(value),
+    responseSerialize: (value: ReturnLabelResponse): Buffer => Buffer.from(ReturnLabelResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ReturnLabelResponse => ReturnLabelResponse.decode(value),
+  },
+  getReturnLabel: {
+    path: "/logistics.LogisticsService/GetReturnLabel",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetByIdRequest): Buffer => Buffer.from(GetByIdRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetByIdRequest => GetByIdRequest.decode(value),
+    responseSerialize: (value: ReturnLabelResponse): Buffer => Buffer.from(ReturnLabelResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ReturnLabelResponse => ReturnLabelResponse.decode(value),
+  },
+  updateReturnLabelStatus: {
+    path: "/logistics.LogisticsService/UpdateReturnLabelStatus",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: UpdateReturnLabelStatusRequest): Buffer =>
+      Buffer.from(UpdateReturnLabelStatusRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UpdateReturnLabelStatusRequest => UpdateReturnLabelStatusRequest.decode(value),
+    responseSerialize: (value: ReturnLabelResponse): Buffer => Buffer.from(ReturnLabelResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ReturnLabelResponse => ReturnLabelResponse.decode(value),
+  },
+  /** ==================== WELCOME KIT ==================== */
+  createWelcomeKit: {
+    path: "/logistics.LogisticsService/CreateWelcomeKit",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: CreateWelcomeKitRequest): Buffer =>
+      Buffer.from(CreateWelcomeKitRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): CreateWelcomeKitRequest => CreateWelcomeKitRequest.decode(value),
+    responseSerialize: (value: CreateWelcomeKitResponse): Buffer =>
+      Buffer.from(CreateWelcomeKitResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreateWelcomeKitResponse => CreateWelcomeKitResponse.decode(value),
+  },
+  generateWelcomeLabel: {
+    path: "/logistics.LogisticsService/GenerateWelcomeLabel",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GenerateWelcomeLabelRequest): Buffer =>
+      Buffer.from(GenerateWelcomeLabelRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GenerateWelcomeLabelRequest => GenerateWelcomeLabelRequest.decode(value),
+    responseSerialize: (value: GenerateWelcomeLabelResponse): Buffer =>
+      Buffer.from(GenerateWelcomeLabelResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): GenerateWelcomeLabelResponse => GenerateWelcomeLabelResponse.decode(value),
+  },
+  notifyDeliveryStatus: {
+    path: "/logistics.LogisticsService/NotifyDeliveryStatus",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: NotifyDeliveryStatusRequest): Buffer =>
+      Buffer.from(NotifyDeliveryStatusRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): NotifyDeliveryStatusRequest => NotifyDeliveryStatusRequest.decode(value),
+    responseSerialize: (value: NotifyDeliveryStatusResponse): Buffer =>
+      Buffer.from(NotifyDeliveryStatusResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): NotifyDeliveryStatusResponse => NotifyDeliveryStatusResponse.decode(value),
+  },
 } as const;
 
 export interface LogisticsServiceServer extends UntypedServiceImplementation {
@@ -4923,6 +6503,14 @@ export interface LogisticsServiceServer extends UntypedServiceImplementation {
   trackShipment: handleUnaryCall<TrackShipmentRequest, TrackingResponse>;
   validateAddress: handleUnaryCall<ValidateAddressRequest, AddressValidationResponse>;
   simulatePricing: handleUnaryCall<SimulatePricingRequest, PricingResponse>;
+  /** ==================== RETURN LABELS ==================== */
+  createReturnLabel: handleUnaryCall<CreateReturnLabelRequest, ReturnLabelResponse>;
+  getReturnLabel: handleUnaryCall<GetByIdRequest, ReturnLabelResponse>;
+  updateReturnLabelStatus: handleUnaryCall<UpdateReturnLabelStatusRequest, ReturnLabelResponse>;
+  /** ==================== WELCOME KIT ==================== */
+  createWelcomeKit: handleUnaryCall<CreateWelcomeKitRequest, CreateWelcomeKitResponse>;
+  generateWelcomeLabel: handleUnaryCall<GenerateWelcomeLabelRequest, GenerateWelcomeLabelResponse>;
+  notifyDeliveryStatus: handleUnaryCall<NotifyDeliveryStatusRequest, NotifyDeliveryStatusResponse>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

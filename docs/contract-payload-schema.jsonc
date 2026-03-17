@@ -1,0 +1,114 @@
+{
+  // Payload unique reçu par le CRM via POST /api/contrat
+  // Envoyé par WinLead+ après signature d'un contrat
+  // Le CRM orchestre ensuite CFAST + GoCardless en interne
+
+  "societe_id": "soc_yyy",                             // ID société dans le CRM (France Téléphone, Mondial TV...)
+
+  // ===== PROSPECT → CLIENT =====
+  // Basé sur le modèle Prospect de WinLead+
+  "prospect": {
+    "nom": "Dupont",                                    // String, requis
+    "prenom": "Jean",                                   // String, requis
+    "civilite": "M",                                    // Enum Civilite: M, F
+    "email": "jean.dupont@mail.com",                    // String, unique côté WinLead+ (optionnel)
+    "telephone": "+33612345678",                        // String, unique côté WinLead+, requis
+    "date_naissance": "1985-03-15T00:00:00.000Z",      // DateTime (optionnel)
+    "lieu_naissance": "Lyon",                           // String (optionnel)
+    "code_postal_naissance": "69000",                   // String (optionnel) — absent de notre proto, à mapper
+    "pays_naissance": "FR",                             // String (optionnel)
+    "csp": "SALARIE_59_ANS_OU_MOINS",                   // Enum CspNeoliane: SALARIE_59_ANS_OU_MOINS, FRONTALIER, FONCTIONNAIRE, TNS_INDEPENDANT, PROFESSION_LIBERALE, CHEF_ENTREPRISE, RETRAITE, ETUDIANT, AUTRE...
+    "numss": "1850375123456",                           // String (optionnel) — numéro sécu
+    "numorganisme": "012345",                           // String (optionnel) — numéro organisme sécu
+    "regime_social": "SALARIE",                         // Enum RegimeSocial: SALARIE, TNS, EXPLOITANT_AGRICOLE, RETRAITE_SALARIE, FONCTIONNAIRE, ETUDIANT, SANS_EMPLOI, ALSACE_MOSELLE...
+    "profession": "CADRE_PROFESSION_INTELLECTUELLE",    // Enum Profession: AGRICULTEUR_EXPLOITANT, ARTISAN_COMMERCANT_CHEF_ENTREPRISE, CADRE_PROFESSION_INTELLECTUELLE, EMPLOYE, OUVRIER, RETRAITE, SANS_ACTIVITE_DEMANDEUR_EMPLOI, ETUDIANT...
+    "is_politically_exposed": false,                     // Boolean (optionnel) — personne politiquement exposée
+    "etape_courante": "SIGNE",                          // String (optionnel) — étape dans le tunnel WinLead+
+    "statut_prospect": "Signe",                         // Enum StatutProspect: En_attente, Valide, Rejete, Retracte, Signe
+
+    // Adresse postale
+    "adresse": {
+      "streetnumber": "12",                              // String (optionnel) — numéro de rue, champ séparé côté WinLead+
+      "ligne1": "rue de la Paix",                        // String, requis — adressePostaleLigne1
+      "ligne2": "Bât A",                                // String (optionnel) — adressePostaleLigne2
+      "code_postal": "75002",                           // String, requis
+      "ville": "Paris",                                 // String, requis
+      "pays": "FR"                                      // String, déduit (défaut: FR)
+    },
+
+    // Consentements RGPD
+    "consentement_rgpd_traitement": true,                // Boolean, requis — consentementRGPDTraitementDonnees
+    "consentement_rgpd_commercial": false,               // Boolean (optionnel) — consentementRGPDCommunicationsCommerciales
+
+    "note": "RAS"                                       // String (optionnel) — note libre
+  },
+
+  // ===== COMMERCIAL =====
+  // Basé sur le modèle User (role=COMMERCIAL) de WinLead+
+  "commercial": {
+    "id": "clxyz123abc",                                // String — User.id côté WinLead+ (cuid)
+    "nom": "Martin",                                    // String
+    "prenom": "Sophie",                                 // String
+    "email": "sophie.martin@winleadplus.com"            // String
+  },
+
+  // ===== CONTRAT =====
+  // Basé sur le modèle Contrat de WinLead+
+  "contrat": {
+    "titre": "Forfait Protection Plus",                 // String, requis
+    "description": "Assurance habitation formule 2",    // String (optionnel)
+    "statut": "Signe",                                  // String — statut du contrat côté WinLead+
+    "type": "souscription",                             // String (optionnel) — type de contrat
+    "signature_mode": "electronic",                     // String (optionnel) — electronic, voice, paper
+    "date_signature": "2026-02-28T14:30:00.000Z",      // DateTime (optionnel)
+    "date_validation": "2026-02-28T15:00:00.000Z",     // DateTime (optionnel)
+    "montant": 29.90,                                   // Float (optionnel) — montant TTC
+    "fournisseur": "Action Prevoyance",                 // String (optionnel) — société/marque
+    "document_url": "https://storage.yousign.com/xxx/contrat.pdf",          // String (optionnel) — PDF signé via YouSign
+    "audit_trail_url": "https://storage.yousign.com/xxx/audit-trail.pdf",  // String (optionnel) — piste d'audit YouSign
+    "voice_validation_audio_url": null,                  // String (optionnel) — URL audio si validation vocale
+    "neoliane_offre_ids": [101, 202],                    // Json (optionnel) — IDs des offres Néoliane sélectionnées
+
+    // Signature YouSign (optionnel — présent si signature électronique)
+    "yousign": {
+      "signature_request_id": "sr_abc123",              // String — yousignSignatureRequestId
+      "status": "done",                                 // Enum: draft, ongoing, done, expired, declined, canceled
+      "external_id": "WLP-2026-001234"                  // String (optionnel) — référence externe
+    }
+  },
+
+  // ===== SOUSCRIPTION =====
+  // Basé sur le modèle Souscription de WinLead+ (optionnel)
+  "souscription": {
+    "date_souscription": "2026-02-28T14:30:00.000Z",   // DateTime
+    "total_amount": 29.90,                              // Float (optionnel) — montant total
+    "formula_id": 3,                                    // Int (optionnel) — ID formule choisie
+    "conserve_numero": false,                            // Boolean (optionnel) — portabilité numéro
+    "rio": null,                                        // String (optionnel) — code RIO portabilité
+    "esim": false,                                      // Boolean (optionnel) — carte eSIM
+    "mobile_number": null,                               // String (optionnel) — numéro mobile actuel
+
+    // Choix Néoliane (optionnel — présent si assurance Néoliane)
+    "choix_neoline": [
+      {
+        "formule_id": 3,                                // Int — ID formule
+        "formule_label": "Formule Confort",             // String — libellé formule
+        "gamme_id": 1,                                   // Int — ID gamme
+        "gamme_label": "Santé",                         // String — libellé gamme
+        "type_assurance": "mutuelle",                    // String — type
+        "montant": 29.90,                                // Float — montant mensuel
+        "date_effet": "2026-03-01T00:00:00.000Z"        // DateTime — date d'effet
+      }
+    ]
+  },
+
+  // ===== PAIEMENT =====
+  // Basé sur le modèle InformationPaiementBancaire de WinLead+
+  "paiement": {
+    "iban": "FR7630006000011234567890189",               // String, requis — IBAN
+    "bic": "BNPAFRPP",                                  // String, requis — BIC
+    "mandat_sepa": "RUM-2026-001234",                   // String (optionnel) — référence mandat SEPA
+    "date_mandat": "2026-02-28T14:30:00.000Z",         // DateTime (optionnel) — date signature mandat
+    "commentaire": null                                  // String (optionnel) — commentaire libre
+  }
+}

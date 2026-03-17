@@ -17,6 +17,7 @@ import { useAiHealthContext } from "@/contexts/ai-health-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AskAiCardButton } from "@/components/ask-ai-card-button";
 
 interface GreetingBriefingProps {
   initialKpis: any;
@@ -173,6 +174,8 @@ export function GreetingBriefing({
     };
   }, [fetchBriefing]);
 
+  const aiPrompt = `Analyse approfondie du briefing CRM. KPIs: contrats actifs ${initialKpis?.contratsActifs || 0}, MRR ${initialKpis?.mrr || 0}€, taux churn ${initialKpis?.tauxChurn || 0}%. Alertes: ${initialAlertes?.total || 0} (${initialAlertes?.nombreCritiques || 0} critiques). Propose 3 actions prioritaires pour aujourd'hui.`;
+
   return (
     <div className="space-y-4">
       {/* Greeting */}
@@ -180,15 +183,18 @@ export function GreetingBriefing({
         <h1 className="text-2xl font-bold tracking-tight">
           {getGreeting()}{userName ? `, ${userName}` : ""}
         </h1>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={fetchBriefing}
-          disabled={isLoading}
-          className="h-8 w-8 p-0"
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-        </Button>
+        <div className="flex items-center gap-1">
+          <AskAiCardButton prompt={aiPrompt} title="Demander une analyse IA approfondie du briefing" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchBriefing}
+            disabled={isLoading}
+            className="h-8 w-8 p-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
       </div>
 
       {/* AI Briefing */}

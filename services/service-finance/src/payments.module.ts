@@ -39,7 +39,10 @@ import {
   ReconciliationEntity,
   PaymentArchiveEntity,
   DunningConfigEntity,
+  DunningRunEntity,
   InformationPaiementBancaireEntity,
+  ExportConfigEntity,
+  CompteComptableEntity,
 } from './domain/payments/entities';
 
 // Infrastructure services
@@ -85,8 +88,11 @@ import { DunningMaxRetriesExceededHandler } from './infrastructure/messaging/nat
 import { DepanssurPaymentFailedHandler } from './infrastructure/messaging/nats/handlers/depanssur-payment-failed.handler';
 import { DepanssurPaymentSucceededHandler } from './infrastructure/messaging/nats/handlers/depanssur-payment-succeeded.handler';
 import { DunningDepanssurService } from './domain/payments/services/dunning-depanssur.service';
+import { DunningDepanssurSchedulerService } from './domain/payments/services/dunning-depanssur-scheduler.service';
 import { SMS_SERVICE_TOKEN } from './infrastructure/external/sms/sms-service.interface';
 import { MockSmsService } from './infrastructure/external/sms/mock-sms.service';
+import { EMAIL_SERVICE_TOKEN } from './infrastructure/external/email/email-service.interface';
+import { MockEmailService } from './infrastructure/external/email/mock-email.service';
 import { IMS_CLIENT_TOKEN } from './infrastructure/external/ims/ims-client.interface';
 import { MockImsClientService } from './infrastructure/external/ims/mock-ims-client.service';
 import { CbUpdateSessionController } from './interfaces/http/controllers/payments/cb-update-session.controller';
@@ -99,6 +105,11 @@ import { ProviderOverrideService } from './infrastructure/persistence/typeorm/re
 import { ReassignmentJobService } from './infrastructure/persistence/typeorm/repositories/payments/reassignment-job.service';
 import { FacturesModule } from './factures.module';
 import { ScoringController } from './infrastructure/grpc/scoring/scoring.controller';
+import { FactureEntity } from './domain/factures/entities/facture.entity';
+import { JournalVentesService } from './domain/payments/services/journal-ventes.service';
+import { JournalReglementsService } from './domain/payments/services/journal-reglements.service';
+import { JournalImpayesService } from './domain/payments/services/journal-impayes.service';
+import { FecGeneratorService } from './domain/payments/services/fec-generator.service';
 
 @Global()
 @Module({
@@ -140,7 +151,12 @@ import { ScoringController } from './infrastructure/grpc/scoring/scoring.control
       ReconciliationEntity,
       PaymentArchiveEntity,
       DunningConfigEntity,
+      DunningRunEntity,
       InformationPaiementBancaireEntity,
+      InformationPaiementBancaireEntity,
+      FactureEntity,
+      ExportConfigEntity,
+      CompteComptableEntity,
     ]),
   ],
   controllers: [
@@ -183,6 +199,7 @@ import { ScoringController } from './infrastructure/grpc/scoring/scoring.control
     CbUpdateSessionService,
     DunningMaxRetriesExceededHandler,
     DunningDepanssurService,
+    DunningDepanssurSchedulerService,
     DepanssurPaymentFailedHandler,
     DepanssurPaymentSucceededHandler,
     PaymentQueryService,
@@ -190,9 +207,17 @@ import { ScoringController } from './infrastructure/grpc/scoring/scoring.control
     RoutingEngineService,
     ProviderOverrideService,
     ReassignmentJobService,
+    JournalVentesService,
+    JournalReglementsService,
+    JournalImpayesService,
+    FecGeneratorService,
     {
       provide: SMS_SERVICE_TOKEN,
       useClass: MockSmsService,
+    },
+    {
+      provide: EMAIL_SERVICE_TOKEN,
+      useClass: MockEmailService,
     },
     {
       provide: IMS_CLIENT_TOKEN,
@@ -227,12 +252,14 @@ import { ScoringController } from './infrastructure/grpc/scoring/scoring.control
     CbUpdateSessionService,
     DunningMaxRetriesExceededHandler,
     DunningDepanssurService,
+    DunningDepanssurSchedulerService,
     DepanssurPaymentFailedHandler,
     DepanssurPaymentSucceededHandler,
     PaymentQueryService,
     InformationPaiementBancaireService,
     SMS_SERVICE_TOKEN,
     IMS_CLIENT_TOKEN,
+    EMAIL_SERVICE_TOKEN,
   ],
 })
 export class PaymentsModule {}

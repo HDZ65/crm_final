@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useEffect } from "react"
 import {
   AreaChart,
   Area,
@@ -28,6 +29,12 @@ import type {
   ClientScore,
   ForecastVsActual,
 } from "@/lib/ui/display-types/payment"
+import {
+  fetchRejectionTrends,
+  fetchHeatmapData,
+  fetchClientScores,
+  fetchForecastData,
+} from "@/actions/analytics"
 
 // ---------- Heatmap color utility ----------
 function heatmapColor(intensity: DayHeatmapEntry["intensity"]): string {
@@ -52,20 +59,37 @@ export function AnalyticsDashboard({ societeId }: AnalyticsDashboardProps) {
   const [timeRange, setTimeRange] = React.useState<AnalyticsTimeRange>("3M")
   const [isLoading, setIsLoading] = React.useState(false)
 
-  // Data arrays — stub (no gRPC call yet), always empty → empty states
+  // Data arrays — fetched from server actions on mount and timeRange change
   const [rejectionTrends, setRejectionTrends] = React.useState<RejectionTrend[]>([])
   const [heatmapData, setHeatmapData] = React.useState<DayHeatmapEntry[]>([])
   const [clientScores, setClientScores] = React.useState<ClientScore[]>([])
   const [forecastData, setForecastData] = React.useState<ForecastVsActual[]>([])
 
-  // Suppress unused-var warnings for stub setters & props used later
-  void societeId
-  void isLoading
-  void setIsLoading
-  void setRejectionTrends
-  void setHeatmapData
-  void setClientScores
-  void setForecastData
+  // Fetch data on mount and when timeRange changes
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        const [trends, heatmap, clients, forecast] = await Promise.all([
+          fetchRejectionTrends(societeId, timeRange),
+          fetchHeatmapData(societeId, timeRange),
+          fetchClientScores(societeId, timeRange),
+          fetchForecastData(societeId, timeRange),
+        ])
+
+        if (trends.data) setRejectionTrends(trends.data)
+        if (heatmap.data) setHeatmapData(heatmap.data)
+        if (clients.data) setClientScores(clients.data)
+        if (forecast.data) setForecastData(forecast.data)
+      } catch (error) {
+        console.error("[AnalyticsDashboard] Error fetching data:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [societeId, timeRange])
 
   // ---------- Time range selector ----------
   const timeRangeOptions: { value: AnalyticsTimeRange; label: string }[] = [

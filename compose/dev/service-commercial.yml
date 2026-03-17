@@ -11,8 +11,8 @@ services:
       - "traefik.http.routers.alex-comm.rule=Host(`alex-commercial.local`)"
       - "traefik.http.services.alex-comm.loadbalancer.server.port=3053"
     ports:
-      - "50073:50053" # gRPC host:container (50073 libre sur TRX50)
-      - "3073:3053"   # HTTP host:container
+      - "3403:3053"   # HTTP per ports.yaml slot 4
+      # gRPC 50053 internal only (docker network)
     env_file:
       - ../../services/service-commercial/.env.development
     environment:
@@ -30,6 +30,16 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./services/service-commercial/src
+          target: /app/services/service-commercial/src
+          ignore:
+            - "node_modules/"
+            - "dist/"
+        - action: rebuild
+          path: ./services/service-commercial/package.json
 
 networks:
   shared_dev_net:

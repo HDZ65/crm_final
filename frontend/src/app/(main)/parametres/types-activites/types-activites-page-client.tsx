@@ -177,13 +177,14 @@ export function TypesActivitesPageClient({ initialTypes }: TypesActivitesPageCli
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <CardTitle>Liste des types</CardTitle>
               <CardDescription>
                 {types.length} type{types.length > 1 ? "s" : ""} d'activité{types.length > 1 ? "s" : ""}
               </CardDescription>
             </div>
+              <AskAiCardButton prompt="Analyse cette configuration de types d'activités et suggère des améliorations" />
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -345,10 +346,5 @@ export function TypesActivitesPageClient({ initialTypes }: TypesActivitesPageCli
 }
 
 export function TypesActivitesPageClientWrapper(props: TypesActivitesPageClientProps) {
-  return (
-    <>
-      <AskAiCardButton prompt="Analyse cette configuration de types d'activités et suggère des améliorations" />
-      <TypesActivitesPageClient {...props} />
-    </>
-  )
+  return <TypesActivitesPageClient {...props} />
 }

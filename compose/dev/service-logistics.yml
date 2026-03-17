@@ -14,7 +14,7 @@ services:
       # Indique à Traefik que c'est du h2c (gRPC sans TLS)
       - "traefik.http.services.alex-log.loadbalancer.server.scheme=h2c"
     ports:
-      - "50075:50060" # gRPC host:container (50075 libre sur TRX50)
+      - "3406:50060" # gRPC per ports.yaml slot 4 (no HTTP server)
     env_file:
       - ../../services/service-logistics/.env.development
     environment:
@@ -31,6 +31,16 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./services/service-logistics/src
+          target: /app/services/service-logistics/src
+          ignore:
+            - "node_modules/"
+            - "dist/"
+        - action: rebuild
+          path: ./services/service-logistics/package.json
 
 networks:
   shared_dev_net:

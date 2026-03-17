@@ -10,7 +10,7 @@
 	prod-wait-for-dbs prod-migrate-all prod-verify-migrations prod-health-check prod-consul-status prod-shell \
 	prod-clean-all-dbs prod-backup-db prod-restore-db \
 	prod-service-core-logs prod-service-commercial-logs prod-service-finance-logs \
-	prod-service-engagement-logs prod-service-logistics-logs prod-nats-logs
+	prod-service-engagement-logs prod-service-logistics-logs prod-service-telecom-logs prod-nats-logs
 
 # ============================================================================
 # Compose File Definitions
@@ -22,6 +22,7 @@ PROD_COMMERCIAL = $(PROD_INFRA) -f compose/production/service-commercial.yml
 PROD_FINANCE = $(PROD_INFRA) -f compose/production/service-finance.yml
 PROD_ENGAGEMENT = $(PROD_INFRA) -f compose/production/service-engagement.yml
 PROD_LOGISTICS = $(PROD_INFRA) -f compose/production/service-logistics.yml
+PROD_TELECOM = $(PROD_INFRA) -f compose/production/service-telecom.yml
 PROD_FRONTEND = $(PROD_INFRA) -f compose/production/frontend.yml
 
 PROD_ALL = $(PROD_INFRA) \
@@ -29,6 +30,7 @@ PROD_ALL = $(PROD_INFRA) \
 	-f compose/production/service-commercial.yml \
 	-f compose/production/service-finance.yml \
 	-f compose/production/service-engagement.yml \
+	-f compose/production/service-telecom.yml \
 	-f compose/production/service-logistics.yml \
 	-f compose/production/frontend.yml
 
@@ -104,6 +106,9 @@ prod-service-engagement-logs:
 prod-service-logistics-logs:
 	$(PROD_LOGISTICS) logs -f production-crm-service-logistics
 
+prod-service-telecom-logs:
+	$(PROD_TELECOM) logs -f prod-crm-service-telecom
+
 prod-nats-logs:
 	$(PROD_INFRA) logs -f production-crm-nats
 
@@ -120,6 +125,7 @@ prod-wait-for-dbs:
 		"production-crm-commercial-db:commercial_db" \
 		"production-crm-finance-db:finance_db" \
 		"production-crm-engagement-db:engagement_db" \
+		"production-crm-telecom-db:telecom_db" \
 		"production-crm-logistics-db:logistics_db"; do \
 		container=$$(echo $$db | cut -d: -f1); \
 		dbname=$$(echo $$db | cut -d: -f2); \
@@ -153,6 +159,8 @@ prod-migrate-all:
 	docker exec -T production-crm-service-finance bun run migration:run; \
 	echo "service-engagement..."; \
 	docker exec -T production-crm-engagement bun run migration:run; \
+	echo "service-telecom..."; \
+	docker exec -T prod-crm-service-telecom bun run migration:run; \
 	echo "service-logistics..."; \
 	docker exec -T production-crm-service-logistics bun run migration:run
 	@echo "=== Done ==="
@@ -166,6 +174,7 @@ prod-verify-migrations:
 		"production-crm-service-commercial:service-commercial" \
 		"production-crm-service-finance:service-finance" \
 		"production-crm-engagement:service-engagement" \
+		"prod-crm-service-telecom:service-telecom" \
 		"production-crm-service-logistics:service-logistics"; do \
 		container=$$(echo $$svc | cut -d: -f1); \
 		name=$$(echo $$svc | cut -d: -f2); \

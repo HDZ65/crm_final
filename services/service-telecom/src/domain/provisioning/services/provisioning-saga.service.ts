@@ -816,7 +816,7 @@ export class ProvisioningSagaService {
           `Cancel subscription failed for ${lifecycle.contratId}: ${(err as Error).message}`,
         );
       }
-
+    }
     try {
       await this.terminationPort.terminateLine(
         lifecycle.contratId,

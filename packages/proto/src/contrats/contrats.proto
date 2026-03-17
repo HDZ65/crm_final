@@ -47,6 +47,12 @@ message Contrat {
   string updated_at = 21;
   optional int32 jour_prelevement = 22;           // Jour fixe de prélèvement (1-28)
   optional string prochaine_date_prelevement = 23; // Prochaine date de prélèvement calculée (ISO string)
+  optional string renewal_date = 24;
+  bool tacite_renewal_enabled = 25;
+  optional string renewal_status = 26;
+  optional string renewal_notification_j90_sent_at = 27;
+  optional string renewal_notification_j30_sent_at = 28;
+  optional string statut_cq = 29; // Statut du contrôle qualité (EN_ATTENTE/VALIDE/REJETE)
 }
 
 message ContratWithDetails {

@@ -92,4 +92,4 @@ export type {
     WinLeadPlusConfig,
     UpdateWinLeadPlusConfigRequest,
   };
-  export type { WinLeadPlusTestConnectionResponse as TestConnectionResponse };
+  export type { WinLeadPlusTestConnectionResponse };

@@ -7,7 +7,9 @@ import { AppModule } from './app.module';
 
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
 
   // Body size limit (1MB)
   app.use(json({ limit: '1mb' }));

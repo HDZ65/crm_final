@@ -36,6 +36,7 @@ export * from './payment-audit-log.entity';
 
 // Dunning
 export * from './dunning-config.entity';
+export * from './dunning-run.entity';
 
 // Archive
 export * from './payment-archive.entity';
@@ -52,3 +53,7 @@ export * from './export-job.entity';
 export * from './risk-score.entity';
 export * from './customer-interaction.entity';
 export * from './reconciliation.entity';
+
+// Export config & accounting
+export * from './export-config.entity';
+export * from './compte-comptable.entity';

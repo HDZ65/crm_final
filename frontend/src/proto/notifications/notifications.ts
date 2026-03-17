@@ -306,6 +306,26 @@ export interface IsUserConnectedResponse {
   connected: boolean;
 }
 
+export interface NotifyShippingStatusChangedRequest {
+  organisationId: string;
+  clientId: string;
+  expeditionId: string;
+  newStatus: string;
+  trackingNumber?: string | undefined;
+  carrier?: string | undefined;
+}
+
+export interface NotifyReconductionTaciteRequest {
+  organisationId: string;
+  clientId: string;
+  contratId: string;
+  renewalDate: string;
+  cancellationDeadline: string;
+  contratReference: string;
+  duree?: string | undefined;
+  montant?: string | undefined;
+}
+
 function createBaseEmptyRequest(): EmptyRequest {
   return {};
 }
@@ -3857,6 +3877,384 @@ export const IsUserConnectedResponse: MessageFns<IsUserConnectedResponse> = {
   },
 };
 
+function createBaseNotifyShippingStatusChangedRequest(): NotifyShippingStatusChangedRequest {
+  return {
+    organisationId: "",
+    clientId: "",
+    expeditionId: "",
+    newStatus: "",
+    trackingNumber: undefined,
+    carrier: undefined,
+  };
+}
+
+export const NotifyShippingStatusChangedRequest: MessageFns<NotifyShippingStatusChangedRequest> = {
+  encode(message: NotifyShippingStatusChangedRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.expeditionId !== "") {
+      writer.uint32(26).string(message.expeditionId);
+    }
+    if (message.newStatus !== "") {
+      writer.uint32(34).string(message.newStatus);
+    }
+    if (message.trackingNumber !== undefined) {
+      writer.uint32(42).string(message.trackingNumber);
+    }
+    if (message.carrier !== undefined) {
+      writer.uint32(50).string(message.carrier);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): NotifyShippingStatusChangedRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNotifyShippingStatusChangedRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.expeditionId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.newStatus = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.trackingNumber = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.carrier = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): NotifyShippingStatusChangedRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      expeditionId: isSet(object.expeditionId)
+        ? globalThis.String(object.expeditionId)
+        : isSet(object.expedition_id)
+        ? globalThis.String(object.expedition_id)
+        : "",
+      newStatus: isSet(object.newStatus)
+        ? globalThis.String(object.newStatus)
+        : isSet(object.new_status)
+        ? globalThis.String(object.new_status)
+        : "",
+      trackingNumber: isSet(object.trackingNumber)
+        ? globalThis.String(object.trackingNumber)
+        : isSet(object.tracking_number)
+        ? globalThis.String(object.tracking_number)
+        : undefined,
+      carrier: isSet(object.carrier) ? globalThis.String(object.carrier) : undefined,
+    };
+  },
+
+  toJSON(message: NotifyShippingStatusChangedRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.expeditionId !== "") {
+      obj.expeditionId = message.expeditionId;
+    }
+    if (message.newStatus !== "") {
+      obj.newStatus = message.newStatus;
+    }
+    if (message.trackingNumber !== undefined) {
+      obj.trackingNumber = message.trackingNumber;
+    }
+    if (message.carrier !== undefined) {
+      obj.carrier = message.carrier;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<NotifyShippingStatusChangedRequest>, I>>(
+    base?: I,
+  ): NotifyShippingStatusChangedRequest {
+    return NotifyShippingStatusChangedRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<NotifyShippingStatusChangedRequest>, I>>(
+    object: I,
+  ): NotifyShippingStatusChangedRequest {
+    const message = createBaseNotifyShippingStatusChangedRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.expeditionId = object.expeditionId ?? "";
+    message.newStatus = object.newStatus ?? "";
+    message.trackingNumber = object.trackingNumber ?? undefined;
+    message.carrier = object.carrier ?? undefined;
+    return message;
+  },
+};
+
+function createBaseNotifyReconductionTaciteRequest(): NotifyReconductionTaciteRequest {
+  return {
+    organisationId: "",
+    clientId: "",
+    contratId: "",
+    renewalDate: "",
+    cancellationDeadline: "",
+    contratReference: "",
+    duree: undefined,
+    montant: undefined,
+  };
+}
+
+export const NotifyReconductionTaciteRequest: MessageFns<NotifyReconductionTaciteRequest> = {
+  encode(message: NotifyReconductionTaciteRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.organisationId !== "") {
+      writer.uint32(10).string(message.organisationId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(18).string(message.clientId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(26).string(message.contratId);
+    }
+    if (message.renewalDate !== "") {
+      writer.uint32(34).string(message.renewalDate);
+    }
+    if (message.cancellationDeadline !== "") {
+      writer.uint32(42).string(message.cancellationDeadline);
+    }
+    if (message.contratReference !== "") {
+      writer.uint32(50).string(message.contratReference);
+    }
+    if (message.duree !== undefined) {
+      writer.uint32(58).string(message.duree);
+    }
+    if (message.montant !== undefined) {
+      writer.uint32(66).string(message.montant);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): NotifyReconductionTaciteRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNotifyReconductionTaciteRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.renewalDate = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.cancellationDeadline = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.contratReference = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.duree = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.montant = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): NotifyReconductionTaciteRequest {
+    return {
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      renewalDate: isSet(object.renewalDate)
+        ? globalThis.String(object.renewalDate)
+        : isSet(object.renewal_date)
+        ? globalThis.String(object.renewal_date)
+        : "",
+      cancellationDeadline: isSet(object.cancellationDeadline)
+        ? globalThis.String(object.cancellationDeadline)
+        : isSet(object.cancellation_deadline)
+        ? globalThis.String(object.cancellation_deadline)
+        : "",
+      contratReference: isSet(object.contratReference)
+        ? globalThis.String(object.contratReference)
+        : isSet(object.contrat_reference)
+        ? globalThis.String(object.contrat_reference)
+        : "",
+      duree: isSet(object.duree) ? globalThis.String(object.duree) : undefined,
+      montant: isSet(object.montant) ? globalThis.String(object.montant) : undefined,
+    };
+  },
+
+  toJSON(message: NotifyReconductionTaciteRequest): unknown {
+    const obj: any = {};
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.renewalDate !== "") {
+      obj.renewalDate = message.renewalDate;
+    }
+    if (message.cancellationDeadline !== "") {
+      obj.cancellationDeadline = message.cancellationDeadline;
+    }
+    if (message.contratReference !== "") {
+      obj.contratReference = message.contratReference;
+    }
+    if (message.duree !== undefined) {
+      obj.duree = message.duree;
+    }
+    if (message.montant !== undefined) {
+      obj.montant = message.montant;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<NotifyReconductionTaciteRequest>, I>>(base?: I): NotifyReconductionTaciteRequest {
+    return NotifyReconductionTaciteRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<NotifyReconductionTaciteRequest>, I>>(
+    object: I,
+  ): NotifyReconductionTaciteRequest {
+    const message = createBaseNotifyReconductionTaciteRequest();
+    message.organisationId = object.organisationId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.contratId = object.contratId ?? "";
+    message.renewalDate = object.renewalDate ?? "";
+    message.cancellationDeadline = object.cancellationDeadline ?? "";
+    message.contratReference = object.contratReference ?? "";
+    message.duree = object.duree ?? undefined;
+    message.montant = object.montant ?? undefined;
+    return message;
+  },
+};
+
 export type NotificationServiceService = typeof NotificationServiceService;
 export const NotificationServiceService = {
   /** ===== CRUD Operations ===== */
@@ -4115,6 +4513,43 @@ export const NotificationServiceService = {
       Buffer.from(IsUserConnectedResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): IsUserConnectedResponse => IsUserConnectedResponse.decode(value),
   },
+  /** ===== Shipping & Reconduction Notifications ===== */
+  notifyShippingStatusChanged: {
+    path: "/notifications.NotificationService/NotifyShippingStatusChanged",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: NotifyShippingStatusChangedRequest): Buffer =>
+      Buffer.from(NotifyShippingStatusChangedRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): NotifyShippingStatusChangedRequest =>
+      NotifyShippingStatusChangedRequest.decode(value),
+    responseSerialize: (value: NotificationResponse): Buffer =>
+      Buffer.from(NotificationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): NotificationResponse => NotificationResponse.decode(value),
+  },
+  notifyReconductionTaciteJ90: {
+    path: "/notifications.NotificationService/NotifyReconductionTaciteJ90",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: NotifyReconductionTaciteRequest): Buffer =>
+      Buffer.from(NotifyReconductionTaciteRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): NotifyReconductionTaciteRequest =>
+      NotifyReconductionTaciteRequest.decode(value),
+    responseSerialize: (value: NotificationResponse): Buffer =>
+      Buffer.from(NotificationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): NotificationResponse => NotificationResponse.decode(value),
+  },
+  notifyReconductionTaciteJ30: {
+    path: "/notifications.NotificationService/NotifyReconductionTaciteJ30",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: NotifyReconductionTaciteRequest): Buffer =>
+      Buffer.from(NotifyReconductionTaciteRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): NotifyReconductionTaciteRequest =>
+      NotifyReconductionTaciteRequest.decode(value),
+    responseSerialize: (value: NotificationResponse): Buffer =>
+      Buffer.from(NotificationResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): NotificationResponse => NotificationResponse.decode(value),
+  },
 } as const;
 
 export interface NotificationServiceServer extends UntypedServiceImplementation {
@@ -4148,6 +4583,10 @@ export interface NotificationServiceServer extends UntypedServiceImplementation 
   /** ===== WebSocket Status ===== */
   getConnectedUsersCount: handleUnaryCall<EmptyRequest, ConnectedUsersResponse>;
   isUserConnected: handleUnaryCall<IsUserConnectedRequest, IsUserConnectedResponse>;
+  /** ===== Shipping & Reconduction Notifications ===== */
+  notifyShippingStatusChanged: handleUnaryCall<NotifyShippingStatusChangedRequest, NotificationResponse>;
+  notifyReconductionTaciteJ90: handleUnaryCall<NotifyReconductionTaciteRequest, NotificationResponse>;
+  notifyReconductionTaciteJ30: handleUnaryCall<NotifyReconductionTaciteRequest, NotificationResponse>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

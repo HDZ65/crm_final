@@ -21,7 +21,7 @@
 # ============================================================================
 
 # Force Docker context to remote server (containers run there, not locally)
-DOCKER_CONTEXT ?= remote-server
+DOCKER_CONTEXT := remote-server
 DEV_INFRA = docker --context $(DOCKER_CONTEXT) compose -p crmdev -f compose/dev/infrastructure.yml
 DEV_CORE = $(DEV_INFRA) -f compose/dev/service-core.yml
 DEV_COMMERCIAL = $(DEV_INFRA) -f compose/dev/service-commercial.yml
@@ -39,6 +39,8 @@ DEV_ALL = $(DEV_INFRA) \
 	-f compose/dev/service-telecom.yml \
 	-f compose/dev/service-logistics.yml \
 	-f compose/dev/frontend.yml
+
+CACHE_ID := $(shell echo %time% || date +%s)
 
 # ============================================================================
 # Dev Environment Commands
@@ -79,12 +81,10 @@ db-init:
 	@echo "=== All databases ready ==="
 
 dev-up:
-	$(DEV_ALL) build --build-arg CACHE_BUST=$$(date +%s)
+	$(DEV_ALL) build
 	$(DEV_ALL) up -d
 	@echo ""
-	@echo "All services started! Access:"
-	@echo "  Frontend:      http://localhost:3000"
-	@echo "  gRPC Services: localhost:50051-50068"
+	@echo "Services lances sur le serveur distant !"
 
 dev-down:
 	$(DEV_ALL) down

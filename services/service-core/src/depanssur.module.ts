@@ -20,10 +20,12 @@ import {
   OptionAbonnementService,
   CompteurPlafondService,
   DossierDeclaratifService,
+  ConsentementService,
 } from './infrastructure/persistence/typeorm/repositories/depanssur';
 import { RegleDepanssurService } from './domain/depanssur/services/regle-depanssur.service';
 import { DepanssurWebhookService } from './domain/depanssur/services/depanssur-webhook.service';
 import { DepanssurSchedulerService } from './domain/depanssur/services/depanssur-scheduler.service';
+import { AbonnementRestoredHandler } from './infrastructure/messaging/nats/handlers/depanssur/abonnement-restored.handler';
 
 // Interface controllers
 import { DepanssurController } from './infrastructure/grpc/depanssur';
@@ -59,6 +61,8 @@ import { ClientsModule } from './clients.module';
     DossierDeclaratifService,
     DepanssurWebhookService,
     DepanssurSchedulerService,
+    ConsentementService,
+    AbonnementRestoredHandler,
   ],
   exports: [
     RegleDepanssurService,
@@ -67,6 +71,7 @@ import { ClientsModule } from './clients.module';
     CompteurPlafondService,
     DossierDeclaratifService,
     DepanssurWebhookService,
+    ConsentementService,
   ],
 })
 export class DepanssurModule {}

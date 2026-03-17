@@ -1,0 +1,57 @@
+syntax = "proto3";
+package payment;
+
+enum JournalType {
+  JOURNAL_TYPE_UNSPECIFIED = 0;
+  JOURNAL_VENTES = 1;
+  JOURNAL_REGLEMENTS = 2;
+  JOURNAL_IMPAYES = 3;
+}
+
+enum ExportJournalFormat {
+  EXPORT_JOURNAL_FORMAT_UNSPECIFIED = 0;
+  EXPORT_JOURNAL_CSV = 1;
+  EXPORT_JOURNAL_XLSX = 2;
+  EXPORT_JOURNAL_FEC = 3;
+}
+
+message FecEntry {
+  string journal_code = 1;
+  string journal_lib = 2;
+  string ecriture_num = 3;
+  string ecriture_date = 4;
+  string compte_num = 5;
+  string compte_lib = 6;
+  string comp_aux_num = 7;
+  string comp_aux_lib = 8;
+  string piece_ref = 9;
+  string piece_date = 10;
+  string ecriture_lib = 11;
+  string debit = 12;
+  string credit = 13;
+  string ecriture_let = 14;
+  string date_let = 15;
+  string valid_date = 16;
+  string montantdevise = 17;
+  string idevise = 18;
+}
+
+message CreateJournalExportRequest {
+  string societe_id = 1;
+  JournalType journal_type = 2;
+  string period_from = 3;
+  string period_to = 4;
+  ExportJournalFormat format = 5;
+  string siren = 6;
+}
+
+message JournalExportResponse {
+  bytes file_content = 1;
+  string file_name = 2;
+  string content_type = 3;
+  int32 record_count = 4;
+}
+
+message GetJournalExportFormatsResponse {
+  repeated string formats = 1;
+}

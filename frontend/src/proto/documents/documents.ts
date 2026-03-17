@@ -10,6 +10,82 @@ import type { handleUnaryCall, UntypedServiceImplementation } from "@grpc/grpc-j
 
 export const protobufPackage = "documents";
 
+/** ========== ENUMS ========== */
+export enum TypeDocument {
+  TYPE_DOCUMENT_UNSPECIFIED = 0,
+  CNI = 1,
+  RIB = 2,
+  MANDAT_SEPA = 3,
+  JUSTIFICATIF_DOMICILE = 4,
+  KBIS = 5,
+  ATTESTATION_ASSURANCE = 6,
+  CONTRAT_SIGNE = 7,
+  AUTRE = 8,
+  UNRECOGNIZED = -1,
+}
+
+export function typeDocumentFromJSON(object: any): TypeDocument {
+  switch (object) {
+    case 0:
+    case "TYPE_DOCUMENT_UNSPECIFIED":
+      return TypeDocument.TYPE_DOCUMENT_UNSPECIFIED;
+    case 1:
+    case "CNI":
+      return TypeDocument.CNI;
+    case 2:
+    case "RIB":
+      return TypeDocument.RIB;
+    case 3:
+    case "MANDAT_SEPA":
+      return TypeDocument.MANDAT_SEPA;
+    case 4:
+    case "JUSTIFICATIF_DOMICILE":
+      return TypeDocument.JUSTIFICATIF_DOMICILE;
+    case 5:
+    case "KBIS":
+      return TypeDocument.KBIS;
+    case 6:
+    case "ATTESTATION_ASSURANCE":
+      return TypeDocument.ATTESTATION_ASSURANCE;
+    case 7:
+    case "CONTRAT_SIGNE":
+      return TypeDocument.CONTRAT_SIGNE;
+    case 8:
+    case "AUTRE":
+      return TypeDocument.AUTRE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return TypeDocument.UNRECOGNIZED;
+  }
+}
+
+export function typeDocumentToJSON(object: TypeDocument): string {
+  switch (object) {
+    case TypeDocument.TYPE_DOCUMENT_UNSPECIFIED:
+      return "TYPE_DOCUMENT_UNSPECIFIED";
+    case TypeDocument.CNI:
+      return "CNI";
+    case TypeDocument.RIB:
+      return "RIB";
+    case TypeDocument.MANDAT_SEPA:
+      return "MANDAT_SEPA";
+    case TypeDocument.JUSTIFICATIF_DOMICILE:
+      return "JUSTIFICATIF_DOMICILE";
+    case TypeDocument.KBIS:
+      return "KBIS";
+    case TypeDocument.ATTESTATION_ASSURANCE:
+      return "ATTESTATION_ASSURANCE";
+    case TypeDocument.CONTRAT_SIGNE:
+      return "CONTRAT_SIGNE";
+    case TypeDocument.AUTRE:
+      return "AUTRE";
+    case TypeDocument.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export interface PieceJointe {
   id: string;
   nomFichier: string;
@@ -22,6 +98,11 @@ export interface PieceJointe {
   uploadedBy: string;
   createdAt: string;
   updatedAt: string;
+  typeDocument: TypeDocument;
+  version: number;
+  parentId: string;
+  hashSha256: string;
+  organisationId: string;
 }
 
 export interface CreatePieceJointeRequest {
@@ -32,6 +113,8 @@ export interface CreatePieceJointeRequest {
   entiteType: string;
   entiteId: string;
   uploadedBy: string;
+  typeDocument: TypeDocument;
+  organisationId: string;
 }
 
 export interface UpdatePieceJointeRequest {
@@ -63,6 +146,42 @@ export interface DeletePieceJointeRequest {
 export interface ListPieceJointeResponse {
   pieces: PieceJointe[];
   pagination: PaginationResult | undefined;
+}
+
+export interface ListPieceJointeByTypeRequest {
+  typeDocument: TypeDocument;
+  organisationId: string;
+  entiteType: string;
+  pagination: Pagination | undefined;
+}
+
+export interface GetVersionHistoryRequest {
+  parentId: string;
+}
+
+export interface DocumentAuditLog {
+  id: string;
+  documentId: string;
+  organisationId: string;
+  action: string;
+  userId: string;
+  userName: string;
+  ipAddress: string;
+  timestamp: string;
+}
+
+export interface LogDocumentAccessRequest {
+  documentId: string;
+  organisationId: string;
+  action: string;
+  userId: string;
+  userName: string;
+  ipAddress: string;
+}
+
+export interface LogDocumentAccessResponse {
+  success: boolean;
+  log: DocumentAuditLog | undefined;
 }
 
 export interface BoiteMail {
@@ -216,6 +335,11 @@ function createBasePieceJointe(): PieceJointe {
     uploadedBy: "",
     createdAt: "",
     updatedAt: "",
+    typeDocument: 0,
+    version: 0,
+    parentId: "",
+    hashSha256: "",
+    organisationId: "",
   };
 }
 
@@ -253,6 +377,21 @@ export const PieceJointe: MessageFns<PieceJointe> = {
     }
     if (message.updatedAt !== "") {
       writer.uint32(90).string(message.updatedAt);
+    }
+    if (message.typeDocument !== 0) {
+      writer.uint32(96).int32(message.typeDocument);
+    }
+    if (message.version !== 0) {
+      writer.uint32(104).int32(message.version);
+    }
+    if (message.parentId !== "") {
+      writer.uint32(114).string(message.parentId);
+    }
+    if (message.hashSha256 !== "") {
+      writer.uint32(122).string(message.hashSha256);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(130).string(message.organisationId);
     }
     return writer;
   },
@@ -352,6 +491,46 @@ export const PieceJointe: MessageFns<PieceJointe> = {
           message.updatedAt = reader.string();
           continue;
         }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.typeDocument = reader.int32() as any;
+          continue;
+        }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.version = reader.int32();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.parentId = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.hashSha256 = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -406,6 +585,27 @@ export const PieceJointe: MessageFns<PieceJointe> = {
         : isSet(object.updated_at)
         ? globalThis.String(object.updated_at)
         : "",
+      typeDocument: isSet(object.typeDocument)
+        ? typeDocumentFromJSON(object.typeDocument)
+        : isSet(object.type_document)
+        ? typeDocumentFromJSON(object.type_document)
+        : 0,
+      version: isSet(object.version) ? globalThis.Number(object.version) : 0,
+      parentId: isSet(object.parentId)
+        ? globalThis.String(object.parentId)
+        : isSet(object.parent_id)
+        ? globalThis.String(object.parent_id)
+        : "",
+      hashSha256: isSet(object.hashSha256)
+        ? globalThis.String(object.hashSha256)
+        : isSet(object.hash_sha256)
+        ? globalThis.String(object.hash_sha256)
+        : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
     };
   },
 
@@ -444,6 +644,21 @@ export const PieceJointe: MessageFns<PieceJointe> = {
     if (message.updatedAt !== "") {
       obj.updatedAt = message.updatedAt;
     }
+    if (message.typeDocument !== 0) {
+      obj.typeDocument = typeDocumentToJSON(message.typeDocument);
+    }
+    if (message.version !== 0) {
+      obj.version = Math.round(message.version);
+    }
+    if (message.parentId !== "") {
+      obj.parentId = message.parentId;
+    }
+    if (message.hashSha256 !== "") {
+      obj.hashSha256 = message.hashSha256;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
     return obj;
   },
 
@@ -463,12 +678,27 @@ export const PieceJointe: MessageFns<PieceJointe> = {
     message.uploadedBy = object.uploadedBy ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
+    message.typeDocument = object.typeDocument ?? 0;
+    message.version = object.version ?? 0;
+    message.parentId = object.parentId ?? "";
+    message.hashSha256 = object.hashSha256 ?? "";
+    message.organisationId = object.organisationId ?? "";
     return message;
   },
 };
 
 function createBaseCreatePieceJointeRequest(): CreatePieceJointeRequest {
-  return { nomFichier: "", url: "", typeMime: "", taille: 0, entiteType: "", entiteId: "", uploadedBy: "" };
+  return {
+    nomFichier: "",
+    url: "",
+    typeMime: "",
+    taille: 0,
+    entiteType: "",
+    entiteId: "",
+    uploadedBy: "",
+    typeDocument: 0,
+    organisationId: "",
+  };
 }
 
 export const CreatePieceJointeRequest: MessageFns<CreatePieceJointeRequest> = {
@@ -493,6 +723,12 @@ export const CreatePieceJointeRequest: MessageFns<CreatePieceJointeRequest> = {
     }
     if (message.uploadedBy !== "") {
       writer.uint32(58).string(message.uploadedBy);
+    }
+    if (message.typeDocument !== 0) {
+      writer.uint32(64).int32(message.typeDocument);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(74).string(message.organisationId);
     }
     return writer;
   },
@@ -560,6 +796,22 @@ export const CreatePieceJointeRequest: MessageFns<CreatePieceJointeRequest> = {
           message.uploadedBy = reader.string();
           continue;
         }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.typeDocument = reader.int32() as any;
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -598,6 +850,16 @@ export const CreatePieceJointeRequest: MessageFns<CreatePieceJointeRequest> = {
         : isSet(object.uploaded_by)
         ? globalThis.String(object.uploaded_by)
         : "",
+      typeDocument: isSet(object.typeDocument)
+        ? typeDocumentFromJSON(object.typeDocument)
+        : isSet(object.type_document)
+        ? typeDocumentFromJSON(object.type_document)
+        : 0,
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
     };
   },
 
@@ -624,6 +886,12 @@ export const CreatePieceJointeRequest: MessageFns<CreatePieceJointeRequest> = {
     if (message.uploadedBy !== "") {
       obj.uploadedBy = message.uploadedBy;
     }
+    if (message.typeDocument !== 0) {
+      obj.typeDocument = typeDocumentToJSON(message.typeDocument);
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
     return obj;
   },
 
@@ -639,6 +907,8 @@ export const CreatePieceJointeRequest: MessageFns<CreatePieceJointeRequest> = {
     message.entiteType = object.entiteType ?? "";
     message.entiteId = object.entiteId ?? "";
     message.uploadedBy = object.uploadedBy ?? "";
+    message.typeDocument = object.typeDocument ?? 0;
+    message.organisationId = object.organisationId ?? "";
     return message;
   },
 };
@@ -1130,6 +1400,631 @@ export const ListPieceJointeResponse: MessageFns<ListPieceJointeResponse> = {
     message.pieces = object.pieces?.map((e) => PieceJointe.fromPartial(e)) || [];
     message.pagination = (object.pagination !== undefined && object.pagination !== null)
       ? PaginationResult.fromPartial(object.pagination)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseListPieceJointeByTypeRequest(): ListPieceJointeByTypeRequest {
+  return { typeDocument: 0, organisationId: "", entiteType: "", pagination: undefined };
+}
+
+export const ListPieceJointeByTypeRequest: MessageFns<ListPieceJointeByTypeRequest> = {
+  encode(message: ListPieceJointeByTypeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.typeDocument !== 0) {
+      writer.uint32(8).int32(message.typeDocument);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    if (message.entiteType !== "") {
+      writer.uint32(26).string(message.entiteType);
+    }
+    if (message.pagination !== undefined) {
+      Pagination.encode(message.pagination, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListPieceJointeByTypeRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListPieceJointeByTypeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.typeDocument = reader.int32() as any;
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.entiteType = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.pagination = Pagination.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListPieceJointeByTypeRequest {
+    return {
+      typeDocument: isSet(object.typeDocument)
+        ? typeDocumentFromJSON(object.typeDocument)
+        : isSet(object.type_document)
+        ? typeDocumentFromJSON(object.type_document)
+        : 0,
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      entiteType: isSet(object.entiteType)
+        ? globalThis.String(object.entiteType)
+        : isSet(object.entite_type)
+        ? globalThis.String(object.entite_type)
+        : "",
+      pagination: isSet(object.pagination) ? Pagination.fromJSON(object.pagination) : undefined,
+    };
+  },
+
+  toJSON(message: ListPieceJointeByTypeRequest): unknown {
+    const obj: any = {};
+    if (message.typeDocument !== 0) {
+      obj.typeDocument = typeDocumentToJSON(message.typeDocument);
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.entiteType !== "") {
+      obj.entiteType = message.entiteType;
+    }
+    if (message.pagination !== undefined) {
+      obj.pagination = Pagination.toJSON(message.pagination);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListPieceJointeByTypeRequest>, I>>(base?: I): ListPieceJointeByTypeRequest {
+    return ListPieceJointeByTypeRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListPieceJointeByTypeRequest>, I>>(object: I): ListPieceJointeByTypeRequest {
+    const message = createBaseListPieceJointeByTypeRequest();
+    message.typeDocument = object.typeDocument ?? 0;
+    message.organisationId = object.organisationId ?? "";
+    message.entiteType = object.entiteType ?? "";
+    message.pagination = (object.pagination !== undefined && object.pagination !== null)
+      ? Pagination.fromPartial(object.pagination)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseGetVersionHistoryRequest(): GetVersionHistoryRequest {
+  return { parentId: "" };
+}
+
+export const GetVersionHistoryRequest: MessageFns<GetVersionHistoryRequest> = {
+  encode(message: GetVersionHistoryRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.parentId !== "") {
+      writer.uint32(10).string(message.parentId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetVersionHistoryRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetVersionHistoryRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.parentId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetVersionHistoryRequest {
+    return {
+      parentId: isSet(object.parentId)
+        ? globalThis.String(object.parentId)
+        : isSet(object.parent_id)
+        ? globalThis.String(object.parent_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetVersionHistoryRequest): unknown {
+    const obj: any = {};
+    if (message.parentId !== "") {
+      obj.parentId = message.parentId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetVersionHistoryRequest>, I>>(base?: I): GetVersionHistoryRequest {
+    return GetVersionHistoryRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetVersionHistoryRequest>, I>>(object: I): GetVersionHistoryRequest {
+    const message = createBaseGetVersionHistoryRequest();
+    message.parentId = object.parentId ?? "";
+    return message;
+  },
+};
+
+function createBaseDocumentAuditLog(): DocumentAuditLog {
+  return {
+    id: "",
+    documentId: "",
+    organisationId: "",
+    action: "",
+    userId: "",
+    userName: "",
+    ipAddress: "",
+    timestamp: "",
+  };
+}
+
+export const DocumentAuditLog: MessageFns<DocumentAuditLog> = {
+  encode(message: DocumentAuditLog, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.documentId !== "") {
+      writer.uint32(18).string(message.documentId);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(26).string(message.organisationId);
+    }
+    if (message.action !== "") {
+      writer.uint32(34).string(message.action);
+    }
+    if (message.userId !== "") {
+      writer.uint32(42).string(message.userId);
+    }
+    if (message.userName !== "") {
+      writer.uint32(50).string(message.userName);
+    }
+    if (message.ipAddress !== "") {
+      writer.uint32(58).string(message.ipAddress);
+    }
+    if (message.timestamp !== "") {
+      writer.uint32(66).string(message.timestamp);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DocumentAuditLog {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDocumentAuditLog();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.documentId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.action = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.userName = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.ipAddress = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.timestamp = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DocumentAuditLog {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      documentId: isSet(object.documentId)
+        ? globalThis.String(object.documentId)
+        : isSet(object.document_id)
+        ? globalThis.String(object.document_id)
+        : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      action: isSet(object.action) ? globalThis.String(object.action) : "",
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      userName: isSet(object.userName)
+        ? globalThis.String(object.userName)
+        : isSet(object.user_name)
+        ? globalThis.String(object.user_name)
+        : "",
+      ipAddress: isSet(object.ipAddress)
+        ? globalThis.String(object.ipAddress)
+        : isSet(object.ip_address)
+        ? globalThis.String(object.ip_address)
+        : "",
+      timestamp: isSet(object.timestamp) ? globalThis.String(object.timestamp) : "",
+    };
+  },
+
+  toJSON(message: DocumentAuditLog): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.documentId !== "") {
+      obj.documentId = message.documentId;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.action !== "") {
+      obj.action = message.action;
+    }
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.userName !== "") {
+      obj.userName = message.userName;
+    }
+    if (message.ipAddress !== "") {
+      obj.ipAddress = message.ipAddress;
+    }
+    if (message.timestamp !== "") {
+      obj.timestamp = message.timestamp;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DocumentAuditLog>, I>>(base?: I): DocumentAuditLog {
+    return DocumentAuditLog.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DocumentAuditLog>, I>>(object: I): DocumentAuditLog {
+    const message = createBaseDocumentAuditLog();
+    message.id = object.id ?? "";
+    message.documentId = object.documentId ?? "";
+    message.organisationId = object.organisationId ?? "";
+    message.action = object.action ?? "";
+    message.userId = object.userId ?? "";
+    message.userName = object.userName ?? "";
+    message.ipAddress = object.ipAddress ?? "";
+    message.timestamp = object.timestamp ?? "";
+    return message;
+  },
+};
+
+function createBaseLogDocumentAccessRequest(): LogDocumentAccessRequest {
+  return { documentId: "", organisationId: "", action: "", userId: "", userName: "", ipAddress: "" };
+}
+
+export const LogDocumentAccessRequest: MessageFns<LogDocumentAccessRequest> = {
+  encode(message: LogDocumentAccessRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.documentId !== "") {
+      writer.uint32(10).string(message.documentId);
+    }
+    if (message.organisationId !== "") {
+      writer.uint32(18).string(message.organisationId);
+    }
+    if (message.action !== "") {
+      writer.uint32(26).string(message.action);
+    }
+    if (message.userId !== "") {
+      writer.uint32(34).string(message.userId);
+    }
+    if (message.userName !== "") {
+      writer.uint32(42).string(message.userName);
+    }
+    if (message.ipAddress !== "") {
+      writer.uint32(50).string(message.ipAddress);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LogDocumentAccessRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLogDocumentAccessRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.documentId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.organisationId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.action = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.userName = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.ipAddress = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LogDocumentAccessRequest {
+    return {
+      documentId: isSet(object.documentId)
+        ? globalThis.String(object.documentId)
+        : isSet(object.document_id)
+        ? globalThis.String(object.document_id)
+        : "",
+      organisationId: isSet(object.organisationId)
+        ? globalThis.String(object.organisationId)
+        : isSet(object.organisation_id)
+        ? globalThis.String(object.organisation_id)
+        : "",
+      action: isSet(object.action) ? globalThis.String(object.action) : "",
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      userName: isSet(object.userName)
+        ? globalThis.String(object.userName)
+        : isSet(object.user_name)
+        ? globalThis.String(object.user_name)
+        : "",
+      ipAddress: isSet(object.ipAddress)
+        ? globalThis.String(object.ipAddress)
+        : isSet(object.ip_address)
+        ? globalThis.String(object.ip_address)
+        : "",
+    };
+  },
+
+  toJSON(message: LogDocumentAccessRequest): unknown {
+    const obj: any = {};
+    if (message.documentId !== "") {
+      obj.documentId = message.documentId;
+    }
+    if (message.organisationId !== "") {
+      obj.organisationId = message.organisationId;
+    }
+    if (message.action !== "") {
+      obj.action = message.action;
+    }
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.userName !== "") {
+      obj.userName = message.userName;
+    }
+    if (message.ipAddress !== "") {
+      obj.ipAddress = message.ipAddress;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LogDocumentAccessRequest>, I>>(base?: I): LogDocumentAccessRequest {
+    return LogDocumentAccessRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LogDocumentAccessRequest>, I>>(object: I): LogDocumentAccessRequest {
+    const message = createBaseLogDocumentAccessRequest();
+    message.documentId = object.documentId ?? "";
+    message.organisationId = object.organisationId ?? "";
+    message.action = object.action ?? "";
+    message.userId = object.userId ?? "";
+    message.userName = object.userName ?? "";
+    message.ipAddress = object.ipAddress ?? "";
+    return message;
+  },
+};
+
+function createBaseLogDocumentAccessResponse(): LogDocumentAccessResponse {
+  return { success: false, log: undefined };
+}
+
+export const LogDocumentAccessResponse: MessageFns<LogDocumentAccessResponse> = {
+  encode(message: LogDocumentAccessResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.log !== undefined) {
+      DocumentAuditLog.encode(message.log, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LogDocumentAccessResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLogDocumentAccessResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.log = DocumentAuditLog.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LogDocumentAccessResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      log: isSet(object.log) ? DocumentAuditLog.fromJSON(object.log) : undefined,
+    };
+  },
+
+  toJSON(message: LogDocumentAccessResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.log !== undefined) {
+      obj.log = DocumentAuditLog.toJSON(message.log);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LogDocumentAccessResponse>, I>>(base?: I): LogDocumentAccessResponse {
+    return LogDocumentAccessResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LogDocumentAccessResponse>, I>>(object: I): LogDocumentAccessResponse {
+    const message = createBaseLogDocumentAccessResponse();
+    message.success = object.success ?? false;
+    message.log = (object.log !== undefined && object.log !== null)
+      ? DocumentAuditLog.fromPartial(object.log)
       : undefined;
     return message;
   },
@@ -3578,6 +4473,39 @@ export const PieceJointeServiceService = {
     responseSerialize: (value: DeleteResponse): Buffer => Buffer.from(DeleteResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): DeleteResponse => DeleteResponse.decode(value),
   },
+  listByType: {
+    path: "/documents.PieceJointeService/ListByType",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: ListPieceJointeByTypeRequest): Buffer =>
+      Buffer.from(ListPieceJointeByTypeRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListPieceJointeByTypeRequest => ListPieceJointeByTypeRequest.decode(value),
+    responseSerialize: (value: ListPieceJointeResponse): Buffer =>
+      Buffer.from(ListPieceJointeResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListPieceJointeResponse => ListPieceJointeResponse.decode(value),
+  },
+  getVersionHistory: {
+    path: "/documents.PieceJointeService/GetVersionHistory",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetVersionHistoryRequest): Buffer =>
+      Buffer.from(GetVersionHistoryRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetVersionHistoryRequest => GetVersionHistoryRequest.decode(value),
+    responseSerialize: (value: ListPieceJointeResponse): Buffer =>
+      Buffer.from(ListPieceJointeResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ListPieceJointeResponse => ListPieceJointeResponse.decode(value),
+  },
+  logAccess: {
+    path: "/documents.PieceJointeService/LogAccess",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: LogDocumentAccessRequest): Buffer =>
+      Buffer.from(LogDocumentAccessRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): LogDocumentAccessRequest => LogDocumentAccessRequest.decode(value),
+    responseSerialize: (value: LogDocumentAccessResponse): Buffer =>
+      Buffer.from(LogDocumentAccessResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): LogDocumentAccessResponse => LogDocumentAccessResponse.decode(value),
+  },
 } as const;
 
 export interface PieceJointeServiceServer extends UntypedServiceImplementation {
@@ -3587,6 +4515,9 @@ export interface PieceJointeServiceServer extends UntypedServiceImplementation {
   list: handleUnaryCall<ListPieceJointeRequest, ListPieceJointeResponse>;
   listByEntite: handleUnaryCall<ListPieceJointeByEntiteRequest, ListPieceJointeResponse>;
   delete: handleUnaryCall<DeletePieceJointeRequest, DeleteResponse>;
+  listByType: handleUnaryCall<ListPieceJointeByTypeRequest, ListPieceJointeResponse>;
+  getVersionHistory: handleUnaryCall<GetVersionHistoryRequest, ListPieceJointeResponse>;
+  logAccess: handleUnaryCall<LogDocumentAccessRequest, LogDocumentAccessResponse>;
 }
 
 /** ========== BOITE MAIL SERVICE ========== */

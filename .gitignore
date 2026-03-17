@@ -116,3 +116,23 @@ clone/
 # OBSOLETE DIRECTORIES (DO NOT USE)
 # ============================================
 backend/
+
+# ============================================
+# AI AGENT WORKING FILES (local only)
+# ============================================
+.sisyphus/
+.sisyphusevidence/
+.sisyphusplans/
+
+# ============================================
+# BUILD ARTIFACTS & TEMP (local)
+# ============================================
+build-output.txt
+nul
+
+# ============================================
+# RUNTIME UPLOADS (server data, not source)
+# ============================================
+uploads/
+**/uploads/
+temp-build.txt

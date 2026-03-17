@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { ContratEntity } from './contrat.entity';
+import type { ContratEntity } from './contrat.entity';
 
 @Entity('historique_statut_contrat')
 export class HistoriqueStatutContratEntity {
@@ -32,7 +32,7 @@ export class HistoriqueStatutContratEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => ContratEntity, (contrat) => contrat.historique)
+  @ManyToOne('ContratEntity', 'historique')
   @JoinColumn({ name: 'contrat_id' })
   contrat: ContratEntity;
 }

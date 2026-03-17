@@ -1,0 +1,32 @@
+services:
+  crm-service-finance:
+    build:
+      context: ../..
+      dockerfile: services/service-finance/Dockerfile
+      target: production
+    container_name: staging-crm-service-finance
+    ports:
+      - "127.0.0.1:3414:3059"
+    env_file:
+      - ../../services/service-finance/.env.staging
+    environment:
+      - NODE_PATH=/app/services/service-finance/node_modules
+      - DATABASE_URL=postgresql://postgres:postgres@staging-crm-postgres:5432/staging_finance
+      - MIGRATIONS_RUN=false
+      - REDIS_HOST=staging-crm-redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crm-staging-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3059, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  crm-staging-network:

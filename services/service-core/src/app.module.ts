@@ -41,7 +41,7 @@ import { DepanssurModule } from './depanssur.module';
         database: configService.get('DB_DATABASE', 'core_db'),
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
-        synchronize: configService.get('NODE_ENV') !== 'production',
+        synchronize: configService.get<string>('DB_SYNCHRONIZE', 'false') === 'true',
         migrationsRun: configService.get('MIGRATIONS_RUN', 'true') === 'true',
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get('NODE_ENV') === 'development',

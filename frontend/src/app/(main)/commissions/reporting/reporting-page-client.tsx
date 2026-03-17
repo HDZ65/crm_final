@@ -79,7 +79,7 @@ export function ReportingPageClient() {
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
               <AskAiCardButton
-                aiPrompt={`Analyse les métriques de commissions: CA total ${kpis.brut}€, ${kpis.volume} commissions. Tendances et anomalies. Reprises: ${kpis.reprises}€ (${kpis.tauxReprise}%).`}
+                prompt={`Analyse les métriques de commissions: CA total ${kpis.brut}€, ${kpis.volume} commissions. Tendances et anomalies. Reprises: ${kpis.reprises}€ (${kpis.tauxReprise}%).`}
               />
             </div>
           </CardHeader>

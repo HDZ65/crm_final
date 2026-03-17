@@ -164,8 +164,10 @@ describe('DunningMaxRetriesExceededHandler', () => {
     };
 
     const imsClient = new MockImsClientService();
+    const mockNatsService = { subscribe: jest.fn() };
 
     const handler = new DunningMaxRetriesExceededHandler(
+      mockNatsService as any,
       scheduleRepository as any,
       imsClient,
     );
@@ -200,8 +202,10 @@ describe('DunningMaxRetriesExceededHandler', () => {
     };
 
     const imsClient = new MockImsClientService();
+    const mockNatsService = { subscribe: jest.fn() };
 
     const handler = new DunningMaxRetriesExceededHandler(
+      mockNatsService as any,
       scheduleRepository as any,
       imsClient,
     );

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package events;
+
+message EcheanceEncaisseeEvent {
+  string echeance_id = 1;
+  string contrat_id = 2;
+  string organisation_id = 3;
+  double montant = 4;
+  string date_encaissement = 5;
+}

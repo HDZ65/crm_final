@@ -9,7 +9,9 @@ import type {
   BoiteMail,
   ListBoiteMailResponse,
   TestConnectionResponse,
+  DocumentAuditLog,
 } from "@proto/documents/documents";
+import { TypeDocument } from "@proto/documents/documents";
 
 // ============================================================================
 // PieceJointe Actions
@@ -67,10 +69,23 @@ export async function createPieceJointeAction(input: {
   entiteType: string;
   entiteId: string;
   uploadedBy: string;
+  typeDocument?: TypeDocument;
+  organisationId?: string;
 }): Promise<ActionResult<PieceJointe>> {
   try {
-    const data = await piecesJointes.create(input);
+    const data = await piecesJointes.create({
+      nomFichier: input.nomFichier,
+      url: input.url,
+      typeMime: input.typeMime,
+      taille: input.taille,
+      entiteType: input.entiteType,
+      entiteId: input.entiteId,
+      uploadedBy: input.uploadedBy,
+      typeDocument: input.typeDocument ?? TypeDocument.AUTRE,
+      organisationId: input.organisationId ?? "",
+    });
     revalidatePath("/clients");
+    revalidatePath("/documents");
     return { data, error: null };
   } catch (err) {
     console.error("[createPieceJointe] gRPC error:", err);
@@ -105,6 +120,60 @@ export async function deletePieceJointeAction(id: string): Promise<ActionResult<
   } catch (err) {
     console.error("[deletePieceJointe] gRPC error:", err);
     return { data: null, error: err instanceof Error ? err.message : "Erreur lors de la suppression de la pièce jointe" };
+  }
+}
+
+// ============================================================================
+// GED (Document Management) Actions
+// ============================================================================
+
+export async function listDocumentsGED(params?: {
+  search?: string;
+  typeDocument?: TypeDocument;
+  organisationId?: string;
+}): Promise<ActionResult<ListPieceJointeResponse>> {
+  try {
+    const data = await piecesJointes.list({
+      search: params?.search || "",
+      typeMime: "",
+      pagination: undefined,
+    });
+    // Client-side filter by typeDocument if specified (until backend supports it)
+    if (params?.typeDocument !== undefined && data.pieces) {
+      data.pieces = data.pieces.filter(
+        (p) => p.typeDocument === params.typeDocument
+      );
+    }
+    if (params?.organisationId && data.pieces) {
+      data.pieces = data.pieces.filter(
+        (p) => p.organisationId === params.organisationId
+      );
+    }
+    return { data, error: null };
+  } catch (err) {
+    console.error("[listDocumentsGED] gRPC error:", err);
+    return { data: null, error: err instanceof Error ? err.message : "Erreur lors du chargement des documents" };
+  }
+}
+
+export async function getDocumentDownloadUrl(id: string): Promise<ActionResult<{ url: string }>> {
+  try {
+    const data = await piecesJointes.get({ id });
+    return { data: { url: data.url }, error: null };
+  } catch (err) {
+    console.error("[getDocumentDownloadUrl] gRPC error:", err);
+    return { data: null, error: err instanceof Error ? err.message : "Erreur lors de la récupération de l'URL" };
+  }
+}
+
+export async function deleteDocumentGED(id: string): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    await piecesJointes.delete({ id });
+    revalidatePath("/documents");
+    return { data: { success: true }, error: null };
+  } catch (err) {
+    console.error("[deleteDocumentGED] gRPC error:", err);
+    return { data: null, error: err instanceof Error ? err.message : "Erreur lors de la suppression du document" };
   }
 }
 

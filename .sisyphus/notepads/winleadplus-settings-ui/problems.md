@@ -1,2 +1,0 @@
-# Problems: WinLeadPlus Settings UI
-

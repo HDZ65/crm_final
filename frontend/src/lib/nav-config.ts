@@ -23,6 +23,9 @@ import {
   Zap,
   Smartphone,
   BookOpen,
+  BoxIcon,
+  Flame,
+  FileStack,
 } from "lucide-react"
 import { type LucideIcon } from "lucide-react"
 
@@ -124,6 +127,11 @@ export const NAV_FINANCE_VENTES_GROUP: NavGroup = {
       url: "/statistiques",
       icon: BarChart3,
     },
+    {
+      title: "Documents",
+      url: "/documents",
+      icon: FileStack,
+    },
   ],
 }
 
@@ -170,6 +178,16 @@ export const NAV_CATALOGUE_OPERATIONS_GROUP: NavGroup = {
       url: "/telecom",
       icon: Smartphone,
     },
+    {
+      title: "ReducBox",
+      url: "/reducbox",
+      icon: BoxIcon,
+    },
+    {
+      title: "Énergie",
+      url: "/energie",
+      icon: Flame,
+    },
   ],
 }
 
@@ -189,7 +207,7 @@ export const NAV_ADMIN_GROUP: NavGroup = {
     },
     {
       title: "Documentation",
-      url: "/docs",
+      url: `${process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:3405'}/api/docs`,
       icon: BookOpen,
       external: true,
     },
@@ -231,6 +249,7 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   "abonnements/plans": "Plans d'abonnement",
   "paiements": "Paiements",
   "statistiques": "Statistiques",
+  "documents": "Documents",
 
   // Catalogue & Opérations routes
   "catalogue": "Catalogue",
@@ -240,6 +259,8 @@ export const NAV_ROUTE_LABELS: Record<string, string> = {
   "depanssur/dossiers": "Dossiers",
   "depanssur/reporting": "Reporting",
   "telecom": "Télécom",
+  "reducbox": "ReducBox",
+  "energie": "Énergie",
 
   // Administration routes
   "parametres": "Paramètres",

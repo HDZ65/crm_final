@@ -405,22 +405,22 @@ export function WooCommercePageClient({
             Gérez les configurations, mappings produits et webhooks WooCommerce.
           </p>
         </div>
-        <AskAiCardButton
-          prompt="Analysez l'état de synchronisation WooCommerce : nombre de configurations actives, statut des mappings produits, événements webhook récents, et recommandations pour optimiser la synchronisation des données."
-          title="Analyser l'état de synchronisation WooCommerce"
-        />
       </div>
 
       {/* Configurations Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <CardTitle>Configurations WooCommerce</CardTitle>
               <CardDescription>
                 {configs.length} configuration{configs.length > 1 ? "s" : ""}
               </CardDescription>
             </div>
+            <AskAiCardButton
+              prompt="Analysez l'état de synchronisation WooCommerce : nombre de configurations actives, statut des mappings produits, événements webhook récents, et recommandations pour optimiser la synchronisation des données."
+              title="Analyser l'état de synchronisation WooCommerce"
+            />
             <div className="flex items-center gap-2">
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />

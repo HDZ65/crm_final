@@ -215,7 +215,7 @@ export function ValidationPageClient({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Validation ADV</CardTitle>
           <AskAiCardButton
-            aiPrompt={`Analyse les bordereaux en attente de validation (${bordereaux.length}). Montants: ${bordereaux.slice(0, 5).map(b => `${b.periode}: ${b.apporteurId}`).join(" | ")}. Identifie les priorités.`}
+            prompt={`Analyse les bordereaux en attente de validation (${bordereaux.length}). Montants: ${bordereaux.slice(0, 5).map(b => `${b.periode}: ${b.apporteurId}`).join(" | ")}. Identifie les priorités.`}
           />
         </CardHeader>
         <CardContent className="space-y-4">

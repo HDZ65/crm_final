@@ -51,6 +51,7 @@ import {
 
 // Cross-context dependencies
 import { ContratsModule } from './contrats.module';
+import { ContratService } from './infrastructure/persistence/typeorm/repositories/contrats';
 import { CommissionCalculationService } from './domain/commercial/services/commission-calculation.service';
 import { RepriseCalculationService } from './domain/commercial/services/reprise-calculation.service';
 import { RecurrenceGenerationService } from './domain/commercial/services/recurrence-generation.service';
@@ -62,6 +63,8 @@ import { GenererBordereauWorkflowService } from './domain/commercial/services/ge
 
 // NATS handlers
 import { DepanssurEventsHandler } from './infrastructure/messaging/nats/handlers/depanssur-events.handler';
+import { ContractTerminatedCommissionHandler } from './infrastructure/messaging/nats/handlers/contract-terminated-commission.handler';
+import { EcheanceEncaisseeHandler } from './infrastructure/messaging/nats/handlers/echeance-encaissee.handler';
 
 @Module({
   imports: [
@@ -125,8 +128,17 @@ import { DepanssurEventsHandler } from './infrastructure/messaging/nats/handlers
         commissionCalculationService: CommissionCalculationService,
         repriseCalculationService: RepriseCalculationService,
         recurrenceGenerationService: RecurrenceGenerationService,
+        contratService: ContratService,
       ) =>
         new GenererBordereauWorkflowService({
+          findCQStatusForContrat: async (contratId: string) => {
+            try {
+              const contrat = await contratService.findById(contratId);
+              return contrat?.statutCq ?? null;
+            } catch {
+              return null;
+            }
+          },
           findCommissionsForPeriode: async (input) => {
             const result = await commissionService.findAll(
               {
@@ -222,12 +234,15 @@ import { DepanssurEventsHandler } from './infrastructure/messaging/nats/handlers
         CommissionCalculationService,
         RepriseCalculationService,
         RecurrenceGenerationService,
+        ContratService,
       ],
     },
     ContestationWorkflowService,
     BordereauExportService,
     BordereauFileStorageService,
     DepanssurEventsHandler,
+    ContractTerminatedCommissionHandler,
+    EcheanceEncaisseeHandler,
     {
       provide: SnapshotKpiService,
       useFactory: (

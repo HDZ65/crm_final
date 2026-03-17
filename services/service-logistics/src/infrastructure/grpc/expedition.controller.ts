@@ -1,6 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import { NatsService } from '@crm/shared-kernel';
 import { ExpeditionService } from '../persistence/typeorm/repositories/logistics';
 import { MailevaService } from '../external/maileva';
 import type {
@@ -21,6 +22,7 @@ export class ExpeditionController {
   constructor(
     private readonly expeditionService: ExpeditionService,
     private readonly mailevaService: MailevaService,
+    private readonly natsService: NatsService,
   ) {}
 
   @GrpcMethod('LogisticsService', 'CreateExpedition')
@@ -119,11 +121,31 @@ export class ExpeditionController {
   async updateExpedition(data: UpdateExpeditionRequest): Promise<ExpeditionResponse> {
     this.logger.log(`UpdateExpedition: ${data.id}`);
 
+    // Fetch current expedition to detect status change
+    const currentExpedition = await this.expeditionService.findById(data.id);
+    if (!currentExpedition) {
+      throw new RpcException({ code: status.NOT_FOUND, message: 'Expedition not found' });
+    }
+    const previousStatus = currentExpedition.etat;
+
     const expedition = await this.expeditionService.update(data.id, {
       etat: data.etat,
       lieuActuel: data.lieu_actuel,
       dateLivraison: data.date_livraison ? new Date(data.date_livraison) : undefined,
     });
+
+    // Publish NATS event only if status actually changed (deduplication)
+    if (data.etat && data.etat !== previousStatus) {
+      await this.natsService.publish('crm.logistics.expedition.status_changed', {
+        expeditionId: expedition.id,
+        newStatus: expedition.etat,
+        trackingNumber: expedition.trackingNumber,
+        clientId: expedition.clientBaseId,
+      });
+      this.logger.log(
+        `Published expedition.status_changed: ${expedition.id} (${previousStatus} → ${expedition.etat})`,
+      );
+    }
 
     return this.toExpeditionResponse(expedition);
   }

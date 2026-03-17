@@ -152,11 +152,13 @@ export function PspIntegrationSection({
 
   return (
     <>
-      <Card className="md:col-span-2">
+      <Card className="group relative md:col-span-2 overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/20">
+        {/* Subtle gradient glow at top */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-600 ring-1 ring-emerald-200/50 dark:from-emerald-900 dark:to-emerald-800 dark:text-emerald-300 dark:ring-emerald-700/50">
                 <CreditCard className="size-5" />
               </div>
               <div>

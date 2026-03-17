@@ -7,6 +7,10 @@ import {
   OneToMany,
 } from 'typeorm';
 import type { AdresseEntity } from './adresse.entity';
+import { EncryptedColumnTransformer } from '../../../infrastructure/security/encrypted-column.transformer';
+import { EncryptionService } from '../../../infrastructure/security/encryption.service';
+
+const encryptionService = new EncryptionService();
 
 @Entity('clientbases')
 export class ClientBaseEntity {
@@ -76,10 +80,20 @@ export class ClientBaseEntity {
     @Column({ type: 'varchar', length: 50, nullable: true })
     civilite: string | null;
 
-    @Column({ name: 'iban', type: 'varchar', length: 34, nullable: true })
+    @Column({
+      name: 'iban',
+      type: 'text',
+      nullable: true,
+      transformer: new EncryptedColumnTransformer(encryptionService),
+    })
     iban: string | null;
 
-    @Column({ name: 'bic', type: 'varchar', length: 11, nullable: true })
+    @Column({
+      name: 'bic',
+      type: 'text',
+      nullable: true,
+      transformer: new EncryptedColumnTransformer(encryptionService),
+    })
     bic: string | null;
 
     @Column({ name: 'mandat_sepa', type: 'boolean', nullable: true })

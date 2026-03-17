@@ -11,12 +11,13 @@ services:
       - "traefik.http.routers.alex-front.rule=Host(`alex.local`)"
       - "traefik.http.services.alex-front.loadbalancer.server.port=3000"
     ports:
-      - "3070:3000" # host:container (3070 libre sur TRX50, accès via Traefik sur 8081)
+      - "127.0.0.1:3400:3000" # tailscale serve handles HTTPS termination
     env_file:
       - ../../frontend/.env.development
     environment:
       - NODE_OPTIONS=--max-old-space-size=4096
-      - WATCHPACK_POLLING=true
+      - NEXTAUTH_URL=https://finanssor-data-center-v1.tail446cc0.ts.net:3400
+      - NEXT_PUBLIC_WS_URL=https://finanssor-data-center-v1.tail446cc0.ts.net:3401
     # depends_on retiré : on utilise le postgres global déjà sain
     # volumes retirés : le serveur n'a pas accès à ton Desktop\crm_final local
     networks:
@@ -37,6 +38,26 @@ services:
           memory: 6G
         reservations:
           memory: 2G
+
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+          ignore:
+            - "node_modules/"
+            - ".next/"
+        - action: sync
+          path: ./frontend/public
+          target: /app/public
+        - action: sync+restart
+          path: ./frontend/next.config.ts
+          target: /app/next.config.ts
+        - action: sync+restart
+          path: ./frontend/.env.development
+          target: /app/.env.development
+        - action: rebuild
+          path: ./frontend/package.json
 
 networks:
   shared_dev_net:

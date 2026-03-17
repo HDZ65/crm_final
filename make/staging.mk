@@ -11,7 +11,7 @@
 	staging-frontend-up staging-frontend-down staging-frontend-logs staging-frontend-rebuild \
 	funnel-staging-on funnel-staging-off funnel-staging-status \
 	staging-service-core-logs staging-service-commercial-logs staging-service-finance-logs \
-	staging-service-engagement-logs staging-service-logistics-logs
+	staging-service-engagement-logs staging-service-logistics-logs staging-service-telecom-logs
 
 # ============================================================================
 # Compose File Definitions
@@ -23,6 +23,7 @@ STAGING_COMMERCIAL = $(STAGING_INFRA) -f compose/staging/service-commercial.yml
 STAGING_FINANCE = $(STAGING_INFRA) -f compose/staging/service-finance.yml
 STAGING_ENGAGEMENT = $(STAGING_INFRA) -f compose/staging/service-engagement.yml
 STAGING_LOGISTICS = $(STAGING_INFRA) -f compose/staging/service-logistics.yml
+STAGING_TELECOM = $(STAGING_INFRA) -f compose/staging/service-telecom.yml
 STAGING_FRONTEND = $(STAGING_INFRA) -f compose/staging/frontend.yml
 
 STAGING_ALL = $(STAGING_INFRA) \
@@ -30,6 +31,7 @@ STAGING_ALL = $(STAGING_INFRA) \
 	-f compose/staging/service-commercial.yml \
 	-f compose/staging/service-finance.yml \
 	-f compose/staging/service-engagement.yml \
+	-f compose/staging/service-telecom.yml \
 	-f compose/staging/service-logistics.yml \
 	-f compose/staging/frontend.yml
 
@@ -115,6 +117,9 @@ staging-service-engagement-logs:
 staging-service-logistics-logs:
 	$(STAGING_LOGISTICS) logs -f staging-crm-service-logistics
 
+staging-service-telecom-logs:
+	$(STAGING_TELECOM) logs -f staging-crm-service-telecom
+
 # ============================================================================
 # Staging Database Readiness
 # ============================================================================
@@ -128,6 +133,7 @@ staging-wait-for-dbs:
 		"staging-crm-commercial-db:commercial_db" \
 		"staging-crm-finance-db:finance_db" \
 		"staging-crm-engagement-db:engagement_db" \
+		"staging-crm-telecom-db:telecom_db" \
 		"staging-crm-logistics-db:logistics_db"; do \
 		container=$$(echo $$db | cut -d: -f1); \
 		dbname=$$(echo $$db | cut -d: -f2); \
@@ -159,6 +165,8 @@ staging-migrate-all:
 	docker exec staging-crm-service-finance bun run migration:run; \
 	echo "service-engagement..."; \
 	docker exec staging-crm-engagement bun run migration:run; \
+	echo "service-telecom..."; \
+	docker exec staging-crm-service-telecom bun run migration:run; \
 	echo "service-logistics..."; \
 	docker exec staging-crm-service-logistics bun run migration:run
 	@echo "=== Done ==="
@@ -172,6 +180,7 @@ staging-verify-migrations:
 		"staging-crm-service-commercial:service-commercial" \
 		"staging-crm-service-finance:service-finance" \
 		"staging-crm-engagement:service-engagement" \
+		"staging-crm-service-telecom:service-telecom" \
 		"staging-crm-service-logistics:service-logistics"; do \
 		container=$$(echo $$svc | cut -d: -f1); \
 		name=$$(echo $$svc | cut -d: -f2); \

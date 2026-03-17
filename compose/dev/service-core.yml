@@ -11,8 +11,8 @@ services:
       - "traefik.http.routers.alex-core.rule=Host(`alex-core.local`)"
       - "traefik.http.services.alex-core.loadbalancer.server.port=3052"
     ports:
-      - "50072:50052" # gRPC host:container (50072 libre sur TRX50)
-      - "3072:3052"   # HTTP host:container
+      - "3402:3052"   # HTTP per ports.yaml slot 4
+      # gRPC 50052 internal only (docker network)
     env_file:
       - ../../services/service-core/.env.development
     environment:
@@ -29,6 +29,16 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./services/service-core/src
+          target: /app/services/service-core/src
+          ignore:
+            - "node_modules/"
+            - "dist/"
+        - action: rebuild
+          path: ./services/service-core/package.json
 
 networks:
   shared_dev_net:

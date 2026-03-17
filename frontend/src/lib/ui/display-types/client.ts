@@ -47,11 +47,14 @@ export interface ComplianceInfo {
   gdprConsent: string
   gdprConsentVariant: "success" | "warning" | "error"
   language: string
+  source: string
+  canalAcquisition: string
 }
 
 // Informations bancaires
 export interface BankInfo {
   iban: string
+  bic: string
   sepaMandateStatus: string
   sepaMandateStatusVariant: "success" | "warning" | "error"
 }

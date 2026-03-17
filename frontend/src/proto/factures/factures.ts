@@ -86,40 +86,6 @@ export interface EmissionFacture {
   updatedAt: string;
 }
 
-export interface CreateEmissionFactureRequest {
-  code: string;
-  nom: string;
-  description: string;
-}
-
-export interface UpdateEmissionFactureRequest {
-  id: string;
-  code?: string | undefined;
-  nom?: string | undefined;
-  description?: string | undefined;
-}
-
-export interface GetEmissionFactureRequest {
-  id: string;
-}
-
-export interface ListEmissionsFactureRequest {
-  pagination: PaginationRequest | undefined;
-}
-
-export interface ListEmissionsFactureResponse {
-  emissions: EmissionFacture[];
-  pagination: PaginationResponse | undefined;
-}
-
-export interface DeleteEmissionFactureRequest {
-  id: string;
-}
-
-export interface DeleteEmissionFactureResponse {
-  success: boolean;
-}
-
 export interface LigneFacture {
   id: string;
   factureId: string;
@@ -268,6 +234,35 @@ export interface ValidateFactureResponse {
 
 export interface FinalizeFactureRequest {
   id: string;
+}
+
+export interface FactureSettings {
+  id: string;
+  societeId: string;
+  logoBase64: string;
+  logoMimeType: string;
+  primaryColor: string;
+  secondaryColor: string;
+  companyName: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  companySiret: string;
+  companyTvaNumber: string;
+  companyRcs: string;
+  companyCapital: string;
+  iban: string;
+  bic: string;
+  bankName: string;
+  headerText: string;
+  footerText: string;
+  legalMentions: string;
+  paymentTerms: string;
+  invoicePrefix: string;
+  showLogo: boolean;
+  logoPosition: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 function createBaseEmpty(): Empty {
@@ -1467,522 +1462,6 @@ export const EmissionFacture: MessageFns<EmissionFacture> = {
     message.description = object.description ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
-    return message;
-  },
-};
-
-function createBaseCreateEmissionFactureRequest(): CreateEmissionFactureRequest {
-  return { code: "", nom: "", description: "" };
-}
-
-export const CreateEmissionFactureRequest: MessageFns<CreateEmissionFactureRequest> = {
-  encode(message: CreateEmissionFactureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.code !== "") {
-      writer.uint32(10).string(message.code);
-    }
-    if (message.nom !== "") {
-      writer.uint32(18).string(message.nom);
-    }
-    if (message.description !== "") {
-      writer.uint32(26).string(message.description);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): CreateEmissionFactureRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateEmissionFactureRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.code = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.nom = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.description = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CreateEmissionFactureRequest {
-    return {
-      code: isSet(object.code) ? globalThis.String(object.code) : "",
-      nom: isSet(object.nom) ? globalThis.String(object.nom) : "",
-      description: isSet(object.description) ? globalThis.String(object.description) : "",
-    };
-  },
-
-  toJSON(message: CreateEmissionFactureRequest): unknown {
-    const obj: any = {};
-    if (message.code !== "") {
-      obj.code = message.code;
-    }
-    if (message.nom !== "") {
-      obj.nom = message.nom;
-    }
-    if (message.description !== "") {
-      obj.description = message.description;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CreateEmissionFactureRequest>, I>>(base?: I): CreateEmissionFactureRequest {
-    return CreateEmissionFactureRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CreateEmissionFactureRequest>, I>>(object: I): CreateEmissionFactureRequest {
-    const message = createBaseCreateEmissionFactureRequest();
-    message.code = object.code ?? "";
-    message.nom = object.nom ?? "";
-    message.description = object.description ?? "";
-    return message;
-  },
-};
-
-function createBaseUpdateEmissionFactureRequest(): UpdateEmissionFactureRequest {
-  return { id: "", code: undefined, nom: undefined, description: undefined };
-}
-
-export const UpdateEmissionFactureRequest: MessageFns<UpdateEmissionFactureRequest> = {
-  encode(message: UpdateEmissionFactureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.code !== undefined) {
-      writer.uint32(18).string(message.code);
-    }
-    if (message.nom !== undefined) {
-      writer.uint32(26).string(message.nom);
-    }
-    if (message.description !== undefined) {
-      writer.uint32(34).string(message.description);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): UpdateEmissionFactureRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUpdateEmissionFactureRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.code = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.nom = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.description = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): UpdateEmissionFactureRequest {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      code: isSet(object.code) ? globalThis.String(object.code) : undefined,
-      nom: isSet(object.nom) ? globalThis.String(object.nom) : undefined,
-      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
-    };
-  },
-
-  toJSON(message: UpdateEmissionFactureRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.code !== undefined) {
-      obj.code = message.code;
-    }
-    if (message.nom !== undefined) {
-      obj.nom = message.nom;
-    }
-    if (message.description !== undefined) {
-      obj.description = message.description;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<UpdateEmissionFactureRequest>, I>>(base?: I): UpdateEmissionFactureRequest {
-    return UpdateEmissionFactureRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<UpdateEmissionFactureRequest>, I>>(object: I): UpdateEmissionFactureRequest {
-    const message = createBaseUpdateEmissionFactureRequest();
-    message.id = object.id ?? "";
-    message.code = object.code ?? undefined;
-    message.nom = object.nom ?? undefined;
-    message.description = object.description ?? undefined;
-    return message;
-  },
-};
-
-function createBaseGetEmissionFactureRequest(): GetEmissionFactureRequest {
-  return { id: "" };
-}
-
-export const GetEmissionFactureRequest: MessageFns<GetEmissionFactureRequest> = {
-  encode(message: GetEmissionFactureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GetEmissionFactureRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetEmissionFactureRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetEmissionFactureRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: GetEmissionFactureRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetEmissionFactureRequest>, I>>(base?: I): GetEmissionFactureRequest {
-    return GetEmissionFactureRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetEmissionFactureRequest>, I>>(object: I): GetEmissionFactureRequest {
-    const message = createBaseGetEmissionFactureRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
-};
-
-function createBaseListEmissionsFactureRequest(): ListEmissionsFactureRequest {
-  return { pagination: undefined };
-}
-
-export const ListEmissionsFactureRequest: MessageFns<ListEmissionsFactureRequest> = {
-  encode(message: ListEmissionsFactureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.pagination !== undefined) {
-      PaginationRequest.encode(message.pagination, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ListEmissionsFactureRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseListEmissionsFactureRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.pagination = PaginationRequest.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ListEmissionsFactureRequest {
-    return { pagination: isSet(object.pagination) ? PaginationRequest.fromJSON(object.pagination) : undefined };
-  },
-
-  toJSON(message: ListEmissionsFactureRequest): unknown {
-    const obj: any = {};
-    if (message.pagination !== undefined) {
-      obj.pagination = PaginationRequest.toJSON(message.pagination);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListEmissionsFactureRequest>, I>>(base?: I): ListEmissionsFactureRequest {
-    return ListEmissionsFactureRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListEmissionsFactureRequest>, I>>(object: I): ListEmissionsFactureRequest {
-    const message = createBaseListEmissionsFactureRequest();
-    message.pagination = (object.pagination !== undefined && object.pagination !== null)
-      ? PaginationRequest.fromPartial(object.pagination)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseListEmissionsFactureResponse(): ListEmissionsFactureResponse {
-  return { emissions: [], pagination: undefined };
-}
-
-export const ListEmissionsFactureResponse: MessageFns<ListEmissionsFactureResponse> = {
-  encode(message: ListEmissionsFactureResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.emissions) {
-      EmissionFacture.encode(v!, writer.uint32(10).fork()).join();
-    }
-    if (message.pagination !== undefined) {
-      PaginationResponse.encode(message.pagination, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ListEmissionsFactureResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseListEmissionsFactureResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.emissions.push(EmissionFacture.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.pagination = PaginationResponse.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ListEmissionsFactureResponse {
-    return {
-      emissions: globalThis.Array.isArray(object?.emissions)
-        ? object.emissions.map((e: any) => EmissionFacture.fromJSON(e))
-        : [],
-      pagination: isSet(object.pagination) ? PaginationResponse.fromJSON(object.pagination) : undefined,
-    };
-  },
-
-  toJSON(message: ListEmissionsFactureResponse): unknown {
-    const obj: any = {};
-    if (message.emissions?.length) {
-      obj.emissions = message.emissions.map((e) => EmissionFacture.toJSON(e));
-    }
-    if (message.pagination !== undefined) {
-      obj.pagination = PaginationResponse.toJSON(message.pagination);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListEmissionsFactureResponse>, I>>(base?: I): ListEmissionsFactureResponse {
-    return ListEmissionsFactureResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListEmissionsFactureResponse>, I>>(object: I): ListEmissionsFactureResponse {
-    const message = createBaseListEmissionsFactureResponse();
-    message.emissions = object.emissions?.map((e) => EmissionFacture.fromPartial(e)) || [];
-    message.pagination = (object.pagination !== undefined && object.pagination !== null)
-      ? PaginationResponse.fromPartial(object.pagination)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseDeleteEmissionFactureRequest(): DeleteEmissionFactureRequest {
-  return { id: "" };
-}
-
-export const DeleteEmissionFactureRequest: MessageFns<DeleteEmissionFactureRequest> = {
-  encode(message: DeleteEmissionFactureRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): DeleteEmissionFactureRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDeleteEmissionFactureRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DeleteEmissionFactureRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: DeleteEmissionFactureRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<DeleteEmissionFactureRequest>, I>>(base?: I): DeleteEmissionFactureRequest {
-    return DeleteEmissionFactureRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<DeleteEmissionFactureRequest>, I>>(object: I): DeleteEmissionFactureRequest {
-    const message = createBaseDeleteEmissionFactureRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
-};
-
-function createBaseDeleteEmissionFactureResponse(): DeleteEmissionFactureResponse {
-  return { success: false };
-}
-
-export const DeleteEmissionFactureResponse: MessageFns<DeleteEmissionFactureResponse> = {
-  encode(message: DeleteEmissionFactureResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.success !== false) {
-      writer.uint32(8).bool(message.success);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): DeleteEmissionFactureResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDeleteEmissionFactureResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
-          }
-
-          message.success = reader.bool();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DeleteEmissionFactureResponse {
-    return { success: isSet(object.success) ? globalThis.Boolean(object.success) : false };
-  },
-
-  toJSON(message: DeleteEmissionFactureResponse): unknown {
-    const obj: any = {};
-    if (message.success !== false) {
-      obj.success = message.success;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<DeleteEmissionFactureResponse>, I>>(base?: I): DeleteEmissionFactureResponse {
-    return DeleteEmissionFactureResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<DeleteEmissionFactureResponse>, I>>(
-    object: I,
-  ): DeleteEmissionFactureResponse {
-    const message = createBaseDeleteEmissionFactureResponse();
-    message.success = object.success ?? false;
     return message;
   },
 };
@@ -4558,6 +4037,585 @@ export const FinalizeFactureRequest: MessageFns<FinalizeFactureRequest> = {
   },
 };
 
+function createBaseFactureSettings(): FactureSettings {
+  return {
+    id: "",
+    societeId: "",
+    logoBase64: "",
+    logoMimeType: "",
+    primaryColor: "",
+    secondaryColor: "",
+    companyName: "",
+    companyAddress: "",
+    companyPhone: "",
+    companyEmail: "",
+    companySiret: "",
+    companyTvaNumber: "",
+    companyRcs: "",
+    companyCapital: "",
+    iban: "",
+    bic: "",
+    bankName: "",
+    headerText: "",
+    footerText: "",
+    legalMentions: "",
+    paymentTerms: "",
+    invoicePrefix: "",
+    showLogo: false,
+    logoPosition: "",
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
+export const FactureSettings: MessageFns<FactureSettings> = {
+  encode(message: FactureSettings, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.societeId !== "") {
+      writer.uint32(18).string(message.societeId);
+    }
+    if (message.logoBase64 !== "") {
+      writer.uint32(26).string(message.logoBase64);
+    }
+    if (message.logoMimeType !== "") {
+      writer.uint32(34).string(message.logoMimeType);
+    }
+    if (message.primaryColor !== "") {
+      writer.uint32(42).string(message.primaryColor);
+    }
+    if (message.secondaryColor !== "") {
+      writer.uint32(50).string(message.secondaryColor);
+    }
+    if (message.companyName !== "") {
+      writer.uint32(58).string(message.companyName);
+    }
+    if (message.companyAddress !== "") {
+      writer.uint32(66).string(message.companyAddress);
+    }
+    if (message.companyPhone !== "") {
+      writer.uint32(74).string(message.companyPhone);
+    }
+    if (message.companyEmail !== "") {
+      writer.uint32(82).string(message.companyEmail);
+    }
+    if (message.companySiret !== "") {
+      writer.uint32(90).string(message.companySiret);
+    }
+    if (message.companyTvaNumber !== "") {
+      writer.uint32(98).string(message.companyTvaNumber);
+    }
+    if (message.companyRcs !== "") {
+      writer.uint32(106).string(message.companyRcs);
+    }
+    if (message.companyCapital !== "") {
+      writer.uint32(114).string(message.companyCapital);
+    }
+    if (message.iban !== "") {
+      writer.uint32(122).string(message.iban);
+    }
+    if (message.bic !== "") {
+      writer.uint32(130).string(message.bic);
+    }
+    if (message.bankName !== "") {
+      writer.uint32(138).string(message.bankName);
+    }
+    if (message.headerText !== "") {
+      writer.uint32(146).string(message.headerText);
+    }
+    if (message.footerText !== "") {
+      writer.uint32(154).string(message.footerText);
+    }
+    if (message.legalMentions !== "") {
+      writer.uint32(162).string(message.legalMentions);
+    }
+    if (message.paymentTerms !== "") {
+      writer.uint32(170).string(message.paymentTerms);
+    }
+    if (message.invoicePrefix !== "") {
+      writer.uint32(178).string(message.invoicePrefix);
+    }
+    if (message.showLogo !== false) {
+      writer.uint32(184).bool(message.showLogo);
+    }
+    if (message.logoPosition !== "") {
+      writer.uint32(194).string(message.logoPosition);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(202).string(message.createdAt);
+    }
+    if (message.updatedAt !== "") {
+      writer.uint32(210).string(message.updatedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FactureSettings {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFactureSettings();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.societeId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.logoBase64 = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.logoMimeType = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.primaryColor = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.secondaryColor = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.companyName = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.companyAddress = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.companyPhone = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.companyEmail = reader.string();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.companySiret = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.companyTvaNumber = reader.string();
+          continue;
+        }
+        case 13: {
+          if (tag !== 106) {
+            break;
+          }
+
+          message.companyRcs = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.companyCapital = reader.string();
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.iban = reader.string();
+          continue;
+        }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.bic = reader.string();
+          continue;
+        }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.bankName = reader.string();
+          continue;
+        }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.headerText = reader.string();
+          continue;
+        }
+        case 19: {
+          if (tag !== 154) {
+            break;
+          }
+
+          message.footerText = reader.string();
+          continue;
+        }
+        case 20: {
+          if (tag !== 162) {
+            break;
+          }
+
+          message.legalMentions = reader.string();
+          continue;
+        }
+        case 21: {
+          if (tag !== 170) {
+            break;
+          }
+
+          message.paymentTerms = reader.string();
+          continue;
+        }
+        case 22: {
+          if (tag !== 178) {
+            break;
+          }
+
+          message.invoicePrefix = reader.string();
+          continue;
+        }
+        case 23: {
+          if (tag !== 184) {
+            break;
+          }
+
+          message.showLogo = reader.bool();
+          continue;
+        }
+        case 24: {
+          if (tag !== 194) {
+            break;
+          }
+
+          message.logoPosition = reader.string();
+          continue;
+        }
+        case 25: {
+          if (tag !== 202) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+        case 26: {
+          if (tag !== 210) {
+            break;
+          }
+
+          message.updatedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FactureSettings {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      societeId: isSet(object.societeId)
+        ? globalThis.String(object.societeId)
+        : isSet(object.societe_id)
+        ? globalThis.String(object.societe_id)
+        : "",
+      logoBase64: isSet(object.logoBase64)
+        ? globalThis.String(object.logoBase64)
+        : isSet(object.logo_base64)
+        ? globalThis.String(object.logo_base64)
+        : "",
+      logoMimeType: isSet(object.logoMimeType)
+        ? globalThis.String(object.logoMimeType)
+        : isSet(object.logo_mime_type)
+        ? globalThis.String(object.logo_mime_type)
+        : "",
+      primaryColor: isSet(object.primaryColor)
+        ? globalThis.String(object.primaryColor)
+        : isSet(object.primary_color)
+        ? globalThis.String(object.primary_color)
+        : "",
+      secondaryColor: isSet(object.secondaryColor)
+        ? globalThis.String(object.secondaryColor)
+        : isSet(object.secondary_color)
+        ? globalThis.String(object.secondary_color)
+        : "",
+      companyName: isSet(object.companyName)
+        ? globalThis.String(object.companyName)
+        : isSet(object.company_name)
+        ? globalThis.String(object.company_name)
+        : "",
+      companyAddress: isSet(object.companyAddress)
+        ? globalThis.String(object.companyAddress)
+        : isSet(object.company_address)
+        ? globalThis.String(object.company_address)
+        : "",
+      companyPhone: isSet(object.companyPhone)
+        ? globalThis.String(object.companyPhone)
+        : isSet(object.company_phone)
+        ? globalThis.String(object.company_phone)
+        : "",
+      companyEmail: isSet(object.companyEmail)
+        ? globalThis.String(object.companyEmail)
+        : isSet(object.company_email)
+        ? globalThis.String(object.company_email)
+        : "",
+      companySiret: isSet(object.companySiret)
+        ? globalThis.String(object.companySiret)
+        : isSet(object.company_siret)
+        ? globalThis.String(object.company_siret)
+        : "",
+      companyTvaNumber: isSet(object.companyTvaNumber)
+        ? globalThis.String(object.companyTvaNumber)
+        : isSet(object.company_tva_number)
+        ? globalThis.String(object.company_tva_number)
+        : "",
+      companyRcs: isSet(object.companyRcs)
+        ? globalThis.String(object.companyRcs)
+        : isSet(object.company_rcs)
+        ? globalThis.String(object.company_rcs)
+        : "",
+      companyCapital: isSet(object.companyCapital)
+        ? globalThis.String(object.companyCapital)
+        : isSet(object.company_capital)
+        ? globalThis.String(object.company_capital)
+        : "",
+      iban: isSet(object.iban) ? globalThis.String(object.iban) : "",
+      bic: isSet(object.bic) ? globalThis.String(object.bic) : "",
+      bankName: isSet(object.bankName)
+        ? globalThis.String(object.bankName)
+        : isSet(object.bank_name)
+        ? globalThis.String(object.bank_name)
+        : "",
+      headerText: isSet(object.headerText)
+        ? globalThis.String(object.headerText)
+        : isSet(object.header_text)
+        ? globalThis.String(object.header_text)
+        : "",
+      footerText: isSet(object.footerText)
+        ? globalThis.String(object.footerText)
+        : isSet(object.footer_text)
+        ? globalThis.String(object.footer_text)
+        : "",
+      legalMentions: isSet(object.legalMentions)
+        ? globalThis.String(object.legalMentions)
+        : isSet(object.legal_mentions)
+        ? globalThis.String(object.legal_mentions)
+        : "",
+      paymentTerms: isSet(object.paymentTerms)
+        ? globalThis.String(object.paymentTerms)
+        : isSet(object.payment_terms)
+        ? globalThis.String(object.payment_terms)
+        : "",
+      invoicePrefix: isSet(object.invoicePrefix)
+        ? globalThis.String(object.invoicePrefix)
+        : isSet(object.invoice_prefix)
+        ? globalThis.String(object.invoice_prefix)
+        : "",
+      showLogo: isSet(object.showLogo)
+        ? globalThis.Boolean(object.showLogo)
+        : isSet(object.show_logo)
+        ? globalThis.Boolean(object.show_logo)
+        : false,
+      logoPosition: isSet(object.logoPosition)
+        ? globalThis.String(object.logoPosition)
+        : isSet(object.logo_position)
+        ? globalThis.String(object.logo_position)
+        : "",
+      createdAt: isSet(object.createdAt)
+        ? globalThis.String(object.createdAt)
+        : isSet(object.created_at)
+        ? globalThis.String(object.created_at)
+        : "",
+      updatedAt: isSet(object.updatedAt)
+        ? globalThis.String(object.updatedAt)
+        : isSet(object.updated_at)
+        ? globalThis.String(object.updated_at)
+        : "",
+    };
+  },
+
+  toJSON(message: FactureSettings): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.societeId !== "") {
+      obj.societeId = message.societeId;
+    }
+    if (message.logoBase64 !== "") {
+      obj.logoBase64 = message.logoBase64;
+    }
+    if (message.logoMimeType !== "") {
+      obj.logoMimeType = message.logoMimeType;
+    }
+    if (message.primaryColor !== "") {
+      obj.primaryColor = message.primaryColor;
+    }
+    if (message.secondaryColor !== "") {
+      obj.secondaryColor = message.secondaryColor;
+    }
+    if (message.companyName !== "") {
+      obj.companyName = message.companyName;
+    }
+    if (message.companyAddress !== "") {
+      obj.companyAddress = message.companyAddress;
+    }
+    if (message.companyPhone !== "") {
+      obj.companyPhone = message.companyPhone;
+    }
+    if (message.companyEmail !== "") {
+      obj.companyEmail = message.companyEmail;
+    }
+    if (message.companySiret !== "") {
+      obj.companySiret = message.companySiret;
+    }
+    if (message.companyTvaNumber !== "") {
+      obj.companyTvaNumber = message.companyTvaNumber;
+    }
+    if (message.companyRcs !== "") {
+      obj.companyRcs = message.companyRcs;
+    }
+    if (message.companyCapital !== "") {
+      obj.companyCapital = message.companyCapital;
+    }
+    if (message.iban !== "") {
+      obj.iban = message.iban;
+    }
+    if (message.bic !== "") {
+      obj.bic = message.bic;
+    }
+    if (message.bankName !== "") {
+      obj.bankName = message.bankName;
+    }
+    if (message.headerText !== "") {
+      obj.headerText = message.headerText;
+    }
+    if (message.footerText !== "") {
+      obj.footerText = message.footerText;
+    }
+    if (message.legalMentions !== "") {
+      obj.legalMentions = message.legalMentions;
+    }
+    if (message.paymentTerms !== "") {
+      obj.paymentTerms = message.paymentTerms;
+    }
+    if (message.invoicePrefix !== "") {
+      obj.invoicePrefix = message.invoicePrefix;
+    }
+    if (message.showLogo !== false) {
+      obj.showLogo = message.showLogo;
+    }
+    if (message.logoPosition !== "") {
+      obj.logoPosition = message.logoPosition;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    if (message.updatedAt !== "") {
+      obj.updatedAt = message.updatedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FactureSettings>, I>>(base?: I): FactureSettings {
+    return FactureSettings.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FactureSettings>, I>>(object: I): FactureSettings {
+    const message = createBaseFactureSettings();
+    message.id = object.id ?? "";
+    message.societeId = object.societeId ?? "";
+    message.logoBase64 = object.logoBase64 ?? "";
+    message.logoMimeType = object.logoMimeType ?? "";
+    message.primaryColor = object.primaryColor ?? "";
+    message.secondaryColor = object.secondaryColor ?? "";
+    message.companyName = object.companyName ?? "";
+    message.companyAddress = object.companyAddress ?? "";
+    message.companyPhone = object.companyPhone ?? "";
+    message.companyEmail = object.companyEmail ?? "";
+    message.companySiret = object.companySiret ?? "";
+    message.companyTvaNumber = object.companyTvaNumber ?? "";
+    message.companyRcs = object.companyRcs ?? "";
+    message.companyCapital = object.companyCapital ?? "";
+    message.iban = object.iban ?? "";
+    message.bic = object.bic ?? "";
+    message.bankName = object.bankName ?? "";
+    message.headerText = object.headerText ?? "";
+    message.footerText = object.footerText ?? "";
+    message.legalMentions = object.legalMentions ?? "";
+    message.paymentTerms = object.paymentTerms ?? "";
+    message.invoicePrefix = object.invoicePrefix ?? "";
+    message.showLogo = object.showLogo ?? false;
+    message.logoPosition = object.logoPosition ?? "";
+    message.createdAt = object.createdAt ?? "";
+    message.updatedAt = object.updatedAt ?? "";
+    return message;
+  },
+};
+
 export type StatutFactureServiceService = typeof StatutFactureServiceService;
 export const StatutFactureServiceService = {
   create: {
@@ -4631,70 +4689,6 @@ export interface StatutFactureServiceServer extends UntypedServiceImplementation
   getByCode: handleUnaryCall<GetStatutFactureByCodeRequest, StatutFacture>;
   list: handleUnaryCall<ListStatutsFactureRequest, ListStatutsFactureResponse>;
   delete: handleUnaryCall<DeleteStatutFactureRequest, DeleteStatutFactureResponse>;
-}
-
-export type EmissionFactureServiceService = typeof EmissionFactureServiceService;
-export const EmissionFactureServiceService = {
-  create: {
-    path: "/factures.EmissionFactureService/Create",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: CreateEmissionFactureRequest): Buffer =>
-      Buffer.from(CreateEmissionFactureRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): CreateEmissionFactureRequest => CreateEmissionFactureRequest.decode(value),
-    responseSerialize: (value: EmissionFacture): Buffer => Buffer.from(EmissionFacture.encode(value).finish()),
-    responseDeserialize: (value: Buffer): EmissionFacture => EmissionFacture.decode(value),
-  },
-  update: {
-    path: "/factures.EmissionFactureService/Update",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: UpdateEmissionFactureRequest): Buffer =>
-      Buffer.from(UpdateEmissionFactureRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UpdateEmissionFactureRequest => UpdateEmissionFactureRequest.decode(value),
-    responseSerialize: (value: EmissionFacture): Buffer => Buffer.from(EmissionFacture.encode(value).finish()),
-    responseDeserialize: (value: Buffer): EmissionFacture => EmissionFacture.decode(value),
-  },
-  get: {
-    path: "/factures.EmissionFactureService/Get",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: GetEmissionFactureRequest): Buffer =>
-      Buffer.from(GetEmissionFactureRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetEmissionFactureRequest => GetEmissionFactureRequest.decode(value),
-    responseSerialize: (value: EmissionFacture): Buffer => Buffer.from(EmissionFacture.encode(value).finish()),
-    responseDeserialize: (value: Buffer): EmissionFacture => EmissionFacture.decode(value),
-  },
-  list: {
-    path: "/factures.EmissionFactureService/List",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: ListEmissionsFactureRequest): Buffer =>
-      Buffer.from(ListEmissionsFactureRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): ListEmissionsFactureRequest => ListEmissionsFactureRequest.decode(value),
-    responseSerialize: (value: ListEmissionsFactureResponse): Buffer =>
-      Buffer.from(ListEmissionsFactureResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): ListEmissionsFactureResponse => ListEmissionsFactureResponse.decode(value),
-  },
-  delete: {
-    path: "/factures.EmissionFactureService/Delete",
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value: DeleteEmissionFactureRequest): Buffer =>
-      Buffer.from(DeleteEmissionFactureRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): DeleteEmissionFactureRequest => DeleteEmissionFactureRequest.decode(value),
-    responseSerialize: (value: DeleteEmissionFactureResponse): Buffer =>
-      Buffer.from(DeleteEmissionFactureResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): DeleteEmissionFactureResponse => DeleteEmissionFactureResponse.decode(value),
-  },
-} as const;
-
-export interface EmissionFactureServiceServer extends UntypedServiceImplementation {
-  create: handleUnaryCall<CreateEmissionFactureRequest, EmissionFacture>;
-  update: handleUnaryCall<UpdateEmissionFactureRequest, EmissionFacture>;
-  get: handleUnaryCall<GetEmissionFactureRequest, EmissionFacture>;
-  list: handleUnaryCall<ListEmissionsFactureRequest, ListEmissionsFactureResponse>;
-  delete: handleUnaryCall<DeleteEmissionFactureRequest, DeleteEmissionFactureResponse>;
 }
 
 export type FactureServiceService = typeof FactureServiceService;

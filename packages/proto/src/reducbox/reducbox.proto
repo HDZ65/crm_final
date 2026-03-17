@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package reducbox;
+
+// ========== ENUMS ==========
+
+enum ReducBoxAccessStatus {
+  REDUC_BOX_ACCESS_STATUS_UNSPECIFIED = 0;
+  REDUC_BOX_ACCESS_STATUS_PENDING = 1;
+  REDUC_BOX_ACCESS_STATUS_ACTIVE = 2;
+  REDUC_BOX_ACCESS_STATUS_SUSPENDED = 3;
+  REDUC_BOX_ACCESS_STATUS_CANCELLED = 4;
+}
+
+// ========== REDUCBOX ACCESS SERVICE ==========
+
+service ReducBoxService {
+  rpc CreateAccess(CreateAccessRequest) returns (CreateAccessResponse);
+  rpc SuspendAccess(SuspendAccessRequest) returns (SuspendAccessResponse);
+  rpc RestoreAccess(RestoreAccessRequest) returns (RestoreAccessResponse);
+  rpc GetAccessStatus(GetAccessStatusRequest) returns (GetAccessStatusResponse);
+  rpc ListAccessByClient(ListAccessByClientRequest) returns (ListAccessByClientResponse);
+}
+
+// ========== MESSAGES ==========
+
+message ReducBoxAccess {
+  string id = 1;
+  string client_id = 2;
+  string contrat_id = 3;
+  ReducBoxAccessStatus status = 4;
+  string created_at = 5;
+  optional string suspended_at = 6;
+  optional string restored_at = 7;
+}
+
+message CreateAccessRequest {
+  string client_id = 1;
+  string contrat_id = 2;
+}
+
+message CreateAccessResponse {
+  ReducBoxAccess access = 1;
+}
+
+message SuspendAccessRequest {
+  string id = 1;
+}
+
+message SuspendAccessResponse {
+  ReducBoxAccess access = 1;
+}
+
+message RestoreAccessRequest {
+  string id = 1;
+}
+
+message RestoreAccessResponse {
+  ReducBoxAccess access = 1;
+}
+
+message GetAccessStatusRequest {
+  string id = 1;
+}
+
+message GetAccessStatusResponse {
+  ReducBoxAccess access = 1;
+}
+
+message ListAccessByClientRequest {
+  string client_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListAccessByClientResponse {
+  repeated ReducBoxAccess accesses = 1;
+  PaginationResult pagination = 2;
+}
+
+// ========== EVENT MESSAGES ==========
+
+message ReducBoxAccessCreatedEvent {
+  string id = 1;
+  string client_id = 2;
+  string contrat_id = 3;
+  string created_at = 4;
+}
+
+message ReducBoxAccessSuspendedEvent {
+  string id = 1;
+  string client_id = 2;
+  string suspended_at = 3;
+}
+
+message ReducBoxAccessRestoredEvent {
+  string id = 1;
+  string client_id = 2;
+  string restored_at = 3;
+}
+
+// ========== COMMON MESSAGES ==========
+
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}

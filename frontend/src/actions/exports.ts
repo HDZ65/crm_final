@@ -69,6 +69,62 @@ export async function listExportJobs(
   }
 }
 
+// ============================================================================
+// Journal + FEC exports (REST gateway)
+// ============================================================================
+
+const GATEWAY_URL = process.env.GATEWAY_URL ?? "http://localhost:3405";
+
+export async function generateJournal(params: {
+  societeId: string;
+  journalType: "VENTES" | "REGLEMENTS" | "IMPAYES";
+  periodFrom: string;
+  periodTo: string;
+  format: "CSV" | "FEC";
+}): Promise<ActionResult<{ content: string; filename: string; mimeType: string }>> {
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/payments/exports/journal`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      return { data: null, error: errText || `Erreur ${res.status}` };
+    }
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    const ext = params.format === "FEC" ? "txt" : "csv";
+    const filename = `journal-${params.journalType.toLowerCase()}-${params.periodFrom}-${params.periodTo}.${ext}`;
+    const mimeType = params.format === "FEC" ? "text/plain" : "text/csv";
+    return { data: { content: base64, filename, mimeType }, error: null };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Erreur réseau" };
+  }
+}
+
+export async function generateFec(params: {
+  societeId: string;
+  siren: string;
+  dateCloture: string;
+}): Promise<ActionResult<{ content: string; filename: string }>> {
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/payments/exports/fec`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      return { data: null, error: errText || `Erreur ${res.status}` };
+    }
+    const result = await res.json();
+    return { data: result, error: null };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Erreur réseau" };
+  }
+}
+
 /**
  * Download an export file via gRPC
  */

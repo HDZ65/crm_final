@@ -4,7 +4,7 @@ import {
   ScoringServiceService,
   type PredictRiskRequest,
   type PredictRiskResponse,
-} from "@proto/scoring";
+} from "@proto/scoring/scoring";
 
 let scoringInstance: GrpcClient | null = null;
 

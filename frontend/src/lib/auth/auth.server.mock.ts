@@ -7,8 +7,8 @@ export async function getServerUserProfile() {
   // Return a mock user profile for development
   return {
     utilisateur: {
-      id: "mock-user-id",
-      keycloakId: "mock-keycloak-id",
+      id: "00000000-0000-4000-a000-000000000001",
+      keycloakId: "00000000-0000-4000-a000-000000000002",
       email: "dev@example.com",
       nom: "Developer",
       prenom: "Test",
@@ -19,10 +19,10 @@ export async function getServerUserProfile() {
     },
     organisations: [
       {
-        organisationId: "mock-org-id",
+        organisationId: "00000000-0000-4000-a000-000000000010",
         organisationNom: "Test Organization",
         role: {
-          id: "mock-role-id",
+          id: "00000000-0000-4000-a000-000000000020",
           code: "ADMIN",
           nom: "Administrateur",
         },
@@ -34,5 +34,5 @@ export async function getServerUserProfile() {
 }
 
 export async function getActiveOrgIdFromCookie() {
-  return "mock-org-id";
+  return "00000000-0000-4000-a000-000000000010";
 }

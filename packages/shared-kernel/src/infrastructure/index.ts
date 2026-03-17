@@ -15,3 +15,6 @@ export * from './health/index.js';
 
 // NATS
 export * from './nats/index.js';
+
+// Email
+export * from './email/index.js';

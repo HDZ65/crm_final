@@ -82,6 +82,27 @@ export class ContratEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
+  @Column({ name: 'statut_cq', type: 'varchar', length: 20, nullable: true, default: 'EN_ATTENTE' })
+  statutCq: string | null;
+
+  @Column({ name: 'renewal_date', type: 'timestamptz', nullable: true })
+  renewalDate: Date | null;
+
+  @Column({ name: 'tacite_renewal_enabled', type: 'boolean', default: false })
+  taciteRenewalEnabled: boolean;
+
+  @Column({ name: 'renewal_status', type: 'varchar', length: 60, nullable: true })
+  renewalStatus: string | null;
+
+  @Column({ name: 'renewal_notification_j90_sent_at', type: 'timestamptz', nullable: true })
+  renewalNotificationJ90SentAt: Date | null;
+
+  @Column({ name: 'renewal_notification_j30_sent_at', type: 'timestamptz', nullable: true })
+  renewalNotificationJ30SentAt: Date | null;
+
+  @Column({ name: 'renewal_cancellation_deadline', type: 'timestamptz', nullable: true })
+  renewalCancellationDeadline: Date | null;
+
   @OneToMany(() => LigneContratEntity, (ligne) => ligne.contrat)
   lignes: LigneContratEntity[];
 

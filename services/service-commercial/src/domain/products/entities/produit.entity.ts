@@ -86,6 +86,9 @@ export class ProduitEntity {
   @Column({ default: true })
   actif: boolean;
 
+  @Column({ default: true })
+  requiresWithdrawalPeriod: boolean;
+
   @Column({
     name: 'statut_cycle',
     type: 'enum',

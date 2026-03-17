@@ -87,7 +87,10 @@ export function DepanssurReportingClient({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">MRR</CardTitle>
-            <Euro className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-1">
+              <AskAiCardButton prompt="Analyse les métriques de reporting SAV : MRR, taux d'acceptation des dossiers, sinistralité par type, et churn rate. Fournis des insights sur les tendances et recommandations d'optimisation." />
+              <Euro className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{mrr.toFixed(2)} €</div>

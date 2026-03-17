@@ -38,6 +38,16 @@ service LogisticsService {
   rpc TrackShipment(TrackShipmentRequest) returns (TrackingResponse);
   rpc ValidateAddress(ValidateAddressRequest) returns (AddressValidationResponse);
   rpc SimulatePricing(SimulatePricingRequest) returns (PricingResponse);
+
+  // ==================== RETURN LABELS ====================
+  rpc CreateReturnLabel(CreateReturnLabelRequest) returns (ReturnLabelResponse);
+  rpc GetReturnLabel(GetByIdRequest) returns (ReturnLabelResponse);
+  rpc UpdateReturnLabelStatus(UpdateReturnLabelStatusRequest) returns (ReturnLabelResponse);
+
+  // ==================== WELCOME KIT ====================
+  rpc CreateWelcomeKit(CreateWelcomeKitRequest) returns (CreateWelcomeKitResponse);
+  rpc GenerateWelcomeLabel(GenerateWelcomeLabelRequest) returns (GenerateWelcomeLabelResponse);
+  rpc NotifyDeliveryStatus(NotifyDeliveryStatusRequest) returns (NotifyDeliveryStatusResponse);
 }
 
 // ==================== COMMON MESSAGES ====================
@@ -305,4 +315,97 @@ message PricingResponse {
 message PricingBreakdown {
   string label = 1;
   double amount = 2;
+}
+
+// ==================== RETURN LABEL MESSAGES ====================
+message CreateReturnLabelRequest {
+  string expedition_id = 1;
+  string reason = 2;
+  string client_id = 3;
+  optional string organisation_id = 4;
+}
+
+message UpdateReturnLabelStatusRequest {
+  string id = 1;
+  string status = 2;
+  optional string tracking_number = 3;
+}
+
+message ReturnLabelResponse {
+  string id = 1;
+  string expedition_id = 2;
+  string reason = 3;
+  string status = 4;
+  optional string tracking_number = 5;
+  optional string label_url = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+// ==================== SHIPPING STATUS EVENT ====================
+message ShippingStatusChangedEvent {
+  string expedition_id = 1;
+  string client_id = 2;
+  string old_status = 3;
+  string new_status = 4;
+  optional string tracking_number = 5;
+  optional string carrier = 6;
+  string changed_at = 7;
+}
+
+// ==================== WELCOME KIT MESSAGES ====================
+
+enum KitType {
+  KIT_TYPE_UNSPECIFIED = 0;
+  SIM_ONLY = 1;
+  KIT_COMPLET = 2;
+  KIT_BIENVENUE = 3;
+}
+
+message WelcomeKit {
+  string id = 1;
+  KitType type = 2;
+  repeated string contenu = 3;
+  string statut = 4;
+  string label_url = 5;
+}
+
+message DeliveryNotification {
+  string expedition_id = 1;
+  string channel = 2;
+  string sent_at = 3;
+  string status = 4;
+}
+
+message CreateWelcomeKitRequest {
+  KitType kit_type = 1;
+  string client_id = 2;
+  string contrat_id = 3;
+  repeated string contenu = 4;
+}
+
+message CreateWelcomeKitResponse {
+  WelcomeKit kit = 1;
+}
+
+message GenerateWelcomeLabelRequest {
+  string kit_id = 1;
+  string format = 2;
+}
+
+message GenerateWelcomeLabelResponse {
+  string label_url = 1;
+  bool success = 2;
+}
+
+message NotifyDeliveryStatusRequest {
+  string expedition_id = 1;
+  string client_id = 2;
+  string status = 3;
+  string notification_channel = 4;
+}
+
+message NotifyDeliveryStatusResponse {
+  bool success = 1;
+  DeliveryNotification notification = 2;
 }

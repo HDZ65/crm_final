@@ -1,0 +1,1207 @@
+# ============================================================================
+# PORTS.YAML — Registre canonique des ports · finanssor
+# ============================================================================
+# Source de vérité pour toute attribution de port sur ce serveur.
+# Toute modification de port dans un compose file DOIT être reflétée ici.
+# Le script audit-drift.sh vérifie la cohérence runtime vs ce fichier.
+# ============================================================================
+
+meta:
+  server: finanssor
+  ip_lan: "192.168.1.134"
+  ip_tailscale: "100.68.221.26"
+  ip_public: "85.31.109.231"
+  tailnet: tail446cc0.ts.net
+  last_audit: "2026-03-03"
+
+# ----------------------------------------------------------------------------
+# Plages reservees par slot (HTTP uniquement — services internes en docker network only)
+# Slot 0 = INTERDIT (plage basse reservee, regle 0-99)
+# Slot | Projet           | HTTP
+#   0  | INTERDIT         | 3000-3099
+#   1  | Chatbot          | 3100-3199
+#   2  | Winaity Connect  | 3200-3299
+#   3  | *Libre*          | 3300-3399
+#   4  | Alex CRM         | 3400-3499
+#   5  | R-Win            | 3500-3599
+#   6-9| *Libre*          | 3600-3999
+# DB, Redis, NATS, gRPC, Consul = docker network only, aucun port host alloue.
+# ----------------------------------------------------------------------------
+ranges:
+  system:
+    range: "1-1023"
+    note: "Ports privilegies, usage OS uniquement. Plage 0-99 reservee — aucun service applicatif"
+  ssh:
+    range: "22, 2224"
+    note: "SSH host + GitLab SSH"
+  chatbot:  # slot 1
+    http: "3100-3199"
+    note: "Actif - ports actuels 3100/3101/3102/3103. Services internes: docker network only"
+  winaity-connect:  # slot 2
+    http: "3200-3299"
+    note: "Actif - dev(3200 interne)/staging(3210)/prod(3220-3231). Services internes: docker network only"
+  alex-crm:  # slot 4
+    http: "3400-3499"
+    note: "Actif - ports 3400-3406. Services internes (pg/redis/nats/consul): docker network only"
+  r-win:  # slot 5
+    http: "3500-3599"
+    note: "Actif - ports 3500/3501. Postgres: docker network only (plus de host bind)"
+  monitoring:
+    range: "8080, 9029, 9090, 9100, 9115"
+    note: "cadvisor, grafana, prometheus, node-exporter, blackbox-exporter"
+  gitlab:
+    range: "8900, 2224"
+  tools:
+    range: "8880-8899, 9000, 9150-9151, 11434"
+    note: "kokoro-tts, focalboard, hexstrike-ai, minio, whisper-stt, ollama"
+# ----------------------------------------------------------------------------
+# Services — winaity-connect DEV
+# ----------------------------------------------------------------------------
+services:
+
+  # === WINAITY-CONNECT DEV ===
+  dev-connect-frontend:
+    port: 3200
+    proto: tcp
+    bind_current: internal          # docker network only (no host port)
+    bind_target: internal
+    access: internal                 # accessible via cloudflared on docker network
+    container: dev-connect-winaity-frontend
+    app: winaity-connect
+    env: dev
+    type: frontend
+
+  dev-connect-postgres-contacts:
+    port: 5433
+    proto: tcp
+    bind_current: internal
+    bind_target: internal           # docker network only, no host port
+    access: internal
+    container: dev-connect-winaity-postgres-contacts
+    app: winaity-connect
+    env: dev
+    type: database
+
+  dev-connect-postgres-campaigns:
+    port: 5434
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: dev-connect-winaity-postgres-campaigns
+    app: winaity-connect
+    env: dev
+    type: database
+
+  dev-connect-postgres-templates:
+    port: 5435
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: dev-connect-winaity-postgres-templates
+    app: winaity-connect
+    env: dev
+    type: database
+
+  dev-connect-postgres-delivery:
+    port: 5436
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: dev-connect-winaity-postgres-delivery
+    app: winaity-connect
+    env: dev
+    type: database
+
+  dev-connect-postgres-audiences:
+    port: 5437
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: dev-connect-winaity-postgres-audiences
+    app: winaity-connect
+    env: dev
+    type: database
+
+  dev-connect-timescaledb:
+    port: 5438
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: dev-connect-winaity-timescaledb
+    app: winaity-connect
+    env: dev
+    type: database
+
+  dev-connect-postgres-workflows:
+    port: 5439
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: dev-connect-winaity-postgres-workflows
+    app: winaity-connect
+    env: dev
+    type: database
+
+  # === WINAITY-CONNECT STAGING ===
+  staging-connect-frontend:
+    port: 3210
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: staging-connect-winaity-frontend
+    app: winaity-connect
+    env: staging
+    type: frontend
+
+  staging-connect-consul:
+    port: 8600
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-consul
+    app: winaity-connect
+    env: staging
+    type: service-mesh
+    note: "Consul UI — port 8600 conflit potentiel avec Consul DNS UDP"
+
+  staging-connect-nats:
+    port: 4322
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-nats
+    app: winaity-connect
+    env: staging
+    type: queue
+
+  staging-connect-nats-monitoring:
+    port: 8322
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-nats
+    app: winaity-connect
+    env: staging
+    type: admin
+
+  staging-connect-redis:
+    port: 6480
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-redis
+    app: winaity-connect
+    env: staging
+    type: cache
+
+  staging-connect-postgres-users:
+    port: 5532
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-postgres-users
+    app: winaity-connect
+    env: staging
+    type: database
+
+  staging-connect-postgres-contacts:
+    port: 5533
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-postgres-contacts
+    app: winaity-connect
+    env: staging
+    type: database
+
+  staging-connect-postgres-campaigns:
+    port: 5534
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-postgres-campaigns
+    app: winaity-connect
+    env: staging
+    type: database
+
+  staging-connect-postgres-templates:
+    port: 5535
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-postgres-templates
+    app: winaity-connect
+    env: staging
+    type: database
+
+  staging-connect-postgres-delivery:
+    port: 5536
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-postgres-delivery
+    app: winaity-connect
+    env: staging
+    type: database
+
+  staging-connect-postgres-audiences:
+    port: 5537
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-postgres-audiences
+    app: winaity-connect
+    env: staging
+    type: database
+
+  staging-connect-timescaledb:
+    port: 5538
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-timescaledb
+    app: winaity-connect
+    env: staging
+    type: database
+
+  staging-connect-postgres-workflows:
+    port: 5539
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-postgres-workflows
+    app: winaity-connect
+    env: staging
+    type: database
+
+  staging-connect-grpc-user:
+    port: 50151
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-user-service
+    app: winaity-connect
+    env: staging
+    type: grpc
+    note: "Dans plage éphémère Linux (32768-60999) — risque collision"
+
+  staging-connect-grpc-contact:
+    port: 50152
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-contact-api-service
+    app: winaity-connect
+    env: staging
+    type: grpc
+
+  staging-connect-grpc-campaign:
+    port: 50153
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-campaign-service
+    app: winaity-connect
+    env: staging
+    type: grpc
+
+  staging-connect-grpc-template:
+    port: 50154
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-template-service
+    app: winaity-connect
+    env: staging
+    type: grpc
+
+  staging-connect-grpc-audience:
+    port: 50155
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-audience-service
+    app: winaity-connect
+    env: staging
+    type: grpc
+
+  staging-connect-grpc-campaign-bridge:
+    port: 50157
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-campaign-bridge-worker
+    app: winaity-connect
+    env: staging
+    type: grpc
+
+  staging-connect-grpc-analytics:
+    port: 50159
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-analytics-service
+    app: winaity-connect
+    env: staging
+    type: grpc
+
+  staging-connect-grpc-workflow:
+    port: 50160
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-workflow-service
+    app: winaity-connect
+    env: staging
+    type: grpc
+
+  staging-connect-grpc-delivery:
+    port: 50165
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: staging-connect-winaity-delivery-service
+    app: winaity-connect
+    env: staging
+    type: grpc
+
+  # === WINAITY-CONNECT PRODUCTION ===
+  prod-connect-frontend:
+    port: 3220
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: production-connect-winaity-frontend
+    app: winaity-connect
+    env: prod
+    type: frontend
+
+  prod-connect-api-contact:
+    port: 3221
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: production-connect-winaity-contact-api-service
+    app: winaity-connect
+    env: prod
+    type: api
+
+  prod-connect-api-campaign:
+    port: 3223
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: production-connect-winaity-campaign-service
+    app: winaity-connect
+    env: prod
+    type: api
+
+  prod-connect-api-template:
+    port: 3226
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: production-connect-winaity-template-service
+    app: winaity-connect
+    env: prod
+    type: api
+
+  prod-connect-api-audience:
+    port: 3229
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: production-connect-winaity-audience-service
+    app: winaity-connect
+    env: prod
+    type: api
+
+  prod-connect-api-workflow:
+    port: 3231
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: production-connect-winaity-workflow-service
+    app: winaity-connect
+    env: prod
+    type: api
+
+  prod-connect-consul:
+    port: 8700
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-consul
+    app: winaity-connect
+    env: prod
+    type: service-mesh
+
+  prod-connect-nats:
+    port: 4422
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-nats
+    app: winaity-connect
+    env: prod
+    type: queue
+
+  prod-connect-nats-monitoring:
+    port: 8422
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-nats
+    app: winaity-connect
+    env: prod
+    type: admin
+
+  prod-connect-redis:
+    port: 6580
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-redis
+    app: winaity-connect
+    env: prod
+    type: cache
+
+  prod-connect-postgres-users:
+    port: 5632
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-postgres-users
+    app: winaity-connect
+    env: prod
+    type: database
+
+  prod-connect-postgres-contacts:
+    port: 5633
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-postgres-contacts
+    app: winaity-connect
+    env: prod
+    type: database
+
+  prod-connect-postgres-campaigns:
+    port: 5634
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-postgres-campaigns
+    app: winaity-connect
+    env: prod
+    type: database
+
+  prod-connect-postgres-templates:
+    port: 5635
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-postgres-templates
+    app: winaity-connect
+    env: prod
+    type: database
+
+  prod-connect-postgres-delivery:
+    port: 5636
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-postgres-delivery
+    app: winaity-connect
+    env: prod
+    type: database
+
+  prod-connect-postgres-audiences:
+    port: 5637
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-postgres-audiences
+    app: winaity-connect
+    env: prod
+    type: database
+
+  prod-connect-timescaledb:
+    port: 5638
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-timescaledb
+    app: winaity-connect
+    env: prod
+    type: database
+
+  prod-connect-postgres-workflows:
+    port: 5639
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-postgres-workflows
+    app: winaity-connect
+    env: prod
+    type: database
+
+  prod-connect-grpc-user:
+    port: 50251
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-user-service
+    app: winaity-connect
+    env: prod
+    type: grpc
+    note: "Dans plage éphémère Linux — risque collision"
+
+  prod-connect-grpc-contact:
+    port: 50252
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-contact-api-service
+    app: winaity-connect
+    env: prod
+    type: grpc
+
+  prod-connect-grpc-campaign:
+    port: 50253
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-campaign-service
+    app: winaity-connect
+    env: prod
+    type: grpc
+
+  prod-connect-grpc-template:
+    port: 50254
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-template-service
+    app: winaity-connect
+    env: prod
+    type: grpc
+
+  prod-connect-grpc-audience:
+    port: 50255
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-audience-service
+    app: winaity-connect
+    env: prod
+    type: grpc
+
+  prod-connect-grpc-campaign-bridge:
+    port: 50257
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-campaign-bridge-worker
+    app: winaity-connect
+    env: prod
+    type: grpc
+
+  prod-connect-grpc-analytics:
+    port: 50259
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-analytics-service
+    app: winaity-connect
+    env: prod
+    type: grpc
+
+  prod-connect-grpc-workflow:
+    port: 50260
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-workflow-service
+    app: winaity-connect
+    env: prod
+    type: grpc
+
+  prod-connect-grpc-delivery:
+    port: 50265
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: production-connect-winaity-delivery-service
+    app: winaity-connect
+    env: prod
+    type: grpc
+
+  # === R-WIN (déjà conforme ✅) ===
+  r-win-backend:
+    port: 3500
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: r-win-backend-1
+    app: r-win
+    env: prod
+    type: api
+    note: "Phase B: migrated from 3204. Conforme — cloudflared host network"
+
+  r-win-frontend:
+    port: 3501
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: r-win-frontend-1
+    app: r-win
+    env: prod
+    type: frontend
+    note: "Phase B: migrated from 3205. Conforme"
+
+  r-win-postgres:
+    port: 5432
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: r-win-postgres-1
+    app: r-win
+    env: prod
+    type: database
+    note: "Docker network only — plus de host bind (ancien 5440 retiré)"
+
+  # === ALEX-CRM (déployé sur cette machine) ===
+  alex-frontend:
+    port: 3400
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: tailscale
+    container: alex-frontend
+    app: alex-crm
+    env: prod
+    type: frontend
+    note: "Phase B: migrated from 3070"
+    deployed_here: true
+  alex-service-engagement:
+    port: 3401
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: alex-service-engagement
+    app: alex-crm
+    env: prod
+    type: api
+
+    deployed_here: true
+  alex-service-core:
+    port: 3402
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: alex-service-core
+    app: alex-crm
+    env: prod
+    type: api
+
+    deployed_here: true
+  alex-service-commercial:
+    port: 3403
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: alex-service-commercial
+    app: alex-crm
+    env: prod
+    type: api
+
+    deployed_here: true
+  alex-service-finance:
+    port: 3404
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: alex-service-finance
+    app: alex-crm
+    env: prod
+    type: api
+
+    deployed_here: true
+  alex-service-gateway:
+    port: 3405
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: tailscale
+    container: alex-service-gateway
+    app: alex-crm
+    env: prod
+    type: api
+    note: "Swagger gateway — tailscale serve :3405"
+    deployed_here: true
+  alex-service-logistics:
+    port: 3406
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: alex-service-logistics
+    app: alex-crm
+    env: prod
+    type: api
+    deployed_here: true
+  alex-grpc-engagement:
+    port: 50071
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: alex-service-engagement
+    app: alex-crm
+    env: prod
+    type: grpc
+
+    deployed_here: true
+  alex-grpc-core:
+    port: 50072
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: alex-service-core
+    app: alex-crm
+    env: prod
+    type: grpc
+
+    deployed_here: true
+  alex-grpc-commercial:
+    port: 50073
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: alex-service-commercial
+    app: alex-crm
+    env: prod
+    type: grpc
+
+    deployed_here: true
+  alex-grpc-finance:
+    port: 50074
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: alex-service-finance
+    app: alex-crm
+    env: prod
+    type: grpc
+
+  alex-grpc-logistics:
+    port: 50075
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: alex-service-logistics
+    app: alex-crm
+    env: prod
+    type: grpc
+
+    deployed_here: true
+  # === MONITORING ===
+  grafana:
+    port: 9029
+    proto: tcp
+    bind_current: "192.168.1.134+100.68.221.26"
+    bind_target: tailscale-serve
+    access: tailscale
+    container: grafana
+    app: monitoring
+    env: shared
+    type: admin
+    note: "Migré de 3010 → 9029. tailscale serve :9029 → http://127.0.0.1:9029"
+
+  prometheus:
+    port: 9090
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: tailscale
+    container: prometheus
+    app: monitoring
+    env: shared
+    type: admin
+    note: "tailscale serve :9090 → http://127.0.0.1:9090"
+
+  cadvisor:
+    port: 8080
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: cadvisor
+    app: monitoring
+    env: shared
+    type: admin
+
+  node-exporter:
+    port: 9100
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: node_exporter
+    app: monitoring
+    env: shared
+    type: metrics
+
+  blackbox-exporter:
+    port: 9115
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: blackbox_exporter
+    app: monitoring
+    env: shared
+    type: metrics
+    note: "Blackbox exporter pour probes HTTP/TCP"
+
+  # === GITLAB ===
+  gitlab-web:
+    port: 8900
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: tailscale-serve
+    access: tailscale
+    container: gitlab
+    app: gitlab
+    env: shared
+    type: admin
+    note: "Phase B: migrated from 8888. tailscale serve :8900 → https+insecure://127.0.0.1:8900"
+
+  gitlab-ssh:
+    port: 2224
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "100.68.221.26"
+    access: tailscale
+    container: gitlab
+    app: gitlab
+    env: shared
+    type: infra
+    note: "SSH git — tailscale serve --tcp 2224"
+
+  # === TRAEFIK (SUPPRIMÉ — global_router n'existe plus) ===
+  # traefik-http (8081) et traefik-dashboard (8082) retirés
+
+  # === TOOLS & SERVICES ===
+  kokoro-tts:
+    port: 8880
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: internal
+    container: kokoro-tts
+    app: tools
+    env: shared
+    type: api
+
+  focalboard:
+    port: 8889
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: tailscale
+    container: focalboard-app
+    app: tools
+    env: shared
+    type: frontend
+    note: "Conforme — déjà via tailscale serve :8889"
+
+  hexstrike-ai:
+    port: 8890
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tailscale
+    container: hexstrike-ai
+    app: tools
+    env: shared
+    type: api
+
+  minio-api:
+    port: 9150
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: internal
+    container: winaity-minio
+    app: tools
+    env: shared
+    type: storage
+
+  minio-console:
+    port: 9151
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: tailscale
+    container: winaity-minio
+    app: tools
+    env: shared
+    type: admin
+
+  livekit:
+    port: 7880
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "0.0.0.0"
+    access: world
+    container: winaity-livekit
+    app: tools
+    env: shared
+    type: media
+    note: "WebRTC SFU — à remplacer par Cloudflare Realtime (backlog B-01)"
+
+  # === GLOBAL POSTGRES (SUPPRIMÉ — global_postgres n'existe plus) ===
+  # global-postgres (54320) retiré
+
+  winaity-postgres:
+    port: 5432
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: winaity-pg
+    app: infra
+    env: shared
+    type: database
+    note: "Port par défaut PG — conflit possible si PG host installé"
+
+  winaity-redis:
+    port: 6379
+    proto: tcp
+    bind_current: internal
+    bind_target: internal
+    access: internal
+    container: winaity-redis
+    app: infra
+    env: shared
+    type: cache
+    note: "Port par défaut Redis — conflit possible"
+
+  # === HOST SERVICES (non-Docker) ===
+  host-ssh:
+    port: 22
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "100.68.221.26"
+    access: tailscale
+    container: null
+    app: system
+    env: shared
+    type: infra
+    note: "SSH host — reste sur 0.0.0.0 intentionnellement"
+
+  host-whisper-stt:
+    port: 9000
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: null
+    app: winaity-chatbot
+    env: prod
+    type: api
+    note: "uvicorn — whisper speech-to-text"
+
+  host-chatbot-frontend:
+    port: 3100
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: null
+    app: winaity-chatbot
+    env: prod
+    type: frontend
+    note: "Next.js — bloc HTTP Chatbot 3100-3199"
+
+  host-chatbot-backend:
+    port: 3102
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: tunnel
+    container: null
+    app: winaity-chatbot
+    env: prod
+    type: api
+
+  host-chatbot-widget:
+    port: 3103
+    proto: tcp
+    bind_current: "127.0.0.1"
+    bind_target: "127.0.0.1"
+    access: loopback
+    container: winaity-chatbot-widget
+    app: winaity-chatbot
+    env: dev
+    type: frontend
+    note: "Widget SDK bundle server (Docker nginx)"
+
+
+  host-ollama:
+    port: 11434
+    proto: tcp
+    bind_current: "0.0.0.0"
+    bind_target: "127.0.0.1"
+    access: internal
+    container: null
+    app: tools
+    env: shared
+    type: api
+    note: "Ollama LLM server"
+
+  # === CLOUDFLARED (network_mode: host, pas de port propre) ===
+  cloudflared-prod:
+    port: null
+    proto: null
+    bind_current: host-network
+    bind_target: host-network
+    access: tunnel
+    container: production-connect-winaity-cloudflared
+    app: winaity-connect
+    env: prod
+    type: infra
+    note: "Token inline à externaliser + rotater"
+
+  cloudflared-staging:
+    port: null
+    proto: null
+    bind_current: host-network
+    bind_target: host-network
+    access: tunnel
+    container: staging-connect-winaity-cloudflared
+    app: winaity-connect
+    env: staging
+    type: infra
+    note: "Token inline à externaliser + rotater"
+
+  cloudflared-rwin:
+    port: null
+    proto: null
+    bind_current: host-network
+    bind_target: host-network
+    access: tunnel
+    container: r-win-cloudflared
+    app: r-win
+    env: prod
+    type: infra
+    note: "Token inline à externaliser + rotater"
+
+  # === TAILSCALE SERVE (déjà configuré) ===
+  tailscale-serve-8443:
+    port: 8443
+    proto: tcp
+    bind_current: "100.68.221.26"
+    bind_target: "100.68.221.26"
+    access: tailscale
+    container: null
+    app: tailscale
+    env: shared
+    type: infra
+    note: "tailscale serve → localhost:8006 (Proxmox?)"
+
+  tailscale-serve-8889:
+    port: 8889
+    proto: tcp
+    bind_current: "100.68.221.26"
+    bind_target: "100.68.221.26"
+    access: tailscale
+    container: null
+    app: tailscale
+    env: shared
+    type: infra
+    note: "tailscale serve → 127.0.0.1:8889 (Focalboard)"
+
+# ============================================================================
+# Légende access:
+#   tunnel     = accessible monde via Cloudflare Tunnel uniquement
+#   tailscale  = accessible via Tailscale (IP 100.68.221.26 ou tailscale serve)
+#   internal   = docker network only, pas de port host nécessaire
+#   loopback   = 127.0.0.1 uniquement (accès local process)
+#   world      = exposé WAN (à éliminer sauf cas justifié)
+#
+# Légende bind_target:
+#   "127.0.0.1"       = loopback (cloudflared host network y accède)
+#   "100.68.221.26"   = Tailscale IP uniquement
+#   internal           = supprimer ports: du compose, utiliser docker network
+#   tailscale-serve    = exposer via tailscale serve (HTTPS auto)
+#   host-network       = network_mode: host (cloudflared)
+# ============================================================================

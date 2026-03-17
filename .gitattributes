@@ -1,0 +1,31 @@
+# ============================================================
+# .gitattributes — Line ending normalization
+# Project runs on Linux Docker → enforce LF everywhere
+# ============================================================
+
+# Default: auto-detect text files, normalize to LF on checkout
+* text=auto eol=lf
+
+# Explicitly binary — never touch line endings
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.svg    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.eot    binary
+*.pdf    binary
+*.zip    binary
+*.gz     binary
+*.tar    binary
+*.docx   binary
+*.xlsx   binary
+*.pem    binary
+*.key    binary
+*.p12    binary
+*.pfx    binary
+*.lock   text eol=lf
+*.proto  text eol=lf

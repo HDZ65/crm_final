@@ -54,7 +54,7 @@ const formSchema = z.object({
   titre: z.string().min(1, "Le titre est requis"),
   description: z.string().optional(),
   type: z.enum(['APPEL', 'EMAIL', 'RDV', 'RELANCE_IMPAYE', 'RELANCE_CONTRAT', 'RENOUVELLEMENT', 'SUIVI', 'AUTRE']),
-  priorite: z.enum(['HAUTE', 'MOYENNE', 'BASSE']),
+  priorite: z.enum(['URGENTE', 'HAUTE', 'MOYENNE', 'BASSE']),
   statut: z.enum(['A_FAIRE', 'EN_COURS', 'TERMINEE', 'ANNULEE']),
   dateEcheance: z.date({ message: "La date d'échéance est requise" }),
   assigneA: z.string().min(1, "L'assignation est requise"),

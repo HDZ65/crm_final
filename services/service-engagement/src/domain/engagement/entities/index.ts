@@ -5,6 +5,7 @@ export * from './activite.entity';
 export * from './tache.entity';
 export * from './type-activite.entity';
 export * from './evenement-suivi.entity';
+export * from './notification-delivery-proof.entity';
 
 // Agenda entities
 export * from './oauth-connection.entity';

@@ -23,6 +23,22 @@ export const createClientSchema = z.object({
     formDataTransformers.optionalString,
     z.string().uuid("ID société invalide").optional()
   ),
+  iban: z.preprocess(
+    formDataTransformers.optionalString,
+    z.string().regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN invalide (format ISO 13616)").optional()
+  ),
+  bic: z.preprocess(
+    formDataTransformers.optionalString,
+    z.string().regex(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/, "BIC invalide").optional()
+  ),
+  civilite: z.string().optional(),
+  csp: z.string().max(100).optional(),
+  lieuNaissance: z.string().max(100).optional(),
+  paysNaissance: z.string().max(100).optional(),
+  regimeSocial: z.string().max(100).optional(),
+  numss: z.string().max(20).optional(),
+  canalAcquisition: z.string().max(100).optional(),
+  source: z.string().max(50).optional(),
 });
 
 export type CreateClientFormData = z.infer<typeof createClientSchema>;
@@ -49,6 +65,22 @@ export const updateClientSchema = z.object({
     formDataTransformers.optionalString,
     z.string().uuid("ID société invalide").optional().nullable()
   ),
+  iban: z.preprocess(
+    formDataTransformers.optionalString,
+    z.string().regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN invalide (format ISO 13616)").optional()
+  ),
+  bic: z.preprocess(
+    formDataTransformers.optionalString,
+    z.string().regex(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/, "BIC invalide").optional()
+  ),
+  civilite: z.string().optional(),
+  csp: z.string().max(100).optional(),
+  lieuNaissance: z.string().max(100).optional(),
+  paysNaissance: z.string().max(100).optional(),
+  regimeSocial: z.string().max(100).optional(),
+  numss: z.string().max(20).optional(),
+  canalAcquisition: z.string().max(100).optional(),
+  source: z.string().max(50).optional(),
 });
 
 export type UpdateClientFormData = z.infer<typeof updateClientSchema>;

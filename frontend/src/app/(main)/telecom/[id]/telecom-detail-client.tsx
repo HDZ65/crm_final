@@ -416,9 +416,7 @@ export function TelecomDetailClient({
         toast.error(result.error)
       } else {
         toast.success("Action exécutée avec succès")
-        if (result.data?.lifecycle) {
-          setLifecycle(result.data.lifecycle)
-        } else {
+        {
           const refreshed = await getProvisioningLifecycle(lifecycleId)
           if (refreshed.data?.lifecycle) setLifecycle(refreshed.data.lifecycle)
         }

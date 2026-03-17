@@ -19,6 +19,10 @@ import { FactureService } from '../../persistence/typeorm/repositories/factures'
 import {
   GoCardlessAccountEntity,
 } from '../../../domain/payments/entities/gocardless-account.entity';
+import {
+  GoCardlessMandateEntity,
+  MandateStatus,
+} from '../../../domain/payments/entities/gocardless-mandate.entity';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -67,6 +71,8 @@ export class GoCardlessWebhookHandler {
     private readonly gcAccountRepo: Repository<GoCardlessAccountEntity>,
     @InjectRepository(PaymentIntentEntity)
     private readonly paymentIntentRepo: Repository<PaymentIntentEntity>,
+    @InjectRepository(GoCardlessMandateEntity)
+    private readonly gcMandateRepo: Repository<GoCardlessMandateEntity>,
     private readonly factureService: FactureService,
     @Optional() private readonly natsService?: NatsService,
   ) {}
@@ -234,6 +240,11 @@ export class GoCardlessWebhookHandler {
 
     await this.paymentEventRepo.save(paymentEvent);
 
+    // Update mandate entity status for mandate events
+    if (event.resource_type === 'mandates') {
+      await this.handleMandateEvent(event);
+    }
+
     // Fire-and-forget NATS publish for payment succeeded (non-blocking)
     if (paymentEventType === PaymentEventType.PAYMENT_SUCCEEDED) {
       this.publishPaymentSucceeded(event).catch((err) => {
@@ -253,13 +264,15 @@ export class GoCardlessWebhookHandler {
 
   /**
    * Map GoCardless event types to internal status.
-   * Limited to 5 primary event types:
+   * Covers payment and mandate lifecycle events:
    *
    * 1. payments.confirmed / payments.paid_out → PAID
    * 2. payments.failed → REJECT_OTHER or REJECT_INSUFF_FUNDS
    * 3. payments.cancelled → CANCELLED
-   * 4. mandates.active → MANDATE_ACTIVE
-   * 5. mandates.cancelled / mandates.failed → MANDATE_CANCELLED
+   * 4. mandates.created → MANDATE_CREATED
+   * 5. mandates.active → MANDATE_ACTIVE
+   * 6. mandates.cancelled / mandates.failed → MANDATE_CANCELLED
+   * 7. mandates.expired → MANDATE_EXPIRED
    */
   private mapToInternalStatus(eventType: string, reasonCode?: string): string {
     switch (eventType) {
@@ -278,6 +291,10 @@ export class GoCardlessWebhookHandler {
       case 'payments.cancelled':
         return 'CANCELLED';
 
+      // Mandate created
+      case 'mandates.created':
+        return 'MANDATE_CREATED';
+
       // Mandate activated
       case 'mandates.active':
         return 'MANDATE_ACTIVE';
@@ -286,6 +303,10 @@ export class GoCardlessWebhookHandler {
       case 'mandates.cancelled':
       case 'mandates.failed':
         return 'MANDATE_CANCELLED';
+
+      // Mandate expired
+      case 'mandates.expired':
+        return 'MANDATE_EXPIRED';
 
       default:
         return 'UNKNOWN';
@@ -304,6 +325,9 @@ export class GoCardlessWebhookHandler {
       case 'payments.cancelled':
         return PaymentEventType.PAYMENT_CANCELLED;
 
+      case 'mandates.created':
+        return PaymentEventType.MANDATE_CREATED;
+
       case 'mandates.active':
         return PaymentEventType.MANDATE_ACTIVE;
 
@@ -311,8 +335,68 @@ export class GoCardlessWebhookHandler {
       case 'mandates.failed':
         return PaymentEventType.MANDATE_CANCELLED;
 
+      case 'mandates.expired':
+        return PaymentEventType.MANDATE_FAILED;
+
       default:
         return PaymentEventType.WEBHOOK_RECEIVED;
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Mandate entity status transitions
+  // -----------------------------------------------------------------------
+
+  private async handleMandateEvent(event: GoCardlessWebhookEvent): Promise<void> {
+    const gcMandateId = event.links?.mandate;
+    if (!gcMandateId) {
+      this.logger.warn(`Mandate event ${event.id} has no mandate link, skipping entity update`);
+      return;
+    }
+
+    const mandate = await this.gcMandateRepo.findOne({
+      where: { mandateId: gcMandateId },
+    });
+
+    if (!mandate) {
+      this.logger.warn(`Mandate entity not found for GoCardless mandate ${gcMandateId}`);
+      return;
+    }
+
+    const targetStatus = this.mandateActionToStatus(event.action);
+    if (!targetStatus) {
+      this.logger.debug(`No status mapping for mandate action: ${event.action}`);
+      return;
+    }
+
+    if (!mandate.canTransitionTo(targetStatus)) {
+      this.logger.warn(
+        `Invalid mandate transition ${mandate.status} → ${targetStatus} for mandate ${gcMandateId}, forcing update`,
+      );
+      // Force-update for webhooks (GoCardless is authoritative)
+      mandate.status = targetStatus;
+    } else {
+      mandate.transition(targetStatus);
+    }
+
+    await this.gcMandateRepo.save(mandate);
+    this.logger.log(`Mandate ${gcMandateId} transitioned to ${targetStatus}`);
+  }
+
+  private mandateActionToStatus(action: string): MandateStatus | null {
+    switch (action) {
+      case 'created':
+        return MandateStatus.PENDING_SUBMISSION;
+      case 'active':
+        return MandateStatus.ACTIVE;
+      case 'failed':
+        return MandateStatus.FAILED;
+      case 'cancelled':
+        return MandateStatus.CANCELLED;
+      case 'expired':
+        return MandateStatus.EXPIRED;
+      default:
+        return null;
     }
   }
 
@@ -344,8 +428,13 @@ export class GoCardlessWebhookHandler {
       return;
     }
 
-    // Enrich with CFAST metadata if applicable
-    const metadata: Record<string, unknown> = {};
+    // Enrich with original payment intent metadata + CFAST mapping if applicable
+    const metadata: Record<string, unknown> = {
+      ...((paymentIntent.metadata || {}) as Record<string, unknown>),
+      paymentIntentId: paymentIntent.id,
+      clientId: paymentIntent.clientId,
+      societeId: paymentIntent.societeId,
+    };
 
     try {
       const facture = await this.factureService.findById(paymentIntent.factureId);

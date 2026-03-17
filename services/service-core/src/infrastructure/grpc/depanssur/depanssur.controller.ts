@@ -4,6 +4,7 @@ import { AbonnementService } from '../../persistence/typeorm/repositories/depans
 import { OptionAbonnementService } from '../../persistence/typeorm/repositories/depanssur/option-abonnement.service';
 import { CompteurPlafondService } from '../../persistence/typeorm/repositories/depanssur/compteur-plafond.service';
 import { DossierDeclaratifService } from '../../persistence/typeorm/repositories/depanssur/dossier-declaratif.service';
+import { ConsentementService } from '../../persistence/typeorm/repositories/depanssur/consentement.service';
 import type {
   CreateAbonnementRequest,
   UpdateAbonnementRequest,
@@ -25,6 +26,11 @@ import type {
   UpdateCompteurRequest,
   ResetCompteurRequest,
   ListCompteursRequest,
+  CreateConsentementRequest,
+  GetConsentementRequest,
+  UpdateConsentementRequest,
+  ListConsentementsRequest,
+  DeleteConsentementRequest,
 } from '@proto/depanssur';
 
 // Statut enum mapping (proto enum int → string)
@@ -150,6 +156,34 @@ function entityToCompteurResponse(entity: any) {
   };
 }
 
+// TypeConsentement enum mapping (proto enum int → string)
+const TYPE_CONSENTEMENT_MAP: Record<number, string> = {
+  0: 'UNSPECIFIED',
+  1: 'RGPD_EMAIL',
+  2: 'RGPD_SMS',
+  3: 'CGS_DEPANSSUR',
+};
+
+function mapTypeConsentementFromProto(type: number | string | undefined): string | undefined {
+  if (type === undefined || type === null) return undefined;
+  if (typeof type === 'string') return type;
+  return TYPE_CONSENTEMENT_MAP[type] || undefined;
+}
+
+function entityToConsentementResponse(entity: any) {
+  return {
+    id: entity.id,
+    client_id: entity.clientBaseId,
+    type: entity.type,
+    accorde: entity.accorde,
+    date_accord: entity.dateAccord instanceof Date ? entity.dateAccord.toISOString() : entity.dateAccord ?? undefined,
+    date_retrait: entity.dateRetrait instanceof Date ? entity.dateRetrait.toISOString() : entity.dateRetrait ?? undefined,
+    source: entity.source ?? undefined,
+    created_at: entity.createdAt instanceof Date ? entity.createdAt.toISOString() : entity.createdAt,
+    updated_at: entity.updatedAt instanceof Date ? entity.updatedAt.toISOString() : entity.updatedAt,
+  };
+}
+
 @Controller()
 export class DepanssurController {
   constructor(
@@ -157,6 +191,7 @@ export class DepanssurController {
     private readonly optionService: OptionAbonnementService,
     private readonly compteurService: CompteurPlafondService,
     private readonly dossierService: DossierDeclaratifService,
+    private readonly consentementService: ConsentementService,
   ) {}
 
   // ---- Abonnement CRUD ----
@@ -393,5 +428,55 @@ export class DepanssurController {
       compteurs: result.compteurs.map(entityToCompteurResponse),
       pagination: result.pagination,
     };
+  }
+
+
+  // ---- Consentement RGPD CRUD ----
+
+  @GrpcMethod('DepanssurService', 'CreateConsentement')
+  async createConsentement(data: CreateConsentementRequest) {
+    const input: any = { ...data };
+    if (data.type !== undefined) {
+      input.type = mapTypeConsentementFromProto(data.type);
+    }
+    const entity = await this.consentementService.create(input);
+    return entityToConsentementResponse(entity);
+  }
+
+  @GrpcMethod('DepanssurService', 'GetConsentement')
+  async getConsentement(data: GetConsentementRequest) {
+    const entity = await this.consentementService.findById(data.id);
+    return entityToConsentementResponse(entity);
+  }
+
+  @GrpcMethod('DepanssurService', 'UpdateConsentement')
+  async updateConsentement(data: UpdateConsentementRequest) {
+    const entity = await this.consentementService.update(data.id, data);
+    return entityToConsentementResponse(entity);
+  }
+
+  @GrpcMethod('DepanssurService', 'ListConsentements')
+  async listConsentements(data: ListConsentementsRequest) {
+    const typeStr = data.type !== undefined ? mapTypeConsentementFromProto(data.type) : undefined;
+    const result = await this.consentementService.findByClient(
+      data.client_id,
+      { type: typeStr },
+      data.pagination ? {
+        page: data.pagination.page,
+        limit: data.pagination.limit,
+        sortBy: data.pagination.sort_by,
+        sortOrder: data.pagination.sort_order,
+      } : undefined,
+    );
+    return {
+      consentements: result.consentements.map(entityToConsentementResponse),
+      pagination: result.pagination,
+    };
+  }
+
+  @GrpcMethod('DepanssurService', 'DeleteConsentement')
+  async deleteConsentement(data: DeleteConsentementRequest) {
+    await this.consentementService.delete(data.id);
+    return { success: true };
   }
 }

@@ -19,7 +19,25 @@
       "Bash(docker rm:*)",
       "Bash(docker exec dev-crm-service-finance sh -c \"pwd; ls -la /app/services/service-finance/node_modules/@crm/grpc-utils/ 2>&1; cat /app/services/service-finance/node_modules/@crm/grpc-utils/package.json 2>&1 | head -5\")",
       "Bash(docker exec dev-crm-service-core sh -c \"pwd; ls -la /app/services/service-core/node_modules/@crm/grpc-utils/ 2>&1; cat /app/services/service-core/node_modules/@crm/grpc-utils/package.json 2>&1 | head -5\")",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(docker restart:*)",
+      "Bash(make service-commercial-up:*)",
+      "Bash(make frontend-up:*)",
+      "Bash(tailscale serve status:*)",
+      "Bash(tailscale serve:*)",
+      "Bash(make dev-down:*)",
+      "Bash(ssh:*)",
+      "Read(//c/Users/Dev/.ssh/**)",
+      "Bash(docker context ls:*)",
+      "Bash(docker --context remote-server compose:*)",
+      "Bash(DOCKER_CONTEXT=remote-server docker compose:*)",
+      "Bash(DOCKER_HOST=\"ssh://finanssor-data-center-v1@finanssor-data-center-v1.tail446cc0.ts.net\" docker compose:*)",
+      "Bash(scp:*)",
+      "Bash(for svc in service-core service-commercial service-finance service-engagement service-logistics)",
+      "Bash(do)",
+      "Bash(done)",
+      "Bash(docker context use:*)",
+      "Bash(docker save:*)"
     ]
   }
 }

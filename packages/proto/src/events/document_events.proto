@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package events;
+
+message DocumentSignedEvent {
+  string signature_request_id = 1;
+  string document_id = 2;
+  string contrat_id = 3;
+  string organisation_id = 4;
+  string signer_email = 5;
+  string signed_at = 6;
+  string timestamp = 7;
+}
+
+message DocumentSignatureFailedEvent {
+  string signature_request_id = 1;
+  string contrat_id = 2;
+  string organisation_id = 3;
+  string reason = 4;
+  string status = 5;
+  string timestamp = 6;
+}

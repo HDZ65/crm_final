@@ -1,7 +1,0 @@
-=== service-commercial tsc ===
-PASS: 0 errors
-=== service-finance tsc ===
-PASS: 0 errors
-=== frontend tsc ===
-PASS: 0 errors
-=== OVERALL: ALL BUILDS PASS ===

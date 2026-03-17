@@ -43,7 +43,7 @@ import { EngagementModule } from './engagement.module';
         database: configService.get<string>('DB_DATABASE', 'engagement_db'),
         namingStrategy: new SnakeNamingStrategy(),
         autoLoadEntities: true,
-        synchronize: configService.get('NODE_ENV') !== 'production',
+        synchronize: configService.get<string>('DB_SYNCHRONIZE', 'false') === 'true',
         migrationsRun: configService.get('MIGRATIONS_RUN', 'true') === 'true',
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         logging: configService.get<string>('NODE_ENV') === 'development',

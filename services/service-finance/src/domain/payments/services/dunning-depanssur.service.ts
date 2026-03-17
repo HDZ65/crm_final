@@ -9,9 +9,12 @@ import {
   DunningConfigEntity,
   type DunningStep,
 } from '../entities/dunning-config.entity';
+import { DunningRunEntity } from '../entities/dunning-run.entity';
 import { PortalPaymentSessionEntity } from '../entities/portal-session.entity';
 import type { ISmsService } from '../../../infrastructure/external/sms/sms-service.interface';
 import { SMS_SERVICE_TOKEN } from '../../../infrastructure/external/sms/sms-service.interface';
+import type { IEmailService } from '../../../infrastructure/external/email/email-service.interface';
+import { EMAIL_SERVICE_TOKEN } from '../../../infrastructure/external/email/email-service.interface';
 import type { IImsClient } from '../../../infrastructure/external/ims/ims-client.interface';
 import { IMS_CLIENT_TOKEN } from '../../../infrastructure/external/ims/ims-client.interface';
 import { CbUpdateSessionService } from '../../../infrastructure/persistence/typeorm/repositories/payments/cb-update-session.service';
@@ -93,7 +96,7 @@ export interface DunningRunState {
   scheduleId: string;
   clientId: string;
   organisationId: string;
-  societeId?: string;
+  societeId: string | null;
   configId: string;
   /** Index of last completed step (0-based). -1 means not started. */
   lastCompletedStep: number;
@@ -104,7 +107,7 @@ export interface DunningRunState {
   /** Whether this dunning run is resolved (payment received or abonnement suspended) */
   isResolved: boolean;
   /** Resolution reason */
-  resolutionReason?: string;
+  resolutionReason: string | null;
   /** Created date */
   createdAt: Date;
   /** Last updated */
@@ -135,7 +138,6 @@ export class DunningDepanssurService {
    * In production this would be a DB table; for now kept in-memory
    * to avoid extra migration complexity.
    */
-  private readonly activeRuns = new Map<string, DunningRunState>();
 
   constructor(
     @InjectRepository(DunningConfigEntity)
@@ -144,11 +146,15 @@ export class DunningDepanssurService {
     private readonly scheduleRepository: Repository<ScheduleEntity>,
     @InjectRepository(PortalPaymentSessionEntity)
     private readonly portalSessionRepository: Repository<PortalPaymentSessionEntity>,
+    @InjectRepository(DunningRunEntity)
+    private readonly dunningRunRepo: Repository<DunningRunEntity>,
     @Inject(SMS_SERVICE_TOKEN)
     private readonly smsService: ISmsService,
     @Inject(IMS_CLIENT_TOKEN)
     private readonly imsClient: IImsClient,
     private readonly cbUpdateSessionService: CbUpdateSessionService,
+    @Inject(EMAIL_SERVICE_TOKEN)
+    private readonly emailService: IEmailService,
   ) {}
 
   // ──────────────────────────────────────────────────────────────────
@@ -173,24 +179,23 @@ export class DunningDepanssurService {
       return;
     }
 
-    let run = this.activeRuns.get(event.abonnementId);
-    if (!run || run.isResolved) {
-      // Start new dunning run
-      run = {
+    let run = await this.dunningRunRepo.findOne({
+      where: { abonnementId: event.abonnementId, isResolved: false },
+    });
+    if (!run) {
+      run = this.dunningRunRepo.create({
         abonnementId: event.abonnementId,
         scheduleId: event.scheduleId,
         clientId: event.clientId,
         organisationId: event.organisationId,
-        societeId: event.societeId,
+        societeId: event.societeId ?? null,
         configId: config.id,
         lastCompletedStep: -1,
         failureDate: new Date(event.occurredAt),
         totalAttempts: 0,
         isResolved: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      this.activeRuns.set(event.abonnementId, run);
+      });
+      run = await this.dunningRunRepo.save(run);
       this.logger.log(`Dunning run started for abonnement=${event.abonnementId}`);
     }
 
@@ -210,10 +215,9 @@ export class DunningDepanssurService {
     const now = new Date();
     let processed = 0;
 
-    for (const [abonnementId, run] of this.activeRuns.entries()) {
-      if (run.isResolved) {
-        continue;
-      }
+    const activeRuns = await this.dunningRunRepo.find({ where: { isResolved: false } });
+    for (const run of activeRuns) {
+      const abonnementId = run.abonnementId;
 
       const config = await this.configRepository.findOne({
         where: { id: run.configId },
@@ -223,6 +227,7 @@ export class DunningDepanssurService {
         this.logger.warn(`Config ${run.configId} not found, resolving run for ${abonnementId}`);
         run.isResolved = true;
         run.resolutionReason = 'CONFIG_NOT_FOUND';
+        await this.dunningRunRepo.save(run);
         continue;
       }
 
@@ -267,15 +272,17 @@ export class DunningDepanssurService {
       `Payment succeeded for abonnement=${event.abonnementId} schedule=${event.scheduleId}`,
     );
 
-    const run = this.activeRuns.get(event.abonnementId);
-    if (!run || run.isResolved) {
+    const run = await this.dunningRunRepo.findOne({
+      where: { abonnementId: event.abonnementId, isResolved: false },
+    });
+    if (!run) {
       return { restored: false, events: [] };
     }
 
     // Resolve the dunning run
     run.isResolved = true;
     run.resolutionReason = 'PAYMENT_SUCCEEDED';
-    run.updatedAt = new Date();
+    await this.dunningRunRepo.save(run);
 
     // Restore the schedule if it was paused
     const schedule = await this.scheduleRepository.findOne({
@@ -480,16 +487,12 @@ export class DunningDepanssurService {
   // PUBLIC: Getters for monitoring
   // ──────────────────────────────────────────────────────────────────
 
-  getActiveRunCount(): number {
-    let count = 0;
-    for (const run of this.activeRuns.values()) {
-      if (!run.isResolved) count++;
-    }
-    return count;
+  async getActiveRunCount(): Promise<number> {
+    return this.dunningRunRepo.count({ where: { isResolved: false } });
   }
 
-  getRunState(abonnementId: string): DunningRunState | undefined {
-    return this.activeRuns.get(abonnementId);
+  async getRunState(abonnementId: string): Promise<DunningRunEntity | null> {
+    return this.dunningRunRepo.findOne({ where: { abonnementId } });
   }
 
   // ──────────────────────────────────────────────────────────────────
@@ -541,7 +544,7 @@ export class DunningDepanssurService {
       }
 
       run.lastCompletedStep = stepIndex;
-      run.updatedAt = new Date();
+      await this.dunningRunRepo.save(run);
     } catch (error: any) {
       this.logger.error(
         `Dunning step ${stepIndex} failed for abonnement=${run.abonnementId}: ${error.message}`,
@@ -576,10 +579,23 @@ export class DunningDepanssurService {
 
     // Send email notification on J0
     if (step.channels.includes('EMAIL')) {
-      this.logger.log(
-        `[DUNNING] Email notification sent for abonnement=${run.abonnementId} step=${stepIndex}`,
-      );
-      // In production: call EmailService.send() with soft payment failure template
+      try {
+        const emailResult = await this.emailService.sendEmail({
+          templateId: 'DEPANSSUR_EMAIL_DUNNING_J0',
+          recipientClientId: run.clientId,
+          variables: {
+            abonnementId: run.abonnementId,
+            montantCents: run.totalAttempts,
+          },
+        });
+        this.logger.log(
+          `[DUNNING] Email notification sent for abonnement=${run.abonnementId} step=${stepIndex} success=${emailResult.success}`,
+        );
+      } catch (error: any) {
+        this.logger.error(
+          `Failed to send dunning J0 email for abonnement=${run.abonnementId}: ${error.message}`,
+        );
+      }
     }
 
     this.logger.log(
@@ -683,15 +699,27 @@ export class DunningDepanssurService {
     // Resolve the dunning run
     run.isResolved = true;
     run.resolutionReason = 'ABONNEMENT_SUSPENDED';
-    run.updatedAt = new Date();
+    await this.dunningRunRepo.save(run);
 
     // Send final notifications
     for (const channel of step.channels) {
       if (channel === 'EMAIL') {
-        this.logger.log(
-          `[DUNNING] Suspension email sent for abonnement=${run.abonnementId}`,
-        );
-        // In production: call EmailService.send() with suspension notification template
+        try {
+          await this.emailService.sendEmail({
+            templateId: 'DEPANSSUR_EMAIL_DUNNING_J10',
+            recipientClientId: run.clientId,
+            variables: {
+              abonnementId: run.abonnementId,
+            },
+          });
+          this.logger.log(
+            `[DUNNING] Suspension email sent for abonnement=${run.abonnementId}`,
+          );
+        } catch (error: any) {
+          this.logger.error(
+            `Failed to send dunning J10 suspension email for abonnement=${run.abonnementId}: ${error.message}`,
+          );
+        }
       }
       if (channel === 'SMS') {
         try {

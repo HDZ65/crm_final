@@ -270,7 +270,7 @@ export class CfastInvoiceSyncSchedulerService {
     }
   }
 
-  private async syncOrganisation(organisationId: string): Promise<void> {
+  async syncOrganisation(organisationId: string): Promise<void> {
     const config = await this.cfastConfigService.findByOrganisationId(organisationId);
     if (!config) {
       return;

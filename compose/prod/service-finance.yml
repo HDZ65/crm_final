@@ -1,0 +1,32 @@
+services:
+  crm-service-finance:
+    build:
+      context: ../..
+      dockerfile: services/service-finance/Dockerfile
+      target: production
+    container_name: prod-crm-service-finance
+    ports:
+      - "127.0.0.1:3404:3059"
+    env_file:
+      - ../../services/service-finance/.env.production
+    environment:
+      - NODE_PATH=/app/services/service-finance/node_modules
+      - DATABASE_URL=postgresql://postgres:postgres@prod-crm-postgres:5432/prod_finance
+      - MIGRATIONS_RUN=false
+      - REDIS_HOST=prod-crm-redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crm-prod-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3059, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  crm-prod-network:

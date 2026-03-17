@@ -1,0 +1,15 @@
+export enum StatutCQ {
+  EN_ATTENTE = 'EN_ATTENTE',
+  EN_COURS = 'EN_COURS',
+  VALIDE = 'VALIDE',
+  REJETE = 'REJETE',
+  RETOUR = 'RETOUR',
+}
+
+export enum TypeCritere {
+  DOCUMENT = 'DOCUMENT',
+  SIGNATURE = 'SIGNATURE',
+  PAIEMENT = 'PAIEMENT',
+  CONFORMITE = 'CONFORMITE',
+  CUSTOM = 'CUSTOM',
+}

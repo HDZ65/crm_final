@@ -60,6 +60,7 @@ export const SERVICES = {
   relance: process.env.GRPC_RELANCE_URL || "localhost:50051",
   agenda: process.env.GRPC_AGENDA_URL || "localhost:50051",
   telecom: process.env.GRPC_TELECOM_URL || "localhost:50077",
+  scoring: process.env.GRPC_SCORING_URL || "localhost:50051",
 } as const;
 
 /**

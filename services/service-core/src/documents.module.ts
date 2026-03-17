@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   PieceJointeEntity,
   BoiteMailEntity,
+  DocumentAuditLogEntity,
 } from './domain/documents/entities';
 
 // Infrastructure services
@@ -12,6 +13,10 @@ import {
   PieceJointeService,
   BoiteMailService,
 } from './infrastructure/persistence/typeorm/repositories/documents';
+
+// Infrastructure storage
+import { StorageModule } from './infrastructure/storage/storage.module';
+import { DocumentStorageService } from './infrastructure/storage/document-storage.service';
 
 // Interface controllers
 import {
@@ -24,7 +29,9 @@ import {
     TypeOrmModule.forFeature([
       PieceJointeEntity,
       BoiteMailEntity,
+      DocumentAuditLogEntity,
     ]),
+    StorageModule,
   ],
   controllers: [
     PieceJointeController,
@@ -37,6 +44,7 @@ import {
   exports: [
     PieceJointeService,
     BoiteMailService,
+    DocumentStorageService,
   ],
 })
 export class DocumentsModule {}

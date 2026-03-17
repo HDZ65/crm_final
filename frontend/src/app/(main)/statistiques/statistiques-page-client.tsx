@@ -478,19 +478,17 @@ export function StatistiquesPageClient({
         {/* Contenu principal avec tabs */}
         <div className="flex-1 min-h-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="">
-            <TabsList className="mb-4">
-              <TabsTrigger value="vue-direction">Vue Direction</TabsTrigger>
-              <TabsTrigger value="vue-commerciale">Vue Commerciale</TabsTrigger>
-              <TabsTrigger value="vue-risques">Risques & Qualité</TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between mb-4">
+              <TabsList>
+                <TabsTrigger value="vue-direction">Vue Direction</TabsTrigger>
+                <TabsTrigger value="vue-commerciale">Vue Commerciale</TabsTrigger>
+                <TabsTrigger value="vue-risques">Risques & Qualité</TabsTrigger>
+              </TabsList>
+              <AskAiCardButton prompt={`Analyse les statistiques du CRM. KPIs: ${kpiCards.map(k => `${k.label}: ${k.value}`).join(" | ")}. Alertes actives: ${alertsList.length}. Identifie les tendances et propose 3 actions prioritaires.`} />
+            </div>
 
             {/* Vue Direction */}
             <TabsContent value="vue-direction" className="space-y-4">
-              {/* KPIs principaux */}
-              {/* AI Analysis Button */}
-              <div className="flex justify-end mb-2">
-                <AskAiCardButton prompt={`Analyse les statistiques du CRM. KPIs: ${kpiCards.map(k => `${k.label}: ${k.value}`).join(" | ")}. Alertes actives: ${alertsList.length}. Identifie les tendances et propose 3 actions prioritaires.`} />
-              </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {isLoading ? (
                   // Loading skeleton for KPIs

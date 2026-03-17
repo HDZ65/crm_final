@@ -3,12 +3,9 @@
 import {
   AlertCircle,
   Bell,
-  ListTree,
-  Palette,
   Shield,
   ShieldCheck,
   User,
-  Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -55,24 +52,6 @@ const navItems = [
     id: "roles-permissions",
     name: "Rôles & Permissions",
     icon: ShieldCheck,
-    group: "organisation",
-  },
-  {
-    id: "marque-blanche",
-    name: "Marque Blanche",
-    icon: Palette,
-    group: "organisation",
-  },
-  {
-    id: "types-activites",
-    name: "Types d'activités",
-    icon: ListTree,
-    group: "organisation",
-  },
-  {
-    id: "integrations",
-    name: "Intégrations",
-    icon: Zap,
     group: "organisation",
   },
 ];
@@ -248,65 +227,6 @@ function RolesPermissionsSettingsWrapper({
   return <RolesPermissionsSettings onOpenChange={onOpenChange} />;
 }
 
-function MarqueBlancheSettings({
-  onOpenChange,
-}: {
-  onOpenChange: (open: boolean) => void;
-}) {
-  return (
-    <AdminSectionLink
-      title="Marque Blanche"
-      description="Personnalisez l'apparence de votre plateforme."
-      path="/parametres/marque-blanche"
-      onOpenChange={onOpenChange}
-    />
-  );
-}
-
-function PermissionsSettings({
-  onOpenChange,
-}: {
-  onOpenChange: (open: boolean) => void;
-}) {
-  return (
-    <AdminSectionLink
-      title="Permissions"
-      description="Gérez les rôles et permissions des utilisateurs."
-      path="/parametres/permissions"
-      onOpenChange={onOpenChange}
-    />
-  );
-}
-
-function TypesActivitesSettings({
-  onOpenChange,
-}: {
-  onOpenChange: (open: boolean) => void;
-}) {
-  return (
-    <AdminSectionLink
-      title="Types d'activités"
-      description="Configurez les types d'activités disponibles."
-      path="/parametres/types-activites"
-      onOpenChange={onOpenChange}
-    />
-  );
-}
-
-function IntegrationsSettings({
-  onOpenChange,
-}: {
-  onOpenChange: (open: boolean) => void;
-}) {
-  return (
-    <AdminSectionLink
-      title="Intégrations"
-      description="Configurez les accès aux catalogues, PSP, et services externes."
-      path="/parametres/integrations"
-      onOpenChange={onOpenChange}
-    />
-  );
-}
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [activeSection, setActiveSection] = React.useState("profil");
@@ -322,14 +242,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         return <SecuriteSettings />;
       case "roles-permissions":
         return <RolesPermissionsSettingsWrapper onOpenChange={onOpenChange} />;
-      case "marque-blanche":
-        return <MarqueBlancheSettings onOpenChange={onOpenChange} />;
-      case "permissions":
-        return <PermissionsSettings onOpenChange={onOpenChange} />;
-      case "types-activites":
-        return <TypesActivitesSettings onOpenChange={onOpenChange} />;
-      case "integrations":
-        return <IntegrationsSettings onOpenChange={onOpenChange} />;
       default:
         return <ProfilSettings />;
     }

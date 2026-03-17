@@ -11,8 +11,8 @@ services:
       - "traefik.http.routers.alex-eng.rule=Host(`alex-engagement.local`)"
       - "traefik.http.services.alex-eng.loadbalancer.server.port=3061"
     ports:
-      - "50071:50051" # gRPC host:container (50071 libre sur TRX50)
-      - "3071:3061"   # HTTP host:container
+      - "3401:3061"   # HTTP per ports.yaml slot 4
+      # gRPC 50051 internal only (docker network)
     env_file:
       - ../../services/service-engagement/.env.development
     environment:
@@ -31,6 +31,16 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./services/service-engagement/src
+          target: /app/services/service-engagement/src
+          ignore:
+            - "node_modules/"
+            - "dist/"
+        - action: rebuild
+          path: ./services/service-engagement/package.json
 
 networks:
   shared_dev_net:

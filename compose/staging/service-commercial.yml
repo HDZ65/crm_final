@@ -1,0 +1,30 @@
+services:
+  crm-service-commercial:
+    build:
+      context: ../..
+      dockerfile: services/service-commercial/Dockerfile
+      target: production
+    container_name: staging-crm-service-commercial
+    ports:
+      - "127.0.0.1:3413:3053"
+    env_file:
+      - ../../services/service-commercial/.env.staging
+    environment:
+      - NODE_PATH=/app/services/service-commercial/node_modules
+      - DATABASE_URL=postgresql://postgres:postgres@staging-crm-postgres:5432/staging_commercial
+      - MIGRATIONS_RUN=false
+      - WINLEADPLUS_API_URL=https://winleadplus.com/api/prospects
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - crm-staging-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3053, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  crm-staging-network:

@@ -428,6 +428,7 @@ export function MarqueBlanchePageClient({
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <AskAiCardButton prompt="Analyse cette configuration marque blanche et suggère des améliorations" />
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
@@ -975,10 +976,5 @@ export function MarqueBlanchePageClient({
 }
 
 export function MarqueBlanchePageClientWrapper(props: MarqueBlanchePageClientProps) {
-  return (
-    <>
-      <AskAiCardButton prompt="Analyse cette configuration marque blanche et suggère des améliorations" />
-      <MarqueBlanchePageClient {...props} />
-    </>
-  )
+  return <MarqueBlanchePageClient {...props} />
 }

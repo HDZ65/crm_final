@@ -42,6 +42,11 @@ service NotificationService {
   // ===== WebSocket Status =====
   rpc GetConnectedUsersCount(EmptyRequest) returns (ConnectedUsersResponse);
   rpc IsUserConnected(IsUserConnectedRequest) returns (IsUserConnectedResponse);
+
+  // ===== Shipping & Reconduction Notifications =====
+  rpc NotifyShippingStatusChanged(NotifyShippingStatusChangedRequest) returns (NotificationResponse);
+  rpc NotifyReconductionTaciteJ90(NotifyReconductionTaciteRequest) returns (NotificationResponse);
+  rpc NotifyReconductionTaciteJ30(NotifyReconductionTaciteRequest) returns (NotificationResponse);
 }
 
 // ============================================
@@ -272,4 +277,28 @@ message IsUserConnectedRequest {
 
 message IsUserConnectedResponse {
   bool connected = 1;
+}
+
+// ============================================
+// SHIPPING & RECONDUCTION NOTIFICATION MESSAGES
+// ============================================
+
+message NotifyShippingStatusChangedRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string expedition_id = 3;
+  string new_status = 4;
+  optional string tracking_number = 5;
+  optional string carrier = 6;
+}
+
+message NotifyReconductionTaciteRequest {
+  string organisation_id = 1;
+  string client_id = 2;
+  string contrat_id = 3;
+  string renewal_date = 4;
+  string cancellation_deadline = 5;
+  string contrat_reference = 6;
+  optional string duree = 7;
+  optional string montant = 8;
 }

@@ -1,0 +1,29 @@
+services:
+  crm-service-telecom:
+    build:
+      context: ../..
+      dockerfile: services/service-telecom/Dockerfile
+      target: production
+    container_name: prod-crm-service-telecom
+    ports:
+      - "127.0.0.1:3407:3056"
+    env_file:
+      - ../../services/service-telecom/.env.production
+    environment:
+      - NODE_PATH=/app/services/service-telecom/node_modules
+      - DATABASE_URL=postgresql://postgres:postgres@prod-crm-postgres:5432/prod_telecom
+      - MIGRATIONS_RUN=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - crm-prod-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3056, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  crm-prod-network:

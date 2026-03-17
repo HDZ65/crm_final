@@ -30,6 +30,98 @@ export interface ContractSignedEvent {
   dateSignature: Date | undefined;
 }
 
+/** Contract activated event */
+export interface ContractActivatedEvent {
+  /** Event metadata */
+  eventId: string;
+  /** Unix timestamp in milliseconds */
+  timestamp: number;
+  /** Optional, for tracing */
+  correlationId: string;
+  /** Event data */
+  contratId: string;
+  /** Client ID */
+  clientId: string;
+  /** Activation date */
+  activatedAt: string;
+  /** Reason for activation */
+  reason: string;
+}
+
+/** Contract suspended event */
+export interface ContractSuspendedEvent {
+  /** Event metadata */
+  eventId: string;
+  /** Unix timestamp in milliseconds */
+  timestamp: number;
+  /** Optional, for tracing */
+  correlationId: string;
+  /** Event data */
+  contratId: string;
+  /** Client ID */
+  clientId: string;
+  /** Suspension date */
+  suspendedAt: string;
+  /** Reason for suspension */
+  reason: string;
+}
+
+/** Contract terminated event */
+export interface ContractTerminatedEvent {
+  /** Event metadata */
+  eventId: string;
+  /** Unix timestamp in milliseconds */
+  timestamp: number;
+  /** Optional, for tracing */
+  correlationId: string;
+  /** Event data */
+  contratId: string;
+  /** Client ID */
+  clientId: string;
+  /** Termination date */
+  terminatedAt: string;
+  /** Reason for termination */
+  reason: string;
+  /** Whether to generate closure invoice */
+  generatesClosureInvoice: boolean;
+}
+
+/** Contract closed event */
+export interface ContractClosedEvent {
+  /** Event metadata */
+  eventId: string;
+  /** Unix timestamp in milliseconds */
+  timestamp: number;
+  /** Optional, for tracing */
+  correlationId: string;
+  /** Event data */
+  contratId: string;
+  /** Client ID */
+  clientId: string;
+  /** Closure date */
+  closedAt: string;
+}
+
+/** Contract status changed event */
+export interface ContractStatusChangedEvent {
+  /** Event metadata */
+  eventId: string;
+  /** Unix timestamp in milliseconds */
+  timestamp: number;
+  /** Optional, for tracing */
+  correlationId: string;
+  /** Event data */
+  contratId: string;
+  /** Previous status */
+  previousStatus: string;
+  /** New status */
+  newStatus: string;
+  /** Reason for status change */
+  reason: string;
+  /** User or system that triggered the change */
+  triggeredBy: string;
+}
+
 function createBaseContractSignedEvent(): ContractSignedEvent {
   return {
     eventId: "",
@@ -235,6 +327,928 @@ export const ContractSignedEvent: MessageFns<ContractSignedEvent> = {
     message.produitId = object.produitId ?? "";
     message.montantTotal = object.montantTotal ?? 0;
     message.dateSignature = object.dateSignature ?? undefined;
+    return message;
+  },
+};
+
+function createBaseContractActivatedEvent(): ContractActivatedEvent {
+  return { eventId: "", timestamp: 0, correlationId: "", contratId: "", clientId: "", activatedAt: "", reason: "" };
+}
+
+export const ContractActivatedEvent: MessageFns<ContractActivatedEvent> = {
+  encode(message: ContractActivatedEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.eventId !== "") {
+      writer.uint32(10).string(message.eventId);
+    }
+    if (message.timestamp !== 0) {
+      writer.uint32(16).int64(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      writer.uint32(26).string(message.correlationId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(34).string(message.contratId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(42).string(message.clientId);
+    }
+    if (message.activatedAt !== "") {
+      writer.uint32(50).string(message.activatedAt);
+    }
+    if (message.reason !== "") {
+      writer.uint32(58).string(message.reason);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ContractActivatedEvent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseContractActivatedEvent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.eventId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.timestamp = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.correlationId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.activatedAt = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ContractActivatedEvent {
+    return {
+      eventId: isSet(object.eventId)
+        ? globalThis.String(object.eventId)
+        : isSet(object.event_id)
+        ? globalThis.String(object.event_id)
+        : "",
+      timestamp: isSet(object.timestamp) ? globalThis.Number(object.timestamp) : 0,
+      correlationId: isSet(object.correlationId)
+        ? globalThis.String(object.correlationId)
+        : isSet(object.correlation_id)
+        ? globalThis.String(object.correlation_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      activatedAt: isSet(object.activatedAt)
+        ? globalThis.String(object.activatedAt)
+        : isSet(object.activated_at)
+        ? globalThis.String(object.activated_at)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+    };
+  },
+
+  toJSON(message: ContractActivatedEvent): unknown {
+    const obj: any = {};
+    if (message.eventId !== "") {
+      obj.eventId = message.eventId;
+    }
+    if (message.timestamp !== 0) {
+      obj.timestamp = Math.round(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      obj.correlationId = message.correlationId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.activatedAt !== "") {
+      obj.activatedAt = message.activatedAt;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ContractActivatedEvent>, I>>(base?: I): ContractActivatedEvent {
+    return ContractActivatedEvent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ContractActivatedEvent>, I>>(object: I): ContractActivatedEvent {
+    const message = createBaseContractActivatedEvent();
+    message.eventId = object.eventId ?? "";
+    message.timestamp = object.timestamp ?? 0;
+    message.correlationId = object.correlationId ?? "";
+    message.contratId = object.contratId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.activatedAt = object.activatedAt ?? "";
+    message.reason = object.reason ?? "";
+    return message;
+  },
+};
+
+function createBaseContractSuspendedEvent(): ContractSuspendedEvent {
+  return { eventId: "", timestamp: 0, correlationId: "", contratId: "", clientId: "", suspendedAt: "", reason: "" };
+}
+
+export const ContractSuspendedEvent: MessageFns<ContractSuspendedEvent> = {
+  encode(message: ContractSuspendedEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.eventId !== "") {
+      writer.uint32(10).string(message.eventId);
+    }
+    if (message.timestamp !== 0) {
+      writer.uint32(16).int64(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      writer.uint32(26).string(message.correlationId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(34).string(message.contratId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(42).string(message.clientId);
+    }
+    if (message.suspendedAt !== "") {
+      writer.uint32(50).string(message.suspendedAt);
+    }
+    if (message.reason !== "") {
+      writer.uint32(58).string(message.reason);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ContractSuspendedEvent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseContractSuspendedEvent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.eventId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.timestamp = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.correlationId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.suspendedAt = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ContractSuspendedEvent {
+    return {
+      eventId: isSet(object.eventId)
+        ? globalThis.String(object.eventId)
+        : isSet(object.event_id)
+        ? globalThis.String(object.event_id)
+        : "",
+      timestamp: isSet(object.timestamp) ? globalThis.Number(object.timestamp) : 0,
+      correlationId: isSet(object.correlationId)
+        ? globalThis.String(object.correlationId)
+        : isSet(object.correlation_id)
+        ? globalThis.String(object.correlation_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      suspendedAt: isSet(object.suspendedAt)
+        ? globalThis.String(object.suspendedAt)
+        : isSet(object.suspended_at)
+        ? globalThis.String(object.suspended_at)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+    };
+  },
+
+  toJSON(message: ContractSuspendedEvent): unknown {
+    const obj: any = {};
+    if (message.eventId !== "") {
+      obj.eventId = message.eventId;
+    }
+    if (message.timestamp !== 0) {
+      obj.timestamp = Math.round(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      obj.correlationId = message.correlationId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.suspendedAt !== "") {
+      obj.suspendedAt = message.suspendedAt;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ContractSuspendedEvent>, I>>(base?: I): ContractSuspendedEvent {
+    return ContractSuspendedEvent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ContractSuspendedEvent>, I>>(object: I): ContractSuspendedEvent {
+    const message = createBaseContractSuspendedEvent();
+    message.eventId = object.eventId ?? "";
+    message.timestamp = object.timestamp ?? 0;
+    message.correlationId = object.correlationId ?? "";
+    message.contratId = object.contratId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.suspendedAt = object.suspendedAt ?? "";
+    message.reason = object.reason ?? "";
+    return message;
+  },
+};
+
+function createBaseContractTerminatedEvent(): ContractTerminatedEvent {
+  return {
+    eventId: "",
+    timestamp: 0,
+    correlationId: "",
+    contratId: "",
+    clientId: "",
+    terminatedAt: "",
+    reason: "",
+    generatesClosureInvoice: false,
+  };
+}
+
+export const ContractTerminatedEvent: MessageFns<ContractTerminatedEvent> = {
+  encode(message: ContractTerminatedEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.eventId !== "") {
+      writer.uint32(10).string(message.eventId);
+    }
+    if (message.timestamp !== 0) {
+      writer.uint32(16).int64(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      writer.uint32(26).string(message.correlationId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(34).string(message.contratId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(42).string(message.clientId);
+    }
+    if (message.terminatedAt !== "") {
+      writer.uint32(50).string(message.terminatedAt);
+    }
+    if (message.reason !== "") {
+      writer.uint32(58).string(message.reason);
+    }
+    if (message.generatesClosureInvoice !== false) {
+      writer.uint32(64).bool(message.generatesClosureInvoice);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ContractTerminatedEvent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseContractTerminatedEvent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.eventId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.timestamp = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.correlationId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.terminatedAt = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.generatesClosureInvoice = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ContractTerminatedEvent {
+    return {
+      eventId: isSet(object.eventId)
+        ? globalThis.String(object.eventId)
+        : isSet(object.event_id)
+        ? globalThis.String(object.event_id)
+        : "",
+      timestamp: isSet(object.timestamp) ? globalThis.Number(object.timestamp) : 0,
+      correlationId: isSet(object.correlationId)
+        ? globalThis.String(object.correlationId)
+        : isSet(object.correlation_id)
+        ? globalThis.String(object.correlation_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      terminatedAt: isSet(object.terminatedAt)
+        ? globalThis.String(object.terminatedAt)
+        : isSet(object.terminated_at)
+        ? globalThis.String(object.terminated_at)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      generatesClosureInvoice: isSet(object.generatesClosureInvoice)
+        ? globalThis.Boolean(object.generatesClosureInvoice)
+        : isSet(object.generates_closure_invoice)
+        ? globalThis.Boolean(object.generates_closure_invoice)
+        : false,
+    };
+  },
+
+  toJSON(message: ContractTerminatedEvent): unknown {
+    const obj: any = {};
+    if (message.eventId !== "") {
+      obj.eventId = message.eventId;
+    }
+    if (message.timestamp !== 0) {
+      obj.timestamp = Math.round(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      obj.correlationId = message.correlationId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.terminatedAt !== "") {
+      obj.terminatedAt = message.terminatedAt;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.generatesClosureInvoice !== false) {
+      obj.generatesClosureInvoice = message.generatesClosureInvoice;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ContractTerminatedEvent>, I>>(base?: I): ContractTerminatedEvent {
+    return ContractTerminatedEvent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ContractTerminatedEvent>, I>>(object: I): ContractTerminatedEvent {
+    const message = createBaseContractTerminatedEvent();
+    message.eventId = object.eventId ?? "";
+    message.timestamp = object.timestamp ?? 0;
+    message.correlationId = object.correlationId ?? "";
+    message.contratId = object.contratId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.terminatedAt = object.terminatedAt ?? "";
+    message.reason = object.reason ?? "";
+    message.generatesClosureInvoice = object.generatesClosureInvoice ?? false;
+    return message;
+  },
+};
+
+function createBaseContractClosedEvent(): ContractClosedEvent {
+  return { eventId: "", timestamp: 0, correlationId: "", contratId: "", clientId: "", closedAt: "" };
+}
+
+export const ContractClosedEvent: MessageFns<ContractClosedEvent> = {
+  encode(message: ContractClosedEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.eventId !== "") {
+      writer.uint32(10).string(message.eventId);
+    }
+    if (message.timestamp !== 0) {
+      writer.uint32(16).int64(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      writer.uint32(26).string(message.correlationId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(34).string(message.contratId);
+    }
+    if (message.clientId !== "") {
+      writer.uint32(42).string(message.clientId);
+    }
+    if (message.closedAt !== "") {
+      writer.uint32(50).string(message.closedAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ContractClosedEvent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseContractClosedEvent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.eventId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.timestamp = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.correlationId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.clientId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.closedAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ContractClosedEvent {
+    return {
+      eventId: isSet(object.eventId)
+        ? globalThis.String(object.eventId)
+        : isSet(object.event_id)
+        ? globalThis.String(object.event_id)
+        : "",
+      timestamp: isSet(object.timestamp) ? globalThis.Number(object.timestamp) : 0,
+      correlationId: isSet(object.correlationId)
+        ? globalThis.String(object.correlationId)
+        : isSet(object.correlation_id)
+        ? globalThis.String(object.correlation_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      clientId: isSet(object.clientId)
+        ? globalThis.String(object.clientId)
+        : isSet(object.client_id)
+        ? globalThis.String(object.client_id)
+        : "",
+      closedAt: isSet(object.closedAt)
+        ? globalThis.String(object.closedAt)
+        : isSet(object.closed_at)
+        ? globalThis.String(object.closed_at)
+        : "",
+    };
+  },
+
+  toJSON(message: ContractClosedEvent): unknown {
+    const obj: any = {};
+    if (message.eventId !== "") {
+      obj.eventId = message.eventId;
+    }
+    if (message.timestamp !== 0) {
+      obj.timestamp = Math.round(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      obj.correlationId = message.correlationId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.clientId !== "") {
+      obj.clientId = message.clientId;
+    }
+    if (message.closedAt !== "") {
+      obj.closedAt = message.closedAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ContractClosedEvent>, I>>(base?: I): ContractClosedEvent {
+    return ContractClosedEvent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ContractClosedEvent>, I>>(object: I): ContractClosedEvent {
+    const message = createBaseContractClosedEvent();
+    message.eventId = object.eventId ?? "";
+    message.timestamp = object.timestamp ?? 0;
+    message.correlationId = object.correlationId ?? "";
+    message.contratId = object.contratId ?? "";
+    message.clientId = object.clientId ?? "";
+    message.closedAt = object.closedAt ?? "";
+    return message;
+  },
+};
+
+function createBaseContractStatusChangedEvent(): ContractStatusChangedEvent {
+  return {
+    eventId: "",
+    timestamp: 0,
+    correlationId: "",
+    contratId: "",
+    previousStatus: "",
+    newStatus: "",
+    reason: "",
+    triggeredBy: "",
+  };
+}
+
+export const ContractStatusChangedEvent: MessageFns<ContractStatusChangedEvent> = {
+  encode(message: ContractStatusChangedEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.eventId !== "") {
+      writer.uint32(10).string(message.eventId);
+    }
+    if (message.timestamp !== 0) {
+      writer.uint32(16).int64(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      writer.uint32(26).string(message.correlationId);
+    }
+    if (message.contratId !== "") {
+      writer.uint32(34).string(message.contratId);
+    }
+    if (message.previousStatus !== "") {
+      writer.uint32(42).string(message.previousStatus);
+    }
+    if (message.newStatus !== "") {
+      writer.uint32(50).string(message.newStatus);
+    }
+    if (message.reason !== "") {
+      writer.uint32(58).string(message.reason);
+    }
+    if (message.triggeredBy !== "") {
+      writer.uint32(66).string(message.triggeredBy);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ContractStatusChangedEvent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseContractStatusChangedEvent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.eventId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.timestamp = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.correlationId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.contratId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.previousStatus = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.newStatus = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.triggeredBy = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ContractStatusChangedEvent {
+    return {
+      eventId: isSet(object.eventId)
+        ? globalThis.String(object.eventId)
+        : isSet(object.event_id)
+        ? globalThis.String(object.event_id)
+        : "",
+      timestamp: isSet(object.timestamp) ? globalThis.Number(object.timestamp) : 0,
+      correlationId: isSet(object.correlationId)
+        ? globalThis.String(object.correlationId)
+        : isSet(object.correlation_id)
+        ? globalThis.String(object.correlation_id)
+        : "",
+      contratId: isSet(object.contratId)
+        ? globalThis.String(object.contratId)
+        : isSet(object.contrat_id)
+        ? globalThis.String(object.contrat_id)
+        : "",
+      previousStatus: isSet(object.previousStatus)
+        ? globalThis.String(object.previousStatus)
+        : isSet(object.previous_status)
+        ? globalThis.String(object.previous_status)
+        : "",
+      newStatus: isSet(object.newStatus)
+        ? globalThis.String(object.newStatus)
+        : isSet(object.new_status)
+        ? globalThis.String(object.new_status)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      triggeredBy: isSet(object.triggeredBy)
+        ? globalThis.String(object.triggeredBy)
+        : isSet(object.triggered_by)
+        ? globalThis.String(object.triggered_by)
+        : "",
+    };
+  },
+
+  toJSON(message: ContractStatusChangedEvent): unknown {
+    const obj: any = {};
+    if (message.eventId !== "") {
+      obj.eventId = message.eventId;
+    }
+    if (message.timestamp !== 0) {
+      obj.timestamp = Math.round(message.timestamp);
+    }
+    if (message.correlationId !== "") {
+      obj.correlationId = message.correlationId;
+    }
+    if (message.contratId !== "") {
+      obj.contratId = message.contratId;
+    }
+    if (message.previousStatus !== "") {
+      obj.previousStatus = message.previousStatus;
+    }
+    if (message.newStatus !== "") {
+      obj.newStatus = message.newStatus;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.triggeredBy !== "") {
+      obj.triggeredBy = message.triggeredBy;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ContractStatusChangedEvent>, I>>(base?: I): ContractStatusChangedEvent {
+    return ContractStatusChangedEvent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ContractStatusChangedEvent>, I>>(object: I): ContractStatusChangedEvent {
+    const message = createBaseContractStatusChangedEvent();
+    message.eventId = object.eventId ?? "";
+    message.timestamp = object.timestamp ?? 0;
+    message.correlationId = object.correlationId ?? "";
+    message.contratId = object.contratId ?? "";
+    message.previousStatus = object.previousStatus ?? "";
+    message.newStatus = object.newStatus ?? "";
+    message.reason = object.reason ?? "";
+    message.triggeredBy = object.triggeredBy ?? "";
     return message;
   },
 };

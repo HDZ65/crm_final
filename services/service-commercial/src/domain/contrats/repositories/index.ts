@@ -3,3 +3,4 @@ export * from './ILigneContratRepository';
 export * from './IHistoriqueStatutContratRepository';
 export * from './IStatutContratRepository';
 export * from './IOrchestrationHistoryRepository';
+export * from './IReconductionTaciteRepository';

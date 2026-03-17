@@ -132,9 +132,12 @@ function mapClientDetailDtoToDetail(
       gdprConsent: "Non acceptés", // Not available in gRPC yet
       gdprConsentVariant: "error",
       language: "Français",
+      source: "",
+      canalAcquisition: "",
     },
     bank: {
       iban: formatIbanMasked(undefined),
+      bic: "",
       sepaMandateStatus: "Inactif", // Not available in gRPC yet
       sepaMandateStatusVariant: "error",
     },

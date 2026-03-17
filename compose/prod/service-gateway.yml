@@ -1,0 +1,26 @@
+services:
+  crm-service-gateway:
+    build:
+      context: ../..
+      dockerfile: services/service-gateway/Dockerfile
+      target: production
+    container_name: prod-crm-service-gateway
+    ports:
+      - "127.0.0.1:3405:3405"
+    env_file:
+      - ../../services/service-gateway/.env.production
+    environment:
+      - NODE_PATH=/app/services/service-gateway/node_modules
+      - NATS_URL=nats://prod-crm-nats:4222
+      - GRPC_CONTRAT_URL=prod-crm-service-commercial:50053
+    networks:
+      - crm-prod-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3405, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  crm-prod-network:

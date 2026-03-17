@@ -45,3 +45,6 @@ export * from './utils/index.js';
 // Re-export constants and enums
 export * from './constants/index.js';
 export * from './enums/index.js';
+
+// Re-export storage abstraction
+export * from './storage/index.js';

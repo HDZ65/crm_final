@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package payment;
+import "payments/export-fec.proto";
 
 // ==================== PAYMENT SERVICE ====================
 // Service gRPC unifié pour tous les paiements (Stripe, PayPal, GoCardless, etc.)
@@ -110,6 +111,8 @@ service PaymentService {
   rpc GetExportJob(GetExportJobRequest) returns (ExportJobResponse);
   rpc ListExportJobs(ListExportJobsRequest) returns (ListExportJobsResponse);
   rpc DownloadExport(DownloadExportRequest) returns (DownloadExportResponse);
+  rpc CreateJournalExport(CreateJournalExportRequest) returns (JournalExportResponse);
+  rpc GetJournalExportFormats(CreateJournalExportRequest) returns (GetJournalExportFormatsResponse);
 
   // ==================== RISK SCORING ====================
   rpc GetRiskScore(GetRiskScoreRequest) returns (RiskScoreResponse);

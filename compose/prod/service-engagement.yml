@@ -1,0 +1,33 @@
+services:
+  crm-service-engagement:
+    build:
+      context: ../..
+      dockerfile: services/service-engagement/Dockerfile
+      target: production
+    container_name: prod-crm-service-engagement
+    ports:
+      - "127.0.0.1:3401:3061"
+    env_file:
+      - ../../services/service-engagement/.env.production
+    environment:
+      - NODE_PATH=/app/services/service-engagement/node_modules
+      - DATABASE_URL=postgresql://postgres:postgres@prod-crm-postgres:5432/prod_engagement
+      - MIGRATIONS_RUN=false
+      - NATS_URL=nats://prod-crm-nats:4222
+      - REDIS_HOST=prod-crm-redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crm-prod-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3061, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  crm-prod-network:

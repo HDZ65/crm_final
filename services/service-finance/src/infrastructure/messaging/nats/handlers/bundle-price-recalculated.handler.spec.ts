@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, mock } from 'bun:test';
 import { BundlePriceRecalculatedHandler } from './bundle-price-recalculated.handler';
 
 describe('BundlePriceRecalculatedHandler', () => {
@@ -16,7 +16,10 @@ describe('BundlePriceRecalculatedHandler', () => {
       },
     };
 
+    const mockNatsService = { subscribe: mock(() => {}) };
+
     const handler = new BundlePriceRecalculatedHandler(
+      mockNatsService as any,
       consolidatedBillingService as any,
     );
 

@@ -20,6 +20,34 @@ export enum MandateStatus {
   BLOCKED = 'blocked',
 }
 
+/** Valid mandate status transitions (GoCardless SEPA lifecycle). */
+const MANDATE_TRANSITIONS: Record<MandateStatus, MandateStatus[]> = {
+  [MandateStatus.PENDING_CUSTOMER_APPROVAL]: [MandateStatus.PENDING_SUBMISSION, MandateStatus.CANCELLED],
+  [MandateStatus.PENDING_SUBMISSION]: [MandateStatus.SUBMITTED, MandateStatus.FAILED, MandateStatus.CANCELLED],
+  [MandateStatus.SUBMITTED]: [MandateStatus.ACTIVE, MandateStatus.FAILED, MandateStatus.CANCELLED],
+  [MandateStatus.ACTIVE]: [MandateStatus.CANCELLED, MandateStatus.EXPIRED, MandateStatus.CONSUMED, MandateStatus.SUSPENDED_BY_PAYER],
+  [MandateStatus.SUSPENDED_BY_PAYER]: [MandateStatus.ACTIVE, MandateStatus.CANCELLED],
+  [MandateStatus.FAILED]: [],
+  [MandateStatus.CANCELLED]: [],
+  [MandateStatus.EXPIRED]: [],
+  [MandateStatus.CONSUMED]: [],
+  [MandateStatus.BLOCKED]: [],
+};
+
+/**
+ * Check if a transition from one mandate status to another is valid.
+ */
+export function canTransitionMandate(from: MandateStatus, to: MandateStatus): boolean {
+  return MANDATE_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+/**
+ * Returns the list of terminal (no-exit) mandate statuses.
+ */
+export function isTerminalMandateStatus(status: MandateStatus): boolean {
+  return MANDATE_TRANSITIONS[status]?.length === 0;
+}
+
 @Entity('gocardless_mandates')
 export class GoCardlessMandateEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -81,5 +109,31 @@ export class GoCardlessMandateEntity {
 
   canCharge(): boolean {
     return this.status === MandateStatus.ACTIVE;
+  }
+
+  /**
+   * Check if this mandate can transition to the given status.
+   */
+  canTransitionTo(newStatus: MandateStatus): boolean {
+    return canTransitionMandate(this.status, newStatus);
+  }
+
+  /**
+   * Transition mandate to a new status. Throws if the transition is invalid.
+   */
+  transition(newStatus: MandateStatus): void {
+    if (!this.canTransitionTo(newStatus)) {
+      throw new Error(
+        `Invalid mandate transition: ${this.status} → ${newStatus}`,
+      );
+    }
+    this.status = newStatus;
+  }
+
+  /**
+   * Whether this mandate is in a terminal (final) state.
+   */
+  isTerminal(): boolean {
+    return isTerminalMandateStatus(this.status);
   }
 }

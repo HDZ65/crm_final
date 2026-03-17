@@ -29,6 +29,7 @@ import {
 
 import { OptimizationEmptyState } from "@/components/payments/empty-states"
 import type { OptimizationSuggestion } from "@/lib/ui/display-types/payment"
+import { fetchOptimizationSuggestions } from "@/actions/analytics"
 
 interface OptimizationPanelProps {
   societeId: string
@@ -47,12 +48,17 @@ export function OptimizationPanel({ societeId }: OptimizationPanelProps) {
 
   function handleAnalyze() {
     setIsLoading(true)
-    // Stub — simulates gRPC call delay. Will be replaced with real GetOptimizationSuggestions call.
-    setTimeout(() => {
-      setSuggestions([])
+    // Fetch real optimization suggestions from server action
+    fetchOptimizationSuggestions(societeId).then((result) => {
+      if (result.error) {
+        console.error("Failed to fetch suggestions:", result.error)
+        toast.error(result.error)
+      } else {
+        setSuggestions(result.data || [])
+      }
       setLastAnalyzedAt(new Date())
       setIsLoading(false)
-    }, 1500)
+    })
   }
 
   function handleApply() {
@@ -69,8 +75,10 @@ export function OptimizationPanel({ societeId }: OptimizationPanelProps) {
     }, 1000)
   }
 
-  // Suppress unused societeId lint warning — will be used for gRPC call
-  void societeId
+  // Fetch suggestions on mount
+  React.useEffect(() => {
+    handleAnalyze()
+  }, [societeId])
 
   return (
     <Card className="mt-6">

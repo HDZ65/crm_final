@@ -223,7 +223,6 @@ export function DossiersPageClient({ initialDossiers = [], activeOrgId }: Dossie
             <Plus className="size-4" />
             Nouveau dossier
           </Button>
-          <AskAiCardButton prompt="Analyse les dossiers SAV en cours et fournis un résumé des statuts, montants demandés et acceptés, ainsi que les dossiers en attente d'information." />
         </div>
 
         {/* Filtres avancés (collapsible) */}
@@ -272,6 +271,7 @@ export function DossiersPageClient({ initialDossiers = [], activeOrgId }: Dossie
               <span className="text-sm text-muted-foreground">
                 {filteredDossiers.length} dossier{filteredDossiers.length > 1 ? 's' : ''}
               </span>
+              <AskAiCardButton prompt="Analyse les dossiers SAV en cours et fournis un résumé des statuts, montants demandés et acceptés, ainsi que les dossiers en attente d'information." />
             </div>
 
             <div className="flex-1 min-h-0">

@@ -1,0 +1,125 @@
+syntax = "proto3";
+package qualite;
+
+enum StatutCQ {
+  STATUT_CQ_UNSPECIFIED = 0;
+  CQ_EN_ATTENTE = 1;
+  CQ_EN_COURS = 2;
+  CQ_VALIDE = 3;
+  CQ_REJETE = 4;
+  CQ_RETOUR = 5;
+}
+
+enum TypeCritere {
+  TYPE_CRITERE_UNSPECIFIED = 0;
+  CRITERE_DOCUMENT = 1;
+  CRITERE_SIGNATURE = 2;
+  CRITERE_PAIEMENT = 3;
+  CRITERE_CONFORMITE = 4;
+  CRITERE_CUSTOM = 5;
+}
+
+service ControleQualiteService {
+  // Controles
+  rpc CreerControle(CreerControleRequest) returns (ControleQualite);
+  rpc GetControle(GetControleRequest) returns (ControleQualite);
+  rpc GetControles(GetControlesRequest) returns (GetControlesResponse);
+  rpc GetControleByContrat(GetControleByContratRequest) returns (ControleQualite);
+  // Workflow
+  rpc ValiderCritere(ValiderCritereRequest) returns (ResultatCritere);
+  rpc RejeterControle(RejeterControleRequest) returns (ControleQualite);
+  rpc ValiderControle(ValiderControleRequest) returns (ControleQualite);
+  rpc RetournerControle(RetournerControleRequest) returns (ControleQualite);
+  // Criteres
+  rpc GetCriteres(GetCriteresRequest) returns (GetCriteresResponse);
+  rpc CreateCritere(CreateCritereRequest) returns (CritereCQ);
+  rpc UpdateCritere(UpdateCritereRequest) returns (CritereCQ);
+  rpc DeleteCritere(DeleteCritereRequest) returns (DeleteCQResponse);
+  // Regles
+  rpc GetRegles(GetReglesRequest) returns (GetReglesResponse);
+  rpc CreateRegle(CreateRegleRequest) returns (RegleCQ);
+  rpc UpdateRegle(UpdateRegleRequest) returns (RegleCQ);
+  // Stats
+  rpc GetStatistiques(GetStatistiquesRequest) returns (StatistiquesCQ);
+}
+
+message ControleQualite {
+  string id = 1;
+  string organisation_id = 2;
+  string contrat_id = 3;
+  StatutCQ statut = 4;
+  string validateur_id = 5;
+  string date_soumission = 6;
+  string date_validation = 7;
+  string motif_rejet = 8;
+  string commentaire = 9;
+  double score = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+message CritereCQ {
+  string id = 1;
+  string organisation_id = 2;
+  string code = 3;
+  string nom = 4;
+  string description = 5;
+  TypeCritere type_critere = 6;
+  bool obligatoire = 7;
+  bool actif = 8;
+  int32 ordre = 9;
+  string created_at = 10;
+}
+
+message ResultatCritere {
+  string id = 1;
+  string controle_qualite_id = 2;
+  string critere_id = 3;
+  bool conforme = 4;
+  string commentaire = 5;
+  string verifie_par = 6;
+  string date_verification = 7;
+}
+
+message RegleCQ {
+  string id = 1;
+  string organisation_id = 2;
+  string type_produit = 3;
+  repeated string criteres_ids = 4;
+  double score_minimum = 5;
+  bool auto_validation = 6;
+  bool actif = 7;
+  string created_at = 8;
+}
+
+message StatistiquesCQ {
+  int32 total = 1;
+  int32 en_attente = 2;
+  int32 en_cours = 3;
+  int32 valide = 4;
+  int32 rejete = 5;
+  int32 retour = 6;
+  double taux_validation = 7;
+}
+
+// Request/Response messages
+message CreerControleRequest { string organisation_id = 1; string contrat_id = 2; }
+message GetControleRequest { string id = 1; }
+message GetControleByContratRequest { string contrat_id = 1; string organisation_id = 2; }
+message GetControlesRequest { string organisation_id = 1; StatutCQ statut = 2; int32 page = 3; int32 limit = 4; }
+message GetControlesResponse { repeated ControleQualite controles = 1; int32 total = 2; }
+message ValiderCritereRequest { string controle_id = 1; string critere_id = 2; bool conforme = 3; string commentaire = 4; string verifie_par = 5; }
+message RejeterControleRequest { string id = 1; string motif = 2; string validateur_id = 3; }
+message ValiderControleRequest { string id = 1; string validateur_id = 2; }
+message RetournerControleRequest { string id = 1; string motif = 2; string validateur_id = 3; }
+message GetCriteresRequest { string organisation_id = 1; bool actif_only = 2; }
+message GetCriteresResponse { repeated CritereCQ criteres = 1; }
+message CreateCritereRequest { string organisation_id = 1; string code = 2; string nom = 3; string description = 4; TypeCritere type_critere = 5; bool obligatoire = 6; int32 ordre = 7; }
+message UpdateCritereRequest { string id = 1; string nom = 2; string description = 3; bool obligatoire = 4; bool actif = 5; int32 ordre = 6; }
+message DeleteCritereRequest { string id = 1; }
+message DeleteCQResponse { bool success = 1; }
+message GetReglesRequest { string organisation_id = 1; string type_produit = 2; }
+message GetReglesResponse { repeated RegleCQ regles = 1; }
+message CreateRegleRequest { string organisation_id = 1; string type_produit = 2; repeated string criteres_ids = 3; double score_minimum = 4; bool auto_validation = 5; }
+message UpdateRegleRequest { string id = 1; repeated string criteres_ids = 2; double score_minimum = 3; bool auto_validation = 4; bool actif = 5; }
+message GetStatistiquesRequest { string organisation_id = 1; string period_from = 2; string period_to = 3; }

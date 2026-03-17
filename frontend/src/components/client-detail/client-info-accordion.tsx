@@ -25,11 +25,26 @@ import {
   Globe,
   CreditCard,
   FileText,
+  Eye,
+  EyeOff,
+  Megaphone,
+  Loader2,
 } from "lucide-react"
 import { EditableField } from "./editable-field"
+import { ClientConsents } from "./client-consents"
+import { listConsentementsByClient } from "@/actions/consentements"
 import type { ClientInfo, ComplianceInfo, BankInfo } from "@/lib/ui/display-types/client"
+import type { ConsentementRGPD } from "@proto/depanssur/depanssur"
+
+// --- IBAN masking ---
+function maskIban(iban: string): string {
+  if (!iban || iban.length < 8) return iban
+  return iban.slice(0, 4) + "*".repeat(iban.length - 8) + iban.slice(-4)
+}
+
 
 interface ClientInfoAccordionProps {
+  clientId: string
   clientInfo: ClientInfo
   compliance: ComplianceInfo
   bank: BankInfo
@@ -37,11 +52,36 @@ interface ClientInfoAccordionProps {
 }
 
 export function ClientInfoAccordion({
+  clientId,
   clientInfo,
   compliance,
   bank,
   onUpdateField,
 }: ClientInfoAccordionProps) {
+  const [ibanVisible, setIbanVisible] = React.useState(false)
+  const [consentements, setConsentements] = React.useState<ConsentementRGPD[]>([])
+  const [consLoading, setConsLoading] = React.useState(true)
+
+  // Load consentements on mount
+  React.useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setConsLoading(true)
+      try {
+        const result = await listConsentementsByClient(clientId)
+        if (!cancelled && result.data) {
+          setConsentements(result.data.consentements ?? [])
+        }
+      } catch {
+        // silently fail — we'll show "Aucun consentement"
+      } finally {
+        if (!cancelled) setConsLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [clientId])
+
   const getVariantClass = (variant: "success" | "warning" | "error") => {
     switch (variant) {
       case "success":
@@ -82,8 +122,13 @@ export function ClientInfoAccordion({
   }
 
   const KycIcon = getStatusIcon(compliance.kycStatusVariant)
-  const GdprIcon = getStatusIcon(compliance.gdprConsentVariant)
   const SepaIcon = getStatusIcon(bank.sepaMandateStatusVariant)
+
+  // Derive GDPR variant from loaded consentements
+  const gdprVariant: "success" | "warning" | "error" = consentements.length > 0
+    ? consentements.every((c) => c.accorde) ? "success" : "warning"
+    : "warning"
+  const GdprIcon = getStatusIcon(gdprVariant)
 
   return (
     <div className="lg:col-span-4 lg:sticky lg:top-[calc(var(--header-height)+1rem)]">
@@ -163,6 +208,7 @@ export function ClientInfoAccordion({
                 </div>
               </AccordionContent>
             </AccordionItem>
+
             <AccordionItem value="conformite">
               <AccordionTrigger className="hover:no-underline">
                 <span className="flex items-center gap-2">
@@ -172,34 +218,60 @@ export function ClientInfoAccordion({
               </AccordionTrigger>
               <AccordionContent>
                 <div className="text-sm space-y-3 text-slate-800">
+                  {/* KYC Status */}
                   <div className="flex items-start gap-2">
                     <KycIcon className={`size-4 mt-0.5 ${getTextVariantClass(compliance.kycStatusVariant)}`} />
                     <div className="flex-1">
                       <div className="text-slate-600 text-xs">Statut KYC</div>
                       <div className={`font-medium ${getTextVariantClass(compliance.kycStatusVariant)}`}>
-                        {compliance.kycStatus}
+                        {compliance.kycStatus || "—"}
                       </div>
                     </div>
                   </div>
+
+                  {/* Consentements RGPD — interactive toggles */}
                   <div className="flex items-start gap-2">
-                    <GdprIcon className={`size-4 mt-0.5 ${getTextVariantClass(compliance.gdprConsentVariant)}`} />
+                    <GdprIcon className={`size-4 mt-0.5 ${getTextVariantClass(gdprVariant)}`} />
                     <div className="flex-1">
-                      <div className="text-slate-600 text-xs">Consentements RGPD</div>
-                      <div className={`font-medium ${getTextVariantClass(compliance.gdprConsentVariant)}`}>
-                        {compliance.gdprConsent}
-                      </div>
+                      <div className="text-slate-600 text-xs mb-1">Consentements RGPD</div>
+                      {consLoading ? (
+                        <div className="flex items-center gap-1.5 text-slate-500">
+                          <Loader2 className="size-3.5 animate-spin" />
+                          <span className="text-xs">Chargement…</span>
+                        </div>
+                      ) : (
+                        <ClientConsents clientId={clientId} initialConsentements={consentements} />
+                      )}
                     </div>
                   </div>
+
+                  {/* Language */}
                   <div className="flex items-start gap-2">
                     <Globe className="size-4 text-slate-500 mt-0.5" />
                     <div className="flex-1">
                       <div className="text-slate-600 text-xs">Langue</div>
-                      <div className="font-medium">{compliance.language}</div>
+                      <div className="font-medium">{compliance.language || "—"}</div>
                     </div>
                   </div>
+
+                  {/* Source & Canal d'acquisition */}
+                  {(compliance.source || compliance.canalAcquisition) && (
+                    <div className="flex items-start gap-2">
+                      <Megaphone className="size-4 text-slate-500 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-slate-600 text-xs">Source / Canal d&apos;acquisition</div>
+                        <div className="font-medium">
+                          {[compliance.source, compliance.canalAcquisition]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </AccordionContent>
             </AccordionItem>
+
             <AccordionItem value="banque">
               <AccordionTrigger className="hover:no-underline">
                 <span className="flex items-center gap-2">
@@ -209,13 +281,48 @@ export function ClientInfoAccordion({
               </AccordionTrigger>
               <AccordionContent>
                 <div className="text-slate-800 space-y-3 text-sm">
+                  {/* IBAN — masked by default, toggle with eye icon */}
                   <div className="flex items-start gap-2">
                     <CreditCard className="size-4 text-slate-500 mt-0.5" />
                     <div className="flex-1">
                       <div className="text-slate-600 text-xs">IBAN</div>
-                      <div className="font-mono font-semibold tracking-tight text-xs">{bank.iban}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-semibold tracking-tight text-xs">
+                          {bank.iban
+                            ? (ibanVisible ? bank.iban : maskIban(bank.iban))
+                            : "—"}
+                        </span>
+                        {bank.iban && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"
+                            onClick={() => setIbanVisible((v) => !v)}
+                            aria-label={ibanVisible ? "Masquer l'IBAN" : "Afficher l'IBAN"}
+                          >
+                            {ibanVisible ? (
+                              <EyeOff className="size-3.5" />
+                            ) : (
+                              <Eye className="size-3.5" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
+
+                  {/* BIC */}
+                  <div className="flex items-start gap-2">
+                    <CreditCard className="size-4 text-slate-500 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-slate-600 text-xs">BIC</div>
+                      <div className="font-mono font-semibold tracking-tight text-xs">
+                        {bank.bic || "—"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mandat SEPA */}
                   <div className="flex items-start gap-2">
                     <SepaIcon className={`size-4 mt-0.5 ${getTextVariantClass(bank.sepaMandateStatusVariant)}`} />
                     <div className="flex-1">
@@ -224,10 +331,11 @@ export function ClientInfoAccordion({
                         variant="secondary"
                         className={getVariantClass(bank.sepaMandateStatusVariant)}
                       >
-                        {bank.sepaMandateStatus}
+                        {bank.sepaMandateStatus || "—"}
                       </Badge>
                     </div>
                   </div>
+
                   <Button variant="link" size="sm" className="px-0 gap-2 h-auto">
                     <FileText className="size-3.5" />
                     Voir le document

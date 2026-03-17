@@ -1,0 +1,988 @@
+{
+  "tags": [
+    "Activités",
+    "Adresses",
+    "Avenants",
+    "Bill",
+    "BillingAudit",
+    "Clients",
+    "Contacts",
+    "Credit",
+    "Devis",
+    "Export",
+    "Payment",
+    "Relations"
+  ],
+  "totalRoutes": 135,
+  "routesByTag": {
+    "Activités": [
+      {
+        "method": "GET",
+        "path": "/v1/client/{clientId}/activities",
+        "operationId": "ClientActivityController_getActivities",
+        "summary": "Lister les activités",
+        "description": "Liste les activités d'un client."
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{clientId}/activities/notes",
+        "operationId": "ClientActivityController_createNote",
+        "summary": "Consigner une activité",
+        "description": "Consigne une activité liée à un client. Les activités consignées peuvent être retrouvées au sein du CRM."
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{clientId}/activities/notes/{noteId}",
+        "operationId": "ClientActivityController_updateNote",
+        "summary": "Modifier une activité",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/client/{clientId}/activities/notes/{noteId}",
+        "operationId": "ClientActivityController_deleteNote",
+        "summary": "Supprimer une activité",
+        "description": ""
+      }
+    ],
+    "Adresses": [
+      {
+        "method": "POST",
+        "path": "/v1/client/{clientId}/addresses",
+        "operationId": "ClientAddressesController_createAddress",
+        "summary": "Ajouter une adresse ",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{clientId}/addresses/{addressId}",
+        "operationId": "ClientAddressesController_updateAddress",
+        "summary": "Modifier une adresse",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/client/{clientId}/addresses/{addressId}",
+        "operationId": "ClientAddressesController_deleteAddress",
+        "summary": "Supprimer une adresse",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{clientId}/addresses/{addressId}/primary",
+        "operationId": "ClientAddressesController_updatePrimaryAddress",
+        "summary": "Changer l'adresse principale",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{clientId}/addresses/{addressId}/locations",
+        "operationId": "LocationsController_addLocation",
+        "summary": "Ajouter un emplacement",
+        "description": "Ajouter un emplacement à une adresse."
+      },
+      {
+        "method": "GET",
+        "path": "/v1/client/{clientId}/addresses/{addressId}/locations",
+        "operationId": "LocationsController_getLocations",
+        "summary": "Lister les emplacements",
+        "description": "Liste l'ensemble des emplacements renseignés à une adresse."
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{clientId}/addresses/{addressId}/locations/{locationId}",
+        "operationId": "LocationsController_updateLocation",
+        "summary": "Modifier un emplacement",
+        "description": "Modifier un emplacement déclaré à une adresse."
+      },
+      {
+        "method": "GET",
+        "path": "/v1/client/{clientId}/addresses/{addressId}/locations/{locationId}",
+        "operationId": "LocationsController_getLocation",
+        "summary": "Récupérer un emplacement",
+        "description": "Récupère un emplacement d'adresse par identifiant."
+      }
+    ],
+    "Avenants": [
+      {
+        "method": "GET",
+        "path": "/v1/billing/amendments",
+        "operationId": "AmendmentController_findAll",
+        "summary": "Lister les avenants",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/amendments",
+        "operationId": "AmendmentController_createAmendment",
+        "summary": "Créer un avenant",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/amendments/{id}",
+        "operationId": "AmendmentController_getOne",
+        "summary": "Récupérer un avenant",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/amendments/{id}",
+        "operationId": "AmendmentController_updateAmendment",
+        "summary": "Mettre à jour un avenant",
+        "description": ""
+      },
+      {
+        "method": "PATCH",
+        "path": "/v1/billing/amendments/{id}",
+        "operationId": "AmendmentController_partialUpdateAmendment",
+        "summary": "Patcher un avenant",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/billing/amendments/{id}",
+        "operationId": "AmendmentController_deleteAmendment",
+        "summary": "Supprimer un avenant",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/amendments/{id}/status/{status}",
+        "operationId": "AmendmentController_changeAmendmentStatus",
+        "summary": "Changer le statut d'un avenant",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/amendments/{id}/html",
+        "operationId": "AmendmentController_getHtml",
+        "summary": "Générer l'HTML de l'avenant",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/amendments/{id}/pdf/{name}",
+        "operationId": "AmendmentController_getPdf",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/amendments/{id}/emails",
+        "operationId": "AmendmentController_sendByEmail",
+        "summary": "Envoyer par email",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/amendments/{id}/emails",
+        "operationId": "AmendmentController_getEmailHistory",
+        "summary": "Récupérer l'historique des emails",
+        "description": ""
+      }
+    ],
+    "Bill": [
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills",
+        "operationId": "BillController_findAll",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/bills",
+        "operationId": "BillController_createBill",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills/last-numbered-date",
+        "operationId": "BillController_getLastBillDate",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills/statuses",
+        "operationId": "BillController_aggregateBillsPerStatus",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/bills/{id}/copy",
+        "operationId": "BillController_copyBill",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/bills/{billId}/credits/{type}",
+        "operationId": "BillController_createCredits",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/bills/{id}/status/{status}",
+        "operationId": "BillController_changeBillStatus",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/bills/{id}/categorization",
+        "operationId": "BillController_categorizeBill",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills/{id}",
+        "operationId": "BillController_getBill",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/billing/bills/{id}",
+        "operationId": "BillController_deleteBill",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/bills/{id}",
+        "operationId": "BillController_updateBill",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PATCH",
+        "path": "/v1/billing/bills/{id}",
+        "operationId": "BillController_partialUpdateBill",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/bills/{id}/payments",
+        "operationId": "BillController_registerPayment",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/billing/bills/{id}/payments/{paymentId}",
+        "operationId": "BillController_deletePayment",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills/{id}/pdf/{name}",
+        "operationId": "BillController_visualizeBillFileContent",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills/{id}/ubl",
+        "operationId": "BillController_visualizeBillUBL",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills/{id}/html",
+        "operationId": "BillController_visualizeBillHtml",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/bills/{id}/peppol",
+        "operationId": "BillController_sendToPeppolEndpoint",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/bills/{id}/peppol/check-recipient",
+        "operationId": "BillController_checkPeppolRecipientEndpoint",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/bills/{id}/refresh-from-crm",
+        "operationId": "BillController_refreshBillPartiesFromCrm",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/bills/{billId}/emails",
+        "operationId": "BillController_sendBillByEmail",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills/{id}/emails",
+        "operationId": "BillController_getBillEmailHistory",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/bills/{billId}/linked-to/{linkedId}",
+        "operationId": "BillController_linkBillTo",
+        "summary": "",
+        "description": ""
+      }
+    ],
+    "BillingAudit": [
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/{billingId}/audit",
+        "operationId": "BillingAuditController_getQuotationAudit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/bills/{billingId}/audit",
+        "operationId": "BillingAuditController_getBillAudit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/credits/{billingId}/audit",
+        "operationId": "BillingAuditController_getCreditAudit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/amendments/{billingId}/audit",
+        "operationId": "BillingAuditController_getAmendmentAudit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/stats",
+        "operationId": "BillingAuditController_getStats",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/summary",
+        "operationId": "BillingAuditController_getSummary",
+        "summary": "",
+        "description": ""
+      }
+    ],
+    "Clients": [
+      {
+        "method": "POST",
+        "path": "/v1/client/particular",
+        "operationId": "ClientController_createParticular",
+        "summary": "Créer un particulier",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/professional",
+        "operationId": "ClientController_createClientProfessional",
+        "summary": "Créer un professionnel",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/ownersAssociation",
+        "operationId": "ClientController_createClientOwnersAssociation",
+        "summary": "Créer un syndic",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/client/search",
+        "operationId": "ClientController_findClient",
+        "summary": "Suggérer des clients",
+        "description": "Destiné à fournir un résultat rapide, ce endpoint peut notamment être utilisé pour suggérer une liste de clients. Pour plus de détails dans les résultats, consultez le endpoint <code>Rechercher des clients</code>."
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/import",
+        "operationId": "ClientController_importClients",
+        "summary": "Importer des clients ",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/particular/{id}",
+        "operationId": "ClientController_updateClientParticular",
+        "summary": "Modifier un particulier",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/professional/{id}",
+        "operationId": "ClientController_updateClientProfessional",
+        "summary": "Modifier un professionnel ",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/ownersAssociation/{id}",
+        "operationId": "ClientController_updateClientOwnersAssociation",
+        "summary": "Modifier un syndic ",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/client/contacts",
+        "operationId": "ClientController_getAllContact",
+        "summary": "Lister les contacts ",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/client/{id}",
+        "operationId": "ClientController_getById",
+        "summary": "Récupérer un client ",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/client/{id}",
+        "operationId": "ClientController_deleteClient",
+        "summary": "Supprimer un client",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{id}/type/professional",
+        "operationId": "ClientController_convertParticularToProfessional",
+        "summary": "Convertir en professionnel",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{id}/type/particular",
+        "operationId": "ClientController_convertProfessionalToParticular",
+        "summary": "Convertir en particulier",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/client/{id}/documents",
+        "operationId": "ClientController_getDocumentsByClientId",
+        "summary": "Lister les documents ",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/client/{clientId}/events",
+        "operationId": "ClientController_getEvents",
+        "summary": "Lister les événements ",
+        "description": "Liste les événements associés à un client"
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{clientId}/config",
+        "operationId": "ClientController_saveClientConfig",
+        "summary": "Modifier la configuration",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{clientId}/contacts/{contactId}/user",
+        "operationId": "ClientController_shareClientToContact",
+        "summary": "Partager à un contact",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{id}/salesman/{salesman}",
+        "operationId": "ClientController_assignToSalesman",
+        "summary": "Affecter à un commercial",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/client/{id}/salesman",
+        "operationId": "ClientController_unsassignSalesman",
+        "summary": "Suppprimer l'affectation",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{idClientToKeep}/merge/{idClientToMerge}",
+        "operationId": "ClientController_mergeClients",
+        "summary": "Fusionner deux clients",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/locations/import",
+        "operationId": "ClientController_importLocations",
+        "summary": "Importer des emplacements ",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{clientId}/sites/import",
+        "operationId": "ClientController_importClientSites",
+        "summary": "Importer des sites complets (sites > adresses > emplacements > équipements)",
+        "description": "Import asynchrone"
+      },
+      {
+        "method": "GET",
+        "path": "/v1/client/{id}/einvoice-readiness",
+        "operationId": "ClientController_checkEInvoiceReadiness",
+        "summary": "Vérifier la conformité e-invoice du client",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{id}/email",
+        "operationId": "ClientController_sendEmail",
+        "summary": "Envoyer un email à un client",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/crm/search",
+        "operationId": "CRMController_search",
+        "summary": "Rechercher des clients",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/crm/addresses",
+        "operationId": "CRMController_addresses",
+        "summary": "",
+        "description": ""
+      }
+    ],
+    "Contacts": [
+      {
+        "method": "GET",
+        "path": "/v1/client/contacts",
+        "operationId": "ClientController_getAllContact",
+        "summary": "Lister les contacts ",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{clientId}/contacts",
+        "operationId": "ContactController_addContact",
+        "summary": "Ajouter un contact",
+        "description": "Ajoute un nouveau contact à un client existant."
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/client/{clientId}/contacts/{contactId}",
+        "operationId": "ContactController_updateContact",
+        "summary": "Modifier un contact",
+        "description": "Modifie le contact à partir des informations fournies."
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/client/{clientId}/contacts/{contactId}",
+        "operationId": "ContactController_deleteContact",
+        "summary": "Supprimer un contact",
+        "description": "Supprime définitivement un contact associé à un client."
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{clientId}/contacts/{contactId}/addresses/{addressId}",
+        "operationId": "ContactController_associateContactToAddress",
+        "summary": "Associer un contact à une adresse",
+        "description": "Crée l'association entre un contact existant et une adresse/site du client."
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/client/{clientId}/contacts/{contactId}/addresses/{addressId}",
+        "operationId": "ContactController_dissociateContactFromAddress",
+        "summary": "Désassocier un contact d'une adresse",
+        "description": "Retire l'association entre un contact et une adresse spécifique. Le contact reste associé au client et aux autres adresses."
+      }
+    ],
+    "Credit": [
+      {
+        "method": "GET",
+        "path": "/v1/billing/credits",
+        "operationId": "CreditController_findAll",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/credits/last-numbered-date",
+        "operationId": "CreditController_getLastCreditDate",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/credits/statuses",
+        "operationId": "CreditController_aggregateCreditPerStatus",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/credits/{id}/status/{status}",
+        "operationId": "CreditController_changeCreditStatus",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/credits/{id}/categorization",
+        "operationId": "CreditController_categorizeCredit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/credits/{id}",
+        "operationId": "CreditController_getCredit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/billing/credits/{id}",
+        "operationId": "CreditController_deleteCredit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/credits/{id}",
+        "operationId": "CreditController_updateCredit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "PATCH",
+        "path": "/v1/billing/credits/{id}",
+        "operationId": "CreditController_partialUpdateCredit",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/credits/{id}/refresh-from-crm",
+        "operationId": "CreditController_refreshCreditPartiesFromCrm",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/credits/{id}/pdf/{name}",
+        "operationId": "CreditController_visualizeCreditFileContent",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/credits/{id}/html",
+        "operationId": "CreditController_visualizeCreditHtml",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/credits/{id}/emails",
+        "operationId": "CreditController_sendCreditByEmail",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/credits/{id}/emails",
+        "operationId": "CreditController_getCreditEmailHistory",
+        "summary": "",
+        "description": ""
+      }
+    ],
+    "Devis": [
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations",
+        "operationId": "QuotationController_findAll",
+        "summary": "Lister les devis",
+        "description": "Liste les devis d'un compte entreprise en fonction des filtres fournis dans l'URL."
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations",
+        "operationId": "QuotationController_createQuotation",
+        "summary": "Créer un devis",
+        "description": "Une fois créé, le devis est au statut `draft` et n'a pas encore de numéro."
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations/{id}/copy",
+        "operationId": "QuotationController_copyQuotation",
+        "summary": "Dupliquer un devis",
+        "description": "Dupliquer un devis existant."
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/quotations/{id}/interventions/{interventionId}",
+        "operationId": "QuotationController_linkToIntervention",
+        "summary": "Associer à une intervention",
+        "description": "Associe le devis à une intervention existante."
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/quotations/{id}/maintenance/{maintenanceId}",
+        "operationId": "QuotationController_linkToMaintenance",
+        "summary": "Associer à une maintenance",
+        "description": "Associe le devis à une maintenance existante."
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/statuses",
+        "operationId": "QuotationController_aggregateQuotationsPerStatus",
+        "summary": "Agréger par statut",
+        "description": "Agrège les devis en fonction de leur statut (nombre total, montant HT et montant TTC)."
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/quotations/{id}/status/{status}",
+        "operationId": "QuotationController_changeQuotationStatus",
+        "summary": "Changer le statut",
+        "description": "Change le statut du devis. Le statut cible doit être autorisé (cf. listé dans le champ `availableStatuses`)."
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/{id}",
+        "operationId": "QuotationController_getQuotation",
+        "summary": "Récupérer un devis",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/billing/quotations/{id}",
+        "operationId": "QuotationController_updateQuotation",
+        "summary": "Modifier un devis",
+        "description": ""
+      },
+      {
+        "method": "PATCH",
+        "path": "/v1/billing/quotations/{id}",
+        "operationId": "QuotationController_partialUpdateQuotation",
+        "summary": "Patcher un devis",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/billing/quotations/{id}",
+        "operationId": "QuotationController_deleteQuotation",
+        "summary": "Supprimer un devis",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations/{id}/refresh-from-crm",
+        "operationId": "QuotationController_refreshQuotationPartiesFromCrm",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/{id}/pdf/{name}",
+        "operationId": "QuotationController_visualizeQuotationFileContent",
+        "summary": "Télécharger un devis",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/{id}/html",
+        "operationId": "QuotationController_visualizeQuotationHtml",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/{id}/export/csv",
+        "operationId": "QuotationController_exportQuotationCsv",
+        "summary": "Exporter les lignes du devis en CSV",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations/{id}/emails",
+        "operationId": "QuotationController_sendQuotationByEmail",
+        "summary": "Envoyer par email",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/{id}/emails",
+        "operationId": "QuotationController_getQuotationEmailHistory",
+        "summary": "Récupérer l'historique des emails",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations/{id}/bill",
+        "operationId": "QuotationController_convertQuotationToBill",
+        "summary": "Facturer le solde",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations/{id}/deposit",
+        "operationId": "QuotationController_createDepositBillFromQuotation",
+        "summary": "Facturer un acompte",
+        "description": "Génère une facture d'acompte pour le devis. L'acompte à facturer doit être fourni uniquement si aucun acompte n'a été défini sur le devis."
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations/{id}/progress-bill/global",
+        "operationId": "QuotationController_createGlobalProgressBillFromQuotation",
+        "summary": "Facturer un avancement global",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations/{id}/progress-bill/detailed",
+        "operationId": "QuotationController_createDetailedProgressBillFromQuotation",
+        "summary": "Facturer un avancement détaillé",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/{id}/bills",
+        "operationId": "QuotationController_getBills",
+        "summary": "Lister les factures",
+        "description": "Liste les factures associées au devis."
+      },
+      {
+        "method": "POST",
+        "path": "/v1/billing/quotations/{id}/amendments",
+        "operationId": "QuotationController_createAmendmentFromQuotation",
+        "summary": "Créer un avenant depuis un devis",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/quotations/{id}/amendments",
+        "operationId": "QuotationController_getAmendments",
+        "summary": "Lister les avenants",
+        "description": "Liste les avenants associés au devis."
+      }
+    ],
+    "Export": [
+      {
+        "method": "GET",
+        "path": "/v1/billing/export/quotation",
+        "operationId": "ExportController_exportQuotations",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/export/bill",
+        "operationId": "ExportController_exportBills",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/export/accounting/{type}",
+        "operationId": "ExportController_exportCreditsAccounting",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/export/archive/quotations",
+        "operationId": "ExportController_exportQuotationsAsArchive",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/export/archive/credits",
+        "operationId": "ExportController_exportCreditsAsArchive",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/export/archive/bills",
+        "operationId": "ExportController_exportBillsAsArchive",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/export/credit",
+        "operationId": "ExportController_exportCredits",
+        "summary": "",
+        "description": ""
+      }
+    ],
+    "Payment": [
+      {
+        "method": "GET",
+        "path": "/v1/billing/payments",
+        "operationId": "PaymentController_findAllRegistered",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/payments/export/simple",
+        "operationId": "PaymentController_exportAsCsv",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "GET",
+        "path": "/v1/billing/payments/export/accounting",
+        "operationId": "PaymentController_exportAccounting",
+        "summary": "",
+        "description": ""
+      }
+    ],
+    "Relations": [
+      {
+        "method": "GET",
+        "path": "/v1/client/{clientId}/relations",
+        "operationId": "RelationsController_getAll",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/v1/client/{clientId}/relations",
+        "operationId": "RelationsController_create",
+        "summary": "",
+        "description": ""
+      },
+      {
+        "method": "DELETE",
+        "path": "/v1/client/{clientId}/relations/{relatedClientId}",
+        "operationId": "RelationsController_delete",
+        "summary": "",
+        "description": ""
+      }
+    ]
+  }
+}

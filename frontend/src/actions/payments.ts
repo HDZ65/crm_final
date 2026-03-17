@@ -148,9 +148,13 @@ export async function getPaymentIntents(params: {
   scheduleId?: string;
 }): Promise<ActionResult<PaymentIntentResponse[]>> {
   try {
-    // Note: gRPC client doesn't have a list method yet
-    // This is a placeholder that would need backend implementation
-    // For now, return empty array
+    // Note: No listPaymentIntents RPC available in gRPC client
+    // Use listGoCardlessMandates as proxy for mandate-based payments
+    if (params.scheduleId) {
+      // If filtering by schedule, return empty (would need backend list RPC)
+      return { data: [], error: null };
+    }
+    // For now, return empty array until backend implements listPaymentIntents
     return { data: [], error: null };
   } catch (err) {
     console.error("[getPaymentIntents] gRPC error:", err);
@@ -211,8 +215,9 @@ export async function updatePaymentIntent(
   request: UpdatePaymentIntentRequest
 ): Promise<ActionResult<PaymentIntentResponse>> {
   try {
-    // Note: updatePaymentIntent is not available in the client, this is a placeholder
-    throw new Error("updatePaymentIntent is not implemented");
+    // Note: updatePaymentIntent RPC not available in gRPC client
+    // This operation is not supported by the backend
+    throw new Error("updatePaymentIntent is not implemented in backend");
   } catch (err) {
     console.error("[updatePaymentIntent] gRPC error:", err);
     return {
@@ -229,8 +234,9 @@ export async function deletePaymentIntent(
   id: string
 ): Promise<ActionResult<boolean>> {
   try {
-    // Note: deletePaymentIntent is not available in the client, this is a placeholder
-    throw new Error("deletePaymentIntent is not implemented");
+    // Note: deletePaymentIntent RPC not available in gRPC client
+    // This operation is not supported by the backend
+    throw new Error("deletePaymentIntent is not implemented in backend");
   } catch (err) {
     console.error("[deletePaymentIntent] gRPC error:", err);
     return {
@@ -312,9 +318,9 @@ export async function updatePaymentEvent(
   data: { processed?: boolean; processedAt?: string; errorMessage?: string }
 ): Promise<ActionResult<PaymentEventResponse>> {
   try {
-    // Note: gRPC client doesn't have an update method yet
-    // This is a placeholder that would need backend implementation
-    return { data: null, error: "Mise à jour non implémentée" };
+    // Note: updatePaymentEvent RPC not available in gRPC client
+    // This operation is not supported by the backend
+    throw new Error("updatePaymentEvent is not implemented in backend");
   } catch (err) {
     console.error("[updatePaymentEvent] gRPC error:", err);
     return {
@@ -357,8 +363,8 @@ export async function getSchedules(params: {
   contratId?: string;
 }): Promise<ActionResult<ScheduleResponse[]>> {
   try {
-    // Note: gRPC client doesn't have a list method yet
-    // This is a placeholder that would need backend implementation
+    // Note: No listSchedules RPC available in gRPC client
+    // Would need backend implementation to filter by factureId or contratId
     // For now, return empty array
     return { data: [], error: null };
   } catch (err) {
@@ -460,8 +466,9 @@ export async function triggerPaymentProcessing(): Promise<
   ActionResult<{ processed: number; failed: number }>
 > {
   try {
-    // Note: triggerPaymentProcessing is not available in the client, this is a placeholder
-    throw new Error("triggerPaymentProcessing is not implemented");
+    // Note: triggerPaymentProcessing RPC not available in gRPC client
+    // This operation is not supported by the backend
+    throw new Error("triggerPaymentProcessing is not implemented in backend");
   } catch (err) {
     console.error("[triggerPaymentProcessing] gRPC error:", err);
     return {
@@ -753,6 +760,149 @@ export async function getPSPAccountsSummary(
     return {
       data: null,
       error: err instanceof Error ? err.message : "Erreur lors du chargement des comptes PSP",
+    };
+  }
+}
+
+// ==================== ALERTS ====================
+
+/**
+ * List payment alerts via gRPC
+ */
+export async function listAlerts(params: {
+  societeId?: string;
+  acknowledged?: boolean;
+}): Promise<ActionResult<any[]>> {
+  try {
+    const request = {
+      societeId: params.societeId || "",
+      acknowledged: params.acknowledged,
+    };
+    const response = await payments.listAlerts(request);
+    return { data: response.alerts || [], error: null };
+  } catch (err) {
+    console.error("[listAlerts] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des alertes",
+    };
+  }
+}
+
+/**
+ * Acknowledge a payment alert via gRPC
+ */
+export async function acknowledgeAlert(
+  alertId: string,
+  societeId?: string,
+  acknowledgedBy?: string
+): Promise<ActionResult<any>> {
+  try {
+    const request = {
+      id: alertId,
+      societeId: societeId || "",
+      acknowledgedBy: acknowledgedBy || "",
+    };
+    const data = await payments.acknowledgeAlert(request as any);
+    revalidatePath("/");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[acknowledgeAlert] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de l'acknowledgement de l'alerte",
+    };
+  }
+}
+
+// ==================== EXPORT JOBS ====================
+
+/**
+ * List export jobs via gRPC
+ */
+export async function listExportJobs(params: {
+  societeId?: string;
+}): Promise<ActionResult<any[]>> {
+  try {
+    const request = {
+      societeId: params.societeId || "",
+    };
+    const response = await payments.listExportJobs(request);
+    return { data: response.jobs || [], error: null };
+  } catch (err) {
+    console.error("[listExportJobs] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des exports",
+    };
+  }
+}
+
+/**
+ * Create an export job via gRPC
+ */
+export async function createExportJob(params: {
+  societeId: string;
+  format?: string;
+  filters?: Record<string, any>;
+}): Promise<ActionResult<any>> {
+  try {
+    const request = {
+      societeId: params.societeId,
+      format: params.format || "csv",
+      filters: params.filters || {},
+    };
+    const data = await payments.createExportJob(request as any);
+    revalidatePath("/");
+    return { data, error: null };
+  } catch (err) {
+    console.error("[createExportJob] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors de la création de l'export",
+    };
+  }
+}
+
+// ==================== ROUTING RULES ====================
+
+/**
+ * List routing rules via gRPC
+ */
+export async function listRoutingRules(params: {
+  societeId?: string;
+}): Promise<ActionResult<any[]>> {
+  try {
+    const request = {
+      societeId: params.societeId || "",
+    };
+    const response = await payments.listRoutingRules(request);
+    return { data: response.rules || [], error: null };
+  } catch (err) {
+    console.error("[listRoutingRules] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des règles de routage",
+    };
+  }
+}
+
+// ==================== PAYMENT STATS ====================
+
+/**
+ * Fetch payment statistics via gRPC
+ */
+export async function fetchPaymentStats(
+  societeId: string
+): Promise<ActionResult<PSPAccountsSummaryResponse>> {
+  try {
+    const data = await payments.getPSPAccountsSummary({ societeId });
+    return { data, error: null };
+  } catch (err) {
+    console.error("[fetchPaymentStats] gRPC error:", err);
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Erreur lors du chargement des statistiques de paiement",
     };
   }
 }

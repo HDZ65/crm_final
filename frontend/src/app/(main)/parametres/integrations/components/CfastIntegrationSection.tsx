@@ -270,11 +270,13 @@ export function CfastIntegrationSection({
   // Render
   // ---------------------------------------------------------------------------
   return (
-    <Card className="md:col-span-2">
+    <Card className="group relative md:col-span-2 overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/20">
+      {/* Subtle gradient glow at top */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/20 to-transparent" />
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600 ring-1 ring-orange-200/50 dark:from-orange-900 dark:to-orange-800 dark:text-orange-300 dark:ring-orange-700/50">
               <Phone className="size-5" />
             </div>
             <div>
@@ -285,13 +287,19 @@ export function CfastIntegrationSection({
             </div>
           </div>
           {cfastConfig?.active ? (
-            <Badge variant="default" className="gap-1">
-              <Wifi className="size-3" />
+            <Badge
+              variant="outline"
+              className="gap-1.5 border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400"
+            >
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+              </span>
               Connecté
             </Badge>
           ) : (
-            <Badge variant="secondary" className="gap-1">
-              <WifiOff className="size-3" />
+            <Badge variant="secondary" className="gap-1.5 text-muted-foreground">
+              <span className="size-2 rounded-full bg-muted-foreground/40" />
               Non connecté
             </Badge>
           )}

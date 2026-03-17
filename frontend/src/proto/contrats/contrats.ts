@@ -20,42 +20,6 @@ export interface StatutContrat {
   updatedAt: string;
 }
 
-export interface CreateStatutContratRequest {
-  code: string;
-  nom: string;
-  description: string;
-  ordreAffichage: number;
-}
-
-export interface UpdateStatutContratRequest {
-  id: string;
-  code: string;
-  nom: string;
-  description: string;
-  ordreAffichage: number;
-}
-
-export interface GetStatutContratRequest {
-  id: string;
-}
-
-export interface GetStatutContratByCodeRequest {
-  code: string;
-}
-
-export interface ListStatutContratRequest {
-  pagination: Pagination | undefined;
-}
-
-export interface ListStatutContratResponse {
-  statuts: StatutContrat[];
-  pagination: PaginationResult | undefined;
-}
-
-export interface DeleteStatutContratRequest {
-  id: string;
-}
-
 export interface Contrat {
   id: string;
   organisationId: string;
@@ -84,6 +48,15 @@ export interface Contrat {
     | undefined;
   /** Prochaine date de prélèvement calculée (ISO string) */
   prochaineDatePrelevement?: string | undefined;
+  renewalDate?: string | undefined;
+  taciteRenewalEnabled: boolean;
+  renewalStatus?: string | undefined;
+  renewalNotificationJ90SentAt?: string | undefined;
+  renewalNotificationJ30SentAt?:
+    | string
+    | undefined;
+  /** Statut du contrôle qualité (EN_ATTENTE/VALIDE/REJETE) */
+  statutCq?: string | undefined;
 }
 
 export interface ContratWithDetails {
@@ -178,42 +151,6 @@ export interface LigneContrat {
   updatedAt: string;
 }
 
-export interface CreateLigneContratRequest {
-  contratId: string;
-  produitId: string;
-  periodeFacturationId: string;
-  quantite: number;
-  prixUnitaire: number;
-  canalVente?: string | undefined;
-}
-
-export interface UpdateLigneContratRequest {
-  id: string;
-  produitId: string;
-  periodeFacturationId: string;
-  quantite: number;
-  prixUnitaire: number;
-  canalVente?: string | undefined;
-}
-
-export interface GetLigneContratRequest {
-  id: string;
-}
-
-export interface ListLigneContratByContratRequest {
-  contratId: string;
-  pagination: Pagination | undefined;
-}
-
-export interface ListLigneContratResponse {
-  lignes: LigneContrat[];
-  pagination: PaginationResult | undefined;
-}
-
-export interface DeleteLigneContratRequest {
-  id: string;
-}
-
 export interface HistoriqueStatutContrat {
   id: string;
   contratId: string;
@@ -222,31 +159,6 @@ export interface HistoriqueStatutContrat {
   dateChangement: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface CreateHistoriqueStatutContratRequest {
-  contratId: string;
-  ancienStatutId: string;
-  nouveauStatutId: string;
-  dateChangement: string;
-}
-
-export interface GetHistoriqueStatutContratRequest {
-  id: string;
-}
-
-export interface ListHistoriqueByContratRequest {
-  contratId: string;
-  pagination: Pagination | undefined;
-}
-
-export interface ListHistoriqueStatutContratResponse {
-  historique: HistoriqueStatutContrat[];
-  pagination: PaginationResult | undefined;
-}
-
-export interface DeleteHistoriqueStatutContratRequest {
-  id: string;
 }
 
 export interface OrchestrationRequest {
@@ -508,562 +420,6 @@ export const StatutContrat: MessageFns<StatutContrat> = {
   },
 };
 
-function createBaseCreateStatutContratRequest(): CreateStatutContratRequest {
-  return { code: "", nom: "", description: "", ordreAffichage: 0 };
-}
-
-export const CreateStatutContratRequest: MessageFns<CreateStatutContratRequest> = {
-  encode(message: CreateStatutContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.code !== "") {
-      writer.uint32(10).string(message.code);
-    }
-    if (message.nom !== "") {
-      writer.uint32(18).string(message.nom);
-    }
-    if (message.description !== "") {
-      writer.uint32(26).string(message.description);
-    }
-    if (message.ordreAffichage !== 0) {
-      writer.uint32(32).int32(message.ordreAffichage);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): CreateStatutContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateStatutContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.code = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.nom = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.description = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
-
-          message.ordreAffichage = reader.int32();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CreateStatutContratRequest {
-    return {
-      code: isSet(object.code) ? globalThis.String(object.code) : "",
-      nom: isSet(object.nom) ? globalThis.String(object.nom) : "",
-      description: isSet(object.description) ? globalThis.String(object.description) : "",
-      ordreAffichage: isSet(object.ordreAffichage)
-        ? globalThis.Number(object.ordreAffichage)
-        : isSet(object.ordre_affichage)
-        ? globalThis.Number(object.ordre_affichage)
-        : 0,
-    };
-  },
-
-  toJSON(message: CreateStatutContratRequest): unknown {
-    const obj: any = {};
-    if (message.code !== "") {
-      obj.code = message.code;
-    }
-    if (message.nom !== "") {
-      obj.nom = message.nom;
-    }
-    if (message.description !== "") {
-      obj.description = message.description;
-    }
-    if (message.ordreAffichage !== 0) {
-      obj.ordreAffichage = Math.round(message.ordreAffichage);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CreateStatutContratRequest>, I>>(base?: I): CreateStatutContratRequest {
-    return CreateStatutContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CreateStatutContratRequest>, I>>(object: I): CreateStatutContratRequest {
-    const message = createBaseCreateStatutContratRequest();
-    message.code = object.code ?? "";
-    message.nom = object.nom ?? "";
-    message.description = object.description ?? "";
-    message.ordreAffichage = object.ordreAffichage ?? 0;
-    return message;
-  },
-};
-
-function createBaseUpdateStatutContratRequest(): UpdateStatutContratRequest {
-  return { id: "", code: "", nom: "", description: "", ordreAffichage: 0 };
-}
-
-export const UpdateStatutContratRequest: MessageFns<UpdateStatutContratRequest> = {
-  encode(message: UpdateStatutContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.code !== "") {
-      writer.uint32(18).string(message.code);
-    }
-    if (message.nom !== "") {
-      writer.uint32(26).string(message.nom);
-    }
-    if (message.description !== "") {
-      writer.uint32(34).string(message.description);
-    }
-    if (message.ordreAffichage !== 0) {
-      writer.uint32(40).int32(message.ordreAffichage);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): UpdateStatutContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUpdateStatutContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.code = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.nom = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.description = reader.string();
-          continue;
-        }
-        case 5: {
-          if (tag !== 40) {
-            break;
-          }
-
-          message.ordreAffichage = reader.int32();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): UpdateStatutContratRequest {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      code: isSet(object.code) ? globalThis.String(object.code) : "",
-      nom: isSet(object.nom) ? globalThis.String(object.nom) : "",
-      description: isSet(object.description) ? globalThis.String(object.description) : "",
-      ordreAffichage: isSet(object.ordreAffichage)
-        ? globalThis.Number(object.ordreAffichage)
-        : isSet(object.ordre_affichage)
-        ? globalThis.Number(object.ordre_affichage)
-        : 0,
-    };
-  },
-
-  toJSON(message: UpdateStatutContratRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.code !== "") {
-      obj.code = message.code;
-    }
-    if (message.nom !== "") {
-      obj.nom = message.nom;
-    }
-    if (message.description !== "") {
-      obj.description = message.description;
-    }
-    if (message.ordreAffichage !== 0) {
-      obj.ordreAffichage = Math.round(message.ordreAffichage);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<UpdateStatutContratRequest>, I>>(base?: I): UpdateStatutContratRequest {
-    return UpdateStatutContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<UpdateStatutContratRequest>, I>>(object: I): UpdateStatutContratRequest {
-    const message = createBaseUpdateStatutContratRequest();
-    message.id = object.id ?? "";
-    message.code = object.code ?? "";
-    message.nom = object.nom ?? "";
-    message.description = object.description ?? "";
-    message.ordreAffichage = object.ordreAffichage ?? 0;
-    return message;
-  },
-};
-
-function createBaseGetStatutContratRequest(): GetStatutContratRequest {
-  return { id: "" };
-}
-
-export const GetStatutContratRequest: MessageFns<GetStatutContratRequest> = {
-  encode(message: GetStatutContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GetStatutContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetStatutContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetStatutContratRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: GetStatutContratRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetStatutContratRequest>, I>>(base?: I): GetStatutContratRequest {
-    return GetStatutContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetStatutContratRequest>, I>>(object: I): GetStatutContratRequest {
-    const message = createBaseGetStatutContratRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
-};
-
-function createBaseGetStatutContratByCodeRequest(): GetStatutContratByCodeRequest {
-  return { code: "" };
-}
-
-export const GetStatutContratByCodeRequest: MessageFns<GetStatutContratByCodeRequest> = {
-  encode(message: GetStatutContratByCodeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.code !== "") {
-      writer.uint32(10).string(message.code);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GetStatutContratByCodeRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetStatutContratByCodeRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.code = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetStatutContratByCodeRequest {
-    return { code: isSet(object.code) ? globalThis.String(object.code) : "" };
-  },
-
-  toJSON(message: GetStatutContratByCodeRequest): unknown {
-    const obj: any = {};
-    if (message.code !== "") {
-      obj.code = message.code;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetStatutContratByCodeRequest>, I>>(base?: I): GetStatutContratByCodeRequest {
-    return GetStatutContratByCodeRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetStatutContratByCodeRequest>, I>>(
-    object: I,
-  ): GetStatutContratByCodeRequest {
-    const message = createBaseGetStatutContratByCodeRequest();
-    message.code = object.code ?? "";
-    return message;
-  },
-};
-
-function createBaseListStatutContratRequest(): ListStatutContratRequest {
-  return { pagination: undefined };
-}
-
-export const ListStatutContratRequest: MessageFns<ListStatutContratRequest> = {
-  encode(message: ListStatutContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.pagination !== undefined) {
-      Pagination.encode(message.pagination, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ListStatutContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseListStatutContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.pagination = Pagination.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ListStatutContratRequest {
-    return { pagination: isSet(object.pagination) ? Pagination.fromJSON(object.pagination) : undefined };
-  },
-
-  toJSON(message: ListStatutContratRequest): unknown {
-    const obj: any = {};
-    if (message.pagination !== undefined) {
-      obj.pagination = Pagination.toJSON(message.pagination);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListStatutContratRequest>, I>>(base?: I): ListStatutContratRequest {
-    return ListStatutContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListStatutContratRequest>, I>>(object: I): ListStatutContratRequest {
-    const message = createBaseListStatutContratRequest();
-    message.pagination = (object.pagination !== undefined && object.pagination !== null)
-      ? Pagination.fromPartial(object.pagination)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseListStatutContratResponse(): ListStatutContratResponse {
-  return { statuts: [], pagination: undefined };
-}
-
-export const ListStatutContratResponse: MessageFns<ListStatutContratResponse> = {
-  encode(message: ListStatutContratResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.statuts) {
-      StatutContrat.encode(v!, writer.uint32(10).fork()).join();
-    }
-    if (message.pagination !== undefined) {
-      PaginationResult.encode(message.pagination, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ListStatutContratResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseListStatutContratResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.statuts.push(StatutContrat.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.pagination = PaginationResult.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ListStatutContratResponse {
-    return {
-      statuts: globalThis.Array.isArray(object?.statuts)
-        ? object.statuts.map((e: any) => StatutContrat.fromJSON(e))
-        : [],
-      pagination: isSet(object.pagination) ? PaginationResult.fromJSON(object.pagination) : undefined,
-    };
-  },
-
-  toJSON(message: ListStatutContratResponse): unknown {
-    const obj: any = {};
-    if (message.statuts?.length) {
-      obj.statuts = message.statuts.map((e) => StatutContrat.toJSON(e));
-    }
-    if (message.pagination !== undefined) {
-      obj.pagination = PaginationResult.toJSON(message.pagination);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListStatutContratResponse>, I>>(base?: I): ListStatutContratResponse {
-    return ListStatutContratResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListStatutContratResponse>, I>>(object: I): ListStatutContratResponse {
-    const message = createBaseListStatutContratResponse();
-    message.statuts = object.statuts?.map((e) => StatutContrat.fromPartial(e)) || [];
-    message.pagination = (object.pagination !== undefined && object.pagination !== null)
-      ? PaginationResult.fromPartial(object.pagination)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseDeleteStatutContratRequest(): DeleteStatutContratRequest {
-  return { id: "" };
-}
-
-export const DeleteStatutContratRequest: MessageFns<DeleteStatutContratRequest> = {
-  encode(message: DeleteStatutContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): DeleteStatutContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDeleteStatutContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DeleteStatutContratRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: DeleteStatutContratRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<DeleteStatutContratRequest>, I>>(base?: I): DeleteStatutContratRequest {
-    return DeleteStatutContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<DeleteStatutContratRequest>, I>>(object: I): DeleteStatutContratRequest {
-    const message = createBaseDeleteStatutContratRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
-};
-
 function createBaseContrat(): Contrat {
   return {
     id: "",
@@ -1089,6 +445,12 @@ function createBaseContrat(): Contrat {
     updatedAt: "",
     jourPrelevement: undefined,
     prochaineDatePrelevement: undefined,
+    renewalDate: undefined,
+    taciteRenewalEnabled: false,
+    renewalStatus: undefined,
+    renewalNotificationJ90SentAt: undefined,
+    renewalNotificationJ30SentAt: undefined,
+    statutCq: undefined,
   };
 }
 
@@ -1162,6 +524,24 @@ export const Contrat: MessageFns<Contrat> = {
     }
     if (message.prochaineDatePrelevement !== undefined) {
       writer.uint32(186).string(message.prochaineDatePrelevement);
+    }
+    if (message.renewalDate !== undefined) {
+      writer.uint32(194).string(message.renewalDate);
+    }
+    if (message.taciteRenewalEnabled !== false) {
+      writer.uint32(200).bool(message.taciteRenewalEnabled);
+    }
+    if (message.renewalStatus !== undefined) {
+      writer.uint32(210).string(message.renewalStatus);
+    }
+    if (message.renewalNotificationJ90SentAt !== undefined) {
+      writer.uint32(218).string(message.renewalNotificationJ90SentAt);
+    }
+    if (message.renewalNotificationJ30SentAt !== undefined) {
+      writer.uint32(226).string(message.renewalNotificationJ30SentAt);
+    }
+    if (message.statutCq !== undefined) {
+      writer.uint32(234).string(message.statutCq);
     }
     return writer;
   },
@@ -1357,6 +737,54 @@ export const Contrat: MessageFns<Contrat> = {
           message.prochaineDatePrelevement = reader.string();
           continue;
         }
+        case 24: {
+          if (tag !== 194) {
+            break;
+          }
+
+          message.renewalDate = reader.string();
+          continue;
+        }
+        case 25: {
+          if (tag !== 200) {
+            break;
+          }
+
+          message.taciteRenewalEnabled = reader.bool();
+          continue;
+        }
+        case 26: {
+          if (tag !== 210) {
+            break;
+          }
+
+          message.renewalStatus = reader.string();
+          continue;
+        }
+        case 27: {
+          if (tag !== 218) {
+            break;
+          }
+
+          message.renewalNotificationJ90SentAt = reader.string();
+          continue;
+        }
+        case 28: {
+          if (tag !== 226) {
+            break;
+          }
+
+          message.renewalNotificationJ30SentAt = reader.string();
+          continue;
+        }
+        case 29: {
+          if (tag !== 234) {
+            break;
+          }
+
+          message.statutCq = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1443,6 +871,36 @@ export const Contrat: MessageFns<Contrat> = {
         : isSet(object.prochaine_date_prelevement)
         ? globalThis.String(object.prochaine_date_prelevement)
         : undefined,
+      renewalDate: isSet(object.renewalDate)
+        ? globalThis.String(object.renewalDate)
+        : isSet(object.renewal_date)
+        ? globalThis.String(object.renewal_date)
+        : undefined,
+      taciteRenewalEnabled: isSet(object.taciteRenewalEnabled)
+        ? globalThis.Boolean(object.taciteRenewalEnabled)
+        : isSet(object.tacite_renewal_enabled)
+        ? globalThis.Boolean(object.tacite_renewal_enabled)
+        : false,
+      renewalStatus: isSet(object.renewalStatus)
+        ? globalThis.String(object.renewalStatus)
+        : isSet(object.renewal_status)
+        ? globalThis.String(object.renewal_status)
+        : undefined,
+      renewalNotificationJ90SentAt: isSet(object.renewalNotificationJ90SentAt)
+        ? globalThis.String(object.renewalNotificationJ90SentAt)
+        : isSet(object.renewal_notification_j90_sent_at)
+        ? globalThis.String(object.renewal_notification_j90_sent_at)
+        : undefined,
+      renewalNotificationJ30SentAt: isSet(object.renewalNotificationJ30SentAt)
+        ? globalThis.String(object.renewalNotificationJ30SentAt)
+        : isSet(object.renewal_notification_j30_sent_at)
+        ? globalThis.String(object.renewal_notification_j30_sent_at)
+        : undefined,
+      statutCq: isSet(object.statutCq)
+        ? globalThis.String(object.statutCq)
+        : isSet(object.statut_cq)
+        ? globalThis.String(object.statut_cq)
+        : undefined,
     };
   },
 
@@ -1517,6 +975,24 @@ export const Contrat: MessageFns<Contrat> = {
     if (message.prochaineDatePrelevement !== undefined) {
       obj.prochaineDatePrelevement = message.prochaineDatePrelevement;
     }
+    if (message.renewalDate !== undefined) {
+      obj.renewalDate = message.renewalDate;
+    }
+    if (message.taciteRenewalEnabled !== false) {
+      obj.taciteRenewalEnabled = message.taciteRenewalEnabled;
+    }
+    if (message.renewalStatus !== undefined) {
+      obj.renewalStatus = message.renewalStatus;
+    }
+    if (message.renewalNotificationJ90SentAt !== undefined) {
+      obj.renewalNotificationJ90SentAt = message.renewalNotificationJ90SentAt;
+    }
+    if (message.renewalNotificationJ30SentAt !== undefined) {
+      obj.renewalNotificationJ30SentAt = message.renewalNotificationJ30SentAt;
+    }
+    if (message.statutCq !== undefined) {
+      obj.statutCq = message.statutCq;
+    }
     return obj;
   },
 
@@ -1548,6 +1024,12 @@ export const Contrat: MessageFns<Contrat> = {
     message.updatedAt = object.updatedAt ?? "";
     message.jourPrelevement = object.jourPrelevement ?? undefined;
     message.prochaineDatePrelevement = object.prochaineDatePrelevement ?? undefined;
+    message.renewalDate = object.renewalDate ?? undefined;
+    message.taciteRenewalEnabled = object.taciteRenewalEnabled ?? false;
+    message.renewalStatus = object.renewalStatus ?? undefined;
+    message.renewalNotificationJ90SentAt = object.renewalNotificationJ90SentAt ?? undefined;
+    message.renewalNotificationJ30SentAt = object.renewalNotificationJ30SentAt ?? undefined;
+    message.statutCq = object.statutCq ?? undefined;
     return message;
   },
 };
@@ -3142,609 +2624,6 @@ export const LigneContrat: MessageFns<LigneContrat> = {
   },
 };
 
-function createBaseCreateLigneContratRequest(): CreateLigneContratRequest {
-  return {
-    contratId: "",
-    produitId: "",
-    periodeFacturationId: "",
-    quantite: 0,
-    prixUnitaire: 0,
-    canalVente: undefined,
-  };
-}
-
-export const CreateLigneContratRequest: MessageFns<CreateLigneContratRequest> = {
-  encode(message: CreateLigneContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contratId !== "") {
-      writer.uint32(10).string(message.contratId);
-    }
-    if (message.produitId !== "") {
-      writer.uint32(18).string(message.produitId);
-    }
-    if (message.periodeFacturationId !== "") {
-      writer.uint32(26).string(message.periodeFacturationId);
-    }
-    if (message.quantite !== 0) {
-      writer.uint32(32).int32(message.quantite);
-    }
-    if (message.prixUnitaire !== 0) {
-      writer.uint32(41).double(message.prixUnitaire);
-    }
-    if (message.canalVente !== undefined) {
-      writer.uint32(50).string(message.canalVente);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): CreateLigneContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateLigneContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.contratId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.produitId = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.periodeFacturationId = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
-
-          message.quantite = reader.int32();
-          continue;
-        }
-        case 5: {
-          if (tag !== 41) {
-            break;
-          }
-
-          message.prixUnitaire = reader.double();
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-
-          message.canalVente = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CreateLigneContratRequest {
-    return {
-      contratId: isSet(object.contratId)
-        ? globalThis.String(object.contratId)
-        : isSet(object.contrat_id)
-        ? globalThis.String(object.contrat_id)
-        : "",
-      produitId: isSet(object.produitId)
-        ? globalThis.String(object.produitId)
-        : isSet(object.produit_id)
-        ? globalThis.String(object.produit_id)
-        : "",
-      periodeFacturationId: isSet(object.periodeFacturationId)
-        ? globalThis.String(object.periodeFacturationId)
-        : isSet(object.periode_facturation_id)
-        ? globalThis.String(object.periode_facturation_id)
-        : "",
-      quantite: isSet(object.quantite) ? globalThis.Number(object.quantite) : 0,
-      prixUnitaire: isSet(object.prixUnitaire)
-        ? globalThis.Number(object.prixUnitaire)
-        : isSet(object.prix_unitaire)
-        ? globalThis.Number(object.prix_unitaire)
-        : 0,
-      canalVente: isSet(object.canalVente)
-        ? globalThis.String(object.canalVente)
-        : isSet(object.canal_vente)
-        ? globalThis.String(object.canal_vente)
-        : undefined,
-    };
-  },
-
-  toJSON(message: CreateLigneContratRequest): unknown {
-    const obj: any = {};
-    if (message.contratId !== "") {
-      obj.contratId = message.contratId;
-    }
-    if (message.produitId !== "") {
-      obj.produitId = message.produitId;
-    }
-    if (message.periodeFacturationId !== "") {
-      obj.periodeFacturationId = message.periodeFacturationId;
-    }
-    if (message.quantite !== 0) {
-      obj.quantite = Math.round(message.quantite);
-    }
-    if (message.prixUnitaire !== 0) {
-      obj.prixUnitaire = message.prixUnitaire;
-    }
-    if (message.canalVente !== undefined) {
-      obj.canalVente = message.canalVente;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CreateLigneContratRequest>, I>>(base?: I): CreateLigneContratRequest {
-    return CreateLigneContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CreateLigneContratRequest>, I>>(object: I): CreateLigneContratRequest {
-    const message = createBaseCreateLigneContratRequest();
-    message.contratId = object.contratId ?? "";
-    message.produitId = object.produitId ?? "";
-    message.periodeFacturationId = object.periodeFacturationId ?? "";
-    message.quantite = object.quantite ?? 0;
-    message.prixUnitaire = object.prixUnitaire ?? 0;
-    message.canalVente = object.canalVente ?? undefined;
-    return message;
-  },
-};
-
-function createBaseUpdateLigneContratRequest(): UpdateLigneContratRequest {
-  return { id: "", produitId: "", periodeFacturationId: "", quantite: 0, prixUnitaire: 0, canalVente: undefined };
-}
-
-export const UpdateLigneContratRequest: MessageFns<UpdateLigneContratRequest> = {
-  encode(message: UpdateLigneContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.produitId !== "") {
-      writer.uint32(18).string(message.produitId);
-    }
-    if (message.periodeFacturationId !== "") {
-      writer.uint32(26).string(message.periodeFacturationId);
-    }
-    if (message.quantite !== 0) {
-      writer.uint32(32).int32(message.quantite);
-    }
-    if (message.prixUnitaire !== 0) {
-      writer.uint32(41).double(message.prixUnitaire);
-    }
-    if (message.canalVente !== undefined) {
-      writer.uint32(50).string(message.canalVente);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): UpdateLigneContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUpdateLigneContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.produitId = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.periodeFacturationId = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
-
-          message.quantite = reader.int32();
-          continue;
-        }
-        case 5: {
-          if (tag !== 41) {
-            break;
-          }
-
-          message.prixUnitaire = reader.double();
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-
-          message.canalVente = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): UpdateLigneContratRequest {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      produitId: isSet(object.produitId)
-        ? globalThis.String(object.produitId)
-        : isSet(object.produit_id)
-        ? globalThis.String(object.produit_id)
-        : "",
-      periodeFacturationId: isSet(object.periodeFacturationId)
-        ? globalThis.String(object.periodeFacturationId)
-        : isSet(object.periode_facturation_id)
-        ? globalThis.String(object.periode_facturation_id)
-        : "",
-      quantite: isSet(object.quantite) ? globalThis.Number(object.quantite) : 0,
-      prixUnitaire: isSet(object.prixUnitaire)
-        ? globalThis.Number(object.prixUnitaire)
-        : isSet(object.prix_unitaire)
-        ? globalThis.Number(object.prix_unitaire)
-        : 0,
-      canalVente: isSet(object.canalVente)
-        ? globalThis.String(object.canalVente)
-        : isSet(object.canal_vente)
-        ? globalThis.String(object.canal_vente)
-        : undefined,
-    };
-  },
-
-  toJSON(message: UpdateLigneContratRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.produitId !== "") {
-      obj.produitId = message.produitId;
-    }
-    if (message.periodeFacturationId !== "") {
-      obj.periodeFacturationId = message.periodeFacturationId;
-    }
-    if (message.quantite !== 0) {
-      obj.quantite = Math.round(message.quantite);
-    }
-    if (message.prixUnitaire !== 0) {
-      obj.prixUnitaire = message.prixUnitaire;
-    }
-    if (message.canalVente !== undefined) {
-      obj.canalVente = message.canalVente;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<UpdateLigneContratRequest>, I>>(base?: I): UpdateLigneContratRequest {
-    return UpdateLigneContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<UpdateLigneContratRequest>, I>>(object: I): UpdateLigneContratRequest {
-    const message = createBaseUpdateLigneContratRequest();
-    message.id = object.id ?? "";
-    message.produitId = object.produitId ?? "";
-    message.periodeFacturationId = object.periodeFacturationId ?? "";
-    message.quantite = object.quantite ?? 0;
-    message.prixUnitaire = object.prixUnitaire ?? 0;
-    message.canalVente = object.canalVente ?? undefined;
-    return message;
-  },
-};
-
-function createBaseGetLigneContratRequest(): GetLigneContratRequest {
-  return { id: "" };
-}
-
-export const GetLigneContratRequest: MessageFns<GetLigneContratRequest> = {
-  encode(message: GetLigneContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GetLigneContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetLigneContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetLigneContratRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: GetLigneContratRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetLigneContratRequest>, I>>(base?: I): GetLigneContratRequest {
-    return GetLigneContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetLigneContratRequest>, I>>(object: I): GetLigneContratRequest {
-    const message = createBaseGetLigneContratRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
-};
-
-function createBaseListLigneContratByContratRequest(): ListLigneContratByContratRequest {
-  return { contratId: "", pagination: undefined };
-}
-
-export const ListLigneContratByContratRequest: MessageFns<ListLigneContratByContratRequest> = {
-  encode(message: ListLigneContratByContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contratId !== "") {
-      writer.uint32(10).string(message.contratId);
-    }
-    if (message.pagination !== undefined) {
-      Pagination.encode(message.pagination, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ListLigneContratByContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseListLigneContratByContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.contratId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.pagination = Pagination.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ListLigneContratByContratRequest {
-    return {
-      contratId: isSet(object.contratId)
-        ? globalThis.String(object.contratId)
-        : isSet(object.contrat_id)
-        ? globalThis.String(object.contrat_id)
-        : "",
-      pagination: isSet(object.pagination) ? Pagination.fromJSON(object.pagination) : undefined,
-    };
-  },
-
-  toJSON(message: ListLigneContratByContratRequest): unknown {
-    const obj: any = {};
-    if (message.contratId !== "") {
-      obj.contratId = message.contratId;
-    }
-    if (message.pagination !== undefined) {
-      obj.pagination = Pagination.toJSON(message.pagination);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListLigneContratByContratRequest>, I>>(
-    base?: I,
-  ): ListLigneContratByContratRequest {
-    return ListLigneContratByContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListLigneContratByContratRequest>, I>>(
-    object: I,
-  ): ListLigneContratByContratRequest {
-    const message = createBaseListLigneContratByContratRequest();
-    message.contratId = object.contratId ?? "";
-    message.pagination = (object.pagination !== undefined && object.pagination !== null)
-      ? Pagination.fromPartial(object.pagination)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseListLigneContratResponse(): ListLigneContratResponse {
-  return { lignes: [], pagination: undefined };
-}
-
-export const ListLigneContratResponse: MessageFns<ListLigneContratResponse> = {
-  encode(message: ListLigneContratResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.lignes) {
-      LigneContrat.encode(v!, writer.uint32(10).fork()).join();
-    }
-    if (message.pagination !== undefined) {
-      PaginationResult.encode(message.pagination, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ListLigneContratResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseListLigneContratResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.lignes.push(LigneContrat.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.pagination = PaginationResult.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ListLigneContratResponse {
-    return {
-      lignes: globalThis.Array.isArray(object?.lignes) ? object.lignes.map((e: any) => LigneContrat.fromJSON(e)) : [],
-      pagination: isSet(object.pagination) ? PaginationResult.fromJSON(object.pagination) : undefined,
-    };
-  },
-
-  toJSON(message: ListLigneContratResponse): unknown {
-    const obj: any = {};
-    if (message.lignes?.length) {
-      obj.lignes = message.lignes.map((e) => LigneContrat.toJSON(e));
-    }
-    if (message.pagination !== undefined) {
-      obj.pagination = PaginationResult.toJSON(message.pagination);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListLigneContratResponse>, I>>(base?: I): ListLigneContratResponse {
-    return ListLigneContratResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListLigneContratResponse>, I>>(object: I): ListLigneContratResponse {
-    const message = createBaseListLigneContratResponse();
-    message.lignes = object.lignes?.map((e) => LigneContrat.fromPartial(e)) || [];
-    message.pagination = (object.pagination !== undefined && object.pagination !== null)
-      ? PaginationResult.fromPartial(object.pagination)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseDeleteLigneContratRequest(): DeleteLigneContratRequest {
-  return { id: "" };
-}
-
-export const DeleteLigneContratRequest: MessageFns<DeleteLigneContratRequest> = {
-  encode(message: DeleteLigneContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): DeleteLigneContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDeleteLigneContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DeleteLigneContratRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: DeleteLigneContratRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<DeleteLigneContratRequest>, I>>(base?: I): DeleteLigneContratRequest {
-    return DeleteLigneContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<DeleteLigneContratRequest>, I>>(object: I): DeleteLigneContratRequest {
-    const message = createBaseDeleteLigneContratRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
-};
-
 function createBaseHistoriqueStatutContrat(): HistoriqueStatutContrat {
   return {
     id: "",
@@ -3929,426 +2808,6 @@ export const HistoriqueStatutContrat: MessageFns<HistoriqueStatutContrat> = {
     message.dateChangement = object.dateChangement ?? "";
     message.createdAt = object.createdAt ?? "";
     message.updatedAt = object.updatedAt ?? "";
-    return message;
-  },
-};
-
-function createBaseCreateHistoriqueStatutContratRequest(): CreateHistoriqueStatutContratRequest {
-  return { contratId: "", ancienStatutId: "", nouveauStatutId: "", dateChangement: "" };
-}
-
-export const CreateHistoriqueStatutContratRequest: MessageFns<CreateHistoriqueStatutContratRequest> = {
-  encode(message: CreateHistoriqueStatutContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contratId !== "") {
-      writer.uint32(10).string(message.contratId);
-    }
-    if (message.ancienStatutId !== "") {
-      writer.uint32(18).string(message.ancienStatutId);
-    }
-    if (message.nouveauStatutId !== "") {
-      writer.uint32(26).string(message.nouveauStatutId);
-    }
-    if (message.dateChangement !== "") {
-      writer.uint32(34).string(message.dateChangement);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): CreateHistoriqueStatutContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCreateHistoriqueStatutContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.contratId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.ancienStatutId = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.nouveauStatutId = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.dateChangement = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): CreateHistoriqueStatutContratRequest {
-    return {
-      contratId: isSet(object.contratId)
-        ? globalThis.String(object.contratId)
-        : isSet(object.contrat_id)
-        ? globalThis.String(object.contrat_id)
-        : "",
-      ancienStatutId: isSet(object.ancienStatutId)
-        ? globalThis.String(object.ancienStatutId)
-        : isSet(object.ancien_statut_id)
-        ? globalThis.String(object.ancien_statut_id)
-        : "",
-      nouveauStatutId: isSet(object.nouveauStatutId)
-        ? globalThis.String(object.nouveauStatutId)
-        : isSet(object.nouveau_statut_id)
-        ? globalThis.String(object.nouveau_statut_id)
-        : "",
-      dateChangement: isSet(object.dateChangement)
-        ? globalThis.String(object.dateChangement)
-        : isSet(object.date_changement)
-        ? globalThis.String(object.date_changement)
-        : "",
-    };
-  },
-
-  toJSON(message: CreateHistoriqueStatutContratRequest): unknown {
-    const obj: any = {};
-    if (message.contratId !== "") {
-      obj.contratId = message.contratId;
-    }
-    if (message.ancienStatutId !== "") {
-      obj.ancienStatutId = message.ancienStatutId;
-    }
-    if (message.nouveauStatutId !== "") {
-      obj.nouveauStatutId = message.nouveauStatutId;
-    }
-    if (message.dateChangement !== "") {
-      obj.dateChangement = message.dateChangement;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<CreateHistoriqueStatutContratRequest>, I>>(
-    base?: I,
-  ): CreateHistoriqueStatutContratRequest {
-    return CreateHistoriqueStatutContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CreateHistoriqueStatutContratRequest>, I>>(
-    object: I,
-  ): CreateHistoriqueStatutContratRequest {
-    const message = createBaseCreateHistoriqueStatutContratRequest();
-    message.contratId = object.contratId ?? "";
-    message.ancienStatutId = object.ancienStatutId ?? "";
-    message.nouveauStatutId = object.nouveauStatutId ?? "";
-    message.dateChangement = object.dateChangement ?? "";
-    return message;
-  },
-};
-
-function createBaseGetHistoriqueStatutContratRequest(): GetHistoriqueStatutContratRequest {
-  return { id: "" };
-}
-
-export const GetHistoriqueStatutContratRequest: MessageFns<GetHistoriqueStatutContratRequest> = {
-  encode(message: GetHistoriqueStatutContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): GetHistoriqueStatutContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetHistoriqueStatutContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetHistoriqueStatutContratRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: GetHistoriqueStatutContratRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<GetHistoriqueStatutContratRequest>, I>>(
-    base?: I,
-  ): GetHistoriqueStatutContratRequest {
-    return GetHistoriqueStatutContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<GetHistoriqueStatutContratRequest>, I>>(
-    object: I,
-  ): GetHistoriqueStatutContratRequest {
-    const message = createBaseGetHistoriqueStatutContratRequest();
-    message.id = object.id ?? "";
-    return message;
-  },
-};
-
-function createBaseListHistoriqueByContratRequest(): ListHistoriqueByContratRequest {
-  return { contratId: "", pagination: undefined };
-}
-
-export const ListHistoriqueByContratRequest: MessageFns<ListHistoriqueByContratRequest> = {
-  encode(message: ListHistoriqueByContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.contratId !== "") {
-      writer.uint32(10).string(message.contratId);
-    }
-    if (message.pagination !== undefined) {
-      Pagination.encode(message.pagination, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ListHistoriqueByContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseListHistoriqueByContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.contratId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.pagination = Pagination.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ListHistoriqueByContratRequest {
-    return {
-      contratId: isSet(object.contratId)
-        ? globalThis.String(object.contratId)
-        : isSet(object.contrat_id)
-        ? globalThis.String(object.contrat_id)
-        : "",
-      pagination: isSet(object.pagination) ? Pagination.fromJSON(object.pagination) : undefined,
-    };
-  },
-
-  toJSON(message: ListHistoriqueByContratRequest): unknown {
-    const obj: any = {};
-    if (message.contratId !== "") {
-      obj.contratId = message.contratId;
-    }
-    if (message.pagination !== undefined) {
-      obj.pagination = Pagination.toJSON(message.pagination);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListHistoriqueByContratRequest>, I>>(base?: I): ListHistoriqueByContratRequest {
-    return ListHistoriqueByContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListHistoriqueByContratRequest>, I>>(
-    object: I,
-  ): ListHistoriqueByContratRequest {
-    const message = createBaseListHistoriqueByContratRequest();
-    message.contratId = object.contratId ?? "";
-    message.pagination = (object.pagination !== undefined && object.pagination !== null)
-      ? Pagination.fromPartial(object.pagination)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseListHistoriqueStatutContratResponse(): ListHistoriqueStatutContratResponse {
-  return { historique: [], pagination: undefined };
-}
-
-export const ListHistoriqueStatutContratResponse: MessageFns<ListHistoriqueStatutContratResponse> = {
-  encode(message: ListHistoriqueStatutContratResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.historique) {
-      HistoriqueStatutContrat.encode(v!, writer.uint32(10).fork()).join();
-    }
-    if (message.pagination !== undefined) {
-      PaginationResult.encode(message.pagination, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ListHistoriqueStatutContratResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseListHistoriqueStatutContratResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.historique.push(HistoriqueStatutContrat.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.pagination = PaginationResult.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): ListHistoriqueStatutContratResponse {
-    return {
-      historique: globalThis.Array.isArray(object?.historique)
-        ? object.historique.map((e: any) => HistoriqueStatutContrat.fromJSON(e))
-        : [],
-      pagination: isSet(object.pagination) ? PaginationResult.fromJSON(object.pagination) : undefined,
-    };
-  },
-
-  toJSON(message: ListHistoriqueStatutContratResponse): unknown {
-    const obj: any = {};
-    if (message.historique?.length) {
-      obj.historique = message.historique.map((e) => HistoriqueStatutContrat.toJSON(e));
-    }
-    if (message.pagination !== undefined) {
-      obj.pagination = PaginationResult.toJSON(message.pagination);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<ListHistoriqueStatutContratResponse>, I>>(
-    base?: I,
-  ): ListHistoriqueStatutContratResponse {
-    return ListHistoriqueStatutContratResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ListHistoriqueStatutContratResponse>, I>>(
-    object: I,
-  ): ListHistoriqueStatutContratResponse {
-    const message = createBaseListHistoriqueStatutContratResponse();
-    message.historique = object.historique?.map((e) => HistoriqueStatutContrat.fromPartial(e)) || [];
-    message.pagination = (object.pagination !== undefined && object.pagination !== null)
-      ? PaginationResult.fromPartial(object.pagination)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseDeleteHistoriqueStatutContratRequest(): DeleteHistoriqueStatutContratRequest {
-  return { id: "" };
-}
-
-export const DeleteHistoriqueStatutContratRequest: MessageFns<DeleteHistoriqueStatutContratRequest> = {
-  encode(message: DeleteHistoriqueStatutContratRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): DeleteHistoriqueStatutContratRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDeleteHistoriqueStatutContratRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): DeleteHistoriqueStatutContratRequest {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
-  },
-
-  toJSON(message: DeleteHistoriqueStatutContratRequest): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<DeleteHistoriqueStatutContratRequest>, I>>(
-    base?: I,
-  ): DeleteHistoriqueStatutContratRequest {
-    return DeleteHistoriqueStatutContratRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<DeleteHistoriqueStatutContratRequest>, I>>(
-    object: I,
-  ): DeleteHistoriqueStatutContratRequest {
-    const message = createBaseDeleteHistoriqueStatutContratRequest();
-    message.id = object.id ?? "";
     return message;
   },
 };

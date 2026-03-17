@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package events;
+
+message ContratCQValidatedEvent {
+  string contrat_id = 1;
+  string organisation_id = 2;
+  string validateur_id = 3;
+  double score = 4;
+  string timestamp = 5;
+}
+
+message ContratCQRejectedEvent {
+  string contrat_id = 1;
+  string organisation_id = 2;
+  string motif = 3;
+  string timestamp = 4;
+}

@@ -230,6 +230,16 @@ export const createClientAction = createFormAction(
         compteCode: `CLI-${Date.now().toString(36).toUpperCase()}`,
         partenaireId: data.organisationId,
         societeId: data.societeId && data.societeId !== "__none__" ? data.societeId : undefined,
+        iban: data.iban,
+        bic: data.bic,
+        civilite: data.civilite,
+        csp: data.csp,
+        lieuNaissance: data.lieuNaissance,
+        paysNaissance: data.paysNaissance,
+        regimeSocial: data.regimeSocial,
+        numss: data.numss,
+        canalAcquisition: data.canalAcquisition,
+        source: data.source,
       });
       revalidatePath("/clients");
       return { data: client, error: null };
@@ -260,6 +270,16 @@ export const updateClientAction = createFormAction(
         email: data.email,
         statut: data.statutId,
         societeId: data.societeId && data.societeId !== "__none__" ? data.societeId : undefined,
+        iban: data.iban,
+        bic: data.bic,
+        civilite: data.civilite,
+        csp: data.csp,
+        lieuNaissance: data.lieuNaissance,
+        paysNaissance: data.paysNaissance,
+        regimeSocial: data.regimeSocial,
+        numss: data.numss,
+        canalAcquisition: data.canalAcquisition,
+        source: data.source,
       });
       revalidatePath("/clients");
       revalidatePath(`/clients/${data.id}`);

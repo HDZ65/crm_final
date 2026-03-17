@@ -205,30 +205,33 @@ function mapClientBaseToDetail(
     id: client.id,
     name,
     status,
-    location: "Non renseigné",
+    location: "",
     memberSince: new Date(client.createdAt).getFullYear().toString(),
     info: {
-      nom: client.nom || "Non renseigné",
-      prenom: client.prenom || "Non renseigné",
-      profession: "Non renseigné",
-      phone: client.telephone || "Non renseigné",
+      nom: client.nom || "",
+      prenom: client.prenom || "",
+      profession: "",
+      phone: client.telephone || "",
       birthDate: client.dateNaissance
         ? formatDateFr(client.dateNaissance)
-        : "Non renseigné",
-      email: client.email || "Non renseigné",
-      address: "Non renseigné",
+        : "",
+      email: client.email || "",
+      address: "",
     },
     compliance: {
-      kycStatus: "Non renseigné",
+      kycStatus: "",
       kycStatusVariant: "warning" as const,
-      gdprConsent: "Non renseigné",
+      gdprConsent: "",
       gdprConsentVariant: "warning" as const,
       language: "Français",
+      source: client.source || "",
+      canalAcquisition: client.canalAcquisition || "",
     },
     bank: {
-      iban: "Non renseigné",
-      sepaMandateStatus: "Inactif",
-      sepaMandateStatusVariant: "error" as const,
+      iban: client.iban || "",
+      bic: client.bic || "",
+      sepaMandateStatus: client.mandatSepa === true ? "Actif" : client.mandatSepa === false ? "Inactif" : "",
+      sepaMandateStatusVariant: client.mandatSepa ? "success" as const : "error" as const,
     },
     contracts: [],
     payments: [],
@@ -861,6 +864,7 @@ Adresse: ${client.info.address}`;
 
             {clientInfo && complianceInfo && bankInfo && (
               <ClientInfoAccordion
+                clientId={clientId}
                 clientInfo={clientInfo}
                 compliance={complianceInfo}
                 bank={bankInfo}

@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package energie;
+
+// ========== ENUMS ==========
+
+enum RaccordementStatus {
+  RACCORDEMENT_STATUS_UNSPECIFIED = 0;
+  RACCORDEMENT_STATUS_DEMANDE_ENVOYEE = 1;
+  RACCORDEMENT_STATUS_EN_COURS = 2;
+  RACCORDEMENT_STATUS_RACCORDE = 3;
+  RACCORDEMENT_STATUS_ACTIVE = 4;
+  RACCORDEMENT_STATUS_SUSPENDU = 5;
+  RACCORDEMENT_STATUS_RESILIE = 6;
+  RACCORDEMENT_STATUS_ERREUR = 7;
+}
+
+enum PartenaireEnergie {
+  PARTENAIRE_ENERGIE_UNSPECIFIED = 0;
+  PARTENAIRE_ENERGIE_PLENITUDE = 1;
+  PARTENAIRE_ENERGIE_OHM = 2;
+}
+
+// ========== ENERGIE SERVICE ==========
+
+service EnergieService {
+  rpc CreateRaccordement(CreateRaccordementRequest) returns (CreateRaccordementResponse);
+  rpc UpdateRaccordementStatus(UpdateRaccordementStatusRequest) returns (UpdateRaccordementStatusResponse);
+  rpc GetRaccordement(GetRaccordementRequest) returns (GetRaccordementResponse);
+  rpc ListRaccordementsByClient(ListRaccordementsByClientRequest) returns (ListRaccordementsByClientResponse);
+  rpc GetActivationStatus(GetActivationStatusRequest) returns (GetActivationStatusResponse);
+}
+
+// ========== MESSAGES ==========
+
+message Raccordement {
+  string id = 1;
+  string client_id = 2;
+  string contrat_id = 3;
+  PartenaireEnergie partenaire = 4;
+  RaccordementStatus statut_raccordement = 5;
+  string statut_activation = 6;
+  string adresse = 7;
+  string pdl_pce = 8;
+  string date_demande = 9;
+  optional string date_activation = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+message CreateRaccordementRequest {
+  string client_id = 1;
+  string contrat_id = 2;
+  PartenaireEnergie partenaire = 3;
+  string adresse = 4;
+  string pdl_pce = 5;
+}
+
+message CreateRaccordementResponse {
+  Raccordement raccordement = 1;
+}
+
+message UpdateRaccordementStatusRequest {
+  string id = 1;
+  RaccordementStatus statut_raccordement = 2;
+  optional string statut_activation = 3;
+}
+
+message UpdateRaccordementStatusResponse {
+  Raccordement raccordement = 1;
+}
+
+message GetRaccordementRequest {
+  string id = 1;
+}
+
+message GetRaccordementResponse {
+  Raccordement raccordement = 1;
+}
+
+message ListRaccordementsByClientRequest {
+  string client_id = 1;
+  Pagination pagination = 2;
+}
+
+message ListRaccordementsByClientResponse {
+  repeated Raccordement raccordements = 1;
+  PaginationResult pagination = 2;
+}
+
+message GetActivationStatusRequest {
+  string id = 1;
+}
+
+message GetActivationStatusResponse {
+  Raccordement raccordement = 1;
+}
+
+// ========== EVENT MESSAGES ==========
+
+message RaccordementCreatedEvent {
+  string id = 1;
+  string client_id = 2;
+  string contrat_id = 3;
+  PartenaireEnergie partenaire = 4;
+  string adresse = 5;
+  string pdl_pce = 6;
+  string created_at = 7;
+}
+
+message RaccordementStatusChangedEvent {
+  string id = 1;
+  string client_id = 2;
+  RaccordementStatus old_status = 3;
+  RaccordementStatus new_status = 4;
+  string changed_at = 5;
+}
+
+message EnergieActivatedEvent {
+  string id = 1;
+  string client_id = 2;
+  string contrat_id = 3;
+  string activated_at = 4;
+}
+
+// ========== COMMON MESSAGES ==========
+
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+message PaginationResult {
+  int32 total = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  int32 total_pages = 4;
+}

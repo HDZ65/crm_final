@@ -9,7 +9,7 @@
   "scripts": {
     "build": "nest build",
     "proto:clean": "rimraf proto/generated",
-    "proto:generate": "node -e \"const fs=require('fs');const path=require('path');const srcBase=path.resolve('..','..','packages','proto','gen','ts');const dstBase=path.resolve('proto','generated');const files=[['factures/factures.ts','factures.ts'],['payments/payment.ts','payment.ts'],['payments/payment-info.ts','payment-info.ts'],['calendar/calendar.ts','calendar.ts'],['scoring/scoring.ts','scoring.ts']];fs.mkdirSync(dstBase,{recursive:true});for(const [src,dst] of files){fs.copyFileSync(path.join(srcBase,src),path.join(dstBase,dst));}\"",
+    "proto:generate": "node -e \"const fs=require('fs');const path=require('path');const srcBase=path.resolve('..','..','packages','proto','gen','ts');const dstBase=path.resolve('proto','generated');const files=[['factures/factures.ts','factures.ts'],['payments/payment.ts','payment.ts'],['payments/payment-info.ts','payment-info.ts'],['payments/export-fec.ts','export-fec.ts'],['calendar/calendar.ts','calendar.ts'],['scoring/scoring.ts','scoring.ts']];fs.mkdirSync(dstBase,{recursive:true});for(const [src,dst] of files){fs.copyFileSync(path.join(srcBase,src),path.join(dstBase,dst));}\"",
     "prebuild": "npm run proto:clean && npm run proto:generate",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
@@ -95,6 +95,9 @@
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@crm|uuid|jose)/)"
+    ],
     "collectCoverageFrom": ["**/*.(t|j)s"],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

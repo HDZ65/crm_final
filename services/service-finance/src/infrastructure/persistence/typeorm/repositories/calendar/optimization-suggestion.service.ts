@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import {
   ClientDebitConfigurationEntity,
+  DebitBatch,
   DateShiftStrategy,
   DebitDateMode,
   DebitLotEntity,
@@ -208,7 +209,14 @@ export class OptimizationSuggestionService implements IOptimizationSuggestionRep
       });
     }
 
-    config.lotId = input.suggestedLotId;
+    const normalizedBatch = String(targetLot.name || '')
+      .trim()
+      .toUpperCase();
+
+    if ((Object.values(DebitBatch) as string[]).includes(normalizedBatch)) {
+      config.batch = normalizedBatch as DebitBatch;
+    }
+
     config.mode = config.mode ?? DebitDateMode.BATCH;
     config.shiftStrategy = config.shiftStrategy ?? DateShiftStrategy.NEXT_BUSINESS_DAY;
     config.isActive = true;

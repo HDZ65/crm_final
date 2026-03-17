@@ -25,6 +25,13 @@ import {
   type ListOptionsResponse,
   type GetCompteurRequest,
   type CompteurPlafond,
+  type ConsentementRGPD,
+  type CreateConsentementRequest,
+  type GetConsentementRequest,
+  type UpdateConsentementRequest,
+  type ListConsentementsRequest,
+  type ListConsentementsResponse,
+  type DeleteConsentementRequest,
 } from "@proto/depanssur/depanssur";
 
 let depanssurInstance: GrpcClient | null = null;
@@ -120,5 +127,37 @@ export const depanssurClient = {
     promisify<GetCompteurRequest, CompteurPlafond>(
       getDepanssurClient(),
       "getCompteur"
+    )(request),
+
+  // ==================== CONSENTEMENTS ====================
+
+  createConsentement: (request: CreateConsentementRequest): Promise<ConsentementRGPD> =>
+    promisify<CreateConsentementRequest, ConsentementRGPD>(
+      getDepanssurClient(),
+      "createConsentement"
+    )(request),
+
+  getConsentement: (request: GetConsentementRequest): Promise<ConsentementRGPD> =>
+    promisify<GetConsentementRequest, ConsentementRGPD>(
+      getDepanssurClient(),
+      "getConsentement"
+    )(request),
+
+  updateConsentement: (request: UpdateConsentementRequest): Promise<ConsentementRGPD> =>
+    promisify<UpdateConsentementRequest, ConsentementRGPD>(
+      getDepanssurClient(),
+      "updateConsentement"
+    )(request),
+
+  listConsentements: (request: ListConsentementsRequest): Promise<ListConsentementsResponse> =>
+    promisify<ListConsentementsRequest, ListConsentementsResponse>(
+      getDepanssurClient(),
+      "listConsentements"
+    )(request),
+
+  deleteConsentement: (request: DeleteConsentementRequest): Promise<{ success: boolean }> =>
+    promisify<DeleteConsentementRequest, { success: boolean }>(
+      getDepanssurClient(),
+      "deleteConsentement"
     )(request),
 };

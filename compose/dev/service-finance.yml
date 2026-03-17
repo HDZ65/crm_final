@@ -11,8 +11,8 @@ services:
       - "traefik.http.routers.alex-fin.rule=Host(`alex-finance.local`)"
       - "traefik.http.services.alex-fin.loadbalancer.server.port=3059"
     ports:
-      - "50074:50059" # gRPC host:container (50074 libre sur TRX50)
-      - "3074:3059"   # HTTP host:container
+      - "3404:3059"   # HTTP per ports.yaml slot 4
+      # gRPC 50059 internal only (docker network)
     env_file:
       - ../../services/service-finance/.env.development
     environment:
@@ -29,6 +29,16 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./services/service-finance/src
+          target: /app/services/service-finance/src
+          ignore:
+            - "node_modules/"
+            - "dist/"
+        - action: rebuild
+          path: ./services/service-finance/package.json
 
 networks:
   shared_dev_net:

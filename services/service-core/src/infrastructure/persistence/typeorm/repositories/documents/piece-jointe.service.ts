@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PieceJointeEntity } from '../../../../../domain/documents/entities';
+import { PieceJointeEntity, DocumentAuditLogEntity } from '../../../../../domain/documents/entities';
 
 type PieceJointe = PieceJointeEntity;
 
@@ -10,6 +10,8 @@ export class PieceJointeService {
   constructor(
     @InjectRepository(PieceJointeEntity)
     private readonly pieceJointeRepository: Repository<PieceJointe>,
+    @InjectRepository(DocumentAuditLogEntity)
+    private readonly auditLogRepository: Repository<DocumentAuditLogEntity>,
   ) {}
 
   async create(data: Partial<PieceJointe>): Promise<PieceJointe> {
@@ -108,5 +110,68 @@ export class PieceJointeService {
   async delete(id: string): Promise<boolean> {
     const result = await this.pieceJointeRepository.delete(id);
     return (result.affected ?? 0) > 0;
+  }
+
+  async findByType(
+    organisationId: string,
+    typeDocument: number,
+    entiteType?: string,
+    pagination?: { page: number; limit: number },
+  ): Promise<{
+    data: PieceJointe[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = { organisationId, typeDocument };
+    if (entiteType) {
+      where.entiteType = entiteType;
+    }
+
+    const [data, total] = await this.pieceJointeRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      order: { dateUpload: 'DESC' },
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async findVersionHistory(parentId: string): Promise<PieceJointe[]> {
+    return this.pieceJointeRepository.find({
+      where: { parentId },
+      order: { version: 'DESC' },
+    });
+  }
+
+  async logAccess(data: {
+    documentId: string;
+    organisationId: string;
+    action: string;
+    userId?: string;
+    userName?: string;
+    ipAddress?: string;
+  }): Promise<DocumentAuditLogEntity> {
+    const log = this.auditLogRepository.create({
+      documentId: data.documentId,
+      organisationId: data.organisationId,
+      action: data.action,
+      userId: data.userId ?? null,
+      userName: data.userName ?? null,
+      ipAddress: data.ipAddress ?? null,
+    });
+    return this.auditLogRepository.save(log);
   }
 }

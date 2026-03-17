@@ -5,6 +5,7 @@ import { AlertTriangle, Info, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import type { AlertesResponse, Alerte } from "@proto/dashboard/dashboard";
+import { AskAiCardButton } from "@/components/ask-ai-card-button";
 
 interface AlertBannersProps {
   initialAlertes: AlertesResponse | null;
@@ -14,18 +15,28 @@ export function AlertBanners({ initialAlertes }: AlertBannersProps) {
   const alertes = initialAlertes?.alertes || [];
   const total = initialAlertes?.total || 0;
 
+  const aiPrompt = `Analyse ces alertes CRM et propose un plan d'action priorise. ${alertes.length} alertes: ${alertes
+    .slice(0, 5)
+    .map((a) => `[${a.niveau}] ${a.titre}: ${a.description}`)
+    .join(" | ") || "Aucune alerte"}.`;
   // Show max 5 alerts
   const displayedAlerts = alertes.slice(0, 5);
   const hasMore = total > 5;
 
   if (alertes.length === 0) {
     return (
-      <Alert className="bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900">
-        <Info className="h-4 w-4 text-green-600 dark:text-green-400" />
-        <AlertDescription className="text-green-700 dark:text-green-300">
-          Aucune alerte — tout va bien ✓
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Alertes</h3>
+          <AskAiCardButton prompt={aiPrompt} title="Demander une analyse IA des alertes" />
+        </div>
+        <Alert className="bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900">
+          <Info className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-700 dark:text-green-300">
+            Aucune alerte — tout va bien ✓
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
@@ -64,6 +75,10 @@ export function AlertBanners({ initialAlertes }: AlertBannersProps) {
 
   return (
     <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Alertes ({total})</h3>
+        <AskAiCardButton prompt={aiPrompt} title="Demander une analyse IA des alertes" />
+      </div>
       {displayedAlerts.map((alerte, index) => (
         <Alert
           key={index}

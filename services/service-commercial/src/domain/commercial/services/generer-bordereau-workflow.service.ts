@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { TypeCalcul, type BaremeForCalculation, type CommissionResult } from './commission-calculation.service';
 import { TypeReprise, type TypeReprise as TypeRepriseType } from '../entities/reprise-commission.entity';
 import { TypeLigne, StatutLigne } from '../entities/ligne-bordereau.entity';
@@ -52,6 +52,7 @@ export interface GenererBordereauReportNegatif {
 
 export interface GenererBordereauDeps {
   state?: Record<string, unknown>;
+  findCQStatusForContrat?(contratId: string): Promise<string | null>;
   findCommissionsForPeriode(input: GenererBordereauInput): Promise<GenererBordereauCommission[]>;
   findBaremeForCommission(commission: GenererBordereauCommission): Promise<BaremeForCalculation>;
   calculerCommission(contrat: unknown, bareme: BaremeForCalculation, montantBase: number): CommissionResult;
@@ -82,6 +83,7 @@ export interface GenererBordereauOutput {
     nombre_commissions: number;
     nombre_reprises: number;
     nombre_primes: number;
+    excludedForCQ: number;
     total_brut: string;
     total_reprises: string;
     total_net: string;
@@ -96,6 +98,8 @@ export interface GenererBordereauOutput {
 
 @Injectable()
 export class GenererBordereauWorkflowService {
+  private readonly logger = new Logger(GenererBordereauWorkflowService.name);
+
   constructor(private readonly deps: GenererBordereauDeps) {}
 
   async execute(input: GenererBordereauInput): Promise<GenererBordereauOutput> {
@@ -117,12 +121,38 @@ export class GenererBordereauWorkflowService {
     let nombreCommissions = 0;
     let nombreReprises = 0;
     let nombrePrimes = 0;
+    let excludedForCQ = 0;
 
     let totalBrut = 0;
     let totalReprises = 0;
     let totalAcomptes = 0;
 
     for (const commission of commissions) {
+      // T23: Block commissions where CQ is not validated
+      if (this.deps.findCQStatusForContrat) {
+        const cqStatus = await this.deps.findCQStatusForContrat(commission.contratId);
+        if (cqStatus !== 'VALIDE') {
+          excludedForCQ += 1;
+          this.logger.warn(
+            `Commission ${commission.id} excluded from bordereau: contrat ${commission.contratId} statut_cq=${cqStatus ?? 'null'} (motif: CQ_NON_VALIDE)`,
+          );
+          await this.deps.audit({
+            organisationId: input.organisationId,
+            scope: 'bordereau',
+            action: 'commission_excluded_cq',
+            refId: commission.id,
+            contratId: commission.contratId,
+            apporteurId: commission.apporteurId,
+            periode: input.periode,
+            afterData: {
+              motif: 'CQ_NON_VALIDE',
+              statutCq: cqStatus,
+            },
+          });
+          continue;
+        }
+      }
+
       const bareme = await this.deps.findBaremeForCommission(commission);
       const calcul = this.deps.calculerCommission(
         { id: commission.contratId },
@@ -319,6 +349,7 @@ export class GenererBordereauWorkflowService {
         nombre_commissions: nombreCommissions,
         nombre_reprises: nombreReprises,
         nombre_primes: nombrePrimes,
+        excludedForCQ,
         total_brut: this.toMoney(totalBrut),
         total_reprises: this.toMoney(totalReprises),
         total_net: this.toMoney(totalNet),

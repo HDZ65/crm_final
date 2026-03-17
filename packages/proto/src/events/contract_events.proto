@@ -24,3 +24,74 @@ message ContractSignedEvent {
   double montant_total = 7;                         // Total amount in EUR
   google.protobuf.Timestamp date_signature = 8;    // Signature date
 }
+
+// Contract activated event
+message ContractActivatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string contrat_id = 4;                            // Contract ID
+  string client_id = 5;                             // Client ID
+  string activated_at = 6;                          // Activation date
+  string reason = 7;                                // Reason for activation
+}
+
+// Contract suspended event
+message ContractSuspendedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string contrat_id = 4;                            // Contract ID
+  string client_id = 5;                             // Client ID
+  string suspended_at = 6;                          // Suspension date
+  string reason = 7;                                // Reason for suspension
+}
+
+// Contract terminated event
+message ContractTerminatedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string contrat_id = 4;                            // Contract ID
+  string client_id = 5;                             // Client ID
+  string terminated_at = 6;                         // Termination date
+  string reason = 7;                                // Reason for termination
+  bool generates_closure_invoice = 8;               // Whether to generate closure invoice
+}
+
+// Contract closed event
+message ContractClosedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string contrat_id = 4;                            // Contract ID
+  string client_id = 5;                             // Client ID
+  string closed_at = 6;                             // Closure date
+}
+
+// Contract status changed event
+message ContractStatusChangedEvent {
+  // Event metadata
+  string event_id = 1;                              // UUID for idempotency
+  int64 timestamp = 2;                              // Unix timestamp in milliseconds
+  string correlation_id = 3;                        // Optional, for tracing
+
+  // Event data
+  string contrat_id = 4;                            // Contract ID
+  string previous_status = 5;                       // Previous status
+  string new_status = 6;                            // New status
+  string reason = 7;                                // Reason for status change
+  string triggered_by = 8;                          // User or system that triggered the change
+}

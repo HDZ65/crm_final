@@ -25,6 +25,7 @@ interface NavItem {
   url: string
   icon?: LucideIcon
   description?: string
+  external?: boolean
   children?: NavItem[]
 }
 
@@ -89,10 +90,17 @@ export function NavMain({
           return (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={isActive} tooltip={item.description ?? item.title}>
-                <Link href={item.url}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </Link>
+                {item.external ? (
+                  <a href={item.url} target="_blank" rel="noopener noreferrer">
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </a>
+                ) : (
+                  <Link href={item.url}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           )

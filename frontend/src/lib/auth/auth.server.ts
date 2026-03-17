@@ -18,7 +18,7 @@ export async function getActiveOrgIdFromCookie(): Promise<string | null> {
   const orgId = cookieStore.get(COOKIE_NAMES.ACTIVE_ORG)?.value;
   if (orgId) return orgId;
   // Use mock org id for development
-  return "mock-org-id";
+  return "00000000-0000-4000-a000-000000000010";
 }
 
 async function _old_getActiveOrgIdFromCookie() {

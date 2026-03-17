@@ -6,6 +6,10 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
+import { EncryptedColumnTransformer } from '../../../infrastructure/security/encrypted-column.transformer';
+import { EncryptionService } from '../../../infrastructure/security/encryption.service';
+
+const encryptionService = new EncryptionService();
 
 export enum StatutInformationPaiement {
   ACTIF = 'ACTIF',
@@ -15,10 +19,8 @@ export enum StatutInformationPaiement {
 }
 
 /**
- * InformationPaiementBancaireEntity stores IBAN/BIC payment information in clear text.
+ * InformationPaiementBancaireEntity stores IBAN/BIC payment information encrypted at rest.
  * This entity is used for storing bank account details for SEPA direct debit payments.
- * 
- * IMPORTANT: IBAN and BIC are stored in PLAIN TEXT (no encryption) as per requirements.
  */
 @Entity('information_paiement_bancaire')
 export class InformationPaiementBancaireEntity {
@@ -33,20 +35,19 @@ export class InformationPaiementBancaireEntity {
   @Index()
   clientId: string;
 
-  /**
-   * IBAN - International Bank Account Number (stored in clear text)
-   * Max length: 34 characters (IBAN standard)
-   */
-  @Column({ type: 'varchar', length: 34 })
-  @Index()
-  iban: string;
+  @Column({
+    type: 'text',
+    nullable: true,
+    transformer: new EncryptedColumnTransformer(encryptionService),
+  })
+  iban: string | null;
 
-  /**
-   * BIC - Bank Identifier Code (stored in clear text)
-   * Max length: 11 characters (BIC standard)
-   */
-  @Column({ type: 'varchar', length: 11 })
-  bic: string;
+  @Column({
+    type: 'text',
+    nullable: true,
+    transformer: new EncryptedColumnTransformer(encryptionService),
+  })
+  bic: string | null;
 
   /**
    * Nom du titulaire du compte bancaire

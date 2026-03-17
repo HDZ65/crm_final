@@ -51,13 +51,13 @@ export class DepanssurPaymentSucceededHandler implements OnModuleInit {
             this.logger.log(
               `[NATS] Publishing abonnement.depanssur.restored for ${event.abonnementId}`,
             );
-            // TODO: await this.natsService.publishProto('abonnement.depanssur.restored', evt);
+            await this.natsService.publish('abonnement.depanssur.restored', evt);
           }
           if ('effectiveDate' in evt) {
             this.logger.log(
               `[NATS] Publishing commission.restart_recurring for ${event.abonnementId}`,
             );
-            // TODO: await this.natsService.publishProto('commission.restart_recurring', evt);
+            await this.natsService.publish('commission.restart_recurring', evt);
           }
         }
       } else {

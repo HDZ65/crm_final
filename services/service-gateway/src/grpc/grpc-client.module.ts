@@ -69,6 +69,7 @@ const grpcChannelOptions = {
             'woocommerce',
             'partenaires',
             'cfast',
+            'qualite',
           ],
           protoPath: [
             resolveProtoPath('commerciaux/commerciaux.proto'),
@@ -81,6 +82,7 @@ const grpcChannelOptions = {
             resolveProtoPath('woocommerce/woocommerce.proto'),
             resolveProtoPath('partenaires/partenaires.proto'),
             resolveProtoPath('cfast/cfast.proto'),
+            resolveProtoPath('qualite/qualite.proto'),
           ],
           url: process.env.GRPC_COMMERCIAL_URL || 'localhost:50053',
           loader: grpcLoaderOptions,

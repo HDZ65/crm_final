@@ -43,6 +43,7 @@ import { fr } from "date-fns/locale"
 
 // Icônes et couleurs pour les priorités
 const PRIORITE_CONFIG: Record<TachePriorite, { icon: React.ElementType; color: string; label: string }> = {
+  URGENTE: { icon: ArrowUp, color: "text-red-600", label: "Urgente" },
   HAUTE: { icon: ArrowUp, color: "text-destructive", label: "Haute" },
   MOYENNE: { icon: Minus, color: "text-blue-500", label: "Moyenne" },
   BASSE: { icon: ArrowDown, color: "text-muted-foreground", label: "Basse" },

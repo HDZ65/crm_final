@@ -10,7 +10,7 @@ services:
       - "traefik.http.routers.alex-telecom.rule=Host(`alex-telecom.local`)"
       - "traefik.http.services.alex-telecom.loadbalancer.server.port=3056"
     ports:
-      - "127.0.0.1:3407:3056"
+      - "3407:3056"
     env_file:
       - ../../services/service-telecom/.env.development
     environment:

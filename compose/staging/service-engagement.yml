@@ -1,0 +1,33 @@
+services:
+  crm-service-engagement:
+    build:
+      context: ../..
+      dockerfile: services/service-engagement/Dockerfile
+      target: production
+    container_name: staging-crm-service-engagement
+    ports:
+      - "127.0.0.1:3411:3061"
+    env_file:
+      - ../../services/service-engagement/.env.staging
+    environment:
+      - NODE_PATH=/app/services/service-engagement/node_modules
+      - DATABASE_URL=postgresql://postgres:postgres@staging-crm-postgres:5432/staging_engagement
+      - MIGRATIONS_RUN=false
+      - NATS_URL=nats://staging-crm-nats:4222
+      - REDIS_HOST=staging-crm-redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crm-staging-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(3061, 'localhost').on('connect', () => process.exit(0))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  crm-staging-network:

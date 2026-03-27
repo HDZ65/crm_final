@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import type { GetAlertesRequest, AlertesResponse } from '@proto/dashboard';
+import type { AlertesResponse, GetAlertesRequest } from '@proto/dashboard';
 
 @Controller()
 export class AlertesController {
@@ -9,9 +9,9 @@ export class AlertesController {
     return {
       alertes: [],
       total: 0,
-      nombre_critiques: 0,
-      nombre_avertissements: 0,
-      nombre_infos: 0,
+      nombreCritiques: 0,
+      nombreAvertissements: 0,
+      nombreInfos: 0,
     };
   }
 }

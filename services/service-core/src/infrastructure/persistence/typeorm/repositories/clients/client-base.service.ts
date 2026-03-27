@@ -1,105 +1,126 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import type { CreateClientBaseRequest, ListClientsBaseRequest, UpdateClientBaseRequest } from '@proto/clients';
+import type { FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ClientBaseEntity } from '../../../../../domain/clients/entities';
-import type {
-  CreateClientBaseRequest,
-  UpdateClientBaseRequest,
-  ListClientsBaseRequest,
-} from '@proto/clients';
+import {
+  type PaginationOutput,
+  normalizePagination,
+} from '../../../../../types/client-input.types';
 
 @Injectable()
 export class ClientBaseService {
-  private readonly logger = new Logger(ClientBaseService.name);
-
   constructor(
     @InjectRepository(ClientBaseEntity)
     private readonly repository: Repository<ClientBaseEntity>,
   ) {}
 
   async create(input: CreateClientBaseRequest): Promise<ClientBaseEntity> {
-    const inputData = input as any;
-    const organisationId = inputData.organisationId || input.organisation_id;
-    const existing = await this.findByPhoneAndName(input.telephone, input.nom, organisationId);
+    const identity = input.identity;
+    const contact = input.contact;
+    const banking = input.banking;
+    const compliance = input.compliance;
+    const acquisition = input.acquisition;
+
+    const telephone = contact?.telephone ?? '';
+    const nom = identity?.nom ?? '';
+    const keycloakGroupId = input.organisationId;
+
+    const existing = await this.findByPhoneAndName(telephone, nom, keycloakGroupId);
     if (existing) {
       throw new RpcException({
         code: status.ALREADY_EXISTS,
-        message: `Client with phone ${input.telephone} and name ${input.nom} already exists`,
+        message: `Client with phone ${telephone} and name ${nom} already exists`,
       });
     }
 
     const entity = this.repository.create({
-      organisationId,
-      typeClient: inputData.typeClient || input.type_client,
-      nom: ClientBaseEntity.capitalizeName(input.nom),
-      prenom: ClientBaseEntity.capitalizeName(input.prenom),
-      dateNaissance: (inputData.dateNaissance || input.date_naissance) ? new Date(inputData.dateNaissance || input.date_naissance) : null,
-      compteCode: inputData.compteCode || input.compte_code,
-      partenaireId: inputData.partenaireId || input.partenaire_id,
+      keycloakGroupId,
+      typeClient: input.typeClient?.toString() ?? '',
+      nom: ClientBaseEntity.capitalizeName(nom),
+      prenom: ClientBaseEntity.capitalizeName(identity?.prenom ?? ''),
+      telephone,
+      email: contact?.email ?? null,
+      statut: input.statut ?? 'ACTIF',
+      compteCode: input.compteCode ?? '',
+      partenaireId: input.partenaireId ?? '',
+      // Identity fields
+      dateNaissance: identity?.dateNaissance ? new Date((identity.dateNaissance as any).seconds * 1000) : null,
+      civilite: identity?.civilite?.toString() ?? null,
+      lieuNaissance: identity?.lieuNaissance ?? null,
+      paysNaissance: identity?.paysNaissance ?? null,
+      csp: identity?.csp ?? null,
+      regimeSocial: identity?.regimeSocial ?? null,
+      // Banking fields
+      iban: banking?.iban ?? null,
+      bic: banking?.bic ?? null,
+      mandatSepa: banking?.mandatSepa ?? null,
+      // Compliance fields
+      isPoliticallyExposed: compliance?.isPoliticallyExposed ?? null,
+      numss: compliance?.numss ?? null,
+      // Acquisition fields
+      source: acquisition?.source ?? null,
+      canalAcquisition: acquisition?.canalAcquisition ?? null,
+      etapeCourante: acquisition?.etapeCourante ?? null,
       dateCreation: new Date(),
-      telephone: input.telephone,
-      email: input.email,
-      statut: input.statut || 'ACTIF',
-      societeId: inputData.societeId || input.societe_id,
-      source: input.source,
-      canalAcquisition: inputData.canalAcquisition ?? input.canal_acquisition ?? null,
-      civilite: input.civilite ?? null,
-      iban: input.iban ?? null,
-      bic: input.bic ?? null,
-      mandatSepa: inputData.mandatSepa ?? input.mandat_sepa ?? null,
-      csp: input.csp ?? null,
-      regimeSocial: inputData.regimeSocial ?? input.regime_social ?? null,
-      lieuNaissance: inputData.lieuNaissance ?? input.lieu_naissance ?? null,
-      paysNaissance: inputData.paysNaissance ?? input.pays_naissance ?? null,
-      etapeCourante: inputData.etapeCourante ?? input.etape_courante ?? null,
-      isPoliticallyExposed: inputData.isPoliticallyExposed ?? input.is_politically_exposed ?? null,
-      numss: input.numss ?? null,
     });
 
     return this.repository.save(entity);
   }
 
   async update(input: UpdateClientBaseRequest): Promise<ClientBaseEntity> {
-    const inputData = input as any;
     const entity = await this.findById(input.id);
 
-    const typeClient = inputData.typeClient ?? input.type_client;
-    if (typeClient !== undefined) entity.typeClient = typeClient;
-    if (input.nom !== undefined) entity.nom = ClientBaseEntity.capitalizeName(input.nom);
-    if (input.prenom !== undefined) entity.prenom = ClientBaseEntity.capitalizeName(input.prenom);
-    const dateNaissance = inputData.dateNaissance ?? input.date_naissance;
-    if (dateNaissance !== undefined) entity.dateNaissance = dateNaissance ? new Date(dateNaissance) : null;
-    const compteCode = inputData.compteCode ?? input.compte_code;
-    if (compteCode !== undefined) entity.compteCode = compteCode;
-    const partenaireId = inputData.partenaireId ?? input.partenaire_id;
-    if (partenaireId !== undefined) entity.partenaireId = partenaireId;
-    if (input.telephone !== undefined) entity.telephone = input.telephone;
-    if (input.email !== undefined) entity.email = input.email;
+    const identity = input.identity;
+    const contact = input.contact;
+    const banking = input.banking;
+    const compliance = input.compliance;
+    const acquisition = input.acquisition;
+
+    if (input.typeClient !== undefined) entity.typeClient = input.typeClient.toString();
     if (input.statut !== undefined) entity.statut = input.statut;
-    const societeId = inputData.societeId ?? input.societe_id;
-    if (societeId !== undefined) entity.societeId = societeId;
-    if (input.source !== undefined) entity.source = input.source;
-    const canalAcquisition = inputData.canalAcquisition ?? input.canal_acquisition;
-    if (canalAcquisition !== undefined) entity.canalAcquisition = canalAcquisition;
-    if (input.civilite !== undefined) entity.civilite = input.civilite;
-    if (input.iban !== undefined) entity.iban = input.iban;
-    if (input.bic !== undefined) entity.bic = input.bic;
-    const mandatSepa = inputData.mandatSepa ?? input.mandat_sepa;
-    if (mandatSepa !== undefined) entity.mandatSepa = mandatSepa;
-    if (input.csp !== undefined) entity.csp = input.csp;
-    const regimeSocial = inputData.regimeSocial ?? input.regime_social;
-    if (regimeSocial !== undefined) entity.regimeSocial = regimeSocial;
-    const lieuNaissance = inputData.lieuNaissance ?? input.lieu_naissance;
-    if (lieuNaissance !== undefined) entity.lieuNaissance = lieuNaissance;
-    const paysNaissance = inputData.paysNaissance ?? input.pays_naissance;
-    if (paysNaissance !== undefined) entity.paysNaissance = paysNaissance;
-    const etapeCourante = inputData.etapeCourante ?? input.etape_courante;
-    if (etapeCourante !== undefined) entity.etapeCourante = etapeCourante;
-    const isPoliticallyExposed = inputData.isPoliticallyExposed ?? input.is_politically_exposed;
-    if (isPoliticallyExposed !== undefined) entity.isPoliticallyExposed = isPoliticallyExposed;
-    if (input.numss !== undefined) entity.numss = input.numss;
+    if (input.compteCode !== undefined) entity.compteCode = input.compteCode;
+    if (input.partenaireId !== undefined) entity.partenaireId = input.partenaireId;
+
+    if (identity) {
+      if (identity.nom !== undefined) entity.nom = ClientBaseEntity.capitalizeName(identity.nom);
+      if (identity.prenom !== undefined) entity.prenom = ClientBaseEntity.capitalizeName(identity.prenom);
+      if (identity.dateNaissance !== undefined) {
+        entity.dateNaissance = identity.dateNaissance
+          ? new Date((identity.dateNaissance as any).seconds * 1000)
+          : null;
+      }
+      if (identity.civilite !== undefined) entity.civilite = identity.civilite.toString();
+      if (identity.lieuNaissance !== undefined) entity.lieuNaissance = identity.lieuNaissance;
+      if (identity.paysNaissance !== undefined) entity.paysNaissance = identity.paysNaissance;
+      if (identity.csp !== undefined) entity.csp = identity.csp;
+      if (identity.regimeSocial !== undefined) entity.regimeSocial = identity.regimeSocial;
+    }
+
+    if (contact) {
+      if (contact.telephone !== undefined) entity.telephone = contact.telephone;
+      if (contact.email !== undefined) entity.email = contact.email;
+    }
+
+    if (banking) {
+      if (banking.iban !== undefined) entity.iban = banking.iban;
+      if (banking.bic !== undefined) entity.bic = banking.bic;
+      if (banking.mandatSepa !== undefined) entity.mandatSepa = banking.mandatSepa;
+    }
+
+    if (compliance) {
+      if (compliance.isPoliticallyExposed !== undefined) entity.isPoliticallyExposed = compliance.isPoliticallyExposed;
+      if (compliance.numss !== undefined) entity.numss = compliance.numss;
+    }
+
+    if (acquisition) {
+      if (acquisition.source !== undefined) entity.source = acquisition.source;
+      if (acquisition.canalAcquisition !== undefined) entity.canalAcquisition = acquisition.canalAcquisition;
+      if (acquisition.etapeCourante !== undefined) entity.etapeCourante = acquisition.etapeCourante;
+    }
 
     return this.repository.save(entity);
   }
@@ -115,40 +136,67 @@ export class ClientBaseService {
     return entity;
   }
 
-  async findByPhoneAndName(telephone: string, nom: string, organisationId?: string): Promise<ClientBaseEntity | null> {
-    const where: Record<string, unknown> = { telephone, nom: ClientBaseEntity.capitalizeName(nom) };
-    if (organisationId) {
-      where.organisationId = organisationId;
+  async findByPhoneAndName(
+    telephone: string,
+    nom: string,
+    keycloakGroupId?: string,
+  ): Promise<ClientBaseEntity | null> {
+    const where: FindOptionsWhere<ClientBaseEntity> = {
+      telephone,
+      nom: ClientBaseEntity.capitalizeName(nom),
+    };
+    if (keycloakGroupId) {
+      where.keycloakGroupId = keycloakGroupId;
     }
-    return this.repository.findOne({ where: where as any });
+    return this.repository.findOne({ where });
   }
 
-  async findAll(
-    request: ListClientsBaseRequest,
-  ): Promise<{
+  async findAll(request: ListClientsBaseRequest): Promise<{
     clients: ClientBaseEntity[];
-    pagination: { total: number; page: number; limit: number; totalPages: number };
+    pagination: PaginationOutput;
   }> {
-    const requestData = request as any;
-    const page = request.pagination?.page ?? 1;
-    const limit = request.pagination?.limit ?? 20;
-    const sortBy = (request.pagination as any)?.sortBy || request.pagination?.sort_by || 'createdAt';
-    const sortOrder = (((request.pagination as any)?.sortOrder || request.pagination?.sort_order)?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
-    const orgId = requestData.organisationId || request.organisation_id;
-    const statutId = requestData.statutId || request.statut_id;
-    const societeId = requestData.societeId || request.societe_id;
+    const { page, limit, sortBy, sortOrder } = normalizePagination(
+      request.pagination
+        ? {
+            page: request.pagination.page,
+            limit: request.pagination.limit,
+            sort_by: request.pagination.sortBy,
+            sort_order: request.pagination.sortOrder,
+          }
+        : undefined,
+    );
 
+    // PERFORMANCE: Limite maximale pour éviter memory exhaustion
+    const safeLimitMax = 500;
+    const safeLimit = Math.min(limit, safeLimitMax);
+
+    const orgId = request.organisationId;
+    const statutId = request.statutId;
+
+    // PERFORMANCE: Requête légère sans les adresses (lazy loading)
+    // Les adresses seront chargées à la demande via findById
     const qb = this.repository
       .createQueryBuilder('c')
-      .leftJoinAndSelect('c.adresses', 'adresses')
-      .where('c.organisationId = :orgId', { orgId });
+      .select([
+        'c.id',
+        'c.keycloakGroupId',
+        'c.typeClient',
+        'c.nom',
+        'c.prenom',
+        'c.telephone',
+        'c.email',
+        'c.statut',
+        'c.source',
+        'c.canalAcquisition',
+        'c.civilite',
+        'c.dateCreation',
+        'c.createdAt',
+        'c.updatedAt',
+      ])
+      .where('c.keycloakGroupId = :orgId', { orgId });
 
     if (statutId) {
       qb.andWhere('c.statut = :statut', { statut: statutId });
-    }
-
-    if (societeId) {
-      qb.andWhere('c.societeId = :societeId', { societeId });
     }
 
     if (request.source) {
@@ -164,11 +212,11 @@ export class ClientBaseService {
 
     const [clients, total] = await qb
       .orderBy(`c.${sortBy}`, sortOrder)
-      .skip((page - 1) * limit)
-      .take(limit)
+      .skip((page - 1) * safeLimit)
+      .take(safeLimit)
       .getManyAndCount();
 
-    return { clients, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return { clients, pagination: { total, page, limit: safeLimit, totalPages: Math.ceil(total / safeLimit) } };
   }
 
   async delete(id: string): Promise<boolean> {
@@ -176,16 +224,20 @@ export class ClientBaseService {
     return (result.affected ?? 0) > 0;
   }
 
-  async search(organisation_id: string, telephone: string, nom: string): Promise<{ found: boolean; client: ClientBaseEntity | null }> {
-    const where: Record<string, unknown> = {
-      organisationId: organisation_id,
+  async search(
+    organisationId: string,
+    telephone: string,
+    nom: string,
+  ): Promise<{ found: boolean; client: ClientBaseEntity | null }> {
+    const where: FindOptionsWhere<ClientBaseEntity> = {
+      keycloakGroupId: organisationId,
       telephone,
     };
-    if (nom && nom.trim()) {
+    if (nom?.trim()) {
       where.nom = ClientBaseEntity.capitalizeName(nom);
     }
     const client = await this.repository.findOne({
-      where: where as any,
+      where,
       relations: ['adresses'],
     });
     return { found: !!client, client };

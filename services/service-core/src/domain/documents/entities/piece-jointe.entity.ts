@@ -1,11 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('piecejointes')
 export class PieceJointeEntity {
@@ -55,7 +48,7 @@ export class PieceJointeEntity {
   @Column({ name: 'hash_sha256', type: 'varchar', length: 64, nullable: true })
   hashSha256: string | null;
 
-  @Column({ name: 'organisation_id', type: 'uuid', nullable: true })
+  @Column({ name: 'keycloak_group_id', type: 'varchar', length: 255, nullable: true })
   @Index()
-  organisationId: string | null;
+  keycloakGroupId: string | null;
 }

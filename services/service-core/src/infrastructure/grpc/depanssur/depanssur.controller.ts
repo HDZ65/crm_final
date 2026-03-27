@@ -1,39 +1,47 @@
-import { Controller } from '@nestjs/common';
+/**
+ * Depanssur gRPC Controller
+ *
+ * Refactored to use unified error system with assertion helpers.
+ * No more dynamic imports of RpcException/grpc-js status.
+ */
+import { Controller, UseFilters } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { AbonnementService } from '../../persistence/typeorm/repositories/depanssur/abonnement.service';
-import { OptionAbonnementService } from '../../persistence/typeorm/repositories/depanssur/option-abonnement.service';
-import { CompteurPlafondService } from '../../persistence/typeorm/repositories/depanssur/compteur-plafond.service';
-import { DossierDeclaratifService } from '../../persistence/typeorm/repositories/depanssur/dossier-declaratif.service';
-import { ConsentementService } from '../../persistence/typeorm/repositories/depanssur/consentement.service';
+import { assertFound, EnhancedGrpcExceptionFilter } from '@crm/shared-kernel/errors';
 import type {
   CreateAbonnementRequest,
-  UpdateAbonnementRequest,
-  GetAbonnementRequest,
-  GetAbonnementByClientRequest,
-  ListAbonnementsRequest,
-  CreateDossierRequest,
-  UpdateDossierRequest,
-  GetDossierRequest,
-  GetDossierByReferenceRequest,
-  ListDossiersRequest,
-  DeleteDossierRequest,
-  CreateOptionRequest,
-  UpdateOptionRequest,
-  GetOptionRequest,
-  ListOptionsRequest,
-  DeleteOptionRequest,
-  GetCompteurRequest,
-  UpdateCompteurRequest,
-  ResetCompteurRequest,
-  ListCompteursRequest,
   CreateConsentementRequest,
-  GetConsentementRequest,
-  UpdateConsentementRequest,
-  ListConsentementsRequest,
+  CreateDossierRequest,
+  CreateOptionRequest,
   DeleteConsentementRequest,
+  DeleteDossierRequest,
+  DeleteOptionRequest,
+  GetAbonnementByClientRequest,
+  GetAbonnementRequest,
+  GetCompteurRequest,
+  GetConsentementRequest,
+  GetDossierByReferenceRequest,
+  GetDossierRequest,
+  GetOptionRequest,
+  ListAbonnementsRequest,
+  ListCompteursRequest,
+  ListConsentementsRequest,
+  ListDossiersRequest,
+  ListOptionsRequest,
+  ResetCompteurRequest,
+  UpdateAbonnementRequest,
+  UpdateCompteurRequest,
+  UpdateConsentementRequest,
+  UpdateDossierRequest,
+  UpdateOptionRequest,
 } from '@proto/depanssur';
+import { AbonnementService } from '../../persistence/typeorm/repositories/depanssur/abonnement.service';
+import { CompteurPlafondService } from '../../persistence/typeorm/repositories/depanssur/compteur-plafond.service';
+import { ConsentementService } from '../../persistence/typeorm/repositories/depanssur/consentement.service';
+import { DossierDeclaratifService } from '../../persistence/typeorm/repositories/depanssur/dossier-declaratif.service';
+import { OptionAbonnementService } from '../../persistence/typeorm/repositories/depanssur/option-abonnement.service';
 
-// Statut enum mapping (proto enum int → string)
+// ---- Enum Mappings ----
+
 const STATUT_ABONNEMENT_MAP: Record<number, string> = {
   0: 'UNSPECIFIED',
   1: 'ACTIF',
@@ -41,53 +49,6 @@ const STATUT_ABONNEMENT_MAP: Record<number, string> = {
   3: 'SUSPENDU_IMPAYE',
   4: 'RESILIE',
 };
-
-function mapStatutFromProto(statut: number | string | undefined): string | undefined {
-  if (statut === undefined || statut === null) return undefined;
-  if (typeof statut === 'string') return statut;
-  return STATUT_ABONNEMENT_MAP[statut] || undefined;
-}
-
-function entityToAbonnementResponse(entity: any) {
-  return {
-    id: entity.id,
-    organisation_id: entity.organisationId,
-    client_id: entity.clientId,
-    plan_type: entity.planType,
-    periodicite: entity.periodicite,
-    periode_attente: entity.periodeAttente,
-    franchise: entity.franchise ? Number(entity.franchise) : undefined,
-    plafond_par_intervention: entity.plafondParIntervention ? Number(entity.plafondParIntervention) : undefined,
-    plafond_annuel: entity.plafondAnnuel ? Number(entity.plafondAnnuel) : undefined,
-    nb_interventions_max: entity.nbInterventionsMax ?? undefined,
-    statut: entity.statut,
-    motif_resiliation: entity.motifResiliation ?? undefined,
-    date_souscription: entity.dateSouscription instanceof Date ? entity.dateSouscription.toISOString() : entity.dateSouscription,
-    date_effet: entity.dateEffet instanceof Date ? entity.dateEffet.toISOString() : entity.dateEffet,
-    date_fin: entity.dateFin instanceof Date ? entity.dateFin.toISOString() : entity.dateFin ?? undefined,
-    prochaine_echeance: entity.prochaineEcheance instanceof Date ? entity.prochaineEcheance.toISOString() : entity.prochaineEcheance,
-    prix_ttc: Number(entity.prixTtc),
-    taux_tva: Number(entity.tauxTva),
-    montant_ht: Number(entity.montantHt),
-    code_remise: entity.codeRemise ?? undefined,
-    montant_remise: entity.montantRemise ? Number(entity.montantRemise) : undefined,
-    created_at: entity.createdAt instanceof Date ? entity.createdAt.toISOString() : entity.createdAt,
-    updated_at: entity.updatedAt instanceof Date ? entity.updatedAt.toISOString() : entity.updatedAt,
-  };
-}
-
-function entityToOptionResponse(entity: any) {
-  return {
-    id: entity.id,
-    abonnement_id: entity.abonnementId,
-    type: entity.type,
-    label: entity.label,
-    prix_ttc: Number(entity.prixTtc),
-    actif: entity.actif,
-    created_at: entity.createdAt instanceof Date ? entity.createdAt.toISOString() : entity.createdAt,
-    updated_at: entity.updatedAt instanceof Date ? entity.updatedAt.toISOString() : entity.updatedAt,
-  };
-}
 
 const STATUT_DOSSIER_MAP: Record<number, string> = {
   0: 'UNSPECIFIED',
@@ -107,56 +68,6 @@ const TYPE_DOSSIER_MAP: Record<number, string> = {
   5: 'AUTRE',
 };
 
-function mapStatutDossierFromProto(statut: number | string | undefined): string | undefined {
-  if (statut === undefined || statut === null) return undefined;
-  if (typeof statut === 'string') return statut;
-  return STATUT_DOSSIER_MAP[statut] || undefined;
-}
-
-function mapTypeDossierFromProto(type: number | string | undefined): string | undefined {
-  if (type === undefined || type === null) return undefined;
-  if (typeof type === 'string') return type;
-  return TYPE_DOSSIER_MAP[type] || undefined;
-}
-
-function entityToDossierResponse(entity: any) {
-  return {
-    id: entity.id,
-    organisation_id: entity.organisationId,
-    abonnement_id: entity.abonnementId,
-    client_id: entity.clientId,
-    reference_externe: entity.referenceExterne,
-    date_ouverture: entity.dateOuverture instanceof Date ? entity.dateOuverture.toISOString() : entity.dateOuverture,
-    type: entity.type,
-    statut: entity.statut,
-    adresse_risque_id: entity.adresseRisqueId ?? undefined,
-    montant_estimatif: entity.montantEstimatif != null ? Number(entity.montantEstimatif) : undefined,
-    prise_en_charge: entity.priseEnCharge ?? undefined,
-    franchise_appliquee: entity.franchiseAppliquee != null ? Number(entity.franchiseAppliquee) : undefined,
-    reste_a_charge: entity.resteACharge != null ? Number(entity.resteACharge) : undefined,
-    montant_pris_en_charge: entity.montantPrisEnCharge != null ? Number(entity.montantPrisEnCharge) : undefined,
-    nps_score: entity.npsScore ?? undefined,
-    nps_commentaire: entity.npsCommentaire ?? undefined,
-    date_cloture: entity.dateCloture instanceof Date ? entity.dateCloture.toISOString() : entity.dateCloture ?? undefined,
-    created_at: entity.createdAt instanceof Date ? entity.createdAt.toISOString() : entity.createdAt,
-    updated_at: entity.updatedAt instanceof Date ? entity.updatedAt.toISOString() : entity.updatedAt,
-  };
-}
-
-function entityToCompteurResponse(entity: any) {
-  return {
-    id: entity.id,
-    abonnement_id: entity.abonnementId,
-    annee_glissante_debut: entity.anneeGlissanteDebut instanceof Date ? entity.anneeGlissanteDebut.toISOString() : entity.anneeGlissanteDebut,
-    annee_glissante_fin: entity.anneeGlissanteFin instanceof Date ? entity.anneeGlissanteFin.toISOString() : entity.anneeGlissanteFin,
-    nb_interventions_utilisees: entity.nbInterventionsUtilisees,
-    montant_cumule: Number(entity.montantCumule),
-    created_at: entity.createdAt instanceof Date ? entity.createdAt.toISOString() : entity.createdAt,
-    updated_at: entity.updatedAt instanceof Date ? entity.updatedAt.toISOString() : entity.updatedAt,
-  };
-}
-
-// TypeConsentement enum mapping (proto enum int → string)
 const TYPE_CONSENTEMENT_MAP: Record<number, string> = {
   0: 'UNSPECIFIED',
   1: 'RGPD_EMAIL',
@@ -164,27 +75,129 @@ const TYPE_CONSENTEMENT_MAP: Record<number, string> = {
   3: 'CGS_DEPANSSUR',
 };
 
-function mapTypeConsentementFromProto(type: number | string | undefined): string | undefined {
-  if (type === undefined || type === null) return undefined;
-  if (typeof type === 'string') return type;
-  return TYPE_CONSENTEMENT_MAP[type] || undefined;
+// ---- Mapping Helpers ----
+
+function mapEnumFromProto(value: number | string | undefined, map: Record<number, string>): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'string') return value;
+  return map[value];
 }
 
-function entityToConsentementResponse(entity: any) {
+function toIsoString(date: Date | string | null | undefined): string | undefined {
+  if (!date) return undefined;
+  return date instanceof Date ? date.toISOString() : date;
+}
+
+function toNumber(value: unknown): number | undefined {
+  if (value === null || value === undefined) return undefined;
+  const num = Number(value);
+  return isNaN(num) ? undefined : num;
+}
+
+// ---- Entity to Response Mappers ----
+// Note: Using generic parameter to preserve entity type while allowing property access
+
+function entityToAbonnementResponse<T extends object>(entity: T) {
+  const e = entity as Record<string, unknown>;
   return {
-    id: entity.id,
-    client_id: entity.clientBaseId,
-    type: entity.type,
-    accorde: entity.accorde,
-    date_accord: entity.dateAccord instanceof Date ? entity.dateAccord.toISOString() : entity.dateAccord ?? undefined,
-    date_retrait: entity.dateRetrait instanceof Date ? entity.dateRetrait.toISOString() : entity.dateRetrait ?? undefined,
-    source: entity.source ?? undefined,
-    created_at: entity.createdAt instanceof Date ? entity.createdAt.toISOString() : entity.createdAt,
-    updated_at: entity.updatedAt instanceof Date ? entity.updatedAt.toISOString() : entity.updatedAt,
+    id: e.id,
+    organisationId: e.keycloakGroupId,
+    clientId: e.clientId,
+    planType: e.planType,
+    periodicite: e.periodicite,
+    periodeAttente: e.periodeAttente,
+    franchise: toNumber(e.franchise),
+    plafondParIntervention: toNumber(e.plafondParIntervention),
+    plafondAnnuel: toNumber(e.plafondAnnuel),
+    nbInterventionsMax: e.nbInterventionsMax ?? undefined,
+    statut: e.statut,
+    motifResiliation: e.motifResiliation ?? undefined,
+    dateSouscription: toIsoString(e.dateSouscription as Date),
+    dateEffet: toIsoString(e.dateEffet as Date),
+    dateFin: toIsoString(e.dateFin as Date),
+    prochaineEcheance: toIsoString(e.prochaineEcheance as Date),
+    prixTtc: Number(e.prixTtc),
+    tauxTva: Number(e.tauxTva),
+    montantHt: Number(e.montantHt),
+    codeRemise: e.codeRemise ?? undefined,
+    montantRemise: toNumber(e.montantRemise),
+    createdAt: toIsoString(e.createdAt as Date),
+    updatedAt: toIsoString(e.updatedAt as Date),
   };
 }
 
+function entityToOptionResponse<T extends object>(entity: T) {
+  const e = entity as Record<string, unknown>;
+  return {
+    id: e.id,
+    abonnementId: e.abonnementId,
+    type: e.type,
+    label: e.label,
+    prixTtc: Number(e.prixTtc),
+    actif: e.actif,
+    createdAt: toIsoString(e.createdAt as Date),
+    updatedAt: toIsoString(e.updatedAt as Date),
+  };
+}
+
+function entityToDossierResponse<T extends object>(entity: T) {
+  const e = entity as Record<string, unknown>;
+  return {
+    id: e.id,
+    organisationId: e.keycloakGroupId,
+    abonnementId: e.abonnementId,
+    clientId: e.clientId,
+    referenceExterne: e.referenceExterne,
+    dateOuverture: toIsoString(e.dateOuverture as Date),
+    type: e.type,
+    statut: e.statut,
+    adresseRisqueId: e.adresseRisqueId ?? undefined,
+    montantEstimatif: toNumber(e.montantEstimatif),
+    priseEnCharge: e.priseEnCharge ?? undefined,
+    franchiseAppliquee: toNumber(e.franchiseAppliquee),
+    resteACharge: toNumber(e.resteACharge),
+    montantPrisEnCharge: toNumber(e.montantPrisEnCharge),
+    npsScore: e.npsScore ?? undefined,
+    npsCommentaire: e.npsCommentaire ?? undefined,
+    dateCloture: toIsoString(e.dateCloture as Date),
+    createdAt: toIsoString(e.createdAt as Date),
+    updatedAt: toIsoString(e.updatedAt as Date),
+  };
+}
+
+function entityToCompteurResponse<T extends object>(entity: T) {
+  const e = entity as Record<string, unknown>;
+  return {
+    id: e.id,
+    abonnementId: e.abonnementId,
+    anneeGlissanteDebut: toIsoString(e.anneeGlissanteDebut as Date),
+    anneeGlissanteFin: toIsoString(e.anneeGlissanteFin as Date),
+    nbInterventionsUtilisees: e.nbInterventionsUtilisees,
+    montantCumule: Number(e.montantCumule),
+    createdAt: toIsoString(e.createdAt as Date),
+    updatedAt: toIsoString(e.updatedAt as Date),
+  };
+}
+
+function entityToConsentementResponse<T extends object>(entity: T) {
+  const e = entity as Record<string, unknown>;
+  return {
+    id: e.id,
+    clientId: e.clientBaseId,
+    type: e.type,
+    accorde: e.accorde,
+    dateAccord: toIsoString(e.dateAccord as Date),
+    dateRetrait: toIsoString(e.dateRetrait as Date),
+    source: e.source ?? undefined,
+    createdAt: toIsoString(e.createdAt as Date),
+    updatedAt: toIsoString(e.updatedAt as Date),
+  };
+}
+
+// ---- Controller ----
+
 @Controller()
+@UseFilters(EnhancedGrpcExceptionFilter)
 export class DepanssurController {
   constructor(
     private readonly abonnementService: AbonnementService,
@@ -205,31 +218,22 @@ export class DepanssurController {
   @GrpcMethod('DepanssurService', 'GetAbonnement')
   async getAbonnement(data: GetAbonnementRequest) {
     const entity = await this.abonnementService.findById(data.id);
-    if (!entity) {
-      const { RpcException } = await import('@nestjs/microservices');
-      const { status } = await import('@grpc/grpc-js');
-      throw new RpcException({ code: status.NOT_FOUND, message: `Abonnement ${data.id} not found` });
-    }
+    assertFound(entity, 'Abonnement', data.id);
     return entityToAbonnementResponse(entity);
   }
 
   @GrpcMethod('DepanssurService', 'GetAbonnementByClient')
   async getAbonnementByClient(data: GetAbonnementByClientRequest) {
-    const entity = await this.abonnementService.findByClientId(data.organisation_id, data.client_id);
-    if (!entity) {
-      const { RpcException } = await import('@nestjs/microservices');
-      const { status } = await import('@grpc/grpc-js');
-      throw new RpcException({ code: status.NOT_FOUND, message: `No abonnement found for client ${data.client_id}` });
-    }
+    const entity = await this.abonnementService.findByClientId(data.organisationId, data.clientId);
+    assertFound(entity, 'Abonnement', { clientId: data.clientId });
     return entityToAbonnementResponse(entity);
   }
 
   @GrpcMethod('DepanssurService', 'UpdateAbonnement')
   async updateAbonnement(data: UpdateAbonnementRequest) {
-    // Map proto statut enum to string if needed
-    const input: any = { ...data };
+    const input: Record<string, unknown> = { ...data };
     if (data.statut !== undefined) {
-      input.statut = mapStatutFromProto(data.statut);
+      input.statut = mapEnumFromProto(data.statut, STATUT_ABONNEMENT_MAP);
     }
     const entity = await this.abonnementService.update(input);
     return entityToAbonnementResponse(entity);
@@ -237,21 +241,22 @@ export class DepanssurController {
 
   @GrpcMethod('DepanssurService', 'ListAbonnements')
   async listAbonnements(data: ListAbonnementsRequest) {
-    const statutStr = data.statut !== undefined ? mapStatutFromProto(data.statut) : undefined;
     const result = await this.abonnementService.findAll(
-      data.organisation_id,
+      data.organisationId,
       {
-        clientId: data.client_id,
-        statut: statutStr,
-        planType: data.plan_type,
+        clientId: data.clientId,
+        statut: mapEnumFromProto(data.statut, STATUT_ABONNEMENT_MAP),
+        planType: data.planType,
         search: data.search,
       },
-      data.pagination ? {
-        page: data.pagination.page,
-        limit: data.pagination.limit,
-        sortBy: data.pagination.sort_by,
-        sortOrder: data.pagination.sort_order,
-      } : undefined,
+      data.pagination
+        ? {
+            page: data.pagination.page,
+            limit: data.pagination.limit,
+            sortBy: data.pagination.sortBy,
+            sortOrder: data.pagination.sortOrder,
+          }
+        : undefined,
     );
     return {
       abonnements: result.abonnements.map(entityToAbonnementResponse),
@@ -263,9 +268,9 @@ export class DepanssurController {
 
   @GrpcMethod('DepanssurService', 'CreateDossier')
   async createDossier(data: CreateDossierRequest) {
-    const input: any = { ...data };
+    const input: Record<string, unknown> = { ...data };
     if (data.type !== undefined) {
-      input.type = mapTypeDossierFromProto(data.type);
+      input.type = mapEnumFromProto(data.type, TYPE_DOSSIER_MAP);
     }
     const entity = await this.dossierService.create(input);
     return entityToDossierResponse(entity);
@@ -274,30 +279,22 @@ export class DepanssurController {
   @GrpcMethod('DepanssurService', 'GetDossier')
   async getDossier(data: GetDossierRequest) {
     const entity = await this.dossierService.findById(data.id);
-    if (!entity) {
-      const { RpcException } = await import('@nestjs/microservices');
-      const { status } = await import('@grpc/grpc-js');
-      throw new RpcException({ code: status.NOT_FOUND, message: `Dossier ${data.id} not found` });
-    }
+    assertFound(entity, 'Dossier', data.id);
     return entityToDossierResponse(entity);
   }
 
   @GrpcMethod('DepanssurService', 'GetDossierByReference')
   async getDossierByReference(data: GetDossierByReferenceRequest) {
-    const entity = await this.dossierService.findByReferenceExterne(data.organisation_id, data.reference_externe);
-    if (!entity) {
-      const { RpcException } = await import('@nestjs/microservices');
-      const { status } = await import('@grpc/grpc-js');
-      throw new RpcException({ code: status.NOT_FOUND, message: `Dossier with ref ${data.reference_externe} not found` });
-    }
+    const entity = await this.dossierService.findByReferenceExterne(data.organisationId, data.referenceExterne);
+    assertFound(entity, 'Dossier', { referenceExterne: data.referenceExterne });
     return entityToDossierResponse(entity);
   }
 
   @GrpcMethod('DepanssurService', 'UpdateDossier')
   async updateDossier(data: UpdateDossierRequest) {
-    const input: any = { ...data };
+    const input: Record<string, unknown> = { ...data };
     if (data.statut !== undefined) {
-      input.statut = mapStatutDossierFromProto(data.statut);
+      input.statut = mapEnumFromProto(data.statut, STATUT_DOSSIER_MAP);
     }
     const entity = await this.dossierService.update(input);
     return entityToDossierResponse(entity);
@@ -305,23 +302,23 @@ export class DepanssurController {
 
   @GrpcMethod('DepanssurService', 'ListDossiers')
   async listDossiers(data: ListDossiersRequest) {
-    const statutStr = data.statut !== undefined ? mapStatutDossierFromProto(data.statut) : undefined;
-    const typeStr = data.type !== undefined ? mapTypeDossierFromProto(data.type) : undefined;
     const result = await this.dossierService.findAll(
-      data.organisation_id,
+      data.organisationId,
       {
-        abonnementId: data.abonnement_id,
-        clientId: data.client_id,
-        type: typeStr,
-        statut: statutStr,
+        abonnementId: data.abonnementId,
+        clientId: data.clientId,
+        type: mapEnumFromProto(data.type, TYPE_DOSSIER_MAP),
+        statut: mapEnumFromProto(data.statut, STATUT_DOSSIER_MAP),
         search: data.search,
       },
-      data.pagination ? {
-        page: data.pagination.page,
-        limit: data.pagination.limit,
-        sortBy: data.pagination.sort_by,
-        sortOrder: data.pagination.sort_order,
-      } : undefined,
+      data.pagination
+        ? {
+            page: data.pagination.page,
+            limit: data.pagination.limit,
+            sortBy: data.pagination.sortBy,
+            sortOrder: data.pagination.sortOrder,
+          }
+        : undefined,
     );
     return {
       dossiers: result.dossiers.map(entityToDossierResponse),
@@ -346,11 +343,7 @@ export class DepanssurController {
   @GrpcMethod('DepanssurService', 'GetOption')
   async getOption(data: GetOptionRequest) {
     const entity = await this.optionService.findById(data.id);
-    if (!entity) {
-      const { RpcException } = await import('@nestjs/microservices');
-      const { status } = await import('@grpc/grpc-js');
-      throw new RpcException({ code: status.NOT_FOUND, message: `Option ${data.id} not found` });
-    }
+    assertFound(entity, 'Option', data.id);
     return entityToOptionResponse(entity);
   }
 
@@ -363,14 +356,16 @@ export class DepanssurController {
   @GrpcMethod('DepanssurService', 'ListOptions')
   async listOptions(data: ListOptionsRequest) {
     const result = await this.optionService.findAll(
-      data.abonnement_id,
+      data.abonnementId,
       { actif: data.actif },
-      data.pagination ? {
-        page: data.pagination.page,
-        limit: data.pagination.limit,
-        sortBy: data.pagination.sort_by,
-        sortOrder: data.pagination.sort_order,
-      } : undefined,
+      data.pagination
+        ? {
+            page: data.pagination.page,
+            limit: data.pagination.limit,
+            sortBy: data.pagination.sortBy,
+            sortOrder: data.pagination.sortOrder,
+          }
+        : undefined,
     );
     return {
       options: result.options.map(entityToOptionResponse),
@@ -388,12 +383,8 @@ export class DepanssurController {
 
   @GrpcMethod('DepanssurService', 'GetCompteur')
   async getCompteur(data: GetCompteurRequest) {
-    const entity = await this.compteurService.findCurrentByAbonnementId(data.abonnement_id);
-    if (!entity) {
-      const { RpcException } = await import('@nestjs/microservices');
-      const { status } = await import('@grpc/grpc-js');
-      throw new RpcException({ code: status.NOT_FOUND, message: `No current compteur for abonnement ${data.abonnement_id}` });
-    }
+    const entity = await this.compteurService.findCurrentByAbonnementId(data.abonnementId);
+    assertFound(entity, 'Compteur', { abonnementId: data.abonnementId });
     return entityToCompteurResponse(entity);
   }
 
@@ -406,9 +397,9 @@ export class DepanssurController {
   @GrpcMethod('DepanssurService', 'ResetCompteur')
   async resetCompteur(data: ResetCompteurRequest) {
     const entity = await this.compteurService.resetCompteur(
-      data.abonnement_id,
-      data.annee_glissante_debut,
-      data.annee_glissante_fin,
+      data.abonnementId,
+      data.anneeGlissanteDebut,
+      data.anneeGlissanteFin,
     );
     return entityToCompteurResponse(entity);
   }
@@ -416,13 +407,15 @@ export class DepanssurController {
   @GrpcMethod('DepanssurService', 'ListCompteurs')
   async listCompteurs(data: ListCompteursRequest) {
     const result = await this.compteurService.findAll(
-      data.abonnement_id,
-      data.pagination ? {
-        page: data.pagination.page,
-        limit: data.pagination.limit,
-        sortBy: data.pagination.sort_by,
-        sortOrder: data.pagination.sort_order,
-      } : undefined,
+      data.abonnementId,
+      data.pagination
+        ? {
+            page: data.pagination.page,
+            limit: data.pagination.limit,
+            sortBy: data.pagination.sortBy,
+            sortOrder: data.pagination.sortOrder,
+          }
+        : undefined,
     );
     return {
       compteurs: result.compteurs.map(entityToCompteurResponse),
@@ -430,14 +423,13 @@ export class DepanssurController {
     };
   }
 
-
   // ---- Consentement RGPD CRUD ----
 
   @GrpcMethod('DepanssurService', 'CreateConsentement')
   async createConsentement(data: CreateConsentementRequest) {
-    const input: any = { ...data };
+    const input: Record<string, unknown> = { ...data };
     if (data.type !== undefined) {
-      input.type = mapTypeConsentementFromProto(data.type);
+      input.type = mapEnumFromProto(data.type, TYPE_CONSENTEMENT_MAP);
     }
     const entity = await this.consentementService.create(input);
     return entityToConsentementResponse(entity);
@@ -446,6 +438,7 @@ export class DepanssurController {
   @GrpcMethod('DepanssurService', 'GetConsentement')
   async getConsentement(data: GetConsentementRequest) {
     const entity = await this.consentementService.findById(data.id);
+    assertFound(entity, 'Consentement', data.id);
     return entityToConsentementResponse(entity);
   }
 
@@ -457,16 +450,17 @@ export class DepanssurController {
 
   @GrpcMethod('DepanssurService', 'ListConsentements')
   async listConsentements(data: ListConsentementsRequest) {
-    const typeStr = data.type !== undefined ? mapTypeConsentementFromProto(data.type) : undefined;
     const result = await this.consentementService.findByClient(
-      data.client_id,
-      { type: typeStr },
-      data.pagination ? {
-        page: data.pagination.page,
-        limit: data.pagination.limit,
-        sortBy: data.pagination.sort_by,
-        sortOrder: data.pagination.sort_order,
-      } : undefined,
+      data.clientId,
+      { type: mapEnumFromProto(data.type, TYPE_CONSENTEMENT_MAP) },
+      data.pagination
+        ? {
+            page: data.pagination.page,
+            limit: data.pagination.limit,
+            sortBy: data.pagination.sortBy,
+            sortOrder: data.pagination.sortOrder,
+          }
+        : undefined,
     );
     return {
       consentements: result.consentements.map(entityToConsentementResponse),

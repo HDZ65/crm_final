@@ -1,10 +1,4 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('clientpartenaires')
 export class ClientPartenaireEntity {
@@ -23,17 +17,17 @@ export class ClientPartenaireEntity {
   @Column({ name: 'valid_from', type: 'date' })
   validFrom: string;
 
-   @Column({ name: 'valid_to', type: 'date', nullable: true })
-   validTo: string | null;
+  @Column({ name: 'valid_to', type: 'date', nullable: true })
+  validTo: string | null;
 
-   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
-   createdBy: string | null;
+  @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+  createdBy: string | null;
 
-   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
-   modifiedBy: string | null;
+  @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+  modifiedBy: string | null;
 
-   @CreateDateColumn({ name: 'created_at' })
-   createdAt: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

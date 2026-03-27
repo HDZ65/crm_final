@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { S3StorageConfig } from '../s3-storage.service';
 
 // ---------------------------------------------------------------------------
@@ -12,7 +12,6 @@ const mockGetSignedUrl = mock(() =>
 
 mock.module('@aws-sdk/client-s3', () => ({
   S3Client: class MockS3Client {
-    constructor(_config: unknown) {}
     send = mockSend;
   },
   PutObjectCommand: class MockPut {
@@ -71,7 +70,7 @@ describe('S3StorageService', () => {
     });
 
     it('should forward metadata to S3 when provided', async () => {
-      const meta = { 'organisation-id': 'org-1', 'sha256': 'deadbeef' };
+      const meta = { 'organisation-id': 'org-1', sha256: 'deadbeef' };
 
       await service.upload('k', Buffer.from('x'), 'text/plain', meta);
 
@@ -107,9 +106,7 @@ describe('S3StorageService', () => {
     it('should throw when response body is empty', async () => {
       mockSend.mockImplementationOnce(() => Promise.resolve({ Body: null }));
 
-      await expect(service.download('missing-key')).rejects.toThrow(
-        'Empty response body for key: missing-key',
-      );
+      await expect(service.download('missing-key')).rejects.toThrow('Empty response body for key: missing-key');
     });
   });
 
@@ -176,9 +173,7 @@ describe('S3StorageService', () => {
       const result = await service.upload(key, Buffer.from('data'), 'application/pdf');
 
       expect(result).toBe(key);
-      expect(result).toMatch(
-        /^[a-zA-Z0-9-]+\/documents\/[a-zA-Z0-9_-]+\/\d{4}\/[a-f0-9-]+-[\w.-]+$/,
-      );
+      expect(result).toMatch(/^[a-zA-Z0-9-]+\/documents\/[a-zA-Z0-9_-]+\/\d{4}\/[a-f0-9-]+-[\w.-]+$/);
     });
   });
 
@@ -187,24 +182,24 @@ describe('S3StorageService', () => {
   // -------------------------------------------------------------------------
   describe('s3ConfigFromEnv', () => {
     it('should throw when S3_BUCKET is missing', () => {
-      const saved = process.env['S3_BUCKET'];
-      delete process.env['S3_BUCKET'];
+      const saved = process.env.S3_BUCKET;
+      delete process.env.S3_BUCKET;
       try {
         expect(() => s3ConfigFromEnv()).toThrow('S3_BUCKET');
       } finally {
-        if (saved) process.env['S3_BUCKET'] = saved;
+        if (saved) process.env.S3_BUCKET = saved;
       }
     });
 
     it('should throw when S3_ACCESS_KEY_ID is missing', () => {
-      process.env['S3_BUCKET'] = 'b';
-      const saved = process.env['S3_ACCESS_KEY_ID'];
-      delete process.env['S3_ACCESS_KEY_ID'];
+      process.env.S3_BUCKET = 'b';
+      const saved = process.env.S3_ACCESS_KEY_ID;
+      delete process.env.S3_ACCESS_KEY_ID;
       try {
         expect(() => s3ConfigFromEnv()).toThrow('S3_ACCESS_KEY_ID');
       } finally {
-        if (saved) process.env['S3_ACCESS_KEY_ID'] = saved;
-        delete process.env['S3_BUCKET'];
+        if (saved) process.env.S3_ACCESS_KEY_ID = saved;
+        delete process.env.S3_BUCKET;
       }
     });
   });

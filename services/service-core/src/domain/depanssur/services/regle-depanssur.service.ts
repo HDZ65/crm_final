@@ -1,8 +1,8 @@
+import { randomUUID } from 'node:crypto';
+import { NatsService } from '@crm/shared-kernel';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
-import { NatsService } from '@crm/shared-kernel';
-import { randomUUID } from 'crypto';
 import { AbonnementDepanssurEntity } from '../entities/abonnement-depanssur.entity';
 import { CompteurPlafondEntity } from '../entities/compteur-plafond.entity';
 
@@ -57,12 +57,15 @@ export class RegleDepanssurService {
 
   validerCarence(abonnement: AbonnementDepanssurEntity, dateDossier: Date): CarenceValidationResult {
     if (!abonnement?.dateEffet) {
-      throw new RegleDepanssurError('ABONNEMENT_DATE_EFFET_REQUIRED', 'La date d\'effet de l\'abonnement est requise');
+      throw new RegleDepanssurError('ABONNEMENT_DATE_EFFET_REQUIRED', "La date d'effet de l'abonnement est requise");
     }
 
     const referenceDate = this.ensureDate(dateDossier, 'DATE_DOSSIER_INVALID');
     const periodeAttente = abonnement.periodeAttente ?? 0;
-    const dateFinCarence = this.addUtcDays(this.ensureDate(abonnement.dateEffet, 'ABONNEMENT_DATE_EFFET_INVALID'), periodeAttente);
+    const dateFinCarence = this.addUtcDays(
+      this.ensureDate(abonnement.dateEffet, 'ABONNEMENT_DATE_EFFET_INVALID'),
+      periodeAttente,
+    );
 
     if (referenceDate.getTime() < dateFinCarence.getTime()) {
       return {
@@ -94,7 +97,8 @@ export class RegleDepanssurService {
         plafondsRestants: {
           parIntervention: 0,
           annuelMontant: plafondAnnuel === null ? null : Math.max(0, this.roundMontant(plafondAnnuel - montantCumule)),
-          annuelInterventions: nbInterventionsMax === null ? null : Math.max(0, nbInterventionsMax - nbInterventionsUtilisees),
+          annuelInterventions:
+            nbInterventionsMax === null ? null : Math.max(0, nbInterventionsMax - nbInterventionsUtilisees),
         },
       };
     }
@@ -106,11 +110,10 @@ export class RegleDepanssurService {
         raison: 'PLAFOND_ANNUEL_DEPASSE',
         plafondsRestants: {
           parIntervention:
-            plafondParIntervention === null
-              ? null
-              : Math.max(0, this.roundMontant(plafondParIntervention - montant)),
+            plafondParIntervention === null ? null : Math.max(0, this.roundMontant(plafondParIntervention - montant)),
           annuelMontant: 0,
-          annuelInterventions: nbInterventionsMax === null ? null : Math.max(0, nbInterventionsMax - nbInterventionsUtilisees),
+          annuelInterventions:
+            nbInterventionsMax === null ? null : Math.max(0, nbInterventionsMax - nbInterventionsUtilisees),
         },
       };
     }
@@ -122,9 +125,7 @@ export class RegleDepanssurService {
         raison: 'NB_INTERVENTIONS_MAX_DEPASSE',
         plafondsRestants: {
           parIntervention:
-            plafondParIntervention === null
-              ? null
-              : Math.max(0, this.roundMontant(plafondParIntervention - montant)),
+            plafondParIntervention === null ? null : Math.max(0, this.roundMontant(plafondParIntervention - montant)),
           annuelMontant: plafondAnnuel === null ? null : Math.max(0, this.roundMontant(plafondAnnuel - montantCumule)),
           annuelInterventions: 0,
         },
@@ -241,13 +242,17 @@ export class RegleDepanssurService {
     montantIntervention: number,
     dateReference: Date,
   ): Promise<CompteurPlafondEntity> {
-    const compteur = await this.getOrCreateCompteurForCycle(manager, abonnement, this.ensureDate(dateReference, 'DATE_REFERENCE_INVALID'));
+    const compteur = await this.getOrCreateCompteurForCycle(
+      manager,
+      abonnement,
+      this.ensureDate(dateReference, 'DATE_REFERENCE_INVALID'),
+    );
     const verification = this.verifierPlafonds(abonnement, montantIntervention, compteur);
 
     if (!verification.autorise) {
       throw new RegleDepanssurError(
         verification.raison ?? 'PLAFOND_DEPASSE',
-        'Le dossier depasse les plafonds de prise en charge de l\'abonnement',
+        "Le dossier depasse les plafonds de prise en charge de l'abonnement",
       );
     }
 
@@ -268,7 +273,7 @@ export class RegleDepanssurService {
     dateReference: Date,
   ): Promise<CompteurPlafondEntity> {
     if (!abonnement?.id) {
-      throw new RegleDepanssurError('ABONNEMENT_ID_REQUIRED', 'L\'identifiant abonnement est requis');
+      throw new RegleDepanssurError('ABONNEMENT_ID_REQUIRED', "L'identifiant abonnement est requis");
     }
 
     const reference = this.ensureDate(dateReference, 'DATE_REFERENCE_INVALID');
@@ -301,7 +306,7 @@ export class RegleDepanssurService {
 
   private getCycleWindow(abonnement: AbonnementDepanssurEntity, referenceDate: Date): { debut: Date; fin: Date } {
     if (!abonnement?.dateEffet) {
-      throw new RegleDepanssurError('ABONNEMENT_DATE_EFFET_REQUIRED', 'La date d\'effet de l\'abonnement est requise');
+      throw new RegleDepanssurError('ABONNEMENT_DATE_EFFET_REQUIRED', "La date d'effet de l'abonnement est requise");
     }
 
     const reference = this.ensureDate(referenceDate, 'DATE_REFERENCE_INVALID');
@@ -358,10 +363,13 @@ export class RegleDepanssurService {
   private normalizeMontant(value: number): number {
     const montant = Number(value ?? 0);
     if (!Number.isFinite(montant)) {
-      throw new RegleDepanssurError('MONTANT_INTERVENTION_INVALID', 'Le montant d\'intervention est invalide');
+      throw new RegleDepanssurError('MONTANT_INTERVENTION_INVALID', "Le montant d'intervention est invalide");
     }
     if (montant < 0) {
-      throw new RegleDepanssurError('MONTANT_INTERVENTION_NEGATIF', 'Le montant d\'intervention ne peut pas etre negatif');
+      throw new RegleDepanssurError(
+        'MONTANT_INTERVENTION_NEGATIF',
+        "Le montant d'intervention ne peut pas etre negatif",
+      );
     }
     return this.roundMontant(montant);
   }
@@ -403,23 +411,13 @@ export class RegleDepanssurService {
 
     // Check if exceeded
     if (montantUtilise > plafondAnnuel) {
-      await this.publishPlafondExceededEvent(
-        abonnement,
-        plafondAnnuel,
-        montantUtilise,
-        montantUtilise - plafondAnnuel,
-      );
+      await this.publishPlafondExceededEvent(abonnement, plafondAnnuel, montantUtilise, montantUtilise - plafondAnnuel);
       return;
     }
 
     // Check if threshold reached (80%)
     if (pourcentageUtilise >= 80) {
-      await this.publishPlafondThresholdReachedEvent(
-        abonnement,
-        plafondAnnuel,
-        montantUtilise,
-        pourcentageUtilise,
-      );
+      await this.publishPlafondThresholdReachedEvent(abonnement, plafondAnnuel, montantUtilise, pourcentageUtilise);
     }
   }
 
@@ -436,7 +434,7 @@ export class RegleDepanssurService {
         correlation_id: null,
         abonnement_id: abonnement.id,
         client_id: abonnement.clientId,
-        organisation_id: abonnement.organisationId,
+        organisation_id: abonnement.keycloakGroupId,
         plafond_annuel: plafondAnnuel,
         montant_utilise: montantUtilise,
         pourcentage_utilise: pourcentageUtilise,
@@ -462,7 +460,7 @@ export class RegleDepanssurService {
         correlation_id: null,
         abonnement_id: abonnement.id,
         client_id: abonnement.clientId,
-        organisation_id: abonnement.organisationId,
+        organisation_id: abonnement.keycloakGroupId,
         plafond_annuel: plafondAnnuel,
         montant_utilise: montantUtilise,
         montant_depasse: montantDepasse,

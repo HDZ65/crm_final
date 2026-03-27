@@ -2,25 +2,51 @@ syntax = "proto3";
 
 package clients;
 
-// ===== COMMON =====
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "common/common.proto";
 
-message Empty {}
+option java_multiple_files = true;
+option java_package = "com.finanssor.crm.clients";
 
-message PaginationRequest {
-  int32 page = 1;
-  int32 limit = 2;
-  string sort_by = 3;
-  string sort_order = 4;
+// ============================================================================
+// CLIENTS MICROSERVICE - gRPC Service Definitions
+// ============================================================================
+// Manages client data: individuals, enterprises, addresses, and partnerships
+// ============================================================================
+
+// === ENUMS ===
+
+enum ClientType {
+  CLIENT_TYPE_UNSPECIFIED = 0;
+  CLIENT_TYPE_PARTICULIER = 1;
+  CLIENT_TYPE_ENTREPRISE = 2;
+  CLIENT_TYPE_ASSOCIATION = 3;
 }
 
-message PaginationResponse {
-  int32 total = 1;
-  int32 page = 2;
-  int32 limit = 3;
-  int32 total_pages = 4;
+enum Civilite {
+  CIVILITE_UNSPECIFIED = 0;
+  CIVILITE_M = 1;
+  CIVILITE_MME = 2;
 }
 
-// ===== STATUT CLIENT =====
+enum KycStatus {
+  KYC_STATUS_UNSPECIFIED = 0;
+  KYC_STATUS_PENDING = 1;
+  KYC_STATUS_VERIFIED = 2;
+  KYC_STATUS_REJECTED = 3;
+  KYC_STATUS_EXPIRED = 4;
+}
+
+enum AddressType {
+  ADDRESS_TYPE_UNSPECIFIED = 0;
+  ADDRESS_TYPE_DOMICILE = 1;
+  ADDRESS_TYPE_FACTURATION = 2;
+  ADDRESS_TYPE_LIVRAISON = 3;
+  ADDRESS_TYPE_SIEGE = 4;
+}
+
+// === STATUT CLIENT ===
 
 message StatutClient {
   string id = 1;
@@ -28,8 +54,8 @@ message StatutClient {
   string nom = 3;
   string description = 4;
   int32 ordre_affichage = 5;
-  string created_at = 6;
-  string updated_at = 7;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
 }
 
 message CreateStatutClientRequest {
@@ -56,23 +82,19 @@ message GetStatutClientByCodeRequest {
 }
 
 message ListStatutsClientRequest {
-  PaginationRequest pagination = 1;
+  common.PaginationRequest pagination = 1;
 }
 
 message ListStatutsClientResponse {
   repeated StatutClient statuts = 1;
-  PaginationResponse pagination = 2;
+  common.PaginationResponse pagination = 2;
 }
 
 message DeleteStatutClientRequest {
   string id = 1;
 }
 
-message DeleteResponse {
-  bool success = 1;
-}
-
-// ===== ADRESSE =====
+// === ADRESSE ===
 
 message Adresse {
   string id = 1;
@@ -82,9 +104,13 @@ message Adresse {
   string code_postal = 5;
   string ville = 6;
   string pays = 7;
-  string type = 8;
-  string created_at = 9;
-  string updated_at = 10;
+  AddressType type = 8;
+  bool is_primary = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+
+  // Reserved for future use
+  reserved 50 to 100;
 }
 
 message CreateAdresseRequest {
@@ -94,7 +120,8 @@ message CreateAdresseRequest {
   string code_postal = 4;
   string ville = 5;
   string pays = 6;
-  string type = 7;
+  AddressType type = 7;
+  bool is_primary = 8;
 }
 
 message UpdateAdresseRequest {
@@ -104,7 +131,8 @@ message UpdateAdresseRequest {
   optional string code_postal = 4;
   optional string ville = 5;
   optional string pays = 6;
-  optional string type = 7;
+  optional AddressType type = 7;
+  optional bool is_primary = 8;
 }
 
 message GetAdresseRequest {
@@ -113,127 +141,161 @@ message GetAdresseRequest {
 
 message ListAdressesRequest {
   string client_base_id = 1;
-  PaginationRequest pagination = 2;
+  common.PaginationRequest pagination = 2;
 }
 
 message ListAdressesResponse {
   repeated Adresse adresses = 1;
-  PaginationResponse pagination = 2;
+  common.PaginationResponse pagination = 2;
 }
 
 message DeleteAdresseRequest {
   string id = 1;
 }
 
-// ===== CLIENT BASE =====
+// === CLIENT BASE - COMPOSED STRUCTURE ===
 
+// Identity information for a client
+message ClientIdentity {
+  string nom = 1;
+  string prenom = 2;
+  Civilite civilite = 3;
+  google.protobuf.Timestamp date_naissance = 4;
+  string lieu_naissance = 5;
+  string pays_naissance = 6;
+  string profession = 7;
+  string csp = 8;                    // Catégorie socio-professionnelle
+  string regime_social = 9;
+}
+
+// Contact information
+message ClientContact {
+  string telephone = 1;
+  string email = 2;
+  string langue = 3;                 // ISO 639-1: "fr", "en"
+}
+
+// Banking information
+message ClientBanking {
+  string iban = 1;
+  string bic = 2;
+  bool mandat_sepa = 3;
+  google.protobuf.Timestamp mandat_sepa_date = 4;
+  string mandat_sepa_reference = 5;
+}
+
+// Subscribed services flags
+message ClientServices {
+  bool has_conciergerie = 1;
+  bool has_justi_plus = 2;
+  bool has_wincash = 3;
+  string uuid_wincash = 4;
+  string uuid_justi_plus = 5;
+  string uuid_conciergerie = 6;
+}
+
+// Compliance and regulatory information
+message ClientCompliance {
+  KycStatus kyc_status = 1;
+  google.protobuf.Timestamp kyc_verified_at = 2;
+  bool gdpr_consent = 3;
+  google.protobuf.Timestamp gdpr_consent_date = 4;
+  bool is_politically_exposed = 5;  // PEP status
+  string numss = 6;                  // Numéro de sécurité sociale
+  string num_organisme = 7;          // Numéro organisme
+}
+
+// Acquisition information
+message ClientAcquisition {
+  string canal_acquisition = 1;      // "web", "phone", "agency"
+  string source = 2;                 // Lead source
+  google.protobuf.Timestamp date_premiere_souscription = 3;
+  string etape_courante = 4;         // Current onboarding step
+}
+
+// Main client entity - composed of sub-messages
 message ClientBase {
-   string id = 1;
-   string organisation_id = 2;
-   string type_client = 3;
-   string nom = 4;
-   string prenom = 5;
-   string date_naissance = 6;
-   string compte_code = 7;
-   string partenaire_id = 8;
-   string date_creation = 9;
-   string telephone = 10;
-   string email = 11;
-   string statut = 12;
-   string created_at = 13;
-   string updated_at = 14;
-   repeated Adresse adresses = 15;
-   optional string societe_id = 16;
-   optional string profession = 17;
-   optional string iban = 18;
-   optional bool mandat_sepa = 19;
-   optional string kyc_status = 20;
-   optional bool gdpr_consent = 21;
-   optional string gdpr_consent_date = 22;
-   optional string langue = 23;
-   optional bool has_conciergerie = 24;
-   optional bool has_justi_plus = 25;
-   optional bool has_wincash = 26;
-   optional string uuid_wincash = 27;
-   optional string uuid_justi_plus = 28;
-   optional string date_premiere_souscription = 29;
-   optional string canal_acquisition = 30;
-   optional string source = 31;
-   optional string civilite = 32;
-   optional string bic = 33;
-   optional string csp = 34;
-   optional string regime_social = 35;
-   optional string lieu_naissance = 36;
-   optional string pays_naissance = 37;
-   optional string etape_courante = 38;
-   optional bool is_politically_exposed = 39;
-   optional string numss = 40;
+  // Core identifiers
+  string id = 1;
+  string organisation_id = 2;
+  string compte_code = 3;
+  ClientType type_client = 4;
+  string statut = 5;
+
+  // Composed sub-messages
+  ClientIdentity identity = 6;
+  ClientContact contact = 7;
+  ClientBanking banking = 8;
+  ClientServices services = 9;
+  ClientCompliance compliance = 10;
+  ClientAcquisition acquisition = 11;
+
+  // Relations
+  repeated Adresse adresses = 12;
+  string partenaire_id = 13;
+  string societe_id = 14;
+
+  // Audit fields
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+  google.protobuf.Timestamp deleted_at = 17;  // Soft delete
+
+  // Reserved for future use - NEVER reuse these numbers
+  reserved 50 to 100;
+  reserved "legacy_field", "deprecated_status";
+}
+
+// Lightweight client summary for lists
+message ClientSummary {
+  string id = 1;
+  string compte_code = 2;
+  string nom_complet = 3;            // "Dupont Jean"
+  string email = 4;
+  string telephone = 5;
+  string statut = 6;
+  ClientType type_client = 7;
+  google.protobuf.Timestamp created_at = 8;
 }
 
 message CreateClientBaseRequest {
-   string organisation_id = 1;
-   string type_client = 2;
-   string nom = 3;
-   string prenom = 4;
-   string date_naissance = 5;
-   string compte_code = 6;
-   string partenaire_id = 7;
-   string telephone = 8;
-   string email = 9;
-   string statut = 10;
-   optional string societe_id = 11;
-   optional bool has_conciergerie = 12;
-   optional bool has_justi_plus = 13;
-   optional bool has_wincash = 14;
-   optional string uuid_wincash = 15;
-   optional string uuid_justi_plus = 16;
-   optional string date_premiere_souscription = 17;
-   optional string canal_acquisition = 18;
-   optional string source = 19;
-   optional string iban = 20;
-   optional bool mandat_sepa = 21;
-   optional string civilite = 22;
-   optional string bic = 23;
-   optional string csp = 24;
-   optional string regime_social = 25;
-   optional string lieu_naissance = 26;
-   optional string pays_naissance = 27;
-   optional string etape_courante = 28;
-   optional bool is_politically_exposed = 29;
-   optional string numss = 30;
+  string organisation_id = 1;
+  ClientType type_client = 2;
+  string compte_code = 3;
+  string statut = 4;
+
+  // Composed data
+  ClientIdentity identity = 5;
+  ClientContact contact = 6;
+  ClientBanking banking = 7;
+  ClientServices services = 8;
+  ClientCompliance compliance = 9;
+  ClientAcquisition acquisition = 10;
+
+  // Relations
+  string partenaire_id = 11;
+  string societe_id = 12;
+
+  // Initial addresses
+  repeated CreateAdresseRequest adresses = 13;
 }
 
 message UpdateClientBaseRequest {
-   string id = 1;
-   optional string type_client = 2;
-   optional string nom = 3;
-   optional string prenom = 4;
-   optional string date_naissance = 5;
-   optional string compte_code = 6;
-   optional string partenaire_id = 7;
-   optional string telephone = 8;
-   optional string email = 9;
-   optional string statut = 10;
-   optional string societe_id = 11;
-   optional bool has_conciergerie = 12;
-   optional bool has_justi_plus = 13;
-   optional bool has_wincash = 14;
-   optional string uuid_wincash = 15;
-   optional string uuid_justi_plus = 16;
-   optional string date_premiere_souscription = 17;
-   optional string canal_acquisition = 18;
-   optional string source = 19;
-   optional string iban = 20;
-   optional bool mandat_sepa = 21;
-   optional string civilite = 22;
-   optional string bic = 23;
-   optional string csp = 24;
-   optional string regime_social = 25;
-   optional string lieu_naissance = 26;
-   optional string pays_naissance = 27;
-   optional string etape_courante = 28;
-   optional bool is_politically_exposed = 29;
-   optional string numss = 30;
+  string id = 1;
+
+  // Optional updates - only set fields will be updated
+  optional ClientType type_client = 2;
+  optional string compte_code = 3;
+  optional string statut = 4;
+
+  optional ClientIdentity identity = 5;
+  optional ClientContact contact = 6;
+  optional ClientBanking banking = 7;
+  optional ClientServices services = 8;
+  optional ClientCompliance compliance = 9;
+  optional ClientAcquisition acquisition = 10;
+
+  optional string partenaire_id = 11;
+  optional string societe_id = 12;
 }
 
 message GetClientBaseRequest {
@@ -241,27 +303,31 @@ message GetClientBaseRequest {
 }
 
 message ListClientsBaseRequest {
-   string organisation_id = 1;
-   optional string statut_id = 2;
-   optional string societe_id = 3;
-   optional string search = 4;
-   optional string source = 5;
-   PaginationRequest pagination = 6;
+  string organisation_id = 1;
+  optional string statut_id = 2;
+  optional string societe_id = 3;
+  optional string search = 4;         // Full-text search on nom, email, telephone
+  optional string source = 5;
+  optional ClientType type_client = 6;
+  optional string partenaire_id = 7;
+  common.PaginationRequest pagination = 8;
 }
 
 message ListClientsBaseResponse {
-  repeated ClientBase clients = 1;
-  PaginationResponse pagination = 2;
+  repeated ClientSummary clients = 1;  // Use summary for lists
+  common.PaginationResponse pagination = 2;
 }
 
 message DeleteClientBaseRequest {
   string id = 1;
+  bool hard_delete = 2;               // If false, soft delete
 }
 
 message SearchClientRequest {
   string organisation_id = 1;
   string telephone = 2;
   string nom = 3;
+  string email = 4;
 }
 
 message SearchClientResponse {
@@ -269,21 +335,45 @@ message SearchClientResponse {
   ClientBase client = 2;
 }
 
-// ===== CLIENT ENTREPRISE =====
+// Batch operations
+message GetClientsByIdsRequest {
+  repeated string ids = 1;
+}
+
+message GetClientsByIdsResponse {
+  repeated ClientBase clients = 1;
+  repeated string not_found_ids = 2;
+}
+
+// === CLIENT ENTREPRISE ===
 
 message ClientEntreprise {
   string id = 1;
   string raison_sociale = 2;
   string numero_tva = 3;
   string siren = 4;
-  string created_at = 5;
-  string updated_at = 6;
+  string siret = 5;
+  string code_naf = 6;
+  string forme_juridique = 7;
+  common.Money capital_social = 8;
+  google.protobuf.Timestamp date_creation_entreprise = 9;
+  string representant_legal_id = 10;  // Reference to ClientBase
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+
+  reserved 50 to 100;
 }
 
 message CreateClientEntrepriseRequest {
   string raison_sociale = 1;
   string numero_tva = 2;
   string siren = 3;
+  string siret = 4;
+  string code_naf = 5;
+  string forme_juridique = 6;
+  common.Money capital_social = 7;
+  google.protobuf.Timestamp date_creation_entreprise = 8;
+  string representant_legal_id = 9;
 }
 
 message UpdateClientEntrepriseRequest {
@@ -291,6 +381,10 @@ message UpdateClientEntrepriseRequest {
   optional string raison_sociale = 2;
   optional string numero_tva = 3;
   optional string siren = 4;
+  optional string siret = 5;
+  optional string code_naf = 6;
+  optional string forme_juridique = 7;
+  optional common.Money capital_social = 8;
 }
 
 message GetClientEntrepriseRequest {
@@ -298,45 +392,51 @@ message GetClientEntrepriseRequest {
 }
 
 message ListClientsEntrepriseRequest {
-  PaginationRequest pagination = 1;
+  string organisation_id = 1;
+  optional string search = 2;
+  common.PaginationRequest pagination = 3;
 }
 
 message ListClientsEntrepriseResponse {
   repeated ClientEntreprise clients = 1;
-  PaginationResponse pagination = 2;
+  common.PaginationResponse pagination = 2;
 }
 
 message DeleteClientEntrepriseRequest {
   string id = 1;
 }
 
-// ===== CLIENT PARTENAIRE =====
+// === CLIENT PARTENAIRE ===
 
 message ClientPartenaire {
   string id = 1;
   string client_base_id = 2;
   string partenaire_id = 3;
   string role_partenaire_id = 4;
-  string valid_from = 5;
-  string valid_to = 6;
-  string created_at = 7;
-  string updated_at = 8;
+  google.protobuf.Timestamp valid_from = 5;
+  google.protobuf.Timestamp valid_to = 6;
+  bool is_active = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+
+  reserved 50 to 100;
 }
 
 message CreateClientPartenaireRequest {
   string client_base_id = 1;
   string partenaire_id = 2;
   string role_partenaire_id = 3;
-  string valid_from = 4;
-  string valid_to = 5;
+  google.protobuf.Timestamp valid_from = 4;
+  google.protobuf.Timestamp valid_to = 5;
 }
 
 message UpdateClientPartenaireRequest {
   string id = 1;
   optional string partenaire_id = 2;
   optional string role_partenaire_id = 3;
-  optional string valid_from = 4;
-  optional string valid_to = 5;
+  optional google.protobuf.Timestamp valid_from = 4;
+  optional google.protobuf.Timestamp valid_to = 5;
+  optional bool is_active = 6;
 }
 
 message GetClientPartenaireRequest {
@@ -346,19 +446,20 @@ message GetClientPartenaireRequest {
 message ListClientsPartenaireRequest {
   optional string client_base_id = 1;
   optional string partenaire_id = 2;
-  PaginationRequest pagination = 3;
+  optional bool active_only = 3;
+  common.PaginationRequest pagination = 4;
 }
 
 message ListClientsPartenaireResponse {
   repeated ClientPartenaire clients = 1;
-  PaginationResponse pagination = 2;
+  common.PaginationResponse pagination = 2;
 }
 
 message DeleteClientPartenaireRequest {
   string id = 1;
 }
 
-// ===== SERVICES =====
+// === SERVICES ===
 
 service StatutClientService {
   rpc Create(CreateStatutClientRequest) returns (StatutClient);
@@ -366,7 +467,7 @@ service StatutClientService {
   rpc Get(GetStatutClientRequest) returns (StatutClient);
   rpc GetByCode(GetStatutClientByCodeRequest) returns (StatutClient);
   rpc List(ListStatutsClientRequest) returns (ListStatutsClientResponse);
-  rpc Delete(DeleteStatutClientRequest) returns (DeleteResponse);
+  rpc Delete(DeleteStatutClientRequest) returns (common.DeleteResponse);
 }
 
 service AdresseService {
@@ -374,7 +475,7 @@ service AdresseService {
   rpc Update(UpdateAdresseRequest) returns (Adresse);
   rpc Get(GetAdresseRequest) returns (Adresse);
   rpc ListByClient(ListAdressesRequest) returns (ListAdressesResponse);
-  rpc Delete(DeleteAdresseRequest) returns (DeleteResponse);
+  rpc Delete(DeleteAdresseRequest) returns (common.DeleteResponse);
 }
 
 service ClientBaseService {
@@ -382,8 +483,12 @@ service ClientBaseService {
   rpc Update(UpdateClientBaseRequest) returns (ClientBase);
   rpc Get(GetClientBaseRequest) returns (ClientBase);
   rpc List(ListClientsBaseRequest) returns (ListClientsBaseResponse);
-  rpc Delete(DeleteClientBaseRequest) returns (DeleteResponse);
+  rpc Delete(DeleteClientBaseRequest) returns (common.DeleteResponse);
   rpc Search(SearchClientRequest) returns (SearchClientResponse);
+  rpc GetByIds(GetClientsByIdsRequest) returns (GetClientsByIdsResponse);
+
+  // Streaming for large exports
+  rpc StreamClients(ListClientsBaseRequest) returns (stream ClientBase);
 }
 
 service ClientEntrepriseService {
@@ -391,7 +496,7 @@ service ClientEntrepriseService {
   rpc Update(UpdateClientEntrepriseRequest) returns (ClientEntreprise);
   rpc Get(GetClientEntrepriseRequest) returns (ClientEntreprise);
   rpc List(ListClientsEntrepriseRequest) returns (ListClientsEntrepriseResponse);
-  rpc Delete(DeleteClientEntrepriseRequest) returns (DeleteResponse);
+  rpc Delete(DeleteClientEntrepriseRequest) returns (common.DeleteResponse);
 }
 
 service ClientPartenaireService {
@@ -399,5 +504,5 @@ service ClientPartenaireService {
   rpc Update(UpdateClientPartenaireRequest) returns (ClientPartenaire);
   rpc Get(GetClientPartenaireRequest) returns (ClientPartenaire);
   rpc List(ListClientsPartenaireRequest) returns (ListClientsPartenaireResponse);
-  rpc Delete(DeleteClientPartenaireRequest) returns (DeleteResponse);
+  rpc Delete(DeleteClientPartenaireRequest) returns (common.DeleteResponse);
 }

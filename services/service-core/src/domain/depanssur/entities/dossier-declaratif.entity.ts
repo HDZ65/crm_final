@@ -1,21 +1,12 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('dossiers_declaratifs')
 export class DossierDeclaratifEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'organisation_id', type: 'uuid' })
-  organisationId: string;
+  @Column({ name: 'keycloak_group_id', type: 'varchar', length: 255 })
+  keycloakGroupId: string;
 
   @Column({ name: 'abonnement_id', type: 'uuid' })
   abonnementId: string;

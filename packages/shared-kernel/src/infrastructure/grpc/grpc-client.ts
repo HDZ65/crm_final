@@ -7,8 +7,8 @@
 import { loadPackageDefinition } from '@grpc/grpc-js';
 import { loadSync, Options as ProtoLoaderOptions } from '@grpc/proto-loader';
 import { getProtoLoaderConfig } from './proto-loader.js';
-import { getServiceConfig, getServiceUrl } from './service-config.js';
 import type { ServiceName } from './service-config.js';
+import { getServiceConfig, getServiceUrl } from './service-config.js';
 
 export interface GrpcClientOptions {
   /** Service URL override (defaults to service registry URL) */
@@ -20,10 +20,7 @@ export interface GrpcClientOptions {
 /**
  * Load a gRPC package definition
  */
-export function loadGrpcPackage(
-  serviceName: ServiceName,
-  options?: Pick<GrpcClientOptions, 'loaderOptions'>
-): any {
+export function loadGrpcPackage(serviceName: ServiceName, options?: Pick<GrpcClientOptions, 'loaderOptions'>): any {
   const serviceConfig = getServiceConfig(serviceName);
   const protoConfig = getProtoLoaderConfig(serviceConfig.protoFile);
 
@@ -43,11 +40,7 @@ export function loadGrpcPackage(
 /**
  * NestJS-compatible gRPC client module options
  */
-export function getGrpcClientModuleOptions(
-  clientName: string,
-  serviceName: ServiceName,
-  options?: { url?: string }
-) {
+export function getGrpcClientModuleOptions(clientName: string, serviceName: ServiceName, options?: { url?: string }) {
   const serviceConfig = getServiceConfig(serviceName);
   const protoConfig = getProtoLoaderConfig(serviceConfig.protoFile);
   const url = options?.url || getServiceUrl(serviceName);

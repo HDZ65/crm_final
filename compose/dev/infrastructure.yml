@@ -1,36 +1,75 @@
 services:
   # ============================================================================
-  # GLOBAL INFRASTRUCTURE (managed externally on TRX50)
-  # global_postgres, global_redis, global_router (Traefik) run as standalone
-  # containers on shared_dev_net — do NOT redefine them here.
+  # LOCAL INFRASTRUCTURE FOR CRM-GESTION DEV
   # ============================================================================
 
-  # ============================================================================
-  # PER-DEVELOPER INFRASTRUCTURE (alex- prefixed)
-  # ============================================================================
+  # PostgreSQL - Base de données principale
+  postgres:
+    image: postgres:17-alpine
+    container_name: dev-crm-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=crm_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:3401:5432"
+    networks:
+      - crm_dev_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  # Consul - per-dev service discovery
+  # Redis - Cache et sessions
+  redis:
+    image: redis:7-alpine
+    container_name: dev-crm-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:3403:6379"
+    networks:
+      - crm_dev_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Consul - Service discovery
   consul:
     image: hashicorp/consul:1.17
-    container_name: alex-crm-consul
+    container_name: dev-crm-consul
     command: agent -dev -client=0.0.0.0 -ui
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.alex-consul.rule=Host(`alex-consul.local`)"
-      - "traefik.http.services.alex-consul.loadbalancer.server.port=8500"
+    ports:
+      - "127.0.0.1:3406:8500"
     networks:
-      - shared_dev_net
+      - crm_dev_net
     restart: unless-stopped
 
-  # NATS - per-dev event streaming
+  # NATS - Event streaming
   nats:
     image: nats:2.10-alpine
-    container_name: alex-crm-nats
+    container_name: dev-crm-nats
     command: "-js -m 8222"
+    ports:
+      - "127.0.0.1:3404:4222"
+      - "127.0.0.1:3405:8222"
     networks:
-      - shared_dev_net
+      - crm_dev_net
     restart: unless-stopped
 
+volumes:
+  postgres_data:
+  redis_data:
+
 networks:
-  shared_dev_net:
-    external: true
+  crm_dev_net:
+    name: crm_dev_network
+    driver: bridge

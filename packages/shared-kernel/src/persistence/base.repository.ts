@@ -6,10 +6,10 @@
  * @module @crm/shared-kernel/persistence
  */
 
-import { Repository, SelectQueryBuilder, IsNull } from 'typeorm';
-import { AggregateRoot } from '../domain/aggregate-root.base.js';
-import { NotFoundException } from '../exceptions/domain.exception.js';
-import { NormalizedPagination } from '../helpers/pagination.helper.js';
+import { IsNull, Repository, SelectQueryBuilder } from 'typeorm';
+import { AggregateRoot } from '../domain/aggregate-root.base';
+import { NotFoundException } from '../exceptions/domain.exception';
+import { NormalizedPagination } from '../helpers/pagination.helper';
 
 /**
  * Interface for search options
@@ -66,10 +66,7 @@ export abstract class BaseRepository<
     return entity ? this.toAggregate(entity) : null;
   }
 
-  async findAll(
-    pagination: NormalizedPagination,
-    options: SearchOptions & SortOptions = {},
-  ): Promise<[A[], number]> {
+  async findAll(pagination: NormalizedPagination, options: SearchOptions & SortOptions = {}): Promise<[A[], number]> {
     const queryBuilder = this.createBaseQueryBuilder();
 
     if (options.search && options.searchFields?.length) {
@@ -92,10 +89,7 @@ export abstract class BaseRepository<
   }
 
   async delete(id: ID): Promise<void> {
-    await this.ormRepository.update(
-      { id: id.getValue() } as any,
-      { deleted_at: new Date() } as any,
-    );
+    await this.ormRepository.update({ id: id.getValue() } as any, { deleted_at: new Date() } as any);
   }
 
   async exists(id: ID): Promise<boolean> {
@@ -125,33 +119,20 @@ export abstract class BaseRepository<
   // ==================== Protected Helpers ====================
 
   protected createBaseQueryBuilder(): SelectQueryBuilder<E> {
-    return this.ormRepository
-      .createQueryBuilder(this.entityAlias)
-      .where(`${this.entityAlias}.deleted_at IS NULL`);
+    return this.ormRepository.createQueryBuilder(this.entityAlias).where(`${this.entityAlias}.deleted_at IS NULL`);
   }
 
-  protected applySearch(
-    queryBuilder: SelectQueryBuilder<E>,
-    search: string,
-    fields: string[],
-  ): void {
+  protected applySearch(queryBuilder: SelectQueryBuilder<E>, search: string, fields: string[]): void {
     if (!search?.trim() || !fields.length) return;
 
-    const conditions = fields
-      .map((field) => `${this.entityAlias}.${field} ILIKE :search`)
-      .join(' OR ');
+    const conditions = fields.map((field) => `${this.entityAlias}.${field} ILIKE :search`).join(' OR ');
 
     queryBuilder.andWhere(`(${conditions})`, { search: `%${search}%` });
   }
 
-  protected applySorting(
-    queryBuilder: SelectQueryBuilder<E>,
-    sortBy?: string,
-    ascending?: boolean,
-  ): void {
+  protected applySorting(queryBuilder: SelectQueryBuilder<E>, sortBy?: string, ascending?: boolean): void {
     const validSortFields = this.getValidSortFields();
-    const field =
-      sortBy && validSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const field = sortBy && validSortFields.includes(sortBy) ? sortBy : 'created_at';
     const order = ascending ? 'ASC' : 'DESC';
     queryBuilder.orderBy(`${this.entityAlias}.${field}`, order);
   }

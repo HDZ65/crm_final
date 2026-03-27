@@ -1,5 +1,5 @@
-import { StringValueObject, normalizeStringValue } from './value-object.base.js';
-import { InvalidDataException } from '../exceptions/index.js';
+import { InvalidDataException } from '../exceptions/index';
+import { normalizeStringValue, StringValueObject } from './value-object.base.js';
 
 const PHONE_REGEX = /^\+?[\d\s\-().]{7,20}$/;
 

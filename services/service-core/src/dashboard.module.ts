@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 
 import {
+  AlertesController,
   DashboardKpisController,
-  StatsSocietesController,
   EvolutionCaController,
   KpisCommerciauxController,
   RepartitionProduitsController,
-  AlertesController,
+  StatsSocietesController,
 } from './infrastructure/grpc/dashboard';
 
 @Module({

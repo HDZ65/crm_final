@@ -1,20 +1,17 @@
+import { GrpcAppModule, NatsModule } from '@crm/shared-kernel';
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { AuthInterceptor, NatsModule, GrpcExceptionFilter } from '@crm/shared-kernel';
+import { ClientsModule } from './clients.module';
+import { DashboardModule } from './dashboard.module';
+import { DepanssurModule } from './depanssur.module';
+import { DocumentsModule } from './documents.module';
 import { AuditSubscriber } from './infrastructure/persistence/typeorm/audit-subscriber';
-
 // ============================================================================
 // DDD BOUNDED CONTEXT MODULES
 // ============================================================================
-import { UsersModule } from './users.module';
 import { OrganisationsModule } from './organisations.module';
-import { ClientsModule } from './clients.module';
-import { DocumentsModule } from './documents.module';
-import { DashboardModule } from './dashboard.module';
-import { DepanssurModule } from './depanssur.module';
 
 @Module({
   imports: [
@@ -27,6 +24,7 @@ import { DepanssurModule } from './depanssur.module';
       useFactory: (configService: ConfigService) => ({
         servers: configService.get('NATS_URL', 'nats://localhost:4222'),
         name: 'service-core',
+        queue: 'service-core',
       }),
     }),
     TypeOrmModule.forRootAsync({
@@ -43,7 +41,7 @@ import { DepanssurModule } from './depanssur.module';
         autoLoadEntities: true,
         synchronize: configService.get<string>('DB_SYNCHRONIZE', 'false') === 'true',
         migrationsRun: configService.get('MIGRATIONS_RUN', 'true') === 'true',
-        migrations: [__dirname + '/migrations/*{.ts,.js}'],
+        migrations: [`${__dirname}/migrations/*{.ts,.js}`],
         logging: configService.get('NODE_ENV') === 'development',
         ssl:
           configService.get<string>('DB_SSL') === 'true'
@@ -56,8 +54,9 @@ import { DepanssurModule } from './depanssur.module';
         },
       }),
     }),
+    // gRPC interceptors and exception filter
+    GrpcAppModule.forRoot(),
     // DDD Bounded Context Modules
-    UsersModule,
     OrganisationsModule,
     ClientsModule,
     DocumentsModule,
@@ -65,16 +64,6 @@ import { DepanssurModule } from './depanssur.module';
     DepanssurModule,
   ],
   controllers: [],
-  providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: AuthInterceptor,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: GrpcExceptionFilter,
-    },
-    AuditSubscriber,
-  ],
+  providers: [AuditSubscriber],
 })
 export class AppModule {}

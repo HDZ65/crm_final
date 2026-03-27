@@ -2,21 +2,21 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, Repository } from 'typeorm';
+import { AbonnementService } from '../../../infrastructure/persistence/typeorm/repositories/depanssur/abonnement.service';
+import { CompteurPlafondService } from '../../../infrastructure/persistence/typeorm/repositories/depanssur/compteur-plafond.service';
+import { DossierDeclaratifService } from '../../../infrastructure/persistence/typeorm/repositories/depanssur/dossier-declaratif.service';
 import { AbonnementDepanssurEntity } from '../entities/abonnement-depanssur.entity';
 import { CompteurPlafondEntity } from '../entities/compteur-plafond.entity';
 import { DossierDeclaratifEntity } from '../entities/dossier-declaratif.entity';
-import { AbonnementService } from '../../../infrastructure/persistence/typeorm/repositories/depanssur/abonnement.service';
-import { DossierDeclaratifService } from '../../../infrastructure/persistence/typeorm/repositories/depanssur/dossier-declaratif.service';
-import { CompteurPlafondService } from '../../../infrastructure/persistence/typeorm/repositories/depanssur/compteur-plafond.service';
 import { RegleDepanssurService } from './regle-depanssur.service';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Default cron expressions — overridable via environment variables
 // ────────────────────────────────────────────────────────────────────────────
-const DEFAULT_CRON_DAILY_0600 = '0 6 * * *';       // Every day at 06:00
-const DEFAULT_CRON_DAILY_0800 = '0 8 * * *';       // Every day at 08:00
-const DEFAULT_CRON_WEEKLY_MON_0900 = '0 9 * * 1';  // Every Monday at 09:00
+const DEFAULT_CRON_DAILY_0600 = '0 6 * * *'; // Every day at 06:00
+const DEFAULT_CRON_DAILY_0800 = '0 8 * * *'; // Every day at 08:00
+const DEFAULT_CRON_WEEKLY_MON_0900 = '0 9 * * 1'; // Every Monday at 09:00
 
 /** Plafond alert threshold (80%) */
 const PLAFOND_ALERT_THRESHOLD = 0.8;
@@ -42,23 +42,16 @@ export class DepanssurSchedulerService {
     private readonly configService: ConfigService,
     @InjectRepository(AbonnementDepanssurEntity)
     private readonly abonnementRepository: Repository<AbonnementDepanssurEntity>,
-    @InjectRepository(CompteurPlafondEntity)
-    private readonly compteurRepository: Repository<CompteurPlafondEntity>,
+    @InjectRepository(CompteurPlafondEntity) readonly _compteurRepository: Repository<CompteurPlafondEntity>,
     @InjectRepository(DossierDeclaratifEntity)
     private readonly dossierRepository: Repository<DossierDeclaratifEntity>,
-    private readonly abonnementService: AbonnementService,
-    private readonly dossierDeclaratifService: DossierDeclaratifService,
-    private readonly compteurPlafondService: CompteurPlafondService,
+    readonly _abonnementService: AbonnementService,
+    readonly _dossierDeclaratifService: DossierDeclaratifService,
+    readonly _compteurPlafondService: CompteurPlafondService,
     private readonly regleDepanssurService: RegleDepanssurService,
   ) {
-    this.cronDaily0600 = this.configService.get<string>(
-      'DEPANSSUR_CRON_DAILY_PAYMENTS',
-      DEFAULT_CRON_DAILY_0600,
-    );
-    this.cronDaily0800 = this.configService.get<string>(
-      'DEPANSSUR_CRON_DAILY_CHECKS',
-      DEFAULT_CRON_DAILY_0800,
-    );
+    this.cronDaily0600 = this.configService.get<string>('DEPANSSUR_CRON_DAILY_PAYMENTS', DEFAULT_CRON_DAILY_0600);
+    this.cronDaily0800 = this.configService.get<string>('DEPANSSUR_CRON_DAILY_CHECKS', DEFAULT_CRON_DAILY_0800);
     this.cronWeeklyMon0900 = this.configService.get<string>(
       'DEPANSSUR_CRON_WEEKLY_REPORTS',
       DEFAULT_CRON_WEEKLY_MON_0900,
@@ -99,9 +92,7 @@ export class DepanssurSchedulerService {
         relations: ['compteurs'],
       });
 
-      this.logger.log(
-        `[${jobName}] Found ${abonnementsDue.length} abonnement(s) with upcoming due dates`,
-      );
+      this.logger.log(`[${jobName}] Found ${abonnementsDue.length} abonnement(s) with upcoming due dates`);
 
       let processedCount = 0;
       let errorCount = 0;
@@ -141,8 +132,8 @@ export class DepanssurSchedulerService {
   private async processPaymentDue(abonnement: AbonnementDepanssurEntity): Promise<void> {
     this.logger.log(
       `Processing payment for abonnement ${abonnement.id}, ` +
-      `plan=${abonnement.planType}, echeance=${abonnement.prochaineEcheance.toISOString()}, ` +
-      `montant=${abonnement.prixTtc}`,
+        `plan=${abonnement.planType}, echeance=${abonnement.prochaineEcheance.toISOString()}, ` +
+        `montant=${abonnement.prixTtc}`,
     );
 
     // TODO: Publish NATS event 'depanssur.payment.trigger' to service-finance
@@ -155,18 +146,13 @@ export class DepanssurSchedulerService {
     // });
 
     // Advance prochaineEcheance based on periodicite
-    const nextEcheance = this.computeNextEcheance(
-      abonnement.prochaineEcheance,
-      abonnement.periodicite,
-    );
+    const nextEcheance = this.computeNextEcheance(abonnement.prochaineEcheance, abonnement.periodicite);
 
     await this.abonnementRepository.update(abonnement.id, {
       prochaineEcheance: nextEcheance,
     });
 
-    this.logger.log(
-      `Abonnement ${abonnement.id}: next echeance advanced to ${nextEcheance.toISOString()}`,
-    );
+    this.logger.log(`Abonnement ${abonnement.id}: next echeance advanced to ${nextEcheance.toISOString()}`);
   }
 
   /**
@@ -179,9 +165,7 @@ export class DepanssurSchedulerService {
     });
 
     if (suspended.length > 0) {
-      this.logger.log(
-        `Found ${suspended.length} suspended (SUSPENDU_IMPAYE) abonnement(s) for review`,
-      );
+      this.logger.log(`Found ${suspended.length} suspended (SUSPENDU_IMPAYE) abonnement(s) for review`);
       // TODO: Query service-finance for dunning resolution status
       // For each resolved → update statut back to 'ACTIF'
     }
@@ -248,17 +232,14 @@ export class DepanssurSchedulerService {
         continue;
       }
 
-      const dateFinCarence = this.addDays(
-        this.startOfDay(new Date(abonnement.dateEffet)),
-        abonnement.periodeAttente,
-      );
+      const dateFinCarence = this.addDays(this.startOfDay(new Date(abonnement.dateEffet)), abonnement.periodeAttente);
 
       if (dateFinCarence >= startOfToday && dateFinCarence <= endOfToday) {
         carenceExpiringCount++;
         this.logger.log(
           `Carence expiring today for abonnement ${abonnement.id} ` +
-          `(client=${abonnement.clientId}, dateEffet=${abonnement.dateEffet.toISOString()}, ` +
-          `periodeAttente=${abonnement.periodeAttente}j)`,
+            `(client=${abonnement.clientId}, dateEffet=${abonnement.dateEffet.toISOString()}, ` +
+            `periodeAttente=${abonnement.periodeAttente}j)`,
         );
 
         // TODO: Publish NATS notification 'depanssur.carence.expired'
@@ -305,7 +286,7 @@ export class DepanssurSchedulerService {
           alertCount++;
           this.logger.warn(
             `PLAFOND ALERT: Abonnement ${abonnement.id} — montant ${montantCumule}/${plafondAnnuel} ` +
-            `(${Math.round(ratio * 100)}%) ≥ ${Math.round(PLAFOND_ALERT_THRESHOLD * 100)}%`,
+              `(${Math.round(ratio * 100)}%) ≥ ${Math.round(PLAFOND_ALERT_THRESHOLD * 100)}%`,
           );
 
           // TODO: Publish NATS alert 'depanssur.plafond.alert'
@@ -320,7 +301,7 @@ export class DepanssurSchedulerService {
           alertCount++;
           this.logger.warn(
             `PLAFOND ALERT: Abonnement ${abonnement.id} — interventions ${nbInterventionsUtilisees}/${nbMax} ` +
-            `(${Math.round(ratio * 100)}%) ≥ ${Math.round(PLAFOND_ALERT_THRESHOLD * 100)}%`,
+              `(${Math.round(ratio * 100)}%) ≥ ${Math.round(PLAFOND_ALERT_THRESHOLD * 100)}%`,
           );
 
           // TODO: Publish NATS alert 'depanssur.plafond.alert'
@@ -361,13 +342,12 @@ export class DepanssurSchedulerService {
           await this.regleDepanssurService.resetCompteurAnnuel(abonnement, today);
           resetCount++;
           this.logger.log(
-            `Anniversary reset for abonnement ${abonnement.id} ` +
-            `(dateEffet=${dateEffet.toISOString()})`,
+            `Anniversary reset for abonnement ${abonnement.id} ` + `(dateEffet=${dateEffet.toISOString()})`,
           );
         } catch (error) {
           this.logger.error(
             `Failed to reset compteur for abonnement ${abonnement.id}: ` +
-            `${error instanceof Error ? error.message : String(error)}`,
+              `${error instanceof Error ? error.message : String(error)}`,
           );
         }
       }
@@ -425,18 +405,14 @@ export class DepanssurSchedulerService {
    * In production, this publishes a NATS command to service-finance's ExportService.
    */
   private async generateAccountingExport(periodFrom: Date, periodTo: Date): Promise<void> {
-    this.logger.log(
-      `Generating accounting export for period ${periodFrom.toISOString()} → ${periodTo.toISOString()}`,
-    );
+    this.logger.log(`Generating accounting export for period ${periodFrom.toISOString()} → ${periodTo.toISOString()}`);
 
     // Count active subscriptions for the reporting period
     const activeCount = await this.abonnementRepository.count({
       where: { statut: 'ACTIF' },
     });
 
-    this.logger.log(
-      `Accounting export context: ${activeCount} active abonnement(s)`,
-    );
+    this.logger.log(`Accounting export context: ${activeCount} active abonnement(s)`);
 
     // TODO: Publish NATS command 'depanssur.export.accounting' to service-finance
     // Example: await this.natsService.publish('depanssur.export.accounting', {
@@ -463,9 +439,7 @@ export class DepanssurSchedulerService {
       },
     });
 
-    this.logger.log(
-      `Commission tracking: ${subscriptionsInPeriod.length} subscription(s) in period`,
-    );
+    this.logger.log(`Commission tracking: ${subscriptionsInPeriod.length} subscription(s) in period`);
 
     // TODO: Publish NATS command 'depanssur.export.commissions' to service-commercial
     // Example: await this.natsService.publish('depanssur.export.commissions', {
@@ -480,9 +454,7 @@ export class DepanssurSchedulerService {
    * Aggregates dossier data locally and logs the report summary.
    */
   private async generateClaimsReport(periodFrom: Date, periodTo: Date): Promise<void> {
-    this.logger.log(
-      `Generating claims report for period ${periodFrom.toISOString()} → ${periodTo.toISOString()}`,
-    );
+    this.logger.log(`Generating claims report for period ${periodFrom.toISOString()} → ${periodTo.toISOString()}`);
 
     // Aggregate dossiers from the period
     const dossiers = await this.dossierRepository.find({
@@ -514,7 +486,7 @@ export class DepanssurSchedulerService {
 
     this.logger.log(
       `Claims report: ${dossiers.length} dossier(s) — ${summaryStr || 'none'} ` +
-      `| estimatif=${totalMontantEstimatif.toFixed(2)}€, pris_en_charge=${totalMontantPrisEnCharge.toFixed(2)}€`,
+        `| estimatif=${totalMontantEstimatif.toFixed(2)}€, pris_en_charge=${totalMontantPrisEnCharge.toFixed(2)}€`,
     );
 
     // TODO: Publish NATS event 'depanssur.report.claims' for downstream consumers
@@ -535,7 +507,6 @@ export class DepanssurSchedulerService {
       case 'TRIMESTRIELLE':
         next.setUTCMonth(next.getUTCMonth() + 3);
         break;
-      case 'MENSUELLE':
       default:
         next.setUTCMonth(next.getUTCMonth() + 1);
         break;

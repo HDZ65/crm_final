@@ -3,9 +3,7 @@
   "compilerOptions": {
     "module": "node16",
     "target": "ES2022",
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -15,15 +13,15 @@
     "outDir": "./dist",
     "baseUrl": "../../",
     "paths": {
-      "@crm/shared-kernel": [
-        "packages/shared-kernel/dist"
-      ],
-      "@crm/shared-kernel/*": [
-        "packages/shared-kernel/dist/*"
-      ],
-      "@proto/*": [
-        "services/service-core/proto/generated/*"
-      ]
+      "@crm/shared-kernel": ["packages/shared-kernel/dist"],
+      "@crm/shared-kernel/*": ["packages/shared-kernel/dist/*"],
+      "@proto/clients": ["packages/proto/gen/ts/clients/clients"],
+      "@proto/dashboard": ["packages/proto/gen/ts/dashboard/dashboard"],
+      "@proto/depanssur": ["packages/proto/gen/ts/depanssur/depanssur"],
+      "@proto/documents": ["packages/proto/gen/ts/documents/documents"],
+      "@proto/organisations": ["packages/proto/gen/ts/organisations/organisations"],
+      "@proto/referentiel": ["packages/proto/gen/ts/referentiel/referentiel"],
+      "@proto/users": ["packages/proto/gen/ts/organisations/users"]
     },
     "incremental": true,
     "skipLibCheck": true,
@@ -31,20 +29,14 @@
     "strictNullChecks": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "exactOptionalPropertyTypes": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "moduleResolution": "node16"
   },
-  "include": [
-    "src/**/*",
-    "proto/generated/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "test",
-    "**/*spec.ts"
-  ]
+  "include": ["src/**/*", "proto/generated/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

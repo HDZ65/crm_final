@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { ThemeMarqueEntity } from '../../../../../domain/organisations/entities';
 
 @Injectable()
 export class ThemeMarqueService {
-  private readonly logger = new Logger(ThemeMarqueService.name);
-
   constructor(
     @InjectRepository(ThemeMarqueEntity)
     private readonly repository: Repository<ThemeMarqueEntity>,

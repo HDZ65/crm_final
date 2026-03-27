@@ -1,5 +1,5 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { NatsService } from '@crm/shared-kernel';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { AbonnementService } from '../../../../persistence/typeorm/repositories/depanssur/abonnement.service';
 
 /**
@@ -18,13 +18,8 @@ export class AbonnementRestoredHandler implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    this.logger.log(
-      'AbonnementRestoredHandler initialized — subscribing to abonnement.depanssur.restored',
-    );
-    await this.natsService.subscribe<AbonnementRestoredEvent>(
-      'abonnement.depanssur.restored',
-      this.handle.bind(this),
-    );
+    this.logger.log('AbonnementRestoredHandler initialized — subscribing to abonnement.depanssur.restored');
+    await this.natsService.subscribe<AbonnementRestoredEvent>('abonnement.depanssur.restored', this.handle.bind(this));
   }
 
   async handle(event: AbonnementRestoredEvent): Promise<void> {
@@ -36,9 +31,7 @@ export class AbonnementRestoredHandler implements OnModuleInit {
       const abonnement = await this.abonnementService.findById(event.abonnementId);
 
       if (!abonnement) {
-        this.logger.warn(
-          `Abonnement ${event.abonnementId} not found — skipping restoration`,
-        );
+        this.logger.warn(`Abonnement ${event.abonnementId} not found — skipping restoration`);
         return;
       }
 
@@ -72,6 +65,6 @@ export class AbonnementRestoredHandler implements OnModuleInit {
 interface AbonnementRestoredEvent {
   abonnementId: string;
   clientId: string;
-  organisationId: string;
+  keycloakGroupId: string;
   restoredAt: string;
 }

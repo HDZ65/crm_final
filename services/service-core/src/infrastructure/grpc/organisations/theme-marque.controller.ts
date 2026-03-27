@@ -1,16 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { ThemeMarqueService } from '../../persistence/typeorm/repositories/organisations/theme-marque.service';
 import type {
   CreateThemeMarqueRequest,
-  UpdateThemeMarqueRequest,
+  DeleteThemeMarqueRequest,
   GetThemeMarqueRequest,
   ListThemeMarqueRequest,
-  ListThemeMarqueResponse,
-  DeleteThemeMarqueRequest,
-  ThemeMarque,
-  DeleteResponse,
+  UpdateThemeMarqueRequest,
 } from '@proto/organisations';
+import { ThemeMarqueService } from '../../persistence/typeorm/repositories/organisations/theme-marque.service';
 
 @Controller()
 export class ThemeMarqueController {
@@ -19,10 +16,10 @@ export class ThemeMarqueController {
   @GrpcMethod('ThemeMarqueService', 'Create')
   async create(data: CreateThemeMarqueRequest) {
     return this.themeMarqueService.create({
-      logoUrl: data.logo_url,
-      couleurPrimaire: data.couleur_primaire,
-      couleurSecondaire: data.couleur_secondaire,
-      faviconUrl: data.favicon_url,
+      logoUrl: data.logoUrl,
+      couleurPrimaire: data.couleurPrimaire,
+      couleurSecondaire: data.couleurSecondaire,
+      faviconUrl: data.faviconUrl,
     });
   }
 
@@ -30,10 +27,10 @@ export class ThemeMarqueController {
   async update(data: UpdateThemeMarqueRequest) {
     return this.themeMarqueService.update({
       id: data.id,
-      logoUrl: data.logo_url,
-      couleurPrimaire: data.couleur_primaire,
-      couleurSecondaire: data.couleur_secondaire,
-      faviconUrl: data.favicon_url,
+      logoUrl: data.logoUrl,
+      couleurPrimaire: data.couleurPrimaire,
+      couleurSecondaire: data.couleurSecondaire,
+      faviconUrl: data.faviconUrl,
     });
   }
 

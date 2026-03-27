@@ -1,11 +1,11 @@
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { AbonnementDepanssurEntity } from './abonnement-depanssur.entity';
 
@@ -17,7 +17,11 @@ export class CompteurPlafondEntity {
   @Column({ name: 'abonnement_id', type: 'uuid' })
   abonnementId: string;
 
-  @ManyToOne(() => AbonnementDepanssurEntity, (a) => a.compteurs, { onDelete: 'CASCADE' })
+  @ManyToOne(
+    () => AbonnementDepanssurEntity,
+    (a) => a.compteurs,
+    { onDelete: 'CASCADE' },
+  )
   @JoinColumn({ name: 'abonnement_id' })
   abonnement: AbonnementDepanssurEntity;
 

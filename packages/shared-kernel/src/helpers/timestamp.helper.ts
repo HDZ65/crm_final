@@ -39,9 +39,7 @@ export class TimestampHelper {
 
   static fromProtoTimestamp(timestamp?: ProtoTimestamp | null): Date | undefined {
     if (!timestamp) return undefined;
-    const ms =
-      Number(timestamp.seconds) * 1000 +
-      Math.floor(Number(timestamp.nanos) / 1_000_000);
+    const ms = Number(timestamp.seconds) * 1000 + Math.floor(Number(timestamp.nanos) / 1_000_000);
     return new Date(ms);
   }
 
@@ -52,7 +50,7 @@ export class TimestampHelper {
   static fromISOString(isoString?: string | null): Date | undefined {
     if (!isoString) return undefined;
     const date = new Date(isoString);
-    return isNaN(date.getTime()) ? undefined : date;
+    return Number.isNaN(date.getTime()) ? undefined : date;
   }
 
   static nowUnix(): number {
@@ -66,7 +64,7 @@ export class TimestampHelper {
   static normalizeTimestampToMs(timestamp?: number | string | null): number {
     const num = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
 
-    if (num === undefined || num === null || isNaN(num) || num <= 0) {
+    if (num === undefined || num === null || Number.isNaN(num) || num <= 0) {
       return 0;
     }
 
@@ -80,7 +78,7 @@ export class TimestampHelper {
   static normalizeTimestampToSeconds(timestamp?: number | string | null): number {
     const num = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
 
-    if (num === undefined || num === null || isNaN(num) || num <= 0) {
+    if (num === undefined || num === null || Number.isNaN(num) || num <= 0) {
       return 0;
     }
 

@@ -69,7 +69,6 @@ const grpcChannelOptions = {
             'woocommerce',
             'partenaires',
             'cfast',
-            'qualite',
           ],
           protoPath: [
             resolveProtoPath('commerciaux/commerciaux.proto'),
@@ -82,7 +81,6 @@ const grpcChannelOptions = {
             resolveProtoPath('woocommerce/woocommerce.proto'),
             resolveProtoPath('partenaires/partenaires.proto'),
             resolveProtoPath('cfast/cfast.proto'),
-            resolveProtoPath('qualite/qualite.proto'),
           ],
           url: process.env.GRPC_COMMERCIAL_URL || 'localhost:50053',
           loader: grpcLoaderOptions,
@@ -93,10 +91,9 @@ const grpcChannelOptions = {
         name: 'FINANCE_PACKAGE',
         transport: Transport.GRPC,
         options: {
-          package: ['factures', 'invoice', 'payment', 'calendar'],
+          package: ['factures', 'payment', 'calendar'],
           protoPath: [
             resolveProtoPath('factures/factures.proto'),
-            resolveProtoPath('factures/invoice.proto'),
             resolveProtoPath('payments/payment.proto'),
             resolveProtoPath('calendar/calendar.proto'),
           ],

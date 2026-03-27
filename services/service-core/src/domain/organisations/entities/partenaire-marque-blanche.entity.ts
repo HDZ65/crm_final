@@ -1,15 +1,16 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
+import type { Relation } from 'typeorm';
+import { MembrePartenaireEntity } from './membre-partenaire.entity';
 import { StatutPartenaireEntity } from './statut-partenaire.entity';
-import type { MembrePartenaireEntity } from './membre-partenaire.entity';
 
 @Entity('partenairemarqueblanches')
 export class PartenaireMarqueBlancheEntity {
@@ -31,17 +32,17 @@ export class PartenaireMarqueBlancheEntity {
   @Column({ type: 'varchar', length: 50 })
   telephone: string;
 
-   @Column({ name: 'statut_id', type: 'uuid' })
-   statutId: string;
+  @Column({ name: 'statut_id', type: 'uuid' })
+  statutId: string;
 
-   @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
-   createdBy: string | null;
+  @Column({ name: 'created_by', type: 'varchar', length: 255, nullable: true })
+  createdBy: string | null;
 
-   @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
-   modifiedBy: string | null;
+  @Column({ name: 'modified_by', type: 'varchar', length: 255, nullable: true })
+  modifiedBy: string | null;
 
-   @CreateDateColumn({ name: 'created_at' })
-   createdAt: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
@@ -50,6 +51,6 @@ export class PartenaireMarqueBlancheEntity {
   @JoinColumn({ name: 'statut_id' })
   statut: StatutPartenaireEntity;
 
-  @OneToMany('MembrePartenaireEntity', 'partenaire')
-  membres: MembrePartenaireEntity[];
+  @OneToMany(() => MembrePartenaireEntity, (membre) => membre.partenaire)
+  membres: Relation<MembrePartenaireEntity[]>;
 }

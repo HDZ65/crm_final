@@ -1,11 +1,11 @@
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { ClientBaseEntity } from './client-base.entity';
 
@@ -17,7 +17,11 @@ export class AdresseEntity {
   @Column({ name: 'client_base_id', type: 'uuid' })
   clientBaseId: string;
 
-  @ManyToOne(() => ClientBaseEntity, (client) => client.adresses, { onDelete: 'CASCADE' })
+  @ManyToOne(
+    () => ClientBaseEntity,
+    (client) => client.adresses,
+    { onDelete: 'CASCADE' },
+  )
   @JoinColumn({ name: 'client_base_id' })
   client: ClientBaseEntity;
 
@@ -36,14 +40,14 @@ export class AdresseEntity {
   @Column({ length: 100, default: 'France' })
   pays: string;
 
-   @Column({ length: 50 })
-   type: string;
+  @Column({ length: 50 })
+  type: string;
 
-   @Column({ name: 'type_adresse', type: 'varchar', length: 50, default: 'FACTURATION', nullable: true })
-   typeAdresse: string | null;
+  @Column({ name: 'type_adresse', type: 'varchar', length: 50, default: 'FACTURATION', nullable: true })
+  typeAdresse: string | null;
 
-   @CreateDateColumn({ name: 'created_at' })
-   createdAt: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

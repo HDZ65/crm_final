@@ -1,6 +1,6 @@
 import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
 import type { ClientGrpc } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { wrapGrpcCall } from './base-grpc.client';
 
 export interface ApporteurServiceClient {
@@ -58,15 +58,45 @@ export class CommerciauxGrpcClient implements OnModuleInit {
 
   constructor(@Inject('COMMERCIAL_PACKAGE') private client: ClientGrpc) {}
 
+  private getServiceOrFallback<T extends object>(name: string): T {
+    try {
+      return this.client.getService<T>(name);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown gRPC init error';
+      this.logger.warn(
+        `${name} unavailable at startup, related endpoints may return 503: ${message}`,
+      );
+
+      return new Proxy(
+        {},
+        {
+          get: () =>
+            () =>
+              throwError(
+                () => new Error(`${name} is unavailable on COMMERCIAL_PACKAGE`),
+              ),
+        },
+      ) as T;
+    }
+  }
+
   onModuleInit() {
-    this.apporteurService =
-      this.client.getService<ApporteurServiceClient>('ApporteurService');
+    this.apporteurService = this.getServiceOrFallback<ApporteurServiceClient>(
+      'ApporteurService',
+    );
     this.baremeCommissionService =
-      this.client.getService<BaremeCommissionServiceClient>('BaremeCommissionService');
+      this.getServiceOrFallback<BaremeCommissionServiceClient>(
+        'BaremeCommissionService',
+      );
     this.palierCommissionService =
-      this.client.getService<PalierCommissionServiceClient>('PalierCommissionService');
+      this.getServiceOrFallback<PalierCommissionServiceClient>(
+        'PalierCommissionService',
+      );
     this.modeleDistributionService =
-      this.client.getService<ModeleDistributionServiceClient>('ModeleDistributionService');
+      this.getServiceOrFallback<ModeleDistributionServiceClient>(
+        'ModeleDistributionService',
+      );
   }
 
   createApporteur(data: Record<string, unknown>): Observable<unknown> {

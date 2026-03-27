@@ -24,6 +24,7 @@ message Organisation {
   string etat = 9;
   string created_at = 10;
   string updated_at = 11;
+  string keycloak_group_id = 12;
 }
 
 message CreateOrganisationRequest {
@@ -87,6 +88,7 @@ message UpdateOrganisationRequest {
   string email = 7;
   bool actif = 8;
   string etat = 9;
+  string keycloak_group_id = 10;
 }
 
 message GetOrganisationRequest {
@@ -122,7 +124,7 @@ message Societe {
   string id = 1;
   string organisation_id = 2;
   string raison_sociale = 3;
-  string siren = 4;
+  string siret = 4;
   string numero_tva = 5;
   string created_at = 6;
   string updated_at = 7;
@@ -141,7 +143,7 @@ message Societe {
 message CreateSocieteRequest {
   string organisation_id = 1;
   string raison_sociale = 2;
-  string siren = 3;
+  string siret = 3;
   string numero_tva = 4;
   string logo_url = 5;
   string devise = 6;
@@ -158,7 +160,7 @@ message CreateSocieteRequest {
 message UpdateSocieteRequest {
   string id = 1;
   string raison_sociale = 2;
-  string siren = 3;
+  string siret = 3;
   string numero_tva = 4;
   string logo_url = 5;
   string devise = 6;

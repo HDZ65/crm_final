@@ -1,42 +1,39 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { SocieteService } from '../../persistence/typeorm/repositories/organisations/societe.service';
-import { SocieteEntity } from '../../../domain/organisations/entities/societe.entity';
 import type {
   CreateSocieteRequest,
-  UpdateSocieteRequest,
+  DeleteSocieteRequest,
   GetSocieteRequest,
   ListSocieteByOrganisationRequest,
   ListSocieteRequest,
-  ListSocieteResponse,
-  DeleteSocieteRequest,
-  Societe,
-  DeleteResponse,
+  UpdateSocieteRequest,
 } from '@proto/organisations';
+import { SocieteEntity } from '../../../domain/organisations/entities/societe.entity';
+import { SocieteService } from '../../persistence/typeorm/repositories/organisations/societe.service';
 
 /**
- * Map SocieteEntity (camelCase) to proto Societe (snake_case).
- * Required because proto-loader uses keepCase: true.
+ * Map SocieteEntity (camelCase) to proto Societe (camelCase).
+ * Proto-ts generates camelCase field names from snake_case proto fields.
  */
 function societeToProto(entity: SocieteEntity) {
   return {
     id: entity.id,
-    organisation_id: entity.organisationId,
-    raison_sociale: entity.raisonSociale,
-    siren: entity.siren,
-    numero_tva: entity.numeroTva,
-    created_at: entity.createdAt?.toISOString() ?? '',
-    updated_at: entity.updatedAt?.toISOString() ?? '',
-    logo_url: entity.logoUrl ?? '',
+    organisationId: entity.keycloakGroupId,
+    raisonSociale: entity.raisonSociale,
+    siret: entity.siret,
+    numeroTva: entity.numeroTva,
+    createdAt: entity.createdAt?.toISOString() ?? '',
+    updatedAt: entity.updatedAt?.toISOString() ?? '',
+    logoUrl: entity.logoUrl ?? '',
     devise: entity.devise ?? 'EUR',
     ics: entity.ics ?? '',
-    journal_vente: entity.journalVente ?? '',
-    compte_produit_defaut: entity.compteProduitDefaut ?? '',
-    plan_comptable: entity.planComptable ? JSON.stringify(entity.planComptable) : '',
-    adresse_siege: entity.adresseSiege ?? '',
+    journalVente: entity.journalVente ?? '',
+    compteProduitDefaut: entity.compteProduitDefaut ?? '',
+    planComptable: entity.planComptable ? JSON.stringify(entity.planComptable) : '',
+    adresseSiege: entity.adresseSiege ?? '',
     telephone: entity.telephone ?? '',
-    email_contact: entity.emailContact ?? '',
-    parametres_fiscaux: entity.parametresFiscaux ? JSON.stringify(entity.parametresFiscaux) : '',
+    emailContact: entity.emailContact ?? '',
+    parametresFiscaux: entity.parametresFiscaux ? JSON.stringify(entity.parametresFiscaux) : '',
   };
 }
 
@@ -47,20 +44,20 @@ export class SocieteController {
   @GrpcMethod('SocieteService', 'Create')
   async create(data: CreateSocieteRequest) {
     const entity = await this.societeService.create({
-      organisationId: data.organisation_id,
-      raisonSociale: data.raison_sociale,
-      siren: data.siren,
-      numeroTva: data.numero_tva,
-      logoUrl: data.logo_url,
+      keycloakGroupId: data.organisationId,
+      raisonSociale: data.raisonSociale,
+      siret: data.siret,
+      numeroTva: data.numeroTva,
+      logoUrl: data.logoUrl,
       devise: data.devise || 'EUR',
       ics: data.ics,
-      journalVente: data.journal_vente,
-      compteProduitDefaut: data.compte_produit_defaut,
-      planComptable: data.plan_comptable ? JSON.parse(data.plan_comptable) : null,
-      adresseSiege: data.adresse_siege,
+      journalVente: data.journalVente,
+      compteProduitDefaut: data.compteProduitDefaut,
+      planComptable: data.planComptable ? JSON.parse(data.planComptable) : null,
+      adresseSiege: data.adresseSiege,
       telephone: data.telephone,
-      emailContact: data.email_contact,
-      parametresFiscaux: data.parametres_fiscaux ? JSON.parse(data.parametres_fiscaux) : null,
+      emailContact: data.emailContact,
+      parametresFiscaux: data.parametresFiscaux ? JSON.parse(data.parametresFiscaux) : null,
     });
     return societeToProto(entity);
   }
@@ -69,19 +66,19 @@ export class SocieteController {
   async update(data: UpdateSocieteRequest) {
     const entity = await this.societeService.update({
       id: data.id,
-      raisonSociale: data.raison_sociale,
-      siren: data.siren,
-      numeroTva: data.numero_tva,
-      logoUrl: data.logo_url,
+      raisonSociale: data.raisonSociale,
+      siret: data.siret,
+      numeroTva: data.numeroTva,
+      logoUrl: data.logoUrl,
       devise: data.devise,
       ics: data.ics,
-      journalVente: data.journal_vente,
-      compteProduitDefaut: data.compte_produit_defaut,
-      planComptable: data.plan_comptable ? JSON.parse(data.plan_comptable) : null,
-      adresseSiege: data.adresse_siege,
+      journalVente: data.journalVente,
+      compteProduitDefaut: data.compteProduitDefaut,
+      planComptable: data.planComptable ? JSON.parse(data.planComptable) : null,
+      adresseSiege: data.adresseSiege,
       telephone: data.telephone,
-      emailContact: data.email_contact,
-      parametresFiscaux: data.parametres_fiscaux ? JSON.parse(data.parametres_fiscaux) : null,
+      emailContact: data.emailContact,
+      parametresFiscaux: data.parametresFiscaux ? JSON.parse(data.parametresFiscaux) : null,
     });
     return societeToProto(entity);
   }
@@ -94,7 +91,7 @@ export class SocieteController {
 
   @GrpcMethod('SocieteService', 'ListByOrganisation')
   async listByOrganisation(data: ListSocieteByOrganisationRequest) {
-    const result = await this.societeService.findByOrganisation(data.organisation_id, data.pagination);
+    const result = await this.societeService.findByOrganisation(data.organisationId, data.pagination);
     return {
       societes: result.societes.map(societeToProto),
       pagination: result.pagination,

@@ -1,7 +1,19 @@
 export {
-  HealthService,
+  GrpcHealthService,
+  GrpcHealthController,
+  ReadinessProbeController,
+  LivenessProbeController,
   ServingStatus,
-  type HealthCheckRequest,
+  type ComponentHealth,
   type HealthCheckResponse,
+  type HealthDetails,
+  type HealthChecker,
 } from './grpc-health.service.js';
-export { HealthController } from './health.controller.js';
+
+export {
+  createPostgresChecker,
+  createRedisChecker,
+  createNatsChecker,
+  createMemoryChecker,
+  createEventLoopChecker,
+} from './health-checkers.js';

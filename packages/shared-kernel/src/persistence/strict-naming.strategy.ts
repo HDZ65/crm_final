@@ -9,19 +9,12 @@
 import { DefaultNamingStrategy, NamingStrategyInterface } from 'typeorm';
 import { snakeCase } from 'typeorm/util/StringUtils.js';
 
-export class StrictContractDrivenNamingStrategy
-  extends DefaultNamingStrategy
-  implements NamingStrategyInterface
-{
+export class StrictContractDrivenNamingStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
   tableName(targetName: string, userSpecifiedName: string | undefined): string {
     return userSpecifiedName ? userSpecifiedName : snakeCase(targetName);
   }
 
-  columnName(
-    propertyName: string,
-    customName: string | undefined,
-    embeddedPrefixes: string[],
-  ): string {
+  columnName(propertyName: string, customName: string | undefined, embeddedPrefixes: string[]): string {
     if (customName && process.env.NODE_ENV !== 'test') {
       console.warn(
         `ANTI-PATTERN DETECTED: Manual column mapping for "${propertyName}"\n` +
@@ -30,13 +23,9 @@ export class StrictContractDrivenNamingStrategy
       );
     }
 
-    const prefix = embeddedPrefixes.length > 0
-      ? embeddedPrefixes.join('_') + '_'
-      : '';
+    const prefix = embeddedPrefixes.length > 0 ? `${embeddedPrefixes.join('_')}_` : '';
 
-    return customName
-      ? prefix + customName
-      : prefix + snakeCase(propertyName);
+    return customName ? prefix + customName : prefix + snakeCase(propertyName);
   }
 
   relationName(propertyName: string): string {
@@ -44,7 +33,7 @@ export class StrictContractDrivenNamingStrategy
   }
 
   joinColumnName(relationName: string, referencedColumnName: string): string {
-    return snakeCase(relationName) + '_' + referencedColumnName;
+    return `${snakeCase(relationName)}_${referencedColumnName}`;
   }
 
   joinTableName(
@@ -53,29 +42,18 @@ export class StrictContractDrivenNamingStrategy
     _firstPropertyName: string,
     _secondPropertyName: string,
   ): string {
-    return snakeCase(firstTableName + '_' + secondTableName);
+    return snakeCase(`${firstTableName}_${secondTableName}`);
   }
 
-  joinTableColumnName(
-    tableName: string,
-    propertyName: string,
-    columnName?: string,
-  ): string {
-    return snakeCase(tableName + '_' + (columnName ? columnName : propertyName));
+  joinTableColumnName(tableName: string, propertyName: string, columnName?: string): string {
+    return snakeCase(`${tableName}_${columnName ? columnName : propertyName}`);
   }
 
-  classTableInheritanceParentColumnName(
-    parentTableName: string,
-    parentTableIdPropertyName: string,
-  ): string {
-    return snakeCase(parentTableName + '_' + parentTableIdPropertyName);
+  classTableInheritanceParentColumnName(parentTableName: string, parentTableIdPropertyName: string): string {
+    return snakeCase(`${parentTableName}_${parentTableIdPropertyName}`);
   }
 
-  indexName(
-    tableOrName: string,
-    columnNames: string[],
-    userSpecifiedName?: string,
-  ): string {
+  indexName(tableOrName: string, columnNames: string[], userSpecifiedName?: string): string {
     if (userSpecifiedName) {
       return userSpecifiedName;
     }
@@ -107,11 +85,7 @@ export function validateNoManualMapping(entityMetadata: any): void {
   const violations: string[] = [];
 
   for (const column of entityMetadata.columns) {
-    if (
-      column.propertyName &&
-      column.databaseName &&
-      column.databaseName !== snakeCase(column.propertyName)
-    ) {
+    if (column.propertyName && column.databaseName && column.databaseName !== snakeCase(column.propertyName)) {
       violations.push(
         `Entity "${entityMetadata.name}" property "${column.propertyName}" ` +
           `has manual mapping to "${column.databaseName}". ` +

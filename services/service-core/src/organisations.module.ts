@@ -1,46 +1,39 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Domain entities
 import {
-  OrganisationEntity,
+  AccesSocieteEntity,
+  MembrePartenaireEntity,
+  PartenaireMarqueBlancheEntity,
+  RolePartenaireEntity,
   SocieteEntity,
   StatutPartenaireEntity,
-  RolePartenaireEntity,
   ThemeMarqueEntity,
-  PartenaireMarqueBlancheEntity,
-  MembrePartenaireEntity,
 } from './domain/organisations/entities';
-
-// Infrastructure services
-import {
-  OrganisationService,
-  SocieteService,
-  StatutPartenaireService,
-  RolePartenaireService,
-  ThemeMarqueService,
-  PartenaireMarqueBlancheService,
-  MembrePartenaireService,
-} from './infrastructure/persistence/typeorm/repositories/organisations';
-
 // Interface controllers
 import {
-  OrganisationController,
+  MembrePartenaireController,
+  PartenaireMarqueBlancheController,
+  RolePartenaireController,
   SocieteController,
   StatutPartenaireController,
-  RolePartenaireController,
   ThemeMarqueController,
-  PartenaireMarqueBlancheController,
-  MembrePartenaireController,
 } from './infrastructure/grpc/organisations';
-
-// Cross-context dependencies
-import { UsersModule } from './users.module';
+// Infrastructure services
+import {
+  MembrePartenaireService,
+  PartenaireMarqueBlancheService,
+  RolePartenaireService,
+  SocieteService,
+  StatutPartenaireService,
+  ThemeMarqueService,
+} from './infrastructure/persistence/typeorm/repositories/organisations';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      OrganisationEntity,
+      AccesSocieteEntity,
       SocieteEntity,
       StatutPartenaireEntity,
       RolePartenaireEntity,
@@ -48,10 +41,8 @@ import { UsersModule } from './users.module';
       PartenaireMarqueBlancheEntity,
       MembrePartenaireEntity,
     ]),
-    forwardRef(() => UsersModule),
   ],
   controllers: [
-    OrganisationController,
     SocieteController,
     StatutPartenaireController,
     RolePartenaireController,
@@ -60,7 +51,6 @@ import { UsersModule } from './users.module';
     MembrePartenaireController,
   ],
   providers: [
-    OrganisationService,
     SocieteService,
     StatutPartenaireService,
     RolePartenaireService,
@@ -69,7 +59,6 @@ import { UsersModule } from './users.module';
     MembrePartenaireService,
   ],
   exports: [
-    OrganisationService,
     SocieteService,
     StatutPartenaireService,
     RolePartenaireService,

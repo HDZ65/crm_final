@@ -21,7 +21,7 @@ message PaymentReceivedEvent {
   string payment_id = 4;                            // Payment ID
   string schedule_id = 5;                           // Payment schedule ID
   string client_id = 6;                             // Client ID
-  double montant = 7;                               // Amount in EUR
+  string montant = 7;                               // Amount in EUR (string for precision)
   google.protobuf.Timestamp date_reception = 8;    // Reception date
 }
 

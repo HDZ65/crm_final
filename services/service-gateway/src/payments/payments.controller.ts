@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  Param,
   Post,
   Put,
   Query,
@@ -557,36 +556,4 @@ export class PaymentsController {
     return firstValueFrom(this.paymentsClient.getPaymentStats(query));
   }
 
-  // ==================== JOURNAL / FEC EXPORTS ====================
-
-  @Post('exports/journal')
-  @ApiOperation({ summary: 'Create journal export (FEC/CSV/XLSX)' })
-  createJournalExport(@Body() body: Record<string, unknown>) {
-    return firstValueFrom(this.paymentsClient.createJournalExport(body));
-  }
-
-  @Get('exports/formats')
-  @ApiOperation({ summary: 'Get available journal export formats' })
-  getJournalExportFormats() {
-    return firstValueFrom(this.paymentsClient.getJournalExportFormats({}));
-  }
-
-  @Get('exports/config/:societeId')
-  @ApiOperation({ summary: 'Get export config for societe' })
-  getExportConfig(@Param('societeId') societeId: string) {
-    return firstValueFrom(
-      this.paymentsClient.getExportConfig({ societe_id: societeId }),
-    );
-  }
-
-  @Put('exports/config/:societeId')
-  @ApiOperation({ summary: 'Update export config for societe' })
-  updateExportConfig(
-    @Param('societeId') societeId: string,
-    @Body() body: Record<string, unknown>,
-  ) {
-    return firstValueFrom(
-      this.paymentsClient.updateExportConfig({ ...body, societe_id: societeId }),
-    );
-  }
 }

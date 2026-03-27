@@ -4,22 +4,22 @@ services:
       context: ../..
       dockerfile: services/service-telecom/Dockerfile
       target: development
-    container_name: alex-service-telecom
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.alex-telecom.rule=Host(`alex-telecom.local`)"
-      - "traefik.http.services.alex-telecom.loadbalancer.server.port=3056"
+    container_name: dev-crm-service-telecom
     ports:
-      - "3407:3056"
+      - "127.0.0.1:3413:3077"   # HTTP
     env_file:
       - ../../services/service-telecom/.env.development
     environment:
-      - NODE_PATH=/app/services/service-telecom/node_modules
-      - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_telecom
-      - MIGRATIONS_RUN=false
-      - GRPC_PORT=50077
+      - DATABASE_URL=postgresql://postgres:postgres@dev-crm-postgres:5432/crm_telecom
+      - REDIS_HOST=dev-crm-redis
+      - REDIS_PORT=6379
+      - NATS_URL=nats://dev-crm-nats:4222
+    depends_on:
+      - postgres
+      - redis
+      - nats
     networks:
-      - shared_dev_net
+      - crm_dev_net
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(3056, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
@@ -28,5 +28,6 @@ services:
     restart: unless-stopped
 
 networks:
-  shared_dev_net:
-    external: true
+  crm_dev_net:
+    name: crm_dev_network
+    driver: bridge

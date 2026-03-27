@@ -1,23 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { SocieteEntity } from '../../../../../domain/organisations/entities';
 
 @Injectable()
 export class SocieteService {
-  private readonly logger = new Logger(SocieteService.name);
-
   constructor(
     @InjectRepository(SocieteEntity)
     private readonly repository: Repository<SocieteEntity>,
   ) {}
 
   async create(input: {
-    organisationId: string;
+    keycloakGroupId: string;
     raisonSociale: string;
-    siren: string;
+    siret: string;
     numeroTva: string;
     logoUrl?: string;
     devise?: string;
@@ -31,9 +29,9 @@ export class SocieteService {
     parametresFiscaux?: Record<string, any> | null;
   }): Promise<SocieteEntity> {
     const entity = this.repository.create({
-      organisationId: input.organisationId,
+      keycloakGroupId: input.keycloakGroupId,
       raisonSociale: input.raisonSociale,
-      siren: input.siren,
+      siret: input.siret,
       numeroTva: input.numeroTva,
       logoUrl: input.logoUrl ?? null,
       devise: input.devise ?? 'EUR',
@@ -52,7 +50,7 @@ export class SocieteService {
   async update(input: {
     id: string;
     raisonSociale?: string;
-    siren?: string;
+    siret?: string;
     numeroTva?: string;
     logoUrl?: string;
     devise?: string;
@@ -68,7 +66,7 @@ export class SocieteService {
     const entity = await this.findById(input.id);
 
     if (input.raisonSociale !== undefined) entity.raisonSociale = input.raisonSociale;
-    if (input.siren !== undefined) entity.siren = input.siren;
+    if (input.siret !== undefined) entity.siret = input.siret;
     if (input.numeroTva !== undefined) entity.numeroTva = input.numeroTva;
     if (input.logoUrl !== undefined) entity.logoUrl = input.logoUrl ?? null;
     if (input.devise !== undefined) entity.devise = input.devise;
@@ -96,7 +94,7 @@ export class SocieteService {
   }
 
   async findByOrganisation(
-    organisationId: string,
+    keycloakGroupId: string,
     pagination?: { page?: number; limit?: number },
   ): Promise<{
     societes: SocieteEntity[];
@@ -105,12 +103,12 @@ export class SocieteService {
     const page = pagination?.page ?? 1;
     const limit = pagination?.limit ?? 50;
 
-    if (!organisationId) {
+    if (!keycloakGroupId) {
       return { societes: [], pagination: { total: 0, page, limit, totalPages: 0 } };
     }
 
     const [societes, total] = await this.repository.findAndCount({
-      where: { organisationId },
+      where: { keycloakGroupId },
       order: { raisonSociale: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -132,7 +130,7 @@ export class SocieteService {
     const queryBuilder = this.repository.createQueryBuilder('s');
 
     if (filters?.search) {
-      queryBuilder.where('(s.raison_sociale ILIKE :search OR s.siren ILIKE :search)', {
+      queryBuilder.where('(s.raison_sociale ILIKE :search OR s.siret ILIKE :search)', {
         search: `%${filters.search}%`,
       });
     }

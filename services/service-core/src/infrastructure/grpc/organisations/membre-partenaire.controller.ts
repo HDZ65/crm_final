@@ -1,17 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { MembrePartenaireService } from '../../persistence/typeorm/repositories/organisations/membre-partenaire.service';
 import type {
   CreateMembrePartenaireRequest,
-  UpdateMembrePartenaireRequest,
+  DeleteMembrePartenaireRequest,
   GetMembrePartenaireRequest,
   ListMembreByPartenaireRequest,
   ListMembreByUtilisateurRequest,
-  ListMembrePartenaireResponse,
-  DeleteMembrePartenaireRequest,
-  MembrePartenaire,
-  DeleteResponse,
+  UpdateMembrePartenaireRequest,
 } from '@proto/organisations';
+import { MembrePartenaireService } from '../../persistence/typeorm/repositories/organisations/membre-partenaire.service';
 
 @Controller()
 export class MembrePartenaireController {
@@ -20,15 +17,15 @@ export class MembrePartenaireController {
   @GrpcMethod('MembrePartenaireService', 'Create')
   async create(data: CreateMembrePartenaireRequest) {
     return this.membrePartenaireService.create({
-      utilisateurId: data.utilisateur_id,
-      partenaireId: data.partenaire_id,
-      roleId: data.role_id,
+      utilisateurId: data.utilisateurId,
+      partenaireId: data.partenaireId,
+      roleId: data.roleId,
     });
   }
 
   @GrpcMethod('MembrePartenaireService', 'Update')
   async update(data: UpdateMembrePartenaireRequest) {
-    return this.membrePartenaireService.update({ id: data.id, roleId: data.role_id });
+    return this.membrePartenaireService.update({ id: data.id, roleId: data.roleId });
   }
 
   @GrpcMethod('MembrePartenaireService', 'Get')
@@ -38,12 +35,12 @@ export class MembrePartenaireController {
 
   @GrpcMethod('MembrePartenaireService', 'ListByPartenaire')
   async listByPartenaire(data: ListMembreByPartenaireRequest) {
-    return this.membrePartenaireService.findByPartenaire(data.partenaire_id, data.pagination);
+    return this.membrePartenaireService.findByPartenaire(data.partenaireId, data.pagination);
   }
 
   @GrpcMethod('MembrePartenaireService', 'ListByUtilisateur')
   async listByUtilisateur(data: ListMembreByUtilisateurRequest) {
-    return this.membrePartenaireService.findByUtilisateur(data.utilisateur_id, data.pagination);
+    return this.membrePartenaireService.findByUtilisateur(data.utilisateurId, data.pagination);
   }
 
   @GrpcMethod('MembrePartenaireService', 'Delete')

@@ -1,5 +1,5 @@
 import { validate as uuidValidate } from 'uuid';
-import { InvalidDataException } from '../exceptions/index.js';
+import { InvalidDataException } from '../exceptions/index';
 
 /**
  * Base class for all Value Objects
@@ -89,19 +89,17 @@ export function normalizeStringValue(
   }
 
   if (trimmed.length < minLength) {
-    throw new InvalidDataException(
-      fieldName,
-      `${fieldName} is too short (min ${minLength} characters)`,
-      { value: raw, minLength },
-    );
+    throw new InvalidDataException(fieldName, `${fieldName} is too short (min ${minLength} characters)`, {
+      value: raw,
+      minLength,
+    });
   }
 
   if (trimmed.length > maxLength) {
-    throw new InvalidDataException(
-      fieldName,
-      `${fieldName} is too long (max ${maxLength} characters)`,
-      { value: raw, maxLength },
-    );
+    throw new InvalidDataException(fieldName, `${fieldName} is too long (max ${maxLength} characters)`, {
+      value: raw,
+      maxLength,
+    });
   }
 
   return trimmed;
@@ -118,11 +116,7 @@ export function validateUuid(id: string, fieldName: string): void {
   });
 
   if (!uuidValidate(normalized)) {
-    throw new InvalidDataException(
-      fieldName,
-      `${fieldName} must be a valid UUID`,
-      { value: normalized },
-    );
+    throw new InvalidDataException(fieldName, `${fieldName} must be a valid UUID`, { value: normalized });
   }
 }
 
@@ -150,7 +144,5 @@ function deepEqual(a: any, b: any): boolean {
     return false;
   }
 
-  return keysA.every(
-    (key) => Object.prototype.hasOwnProperty.call(b, key) && deepEqual(a[key], b[key]),
-  );
+  return keysA.every((key) => Object.hasOwn(b, key) && deepEqual(a[key], b[key]));
 }

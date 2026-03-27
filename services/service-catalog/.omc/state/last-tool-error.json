@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"echo \\\"=== service-commercial ===\\\" && cd services/service-commercial && bun run build 2>&1 | tail -3 && echo\",\"timeout\":120000,\"description\":\"Build final service-commercial\"}",
+  "error": "Exit code 1\n(eval):cd:1: aucun fichier ou dossier de ce nom: services/service-commercial\n\n=== service-commercial ===",
+  "timestamp": "2026-03-24T20:48:06.589Z",
+  "retry_count": 1
+}

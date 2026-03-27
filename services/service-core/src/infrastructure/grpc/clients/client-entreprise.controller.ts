@@ -1,16 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { ClientEntrepriseService } from '../../persistence/typeorm/repositories/clients/client-entreprise.service';
 import type {
   CreateClientEntrepriseRequest,
-  UpdateClientEntrepriseRequest,
+  DeleteClientEntrepriseRequest,
   GetClientEntrepriseRequest,
   ListClientsEntrepriseRequest,
-  ListClientsEntrepriseResponse,
-  DeleteClientEntrepriseRequest,
-  ClientEntreprise,
-  DeleteResponse,
+  UpdateClientEntrepriseRequest,
 } from '@proto/clients';
+import { ClientEntrepriseService } from '../../persistence/typeorm/repositories/clients/client-entreprise.service';
 
 @Controller()
 export class ClientEntrepriseController {
@@ -19,8 +16,8 @@ export class ClientEntrepriseController {
   @GrpcMethod('ClientEntrepriseService', 'Create')
   async create(data: CreateClientEntrepriseRequest) {
     return this.clientEntrepriseService.create({
-      raisonSociale: data.raison_sociale,
-      numeroTva: data.numero_tva,
+      raisonSociale: data.raisonSociale,
+      numeroTva: data.numeroTva,
       siren: data.siren,
     });
   }
@@ -29,8 +26,8 @@ export class ClientEntrepriseController {
   async update(data: UpdateClientEntrepriseRequest) {
     return this.clientEntrepriseService.update({
       id: data.id,
-      raisonSociale: data.raison_sociale,
-      numeroTva: data.numero_tva,
+      raisonSociale: data.raisonSociale,
+      numeroTva: data.numeroTva,
       siren: data.siren,
     });
   }

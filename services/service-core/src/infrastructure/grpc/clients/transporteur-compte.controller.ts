@@ -1,18 +1,15 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { TransporteurCompteService } from '../../persistence/typeorm/repositories/clients/transporteur-compte.service';
 import type {
+  ActivateTransporteurRequest,
   CreateTransporteurCompteRequest,
-  UpdateTransporteurCompteRequest,
+  DeleteTransporteurCompteRequest,
   GetTransporteurCompteRequest,
   ListTransporteurByOrganisationRequest,
   ListTransporteurCompteRequest,
-  ListTransporteurCompteResponse,
-  ActivateTransporteurRequest,
-  DeleteTransporteurCompteRequest,
-  TransporteurCompte,
-  DeleteResponse,
+  UpdateTransporteurCompteRequest,
 } from '@proto/referentiel';
+import { TransporteurCompteService } from '../../persistence/typeorm/repositories/clients/transporteur-compte.service';
 
 @Controller()
 export class TransporteurCompteController {
@@ -36,7 +33,7 @@ export class TransporteurCompteController {
 
   @GrpcMethod('TransporteurCompteService', 'ListByOrganisation')
   listByOrganisation(data: ListTransporteurByOrganisationRequest) {
-    return this.transporteurCompteService.findByOrganisation(data.organisation_id, data.actif, data.pagination);
+    return this.transporteurCompteService.findByOrganisation(data.organisationId, data.actif, data.pagination);
   }
 
   @GrpcMethod('TransporteurCompteService', 'List')

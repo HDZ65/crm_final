@@ -1,17 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { StatutClientService } from '../../persistence/typeorm/repositories/clients/statut-client.service';
 import type {
   CreateStatutClientRequest,
-  UpdateStatutClientRequest,
-  GetStatutClientRequest,
-  GetStatutClientByCodeRequest,
-  ListStatutsClientRequest,
-  ListStatutsClientResponse,
   DeleteStatutClientRequest,
-  StatutClient,
-  DeleteResponse,
+  GetStatutClientByCodeRequest,
+  GetStatutClientRequest,
+  ListStatutsClientRequest,
+  UpdateStatutClientRequest,
 } from '@proto/clients';
+import { StatutClientService } from '../../persistence/typeorm/repositories/clients/statut-client.service';
 
 @Controller()
 export class StatutClientController {
@@ -23,7 +20,7 @@ export class StatutClientController {
       code: data.code,
       nom: data.nom,
       description: data.description,
-      ordreAffichage: data.ordre_affichage,
+      ordreAffichage: data.ordreAffichage,
     });
   }
 
@@ -34,7 +31,7 @@ export class StatutClientController {
       code: data.code,
       nom: data.nom,
       description: data.description,
-      ordreAffichage: data.ordre_affichage,
+      ordreAffichage: data.ordreAffichage,
     });
   }
 

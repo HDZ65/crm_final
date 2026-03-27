@@ -2,107 +2,284 @@ syntax = "proto3";
 
 package contrats;
 
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "common/common.proto";
+
+option java_multiple_files = true;
+option java_package = "com.finanssor.crm.contrats";
+
+// ============================================================================
+// CONTRATS MICROSERVICE - gRPC Service Definitions
+// ============================================================================
+// Manages contracts: creation, lifecycle, orchestration, and import
+// ============================================================================
+
+// === ENUMS ===
+
+enum ContratType {
+  CONTRAT_TYPE_UNSPECIFIED = 0;
+  CONTRAT_TYPE_ABONNEMENT = 1;
+  CONTRAT_TYPE_PRESTATION = 2;
+  CONTRAT_TYPE_MAINTENANCE = 3;
+  CONTRAT_TYPE_LOCATION = 4;
+  CONTRAT_TYPE_ASSURANCE = 5;
+}
+
+enum ContratStatut {
+  CONTRAT_STATUT_UNSPECIFIED = 0;
+  CONTRAT_STATUT_BROUILLON = 1;
+  CONTRAT_STATUT_EN_ATTENTE = 2;
+  CONTRAT_STATUT_ACTIF = 3;
+  CONTRAT_STATUT_SUSPENDU = 4;
+  CONTRAT_STATUT_RESILIE = 5;
+  CONTRAT_STATUT_EXPIRE = 6;
+  CONTRAT_STATUT_ANNULE = 7;
+}
+
+enum FrequenceFacturation {
+  FREQUENCE_FACTURATION_UNSPECIFIED = 0;
+  FREQUENCE_FACTURATION_MENSUELLE = 1;
+  FREQUENCE_FACTURATION_TRIMESTRIELLE = 2;
+  FREQUENCE_FACTURATION_SEMESTRIELLE = 3;
+  FREQUENCE_FACTURATION_ANNUELLE = 4;
+  FREQUENCE_FACTURATION_PONCTUELLE = 5;
+}
+
+enum StatutCQ {
+  STATUT_CQ_UNSPECIFIED = 0;
+  STATUT_CQ_EN_ATTENTE = 1;
+  STATUT_CQ_VALIDE = 2;
+  STATUT_CQ_REJETE = 3;
+}
+
+enum RenewalStatus {
+  RENEWAL_STATUS_UNSPECIFIED = 0;
+  RENEWAL_STATUS_PENDING = 1;
+  RENEWAL_STATUS_NOTIFIED_J90 = 2;
+  RENEWAL_STATUS_NOTIFIED_J30 = 3;
+  RENEWAL_STATUS_CONFIRMED = 4;
+  RENEWAL_STATUS_CANCELLED = 5;
+}
+
+enum CanalVente {
+  CANAL_VENTE_UNSPECIFIED = 0;
+  CANAL_VENTE_WEB = 1;
+  CANAL_VENTE_TELEPHONE = 2;
+  CANAL_VENTE_AGENCE = 3;
+  CANAL_VENTE_PARTENAIRE = 4;
+}
+
+// === STATUT CONTRAT REFERENCE ===
+
 message StatutContrat {
   string id = 1;
   string code = 2;
   string nom = 3;
   string description = 4;
   int32 ordre_affichage = 5;
-  string created_at = 6;
-  string updated_at = 7;
+  bool is_terminal = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
 }
 
-// ========== CONTRAT SERVICE ==========
-service ContratService {
-  rpc Create(CreateContratRequest) returns (Contrat);
-  rpc Update(UpdateContratRequest) returns (Contrat);
-  rpc Get(GetContratRequest) returns (Contrat);
-  rpc GetByReference(GetContratByReferenceRequest) returns (Contrat);
-  rpc List(ListContratRequest) returns (ListContratResponse);
-  rpc Delete(DeleteContratRequest) returns (DeleteResponse);
-  rpc GetWithDetails(GetContratRequest) returns (ContratWithDetails);
+// === CONTRAT ENTITY ===
+
+// Payment schedule configuration
+message PaymentSchedule {
+  // Fixed payment day (1-28)
+  int32 jour_prelevement = 1;
+
+  // Next scheduled payment date
+  google.protobuf.Timestamp prochaine_date_prelevement = 2;
+
+  // Payment method reference
+  string mode_paiement_id = 3;
 }
 
+// Renewal configuration
+message RenewalConfig {
+  // Tacit renewal enabled
+  bool tacite_renewal_enabled = 1;
+
+  // Renewal status
+  RenewalStatus renewal_status = 2;
+
+  // Renewal date
+  google.protobuf.Timestamp renewal_date = 3;
+
+  // J-90 notification sent timestamp
+  google.protobuf.Timestamp notification_j90_sent_at = 4;
+
+  // J-30 notification sent timestamp
+  google.protobuf.Timestamp notification_j30_sent_at = 5;
+}
+
+// Main contract entity
 message Contrat {
+  // Core identifiers
   string id = 1;
   string organisation_id = 2;
   string reference = 3;
+
+  // Contract details
   string titre = 4;
   string description = 5;
-  string type = 6;
-  string statut = 7;
-  string date_debut = 8;
-  string date_fin = 9;
-  string date_signature = 10;
-  double montant = 11;
-  string devise = 12;
-  string frequence_facturation = 13;
-  string document_url = 14;
-  string fournisseur = 15;
+  ContratType type = 6;
+  ContratStatut statut = 7;
+
+  // Dates
+  google.protobuf.Timestamp date_debut = 8;
+  google.protobuf.Timestamp date_fin = 9;
+  google.protobuf.Timestamp date_signature = 10;
+
+  // Financial - Using string for decimal precision
+  common.Money montant = 11;
+  FrequenceFacturation frequence_facturation = 12;
+
+  // Payment schedule
+  PaymentSchedule payment_schedule = 13;
+
+  // Renewal configuration
+  RenewalConfig renewal_config = 14;
+
+  // Quality control
+  StatutCQ statut_cq = 15;
+
+  // Relations
   string client_id = 16;
   string commercial_id = 17;
   string societe_id = 18;
-  string notes = 19;
-  string created_at = 20;
-  string updated_at = 21;
-  optional int32 jour_prelevement = 22;           // Jour fixe de prélèvement (1-28)
-  optional string prochaine_date_prelevement = 23; // Prochaine date de prélèvement calculée (ISO string)
-  optional string renewal_date = 24;
-  bool tacite_renewal_enabled = 25;
-  optional string renewal_status = 26;
-  optional string renewal_notification_j90_sent_at = 27;
-  optional string renewal_notification_j30_sent_at = 28;
-  optional string statut_cq = 29; // Statut du contrôle qualité (EN_ATTENTE/VALIDE/REJETE)
+  string fournisseur = 19;
+
+  // Documents
+  string document_url = 20;
+
+  // Notes
+  string notes = 21;
+
+  // Audit
+  google.protobuf.Timestamp created_at = 22;
+  google.protobuf.Timestamp updated_at = 23;
+  google.protobuf.Timestamp deleted_at = 24;
+
+  // Reserved for future use
+  reserved 50 to 100;
+  reserved "legacy_montant";
 }
 
+// Lightweight summary for lists
+message ContratSummary {
+  string id = 1;
+  string reference = 2;
+  string titre = 3;
+  ContratStatut statut = 4;
+  common.Money montant = 5;
+  string client_id = 6;
+  string client_nom = 7;
+  google.protobuf.Timestamp date_debut = 8;
+  google.protobuf.Timestamp date_fin = 9;
+}
+
+// Contract with all related data
 message ContratWithDetails {
   Contrat contrat = 1;
   repeated LigneContrat lignes = 2;
   repeated HistoriqueStatutContrat historique = 3;
+
+  // Enriched data from other services
+  string client_nom = 4;
+  string commercial_nom = 5;
+  string societe_nom = 6;
 }
+
+// === LIGNE CONTRAT ===
+
+message LigneContrat {
+  string id = 1;
+  string contrat_id = 2;
+  string produit_id = 3;
+  string periode_facturation_id = 4;
+  int32 quantite = 5;
+  common.Money prix_unitaire = 6;
+  common.Money montant_total = 7;
+  common.Percentage tva_taux = 8;
+  CanalVente canal_vente = 9;
+  string description = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+// === HISTORIQUE STATUT ===
+
+message HistoriqueStatutContrat {
+  string id = 1;
+  string contrat_id = 2;
+  ContratStatut ancien_statut = 3;
+  ContratStatut nouveau_statut = 4;
+  google.protobuf.Timestamp date_changement = 5;
+  string motif = 6;
+  string user_id = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+// === REQUEST/RESPONSE MESSAGES ===
 
 message CreateContratRequest {
   string organisation_id = 1;
   string reference = 2;
   string titre = 3;
   string description = 4;
-  string type = 5;
-  string statut = 6;
-  string date_debut = 7;
-  string date_fin = 8;
-  string date_signature = 9;
-  double montant = 10;
-  string devise = 11;
-  string frequence_facturation = 12;
-  string document_url = 13;
-  string fournisseur = 14;
-  string client_id = 15;
-  string commercial_id = 16;
-  string societe_id = 17;
-  string notes = 18;
-  optional int32 jour_prelevement = 19; // Jour fixe de prélèvement (1-28)
+  ContratType type = 5;
+  ContratStatut statut = 6;
+  google.protobuf.Timestamp date_debut = 7;
+  google.protobuf.Timestamp date_fin = 8;
+  google.protobuf.Timestamp date_signature = 9;
+  common.Money montant = 10;
+  FrequenceFacturation frequence_facturation = 11;
+  string document_url = 12;
+  string fournisseur = 13;
+  string client_id = 14;
+  string commercial_id = 15;
+  string societe_id = 16;
+  string notes = 17;
+
+  // Optional payment schedule
+  PaymentSchedule payment_schedule = 18;
+
+  // Initial lines
+  repeated CreateLigneContratRequest lignes = 19;
+}
+
+message CreateLigneContratRequest {
+  string produit_id = 1;
+  string periode_facturation_id = 2;
+  int32 quantite = 3;
+  common.Money prix_unitaire = 4;
+  CanalVente canal_vente = 5;
+  string description = 6;
 }
 
 message UpdateContratRequest {
   string id = 1;
-  string reference = 2;
-  string titre = 3;
-  string description = 4;
-  string type = 5;
-  string statut = 6;
-  string date_debut = 7;
-  string date_fin = 8;
-  string date_signature = 9;
-  double montant = 10;
-  string devise = 11;
-  string frequence_facturation = 12;
-  string document_url = 13;
-  string fournisseur = 14;
-  string client_id = 15;
-  string commercial_id = 16;
-  string societe_id = 17;
-  string notes = 18;
-  optional int32 jour_prelevement = 19; // Jour fixe de prélèvement (1-28)
+  optional string reference = 2;
+  optional string titre = 3;
+  optional string description = 4;
+  optional ContratType type = 5;
+  optional ContratStatut statut = 6;
+  optional google.protobuf.Timestamp date_debut = 7;
+  optional google.protobuf.Timestamp date_fin = 8;
+  optional google.protobuf.Timestamp date_signature = 9;
+  optional common.Money montant = 10;
+  optional FrequenceFacturation frequence_facturation = 11;
+  optional string document_url = 12;
+  optional string fournisseur = 13;
+  optional string client_id = 14;
+  optional string commercial_id = 15;
+  optional string societe_id = 16;
+  optional string notes = 17;
+  optional PaymentSchedule payment_schedule = 18;
+  optional string motif_modification = 19;
 }
 
 message GetContratRequest {
@@ -116,63 +293,62 @@ message GetContratByReferenceRequest {
 
 message ListContratRequest {
   string organisation_id = 1;
-  string client_id = 2;
-  string commercial_id = 3;
-  string societe_id = 4;
-  string statut = 5;
-  string search = 6;
-  Pagination pagination = 7;
+  optional string client_id = 2;
+  optional string commercial_id = 3;
+  optional string societe_id = 4;
+  optional ContratStatut statut = 5;
+  optional string search = 6;
+  optional ContratType type = 7;
+  optional common.DateRange date_range = 8;
+  common.PaginationRequest pagination = 9;
 }
 
 message ListContratResponse {
-  repeated Contrat contrats = 1;
-  PaginationResult pagination = 2;
+  repeated ContratSummary contrats = 1;
+  common.PaginationResponse pagination = 2;
 }
 
 message DeleteContratRequest {
   string id = 1;
+  bool hard_delete = 2;
+  string motif = 3;
 }
 
-message LigneContrat {
-   string id = 1;
-   string contrat_id = 2;
-   string produit_id = 3;
-   string periode_facturation_id = 4;
-   int32 quantite = 5;
-   double prix_unitaire = 6;
-   string canal_vente = 7;
-   string created_at = 8;
-   string updated_at = 9;
+// Processing status for async operations
+message GetProcessingStatusRequest {
+  string correlation_id = 1;
 }
 
-message HistoriqueStatutContrat {
-  string id = 1;
-  string contrat_id = 2;
-  string ancien_statut_id = 3;
-  string nouveau_statut_id = 4;
-  string date_changement = 5;
-  string created_at = 6;
-  string updated_at = 7;
+message ProcessingStatusResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_PENDING = 1;
+    STATUS_PROCESSING = 2;
+    STATUS_PROCESSED = 3;
+    STATUS_ERROR = 4;
+  }
+
+  Status status = 1;
+  string correlation_id = 2;
+  string contrat_id = 3;
+  string error = 4;
+  google.protobuf.Timestamp processed_at = 5;
 }
 
-// ========== CONTRACT ORCHESTRATION SERVICE ==========
-service ContractOrchestrationService {
-  rpc Activate(OrchestrationRequest) returns (OrchestrationResponse);
-  rpc Suspend(OrchestrationRequest) returns (OrchestrationResponse);
-  rpc Terminate(OrchestrationRequest) returns (OrchestrationResponse);
-  rpc PortIn(OrchestrationRequest) returns (OrchestrationResponse);
-  rpc GetHistory(GetOrchestrationHistoryRequest) returns (ListOrchestrationHistoryResponse);
-}
+// === CONTRACT ORCHESTRATION ===
 
 message OrchestrationRequest {
   string contract_id = 1;
-  string payload = 2; // JSON payload
+  string payload = 2;  // JSON payload for flexibility
+  string correlation_id = 3;
+  string user_id = 4;
 }
 
 message OrchestrationResponse {
   bool success = 1;
   string message = 2;
   string history_id = 3;
+  string correlation_id = 4;
 }
 
 message OrchestrationHistory {
@@ -183,32 +359,30 @@ message OrchestrationHistory {
   string payload = 5;
   string response_payload = 6;
   string error_message = 7;
-  string started_at = 8;
-  string finished_at = 9;
-  string created_at = 10;
+  google.protobuf.Timestamp started_at = 8;
+  google.protobuf.Timestamp finished_at = 9;
+  int64 duration_ms = 10;
+  google.protobuf.Timestamp created_at = 11;
 }
 
 message GetOrchestrationHistoryRequest {
   string contract_id = 1;
-  Pagination pagination = 2;
+  common.PaginationRequest pagination = 2;
 }
 
 message ListOrchestrationHistoryResponse {
   repeated OrchestrationHistory history = 1;
-  PaginationResult pagination = 2;
+  common.PaginationResponse pagination = 2;
 }
 
-// ========== CONTRAT IMPORT SERVICE ==========
-service ContratImportService {
-  rpc ImportFromExternal(ImportFromExternalRequest) returns (ImportFromExternalResponse);
-  rpc GetImportStatus(GetImportStatusRequest) returns (GetImportStatusResponse);
-}
+// === CONTRACT IMPORT ===
 
 message ImportFromExternalRequest {
   string organisation_id = 1;
   string source_url = 2;
   string api_key = 3;
   bool dry_run = 4;
+  string correlation_id = 5;
 }
 
 message ImportFromExternalResponse {
@@ -218,12 +392,15 @@ message ImportFromExternalResponse {
   int32 updated_count = 4;
   int32 skipped_count = 5;
   repeated ImportError errors = 6;
+  int64 duration_ms = 7;
 }
 
 message ImportError {
   int32 row = 1;
   string reference = 2;
-  string error_message = 3;
+  string error_code = 3;
+  string error_message = 4;
+  string field = 5;
 }
 
 message GetImportStatusRequest {
@@ -231,31 +408,60 @@ message GetImportStatusRequest {
 }
 
 message GetImportStatusResponse {
+  enum ImportStatus {
+    IMPORT_STATUS_UNSPECIFIED = 0;
+    IMPORT_STATUS_PENDING = 1;
+    IMPORT_STATUS_IN_PROGRESS = 2;
+    IMPORT_STATUS_COMPLETED = 3;
+    IMPORT_STATUS_FAILED = 4;
+    IMPORT_STATUS_CANCELLED = 5;
+  }
+
   string import_id = 1;
-  string status = 2;
+  ImportStatus status = 2;
   int32 total_rows = 3;
   int32 processed_rows = 4;
   int32 created_count = 5;
   int32 updated_count = 6;
   int32 skipped_count = 7;
   repeated ImportError errors = 8;
+  common.Percentage progress = 9;
 }
 
-// ========== COMMON MESSAGES ==========
-message Pagination {
-  int32 page = 1;
-  int32 limit = 2;
-  string sort_by = 3;
-  string sort_order = 4;
+// === SERVICES ===
+
+service ContratService {
+  // CRUD operations
+  rpc Create(CreateContratRequest) returns (Contrat);
+  rpc Update(UpdateContratRequest) returns (Contrat);
+  rpc Get(GetContratRequest) returns (Contrat);
+  rpc GetByReference(GetContratByReferenceRequest) returns (Contrat);
+  rpc List(ListContratRequest) returns (ListContratResponse);
+  rpc Delete(DeleteContratRequest) returns (common.DeleteResponse);
+
+  // Enriched queries
+  rpc GetWithDetails(GetContratRequest) returns (ContratWithDetails);
+  rpc GetProcessingStatus(GetProcessingStatusRequest) returns (ProcessingStatusResponse);
+
+  // Streaming for exports
+  rpc StreamContrats(ListContratRequest) returns (stream Contrat);
 }
 
-message PaginationResult {
-  int32 total = 1;
-  int32 page = 2;
-  int32 limit = 3;
-  int32 total_pages = 4;
+service ContractOrchestrationService {
+  // Lifecycle operations
+  rpc Activate(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc Suspend(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc Resume(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc Terminate(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc PortIn(OrchestrationRequest) returns (OrchestrationResponse);
+  rpc Renew(OrchestrationRequest) returns (OrchestrationResponse);
+
+  // History
+  rpc GetHistory(GetOrchestrationHistoryRequest) returns (ListOrchestrationHistoryResponse);
 }
 
-message DeleteResponse {
-  bool success = 1;
+service ContratImportService {
+  rpc ImportFromExternal(ImportFromExternalRequest) returns (ImportFromExternalResponse);
+  rpc GetImportStatus(GetImportStatusRequest) returns (GetImportStatusResponse);
+  rpc CancelImport(GetImportStatusRequest) returns (common.DeleteResponse);
 }

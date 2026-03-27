@@ -1,5 +1,5 @@
-import { Module, Logger } from '@nestjs/common';
 import { S3StorageService, s3ConfigFromEnv } from '@crm/shared-kernel';
+import { Logger, Module } from '@nestjs/common';
 import { DocumentStorageService } from './document-storage.service';
 
 const S3_STORAGE_PROVIDER = {
@@ -7,11 +7,9 @@ const S3_STORAGE_PROVIDER = {
   useFactory: (): S3StorageService | null => {
     const logger = new Logger('StorageModule');
 
-    const bucket = process.env['S3_BUCKET'];
+    const bucket = process.env.S3_BUCKET;
     if (!bucket) {
-      logger.warn(
-        'S3_BUCKET env var is not set. S3 storage will be disabled (graceful degradation).',
-      );
+      logger.warn('S3_BUCKET env var is not set. S3 storage will be disabled (graceful degradation).');
       return null;
     }
 
@@ -19,9 +17,7 @@ const S3_STORAGE_PROVIDER = {
       const config = s3ConfigFromEnv();
       return new S3StorageService(config);
     } catch (error) {
-      logger.error(
-        `Failed to initialise S3StorageService: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      logger.error(`Failed to initialise S3StorageService: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     }
   },

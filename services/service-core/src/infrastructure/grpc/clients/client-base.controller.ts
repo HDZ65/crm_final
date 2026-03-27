@@ -1,69 +1,64 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { ClientBaseService } from '../../persistence/typeorm/repositories/clients/client-base.service';
-import { ClientBaseEntity } from '../../../domain/clients/entities/client-base.entity';
 import type {
   CreateClientBaseRequest,
-  UpdateClientBaseRequest,
+  DeleteClientBaseRequest,
   GetClientBaseRequest,
   ListClientsBaseRequest,
-  ListClientsBaseResponse,
-  DeleteClientBaseRequest,
   SearchClientRequest,
-  SearchClientResponse,
-  ClientBase,
-  DeleteResponse,
+  UpdateClientBaseRequest,
 } from '@proto/clients';
+import { ClientBaseEntity } from '../../../domain/clients/entities/client-base.entity';
+import { ClientBaseService } from '../../persistence/typeorm/repositories/clients/client-base.service';
 
 /**
- * Map ClientBaseEntity (camelCase) to proto ClientBase (snake_case).
- * Required because proto-loader uses keepCase: true.
+ * Map ClientBaseEntity (camelCase) to proto ClientBase (camelCase).
+ * Proto-ts generates camelCase field names from snake_case proto fields.
  */
 function clientBaseToProto(entity: ClientBaseEntity) {
   return {
     id: entity.id,
-    organisation_id: entity.organisationId,
-    type_client: entity.typeClient ?? '',
+    organisationId: entity.keycloakGroupId,
+    typeClient: entity.typeClient ?? '',
     nom: entity.nom,
     prenom: entity.prenom,
-    date_naissance: entity.dateNaissance?.toISOString?.() ?? '',
-    compte_code: entity.compteCode ?? '',
-    partenaire_id: entity.partenaireId ?? '',
-    date_creation: entity.dateCreation?.toISOString?.() ?? '',
+    dateNaissance: entity.dateNaissance?.toISOString?.() ?? '',
+    compteCode: entity.compteCode ?? '',
+    partenaireId: entity.partenaireId ?? '',
+    dateCreation: entity.dateCreation?.toISOString?.() ?? '',
     telephone: entity.telephone,
     email: entity.email ?? '',
     statut: entity.statut,
-    created_at: entity.createdAt?.toISOString?.() ?? '',
-    updated_at: entity.updatedAt?.toISOString?.() ?? '',
-    adresses: entity.adresses?.map(a => ({
-      id: a.id,
-      client_base_id: a.clientBaseId ?? '',
-      type: a.type ?? '',
-      type_adresse: a.typeAdresse ?? '',
-      ligne1: a.ligne1 ?? '',
-      ligne2: a.ligne2 ?? '',
-      code_postal: a.codePostal ?? '',
-      ville: a.ville ?? '',
-      pays: a.pays ?? '',
-      created_at: a.createdAt?.toISOString?.() ?? '',
-      updated_at: a.updatedAt?.toISOString?.() ?? '',
-    })) ?? [],
-    societe_id: entity.societeId ?? '',
-    has_conciergerie: entity.hasConciergerie ?? false,
-    has_justi_plus: entity.hasJustiPlus ?? false,
-    has_wincash: entity.hasWincash ?? false,
-    uuid_wincash: entity.uuidWincash ?? '',
-    uuid_justi_plus: entity.uuidJustiPlus ?? '',
-    date_premiere_souscription: entity.datePremiereSouscription?.toISOString?.() ?? '',
-    canal_acquisition: entity.canalAcquisition ?? '',
+    createdAt: entity.createdAt?.toISOString?.() ?? '',
+    updatedAt: entity.updatedAt?.toISOString?.() ?? '',
+    adresses:
+      entity.adresses?.map((a) => ({
+        id: a.id,
+        clientBaseId: a.clientBaseId ?? '',
+        type: a.type ?? '',
+        typeAdresse: a.typeAdresse ?? '',
+        ligne1: a.ligne1 ?? '',
+        ligne2: a.ligne2 ?? '',
+        codePostal: a.codePostal ?? '',
+        ville: a.ville ?? '',
+        pays: a.pays ?? '',
+        createdAt: a.createdAt?.toISOString?.() ?? '',
+        updatedAt: a.updatedAt?.toISOString?.() ?? '',
+      })) ?? [],
+    societeId: '',
+    hasConciergerie: entity.hasConciergerie ?? false,
+    hasJustiPlus: entity.hasJustiPlus ?? false,
+    hasWincash: entity.hasWincash ?? false,
+    uuidWincash: entity.uuidWincash ?? '',
+    uuidJustiPlus: entity.uuidJustiPlus ?? '',
+    datePremiereSouscription: entity.datePremiereSouscription?.toISOString?.() ?? '',
+    canalAcquisition: entity.canalAcquisition ?? '',
   };
 }
 
 @Controller()
 export class ClientBaseController {
-  constructor(
-    private readonly clientBaseService: ClientBaseService,
-  ) {}
+  constructor(private readonly clientBaseService: ClientBaseService) {}
 
   @GrpcMethod('ClientBaseService', 'Create')
   async createClientBase(data: CreateClientBaseRequest) {
@@ -85,22 +80,7 @@ export class ClientBaseController {
 
   @GrpcMethod('ClientBaseService', 'List')
   async listClientsBase(data: ListClientsBaseRequest) {
-    const payload = data as any;
-    const normalizedRequest: ListClientsBaseRequest = {
-      ...data,
-      organisation_id: payload.organisationId || data.organisation_id,
-      statut_id: payload.statutId || data.statut_id,
-      societe_id: payload.societeId || data.societe_id,
-      pagination: data.pagination
-        ? {
-            ...data.pagination,
-            sort_by: (data.pagination as any).sortBy || data.pagination.sort_by,
-            sort_order: (data.pagination as any).sortOrder || data.pagination.sort_order,
-          }
-        : data.pagination,
-    };
-
-    const result = await this.clientBaseService.findAll(normalizedRequest);
+    const result = await this.clientBaseService.findAll(data);
     return {
       clients: result.clients.map(clientBaseToProto),
       pagination: result.pagination,
@@ -115,7 +95,7 @@ export class ClientBaseController {
 
   @GrpcMethod('ClientBaseService', 'Search')
   async searchClient(data: SearchClientRequest) {
-    const result = await this.clientBaseService.search(data.organisation_id, data.telephone, data.nom);
+    const result = await this.clientBaseService.search(data.organisationId, data.telephone, data.nom);
     return {
       found: result.found,
       client: result.client ? clientBaseToProto(result.client) : undefined,

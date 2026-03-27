@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { ClientPartenaireEntity } from '../../../../../domain/clients/entities';
 
 @Injectable()
 export class ClientPartenaireService {
-  private readonly logger = new Logger(ClientPartenaireService.name);
-
   constructor(
     @InjectRepository(ClientPartenaireEntity)
     private readonly repository: Repository<ClientPartenaireEntity>,

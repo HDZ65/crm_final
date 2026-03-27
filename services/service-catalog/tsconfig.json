@@ -1,0 +1,38 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "node16",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "../../",
+    "paths": {
+      "@crm/shared-kernel": ["packages/shared-kernel/dist"],
+      "@crm/shared-kernel/*": ["packages/shared-kernel/dist/*"],
+      "@proto/products": ["packages/proto/gen/ts/products/products_pb"],
+      "@proto/subscriptions": ["packages/proto/gen/ts/subscriptions/subscriptions_pb"],
+      "@proto/bundle": ["packages/proto/gen/ts/services/bundle_pb"]
+    },
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "exactOptionalPropertyTypes": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node16"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+}

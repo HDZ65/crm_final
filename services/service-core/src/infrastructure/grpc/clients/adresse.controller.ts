@@ -1,16 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { AdresseService } from '../../persistence/typeorm/repositories/clients/adresse.service';
 import type {
   CreateAdresseRequest,
-  UpdateAdresseRequest,
+  DeleteAdresseRequest,
   GetAdresseRequest,
   ListAdressesRequest,
-  ListAdressesResponse,
-  DeleteAdresseRequest,
-  Adresse,
-  DeleteResponse,
+  UpdateAdresseRequest,
 } from '@proto/clients';
+import { AdresseService } from '../../persistence/typeorm/repositories/clients/adresse.service';
 
 @Controller()
 export class AdresseController {
@@ -19,13 +16,13 @@ export class AdresseController {
   @GrpcMethod('AdresseService', 'Create')
   async createAdresse(data: CreateAdresseRequest) {
     return this.adresseService.create({
-      clientBaseId: data.client_base_id,
+      clientBaseId: data.clientBaseId,
       ligne1: data.ligne1,
       ligne2: data.ligne2,
-      codePostal: data.code_postal,
+      codePostal: data.codePostal,
       ville: data.ville,
       pays: data.pays,
-      type: data.type,
+      type: data.type as unknown as string,
     });
   }
 
@@ -35,10 +32,10 @@ export class AdresseController {
       id: data.id,
       ligne1: data.ligne1,
       ligne2: data.ligne2,
-      codePostal: data.code_postal,
+      codePostal: data.codePostal,
       ville: data.ville,
       pays: data.pays,
-      type: data.type,
+      type: data.type as unknown as string,
     });
   }
 
@@ -49,7 +46,7 @@ export class AdresseController {
 
   @GrpcMethod('AdresseService', 'ListByClient')
   async listAdressesByClient(data: ListAdressesRequest) {
-    return this.adresseService.findByClient(data.client_base_id, data.pagination);
+    return this.adresseService.findByClient(data.clientBaseId, data.pagination);
   }
 
   @GrpcMethod('AdresseService', 'Delete')

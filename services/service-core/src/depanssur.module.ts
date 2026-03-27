@@ -1,38 +1,34 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
-
+import { TypeOrmModule } from '@nestjs/typeorm';
+// Cross-context module imports (no circular dependency)
+import { ClientsModule } from './clients.module';
 // Domain entities
 import {
-  ConsentementEntity,
   AbonnementDepanssurEntity,
-  OptionAbonnementEntity,
   CompteurPlafondEntity,
-  HistoriqueStatutAbonnementEntity,
+  ConsentementEntity,
   DossierDeclaratifEntity,
+  HistoriqueStatutAbonnementEntity,
   HistoriqueStatutDossierEntity,
+  OptionAbonnementEntity,
   WebhookEventLogEntity,
 } from './domain/depanssur/entities';
-
-// Infrastructure services
-import {
-  AbonnementService,
-  OptionAbonnementService,
-  CompteurPlafondService,
-  DossierDeclaratifService,
-  ConsentementService,
-} from './infrastructure/persistence/typeorm/repositories/depanssur';
-import { RegleDepanssurService } from './domain/depanssur/services/regle-depanssur.service';
-import { DepanssurWebhookService } from './domain/depanssur/services/depanssur-webhook.service';
 import { DepanssurSchedulerService } from './domain/depanssur/services/depanssur-scheduler.service';
-import { AbonnementRestoredHandler } from './infrastructure/messaging/nats/handlers/depanssur/abonnement-restored.handler';
-
+import { DepanssurWebhookService } from './domain/depanssur/services/depanssur-webhook.service';
+import { RegleDepanssurService } from './domain/depanssur/services/regle-depanssur.service';
 // Interface controllers
 import { DepanssurController } from './infrastructure/grpc/depanssur';
 import { DepanssurWebhookController } from './infrastructure/http/controllers/depanssur-webhook.controller';
-
-// Cross-context module imports
-import { ClientsModule } from './clients.module';
+import { AbonnementRestoredHandler } from './infrastructure/messaging/nats/handlers/depanssur/abonnement-restored.handler';
+// Infrastructure services
+import {
+  AbonnementService,
+  CompteurPlafondService,
+  ConsentementService,
+  DossierDeclaratifService,
+  OptionAbonnementService,
+} from './infrastructure/persistence/typeorm/repositories/depanssur';
 
 @Module({
   imports: [
@@ -47,12 +43,10 @@ import { ClientsModule } from './clients.module';
       WebhookEventLogEntity,
     ]),
     ScheduleModule.forRoot(),
-    forwardRef(() => ClientsModule),
+    // No forwardRef needed - ClientsModule doesn't import DepanssurModule
+    ClientsModule,
   ],
-  controllers: [
-    DepanssurController,
-    DepanssurWebhookController,
-  ],
+  controllers: [DepanssurController, DepanssurWebhookController],
   providers: [
     RegleDepanssurService,
     AbonnementService,

@@ -1,12 +1,12 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
   Unique,
+  UpdateDateColumn,
 } from 'typeorm';
 import { PartenaireMarqueBlancheEntity } from './partenaire-marque-blanche.entity';
 import { RolePartenaireEntity } from './role-partenaire.entity';
@@ -32,7 +32,10 @@ export class MembrePartenaireEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => PartenaireMarqueBlancheEntity, (partenaire) => partenaire.membres)
+  @ManyToOne(
+    () => PartenaireMarqueBlancheEntity,
+    (partenaire) => partenaire.membres,
+  )
   @JoinColumn({ name: 'partenaire_marque_blanche_id' })
   partenaire: PartenaireMarqueBlancheEntity;
 

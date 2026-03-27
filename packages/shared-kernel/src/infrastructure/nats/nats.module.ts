@@ -1,7 +1,7 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
-import { NatsService } from './nats.service.js';
-import type { NatsConfig } from './nats.service.js';
 import { NATS_OPTIONS } from './nats.constants.js';
+import type { NatsConfig } from './nats.service.js';
+import { NatsService } from './nats.service.js';
 
 export interface NatsModuleOptions extends NatsConfig {}
 

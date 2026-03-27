@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PieceJointeEntity, DocumentAuditLogEntity } from '../../../../../domain/documents/entities';
+import { DocumentAuditLogEntity, PieceJointeEntity } from '../../../../../domain/documents/entities';
 
 type PieceJointe = PieceJointeEntity;
 
@@ -113,7 +113,7 @@ export class PieceJointeService {
   }
 
   async findByType(
-    organisationId: string,
+    keycloakGroupId: string,
     typeDocument: number,
     entiteType?: string,
     pagination?: { page: number; limit: number },
@@ -128,7 +128,7 @@ export class PieceJointeService {
     const limit = pagination?.limit || 10;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = { organisationId, typeDocument };
+    const where: Record<string, unknown> = { keycloakGroupId, typeDocument };
     if (entiteType) {
       where.entiteType = entiteType;
     }
@@ -158,7 +158,7 @@ export class PieceJointeService {
 
   async logAccess(data: {
     documentId: string;
-    organisationId: string;
+    keycloakGroupId: string;
     action: string;
     userId?: string;
     userName?: string;
@@ -166,7 +166,7 @@ export class PieceJointeService {
   }): Promise<DocumentAuditLogEntity> {
     const log = this.auditLogRepository.create({
       documentId: data.documentId,
-      organisationId: data.organisationId,
+      keycloakGroupId: data.keycloakGroupId,
       action: data.action,
       userId: data.userId ?? null,
       userName: data.userName ?? null,

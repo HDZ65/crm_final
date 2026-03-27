@@ -32,7 +32,7 @@ message PartenaireCommercial {
   string bic = 10;
   string code_extranet = 11;
   string api_base_url = 12;
-  string api_credentials = 13;  // JSON string (TODO: encrypted)
+  reserved 13;                  // Deprecated: api_credentials moved to PartnerCredentialService
   int32 sla_delai_traitement_heures = 14;
   double sla_taux_disponibilite = 15;
   string sla_contact_urgence = 16;
@@ -71,7 +71,7 @@ message CreatePartenaireCommercialRequest {
   string bic = 9;
   string code_extranet = 10;
   string api_base_url = 11;
-  string api_credentials = 12;  // JSON string
+  reserved 12;                  // Deprecated: use PartnerCredentialService.StoreCredentials
   int32 sla_delai_traitement_heures = 13;
   double sla_taux_disponibilite = 14;
   string sla_contact_urgence = 15;
@@ -96,7 +96,7 @@ message UpdatePartenaireCommercialRequest {
   string bic = 9;
   string code_extranet = 10;
   string api_base_url = 11;
-  string api_credentials = 12;  // JSON string
+  reserved 12;                  // Deprecated: use PartnerCredentialService.StoreCredentials
   int32 sla_delai_traitement_heures = 13;
   double sla_taux_disponibilite = 14;
   string sla_contact_urgence = 15;
@@ -170,4 +170,294 @@ message PaginationResult {
 
 message DeleteResponse {
   bool success = 1;
+}
+
+message PartnerCredential {
+  string id = 1;
+  string partner_id = 2;
+  string env = 3;
+  string auth_type = 4;
+  string credentials_encrypted = 5;
+  int32 key_version = 6;
+  string valid_from = 7;
+  string valid_to = 8;
+  string rotated_at = 9;
+  string rotated_by = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+message StorePartnerCredentialRequest {
+  string partner_id = 1;
+  string env = 2;
+  string auth_type = 3;
+  string credentials = 4;
+  string valid_from = 5;
+  string valid_to = 6;
+}
+
+message GetPartnerCredentialRequest {
+  string partner_id = 1;
+  string env = 2;
+}
+
+message GetPartnerCredentialResponse {
+  PartnerCredential credential = 1;
+  string credentials = 2;
+}
+
+message ListPartnerCredentialRequest {
+  string partner_id = 1;
+}
+
+message ListPartnerCredentialResponse {
+  repeated PartnerCredential credentials = 1;
+}
+
+message DeletePartnerCredentialRequest {
+  string id = 1;
+}
+
+message RotatePartnerCredentialRequest {
+  string id = 1;
+  string rotated_by = 2;
+}
+
+service PartnerCredentialService {
+  rpc StoreCredentials(StorePartnerCredentialRequest) returns (PartnerCredential);
+  rpc GetCredentials(GetPartnerCredentialRequest) returns (GetPartnerCredentialResponse);
+  rpc ListCredentials(ListPartnerCredentialRequest) returns (ListPartnerCredentialResponse);
+  rpc DeleteCredential(DeletePartnerCredentialRequest) returns (DeleteResponse);
+  rpc RotateCredential(RotatePartnerCredentialRequest) returns (DeleteResponse);
+}
+
+service WebhookService {
+  rpc RegisterEndpoint(RegisterEndpointRequest) returns (RegisterEndpointResponse);
+  rpc ListEndpoints(ListEndpointsRequest) returns (ListEndpointsResponse);
+  rpc GetEndpoint(GetEndpointRequest) returns (WebhookEndpointDto);
+  rpc DeleteEndpoint(DeleteEndpointRequest) returns (DeleteEndpointResponse);
+  rpc GetPartnerSecret(GetPartnerSecretRequest) returns (GetPartnerSecretResponse);
+  rpc LogWebhookEvent(LogWebhookEventRequest) returns (LogWebhookEventResponse);
+  rpc ListWebhookEvents(ListWebhookEventsRequest) returns (ListWebhookEventsResponse);
+  rpc RetryWebhookEvent(RetryWebhookEventRequest) returns (RetryWebhookEventResponse);
+}
+
+message RegisterEndpointRequest {
+  string partner_id = 1;
+  string event_type = 2;
+  string secret = 3;
+  repeated string allowed_ips = 4;
+}
+
+message RegisterEndpointResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message ListEndpointsRequest {
+  string partner_id = 1;
+}
+
+message ListEndpointsResponse {
+  repeated WebhookEndpointDto endpoints = 1;
+}
+
+message GetEndpointRequest {
+  string id = 1;
+}
+
+message WebhookEndpointDto {
+  string id = 1;
+  string partner_id = 2;
+  string event_type = 3;
+  string status = 4;
+  string created_at = 5;
+}
+
+message DeleteEndpointRequest {
+  string id = 1;
+}
+
+message DeleteEndpointResponse {
+  bool success = 1;
+}
+
+message GetPartnerSecretRequest {
+  string partner_id = 1;
+  string event_type = 2;
+}
+
+message GetPartnerSecretResponse {
+  string secret = 1;
+  repeated string allowed_ips = 2;
+  bool found = 3;
+}
+
+message LogWebhookEventRequest {
+  string partner_id = 1;
+  string event_type = 2;
+  string event_id = 3;
+  string payload_json = 4;
+  string signature = 5;
+  bool signature_valid = 6;
+  string endpoint_id = 7;
+}
+
+message LogWebhookEventResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message ListWebhookEventsRequest {
+  string partner_id = 1;
+  string status = 2;
+  int32 limit = 3;
+}
+
+message ListWebhookEventsResponse {
+  repeated WebhookEventDto events = 1;
+}
+
+message WebhookEventDto {
+  string id = 1;
+  string event_type = 2;
+  string status = 3;
+  int32 retry_count = 4;
+  string error_message = 5;
+  string created_at = 6;
+}
+
+message RetryWebhookEventRequest {
+  string id = 1;
+}
+
+message RetryWebhookEventResponse {
+  bool success = 1;
+  string status = 2;
+}
+
+service AuditLogService {
+  rpc SearchAuditLogs(SearchAuditLogsRequest) returns (SearchAuditLogsResponse);
+  rpc ExportAuditLogsCsv(SearchAuditLogsRequest) returns (ExportCsvResponse);
+}
+
+message SearchAuditLogsRequest {
+  string company_id = 1;
+  string table_name = 2;
+  string record_id = 3;
+  string actor_id = 4;
+  string action = 5;
+  string from_date = 6;
+  string to_date = 7;
+  int32 page = 8;
+  int32 limit = 9;
+}
+
+message SearchAuditLogsResponse {
+  repeated AuditLogDto items = 1;
+  int32 total = 2;
+}
+
+message AuditLogDto {
+  string id = 1;
+  string company_id = 2;
+  string table_name = 3;
+  string record_id = 4;
+  string actor_id = 5;
+  string actor_role = 6;
+  string action = 7;
+  string before_data_json = 8;
+  string after_data_json = 9;
+  string diff_json = 10;
+  string ip_address = 11;
+  string created_at = 12;
+}
+
+message ExportCsvResponse {
+  string csv_content = 1;
+  bool success = 2;
+}
+
+// ========== API KEY SERVICE ==========
+service ApiKeyService {
+  rpc CreateApiKey(CreateApiKeyRequest) returns (CreateApiKeyResponse);
+  rpc ListApiKeys(ListApiKeysRequest) returns (ListApiKeysResponse);
+  rpc GetApiKey(GetApiKeyRequest) returns (ApiKeyDto);
+  rpc RevokeApiKey(RevokeApiKeyRequest) returns (RevokeApiKeyResponse);
+  rpc DeleteApiKey(DeleteApiKeyRequest) returns (DeleteResponse);
+  rpc ValidateApiKey(ValidateApiKeyRequest) returns (ValidateApiKeyResponse);
+}
+
+message CreateApiKeyRequest {
+  string organisation_id = 1;
+  string name = 2;
+  string env = 3;                    // "sandbox" | "production"
+  repeated string scopes = 4;
+  string expires_at = 5;             // ISO 8601 optional
+  string created_by = 6;
+}
+
+message CreateApiKeyResponse {
+  string id = 1;
+  string plain_key = 2;              // Only returned once at creation
+  string key_prefix = 3;             // e.g. "fns_live_"
+  string key_suffix = 4;             // last 8 chars for display
+  string created_at = 5;
+}
+
+message ListApiKeysRequest {
+  string organisation_id = 1;
+  string env = 2;                    // optional filter
+  string status = 3;                 // optional filter: "active" | "revoked" | "expired"
+}
+
+message ListApiKeysResponse {
+  repeated ApiKeyDto api_keys = 1;
+}
+
+message GetApiKeyRequest {
+  string id = 1;
+}
+
+message ApiKeyDto {
+  string id = 1;
+  string organisation_id = 2;
+  string name = 3;
+  string env = 4;
+  string key_prefix = 5;
+  string key_suffix = 6;
+  repeated string scopes = 7;
+  string status = 8;                 // "active" | "revoked" | "expired"
+  string expires_at = 9;
+  string last_used_at = 10;
+  string created_at = 11;
+  string created_by = 12;
+  string revoked_at = 13;
+  string revoked_by = 14;
+}
+
+message RevokeApiKeyRequest {
+  string id = 1;
+  string revoked_by = 2;
+}
+
+message RevokeApiKeyResponse {
+  bool success = 1;
+}
+
+message DeleteApiKeyRequest {
+  string id = 1;
+}
+
+message ValidateApiKeyRequest {
+  string plain_key = 1;
+  string required_scope = 2;
+}
+
+message ValidateApiKeyResponse {
+  bool valid = 1;
+  string organisation_id = 2;
+  string key_id = 3;
+  repeated string scopes = 4;
+  string reason = 5;                 // empty if valid, else "revoked" | "expired" | "not_found" | "scope_denied"
 }

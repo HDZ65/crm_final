@@ -1,20 +1,18 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
-  Controller,
-  Post,
   Body,
+  Controller,
   Headers,
   HttpCode,
   HttpStatus,
   Logger,
-  UnauthorizedException,
+  Post,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHmac, timingSafeEqual } from 'crypto';
-import {
-  DepanssurWebhookService,
-} from '../../../domain/depanssur/services/depanssur-webhook.service';
 import type { DepanssurWebhookPayload } from '../../../domain/depanssur/services/depanssur-webhook.service';
+import { DepanssurWebhookService } from '../../../domain/depanssur/services/depanssur-webhook.service';
 
 @Controller('webhooks')
 export class DepanssurWebhookController {
@@ -25,10 +23,7 @@ export class DepanssurWebhookController {
     private readonly webhookService: DepanssurWebhookService,
     private readonly configService: ConfigService,
   ) {
-    this.webhookSecret = this.configService.get<string>(
-      'DEPANSSUR_WEBHOOK_SECRET',
-      'depanssur-webhook-secret-default',
-    );
+    this.webhookSecret = this.configService.get<string>('DEPANSSUR_WEBHOOK_SECRET', 'depanssur-webhook-secret-default');
   }
 
   @Post('depanssur')
@@ -39,9 +34,7 @@ export class DepanssurWebhookController {
     @Req() req: any,
   ): Promise<{ status: string; eventId: string }> {
     const payload = body as DepanssurWebhookPayload;
-    this.logger.log(
-      `POST /webhooks/depanssur — eventId=${payload.eventId} type=${payload.eventType}`,
-    );
+    this.logger.log(`POST /webhooks/depanssur — eventId=${payload.eventId} type=${payload.eventType}`);
 
     // 1. Validate HMAC signature
     this.validateSignature(req, signature);
@@ -64,36 +57,24 @@ export class DepanssurWebhookController {
    * Validate HMAC-SHA256 signature from X-Depanssur-Signature header.
    * Computes HMAC over raw body using shared secret.
    */
-  private validateSignature(
-    req: any,
-    signature: string | undefined,
-  ): void {
+  private validateSignature(req: any, signature: string | undefined): void {
     if (!signature) {
       throw new UnauthorizedException('Missing X-Depanssur-Signature header');
     }
 
     // Use raw body if available, fallback to stringified body
-    const rawBody = req.rawBody
-      ? req.rawBody
-      : Buffer.from(JSON.stringify(req.body));
+    const rawBody = req.rawBody ? req.rawBody : Buffer.from(JSON.stringify(req.body));
 
-    const expectedSignature = createHmac('sha256', this.webhookSecret)
-      .update(rawBody)
-      .digest('hex');
+    const expectedSignature = createHmac('sha256', this.webhookSecret).update(rawBody).digest('hex');
 
     // Prefix support: "sha256=<hex>" or just "<hex>"
-    const providedHex = signature.startsWith('sha256=')
-      ? signature.slice(7)
-      : signature;
+    const providedHex = signature.startsWith('sha256=') ? signature.slice(7) : signature;
 
     try {
       const expectedBuffer = Buffer.from(expectedSignature, 'hex');
       const providedBuffer = Buffer.from(providedHex, 'hex');
 
-      if (
-        expectedBuffer.length !== providedBuffer.length ||
-        !timingSafeEqual(expectedBuffer, providedBuffer)
-      ) {
+      if (expectedBuffer.length !== providedBuffer.length || !timingSafeEqual(expectedBuffer, providedBuffer)) {
         this.logger.warn('Webhook signature mismatch');
         throw new UnauthorizedException('Invalid signature');
       }

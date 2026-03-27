@@ -184,9 +184,11 @@ describe('RegleDepanssurService', () => {
     it('should throw when abonnement has no dateEffet', () => {
       const abonnement = makeAbonnement({ dateEffet: null as never });
 
-      expect(() => service.validerCarence(abonnement, new Date('2026-01-10T00:00:00.000Z'))).toThrow(RegleDepanssurError);
       expect(() => service.validerCarence(abonnement, new Date('2026-01-10T00:00:00.000Z'))).toThrow(
-        'La date d\'effet de l\'abonnement est requise',
+        RegleDepanssurError,
+      );
+      expect(() => service.validerCarence(abonnement, new Date('2026-01-10T00:00:00.000Z'))).toThrow(
+        "La date d'effet de l'abonnement est requise",
       );
     });
 
@@ -211,7 +213,11 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: 10,
       });
 
-      const result = service.verifierPlafonds(abonnement, 120, makeCompteur({ montantCumule: '200.00', nbInterventionsUtilisees: 2 }));
+      const result = service.verifierPlafonds(
+        abonnement,
+        120,
+        makeCompteur({ montantCumule: '200.00', nbInterventionsUtilisees: 2 }),
+      );
 
       expect(result.autorise).toBe(false);
       expect(result.raison).toBe('PLAFOND_PAR_INTERVENTION_DEPASSE');
@@ -225,7 +231,11 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: 10,
       });
 
-      const result = service.verifierPlafonds(abonnement, 300, makeCompteur({ montantCumule: '800.00', nbInterventionsUtilisees: 4 }));
+      const result = service.verifierPlafonds(
+        abonnement,
+        300,
+        makeCompteur({ montantCumule: '800.00', nbInterventionsUtilisees: 4 }),
+      );
 
       expect(result.autorise).toBe(false);
       expect(result.raison).toBe('PLAFOND_ANNUEL_DEPASSE');
@@ -239,7 +249,11 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: 3,
       });
 
-      const result = service.verifierPlafonds(abonnement, 200, makeCompteur({ montantCumule: '1000.00', nbInterventionsUtilisees: 3 }));
+      const result = service.verifierPlafonds(
+        abonnement,
+        200,
+        makeCompteur({ montantCumule: '1000.00', nbInterventionsUtilisees: 3 }),
+      );
 
       expect(result.autorise).toBe(false);
       expect(result.raison).toBe('NB_INTERVENTIONS_MAX_DEPASSE');
@@ -253,7 +267,11 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: 10,
       });
 
-      const result = service.verifierPlafonds(abonnement, 200, makeCompteur({ montantCumule: '1000.00', nbInterventionsUtilisees: 4 }));
+      const result = service.verifierPlafonds(
+        abonnement,
+        200,
+        makeCompteur({ montantCumule: '1000.00', nbInterventionsUtilisees: 4 }),
+      );
 
       expect(result.autorise).toBe(true);
       expect(result.raison).toBeUndefined();
@@ -269,7 +287,11 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: null,
       });
 
-      const result = service.verifierPlafonds(abonnement, 999999, makeCompteur({ montantCumule: '500000.00', nbInterventionsUtilisees: 1000 }));
+      const result = service.verifierPlafonds(
+        abonnement,
+        999999,
+        makeCompteur({ montantCumule: '500000.00', nbInterventionsUtilisees: 1000 }),
+      );
 
       expect(result.autorise).toBe(true);
       expect(result.plafondsRestants.parIntervention).toBeNull();
@@ -284,7 +306,11 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: 10,
       });
 
-      const result = service.verifierPlafonds(abonnement, 100, makeCompteur({ montantCumule: '700.00', nbInterventionsUtilisees: 2 }));
+      const result = service.verifierPlafonds(
+        abonnement,
+        100,
+        makeCompteur({ montantCumule: '700.00', nbInterventionsUtilisees: 2 }),
+      );
 
       expect(result.autorise).toBe(true);
       expect(result.plafondsRestants.annuelMontant).toBe(200);
@@ -297,7 +323,11 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: 1,
       });
 
-      const result = service.verifierPlafonds(abonnement, 200, makeCompteur({ montantCumule: '100.00', nbInterventionsUtilisees: 1 }));
+      const result = service.verifierPlafonds(
+        abonnement,
+        200,
+        makeCompteur({ montantCumule: '100.00', nbInterventionsUtilisees: 1 }),
+      );
 
       expect(result.autorise).toBe(false);
       expect(result.raison).toBe('PLAFOND_PAR_INTERVENTION_DEPASSE');
@@ -323,9 +353,18 @@ describe('RegleDepanssurService', () => {
       const harness = createHarness({
         getOneQueue: [makeCompteur({ nbInterventionsUtilisees: 1, montantCumule: '100.00' })],
       });
-      const abonnement = makeAbonnement({ plafondParIntervention: '500.00', plafondAnnuel: null, nbInterventionsMax: null });
+      const abonnement = makeAbonnement({
+        plafondParIntervention: '500.00',
+        plafondAnnuel: null,
+        nbInterventionsMax: null,
+      });
 
-      const saved = await harness.service.majCompteurs(abonnement, 50, new Date('2026-06-01T00:00:00.000Z'), harness.manager);
+      const saved = await harness.service.majCompteurs(
+        abonnement,
+        50,
+        new Date('2026-06-01T00:00:00.000Z'),
+        harness.manager,
+      );
 
       expect(saved.nbInterventionsUtilisees).toBe(2);
       expect(saved.montantCumule).toBe('150.00');
@@ -336,7 +375,11 @@ describe('RegleDepanssurService', () => {
       const harness = createHarness({
         getOneQueue: [makeCompteur({ nbInterventionsUtilisees: 0, montantCumule: '0.00' })],
       });
-      const abonnement = makeAbonnement({ plafondParIntervention: '100.00', plafondAnnuel: null, nbInterventionsMax: null });
+      const abonnement = makeAbonnement({
+        plafondParIntervention: '100.00',
+        plafondAnnuel: null,
+        nbInterventionsMax: null,
+      });
 
       await expect(
         harness.service.majCompteurs(abonnement, 250, new Date('2026-06-01T00:00:00.000Z'), harness.manager),
@@ -355,7 +398,12 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: null,
       });
 
-      const saved = await harness.service.majCompteurs(abonnement, 75, new Date('2026-02-01T00:00:00.000Z'), harness.manager);
+      const saved = await harness.service.majCompteurs(
+        abonnement,
+        75,
+        new Date('2026-02-01T00:00:00.000Z'),
+        harness.manager,
+      );
 
       expect(harness.createCalls.length).toBe(1);
       expect(saved.anneeGlissanteDebut.toISOString()).toBe('2026-01-01T00:00:00.000Z');
@@ -368,7 +416,11 @@ describe('RegleDepanssurService', () => {
         getOneQueue: [makeCompteur({ nbInterventionsUtilisees: 0, montantCumule: '0.00' })],
         saveError: new Error('DB_SAVE_FAILED'),
       });
-      const abonnement = makeAbonnement({ plafondParIntervention: null, plafondAnnuel: null, nbInterventionsMax: null });
+      const abonnement = makeAbonnement({
+        plafondParIntervention: null,
+        plafondAnnuel: null,
+        nbInterventionsMax: null,
+      });
 
       await expect(harness.service.majCompteurs(abonnement, 100, new Date('2026-06-01T00:00:00.000Z'))).rejects.toThrow(
         'DB_SAVE_FAILED',
@@ -384,7 +436,11 @@ describe('RegleDepanssurService', () => {
           makeCompteur({ id: 'compteur-b', nbInterventionsUtilisees: 1, montantCumule: '50.00' }),
         ],
       });
-      const abonnement = makeAbonnement({ plafondParIntervention: null, plafondAnnuel: null, nbInterventionsMax: null });
+      const abonnement = makeAbonnement({
+        plafondParIntervention: null,
+        plafondAnnuel: null,
+        nbInterventionsMax: null,
+      });
 
       await Promise.all([
         harness.service.majCompteurs(abonnement, 20, new Date('2026-06-01T00:00:00.000Z'), harness.manager),
@@ -407,7 +463,12 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: null,
       });
 
-      const saved = await harness.service.majCompteurs(abonnement, 40, new Date('2027-01-01T00:00:00.000Z'), harness.manager);
+      const saved = await harness.service.majCompteurs(
+        abonnement,
+        40,
+        new Date('2027-01-01T00:00:00.000Z'),
+        harness.manager,
+      );
 
       expect(saved.anneeGlissanteDebut.toISOString()).toBe('2027-01-01T00:00:00.000Z');
       expect(saved.anneeGlissanteFin.toISOString()).toBe('2028-01-01T00:00:00.000Z');
@@ -442,7 +503,12 @@ describe('RegleDepanssurService', () => {
         nbInterventionsMax: null,
       });
 
-      const saved = await harness.service.majCompteurs(abonnement, 50, new Date('2026-06-01T00:00:00.000Z'), harness.manager);
+      const saved = await harness.service.majCompteurs(
+        abonnement,
+        50,
+        new Date('2026-06-01T00:00:00.000Z'),
+        harness.manager,
+      );
 
       expect(saved.nbInterventionsUtilisees).toBe(2);
       expect(saved.montantCumule).toBe('800.00');
@@ -470,7 +536,11 @@ describe('RegleDepanssurService', () => {
       const harness = createHarness({ getOneQueue: [existing] });
       const abonnement = makeAbonnement({ dateEffet: new Date('2026-01-01T00:00:00.000Z') });
 
-      const result = await harness.service.resetCompteurAnnuel(abonnement, new Date('2026-06-01T00:00:00.000Z'), harness.manager);
+      const result = await harness.service.resetCompteurAnnuel(
+        abonnement,
+        new Date('2026-06-01T00:00:00.000Z'),
+        harness.manager,
+      );
 
       expect(result.id).toBe(existing.id);
       expect(harness.createCalls.length).toBe(0);

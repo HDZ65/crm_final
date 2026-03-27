@@ -1,13 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  WebhookEventLogEntity,
-  WebhookEventStatus,
-} from '../entities/webhook-event-log.entity';
 import { ClientBaseService } from '../../../infrastructure/persistence/typeorm/repositories/clients/client-base.service';
 import { AbonnementService } from '../../../infrastructure/persistence/typeorm/repositories/depanssur/abonnement.service';
 import { DossierDeclaratifService } from '../../../infrastructure/persistence/typeorm/repositories/depanssur/dossier-declaratif.service';
+import { WebhookEventLogEntity, WebhookEventStatus } from '../entities/webhook-event-log.entity';
 import { RegleDepanssurService } from './regle-depanssur.service';
 
 export interface DepanssurWebhookPayload {
@@ -34,10 +31,7 @@ export class DepanssurWebhookService {
    * Main entry point: log event, check idempotency, dispatch to handler, update status.
    * Returns the log entry (caller can respond 200 immediately).
    */
-  async processWebhook(
-    payload: DepanssurWebhookPayload,
-    signature: string | null,
-  ): Promise<WebhookEventLogEntity> {
+  async processWebhook(payload: DepanssurWebhookPayload, signature: string | null): Promise<WebhookEventLogEntity> {
     // 1. Persist the raw event (idempotency check via unique constraint)
     const logEntry = await this.logEvent(payload, signature);
     if (logEntry.isDuplicate()) {
@@ -48,10 +42,7 @@ export class DepanssurWebhookService {
     // 2. Dispatch async — do not block the HTTP response
     setImmediate(() => {
       this.dispatchEvent(logEntry, payload).catch((err) => {
-        this.logger.error(
-          `Unhandled error dispatching webhook ${payload.eventId}: ${err.message}`,
-          err.stack,
-        );
+        this.logger.error(`Unhandled error dispatching webhook ${payload.eventId}: ${err.message}`, err.stack);
       });
     });
 
@@ -62,10 +53,7 @@ export class DepanssurWebhookService {
    * Log event with idempotency via unique eventId constraint.
    * If eventId already exists, mark as DUPLICATE.
    */
-  private async logEvent(
-    payload: DepanssurWebhookPayload,
-    signature: string | null,
-  ): Promise<WebhookEventLogEntity> {
+  private async logEvent(payload: DepanssurWebhookPayload, signature: string | null): Promise<WebhookEventLogEntity> {
     // Check for existing event
     const existing = await this.webhookLogRepository.findOne({
       where: { eventId: payload.eventId },
@@ -99,10 +87,7 @@ export class DepanssurWebhookService {
   /**
    * Dispatch event to the appropriate handler based on eventType.
    */
-  private async dispatchEvent(
-    logEntry: WebhookEventLogEntity,
-    payload: DepanssurWebhookPayload,
-  ): Promise<void> {
+  private async dispatchEvent(logEntry: WebhookEventLogEntity, payload: DepanssurWebhookPayload): Promise<void> {
     try {
       switch (payload.eventType) {
         case 'customer.created':
@@ -160,17 +145,28 @@ export class DepanssurWebhookService {
     this.logger.log(`handleCustomerCreated: ${JSON.stringify(data)}`);
 
     await this.clientBaseService.create({
-      organisation_id: data.organisationId ?? data.organisation_id,
-      type_client: data.typeClient ?? data.type_client ?? 'PARTICULIER',
-      nom: data.nom ?? data.lastName ?? '',
-      prenom: data.prenom ?? data.firstName ?? '',
-      date_naissance: data.dateNaissance ?? data.date_naissance ?? '',
-      compte_code: data.compteCode ?? data.compte_code ?? 'DEFAULT',
-      partenaire_id: data.partenaireId ?? data.partenaire_id,
-      telephone: data.telephone ?? data.phone ?? '',
-      email: data.email ?? '',
+      organisationId: data.organisationId ?? data.organisation_id,
+      typeClient: data.typeClient ?? data.type_client ?? 'PARTICULIER',
+      compteCode: data.compteCode ?? data.compte_code ?? 'DEFAULT',
       statut: data.statut ?? 'ACTIF',
-      societe_id: data.societeId ?? data.societe_id,
+      partenaireId: data.partenaireId ?? data.partenaire_id,
+      societeId: data.societeId ?? data.societe_id,
+      identity: {
+        nom: data.nom ?? data.lastName ?? '',
+        prenom: data.prenom ?? data.firstName ?? '',
+        civilite: 0 as any,
+        lieuNaissance: '',
+        paysNaissance: '',
+        profession: '',
+        csp: '',
+        regimeSocial: '',
+      },
+      contact: {
+        telephone: data.telephone ?? data.phone ?? '',
+        email: data.email ?? '',
+        langue: '',
+      },
+      adresses: [],
     });
   }
 
@@ -187,11 +183,26 @@ export class DepanssurWebhookService {
 
     await this.clientBaseService.update({
       id: clientId,
-      nom: data.nom ?? data.lastName,
-      prenom: data.prenom ?? data.firstName,
-      telephone: data.telephone ?? data.phone,
-      email: data.email,
       statut: data.statut,
+      identity: (data.nom || data.lastName || data.prenom || data.firstName)
+        ? {
+            nom: data.nom ?? data.lastName ?? '',
+            prenom: data.prenom ?? data.firstName ?? '',
+            civilite: 0 as any,
+            lieuNaissance: '',
+            paysNaissance: '',
+            profession: '',
+            csp: '',
+            regimeSocial: '',
+          }
+        : undefined,
+      contact: (data.telephone || data.phone || data.email)
+        ? {
+            telephone: data.telephone ?? data.phone ?? '',
+            email: data.email ?? '',
+            langue: '',
+          }
+        : undefined,
     });
   }
 
@@ -338,13 +349,9 @@ export class DepanssurWebhookService {
               Number(montantPrisEnCharge),
               dossier.dateOuverture,
             );
-            this.logger.log(
-              `Compteurs updated for abonnement ${abonnement.id}, montant=${montantPrisEnCharge}`,
-            );
+            this.logger.log(`Compteurs updated for abonnement ${abonnement.id}, montant=${montantPrisEnCharge}`);
           } catch (error: any) {
-            this.logger.error(
-              `Failed to update compteurs for abonnement ${abonnement.id}: ${error.message}`,
-            );
+            this.logger.error(`Failed to update compteurs for abonnement ${abonnement.id}: ${error.message}`);
             // Don't rethrow — decision fields are already saved, compteur failure is logged
           }
         }
@@ -368,17 +375,12 @@ export class DepanssurWebhookService {
     const referenceExterne = data.referenceExterne ?? data.reference_externe;
     const organisationId = data.organisationId ?? data.organisation_id;
     if (referenceExterne && organisationId) {
-      const dossier = await this.dossierDeclaratifService.findByReferenceExterne(
-        organisationId,
-        referenceExterne,
-      );
+      const dossier = await this.dossierDeclaratifService.findByReferenceExterne(organisationId, referenceExterne);
       if (dossier) {
         return dossier.id;
       }
     }
 
-    throw new Error(
-      `Cannot resolve dossier: no dossierId and no matching referenceExterne (ref=${referenceExterne})`,
-    );
+    throw new Error(`Cannot resolve dossier: no dossierId and no matching referenceExterne (ref=${referenceExterne})`);
   }
 }

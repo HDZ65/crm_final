@@ -74,10 +74,9 @@ export class BoiteMailService {
     const queryBuilder = this.boiteMailRepository.createQueryBuilder('boite');
 
     if (filters?.search) {
-      queryBuilder.andWhere(
-        '(boite.nom ILIKE :search OR boite.adresseEmail ILIKE :search)',
-        { search: `%${filters.search}%` },
-      );
+      queryBuilder.andWhere('(boite.nom ILIKE :search OR boite.adresseEmail ILIKE :search)', {
+        search: `%${filters.search}%`,
+      });
     }
 
     if (filters?.fournisseur) {
@@ -143,10 +142,7 @@ export class BoiteMailService {
 
   async setDefault(id: string, utilisateurId: string): Promise<BoiteMail> {
     // Retirer le défaut des autres boîtes
-    await this.boiteMailRepository.update(
-      { utilisateurId, estParDefaut: true },
-      { estParDefaut: false },
-    );
+    await this.boiteMailRepository.update({ utilisateurId, estParDefaut: true }, { estParDefaut: false });
 
     // Définir la nouvelle par défaut
     const boiteMail = await this.findById(id);

@@ -1,28 +1,22 @@
-import {
-  Entity,
-  PrimaryColumn,
-  Column,
-  Index,
-  CreateDateColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryColumn } from 'typeorm';
 
 @Entity('processed_events')
 @Index(['eventId'])
 @Index(['expiresAt'])
 export class ProcessedEvent {
   @PrimaryColumn({ type: 'varchar', length: 255 })
-  eventId: string;
+  declare eventId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  eventType: string;
+  declare eventType: string;
 
   @CreateDateColumn({ name: 'processed_at', type: 'timestamptz' })
-  processedAt: Date;
+  declare processedAt: Date;
 
   @Column({
     name: 'expires_at',
     type: 'timestamptz',
     nullable: true,
   })
-  expiresAt: Date | null;
+  declare expiresAt: Date | null;
 }

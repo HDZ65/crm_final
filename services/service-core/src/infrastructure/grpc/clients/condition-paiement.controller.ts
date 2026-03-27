@@ -1,17 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { ConditionPaiementService } from '../../persistence/typeorm/repositories/clients/condition-paiement.service';
 import type {
   CreateConditionPaiementRequest,
-  UpdateConditionPaiementRequest,
-  GetConditionPaiementRequest,
-  GetConditionPaiementByCodeRequest,
-  ListConditionPaiementRequest,
-  ListConditionPaiementResponse,
   DeleteConditionPaiementRequest,
-  ConditionPaiement,
-  DeleteResponse,
+  GetConditionPaiementByCodeRequest,
+  GetConditionPaiementRequest,
+  ListConditionPaiementRequest,
+  UpdateConditionPaiementRequest,
 } from '@proto/referentiel';
+import { ConditionPaiementService } from '../../persistence/typeorm/repositories/clients/condition-paiement.service';
 
 @Controller()
 export class ConditionPaiementController {

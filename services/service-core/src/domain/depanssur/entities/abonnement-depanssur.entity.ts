@@ -1,25 +1,26 @@
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
-  JoinColumn,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
+import type { Relation } from 'typeorm';
 import { ClientBaseEntity } from '../../clients/entities/client-base.entity';
-import type { OptionAbonnementEntity } from './option-abonnement.entity';
-import type { CompteurPlafondEntity } from './compteur-plafond.entity';
-import type { HistoriqueStatutAbonnementEntity } from './historique-statut-abonnement.entity';
+import { CompteurPlafondEntity } from './compteur-plafond.entity';
+import { HistoriqueStatutAbonnementEntity } from './historique-statut-abonnement.entity';
+import { OptionAbonnementEntity } from './option-abonnement.entity';
 
 @Entity('abonnement_depanssur')
 export class AbonnementDepanssurEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'organisation_id', type: 'uuid' })
-  organisationId: string;
+  @Column({ name: 'keycloak_group_id', type: 'varchar', length: 255 })
+  keycloakGroupId: string;
 
   @Column({ name: 'client_id', type: 'uuid' })
   clientId: string;
@@ -82,14 +83,14 @@ export class AbonnementDepanssurEntity {
   @Column({ name: 'montant_remise', type: 'decimal', precision: 12, scale: 2, nullable: true })
   montantRemise: string | null;
 
-  @OneToMany('OptionAbonnementEntity', 'abonnement')
-  options: OptionAbonnementEntity[];
+  @OneToMany(() => OptionAbonnementEntity, (option) => option.abonnement)
+  options: Relation<OptionAbonnementEntity[]>;
 
-  @OneToMany('CompteurPlafondEntity', 'abonnement')
-  compteurs: CompteurPlafondEntity[];
+  @OneToMany(() => CompteurPlafondEntity, (compteur) => compteur.abonnement)
+  compteurs: Relation<CompteurPlafondEntity[]>;
 
-  @OneToMany('HistoriqueStatutAbonnementEntity', 'abonnement')
-  historique: HistoriqueStatutAbonnementEntity[];
+  @OneToMany(() => HistoriqueStatutAbonnementEntity, (historique) => historique.abonnement)
+  historique: Relation<HistoriqueStatutAbonnementEntity[]>;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

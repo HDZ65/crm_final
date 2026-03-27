@@ -26,32 +26,20 @@ export class DomainException extends Error {
 
 /** Maps to gRPC NOT_FOUND (5) */
 export class NotFoundException extends DomainException {
-  constructor(
-    entityName: string,
-    identifier: string | Record<string, any>,
-    metadata?: Record<string, any>,
-  ) {
-    const identifierStr = typeof identifier === 'string'
-      ? identifier
-      : JSON.stringify(identifier);
-    super(
-      `${entityName} with identifier ${identifierStr} not found`,
-      `${entityName.toUpperCase()}_NOT_FOUND`,
-      { entityName, identifier, ...metadata },
-    );
+  constructor(entityName: string, identifier: string | Record<string, any>, metadata?: Record<string, any>) {
+    const identifierStr = typeof identifier === 'string' ? identifier : JSON.stringify(identifier);
+    super(`${entityName} with identifier ${identifierStr} not found`, `${entityName.toUpperCase()}_NOT_FOUND`, {
+      entityName,
+      identifier,
+      ...metadata,
+    });
   }
 }
 
 /** Maps to gRPC ALREADY_EXISTS (6) */
 export class AlreadyExistsException extends DomainException {
-  constructor(
-    entityName: string,
-    identifier: string | Record<string, any>,
-    metadata?: Record<string, any>,
-  ) {
-    const identifierStr = typeof identifier === 'string'
-      ? identifier
-      : JSON.stringify(identifier);
+  constructor(entityName: string, identifier: string | Record<string, any>, metadata?: Record<string, any>) {
+    const identifierStr = typeof identifier === 'string' ? identifier : JSON.stringify(identifier);
     super(
       `${entityName} with identifier ${identifierStr} already exists`,
       `${entityName.toUpperCase()}_ALREADY_EXISTS`,
@@ -62,31 +50,19 @@ export class AlreadyExistsException extends DomainException {
 
 /** Maps to gRPC INVALID_ARGUMENT (3) */
 export class InvalidDataException extends DomainException {
-  constructor(
-    entityName: string,
-    reason: string,
-    metadata?: Record<string, any>,
-  ) {
-    super(
-      `Invalid ${entityName} data: ${reason}`,
-      `INVALID_${entityName.toUpperCase()}_DATA`,
-      { entityName, reason, ...metadata },
-    );
+  constructor(entityName: string, reason: string, metadata?: Record<string, any>) {
+    super(`Invalid ${entityName} data: ${reason}`, `INVALID_${entityName.toUpperCase()}_DATA`, {
+      entityName,
+      reason,
+      ...metadata,
+    });
   }
 }
 
 /** Maps to gRPC FAILED_PRECONDITION (9) */
 export class BusinessRuleException extends DomainException {
-  constructor(
-    rule: string,
-    reason: string,
-    metadata?: Record<string, any>,
-  ) {
-    super(
-      `Business rule violated: ${rule} - ${reason}`,
-      'BUSINESS_RULE_VIOLATION',
-      { rule, reason, ...metadata },
-    );
+  constructor(rule: string, reason: string, metadata?: Record<string, any>) {
+    super(`Business rule violated: ${rule} - ${reason}`, 'BUSINESS_RULE_VIOLATION', { rule, reason, ...metadata });
   }
 }
 
@@ -109,15 +85,7 @@ export class VersionConflictException extends DomainException {
 
 /** Maps to gRPC PERMISSION_DENIED (7) */
 export class UnauthorizedException extends DomainException {
-  constructor(
-    operation: string,
-    reason: string,
-    metadata?: Record<string, any>,
-  ) {
-    super(
-      `Unauthorized to perform ${operation}: ${reason}`,
-      'UNAUTHORIZED',
-      { operation, reason, ...metadata },
-    );
+  constructor(operation: string, reason: string, metadata?: Record<string, any>) {
+    super(`Unauthorized to perform ${operation}: ${reason}`, 'UNAUTHORIZED', { operation, reason, ...metadata });
   }
 }

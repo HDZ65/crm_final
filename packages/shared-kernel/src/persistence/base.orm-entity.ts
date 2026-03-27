@@ -8,29 +8,24 @@
  * @module @crm/shared-kernel/persistence
  */
 
-import {
-  PrimaryColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Column,
-  VersionColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, PrimaryColumn, UpdateDateColumn, VersionColumn } from 'typeorm';
 
 /**
  * Base ORM entity with common audit fields
+ * Note: `declare` is used because TypeORM decorators handle property initialization
  */
 export abstract class BaseOrmEntity {
   @PrimaryColumn({ type: 'uuid' })
-  id: string;
+  declare id: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
+  declare createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt: Date;
+  declare updatedAt: Date;
 
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
-  deletedAt: Date | null;
+  declare deletedAt: Date | null;
 }
 
 /**
@@ -38,5 +33,5 @@ export abstract class BaseOrmEntity {
  */
 export abstract class VersionedOrmEntity extends BaseOrmEntity {
   @VersionColumn({ default: 1 })
-  version: number;
+  declare version: number;
 }

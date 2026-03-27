@@ -4,27 +4,24 @@ services:
       context: ../..
       dockerfile: services/service-engagement/Dockerfile
       target: development
-    container_name: alex-service-engagement # <--- Identifiant unique
-    labels:
-      - "traefik.enable=true"
-      # URL pour tes tests HTTP : http://alex-engagement.local:8081
-      - "traefik.http.routers.alex-eng.rule=Host(`alex-engagement.local`)"
-      - "traefik.http.services.alex-eng.loadbalancer.server.port=3061"
+    container_name: dev-crm-service-engagement # <--- Identifiant unique
+      # URL pour tes tests HTTP : http://dev-crm-engagement.local:8081
     ports:
-      - "3401:3061"   # HTTP per ports.yaml slot 4
+      - "127.0.0.1:3410:3051"   # HTTP
       # gRPC 50051 internal only (docker network)
     env_file:
       - ../../services/service-engagement/.env.development
     environment:
-      - NODE_PATH=/app/services/service-engagement/node_modules
-      # Connexion à la base dédiée créée précédemment
-      - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_engagement
-      - MIGRATIONS_RUN=false
-      # On force les hôtes pour pointer vers l'infra partagée et ton NATS perso
-      - NATS_URL=nats://alex-crm-nats:4222
-      - REDIS_HOST=global_redis
+      - DATABASE_URL=postgresql://postgres:postgres@dev-crm-postgres:5432/crm_engagement
+      - REDIS_HOST=dev-crm-redis
+      - REDIS_PORT=6379
+      - NATS_URL=nats://dev-crm-nats:4222
+    depends_on:
+      - postgres
+      - redis
+      - nats
     networks:
-      - shared_dev_net
+      - crm_dev_net
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(3061, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
@@ -38,10 +35,8 @@ services:
           target: /app/services/service-engagement/src
           ignore:
             - "node_modules/"
-            - "dist/"
-        - action: rebuild
-          path: ./services/service-engagement/package.json
 
 networks:
-  shared_dev_net:
-    external: true
+  crm_dev_net:
+    name: crm_dev_network
+    driver: bridge

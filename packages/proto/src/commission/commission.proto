@@ -330,6 +330,8 @@ message GetCommissionsRequest {
   optional string statut_id = 4;
   optional int32 limit = 5;
   optional int32 offset = 6;
+  optional string sort_by = 7;
+  optional string sort_order = 8;
 }
 
 message UpdateCommissionRequest {

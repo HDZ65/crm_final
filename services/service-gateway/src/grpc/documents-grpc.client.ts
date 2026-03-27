@@ -11,9 +11,6 @@ export interface PieceJointeServiceClient {
   Get(data: Record<string, unknown>): Observable<unknown>;
   List(data: Record<string, unknown>): Observable<unknown>;
   ListByEntite(data: Record<string, unknown>): Observable<unknown>;
-  ListByType(data: Record<string, unknown>): Observable<unknown>;
-  GetVersions(data: Record<string, unknown>): Observable<unknown>;
-  LogAccess(data: Record<string, unknown>): Observable<unknown>;
   Delete(data: Record<string, unknown>): Observable<unknown>;
 }
 
@@ -92,33 +89,6 @@ export class DocumentsGrpcClient implements OnModuleInit {
       this.logger,
       'PieceJointeService',
       'ListByEntite',
-    );
-  }
-
-  listPiecesJointesByType(data: Record<string, unknown>): Observable<unknown> {
-    return wrapGrpcCall(
-      this.pieceJointeService.ListByType(data),
-      this.logger,
-      'PieceJointeService',
-      'ListByType',
-    );
-  }
-
-  getPieceJointeVersions(data: Record<string, unknown>): Observable<unknown> {
-    return wrapGrpcCall(
-      this.pieceJointeService.GetVersions(data),
-      this.logger,
-      'PieceJointeService',
-      'GetVersions',
-    );
-  }
-
-  logPieceJointeAccess(data: Record<string, unknown>): Observable<unknown> {
-    return wrapGrpcCall(
-      this.pieceJointeService.LogAccess(data),
-      this.logger,
-      'PieceJointeService',
-      'LogAccess',
     );
   }
 

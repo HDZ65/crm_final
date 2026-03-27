@@ -1,0 +1,195 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1774152913219,
+  "projectRoot": "/home/finanssor-data-center-v1/Applications/crm-gestion/packages/shared-kernel",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "@nestjs/core",
+        "version": "11.1.9",
+        "category": "backend"
+      },
+      {
+        "name": "jest",
+        "version": "30.2.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {
+      "build": "tsc",
+      "build:watch": "tsc --watch",
+      "clean": "rimraf dist",
+      "test": "jest",
+      "test:watch": "jest --watch",
+      "test:cov": "jest --coverage"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 4,
+      "lastAccessed": 1774152913215,
+      "keyFiles": [
+        "index.d.ts",
+        "index.d.ts.map",
+        "index.js",
+        "index.js.map"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 5,
+      "lastAccessed": 1774152913215,
+      "keyFiles": [
+        "index.d.ts",
+        "index.d.ts.map",
+        "index.js",
+        "index.js.map",
+        "index.ts"
+      ]
+    },
+    "dist/helpers": {
+      "path": "dist/helpers",
+      "purpose": "Helper functions",
+      "fileCount": 16,
+      "lastAccessed": 1774152913218,
+      "keyFiles": [
+        "env.helper.d.ts",
+        "env.helper.d.ts.map",
+        "env.helper.js"
+      ]
+    },
+    "src/helpers": {
+      "path": "src/helpers",
+      "purpose": "Helper functions",
+      "fileCount": 20,
+      "lastAccessed": 1774152913218,
+      "keyFiles": [
+        "env.helper.d.ts",
+        "env.helper.d.ts.map",
+        "env.helper.js"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/infrastructure/nats/nats.service.ts",
+      "accessCount": 7,
+      "lastAccessed": 1774153006705,
+      "type": "file"
+    },
+    {
+      "path": "src/infrastructure/interceptors/grpc-deadline.interceptor.ts",
+      "accessCount": 6,
+      "lastAccessed": 1774249447835,
+      "type": "file"
+    },
+    {
+      "path": "src/infrastructure/tracing/opentelemetry.config.ts",
+      "accessCount": 4,
+      "lastAccessed": 1774230851645,
+      "type": "file"
+    },
+    {
+      "path": "src/infrastructure/interceptors/grpc-metrics.interceptor.ts",
+      "accessCount": 3,
+      "lastAccessed": 1774230682634,
+      "type": "file"
+    },
+    {
+      "path": "src/infrastructure/interceptors/grpc-auth.interceptor.ts",
+      "accessCount": 3,
+      "lastAccessed": 1774249473896,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.json",
+      "accessCount": 2,
+      "lastAccessed": 1774152947837,
+      "type": "file"
+    },
+    {
+      "path": "src/infrastructure/nats/processed-events.entity.ts",
+      "accessCount": 2,
+      "lastAccessed": 1774153029386,
+      "type": "file"
+    },
+    {
+      "path": "src/persistence/base.orm-entity.ts",
+      "accessCount": 2,
+      "lastAccessed": 1774153037407,
+      "type": "file"
+    },
+    {
+      "path": "src/infrastructure/filters/grpc-exception.filter.ts",
+      "accessCount": 2,
+      "lastAccessed": 1774230780648,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 2,
+      "lastAccessed": 1774230804739,
+      "type": "file"
+    },
+    {
+      "path": "src/infrastructure/health/health.controller.ts",
+      "accessCount": 1,
+      "lastAccessed": 1774230671527,
+      "type": "file"
+    },
+    {
+      "path": "src/infrastructure/interceptors/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1774249456099,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

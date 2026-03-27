@@ -1,13 +1,7 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  Index,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('document_audit_logs')
-@Index(['organisationId', 'timestamp'])
+@Index(['keycloakGroupId', 'timestamp'])
 @Index(['documentId', 'timestamp'])
 export class DocumentAuditLogEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -17,9 +11,9 @@ export class DocumentAuditLogEntity {
   @Index()
   documentId: string;
 
-  @Column({ name: 'organisation_id', type: 'uuid' })
+  @Column({ name: 'keycloak_group_id', type: 'varchar', length: 255 })
   @Index()
-  organisationId: string;
+  keycloakGroupId: string;
 
   @Column({ type: 'varchar', length: 50 })
   action: string;

@@ -3,48 +3,53 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Domain entities
 import {
+  AdresseEntity,
   ClientBaseEntity,
   ClientEntrepriseEntity,
   ClientPartenaireEntity,
-  AdresseEntity,
-  StatutClientEntity,
   ConditionPaiementEntity,
   EmissionFactureEntity,
   FacturationParEntity,
   PeriodeFacturationEntity,
+  StatutClientEntity,
   TransporteurCompteEntity,
 } from './domain/clients/entities';
-
-// Infrastructure services
-import {
-  ClientBaseService,
-  ClientEntrepriseService,
-  ClientPartenaireService,
-  AdresseService,
-  StatutClientService,
-  ConditionPaiementService,
-  EmissionFactureService,
-  FacturationParService,
-  PeriodeFacturationService,
-  TransporteurCompteService,
-} from './infrastructure/persistence/typeorm/repositories/clients';
-
-// NATS handlers
-import { ClientNatsWorkersService } from './infrastructure/messaging/nats/handlers';
-
 // Interface controllers
 import {
+  AdresseController,
   ClientBaseController,
   ClientEntrepriseController,
   ClientPartenaireController,
-  AdresseController,
-  StatutClientController,
   ConditionPaiementController,
   EmissionFactureController,
   FacturationParController,
   PeriodeFacturationController,
+  StatutClientController,
   TransporteurCompteController,
 } from './infrastructure/grpc/clients';
+
+// NATS handlers
+import {
+  AdresseCreateHandler,
+  ClientCreateHandler,
+  ClientDeleteHandler,
+  ClientNatsWorkersService,
+  ClientSearchHandler,
+  ClientUpdateHandler,
+} from './infrastructure/messaging/nats/handlers';
+// Infrastructure services
+import {
+  AdresseService,
+  ClientBaseService,
+  ClientEntrepriseService,
+  ClientPartenaireService,
+  ConditionPaiementService,
+  EmissionFactureService,
+  FacturationParService,
+  PeriodeFacturationService,
+  StatutClientService,
+  TransporteurCompteService,
+} from './infrastructure/persistence/typeorm/repositories/clients';
 
 @Module({
   imports: [
@@ -85,6 +90,11 @@ import {
     PeriodeFacturationService,
     TransporteurCompteService,
     ClientNatsWorkersService,
+    ClientSearchHandler,
+    ClientCreateHandler,
+    ClientUpdateHandler,
+    ClientDeleteHandler,
+    AdresseCreateHandler,
   ],
   exports: [
     ClientBaseService,

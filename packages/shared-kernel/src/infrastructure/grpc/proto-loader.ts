@@ -7,10 +7,10 @@
  * - Tests: mock paths or local paths
  */
 
-import { existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { getServiceConfig, getServiceUrl } from './service-config.js';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import type { ServiceName } from './service-config.js';
+import { getServiceConfig, getServiceUrl } from './service-config.js';
 
 function resolvePackagePath(packageName: string): string | null {
   try {
@@ -78,7 +78,7 @@ export function getProtoBaseDir(): string {
 
   throw new Error(
     'Could not find proto source directory. ' +
-    'Ensure @crm/proto is installed or proto files exist in packages/proto/src/'
+      'Ensure @crm/proto is installed or proto files exist in packages/proto/src/',
   );
 }
 
@@ -91,9 +91,7 @@ export function resolveProtoPath(protoFile: string): string {
 
   if (!existsSync(fullPath)) {
     throw new Error(
-      `Proto file not found: ${fullPath}\n` +
-      `Base directory: ${baseDir}\n` +
-      `Proto file: ${protoFile}`
+      `Proto file not found: ${fullPath}\n` + `Base directory: ${baseDir}\n` + `Proto file: ${protoFile}`,
     );
   }
 
@@ -144,10 +142,13 @@ export function getProtoLoaderConfig(protoFile: string): {
  * );
  * ```
  */
-export function getGrpcOptions(serviceName: string, options?: {
-  url?: string;
-  maxMessageSize?: number;
-}): {
+export function getGrpcOptions(
+  serviceName: string,
+  options?: {
+    url?: string;
+    maxMessageSize?: number;
+  },
+): {
   package: string;
   protoPath: string;
   url: string;
@@ -188,10 +189,13 @@ export function getGrpcOptions(serviceName: string, options?: {
 /**
  * Get NestJS gRPC options for multiple proto services on a single port
  */
-export function getMultiGrpcOptions(serviceNames: string[], options?: {
-  url?: string;
-  maxMessageSize?: number;
-}): {
+export function getMultiGrpcOptions(
+  serviceNames: string[],
+  options?: {
+    url?: string;
+    maxMessageSize?: number;
+  },
+): {
   package: string[];
   protoPath: string[];
   url: string;

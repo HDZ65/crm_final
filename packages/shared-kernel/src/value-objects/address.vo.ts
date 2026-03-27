@@ -23,11 +23,21 @@ export class Address extends ValueObject<AddressProps> {
     });
   }
 
-  getStreet(): string { return this.props.street; }
-  getCity(): string { return this.props.city; }
-  getPostalCode(): string { return this.props.postalCode; }
-  getCountry(): string { return this.props.country; }
-  getComplement(): string | undefined { return this.props.complement; }
+  getStreet(): string {
+    return this.props.street;
+  }
+  getCity(): string {
+    return this.props.city;
+  }
+  getPostalCode(): string {
+    return this.props.postalCode;
+  }
+  getCountry(): string {
+    return this.props.country;
+  }
+  getComplement(): string | undefined {
+    return this.props.complement;
+  }
 
   toString(): string {
     const parts = [this.props.street];

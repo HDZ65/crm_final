@@ -4,25 +4,27 @@ services:
       context: ../..
       dockerfile: services/service-core/Dockerfile
       target: development
-    container_name: alex-service-core # <--- Préfixe unique
-    labels:
-      - "traefik.enable=true"
-      # URL : http://alex-core.local:8081
-      - "traefik.http.routers.alex-core.rule=Host(`alex-core.local`)"
-      - "traefik.http.services.alex-core.loadbalancer.server.port=3052"
+    container_name: dev-crm-service-core
     ports:
-      - "3402:3052"   # HTTP per ports.yaml slot 4
-      # gRPC 50052 internal only (docker network)
+      - "127.0.0.1:3407:3052"   # HTTP
     env_file:
       - ../../services/service-core/.env.development
     environment:
       - NODE_PATH=/app/services/service-core/node_modules
-      # On pointe vers la base spécifique 'alex_core' sur l'instance globale
-      - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_core
+      - DATABASE_URL=postgresql://postgres:postgres@dev-crm-postgres:5432/crm_core
+      - REDIS_HOST=dev-crm-redis
+      - REDIS_PORT=6379
+      - NATS_URL=nats://dev-crm-nats:4222
+      - CONSUL_HOST=dev-crm-consul
+      - CONSUL_PORT=8500
       - MIGRATIONS_RUN=false
-    # depends_on supprimé : global_postgres gère son propre cycle de vie
+    depends_on:
+      - postgres
+      - redis
+      - nats
+      - consul
     networks:
-      - shared_dev_net
+      - crm_dev_net
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(3052, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
@@ -41,5 +43,6 @@ services:
           path: ./services/service-core/package.json
 
 networks:
-  shared_dev_net:
-    external: true
+  crm_dev_net:
+    name: crm_dev_network
+    driver: bridge

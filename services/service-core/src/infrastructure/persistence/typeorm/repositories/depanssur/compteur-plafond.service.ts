@@ -1,15 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { CompteurPlafondEntity } from '../../../../../domain/depanssur/entities/compteur-plafond.entity';
 import type { ICompteurPlafondRepository } from '../../../../../domain/depanssur/repositories/ICompteurPlafondRepository';
 
 @Injectable()
 export class CompteurPlafondService implements ICompteurPlafondRepository {
-  private readonly logger = new Logger(CompteurPlafondService.name);
-
   constructor(
     @InjectRepository(CompteurPlafondEntity)
     private readonly repository: Repository<CompteurPlafondEntity>,
@@ -76,7 +74,11 @@ export class CompteurPlafondService implements ICompteurPlafondRepository {
     return this.repository.save(entity);
   }
 
-  async resetCompteur(abonnementId: string, anneeGlissanteDebut: string, anneeGlissanteFin: string): Promise<CompteurPlafondEntity> {
+  async resetCompteur(
+    abonnementId: string,
+    anneeGlissanteDebut: string,
+    anneeGlissanteFin: string,
+  ): Promise<CompteurPlafondEntity> {
     const entity = this.repository.create({
       abonnementId,
       anneeGlissanteDebut: new Date(anneeGlissanteDebut),

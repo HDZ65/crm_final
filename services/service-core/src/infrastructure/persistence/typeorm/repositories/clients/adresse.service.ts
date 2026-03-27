@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { AdresseEntity } from '../../../../../domain/clients/entities';
 
 @Injectable()
 export class AdresseService {
-  private readonly logger = new Logger(AdresseService.name);
-
   constructor(
     @InjectRepository(AdresseEntity)
     private readonly repository: Repository<AdresseEntity>,
@@ -64,7 +62,10 @@ export class AdresseService {
     return entity;
   }
 
-  async findByClient(clientBaseId: string, pagination?: { page?: number; limit?: number }): Promise<{
+  async findByClient(
+    clientBaseId: string,
+    pagination?: { page?: number; limit?: number },
+  ): Promise<{
     adresses: AdresseEntity[];
     pagination: { total: number; page: number; limit: number; totalPages: number };
   }> {

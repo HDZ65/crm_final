@@ -1,12 +1,7 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { AppLoggerService } from '../logging/logger.service.js';
+import { AppLoggerService } from '../logging/logger.service';
 import { REQUEST_ID_KEY } from './request-id.interceptor.js';
 
 @Injectable()

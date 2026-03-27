@@ -15,36 +15,31 @@
  * @module @crm/shared-kernel
  */
 
-// Re-export all value objects
-export * from './value-objects/index.js';
+// Re-export constants and enums
+export * from './constants';
 
 // Re-export domain base classes and events
-export * from './domain/index.js';
-
-// Re-export domain exceptions
-export * from './exceptions/index.js';
-
-// Re-export persistence layer
-export * from './persistence/index.js';
-
+export * from './domain';
+export * from './enums';
 // Re-export event handling
-export * from './events/index.js';
+export * from './events';
+// Re-export domain exceptions
+export * from './exceptions';
+
+// Note: The unified error system is available via subpath import:
+// import { CrmError, assertFound, GrpcNotFoundException } from '@crm/shared-kernel/errors';
 
 // Re-export helpers
-export * from './helpers/index.js';
-
-// Re-export validation
-export * from './validation/index.js';
-
+export * from './helpers';
 // Re-export infrastructure components
-export * from './infrastructure/index.js';
-
-// Re-export string utilities
-export * from './utils/index.js';
-
-// Re-export constants and enums
-export * from './constants/index.js';
-export * from './enums/index.js';
-
+export * from './infrastructure';
+// Re-export persistence layer
+export * from './persistence';
 // Re-export storage abstraction
-export * from './storage/index.js';
+export * from './storage';
+// Re-export string utilities
+export * from './utils';
+// Re-export validation
+export * from './validation';
+// Re-export all value objects
+export * from './value-objects';

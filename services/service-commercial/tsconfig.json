@@ -21,11 +21,44 @@
       "@crm/shared-kernel/*": [
         "packages/shared-kernel/dist/*"
       ],
-      "@proto/commission/*": [
-        "services/service-commercial/proto/generated/commission-*"
+      "@proto/commission": [
+        "packages/proto/gen/ts/commission/commission"
+      ],
+      "@proto/products": [
+        "packages/proto/gen/ts/products/products"
+      ],
+      "@proto/contrats": [
+        "packages/proto/gen/ts/contrats/contrats"
+      ],
+      "@proto/partenaires": [
+        "packages/proto/gen/ts/partenaires/partenaires"
+      ],
+      "@proto/commerciaux": [
+        "packages/proto/gen/ts/commerciaux/commerciaux"
+      ],
+      "@proto/dashboard": [
+        "packages/proto/gen/ts/dashboard/dashboard"
+      ],
+      "@proto/qualite": [
+        "packages/proto/gen/ts/qualite/qualite"
+      ],
+      "@proto/subscriptions": [
+        "packages/proto/gen/ts/subscriptions/subscriptions"
+      ],
+      "@proto/woocommerce": [
+        "packages/proto/gen/ts/woocommerce/woocommerce"
+      ],
+      "@proto/cfast": [
+        "packages/proto/gen/ts/cfast/cfast"
+      ],
+      "@proto/winleadplus": [
+        "packages/proto/gen/ts/winleadplus/winleadplus"
+      ],
+      "@proto/catalog-webhook": [
+        "packages/proto/gen/ts/catalog-webhook/catalog-webhook"
       ],
       "@proto/*": [
-        "services/service-commercial/proto/generated/*"
+        "packages/proto/gen/ts/*"
       ]
     },
     "incremental": true,

@@ -1,17 +1,17 @@
+import { randomUUID } from 'node:crypto';
+import { NatsService } from '@crm/shared-kernel';
+import { status } from '@grpc/grpc-js';
 import { Injectable, Logger } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
-import { NatsService } from '@crm/shared-kernel';
-import { randomUUID } from 'crypto';
 import { DossierDeclaratifEntity } from '../../../../../domain/depanssur/entities/dossier-declaratif.entity';
 import { HistoriqueStatutDossierEntity } from '../../../../../domain/depanssur/entities/historique-statut-dossier.entity';
+import type { IDossierDeclaratifRepository } from '../../../../../domain/depanssur/repositories/IDossierDeclaratifRepository';
 import {
   RegleDepanssurError,
   RegleDepanssurService,
 } from '../../../../../domain/depanssur/services/regle-depanssur.service';
-import type { IDossierDeclaratifRepository } from '../../../../../domain/depanssur/repositories/IDossierDeclaratifRepository';
 import { AbonnementService } from './abonnement.service';
 
 @Injectable()
@@ -29,10 +29,10 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
   async create(input: any): Promise<DossierDeclaratifEntity> {
     // Check idempotency via referenceExterne
     const referenceExterne = input.referenceExterne || input.reference_externe;
-    const organisationId = input.organisationId || input.organisation_id;
+    const keycloakGroupId = input.keycloakGroupId || input.organisation_id;
 
     if (referenceExterne) {
-      const existing = await this.findByReferenceExterne(organisationId, referenceExterne);
+      const existing = await this.findByReferenceExterne(keycloakGroupId, referenceExterne);
       if (existing) {
         throw new RpcException({
           code: status.ALREADY_EXISTS,
@@ -41,8 +41,8 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
       }
     }
 
-    const     entity = this.repository.create({
-      organisationId,
+    const entity = this.repository.create({
+      keycloakGroupId,
       abonnementId: input.abonnementId || input.abonnement_id,
       clientId: input.clientId || input.client_id,
       referenceExterne,
@@ -108,9 +108,8 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
         entity.npsCommentaire = input.npsCommentaire ?? input.nps_commentaire ?? null;
       }
       if (input.dateCloture ?? input.date_cloture !== undefined) {
-        entity.dateCloture = (input.dateCloture ?? input.date_cloture)
-          ? new Date(input.dateCloture ?? input.date_cloture)
-          : null;
+        entity.dateCloture =
+          (input.dateCloture ?? input.date_cloture) ? new Date(input.dateCloture ?? input.date_cloture) : null;
       }
       if (input.adresseRisqueId ?? input.adresse_risque_id !== undefined) {
         entity.adresseRisqueId = input.adresseRisqueId ?? input.adresse_risque_id ?? null;
@@ -150,14 +149,17 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
     return this.repository.findOne({ where: { id } });
   }
 
-  async findByReferenceExterne(organisationId: string, referenceExterne: string): Promise<DossierDeclaratifEntity | null> {
+  async findByReferenceExterne(
+    keycloakGroupId: string,
+    referenceExterne: string,
+  ): Promise<DossierDeclaratifEntity | null> {
     return this.repository.findOne({
-      where: { organisationId, referenceExterne },
+      where: { keycloakGroupId, referenceExterne },
     });
   }
 
   async findAll(
-    organisationId: string,
+    keycloakGroupId: string,
     filters?: {
       abonnementId?: string;
       clientId?: string;
@@ -175,9 +177,7 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
     const sortBy = pagination?.sortBy || 'createdAt';
     const sortOrder = (pagination?.sortOrder?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
 
-    const qb = this.repository
-      .createQueryBuilder('d')
-      .where('d.organisationId = :orgId', { orgId: organisationId });
+    const qb = this.repository.createQueryBuilder('d').where('d.keycloakGroupId = :orgId', { orgId: keycloakGroupId });
 
     if (filters?.abonnementId) {
       qb.andWhere('d.abonnementId = :abonnementId', { abonnementId: filters.abonnementId });
@@ -192,10 +192,9 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
       qb.andWhere('d.statut = :statut', { statut: filters.statut });
     }
     if (filters?.search) {
-      qb.andWhere(
-        '(d.referenceExterne ILIKE :search OR d.npsCommentaire ILIKE :search)',
-        { search: `%${filters.search}%` },
-      );
+      qb.andWhere('(d.referenceExterne ILIKE :search OR d.npsCommentaire ILIKE :search)', {
+        search: `%${filters.search}%`,
+      });
     }
 
     const [dossiers, total] = await qb
@@ -241,11 +240,7 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
       }
 
       const montantIntervention = this.resolveMontantIntervention(input, entity);
-      const compteur = await this.regleDepanssurService.resetCompteurAnnuel(
-        abonnement,
-        entity.dateOuverture,
-        manager,
-      );
+      const compteur = await this.regleDepanssurService.resetCompteurAnnuel(abonnement, entity.dateOuverture, manager);
       const plafonds = this.regleDepanssurService.verifierPlafonds(abonnement, montantIntervention, compteur);
 
       if (!plafonds.autorise) {
@@ -255,12 +250,7 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
         );
       }
 
-      await this.regleDepanssurService.majCompteurs(
-        abonnement,
-        montantIntervention,
-        entity.dateOuverture,
-        manager,
-      );
+      await this.regleDepanssurService.majCompteurs(abonnement, montantIntervention, entity.dateOuverture, manager);
     } catch (error) {
       if (error instanceof RegleDepanssurError) {
         throw new RpcException({ code: status.FAILED_PRECONDITION, message: error.message });
@@ -317,7 +307,7 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
         dossier_id: dossier.id,
         abonnement_id: dossier.abonnementId,
         client_id: dossier.clientId,
-        organisation_id: dossier.organisationId,
+        organisation_id: dossier.keycloakGroupId,
         type_sinistre: dossier.type,
         montant_declare: dossier.montantEstimatif || 0,
         date_sinistre: dossier.dateOuverture,
@@ -343,7 +333,7 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
         dossier_id: dossier.id,
         abonnement_id: dossier.abonnementId,
         client_id: dossier.clientId,
-        organisation_id: dossier.organisationId,
+        organisation_id: dossier.keycloakGroupId,
         ancien_statut: ancienStatut,
         nouveau_statut: nouveauStatut,
         changed_at: new Date(),
@@ -368,7 +358,7 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
         dossier_id: dossier.id,
         abonnement_id: dossier.abonnementId,
         client_id: dossier.clientId,
-        organisation_id: dossier.organisationId,
+        organisation_id: dossier.keycloakGroupId,
         decision,
         montant_accorde: dossier.montantPrisEnCharge || 0,
         motif_refus: input.motif || null,
@@ -390,7 +380,7 @@ export class DossierDeclaratifService implements IDossierDeclaratifRepository {
         dossier_id: dossier.id,
         abonnement_id: dossier.abonnementId,
         client_id: dossier.clientId,
-        organisation_id: dossier.organisationId,
+        organisation_id: dossier.keycloakGroupId,
         motif_cloture: motif || 'CLOTURE',
         closed_at: dossier.dateCloture || new Date(),
       };

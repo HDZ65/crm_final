@@ -1,0 +1,79 @@
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+
+export enum CatalogueWebhookProcessingStatus {
+  RECEIVED = 'RECEIVED',
+  PROCESSING = 'PROCESSING',
+  DONE = 'DONE',
+  FAILED = 'FAILED',
+}
+
+@Entity('catalogue_webhook_events')
+@Index('idx_catalogue_webhook_event_unique', ['eventId'], { unique: true })
+@Index('idx_catalogue_webhook_event_org_status', ['keycloakGroupId', 'processingStatus'])
+@Index('idx_catalogue_webhook_event_type_created', ['eventType', 'createdAt'])
+export class CatalogueWebhookEventEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ name: 'keycloak_group_id', type: 'varchar', length: 255 })
+  @Index('idx_catalogue_webhook_event_org')
+  keycloakGroupId: string;
+
+  @Column({ name: 'event_id', type: 'varchar', length: 255 })
+  eventId: string;
+
+  @Column({ name: 'event_type', type: 'varchar', length: 100 })
+  eventType: string;
+
+  @Column({ name: 'payload', type: 'jsonb' })
+  payload: Record<string, any>;
+
+  @Column({ name: 'signature', type: 'varchar', length: 512, nullable: true })
+  signature: string | null;
+
+  @Column({ name: 'endpoint_id', type: 'uuid', nullable: true })
+  endpointId: string | null;
+
+  @Column({ name: 'api_key_valid', type: 'boolean', default: false })
+  apiKeyValid: boolean;
+
+  @Column({
+    name: 'processing_status',
+    type: 'enum',
+    enum: CatalogueWebhookProcessingStatus,
+    default: CatalogueWebhookProcessingStatus.RECEIVED,
+  })
+  processingStatus: CatalogueWebhookProcessingStatus;
+
+  @Column({ name: 'error_message', type: 'text', nullable: true })
+  errorMessage: string | null;
+
+  @Column({ name: 'retry_count', type: 'int', default: 0 })
+  retryCount: number;
+
+  @Column({ name: 'processed_at', type: 'timestamptz', nullable: true })
+  processedAt: Date | null;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt: Date;
+
+  markProcessing(): void {
+    this.processingStatus = CatalogueWebhookProcessingStatus.PROCESSING;
+    this.errorMessage = null;
+  }
+
+  markDone(processedAt: Date = new Date()): void {
+    this.processingStatus = CatalogueWebhookProcessingStatus.DONE;
+    this.processedAt = processedAt;
+    this.errorMessage = null;
+  }
+
+  markFailed(errorMessage: string): void {
+    this.processingStatus = CatalogueWebhookProcessingStatus.FAILED;
+    this.errorMessage = errorMessage;
+  }
+
+  incrementRetry(): void {
+    this.retryCount = Number(this.retryCount || 0) + 1;
+  }
+}

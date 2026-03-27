@@ -21,7 +21,7 @@ message ContractSignedEvent {
   string contrat_id = 4;                            // Contract ID
   string client_id = 5;                             // Client ID
   string produit_id = 6;                            // Product ID
-  double montant_total = 7;                         // Total amount in EUR
+  string montant_total = 7;                         // Total amount in EUR (string for precision)
   google.protobuf.Timestamp date_signature = 8;    // Signature date
 }
 

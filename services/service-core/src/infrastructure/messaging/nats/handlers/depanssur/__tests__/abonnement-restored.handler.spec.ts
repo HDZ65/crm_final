@@ -7,9 +7,9 @@
  * All external dependencies are mocked (no real DB / NATS).
  */
 import { beforeEach, describe, expect, it, jest } from 'bun:test';
-import { AbonnementRestoredHandler } from '../abonnement-restored.handler';
 import type { NatsService } from '@crm/shared-kernel';
 import type { AbonnementService } from '../../../../../persistence/typeorm/repositories/depanssur/abonnement.service';
+import { AbonnementRestoredHandler } from '../abonnement-restored.handler';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -90,10 +90,7 @@ describe('AbonnementRestoredHandler', () => {
     await handler.onModuleInit();
 
     expect(mocks.natsService.subscribe).toHaveBeenCalledTimes(1);
-    expect(mocks.natsService.subscribe).toHaveBeenCalledWith(
-      'abonnement.depanssur.restored',
-      expect.any(Function),
-    );
+    expect(mocks.natsService.subscribe).toHaveBeenCalledWith('abonnement.depanssur.restored', expect.any(Function));
     expect(mocks.subscriptions['abonnement.depanssur.restored']).toBeDefined();
   });
 
@@ -154,31 +151,23 @@ describe('AbonnementRestoredHandler', () => {
   });
 
   it('should propagate error when abonnement service throws', async () => {
-    (mocks.abonnementService.findById as ReturnType<typeof jest.fn>).mockRejectedValue(
-      new Error('DB_CONNECTION_LOST'),
-    );
+    (mocks.abonnementService.findById as ReturnType<typeof jest.fn>).mockRejectedValue(new Error('DB_CONNECTION_LOST'));
 
     const handler = createHandler(mocks);
     await handler.onModuleInit();
 
     const event = makeEvent();
-    await expect(
-      mocks.subscriptions['abonnement.depanssur.restored'](event),
-    ).rejects.toThrow('DB_CONNECTION_LOST');
+    await expect(mocks.subscriptions['abonnement.depanssur.restored'](event)).rejects.toThrow('DB_CONNECTION_LOST');
   });
 
   it('should propagate error when update fails', async () => {
-    (mocks.abonnementService.update as ReturnType<typeof jest.fn>).mockRejectedValue(
-      new Error('UPDATE_FAILED'),
-    );
+    (mocks.abonnementService.update as ReturnType<typeof jest.fn>).mockRejectedValue(new Error('UPDATE_FAILED'));
 
     const handler = createHandler(mocks);
     await handler.onModuleInit();
 
     const event = makeEvent();
-    await expect(
-      mocks.subscriptions['abonnement.depanssur.restored'](event),
-    ).rejects.toThrow('UPDATE_FAILED');
+    await expect(mocks.subscriptions['abonnement.depanssur.restored'](event)).rejects.toThrow('UPDATE_FAILED');
   });
 
   it('should handle full event chain: subscribe → receive → find → update', async () => {

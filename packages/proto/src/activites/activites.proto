@@ -78,6 +78,7 @@ message Activite {
   string client_partenaire_id = 9;
   string created_at = 10;
   string updated_at = 11;
+  string organisation_id = 12;
 }
 
 message CreateActiviteRequest {
@@ -89,6 +90,7 @@ message CreateActiviteRequest {
   string client_base_id = 6;
   string contrat_id = 7;
   string client_partenaire_id = 8;
+  string organisation_id = 9;
 }
 
 message UpdateActiviteRequest {
@@ -98,26 +100,31 @@ message UpdateActiviteRequest {
   string sujet = 4;
   string commentaire = 5;
   string echeance = 6;
+  string organisation_id = 7;
 }
 
 message GetActiviteRequest {
   string id = 1;
+  string organisation_id = 2;
 }
 
 message ListActiviteByClientRequest {
   string client_base_id = 1;
   Pagination pagination = 2;
+  string organisation_id = 3;
 }
 
 message ListActiviteByContratRequest {
   string contrat_id = 1;
   Pagination pagination = 2;
+  string organisation_id = 3;
 }
 
 message ListActiviteRequest {
   string search = 1;
   string type_id = 2;
   Pagination pagination = 3;
+  string organisation_id = 4;
 }
 
 message ListActiviteResponse {
@@ -127,6 +134,7 @@ message ListActiviteResponse {
 
 message DeleteActiviteRequest {
   string id = 1;
+  string organisation_id = 2;
 }
 
 // ========== TACHE SERVICE ==========

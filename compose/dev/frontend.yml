@@ -1,64 +1,111 @@
 services:
   crm-frontend:
-    build:
-      context: ../..
-      dockerfile: frontend/Dockerfile
-      target: development
-    container_name: alex-frontend # <--- Préfixe unique
-    labels:
-      - "traefik.enable=true"
-      # URL : http://alex.local:8081
-      - "traefik.http.routers.alex-front.rule=Host(`alex.local`)"
-      - "traefik.http.services.alex-front.loadbalancer.server.port=3000"
+    image: dev-crm-frontend
+    container_name: dev-crm-frontend
+    restart: unless-stopped
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "mkdir -p src/proto && (cp -r /packages/proto/gen/ts-frontend/* src/proto/ 2>/dev/null || true) && bun dev"
+    entrypoint: docker-entrypoint.sh
+    working_dir: /app
     ports:
-      - "127.0.0.1:3400:3000" # tailscale serve handles HTTPS termination
-    env_file:
-      - ../../frontend/.env.development
+      - "127.0.0.1:3400:3000"
+    volumes:
+      # Cache Next.js pour performances
+      - "dev_next-cache:/app/.next/cache"
+      # Code source avec hot reload
+      - "/home/finanssor-data-center-v1/Applications/crm-gestion/frontend/src:/app/src"
+      - "/home/finanssor-data-center-v1/Applications/crm-gestion/frontend/public:/app/public"
+      # Fichiers de configuration en read-only pour hot reload des configs
+      - "/home/finanssor-data-center-v1/Applications/crm-gestion/frontend/next.config.ts:/app/next.config.ts:ro"
+      - "/home/finanssor-data-center-v1/Applications/crm-gestion/frontend/tsconfig.json:/app/tsconfig.json:ro"
+      - "/home/finanssor-data-center-v1/Applications/crm-gestion/frontend/postcss.config.mjs:/app/postcss.config.mjs:ro"
+      - "/home/finanssor-data-center-v1/Applications/crm-gestion/frontend/components.json:/app/components.json:ro"
+      # Variables d'environnement locales (si existantes)
+      - "/home/finanssor-data-center-v1/Applications/crm-gestion/frontend/.env.development:/app/.env.development:ro"
     environment:
-      - NODE_OPTIONS=--max-old-space-size=4096
-      - NEXTAUTH_URL=https://finanssor-data-center-v1.tail446cc0.ts.net:3400
-      - NEXT_PUBLIC_WS_URL=https://finanssor-data-center-v1.tail446cc0.ts.net:3401
-    # depends_on retiré : on utilise le postgres global déjà sain
-    # volumes retirés : le serveur n'a pas accès à ton Desktop\crm_final local
+      # Runtime
+      - "NODE_ENV=development"
+      - "PORT=3000"
+      - "NODE_OPTIONS=--max-old-space-size=4096"
+      - "NEXT_TELEMETRY_DISABLED=1"
+      # Bun optimizations
+      - "BUN_RUNTIME_TRANSPILER_CACHE_PATH=0"
+      - "BUN_INSTALL_BIN=/usr/local/bin"
+      # Hot reload
+      - "CHOKIDAR_USEPOLLING=true"
+      - "WATCHPACK_POLLING=true"
+      # Keycloak
+      - "KEYCLOAK_SECRET=Dmrf6tVFp0Aa8eUBlAWByKzwQLaCmdW9"
+      - "KEYCLOAK_ID=crm-gestion-frontend"
+      - "KEYCLOAK_REALM=crm-gestion"
+      - "KEYCLOAK_ISSUER_INTERNAL=http://dev-crm-keycloak:8080/realms/crm-gestion"
+      - "KEYCLOAK_ISSUER=http://localhost:3402/realms/crm-gestion"
+      - "KEYCLOAK_ADMIN_CLIENT_ID=crm-gestion-frontend"
+      - "KEYCLOAK_ADMIN_CLIENT_SECRET=Dmrf6tVFp0Aa8eUBlAWByKzwQLaCmdW9"
+      # Auth
+      - "AUTH_SECRET=zOP26vQ9CYyyNtivRbdk5zVGv/TfakAeY43J2EfEFyk="
+      - "AUTH_TRUST_HOST=true"
+      - "NEXTAUTH_URL=https://dev-gestion.winaity.com"
+      # Public URLs
+      - "NEXT_PUBLIC_WS_URL=https://dev-api-gestion.winaity.com"
+      - "NEXT_PUBLIC_BACKEND_API_URL=https://dev-api-gestion.winaity.com"
+      # Infrastructure
+      - "NATS_URL=nats://dev-crm-nats:4222"
+      # gRPC Services - Core
+      - "GRPC_CLIENTS_URL=dev-crm-service-core:50052"
+      - "GRPC_DOCUMENTS_URL=dev-crm-service-core:50052"
+      - "GRPC_REFERENTIEL_URL=dev-crm-service-core:50052"
+      - "GRPC_ORGANISATIONS_URL=dev-crm-service-core:50052"
+      - "GRPC_DASHBOARD_URL=dev-crm-service-core:50052"
+      - "GRPC_USERS_URL=dev-crm-service-core:50052"
+      # gRPC Services - Commercial
+      - "GRPC_COMMERCIAUX_URL=dev-crm-service-commercial:50053"
+      - "GRPC_CONTRATS_URL=dev-crm-service-commercial:50053"
+      - "GRPC_WINLEADPLUS_URL=dev-crm-service-commercial:50053"
+      - "GRPC_PRODUCTS_URL=dev-crm-service-commercial:50053"
+      - "GRPC_COMMISSION_URL=dev-crm-service-commercial:50053"
+      - "GRPC_WOOCOMMERCE_URL=dev-crm-service-commercial:50053"
+      - "GRPC_PARTENAIRES_URL=dev-crm-service-commercial:50053"
+      - "GRPC_SUBSCRIPTIONS_URL=dev-crm-service-commercial:50053"
+      # gRPC Services - Engagement
+      - "GRPC_CONCIERGERIE_URL=dev-crm-service-engagement:50051"
+      - "GRPC_AGENDA_URL=dev-crm-service-engagement:50051"
+      - "GRPC_DEPANSSUR_URL=dev-crm-service-engagement:50051"
+      - "GRPC_EMAIL_URL=dev-crm-service-engagement:50051"
+      - "GRPC_BUNDLE_URL=dev-crm-service-engagement:50051"
+      - "GRPC_NOTIFICATIONS_URL=dev-crm-service-engagement:50051"
+      - "GRPC_JUSTI_PLUS_URL=dev-crm-service-engagement:50051"
+      - "GRPC_ACTIVITES_URL=dev-crm-service-engagement:50051"
+      - "GRPC_RELANCE_URL=dev-crm-service-engagement:50051"
+      - "GRPC_WINCASH_URL=dev-crm-service-engagement:50051"
+      # gRPC Services - Finance
+      - "GRPC_PAYMENTS_URL=dev-crm-service-finance:50059"
+      - "GRPC_CALENDAR_URL=dev-crm-service-finance:50059"
+      - "GRPC_FACTURES_URL=dev-crm-service-finance:50059"
+      # gRPC Services - Others
+      - "GRPC_LOGISTICS_URL=dev-crm-service-logistics:50060"
+      - "GRPC_TELECOM_URL=dev-crm-service-telecom:50077"
     networks:
-      - shared_dev_net # <--- Correction ici
+      - "crm_dev_net"
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      test:
+        - "CMD"
+        - "node"
+        - "-e"
+        - "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
       interval: 30s
       timeout: 10s
       retries: 3
-    restart: unless-stopped
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-    deploy:
-      resources:
-        limits:
-          memory: 6G
-        reservations:
-          memory: 2G
+    depends_on:
+      - postgres
+      - redis
 
-    develop:
-      watch:
-        - action: sync
-          path: ./frontend/src
-          target: /app/src
-          ignore:
-            - "node_modules/"
-            - ".next/"
-        - action: sync
-          path: ./frontend/public
-          target: /app/public
-        - action: sync+restart
-          path: ./frontend/next.config.ts
-          target: /app/next.config.ts
-        - action: sync+restart
-          path: ./frontend/.env.development
-          target: /app/.env.development
-        - action: rebuild
-          path: ./frontend/package.json
+volumes:
+  dev_next-cache:
 
 networks:
-  shared_dev_net:
-    external: true
+  crm_dev_net:
+    name: crm_dev_network
+    driver: bridge

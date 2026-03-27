@@ -1,17 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { EmissionFactureService } from '../../persistence/typeorm/repositories/clients/emission-facture.service';
 import type {
   CreateEmissionFactureRequest,
-  UpdateEmissionFactureRequest,
-  GetEmissionFactureRequest,
-  GetEmissionFactureByCodeRequest,
-  ListEmissionFactureRequest,
-  ListEmissionFactureResponse,
   DeleteEmissionFactureRequest,
-  EmissionFacture,
-  DeleteResponse,
+  GetEmissionFactureByCodeRequest,
+  GetEmissionFactureRequest,
+  ListEmissionFactureRequest,
+  UpdateEmissionFactureRequest,
 } from '@proto/referentiel';
+import { EmissionFactureService } from '../../persistence/typeorm/repositories/clients/emission-facture.service';
 
 @Controller()
 export class EmissionFactureController {

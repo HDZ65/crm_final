@@ -4,25 +4,24 @@ services:
       context: ../..
       dockerfile: services/service-finance/Dockerfile
       target: development
-    container_name: alex-service-finance # <--- Identifiant unique
-    labels:
-      - "traefik.enable=true"
-      # Accès via : http://alex-finance.local:8081
-      - "traefik.http.routers.alex-fin.rule=Host(`alex-finance.local`)"
-      - "traefik.http.services.alex-fin.loadbalancer.server.port=3059"
+    container_name: dev-crm-service-finance # <--- Identifiant unique
+      # Accès via : http://dev-crm-finance.local:8081
     ports:
-      - "3404:3059"   # HTTP per ports.yaml slot 4
+      - "127.0.0.1:3409:3059"   # HTTP
       # gRPC 50059 internal only (docker network)
     env_file:
       - ../../services/service-finance/.env.development
     environment:
-      - NODE_PATH=/app/services/service-finance/node_modules
-      # Pointage vers la base dédiée sur le Postgres global
-      - DATABASE_URL=postgresql://postgres:postgres@global_postgres:5432/alex_finance
-      - MIGRATIONS_RUN=false
-      - REDIS_HOST=global_redis
+      - DATABASE_URL=postgresql://postgres:postgres@dev-crm-postgres:5432/crm_finance
+      - REDIS_HOST=dev-crm-redis
+      - REDIS_PORT=6379
+      - NATS_URL=nats://dev-crm-nats:4222
+    depends_on:
+      - postgres
+      - redis
+      - nats
     networks:
-      - shared_dev_net
+      - crm_dev_net
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(3059, 'localhost').on('connect', () => process.exit(0))"]
       interval: 30s
@@ -36,10 +35,8 @@ services:
           target: /app/services/service-finance/src
           ignore:
             - "node_modules/"
-            - "dist/"
-        - action: rebuild
-          path: ./services/service-finance/package.json
 
 networks:
-  shared_dev_net:
-    external: true
+  crm_dev_net:
+    name: crm_dev_network
+    driver: bridge

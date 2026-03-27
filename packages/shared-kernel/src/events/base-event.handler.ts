@@ -8,16 +8,13 @@
 
 import { Logger } from '@nestjs/common';
 import { IEventHandler } from '@nestjs/cqrs';
-import { DomainEvent } from '../domain/domain-event.base.js';
+import { DomainEvent } from '../domain/domain-event.base';
 
 /**
  * Minimal interface for event emitter (compatible with ClientProxy)
  */
 export interface IEventEmitter {
-  emit<TResult = unknown, TInput = unknown>(
-    pattern: string,
-    data: TInput,
-  ): unknown;
+  emit<_TResult = unknown, TInput = unknown>(pattern: string, data: TInput): unknown;
 }
 
 /**
@@ -34,9 +31,7 @@ export type WithoutEventId<T> = Omit<T, 'eventId'>;
 /**
  * Base event handler for publishing domain events to NATS
  */
-export abstract class BaseEventHandler<E extends DomainEvent, P = Record<string, unknown>>
-  implements IEventHandler<E>
-{
+export abstract class BaseEventHandler<E extends DomainEvent, P = Record<string, unknown>> implements IEventHandler<E> {
   protected readonly logger: Logger;
   protected abstract readonly config: EventHandlerConfig;
 
@@ -54,23 +49,16 @@ export abstract class BaseEventHandler<E extends DomainEvent, P = Record<string,
       };
 
       if (logging) {
-        this.logger.debug(
-          `Publishing ${eventName}: aggregateId=${event.aggregateId}`,
-        );
+        this.logger.debug(`Publishing ${eventName}: aggregateId=${event.aggregateId}`);
       }
 
       this.natsClient.emit(eventName, payload);
 
       if (logging) {
-        this.logger.log(
-          `Event ${eventName} published for ${event.aggregateId}`,
-        );
+        this.logger.log(`Event ${eventName} published for ${event.aggregateId}`);
       }
     } catch (error) {
-      this.logger.error(
-        `Failed to publish ${eventName}: ${(error as Error).message}`,
-        (error as Error).stack,
-      );
+      this.logger.error(`Failed to publish ${eventName}: ${(error as Error).message}`, (error as Error).stack);
     }
   }
 

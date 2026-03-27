@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd services/service-telecom && bun add -D @nestjs/schematics@^11.0.9 @nestjs/testing@^11.1.12 @types/jest@^30.0.0 @typescript-eslint/eslint-plugin@^8.53.1 @typescript-eslint/parser@^8.53.1...",
+  "error": "Exit code 1\n(eval):cd:1: aucun fichier ou dossier de ce nom: services/service-telecom",
+  "timestamp": "2026-03-24T20:35:39.245Z",
+  "retry_count": 1
+}

@@ -1,16 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { PartenaireMarqueBlancheService } from '../../persistence/typeorm/repositories/organisations/partenaire-marque-blanche.service';
 import type {
   CreatePartenaireRequest,
-  UpdatePartenaireRequest,
+  DeletePartenaireRequest,
   GetPartenaireRequest,
   ListPartenaireRequest,
-  ListPartenaireResponse,
-  DeletePartenaireRequest,
-  PartenaireMarqueBlanche,
-  DeleteResponse,
+  UpdatePartenaireRequest,
 } from '@proto/organisations';
+import { PartenaireMarqueBlancheService } from '../../persistence/typeorm/repositories/organisations/partenaire-marque-blanche.service';
 
 @Controller()
 export class PartenaireMarqueBlancheController {
@@ -21,10 +18,10 @@ export class PartenaireMarqueBlancheController {
     return this.partenaireService.create({
       denomination: data.denomination,
       siren: data.siren,
-      numeroTva: data.numero_tva,
-      contactSupportEmail: data.contact_support_email,
+      numeroTva: data.numeroTva,
+      contactSupportEmail: data.contactSupportEmail,
       telephone: data.telephone,
-      statutId: data.statut_id,
+      statutId: data.statutId,
     });
   }
 
@@ -34,10 +31,10 @@ export class PartenaireMarqueBlancheController {
       id: data.id,
       denomination: data.denomination,
       siren: data.siren,
-      numeroTva: data.numero_tva,
-      contactSupportEmail: data.contact_support_email,
+      numeroTva: data.numeroTva,
+      contactSupportEmail: data.contactSupportEmail,
       telephone: data.telephone,
-      statutId: data.statut_id,
+      statutId: data.statutId,
     });
   }
 
@@ -48,7 +45,7 @@ export class PartenaireMarqueBlancheController {
 
   @GrpcMethod('PartenaireMarqueBlancheService', 'List')
   async list(data: ListPartenaireRequest) {
-    return this.partenaireService.findAll({ search: data.search, statutId: data.statut_id }, data.pagination);
+    return this.partenaireService.findAll({ search: data.search, statutId: data.statutId }, data.pagination);
   }
 
   @GrpcMethod('PartenaireMarqueBlancheService', 'Delete')

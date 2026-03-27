@@ -58,19 +58,13 @@ export interface PaginatedResponse<T> {
 export class PaginationHelper {
   static normalize(input: PaginationInput = {}): NormalizedPagination {
     const page = Math.max(input.page || PAGINATION_DEFAULTS.PAGE, 1);
-    const limit = Math.min(
-      Math.max(input.limit || PAGINATION_DEFAULTS.LIMIT, 1),
-      PAGINATION_DEFAULTS.MAX_LIMIT,
-    );
+    const limit = Math.min(Math.max(input.limit || PAGINATION_DEFAULTS.LIMIT, 1), PAGINATION_DEFAULTS.MAX_LIMIT);
     const skip = (page - 1) * limit;
 
     return { page, limit, skip };
   }
 
-  static createMeta(
-    total: number,
-    pagination: NormalizedPagination,
-  ): PaginationMeta {
+  static createMeta(total: number, pagination: NormalizedPagination): PaginationMeta {
     const totalPages = Math.ceil(total / pagination.limit);
 
     return {
@@ -83,28 +77,19 @@ export class PaginationHelper {
     };
   }
 
-  static createResponse<T>(
-    items: T[],
-    total: number,
-    pagination: NormalizedPagination,
-  ): PaginatedResponse<T> {
+  static createResponse<T>(items: T[], total: number, pagination: NormalizedPagination): PaginatedResponse<T> {
     return {
       items,
-      meta: this.createMeta(total, pagination),
+      meta: PaginationHelper.createMeta(total, pagination),
     };
   }
 
   // Legacy compat aliases
   static getParams(pagination?: { page?: number; limit?: number }) {
-    return this.normalize(pagination);
+    return PaginationHelper.normalize(pagination);
   }
 
-  static buildResponse<T>(
-    data: T[],
-    total: number,
-    page: number,
-    limit: number,
-  ) {
+  static buildResponse<T>(data: T[], total: number, page: number, limit: number) {
     const totalPages = Math.ceil(total / limit);
     return {
       data,
@@ -119,13 +104,9 @@ export class PaginationHelper {
     };
   }
 
-  static buildFromInput<T>(
-    data: T[],
-    total: number,
-    paginationInput?: { page?: number; limit?: number },
-  ) {
-    const { page, limit } = this.getParams(paginationInput);
-    return this.buildResponse(data, total, page, limit);
+  static buildFromInput<T>(data: T[], total: number, paginationInput?: { page?: number; limit?: number }) {
+    const { page, limit } = PaginationHelper.getParams(paginationInput);
+    return PaginationHelper.buildResponse(data, total, page, limit);
   }
 }
 
@@ -165,10 +146,7 @@ export class CursorPaginationHelper {
   ): { cursor: C | undefined; limit: number } {
     return {
       cursor: input.cursor,
-      limit: Math.min(
-        Math.max(input.limit || defaultLimit, 1),
-        PAGINATION_DEFAULTS.MAX_LIMIT,
-      ),
+      limit: Math.min(Math.max(input.limit || defaultLimit, 1), PAGINATION_DEFAULTS.MAX_LIMIT),
     };
   }
 }

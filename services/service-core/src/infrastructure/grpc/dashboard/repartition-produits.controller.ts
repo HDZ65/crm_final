@@ -7,7 +7,7 @@ export class RepartitionProduitsController {
   @GrpcMethod('RepartitionProduitsService', 'GetRepartitionProduits')
   async getRepartitionProduits(_: GetRepartitionProduitsRequest): Promise<RepartitionProduitsResponse> {
     return {
-      ca_total: 0,
+      caTotal: 0,
       produits: [],
     };
   }

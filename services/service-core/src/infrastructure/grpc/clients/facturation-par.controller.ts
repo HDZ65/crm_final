@@ -1,17 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { FacturationParService } from '../../persistence/typeorm/repositories/clients/facturation-par.service';
 import type {
   CreateFacturationParRequest,
-  UpdateFacturationParRequest,
-  GetFacturationParRequest,
-  GetFacturationParByCodeRequest,
-  ListFacturationParRequest,
-  ListFacturationParResponse,
   DeleteFacturationParRequest,
-  FacturationPar,
-  DeleteResponse,
+  GetFacturationParByCodeRequest,
+  GetFacturationParRequest,
+  ListFacturationParRequest,
+  UpdateFacturationParRequest,
 } from '@proto/referentiel';
+import { FacturationParService } from '../../persistence/typeorm/repositories/clients/facturation-par.service';
 
 @Controller()
 export class FacturationParController {

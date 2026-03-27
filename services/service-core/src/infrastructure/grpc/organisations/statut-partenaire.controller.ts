@@ -1,17 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { StatutPartenaireService } from '../../persistence/typeorm/repositories/organisations/statut-partenaire.service';
 import type {
   CreateStatutPartenaireRequest,
-  UpdateStatutPartenaireRequest,
-  GetStatutPartenaireRequest,
-  GetStatutPartenaireByCodeRequest,
-  ListStatutPartenaireRequest,
-  ListStatutPartenaireResponse,
   DeleteStatutPartenaireRequest,
-  StatutPartenaire,
-  DeleteResponse,
+  GetStatutPartenaireByCodeRequest,
+  GetStatutPartenaireRequest,
+  ListStatutPartenaireRequest,
+  UpdateStatutPartenaireRequest,
 } from '@proto/organisations';
+import { StatutPartenaireService } from '../../persistence/typeorm/repositories/organisations/statut-partenaire.service';
 
 @Controller()
 export class StatutPartenaireController {

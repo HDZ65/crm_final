@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { createHash } from 'node:crypto';
 import {
   DocumentStorageService,
@@ -13,9 +13,7 @@ function createMockS3() {
   return {
     upload: mock(() => Promise.resolve('mocked-key')),
     download: mock(() => Promise.resolve(Buffer.from('file-content'))),
-    getPresignedUrl: mock(() =>
-      Promise.resolve('https://bucket.s3.amazonaws.com/signed?token=abc'),
-    ),
+    getPresignedUrl: mock(() => Promise.resolve('https://bucket.s3.amazonaws.com/signed?token=abc')),
     delete: mock(() => Promise.resolve()),
     exists: mock(() => Promise.resolve(true)),
   };
@@ -29,7 +27,7 @@ type MockS3 = ReturnType<typeof createMockS3>;
 
 const TEST_FILE = Buffer.from('hello-world-document-content');
 const TEST_METADATA: DocumentUploadMetadata = {
-  organisationId: 'org-42',
+  keycloakGroupId: 'org-42',
   typeDocument: 'facture',
   filename: 'invoice 2026.pdf',
   contentType: 'application/pdf',
@@ -56,18 +54,16 @@ describe('DocumentStorageService', () => {
       const result = await service.uploadDocument(TEST_FILE, TEST_METADATA);
 
       expect(result).not.toBeNull();
-      expect(result!.hash).toBe(expectedHash);
+      expect(result?.hash).toBe(expectedHash);
     });
 
     it('should generate key matching pattern {orgId}/documents/{type}/{year}/{uuid}-{filename}', async () => {
       const result = await service.uploadDocument(TEST_FILE, TEST_METADATA);
 
       expect(result).not.toBeNull();
-      const key = result!.key;
+      const key = result?.key;
       // Pattern: org-42/documents/facture/YYYY/uuid-invoice_2026.pdf
-      expect(key).toMatch(
-        /^org-42\/documents\/facture\/\d{4}\/[a-f0-9-]+-invoice_2026\.pdf$/,
-      );
+      expect(key).toMatch(/^org-42\/documents\/facture\/\d{4}\/[a-f0-9-]+-invoice_2026\.pdf$/);
     });
 
     it('should sanitise unsafe characters in filename', async () => {
@@ -80,7 +76,7 @@ describe('DocumentStorageService', () => {
 
       expect(result).not.toBeNull();
       // Spaces and parens should be replaced with underscores
-      expect(result!.key).toContain('file_name__copy_.pdf');
+      expect(result?.key).toContain('file_name__copy_.pdf');
     });
 
     it('should call S3 upload with the correct metadata', async () => {
@@ -93,17 +89,17 @@ describe('DocumentStorageService', () => {
       const s3Meta = args[3] as Record<string, string>;
       expect(s3Meta['organisation-id']).toBe('org-42');
       expect(s3Meta['type-document']).toBe('facture');
-      expect(s3Meta['sha256']).toBeDefined();
+      expect(s3Meta.sha256).toBeDefined();
     });
 
     it('should return url, key, and hash', async () => {
       const result = await service.uploadDocument(TEST_FILE, TEST_METADATA);
 
       expect(result).not.toBeNull();
-      expect(typeof result!.url).toBe('string');
-      expect(typeof result!.key).toBe('string');
-      expect(typeof result!.hash).toBe('string');
-      expect(result!.hash).toHaveLength(64); // SHA-256 hex = 64 chars
+      expect(typeof result?.url).toBe('string');
+      expect(typeof result?.key).toBe('string');
+      expect(typeof result?.hash).toBe('string');
+      expect(result?.hash).toHaveLength(64); // SHA-256 hex = 64 chars
     });
 
     it('should merge extra metadata when provided', async () => {

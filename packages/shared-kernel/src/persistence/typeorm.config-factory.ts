@@ -47,11 +47,7 @@ export class TypeOrmConfigFactory {
     } as TypeOrmModuleOptions;
   }
 
-  static createDataSourceConfig(
-    config: DatabaseConfig,
-    entities: string[],
-    migrations: string[],
-  ): DataSourceOptions {
+  static createDataSourceConfig(config: DatabaseConfig, entities: string[], migrations: string[]): DataSourceOptions {
     return {
       type: 'postgres',
       host: config.host,

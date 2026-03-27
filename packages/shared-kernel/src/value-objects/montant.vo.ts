@@ -1,5 +1,5 @@
+import { InvalidDataException } from '../exceptions/index';
 import { ValueObject } from './value-object.base.js';
-import { InvalidDataException } from '../exceptions/index.js';
 
 interface MontantProps {
   value: number;
@@ -18,7 +18,7 @@ export class Montant extends ValueObject<MontantProps> {
   }
 
   static create(value: number, currency: string = 'EUR'): Montant {
-    if (isNaN(value)) {
+    if (Number.isNaN(value)) {
       throw new InvalidDataException('Montant', 'Montant must be a valid number', { value });
     }
     return new Montant({ value, currency });
@@ -26,7 +26,7 @@ export class Montant extends ValueObject<MontantProps> {
 
   static fromString(raw: string, currency: string = 'EUR'): Montant {
     const parsed = parseFloat(raw);
-    if (isNaN(parsed)) {
+    if (Number.isNaN(parsed)) {
       throw new InvalidDataException('Montant', `Invalid montant string: "${raw}"`, { value: raw });
     }
     return new Montant({ value: parsed, currency });

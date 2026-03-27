@@ -1,5 +1,5 @@
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class EncryptionService {
@@ -14,9 +14,7 @@ export class EncryptionService {
 
     if (!keyStr) {
       this.key = crypto.randomBytes(32);
-      this.logger.warn(
-        'ENCRYPTION_KEY not set, using random key (data will be lost on restart)',
-      );
+      this.logger.warn('ENCRYPTION_KEY not set, using random key (data will be lost on restart)');
       return;
     }
 

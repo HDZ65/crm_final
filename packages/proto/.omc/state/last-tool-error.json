@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"make proto-generate\",\"timeout\":120000,\"description\":\"Generate proto files with buf\"}",
+  "error": "Exit code 2\nmake: *** Aucune règle pour fabriquer la cible « proto-generate ». Arrêt.",
+  "timestamp": "2026-03-25T19:19:46.856Z",
+  "retry_count": 1
+}

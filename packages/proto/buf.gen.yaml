@@ -9,7 +9,7 @@ plugins:
     opt:
       - nestJs=true
       - addGrpcMetadata=true
-      - snakeToCamel=false
+      # snakeToCamel supprimé : sans effet depuis ts-proto 2.x (utilise protobuf-ts runtime qui force camelCase)
       - outputServices=grpc-js
       - esModuleInterop=true
       - useOptionals=none

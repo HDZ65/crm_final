@@ -1,3 +1,6 @@
+// gRPC App Module (interceptors + filters bundle)
+export { GrpcAppModule } from './grpc-app.module.js';
+
 // gRPC client utilities
 export {
   type GrpcClientOptions,
@@ -14,9 +17,9 @@ export {
   getProtoLoaderConfig,
   isDocker,
   isProduction,
+  type ProtoPathOptions,
   resolveProtoPath,
   resolveProtoPaths,
-  type ProtoPathOptions,
 } from './proto-loader.js';
 
 // Service configuration

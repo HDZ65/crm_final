@@ -35,14 +35,9 @@ export class IdempotenceService {
     return processed;
   }
 
-  async markProcessed(
-    eventId: string | undefined,
-    eventType: string,
-  ): Promise<void> {
+  async markProcessed(eventId: string | undefined, eventType: string): Promise<void> {
     if (!eventId) {
-      this.logger.warn(
-        `Event ${eventType} processed without eventId - cannot mark as processed`,
-      );
+      this.logger.warn(`Event ${eventType} processed without eventId - cannot mark as processed`);
       return;
     }
 

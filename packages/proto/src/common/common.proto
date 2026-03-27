@@ -1,0 +1,368 @@
+syntax = "proto3";
+
+package common;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option java_package = "com.finanssor.crm.common";
+
+// ============================================================================
+// COMMON PROTO - Shared messages across all CRM microservices
+// ============================================================================
+// This file centralizes common message definitions to avoid duplication
+// and ensure consistency across the codebase.
+// ============================================================================
+
+// === PAGINATION ===
+
+// Standard pagination request for list operations
+message PaginationRequest {
+  // Page number (1-indexed, default: 1)
+  int32 page = 1;
+
+  // Number of items per page (default: 20, max: 100)
+  int32 limit = 2;
+
+  // Field to sort by (e.g., "created_at", "nom")
+  string sort_by = 3;
+
+  // Sort direction: "asc" or "desc" (default: "desc")
+  string sort_order = 4;
+}
+
+// Standard pagination response metadata
+message PaginationResponse {
+  // Total number of items across all pages
+  int32 total = 1;
+
+  // Current page number
+  int32 page = 2;
+
+  // Items per page
+  int32 limit = 3;
+
+  // Total number of pages
+  int32 total_pages = 4;
+
+  // Whether there is a next page
+  bool has_next = 5;
+
+  // Whether there is a previous page
+  bool has_previous = 6;
+}
+
+// === COMMON RESPONSES ===
+
+// Empty message for requests/responses with no data
+message Empty {}
+
+// Standard response for delete operations
+message DeleteResponse {
+  // Whether the deletion was successful
+  bool success = 1;
+
+  // Optional message (e.g., error details or confirmation)
+  string message = 2;
+}
+
+// Standard response for bulk operations
+message BulkOperationResponse {
+  // Number of items successfully processed
+  int32 success_count = 1;
+
+  // Number of items that failed
+  int32 failure_count = 2;
+
+  // Total items attempted
+  int32 total_count = 3;
+
+  // Details of failures
+  repeated OperationError errors = 4;
+}
+
+// Error details for bulk operations
+message OperationError {
+  // Identifier of the failed item
+  string item_id = 1;
+
+  // Error code
+  string error_code = 2;
+
+  // Human-readable error message
+  string error_message = 3;
+}
+
+// === MONEY & FINANCIAL ===
+
+// Represents a monetary amount with currency
+// Uses string to avoid IEEE 754 floating-point precision issues
+message Money {
+  // Decimal amount as string (e.g., "123.45", "-50.00")
+  string amount = 1;
+
+  // ISO 4217 currency code (e.g., "EUR", "USD")
+  string currency = 2;
+}
+
+// Represents a percentage value
+message Percentage {
+  // Percentage as string (e.g., "15.5" for 15.5%)
+  string value = 1;
+}
+
+// === DATE & TIME RANGES ===
+
+// Represents a date range for filtering
+message DateRange {
+  // Start date (inclusive)
+  google.protobuf.Timestamp start = 1;
+
+  // End date (inclusive)
+  google.protobuf.Timestamp end = 2;
+}
+
+// Represents a period (year-month format)
+message Period {
+  // Year (e.g., 2024)
+  int32 year = 1;
+
+  // Month (1-12)
+  int32 month = 2;
+}
+
+// === AUDIT & TRACING ===
+
+// Audit metadata attached to operations
+message AuditMetadata {
+  // Correlation ID for distributed tracing
+  string correlation_id = 1;
+
+  // User ID who performed the action
+  string user_id = 2;
+
+  // User display name
+  string user_name = 3;
+
+  // IP address of the request origin
+  string ip_address = 4;
+
+  // User agent string
+  string user_agent = 5;
+
+  // Timestamp of the operation
+  google.protobuf.Timestamp timestamp = 6;
+
+  // Source service name
+  string source_service = 7;
+}
+
+// Event envelope for domain events
+message EventEnvelope {
+  // Unique event ID (UUID) for idempotency
+  string event_id = 1;
+
+  // Unix timestamp in milliseconds
+  int64 timestamp = 2;
+
+  // Correlation ID for tracing
+  string correlation_id = 3;
+
+  // Causation ID (event that caused this event)
+  string causation_id = 4;
+
+  // Event type (e.g., "ContractSigned", "PaymentReceived")
+  string event_type = 5;
+
+  // Event version for schema evolution
+  int32 event_version = 6;
+
+  // Source aggregate type
+  string aggregate_type = 7;
+
+  // Source aggregate ID
+  string aggregate_id = 8;
+}
+
+// === ADDRESS ===
+
+// Standard address structure
+message Address {
+  // Address line 1 (street, number)
+  string line1 = 1;
+
+  // Address line 2 (apartment, building, etc.)
+  string line2 = 2;
+
+  // Postal/ZIP code
+  string postal_code = 3;
+
+  // City name
+  string city = 4;
+
+  // State/Province/Region
+  string region = 5;
+
+  // ISO 3166-1 alpha-2 country code (e.g., "FR", "BE")
+  string country_code = 6;
+
+  // Address type (e.g., "billing", "shipping", "legal")
+  string type = 7;
+
+  // Whether this is the primary address
+  bool is_primary = 8;
+}
+
+// === CONTACT INFORMATION ===
+
+// Phone number with type
+message PhoneNumber {
+  // Phone number in E.164 format (e.g., "+33612345678")
+  string number = 1;
+
+  // Phone type: "mobile", "landline", "fax"
+  string type = 2;
+
+  // Whether this is the primary phone
+  bool is_primary = 3;
+}
+
+// Email address with type
+message EmailAddress {
+  // Email address
+  string email = 1;
+
+  // Email type: "personal", "professional", "billing"
+  string type = 2;
+
+  // Whether this is the primary email
+  bool is_primary = 3;
+
+  // Whether the email is verified
+  bool is_verified = 4;
+}
+
+// === FILTERING & SEARCH ===
+
+// Generic filter for list operations
+message Filter {
+  // Field name to filter on
+  string field = 1;
+
+  // Filter operator
+  FilterOperator operator = 2;
+
+  // Value(s) to filter by
+  repeated string values = 3;
+}
+
+// Filter operators
+enum FilterOperator {
+  FILTER_OPERATOR_UNSPECIFIED = 0;
+  FILTER_OPERATOR_EQUALS = 1;
+  FILTER_OPERATOR_NOT_EQUALS = 2;
+  FILTER_OPERATOR_GREATER_THAN = 3;
+  FILTER_OPERATOR_GREATER_THAN_OR_EQUALS = 4;
+  FILTER_OPERATOR_LESS_THAN = 5;
+  FILTER_OPERATOR_LESS_THAN_OR_EQUALS = 6;
+  FILTER_OPERATOR_IN = 7;
+  FILTER_OPERATOR_NOT_IN = 8;
+  FILTER_OPERATOR_CONTAINS = 9;
+  FILTER_OPERATOR_STARTS_WITH = 10;
+  FILTER_OPERATOR_ENDS_WITH = 11;
+  FILTER_OPERATOR_IS_NULL = 12;
+  FILTER_OPERATOR_IS_NOT_NULL = 13;
+  FILTER_OPERATOR_BETWEEN = 14;
+}
+
+// === FILE & DOCUMENT ===
+
+// File metadata
+message FileInfo {
+  // File name
+  string name = 1;
+
+  // MIME type (e.g., "application/pdf")
+  string mime_type = 2;
+
+  // File size in bytes
+  int64 size_bytes = 3;
+
+  // File URL or path
+  string url = 4;
+
+  // SHA-256 hash for integrity
+  string hash_sha256 = 5;
+
+  // Upload timestamp
+  google.protobuf.Timestamp uploaded_at = 6;
+}
+
+// === ENTITY REFERENCE ===
+
+// Reference to another entity (for loose coupling)
+message EntityReference {
+  // Entity type (e.g., "Client", "Contrat", "Facture")
+  string entity_type = 1;
+
+  // Entity ID
+  string entity_id = 2;
+
+  // Optional display name for UI
+  string display_name = 3;
+}
+
+// === STATUS ===
+
+// Generic status with metadata
+message StatusInfo {
+  // Status code
+  string code = 1;
+
+  // Human-readable status name
+  string name = 2;
+
+  // Status description
+  string description = 3;
+
+  // Status category for grouping
+  string category = 4;
+
+  // Whether this is a terminal/final status
+  bool is_terminal = 5;
+
+  // Display order
+  int32 display_order = 6;
+}
+
+// === LOCALIZATION ===
+
+// Localized string for multi-language support
+message LocalizedString {
+  // Default value (fallback)
+  string default_value = 1;
+
+  // Translations by locale (e.g., "fr-FR", "en-US")
+  map<string, string> translations = 2;
+}
+
+// === BATCH REQUESTS ===
+
+// Standard request for getting multiple items by IDs
+message GetByIdsRequest {
+  // List of IDs to retrieve
+  repeated string ids = 1;
+}
+
+// Standard request for getting a single item by ID
+message GetByIdRequest {
+  // Item ID
+  string id = 1;
+}
+
+// Standard request scoped to an organisation
+message OrganisationScopedRequest {
+  // Organisation/tenant ID
+  string organisation_id = 1;
+}

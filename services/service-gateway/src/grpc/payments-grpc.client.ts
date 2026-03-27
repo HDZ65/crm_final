@@ -97,11 +97,6 @@ export interface PaymentServiceClient {
   ListPortalSessions(data: Record<string, unknown>): Observable<unknown>;
   GetPortalSessionAudit(data: Record<string, unknown>): Observable<unknown>;
   GetPortalSessionStats(data: Record<string, unknown>): Observable<unknown>;
-  // FEC / Journal Exports
-  CreateJournalExport(data: Record<string, unknown>): Observable<unknown>;
-  GetJournalExportFormats(data: Record<string, unknown>): Observable<unknown>;
-  GetExportConfig(data: Record<string, unknown>): Observable<unknown>;
-  UpdateExportConfig(data: Record<string, unknown>): Observable<unknown>;
 }
 
 @Injectable()
@@ -485,25 +480,5 @@ export class PaymentsGrpcClient implements OnModuleInit {
 
   getPortalSessionStats(data: Record<string, unknown>): Observable<unknown> {
     return wrapGrpcCall(this.paymentService.GetPortalSessionStats(data), this.logger, 'PaymentService', 'GetPortalSessionStats');
-  }
-
-  // ===========================================================================
-  // FEC / Journal Exports
-  // ===========================================================================
-
-  createJournalExport(data: Record<string, unknown>): Observable<unknown> {
-    return wrapGrpcCall(this.paymentService.CreateJournalExport(data), this.logger, 'PaymentService', 'CreateJournalExport');
-  }
-
-  getJournalExportFormats(data: Record<string, unknown>): Observable<unknown> {
-    return wrapGrpcCall(this.paymentService.GetJournalExportFormats(data), this.logger, 'PaymentService', 'GetJournalExportFormats');
-  }
-
-  getExportConfig(data: Record<string, unknown>): Observable<unknown> {
-    return wrapGrpcCall(this.paymentService.GetExportConfig(data), this.logger, 'PaymentService', 'GetExportConfig');
-  }
-
-  updateExportConfig(data: Record<string, unknown>): Observable<unknown> {
-    return wrapGrpcCall(this.paymentService.UpdateExportConfig(data), this.logger, 'PaymentService', 'UpdateExportConfig');
   }
 }

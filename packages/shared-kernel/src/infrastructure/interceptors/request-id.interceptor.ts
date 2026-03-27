@@ -1,11 +1,6 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { randomUUID } from 'crypto';
 
 export const REQUEST_ID_HEADER = 'x-request-id';
 export const REQUEST_ID_KEY = 'requestId';
@@ -46,20 +41,18 @@ export class RequestIdInterceptor implements NestInterceptor {
   }
 
   private extractUserIdFromHttpRequest(request: any): string | undefined {
-    return request?.query?.userId ||
-           request?.body?.userId ||
-           request?.headers?.['x-user-id'] ||
-           request?.user?.id ||
-           request?.['userId'] ||
-           undefined;
+    return (
+      request?.query?.userId ||
+      request?.body?.userId ||
+      request?.headers?.['x-user-id'] ||
+      request?.user?.id ||
+      request?.userId ||
+      undefined
+    );
   }
 
   private extractUserIdFromRpcContext(rpcContext: any): string | undefined {
     const data = rpcContext.getData();
-    return data?.userId ||
-           data?.initiatedBy ||
-           data?.ownerId ||
-           data?.callerId ||
-           undefined;
+    return data?.userId || data?.initiatedBy || data?.ownerId || data?.callerId || undefined;
   }
 }

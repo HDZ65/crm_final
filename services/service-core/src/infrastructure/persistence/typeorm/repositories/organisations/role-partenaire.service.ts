@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { RolePartenaireEntity } from '../../../../../domain/organisations/entities';
 
 @Injectable()
 export class RolePartenaireService {
-  private readonly logger = new Logger(RolePartenaireService.name);
-
   constructor(
     @InjectRepository(RolePartenaireEntity)
     private readonly repository: Repository<RolePartenaireEntity>,
@@ -28,7 +26,12 @@ export class RolePartenaireService {
     return this.repository.save(entity);
   }
 
-  async update(input: { id: string; code?: string; nom?: string; description?: string }): Promise<RolePartenaireEntity> {
+  async update(input: {
+    id: string;
+    code?: string;
+    nom?: string;
+    description?: string;
+  }): Promise<RolePartenaireEntity> {
     const entity = await this.findById(input.id);
 
     if (input.code !== undefined) entity.code = input.code;

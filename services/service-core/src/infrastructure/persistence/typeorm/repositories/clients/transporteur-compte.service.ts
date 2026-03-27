@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { TransporteurCompteEntity } from '../../../../../domain/clients/entities';
 
 @Injectable()
 export class TransporteurCompteService {
-  private readonly logger = new Logger(TransporteurCompteService.name);
-
   constructor(
     @InjectRepository(TransporteurCompteEntity)
     private readonly repository: Repository<TransporteurCompteEntity>,
@@ -34,7 +32,7 @@ export class TransporteurCompteService {
   }
 
   async findByOrganisation(
-    organisationId: string,
+    keycloakGroupId: string,
     actif?: boolean,
     pagination?: { page?: number; limit?: number },
   ): Promise<{
@@ -49,7 +47,7 @@ export class TransporteurCompteService {
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.repository.createQueryBuilder('t');
-    queryBuilder.where('t.organisationId = :organisationId', { organisationId });
+    queryBuilder.where('t.keycloakGroupId = :keycloakGroupId', { keycloakGroupId });
 
     if (actif !== undefined) {
       queryBuilder.andWhere('t.actif = :actif', { actif });

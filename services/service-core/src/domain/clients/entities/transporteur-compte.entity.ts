@@ -1,10 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('transporteurorganisations')
 export class TransporteurCompteEntity {
@@ -14,8 +8,8 @@ export class TransporteurCompteEntity {
   @Column()
   type: string;
 
-  @Column({ name: 'organisation_id' })
-  organisationId: string;
+  @Column({ name: 'keycloak_group_id', type: 'varchar', length: 255 })
+  keycloakGroupId: string;
 
   @Column({ name: 'contract_number' })
   contractNumber: string;

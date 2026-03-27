@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"npm run build 2>&1\",\"timeout\":60000,\"description\":\"Vérifier la compilation TypeScript après les corrections\"}",
+  "error": "Exit code 2\n\n> @crm/shared-kernel@1.0.0 build\n> tsc\n\nsrc/infrastructure/tracing/opentelemetry.config.ts(81,24): error TS2693: 'Resource' only refers to a type, but is being used as a value here.\nsrc/infrastructure/tracing/opentelemetry.config.ts(116,11): error TS2353: Object literal may only specify known properties, and 'ignoreIncomingPaths' does not exist in type 'HttpInstrumentationConfig'.",
+  "timestamp": "2026-03-23T01:53:45.433Z",
+  "retry_count": 1
+}

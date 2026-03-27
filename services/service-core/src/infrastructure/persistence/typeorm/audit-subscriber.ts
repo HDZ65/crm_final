@@ -1,18 +1,12 @@
-import {
-  EventSubscriber,
-  EntitySubscriberInterface,
-  InsertEvent,
-  UpdateEvent,
-  DataSource,
-} from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm';
 
 /**
  * AuditSubscriber - Automatically populates created_by and modified_by columns
- * 
+ *
  * This subscriber intercepts INSERT and UPDATE operations and populates audit columns
  * from the gRPC context metadata (user ID).
- * 
+ *
  * The user ID is extracted from the AsyncLocalStorage context set by AuthInterceptor.
  */
 @Injectable()
@@ -41,7 +35,7 @@ export class AuditSubscriber implements EntitySubscriberInterface {
    */
   beforeInsert(event: InsertEvent<any>): void {
     const userId = this.getUserId();
-    
+
     if (userId && event.entity) {
       // Set created_by on insert
       if ('created_by' in event.entity) {
@@ -59,7 +53,7 @@ export class AuditSubscriber implements EntitySubscriberInterface {
    */
   beforeUpdate(event: UpdateEvent<any>): void {
     const userId = this.getUserId();
-    
+
     if (userId && event.entity) {
       // Update modified_by on update
       if ('modified_by' in event.entity) {

@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { EmissionFactureEntity } from '../../../../../domain/clients/entities';
 
 @Injectable()
 export class EmissionFactureService {
-  private readonly logger = new Logger(EmissionFactureService.name);
-
   constructor(
     @InjectRepository(EmissionFactureEntity)
     private readonly repository: Repository<EmissionFactureEntity>,
@@ -18,7 +16,10 @@ export class EmissionFactureService {
     if (data.code) {
       const existing = await this.repository.findOne({ where: { code: data.code } });
       if (existing) {
-        throw new RpcException({ code: status.ALREADY_EXISTS, message: `EmissionFacture with code ${data.code} already exists` });
+        throw new RpcException({
+          code: status.ALREADY_EXISTS,
+          message: `EmissionFacture with code ${data.code} already exists`,
+        });
       }
     }
     const entity = this.repository.create(data);

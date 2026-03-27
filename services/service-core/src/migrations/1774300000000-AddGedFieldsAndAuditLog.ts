@@ -15,7 +15,9 @@ export class AddGedFieldsAndAuditLog1774300000000 implements MigrationInterface 
     `);
 
     await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_piecejointes_parent_id ON piecejointes(parent_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_piecejointes_organisation_id ON piecejointes(organisation_id)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_piecejointes_organisation_id ON piecejointes(organisation_id)`,
+    );
     await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_piecejointes_type_document ON piecejointes(type_document)`);
 
     // Create document_audit_logs table
@@ -33,9 +35,15 @@ export class AddGedFieldsAndAuditLog1774300000000 implements MigrationInterface 
     `);
 
     await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_audit_document_id ON document_audit_logs(document_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_audit_organisation_id ON document_audit_logs(organisation_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_audit_org_timestamp ON document_audit_logs(organisation_id, "timestamp")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_audit_doc_timestamp ON document_audit_logs(document_id, "timestamp")`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_doc_audit_organisation_id ON document_audit_logs(organisation_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_doc_audit_org_timestamp ON document_audit_logs(organisation_id, "timestamp")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_doc_audit_doc_timestamp ON document_audit_logs(document_id, "timestamp")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

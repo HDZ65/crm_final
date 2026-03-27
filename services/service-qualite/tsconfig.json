@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "node16",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "../../",
+    "paths": {
+      "@crm/shared-kernel": ["packages/shared-kernel/dist"],
+      "@crm/shared-kernel/*": ["packages/shared-kernel/dist/*"],
+      "@proto/qualite": ["services/service-qualite/proto/generated/qualite"],
+      "@proto/*": ["services/service-qualite/proto/generated/*"]
+    },
+    "skipLibCheck": true,
+    "strict": false,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "moduleResolution": "node16"
+  },
+  "include": ["src/**/*", "proto/generated/**/*"],
+  "exclude": ["node_modules", "dist", "**/*spec.ts"]
+}

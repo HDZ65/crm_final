@@ -1,16 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { ClientPartenaireService } from '../../persistence/typeorm/repositories/clients/client-partenaire.service';
 import type {
   CreateClientPartenaireRequest,
-  UpdateClientPartenaireRequest,
+  DeleteClientPartenaireRequest,
   GetClientPartenaireRequest,
   ListClientsPartenaireRequest,
-  ListClientsPartenaireResponse,
-  DeleteClientPartenaireRequest,
-  ClientPartenaire,
-  DeleteResponse,
+  UpdateClientPartenaireRequest,
 } from '@proto/clients';
+import { ClientPartenaireService } from '../../persistence/typeorm/repositories/clients/client-partenaire.service';
 
 @Controller()
 export class ClientPartenaireController {
@@ -19,11 +16,11 @@ export class ClientPartenaireController {
   @GrpcMethod('ClientPartenaireService', 'Create')
   async createClientPartenaire(data: CreateClientPartenaireRequest) {
     return this.clientPartenaireService.create({
-      clientBaseId: data.client_base_id,
-      partenaireId: data.partenaire_id,
-      rolePartenaireId: data.role_partenaire_id,
-      validFrom: data.valid_from,
-      validTo: data.valid_to,
+      clientBaseId: data.clientBaseId,
+      partenaireId: data.partenaireId,
+      rolePartenaireId: data.rolePartenaireId,
+      validFrom: data.validFrom as unknown as string,
+      validTo: data.validTo as unknown as string,
     });
   }
 
@@ -31,10 +28,10 @@ export class ClientPartenaireController {
   async updateClientPartenaire(data: UpdateClientPartenaireRequest) {
     return this.clientPartenaireService.update({
       id: data.id,
-      partenaireId: data.partenaire_id,
-      rolePartenaireId: data.role_partenaire_id,
-      validFrom: data.valid_from,
-      validTo: data.valid_to,
+      partenaireId: data.partenaireId,
+      rolePartenaireId: data.rolePartenaireId,
+      validFrom: data.validFrom as unknown as string,
+      validTo: data.validTo as unknown as string,
     });
   }
 
@@ -46,7 +43,7 @@ export class ClientPartenaireController {
   @GrpcMethod('ClientPartenaireService', 'List')
   async listClientsPartenaire(data: ListClientsPartenaireRequest) {
     return this.clientPartenaireService.findAll(
-      { clientBaseId: data.client_base_id, partenaireId: data.partenaire_id },
+      { clientBaseId: data.clientBaseId, partenaireId: data.partenaireId },
       data.pagination,
     );
   }

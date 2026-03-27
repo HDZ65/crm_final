@@ -11,12 +11,7 @@ export interface IStorageService {
    * @param metadata - Optional metadata key-value pairs
    * @returns The storage key of the uploaded file
    */
-  upload(
-    key: string,
-    buffer: Buffer,
-    contentType: string,
-    metadata?: Record<string, string>,
-  ): Promise<string>;
+  upload(key: string, buffer: Buffer, contentType: string, metadata?: Record<string, string>): Promise<string>;
 
   /**
    * Download a file from storage.

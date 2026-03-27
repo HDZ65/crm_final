@@ -5,5 +5,6 @@
  */
 
 export * from './base-event.handler.js';
-export * from './idempotence.service.js';
 export * from './event-id.js';
+export * from './idempotence.service.js';
+export * from './payloads/index.js';

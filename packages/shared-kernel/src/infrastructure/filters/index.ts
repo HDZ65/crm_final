@@ -1,1 +1,1 @@
-export { GrpcExceptionFilter } from './grpc-exception.filter.js';
+export { GrpcExceptionFilter, ServiceUnavailableException, TimeoutException } from './grpc-exception.filter.js';

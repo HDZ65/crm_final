@@ -1,0 +1,44 @@
+services:
+  crm-keycloak:
+    image: "quay.io/keycloak/keycloak:latest"
+    container_name: dev-crm-keycloak
+    restart: unless-stopped
+    command:
+      - "start-dev"
+    entrypoint: /opt/keycloak/bin/kc.sh
+    ports:
+      - "127.0.0.1:3402:8080"
+    # volumes:
+      # - "/home/finanssor-data-center-v1/Applications/crm-gestion/compose/dev/keycloak/crm-gestion-realm.json:/opt/keycloak/data/import/crm-gestion-realm.json:ro"
+      # - "/home/finanssor-data-center-v1/Applications/crm-gestion/keycloak/themes/crm-gestion:/opt/keycloak/themes/crm-gestion:ro"
+    environment:
+      - "KC_DB_PASSWORD=postgres"
+      - "KC_DB=postgres"
+      - "KC_DB_URL=jdbc:postgresql://dev-crm-postgres:5432/crm_keycloak"
+      - "KC_HTTP_ENABLED=true"
+      - "KC_BOOTSTRAP_ADMIN_USERNAME=admin"
+      - "KC_HEALTH_ENABLED=true"
+      - "KC_HOSTNAME_STRICT=false"
+      - "KC_PROXY_HEADERS=xforwarded"
+      - "KC_METRICS_ENABLED=true"
+      - "KC_BOOTSTRAP_ADMIN_PASSWORD=admin"
+      - "KC_DB_USERNAME=postgres"
+      - "LANG=en_US.UTF-8"
+      - "KC_RUN_IN_CONTAINER=true"
+    depends_on:
+      - postgres
+    networks:
+      - "crm_dev_net"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /realms/crm-gestion HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && timeout 5 cat <&3 | grep -q 'crm-gestion'"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  crm_dev_net:
+    name: crm_dev_network
+    driver: bridge

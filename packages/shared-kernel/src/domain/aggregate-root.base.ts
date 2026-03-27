@@ -1,4 +1,4 @@
-import { AggregateRoot as NestAggregateRoot, IEvent } from '@nestjs/cqrs';
+import { IEvent, AggregateRoot as NestAggregateRoot } from '@nestjs/cqrs';
 
 /**
  * Base class for all Aggregate Roots

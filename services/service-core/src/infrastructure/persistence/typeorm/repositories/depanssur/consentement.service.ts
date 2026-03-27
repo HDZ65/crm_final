@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { ConsentementEntity } from '../../../../../domain/depanssur/entities/consentement.entity';
 
 @Injectable()
 export class ConsentementService {
-  private readonly logger = new Logger(ConsentementService.name);
-
   constructor(
     @InjectRepository(ConsentementEntity)
     private readonly repository: Repository<ConsentementEntity>,
@@ -20,7 +18,11 @@ export class ConsentementService {
       clientBaseId: input.clientBaseId || input.client_id,
       type: input.type,
       accorde,
-      dateAccord: accorde ? new Date() : (input.dateAccord || input.date_accord ? new Date(input.dateAccord || input.date_accord) : null),
+      dateAccord: accorde
+        ? new Date()
+        : input.dateAccord || input.date_accord
+          ? new Date(input.dateAccord || input.date_accord)
+          : null,
       dateRetrait: null,
       source: input.source ?? null,
     });
@@ -48,9 +50,7 @@ export class ConsentementService {
     const sortBy = pagination?.sortBy || 'createdAt';
     const sortOrder = (pagination?.sortOrder?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
 
-    const qb = this.repository
-      .createQueryBuilder('c')
-      .where('c.clientBaseId = :clientBaseId', { clientBaseId });
+    const qb = this.repository.createQueryBuilder('c').where('c.clientBaseId = :clientBaseId', { clientBaseId });
 
     if (filters?.type) {
       qb.andWhere('c.type = :type', { type: filters.type });

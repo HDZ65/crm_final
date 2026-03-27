@@ -696,3 +696,185 @@ service FormuleProduitService {
    rpc Activer(ActiverFormuleProduitRequest) returns (FormuleProduit);
    rpc Desactiver(DesactiverFormuleProduitRequest) returns (FormuleProduit);
 }
+
+// ============================================================================
+// PRICING QUOTE SERVICE (Real-time partner passthrough)
+// ============================================================================
+
+service PricingQuoteService {
+  rpc QuotePrice(QuotePriceRequest) returns (QuotePriceResponse);
+}
+
+message QuotePriceRequest {
+  string product_id = 1;
+  string plan_id = 2;
+  string company_id = 3;
+  string channel = 4;
+  SubscriberInfo subscriber = 5;
+  map<string, string> options = 6;
+  string keycloak_group_id = 7;
+}
+
+message SubscriberInfo {
+  string birth_date = 1;
+  string postal_code = 2;
+  string profession = 3;
+  map<string, string> extra_fields = 4;
+}
+
+message QuotePriceResponse {
+  string quote_id = 1;
+  string product_id = 2;
+  string plan_id = 3;
+  string partner_quote_ref = 4;
+  PricingDetail pricing = 5;
+  CommissionPreview commissions = 6;
+  bool manual_pricing_required = 7;
+  string error_message = 8;
+  bool success = 9;
+}
+
+message PricingDetail {
+  double amount_excl_tax = 1;
+  double tax_rate = 2;
+  double tax_amount = 3;
+  double amount_incl_tax = 4;
+  string currency = 5;
+  string recurrence = 6;
+}
+
+message CommissionPreview {
+  double total = 1;
+  map<string, double> split = 2;
+}
+
+// ============================================================================
+// PRODUCT VERSIONING SERVICE
+// ============================================================================
+
+service ProductVersioningService {
+  rpc DuplicateVersion(DuplicateVersionRequest) returns (DuplicateVersionResponse);
+  rpc CompareVersions(CompareVersionsRequest) returns (CompareVersionsResponse);
+  rpc RollbackVersion(RollbackVersionRequest) returns (RollbackVersionResponse);
+}
+
+message DuplicateVersionRequest {
+  string source_version_id = 1;
+  string effective_from = 2;
+  string notes = 3;
+}
+
+message DuplicateVersionResponse {
+  string new_version_id = 1;
+  int32 new_version_number = 2;
+  bool success = 3;
+}
+
+message CompareVersionsRequest {
+  string version_a_id = 1;
+  string version_b_id = 2;
+}
+
+message CompareVersionsResponse {
+  string diff_json = 1;
+  bool has_breaking_changes = 2;
+}
+
+message RollbackVersionRequest {
+  string product_id = 1;
+  string target_version_id = 2;
+}
+
+message RollbackVersionResponse {
+  string restored_version_id = 1;
+  bool success = 2;
+}
+
+service ProductValidationService {
+  rpc ValidatePublicationReadiness(ValidatePublicationRequest) returns (ValidatePublicationResponse);
+  rpc CheckPublicationLock(CheckPublicationLockRequest) returns (CheckPublicationLockResponse);
+}
+
+message ValidatePublicationRequest {
+  string version_id = 1;
+  string company_id = 2;
+}
+
+message ValidatePublicationResponse {
+  bool ready = 1;
+  repeated ValidationCheck checks = 2;
+}
+
+message ValidationCheck {
+  string name = 1;
+  bool passed = 2;
+  string message = 3;
+}
+
+message CheckPublicationLockRequest {
+  string product_id = 1;
+}
+
+message CheckPublicationLockResponse {
+  bool locked = 1;
+  int32 active_publications = 2;
+}
+
+// ============================================================================
+// ACCOUNTING EXPORT SERVICE (CdC Annexe F)
+// ============================================================================
+
+service AccountingExportService {
+  rpc GenerateExport(GenerateAccountingExportRequest) returns (AccountingExportResult);
+  rpc ListExports(ListAccountingExportsRequest) returns (ListAccountingExportsResponse);
+  rpc GetExport(GetAccountingExportRequest) returns (AccountingExportLogEntry);
+  rpc DownloadExport(GetAccountingExportRequest) returns (AccountingExportResult);
+}
+
+message GenerateAccountingExportRequest {
+  string keycloak_group_id = 1;
+  string company_name = 2;
+  string period = 3;
+  string format = 4;
+  repeated string type_filter = 5;
+  string generated_by = 6;
+}
+
+message AccountingExportResult {
+  string filename = 1;
+  bytes buffer = 2;
+  string mime = 3;
+  int32 row_count = 4;
+  string file_hash = 5;
+  string log_id = 6;
+}
+
+message AccountingExportLogEntry {
+  string id = 1;
+  string keycloak_group_id = 2;
+  string company_name = 3;
+  string period = 4;
+  string format = 5;
+  string filename = 6;
+  string file_hash = 7;
+  int32 file_size_bytes = 8;
+  int32 row_count = 9;
+  string storage_path = 10;
+  string s3_url = 11;
+  string generated_by = 12;
+  string generated_at = 13;
+}
+
+message ListAccountingExportsRequest {
+  string keycloak_group_id = 1;
+  string period_from = 2;
+  string period_to = 3;
+}
+
+message ListAccountingExportsResponse {
+  repeated AccountingExportLogEntry exports = 1;
+}
+
+message GetAccountingExportRequest {
+  string id = 1;
+}

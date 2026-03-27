@@ -5,10 +5,10 @@
  * See: WinLeadPlusSyncService (service-commercial) for the active flow.
  */
 
-import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { NatsService } from '@crm/shared-kernel';
-import { ClientBaseService } from '../../../persistence/typeorm/repositories/clients';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import type { CreateClientBaseRequest, UpdateClientBaseRequest } from '@proto/clients';
+import { ClientBaseService } from '../../../persistence/typeorm/repositories/clients';
 
 interface ClientCreateNatsMessage {
   organisation_id: string;
@@ -75,15 +75,13 @@ export class ClientNatsWorkersService implements OnModuleInit {
     if (!this.natsService) return;
 
     // Worker 1: Client Create from WinLeadPlus
-    await this.natsService.subscribe<ClientCreateNatsMessage>(
-      'client.create.from-winleadplus',
-      async (data) => this.handleClientCreate(data),
+    await this.natsService.subscribe<ClientCreateNatsMessage>('client.create.from-winleadplus', async (data) =>
+      this.handleClientCreate(data),
     );
 
     // Worker 2: Client Update from WinLeadPlus
-    await this.natsService.subscribe<ClientUpdateNatsMessage>(
-      'client.update.from-winleadplus',
-      async (data) => this.handleClientUpdate(data),
+    await this.natsService.subscribe<ClientUpdateNatsMessage>('client.update.from-winleadplus', async (data) =>
+      this.handleClientUpdate(data),
     );
 
     this.logger.log('Client NATS workers registered (2 consumers)');
@@ -98,18 +96,33 @@ export class ClientNatsWorkersService implements OnModuleInit {
 
     try {
       const createRequest: CreateClientBaseRequest = {
-        organisation_id: data.organisation_id,
-        type_client: data.type_client,
-        nom: data.nom,
-        prenom: data.prenom,
-        date_naissance: '',
-        email: data.email || '',
-        telephone: data.telephone,
+        organisationId: data.organisation_id,
+        typeClient: data.type_client as any,
+        compteCode: data.compte_code,
         statut: data.statut || 'ACTIF',
-        compte_code: data.compte_code,
-        partenaire_id: data.partenaire_id,
-        societe_id: data.societe_id,
-        source: data.source || 'WinLeadPlus',
+        partenaireId: data.partenaire_id,
+        societeId: data.societe_id ?? '',
+        identity: {
+          nom: data.nom,
+          prenom: data.prenom,
+          civilite: 0 as any,
+          lieuNaissance: '',
+          paysNaissance: '',
+          profession: '',
+          csp: '',
+          regimeSocial: '',
+        },
+        contact: {
+          telephone: data.telephone,
+          email: data.email || '',
+          langue: '',
+        },
+        acquisition: {
+          source: data.source || 'WinLeadPlus',
+          canalAcquisition: '',
+          etapeCourante: '',
+        },
+        adresses: [],
       };
 
       const createdClient = await this.clientBaseService.create(createRequest);
@@ -118,9 +131,7 @@ export class ClientNatsWorkersService implements OnModuleInit {
         `Client created from WinLeadPlus: id=${createdClient.id}, nom=${createdClient.nom}, source=${createdClient.source}`,
       );
     } catch (error) {
-      this.logger.error(
-        `Failed to create client from WinLeadPlus (${data.nom} ${data.prenom}): ${error}`,
-      );
+      this.logger.error(`Failed to create client from WinLeadPlus (${data.nom} ${data.prenom}): ${error}`);
       throw error;
     }
   }
@@ -138,13 +149,31 @@ export class ClientNatsWorkersService implements OnModuleInit {
 
       const updateRequest: UpdateClientBaseRequest = {
         id: data.id,
-        nom: data.nom,
-        prenom: data.prenom,
-        email: data.email,
-        telephone: data.telephone,
         statut: data.statut,
-        // Preserve existing source if not explicitly provided
-        source: data.source || existingClient.source || undefined,
+        identity: (data.nom || data.prenom)
+          ? {
+              nom: data.nom ?? existingClient.nom,
+              prenom: data.prenom ?? existingClient.prenom,
+              civilite: 0 as any,
+              lieuNaissance: '',
+              paysNaissance: '',
+              profession: '',
+              csp: '',
+              regimeSocial: '',
+            }
+          : undefined,
+        contact: (data.email || data.telephone)
+          ? {
+              telephone: data.telephone ?? existingClient.telephone,
+              email: data.email ?? existingClient.email ?? '',
+              langue: '',
+            }
+          : undefined,
+        acquisition: {
+          source: data.source || existingClient.source || '',
+          canalAcquisition: '',
+          etapeCourante: '',
+        },
       };
 
       const updatedClient = await this.clientBaseService.update(updateRequest);

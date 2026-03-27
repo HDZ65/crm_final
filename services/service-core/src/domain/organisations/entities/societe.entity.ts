@@ -1,31 +1,20 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
-import { OrganisationEntity } from './organisation.entity';
-
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 @Entity('societes')
-@Index(['organisationId'])
+@Index(['keycloakGroupId'])
 export class SocieteEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'organisation_id', type: 'uuid' })
-  organisationId: string;
+  @Column({ name: 'keycloak_group_id', type: 'varchar', length: 255 })
+  keycloakGroupId: string;
 
   @Column({ name: 'raison_sociale', type: 'varchar', length: 255 })
   raisonSociale: string;
 
-  @Column({ type: 'varchar', length: 20 })
-  siren: string;
+  @Column({ type: 'varchar', length: 14, unique: true })
+  siret: string;
 
-  @Column({ name: 'numero_tva', type: 'varchar', length: 50 })
+  @Column({ name: 'numero_tva', type: 'varchar', length: 50, unique: true })
   numeroTva: string;
 
   // New enrichment fields
@@ -71,8 +60,4 @@ export class SocieteEntity {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
-  @ManyToOne(() => OrganisationEntity)
-  @JoinColumn({ name: 'organisation_id' })
-  organisation: OrganisationEntity;
 }

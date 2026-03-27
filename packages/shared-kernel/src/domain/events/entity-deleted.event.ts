@@ -1,4 +1,4 @@
-import { DomainEvent } from '../domain-event.base.js';
+import { DomainEvent } from '../domain-event.base';
 
 /**
  * Generic Entity Deleted Event
@@ -27,14 +27,8 @@ export class EntityDeletedEvent<TEntity extends string> extends DomainEvent {
     };
   }
 
-  static fromPrimitives<T extends string>(
-    data: Record<string, any>,
-  ): EntityDeletedEvent<T> {
-    const event = new EntityDeletedEvent<T>(
-      data.entityType,
-      data.aggregateId,
-      data.reason,
-    );
+  static fromPrimitives<T extends string>(data: Record<string, any>): EntityDeletedEvent<T> {
+    const event = new EntityDeletedEvent<T>(data.entityType, data.aggregateId, data.reason);
     (event as any).eventId = data.eventId;
     (event as any).occurredOn = new Date(data.occurredOn);
     (event as any).eventVersion = data.eventVersion;

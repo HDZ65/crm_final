@@ -1,3 +1,4 @@
+import type { Readable } from 'node:stream';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -6,7 +7,6 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import type { Readable } from 'node:stream';
 
 import type { IStorageService } from './storage.interface.js';
 
@@ -28,9 +28,9 @@ export interface S3StorageConfig {
  * Throws if required variables are missing.
  */
 export function s3ConfigFromEnv(): S3StorageConfig {
-  const bucket = process.env['S3_BUCKET'];
-  const accessKeyId = process.env['S3_ACCESS_KEY_ID'];
-  const secretAccessKey = process.env['S3_SECRET_ACCESS_KEY'];
+  const bucket = process.env.S3_BUCKET;
+  const accessKeyId = process.env.S3_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
 
   if (!bucket) {
     throw new Error('S3_BUCKET environment variable is required');
@@ -43,8 +43,8 @@ export function s3ConfigFromEnv(): S3StorageConfig {
   }
 
   return {
-    endpoint: process.env['S3_ENDPOINT'] || undefined,
-    region: process.env['S3_REGION'] || 'eu-west-1',
+    endpoint: process.env.S3_ENDPOINT || undefined,
+    region: process.env.S3_REGION || 'eu-west-1',
     bucket,
     accessKeyId,
     secretAccessKey,
@@ -85,12 +85,7 @@ export class S3StorageService implements IStorageService {
     return new S3StorageService(s3ConfigFromEnv());
   }
 
-  async upload(
-    key: string,
-    buffer: Buffer,
-    contentType: string,
-    metadata?: Record<string, string>,
-  ): Promise<string> {
+  async upload(key: string, buffer: Buffer, contentType: string, metadata?: Record<string, string>): Promise<string> {
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,

@@ -21,10 +21,11 @@ export class EncryptClientBaseIbanBicToText1772810000000 implements MigrationInt
     )) as ClientBaseBankRow[];
 
     for (const row of rows) {
-      await queryRunner.query(
-        'UPDATE "clientbases" SET "iban" = $1, "bic" = $2 WHERE "id" = $3',
-        [transformer.to(row.iban), transformer.to(row.bic), row.id],
-      );
+      await queryRunner.query('UPDATE "clientbases" SET "iban" = $1, "bic" = $2 WHERE "id" = $3', [
+        transformer.to(row.iban),
+        transformer.to(row.bic),
+        row.id,
+      ]);
     }
   }
 
@@ -36,10 +37,11 @@ export class EncryptClientBaseIbanBicToText1772810000000 implements MigrationInt
     )) as ClientBaseBankRow[];
 
     for (const row of rows) {
-      await queryRunner.query(
-        'UPDATE "clientbases" SET "iban" = $1, "bic" = $2 WHERE "id" = $3',
-        [transformer.from(row.iban), transformer.from(row.bic), row.id],
-      );
+      await queryRunner.query('UPDATE "clientbases" SET "iban" = $1, "bic" = $2 WHERE "id" = $3', [
+        transformer.from(row.iban),
+        transformer.from(row.bic),
+        row.id,
+      ]);
     }
 
     await queryRunner.query('ALTER TABLE "clientbases" ALTER COLUMN "iban" TYPE VARCHAR(34)');

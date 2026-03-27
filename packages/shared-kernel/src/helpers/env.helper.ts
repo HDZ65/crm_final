@@ -1,24 +1,18 @@
-import { z, ZodSchema } from 'zod';
+import { ZodSchema, z } from 'zod';
 
 export class EnvValidationError extends Error {
   constructor(public readonly errors: string[]) {
-    const message = [
-      'Environment validation failed:',
-      ...errors.map(e => `  - ${e}`),
-    ].join('\n');
+    const message = ['Environment validation failed:', ...errors.map((e) => `  - ${e}`)].join('\n');
     super(message);
     this.name = 'EnvValidationError';
   }
 }
 
-export function validateEnv<T extends ZodSchema>(
-  schema: T,
-  env: NodeJS.ProcessEnv = process.env,
-): z.infer<T> {
+export function validateEnv<T extends ZodSchema>(schema: T, env: NodeJS.ProcessEnv = process.env): z.infer<T> {
   const result = schema.safeParse(env);
 
   if (!result.success) {
-    const errors = result.error.errors.map(err => {
+    const errors = result.error.errors.map((err) => {
       const path = err.path.join('.');
       return `${path}: ${err.message}`;
     });
@@ -34,10 +28,11 @@ export const envSchema = {
   requiredInt: () => z.coerce.number().int('Must be an integer'),
   optionalString: (defaultValue: string) => z.string().default(defaultValue),
   optionalInt: (defaultValue: number) => z.coerce.number().int().default(defaultValue),
-  optionalBoolean: (defaultValue: boolean) => z
-    .enum(['true', 'false'])
-    .transform(v => v === 'true')
-    .default(defaultValue ? 'true' : 'false'),
+  optionalBoolean: (defaultValue: boolean) =>
+    z
+      .enum(['true', 'false'])
+      .transform((v) => v === 'true')
+      .default(defaultValue ? 'true' : 'false'),
 };
 
 export { z } from 'zod';

@@ -20,9 +20,8 @@
 # Compose File Definitions
 # ============================================================================
 
-# Force Docker context to remote server (containers run there, not locally)
-DOCKER_CONTEXT := remote-server
-DEV_INFRA = docker --context $(DOCKER_CONTEXT) compose -p crmdev -f compose/dev/infrastructure.yml
+# Docker compose definitions for local development
+DEV_INFRA = docker compose -p crmdev -f compose/dev/infrastructure.yml
 DEV_CORE = $(DEV_INFRA) -f compose/dev/service-core.yml
 DEV_COMMERCIAL = $(DEV_INFRA) -f compose/dev/service-commercial.yml
 DEV_FINANCE = $(DEV_INFRA) -f compose/dev/service-finance.yml
@@ -56,26 +55,26 @@ dev-infra-down:
 dev-infra-logs:
 	$(DEV_INFRA) logs -f
 
-# Create all alex_* databases in global_postgres (idempotent)
+# Create all crm_* databases in dev-crm-postgres (idempotent)
 db-init:
-	@echo "=== Creating databases in global_postgres ==="
-	@echo "Waiting for global_postgres to be ready..."
+	@echo "=== Creating databases in dev-crm-postgres ==="
+	@echo "Waiting for dev-crm-postgres to be ready..."
 	@timeout=60; elapsed=0; \
-	while ! docker exec global_postgres pg_isready -U postgres -q 2>/dev/null; do \
+	while ! docker exec dev-crm-postgres pg_isready -U postgres -q 2>/dev/null; do \
 		sleep 2; elapsed=$$((elapsed + 2)); \
 		if [ $$elapsed -ge $$timeout ]; then \
-			echo "ERROR: Timeout waiting for global_postgres after $${timeout}s"; \
+			echo "ERROR: Timeout waiting for dev-crm-postgres after $${timeout}s"; \
 			exit 1; \
 		fi; \
 	done
-	@for db in alex_core alex_commercial alex_finance alex_engagement alex_logistics alex_telecom; do \
+	@for db in crm_core crm_commercial crm_finance crm_engagement crm_logistics crm_telecom; do \
 		echo "Creating database $$db (if not exists)..."; \
-		docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -tc \
+		docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -tc \
 			"SELECT 1 FROM pg_database WHERE datname='$$db'" | grep -q 1 \
-			|| docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -c \
+			|| docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -c \
 			"CREATE DATABASE $$db"; \
 		echo "  Installing uuid-ossp extension..."; \
-		docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d $$db -c \
+		docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d $$db -c \
 			"CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""; \
 	done
 	@echo "=== All databases ready ==="
@@ -164,7 +163,7 @@ frontend-build-no-cache:
 	$(DEV_FRONTEND) build --no-cache crm-frontend
 
 frontend-shell:
-	@docker exec -it alex-frontend sh
+	@docker exec -it dev-crm-frontend sh
 
 frontend-proto-copy:
 	cd frontend && bun run proto:copy
@@ -189,13 +188,13 @@ service-core-logs:
 	$(DEV_CORE) logs -f crm-service-core
 
 service-core-migrate:
-	docker exec alex-service-core bun run migration:run
+	docker exec dev-crm-service-core bun run migration:run
 
 service-core-build:
 	cd services/service-core && bun run build
 
 service-core-shell:
-	@docker exec -it alex-service-core sh
+	@docker exec -it dev-crm-service-core sh
 
 # ============================================================================
 # Service Commercial Commands (gRPC 50053, HTTP 3053 - commerciaux, contrats, products, commission)
@@ -211,13 +210,13 @@ service-commercial-logs:
 	$(DEV_COMMERCIAL) logs -f crm-service-commercial
 
 service-commercial-migrate:
-	docker exec alex-service-commercial bun run migration:run
+	docker exec dev-crm-service-commercial bun run migration:run
 
 service-commercial-build:
 	cd services/service-commercial && bun run build
 
 service-commercial-shell:
-	@docker exec -it alex-service-commercial sh
+	@docker exec -it dev-crm-service-commercial sh
 
 # ============================================================================
 # Service Finance Commands (gRPC 50059, HTTP 3059 - factures, payments, calendar)
@@ -233,13 +232,13 @@ service-finance-logs:
 	$(DEV_FINANCE) logs -f crm-service-finance
 
 service-finance-migrate:
-	docker exec alex-service-finance bun run migration:run
+	docker exec dev-crm-service-finance bun run migration:run
 
 service-finance-build:
 	cd services/service-finance && bun run build
 
 service-finance-shell:
-	@docker exec -it alex-service-finance sh
+	@docker exec -it dev-crm-service-finance sh
 
 # ============================================================================
 # Service Engagement Commands (gRPC 50051, HTTP 3061 - activites, notifications, email)
@@ -255,13 +254,13 @@ service-engagement-logs:
 	$(DEV_ENGAGEMENT) logs -f crm-service-engagement
 
 service-engagement-migrate:
-	docker exec alex-service-engagement bun run migration:run
+	docker exec dev-crm-service-engagement bun run migration:run
 
 service-engagement-build:
 	cd services/service-engagement && bun run build
 
 service-engagement-shell:
-	@docker exec -it alex-service-engagement sh
+	@docker exec -it dev-crm-service-engagement sh
 
 # ============================================================================
 # Service Logistics Commands (50060 - expeditions, colis, tracking)
@@ -277,35 +276,35 @@ service-logistics-logs:
 	$(DEV_LOGISTICS) logs -f crm-service-logistics
 
 service-logistics-migrate:
-	docker exec alex-service-logistics bun run migration:run
+	docker exec dev-crm-service-logistics bun run migration:run
 
 service-logistics-build:
 	cd services/service-logistics && bun run build
 
 service-logistics-shell:
-	@docker exec -it alex-service-logistics sh
+	@docker exec -it dev-crm-service-logistics sh
 
 # ============================================================================
 # Service Telecom Commands (3056 - provisioning saga)
 # ============================================================================
 
 service-telecom-up:
-	$(DEV_TELECOM) up -d --build alex-service-telecom
+	$(DEV_TELECOM) up -d --build dev-crm-service-telecom
 
 service-telecom-down:
-	$(DEV_TELECOM) stop alex-service-telecom
+	$(DEV_TELECOM) stop dev-crm-service-telecom
 
 service-telecom-logs:
-	$(DEV_TELECOM) logs -f alex-service-telecom
+	$(DEV_TELECOM) logs -f dev-crm-service-telecom
 
 service-telecom-migrate:
-	docker exec alex-service-telecom bun run migration:run
+	docker exec dev-crm-service-telecom bun run migration:run
 
 service-telecom-build:
 	cd services/service-telecom && bun run build
 
 service-telecom-shell:
-	@docker exec -it alex-service-telecom sh
+	@docker exec -it dev-crm-service-telecom sh
 
 # ============================================================================
 # Dev Database Readiness
@@ -314,10 +313,10 @@ service-telecom-shell:
 # Wait for all DEV databases to be ready (60s timeout per DB, 2s retry)
 dev-wait-for-dbs:
 	@echo "=== Waiting for DEV databases to be ready ==="
-	@for db in alex_core alex_commercial alex_finance alex_engagement alex_logistics alex_telecom; do \
-		echo "Waiting for global_postgres ($$db)..."; \
+	@for db in crm_core crm_commercial crm_finance crm_engagement crm_logistics crm_telecom; do \
+		echo "Waiting for dev-crm-postgres ($$db)..."; \
 		timeout=60; elapsed=0; \
-		while ! docker exec global_postgres pg_isready -U postgres -d $$db -q 2>/dev/null; do \
+		while ! docker exec dev-crm-postgres pg_isready -U postgres -d $$db -q 2>/dev/null; do \
 			sleep 2; elapsed=$$((elapsed + 2)); \
 			if [ $$elapsed -ge $$timeout ]; then \
 				echo "ERROR: Timeout waiting for $$db after $${timeout}s"; \
@@ -339,12 +338,12 @@ dev-wait-for-dbs:
 dev-seed-migrations:
 	@echo "=== Seeding migration records (synchronize already applied schema) ==="
 	@for entry in \
-		"alex-service-core:alex_core:service-core" \
-		"alex-service-commercial:alex_commercial:service-commercial" \
-		"alex-service-finance:alex_finance:service-finance" \
-		"alex-service-engagement:alex_engagement:service-engagement" \
-		"alex-service-telecom:alex_telecom:service-telecom" \
-		"alex-service-logistics:alex_logistics:service-logistics"; do \
+		"dev-crm-service-core:crm_core:service-core" \
+		"dev-crm-service-commercial:crm_commercial:service-commercial" \
+		"dev-crm-service-finance:crm_finance:service-finance" \
+		"dev-crm-service-engagement:crm_engagement:service-engagement" \
+		"dev-crm-service-telecom:crm_telecom:service-telecom" \
+		"dev-crm-service-logistics:crm_logistics:service-logistics"; do \
 		container=$$(echo $$entry | cut -d: -f1); \
 		db=$$(echo $$entry | cut -d: -f2); \
 		svc_dir=$$(echo $$entry | cut -d: -f3); \
@@ -362,28 +361,28 @@ dev-seed-migrations:
 			echo "  WARNING: Could not read migrations from $$container (skipped)"; \
 			continue; \
 		fi; \
-		docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d $$db -qc \
+		docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d $$db -qc \
 			"CREATE TABLE IF NOT EXISTS migrations (id SERIAL PRIMARY KEY, timestamp bigint NOT NULL, name varchar NOT NULL);"; \
 		for name in $$names; do \
 			ts=$$(echo $$name | grep -oE '[0-9]+$$'); \
-			docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d $$db -qc \
+			docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d $$db -qc \
 				"INSERT INTO migrations (timestamp, name) SELECT $$ts, '$$name' WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE name='$$name');"; \
 		done; \
-		count=$$(docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d $$db -tAc "SELECT count(*) FROM migrations;"); \
+		count=$$(docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d $$db -tAc "SELECT count(*) FROM migrations;"); \
 		echo "  $$db: $$count migrations registered"; \
 	done
 	@echo "=== All migration records seeded ==="
 
 dev-migrate-all: dev-seed-migrations
-	@echo "=== Running all DEV migrations on TRX50 ==="
+	@echo "=== Running all DEV migrations locally ==="
 	@status=0; \
 	for entry in \
-		"alex-service-core:service-core" \
-		"alex-service-commercial:service-commercial" \
-		"alex-service-finance:service-finance" \
-		"alex-service-engagement:service-engagement" \
-		"alex-service-telecom:service-telecom" \
-		"alex-service-logistics:service-logistics"; do \
+		"dev-crm-service-core:service-core" \
+		"dev-crm-service-commercial:service-commercial" \
+		"dev-crm-service-finance:service-finance" \
+		"dev-crm-service-engagement:service-engagement" \
+		"dev-crm-service-telecom:service-telecom" \
+		"dev-crm-service-logistics:service-logistics"; do \
 		container=$$(echo $$entry | cut -d: -f1); \
 		svc=$$(echo $$entry | cut -d: -f2); \
 		echo "Running migrations for $$svc..."; \
@@ -400,12 +399,12 @@ dev-verify-migrations:
 	@echo "=== Verifying DEV migrations ==="
 	@status=0; \
 	for svc in \
-		"alex-service-core:service-core" \
-		"alex-service-commercial:service-commercial" \
-		"alex-service-finance:service-finance" \
-		"alex-service-engagement:service-engagement" \
-		"alex-service-telecom:service-telecom" \
-		"alex-service-logistics:service-logistics"; do \
+		"dev-crm-service-core:service-core" \
+		"dev-crm-service-commercial:service-commercial" \
+		"dev-crm-service-finance:service-finance" \
+		"dev-crm-service-engagement:service-engagement" \
+		"dev-crm-service-telecom:service-telecom" \
+		"dev-crm-service-logistics:service-logistics"; do \
 		container=$$(echo $$svc | cut -d: -f1); \
 		name=$$(echo $$svc | cut -d: -f2); \
 		echo "Checking $$name..."; \
@@ -453,7 +452,7 @@ dev-health-check:
 	@curl -s http://localhost:3000/api/health || echo "  Not available"
 
 dev-shell:
-	@docker exec -it alex-$(SERVICE) sh
+	@docker exec -it dev-crm-$(SERVICE) sh
 
 # ============================================================================
 # Dev Data Management Commands
@@ -463,52 +462,52 @@ dev-db-reset:
 	@echo "==================================="
 	@echo "WARNING: DESTRUCTIVE OPERATION"
 	@echo "==================================="
-	@echo "This will delete ALL global_postgres data"
+	@echo "This will delete ALL dev-crm-postgres data"
 	@read -p "Type 'yes' to confirm: " confirm && [ "$$confirm" = "yes" ] || (echo "Aborted" && exit 1)
-	$(DEV_INFRA) stop global_postgres
-	$(DEV_INFRA) rm -f global_postgres
+	$(DEV_INFRA) stop dev-crm-postgres
+	$(DEV_INFRA) rm -f dev-crm-postgres
 	-docker volume rm crmdev_postgres_global_data
-	$(DEV_INFRA) up -d global_postgres
+	$(DEV_INFRA) up -d dev-crm-postgres
 	@echo "Database reset complete"
 
 clean-core-db:
-	@echo "=== Cleaning alex_core ==="
-	@docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d alex_core -c \
+	@echo "=== Cleaning crm_core ==="
+	@docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d crm_core -c \
 		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename != 'migrations') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;" \
 		2>/dev/null || echo "  Failed"
 	@echo "Done!"
 
 clean-commercial-db:
-	@echo "=== Cleaning alex_commercial ==="
-	@docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d alex_commercial -c \
+	@echo "=== Cleaning crm_commercial ==="
+	@docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d crm_commercial -c \
 		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename != 'migrations') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;" \
 		2>/dev/null || echo "  Failed"
 	@echo "Done!"
 
 clean-finance-db:
-	@echo "=== Cleaning alex_finance ==="
-	@docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d alex_finance -c \
+	@echo "=== Cleaning crm_finance ==="
+	@docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d crm_finance -c \
 		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename != 'migrations') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;" \
 		2>/dev/null || echo "  Failed"
 	@echo "Done!"
 
 clean-engagement-db:
-	@echo "=== Cleaning alex_engagement ==="
-	@docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d alex_engagement -c \
+	@echo "=== Cleaning crm_engagement ==="
+	@docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d crm_engagement -c \
 		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename != 'migrations') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;" \
 		2>/dev/null || echo "  Failed"
 	@echo "Done!"
 
 clean-logistics-db:
-	@echo "=== Cleaning alex_logistics ==="
-	@docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d alex_logistics -c \
+	@echo "=== Cleaning crm_logistics ==="
+	@docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d crm_logistics -c \
 		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename != 'migrations') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;" \
 		2>/dev/null || echo "  Failed"
 	@echo "Done!"
 
 clean-telecom-db:
-	@echo "=== Cleaning alex_telecom ==="
-	@docker exec -e PGPASSWORD=postgres global_postgres psql -U postgres -d alex_telecom -c \
+	@echo "=== Cleaning crm_telecom ==="
+	@docker exec -e PGPASSWORD=postgres dev-crm-postgres psql -U postgres -d crm_telecom -c \
 		"DO \$$\$$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename != 'migrations') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END \$$\$$;" \
 		2>/dev/null || echo "  Failed"
 	@echo "Done!"

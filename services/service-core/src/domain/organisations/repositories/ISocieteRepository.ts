@@ -6,5 +6,5 @@ export interface ISocieteRepository {
   save(entity: SocieteEntity): Promise<SocieteEntity>;
   delete(id: string): Promise<void>;
   findByOrganisationId(organisationId: string): Promise<SocieteEntity[]>;
-  findBySiren(siren: string): Promise<SocieteEntity | null>;
+  findBySiret(siren: string): Promise<SocieteEntity | null>;
 }

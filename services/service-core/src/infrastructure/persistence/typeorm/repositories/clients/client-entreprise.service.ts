@@ -1,24 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { ClientEntrepriseEntity } from '../../../../../domain/clients/entities';
 
 @Injectable()
 export class ClientEntrepriseService {
-  private readonly logger = new Logger(ClientEntrepriseService.name);
-
   constructor(
     @InjectRepository(ClientEntrepriseEntity)
     private readonly repository: Repository<ClientEntrepriseEntity>,
   ) {}
 
-  async create(input: {
-    raisonSociale: string;
-    numeroTva: string;
-    siren: string;
-  }): Promise<ClientEntrepriseEntity> {
+  async create(input: { raisonSociale: string; numeroTva: string; siren: string }): Promise<ClientEntrepriseEntity> {
     // Check for duplicate SIREN
     const existing = await this.repository.findOne({ where: { siren: input.siren } });
     if (existing) {

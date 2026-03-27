@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import type { S3StorageService } from '@crm/shared-kernel';
+import { Injectable, Logger } from '@nestjs/common';
 
 /**
  * Metadata required for document upload.
  */
 export interface DocumentUploadMetadata {
-  organisationId: string;
+  keycloakGroupId: string;
   typeDocument: string;
   filename: string;
   contentType: string;
@@ -27,7 +27,7 @@ export interface DocumentUploadResult {
  * High-level document storage service for the GED (Gestion Electronique de Documents).
  *
  * Wraps the shared-kernel S3StorageService with:
- * - Standardised key generation: {organisationId}/documents/{typeDocument}/{year}/{uuid}-{filename}
+ * - Standardised key generation: {keycloakGroupId}/documents/{typeDocument}/{year}/{uuid}-{filename}
  * - Automatic SHA-256 hash calculation on upload
  * - Graceful degradation when S3 is not configured
  */
@@ -40,21 +40,16 @@ export class DocumentStorageService {
     this.storageService = storageService;
 
     if (!this.storageService) {
-      this.logger.warn(
-        'S3 storage is not configured. Document storage operations will return null/empty values.',
-      );
+      this.logger.warn('S3 storage is not configured. Document storage operations will return null/empty values.');
     }
   }
 
   /**
    * Upload a document to S3 with automatic key generation and SHA-256 hashing.
    *
-   * Key pattern: {organisationId}/documents/{typeDocument}/{year}/{uuid}-{filename}
+   * Key pattern: {keycloakGroupId}/documents/{typeDocument}/{year}/{uuid}-{filename}
    */
-  async uploadDocument(
-    file: Buffer,
-    metadata: DocumentUploadMetadata,
-  ): Promise<DocumentUploadResult | null> {
+  async uploadDocument(file: Buffer, metadata: DocumentUploadMetadata): Promise<DocumentUploadResult | null> {
     if (!this.storageService) {
       return null;
     }
@@ -63,9 +58,9 @@ export class DocumentStorageService {
     const key = this.buildKey(metadata);
 
     const s3Metadata: Record<string, string> = {
-      'organisation-id': metadata.organisationId,
+      'organisation-id': metadata.keycloakGroupId,
       'type-document': metadata.typeDocument,
-      'sha256': hash,
+      sha256: hash,
       ...(metadata.extra ?? {}),
     };
 
@@ -114,13 +109,13 @@ export class DocumentStorageService {
 
   /**
    * Build the S3 key following the convention:
-   * {organisationId}/documents/{typeDocument}/{year}/{uuid}-{filename}
+   * {keycloakGroupId}/documents/{typeDocument}/{year}/{uuid}-{filename}
    */
   private buildKey(metadata: DocumentUploadMetadata): string {
     const year = new Date().getFullYear();
     const uuid = randomUUID();
     const safeFilename = metadata.filename.replace(/[^a-zA-Z0-9._-]/g, '_');
 
-    return `${metadata.organisationId}/documents/${metadata.typeDocument}/${year}/${uuid}-${safeFilename}`;
+    return `${metadata.keycloakGroupId}/documents/${metadata.typeDocument}/${year}/${uuid}-${safeFilename}`;
   }
 }

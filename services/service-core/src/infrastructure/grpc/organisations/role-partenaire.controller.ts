@@ -1,17 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { RolePartenaireService } from '../../persistence/typeorm/repositories/organisations/role-partenaire.service';
 import type {
   CreateRolePartenaireRequest,
-  UpdateRolePartenaireRequest,
-  GetRolePartenaireRequest,
-  GetRolePartenaireByCodeRequest,
-  ListRolePartenaireRequest,
-  ListRolePartenaireResponse,
   DeleteRolePartenaireRequest,
-  RolePartenaire,
-  DeleteResponse,
+  GetRolePartenaireByCodeRequest,
+  GetRolePartenaireRequest,
+  ListRolePartenaireRequest,
+  UpdateRolePartenaireRequest,
 } from '@proto/organisations';
+import { RolePartenaireService } from '../../persistence/typeorm/repositories/organisations/role-partenaire.service';
 
 @Controller()
 export class RolePartenaireController {

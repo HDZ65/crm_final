@@ -29,8 +29,6 @@ import { FacturesModule } from './factures/factures.module';
 import { ContratModule } from './contrat/contrat.module';
 import { ScoringModule } from './scoring/scoring.module';
 import { HealthModule } from './health/health.module';
-import { YousignModule } from './yousign/yousign.module';
-import { QualiteModule } from './qualite/qualite.module';
 
 import { NatsPublisherModule } from './nats/nats-publisher.module';
 import { GrpcClientModule } from './grpc/grpc-client.module';
@@ -72,8 +70,6 @@ import { GrpcClientModule } from './grpc/grpc-client.module';
     WoocommerceModule,
     PaymentsModule,
     FacturesModule,
-    YousignModule,
-    QualiteModule,
   ],
   controllers: [],
   providers: [],

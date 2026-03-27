@@ -1,15 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { status } from '@grpc/grpc-js';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
 import { OptionAbonnementEntity } from '../../../../../domain/depanssur/entities/option-abonnement.entity';
 import type { IOptionAbonnementRepository } from '../../../../../domain/depanssur/repositories/IOptionAbonnementRepository';
 
 @Injectable()
 export class OptionAbonnementService implements IOptionAbonnementRepository {
-  private readonly logger = new Logger(OptionAbonnementService.name);
-
   constructor(
     @InjectRepository(OptionAbonnementEntity)
     private readonly repository: Repository<OptionAbonnementEntity>,
@@ -62,9 +60,7 @@ export class OptionAbonnementService implements IOptionAbonnementRepository {
     const sortBy = pagination?.sortBy || 'createdAt';
     const sortOrder = (pagination?.sortOrder?.toUpperCase() as 'ASC' | 'DESC') || 'DESC';
 
-    const qb = this.repository
-      .createQueryBuilder('o')
-      .where('o.abonnementId = :abonnementId', { abonnementId });
+    const qb = this.repository.createQueryBuilder('o').where('o.abonnementId = :abonnementId', { abonnementId });
 
     if (filters?.actif !== undefined) {
       qb.andWhere('o.actif = :actif', { actif: filters.actif });

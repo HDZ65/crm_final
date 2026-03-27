@@ -55,43 +55,6 @@ export class DocumentsController {
     );
   }
 
-  @Get('pieces-jointes/by-type')
-  @ApiOperation({ summary: 'List pieces jointes by type (GED taxonomy)' })
-  listPiecesJointesByType(
-    @Query('type') type: string,
-    @Query('organisation_id') organisationId?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    return firstValueFrom(
-      this.documentsClient.listPiecesJointesByType({
-        type,
-        organisation_id: organisationId,
-        pagination: {
-          page: page ? parseInt(page, 10) : 1,
-          limit: limit ? parseInt(limit, 10) : 20,
-        },
-      }),
-    );
-  }
-
-  @Get('pieces-jointes/:id/versions')
-  @ApiOperation({ summary: 'Get piece jointe version history' })
-  getPieceJointeVersions(@Param('id') id: string) {
-    return firstValueFrom(this.documentsClient.getPieceJointeVersions({ id }));
-  }
-
-  @Post('pieces-jointes/:id/log-access')
-  @ApiOperation({ summary: 'Log access to piece jointe' })
-  logPieceJointeAccess(
-    @Param('id') id: string,
-    @Body() body: Record<string, unknown>,
-  ) {
-    return firstValueFrom(
-      this.documentsClient.logPieceJointeAccess({ ...body, piece_jointe_id: id }),
-    );
-  }
-
   @Get('pieces-jointes/by-entite/:entiteType/:entiteId')
   @ApiOperation({ summary: 'List pieces jointes by entity' })
   listPiecesJointesByEntite(

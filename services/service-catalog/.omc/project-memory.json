@@ -1,0 +1,119 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1774385370157,
+  "projectRoot": "/home/finanssor-data-center-v1/Applications/crm-gestion/services/service-catalog",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "@nestjs/core",
+        "version": "11.1.12",
+        "category": "backend"
+      },
+      {
+        "name": "jest",
+        "version": "30.2.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run start",
+    "scripts": {
+      "build": "nest build",
+      "format": "prettier --write \"src/**/*.ts\"",
+      "start": "nest start",
+      "start:dev": "nest start --watch",
+      "start:debug": "nest start --debug --watch",
+      "start:prod": "node dist/main.js",
+      "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+      "test": "jest",
+      "test:watch": "jest --watch",
+      "test:cov": "jest --coverage",
+      "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/datasource.ts",
+      "migration:generate": "npm run typeorm -- migration:generate src/migrations/$npm_config_name",
+      "migration:create": "npm run typeorm -- migration:create src/migrations/$npm_config_name",
+      "migration:run": "npm run typeorm -- migration:run",
+      "migration:revert": "npm run typeorm -- migration:revert",
+      "migration:show": "npm run typeorm -- migration:show",
+      "clean": "rimraf dist"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase/PascalCase",
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 21,
+      "lastAccessed": 1774385370153,
+      "keyFiles": [
+        "app.module.d.ts",
+        "app.module.d.ts.map",
+        "app.module.js",
+        "app.module.js.map",
+        "datasource.d.ts"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 5,
+      "lastAccessed": 1774385370153,
+      "keyFiles": [
+        "app.module.ts",
+        "datasource.ts",
+        "main.ts",
+        "products.module.ts",
+        "subscriptions.module.ts"
+      ]
+    },
+    "src/migrations": {
+      "path": "src/migrations",
+      "purpose": "Database migrations",
+      "fileCount": 0,
+      "lastAccessed": 1774385370156,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

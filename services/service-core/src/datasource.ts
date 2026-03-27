@@ -1,6 +1,6 @@
+import * as dotenv from 'dotenv';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import * as dotenv from 'dotenv';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -13,14 +13,17 @@ export const dataSourceOptions: DataSourceOptions = {
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'core_db',
   namingStrategy: new SnakeNamingStrategy(),
-  entities: [__dirname + '/**/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  entities: [`${__dirname}/**/*.entity{.ts,.js}`],
+  migrations: [`${__dirname}/migrations/*{.ts,.js}`],
   synchronize: false, // TOUJOURS false - on utilise les migrations
   logging: process.env.NODE_ENV === 'development',
   extra: {
-    max: 10,
+    // PERFORMANCE: Pool augmenté pour production multi-utilisateurs
+    max: 25,
+    min: 5,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 3000,
+    statement_timeout: 30000, // Kill queries > 30s
   },
 };
 

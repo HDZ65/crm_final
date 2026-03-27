@@ -6,6 +6,6 @@ message EcheanceEncaisseeEvent {
   string echeance_id = 1;
   string contrat_id = 2;
   string organisation_id = 3;
-  double montant = 4;
+  string montant = 4;                               // Amount in EUR (string for precision)
   string date_encaissement = 5;
 }

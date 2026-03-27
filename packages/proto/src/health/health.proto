@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package grpc.health.v1;
+
+option java_multiple_files = true;
+option java_package = "io.grpc.health.v1";
+
+// ============================================================================
+// HEALTH CHECK PROTO - gRPC Health Checking Protocol
+// ============================================================================
+// Standard gRPC health checking protocol as defined in:
+// https://github.com/grpc/grpc/blob/master/doc/health-checking.md
+// ============================================================================
+
+// Health checking service
+service Health {
+  // Synchronous health check
+  // Returns the current health status of the service
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+
+  // Asynchronous health watch
+  // Streams health status changes over time
+  rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+}
+
+// Request message for health check
+message HealthCheckRequest {
+  // Service name to check
+  // Empty string means check the overall server health
+  string service = 1;
+}
+
+// Response message for health check
+message HealthCheckResponse {
+  // Health status
+  ServingStatus status = 1;
+
+  // Optional: Additional health details
+  HealthDetails details = 2;
+}
+
+// Serving status enum
+enum ServingStatus {
+  // Unknown status (should not be used)
+  SERVING_STATUS_UNKNOWN = 0;
+
+  // Service is healthy and serving requests
+  SERVING_STATUS_SERVING = 1;
+
+  // Service is not serving requests
+  SERVING_STATUS_NOT_SERVING = 2;
+
+  // Used by Watch RPC - service name is not known
+  SERVING_STATUS_SERVICE_UNKNOWN = 3;
+}
+
+// Extended health details (optional, for detailed health checks)
+message HealthDetails {
+  // Service version
+  string version = 1;
+
+  // Uptime in seconds
+  int64 uptime_seconds = 2;
+
+  // Timestamp of the health check
+  int64 timestamp = 3;
+
+  // Component health statuses
+  repeated ComponentHealth components = 4;
+}
+
+// Individual component health status
+message ComponentHealth {
+  // Component name (e.g., "database", "redis", "nats")
+  string name = 1;
+
+  // Component status
+  ServingStatus status = 2;
+
+  // Optional error message if unhealthy
+  string error_message = 3;
+
+  // Response time in milliseconds (for latency-based health)
+  int64 latency_ms = 4;
+
+  // Last successful check timestamp
+  int64 last_success_timestamp = 5;
+}
+
+// ============================================================================
+// READINESS & LIVENESS PROBES (Kubernetes-style)
+// ============================================================================
+
+// Readiness check service
+service ReadinessProbe {
+  // Check if service is ready to accept traffic
+  rpc Check(ReadinessCheckRequest) returns (ReadinessCheckResponse);
+}
+
+message ReadinessCheckRequest {}
+
+message ReadinessCheckResponse {
+  bool ready = 1;
+  string message = 2;
+  repeated ComponentHealth components = 3;
+}
+
+// Liveness check service
+service LivenessProbe {
+  // Check if service is alive (not deadlocked)
+  rpc Check(LivenessCheckRequest) returns (LivenessCheckResponse);
+}
+
+message LivenessCheckRequest {}
+
+message LivenessCheckResponse {
+  bool alive = 1;
+  string message = 2;
+}

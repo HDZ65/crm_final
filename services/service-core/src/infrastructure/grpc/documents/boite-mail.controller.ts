@@ -1,49 +1,46 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { BoiteMailService } from '../../persistence/typeorm/repositories/documents/boite-mail.service';
-import { Fournisseur, TypeConnexion } from '../../../domain/documents/entities';
 import type {
-  CreateBoiteMailRequest,
-  UpdateBoiteMailRequest,
-  GetBoiteMailRequest,
-  GetBoiteMailByUtilisateurRequest,
-  GetDefaultBoiteMailRequest,
-  ListBoiteMailRequest,
-  ListBoiteMailResponse,
-  ListBoiteMailByUtilisateurRequest,
-  SetDefaultBoiteMailRequest,
   ActivateBoiteMailRequest,
-  UpdateOAuthTokensRequest,
-  TestConnectionRequest,
-  TestConnectionResponse,
-  DeleteBoiteMailRequest,
   BoiteMail,
-  DeleteResponse,
+  CreateBoiteMailRequest,
+  DeleteBoiteMailRequest,
+  GetBoiteMailByUtilisateurRequest,
+  GetBoiteMailRequest,
+  GetDefaultBoiteMailRequest,
+  ListBoiteMailByUtilisateurRequest,
+  ListBoiteMailRequest,
+  SetDefaultBoiteMailRequest,
+  TestConnectionRequest,
+  UpdateBoiteMailRequest,
+  UpdateOAuthTokensRequest,
 } from '@proto/documents';
+import { Fournisseur, TypeConnexion } from '../../../domain/documents/entities';
+import { BoiteMailService } from '../../persistence/typeorm/repositories/documents/boite-mail.service';
 
 function toProtoBoiteMail(boite: any): BoiteMail {
   return {
     id: boite.id,
     nom: boite.nom,
-    adresse_email: boite.adresseEmail,
+    adresseEmail: boite.adresseEmail,
     fournisseur: boite.fournisseur,
-    type_connexion: boite.typeConnexion,
-    serveur_smtp: boite.serveurSMTP || '',
-    port_smtp: boite.portSMTP || 0,
-    serveur_imap: boite.serveurIMAP || '',
-    port_imap: boite.portIMAP || 0,
-    utilise_ssl: boite.utiliseSsl || false,
-    utilise_tls: boite.utiliseTls || false,
+    typeConnexion: boite.typeConnexion,
+    serveurSmtp: boite.serveurSMTP || '',
+    portSmtp: boite.portSMTP || 0,
+    serveurImap: boite.serveurIMAP || '',
+    portImap: boite.portIMAP || 0,
+    utiliseSsl: boite.utiliseSsl || false,
+    utiliseTls: boite.utiliseTls || false,
     username: boite.username || '',
-    client_id: boite.clientId || '',
-    token_expiration: boite.tokenExpiration?.toISOString() ?? '',
-    signature_html: boite.signatureHtml || '',
-    signature_texte: boite.signatureTexte || '',
-    est_par_defaut: boite.estParDefaut || false,
+    clientId: boite.clientId || '',
+    tokenExpiration: boite.tokenExpiration?.toISOString() ?? '',
+    signatureHtml: boite.signatureHtml || '',
+    signatureTexte: boite.signatureTexte || '',
+    estParDefaut: boite.estParDefaut || false,
     actif: boite.actif,
-    utilisateur_id: boite.utilisateurId,
-    created_at: boite.createdAt?.toISOString() ?? '',
-    updated_at: boite.updatedAt?.toISOString() ?? '',
+    utilisateurId: boite.utilisateurId,
+    createdAt: boite.createdAt?.toISOString() ?? '',
+    updatedAt: boite.updatedAt?.toISOString() ?? '',
   };
 }
 
@@ -55,25 +52,25 @@ export class BoiteMailController {
   async create(data: CreateBoiteMailRequest) {
     const boiteMail = await this.boiteMailService.create({
       ...data,
-      serveurSMTP: data.serveur_smtp,
-      portSMTP: data.port_smtp,
-      serveurIMAP: data.serveur_imap,
-      portIMAP: data.port_imap,
+      serveurSMTP: data.serveurSmtp,
+      portSMTP: data.portSmtp,
+      serveurIMAP: data.serveurImap,
+      portIMAP: data.portImap,
       fournisseur: data.fournisseur as Fournisseur,
-      typeConnexion: data.type_connexion as TypeConnexion,
+      typeConnexion: data.typeConnexion as TypeConnexion,
     });
     return toProtoBoiteMail(boiteMail);
   }
 
   @GrpcMethod('BoiteMailService', 'Update')
   async update(data: UpdateBoiteMailRequest) {
-    const { id, serveur_smtp, port_smtp, serveur_imap, port_imap, ...rest } = data;
+    const { id, serveurSmtp, portSmtp, serveurImap, portImap, ...rest } = data;
     const updateData = {
       ...rest,
-      serveurSMTP: serveur_smtp,
-      portSMTP: port_smtp,
-      serveurIMAP: serveur_imap,
-      portIMAP: port_imap,
+      serveurSMTP: serveurSmtp,
+      portSMTP: portSmtp,
+      serveurIMAP: serveurImap,
+      portIMAP: portImap,
     };
     const boiteMail = await this.boiteMailService.update(id, updateData);
     return toProtoBoiteMail(boiteMail);
@@ -87,13 +84,13 @@ export class BoiteMailController {
 
   @GrpcMethod('BoiteMailService', 'GetByUtilisateur')
   async getByUtilisateur(data: GetBoiteMailByUtilisateurRequest) {
-    const boiteMail = await this.boiteMailService.findByUtilisateur(data.utilisateur_id);
+    const boiteMail = await this.boiteMailService.findByUtilisateur(data.utilisateurId);
     return toProtoBoiteMail(boiteMail);
   }
 
   @GrpcMethod('BoiteMailService', 'GetDefault')
   async getDefault(data: GetDefaultBoiteMailRequest) {
-    const boiteMail = await this.boiteMailService.findDefault(data.utilisateur_id);
+    const boiteMail = await this.boiteMailService.findDefault(data.utilisateurId);
     return toProtoBoiteMail(boiteMail);
   }
 
@@ -120,11 +117,7 @@ export class BoiteMailController {
 
   @GrpcMethod('BoiteMailService', 'ListByUtilisateur')
   async listByUtilisateur(data: ListBoiteMailByUtilisateurRequest) {
-    const result = await this.boiteMailService.findByUtilisateurList(
-      data.utilisateur_id,
-      data.actif,
-      data.pagination,
-    );
+    const result = await this.boiteMailService.findByUtilisateurList(data.utilisateurId, data.actif, data.pagination);
     return {
       boites: result.data.map((b: any) => toProtoBoiteMail(b)),
       pagination: {
@@ -138,7 +131,7 @@ export class BoiteMailController {
 
   @GrpcMethod('BoiteMailService', 'SetDefault')
   async setDefault(data: SetDefaultBoiteMailRequest) {
-    const boiteMail = await this.boiteMailService.setDefault(data.id, data.utilisateur_id);
+    const boiteMail = await this.boiteMailService.setDefault(data.id, data.utilisateurId);
     return toProtoBoiteMail(boiteMail);
   }
 
@@ -158,9 +151,9 @@ export class BoiteMailController {
   async updateOAuthTokens(data: UpdateOAuthTokensRequest) {
     const boiteMail = await this.boiteMailService.updateOAuthTokens(
       data.id,
-      data.access_token,
-      data.refresh_token,
-      new Date(data.token_expiration),
+      data.accessToken,
+      data.refreshToken,
+      new Date(data.tokenExpiration),
     );
     return toProtoBoiteMail(boiteMail);
   }

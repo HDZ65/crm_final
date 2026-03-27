@@ -11,6 +11,148 @@ include make/dev.mk
 include make/staging.mk
 include make/prod.mk
 
+# ============================================================================
+# 🚀 COMMANDES PRINCIPALES - SIMPLE ET RAPIDE
+# ============================================================================
+# Usage:
+#   make start   → Lance tout l'environnement dev (infrastructure + services + frontend)
+#   make stop    → Arrête tout proprement
+# ============================================================================
+
+.PHONY: start stop init update
+
+# Commande d'initialisation (à faire une seule fois ou après un clone)
+init:
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║          🔧 INITIALISATION DU PROJET CRM                   ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "1️⃣  Génération des fichiers Proto..."
+	@cd packages/proto && npm run gen 2>/dev/null || bun run gen
+	@echo "   ✅ Fichiers Proto générés"
+	@echo ""
+	@echo "2️⃣  Démarrage de l'infrastructure..."
+	@$(DEV_INFRA) up -d
+	@echo "   ✅ Infrastructure prête"
+	@echo ""
+	@echo "3️⃣  Attente de PostgreSQL (10 secondes)..."
+	@sleep 10
+	@echo ""
+	@echo "4️⃣  Création des bases de données..."
+	@docker exec dev-crm-postgres psql -U postgres -c "CREATE DATABASE crm_core;" 2>/dev/null || true
+	@docker exec dev-crm-postgres psql -U postgres -c "CREATE DATABASE crm_commercial;" 2>/dev/null || true
+	@docker exec dev-crm-postgres psql -U postgres -c "CREATE DATABASE crm_finance;" 2>/dev/null || true
+	@docker exec dev-crm-postgres psql -U postgres -c "CREATE DATABASE crm_engagement;" 2>/dev/null || true
+	@docker exec dev-crm-postgres psql -U postgres -c "CREATE DATABASE crm_logistics;" 2>/dev/null || true
+	@docker exec dev-crm-postgres psql -U postgres -c "CREATE DATABASE crm_telecom;" 2>/dev/null || true
+	@docker exec dev-crm-postgres psql -U postgres -c "CREATE DATABASE crm_keycloak;" 2>/dev/null || true
+	@echo "   ✅ Bases de données créées"
+	@echo ""
+	@echo "5️⃣  Lancement des services pour les migrations..."
+	@docker compose -f compose/dev/service-core.yml up -d
+	@docker compose -f compose/dev/service-commercial.yml up -d
+	@sleep 5
+	@echo ""
+	@echo "6️⃣  Exécution des migrations..."
+	@docker exec dev-crm-service-core npm run migration:run 2>/dev/null || echo "   ⚠️  Pas de migrations pour core"
+	@docker exec dev-crm-service-commercial npm run migration:run 2>/dev/null || echo "   ⚠️  Pas de migrations pour commercial"
+	@echo "   ✅ Migrations exécutées"
+	@echo ""
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║              ✅ INITIALISATION TERMINÉE                    ║"
+	@echo "║         Vous pouvez maintenant faire: make start           ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+
+# Commande de mise à jour (après modification des protos ou ajout de migrations)
+update:
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║          🔄 MISE À JOUR DES PROTOS ET MIGRATIONS          ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "1️⃣  Régénération des fichiers Proto..."
+	@cd packages/proto && npm run gen:clean && npm run gen
+	@echo "   ✅ Protos mis à jour"
+	@echo ""
+	@echo "2️⃣  Redémarrage des services avec les nouveaux protos..."
+	@docker compose -f compose/dev/service-core.yml restart
+	@docker compose -f compose/dev/service-commercial.yml restart
+	@docker compose -f compose/dev/service-finance.yml restart
+	@docker compose -f compose/dev/service-engagement.yml restart
+	@docker compose -f compose/dev/frontend.yml restart
+	@echo "   ✅ Services redémarrés"
+	@echo ""
+	@echo "3️⃣  Exécution des nouvelles migrations..."
+	@docker exec dev-crm-service-core npm run migration:run 2>/dev/null || echo "   ℹ️  Pas de nouvelles migrations"
+	@docker exec dev-crm-service-commercial npm run migration:run 2>/dev/null || echo "   ℹ️  Pas de nouvelles migrations"
+	@echo "   ✅ Migrations à jour"
+	@echo ""
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║                  ✅ MISE À JOUR TERMINÉE                   ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+
+start:
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║          🚀 DÉMARRAGE DE L'ENVIRONNEMENT CRM              ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "1️⃣  Infrastructure (PostgreSQL, Redis, NATS, Consul)..."
+	@$(DEV_INFRA) up -d
+	@echo "   ✅ Infrastructure démarrée"
+	@echo ""
+	@echo "2️⃣  Keycloak (Authentification)..."
+	@docker compose -f compose/dev/keycloak.yml up -d
+	@echo "   ✅ Keycloak démarré"
+	@echo ""
+	@echo "3️⃣  Services Backend..."
+	@docker compose -f compose/dev/service-core.yml up -d
+	@docker compose -f compose/dev/service-commercial.yml up -d
+	@docker compose -f compose/dev/service-finance.yml up -d
+	@docker compose -f compose/dev/service-engagement.yml up -d
+	@docker compose -f compose/dev/service-gateway.yml up -d
+	@docker compose -f compose/dev/service-logistics.yml up -d
+	@docker compose -f compose/dev/service-telecom.yml up -d
+	@echo "   ✅ Tous les services démarrés"
+	@echo ""
+	@echo "4️⃣  Frontend..."
+	@docker compose -f compose/dev/frontend.yml up -d
+	@echo "   ✅ Frontend démarré"
+	@echo ""
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║                  ✅ SYSTÈME OPÉRATIONNEL                   ║"
+	@echo "╠════════════════════════════════════════════════════════════╣"
+	@echo "║  🌐 Frontend    : http://localhost:3400                    ║"
+	@echo "║  🔐 Keycloak   : http://localhost:3402 (admin/admin)      ║"
+	@echo "║  🗂️  Consul     : http://localhost:3406                    ║"
+	@echo "║  📊 PostgreSQL : localhost:3401 (postgres/postgres)        ║"
+	@echo "╠════════════════════════════════════════════════════════════╣"
+	@echo "║  💡 Première fois? Faites d'abord: make init              ║"
+	@echo "║  🔄 Protos modifiés? Faites: make update                  ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+
+stop:
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║           🛑 ARRÊT DE L'ENVIRONNEMENT CRM                 ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "📦 Arrêt du Frontend..."
+	@docker compose -f compose/dev/frontend.yml down
+	@echo "📦 Arrêt des Services..."
+	@docker compose -f compose/dev/service-telecom.yml down
+	@docker compose -f compose/dev/service-logistics.yml down
+	@docker compose -f compose/dev/service-gateway.yml down
+	@docker compose -f compose/dev/service-engagement.yml down
+	@docker compose -f compose/dev/service-finance.yml down
+	@docker compose -f compose/dev/service-commercial.yml down
+	@docker compose -f compose/dev/service-core.yml down
+	@echo "📦 Arrêt de Keycloak..."
+	@docker compose -f compose/dev/keycloak.yml down
+	@echo "📦 Arrêt de l'Infrastructure..."
+	@$(DEV_INFRA) down
+	@echo ""
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║              ✅ ENVIRONNEMENT ARRÊTÉ                       ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+
 .PHONY: up down restart logs ps clean \
 	proto-generate proto-clean proto-build-all proto-rebuild-all \
 	build-all build-packages build-services docker-build-all docker-build-service docker-prune \
